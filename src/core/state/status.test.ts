@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import {
+  fresh,
+  stamp,
+  testRegistries,
+  textFile,
+} from "../../../test/support/state";
 import { summarize } from "../features/links/summarize";
 import { scanDoc } from "../lang/markdown/scan";
 import { statusSegments } from "./status";
@@ -31,6 +36,20 @@ test("status shows a failed save and its retry time", () => {
     reason: "EACCES",
     retryAt: 2000,
   });
+});
+
+test("status shows a deleted file until it is saved again", () => {
+  let s = open("a.md", "x\n");
+  s = update(s, {
+    type: "fileChanged",
+    event: { kind: "removed", path: "a.md" },
+  }).state;
+  s = update(s, { type: "key", key: "j", now: 0 }).state;
+  expect(s.notifications.message).toBeUndefined();
+  expect(statusSegments(s).deletedOnDisk).toBe(true);
+
+  s = update(s, { type: "saved", path: "a.md", stamp: stamp(2) }).state;
+  expect(statusSegments(s).deletedOnDisk).toBeUndefined();
 });
 
 test("status with nothing open shows only the mode", () => {

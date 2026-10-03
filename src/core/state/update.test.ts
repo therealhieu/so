@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { deepFreeze, fresh, testRegistries } from "../../../test/support/state";
+import {
+  deepFreeze,
+  fresh,
+  openBuffer,
+  testRegistries,
+} from "../../../test/support/state";
 import { createStore } from "./store";
 import type { Action, Effect } from "./types";
 import { createUpdate } from "./update";
@@ -64,5 +69,28 @@ test("a throwing command keeps the previous state and reports the error", () => 
   expect(r.state).toEqual({
     ...s,
     notifications: { toasts: [{ id: 1, level: "error", text: "boom" }] },
+  });
+});
+
+test("a message lasts until the next key", () => {
+  const update = createUpdate(testRegistries());
+  const editing = openBuffer(fresh(), "a.md", "one\ntwo");
+  const deleted = update(editing, {
+    type: "fileChanged",
+    event: { kind: "removed", path: "a.md" },
+  }).state;
+  expect(deleted.notifications.message?.text).toBe(
+    "deleted on disk — :w to recreate",
+  );
+
+  const moved = update(deleted, { type: "key", key: "j", now: 0 }).state;
+  expect(moved.notifications.message).toBeUndefined();
+
+  let s = moved;
+  for (const key of [":", "x", "<CR>"])
+    s = update(s, { type: "key", key, now: 0 }).state;
+  expect(s.notifications.message).toEqual({
+    text: "E492: Not an editor command: x",
+    level: "error",
   });
 });

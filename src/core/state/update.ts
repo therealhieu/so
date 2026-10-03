@@ -18,7 +18,7 @@ import {
   onSearchResults,
   onSearchTimer,
 } from "./picker";
-import { none, notifyError } from "./result";
+import { clearMessage, none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
   onStateLoaded,
@@ -58,7 +58,8 @@ export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
     switch (action.type) {
       case "key":
-        return handleKeyAction(state, action, reg);
+        // A message lasts until the next key; one the key itself sets still shows.
+        return handleKeyAction(clearMessage(state), action, reg);
       case "clipboardText":
         return onClipboardText(state, action, reg);
       case "fileLoaded":

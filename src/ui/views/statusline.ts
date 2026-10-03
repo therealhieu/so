@@ -41,7 +41,7 @@ function indexSegment(seg: StatusSegments): Seg {
 const cells = (text: string) => [...text].length;
 
 /**
- * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ jump i/n │ ← N backlinks │ N words │ index`
+ * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ index`
  * on the left and `Ln:Col` on the right. Narrow terminals drop the view and word segments;
  * the path is cut in the middle when the row is still too long.
  */
@@ -88,6 +88,11 @@ export class Statusline extends Renderable {
         token: "statusError",
       });
     }
+    if (seg.deletedOnDisk)
+      segs.push({
+        text: "✗ deleted on disk · :w to recreate",
+        token: "statusError",
+      });
     if (seg.jump !== undefined)
       segs.push({ text: seg.jump, token: "statusDim" });
     if (seg.backlinks !== undefined)

@@ -14,6 +14,8 @@ export type StatusSegments = {
   /** Markdown buffers only. */
   words?: number;
   saveError?: { reason: string; retryAt: number };
+  /** The file was removed outside so; edits are kept but not autosaved. */
+  deletedOnDisk?: true;
   position?: Pos;
   /** Notes only, once the index has finished a scan. */
   backlinks?: number;
@@ -61,6 +63,7 @@ export function statusSegments(s: AppState): StatusSegments {
     }
     if (b.save.kind === "failed")
       seg.saveError = { reason: b.save.reason, retryAt: b.save.retryAt };
+    if (b.disk === "deleted") seg.deletedOnDisk = true;
   }
   if (index !== "idle") seg.index = index;
   if (index === "indexing")
