@@ -2,9 +2,9 @@
 
 ## Status
 
-- **State:** `Ready`
-- **Current Position:** `Not started`
-- **Last Updated:** `Not started`
+- **State:** `In Progress`
+- **Current Position:** `P1-G1 — implementation`
+- **Last Updated:** `2026-10-03`
 
 ## Sources
 
@@ -208,11 +208,11 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
 - **Dependencies:** None (execution prerequisites: Bun 1.4.2, Neovim v0.11.7 for recording)
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P1-G1 — Toolchain, Repository Policy, CI and Release Definitions
 
-- [ ] Context and dependencies confirmed.
+- [x] Context and dependencies confirmed.
 - [ ] Implementation turn completed.
 - [ ] `P1-G1-T1` — Install Bun 1.4.2 and add toolchain files.
 - [ ] `P1-G1-T2` — Lock repository policy and PR-only CI.
@@ -463,7 +463,7 @@ Keep definitions in the accepted binding (`w261003hege-discuss-context.md`, Road
 
 | Boundary | Accepted references and current sources checked | Assessment and evidence |
 |---|---|---|
-| Execution start | `Pending implementation` — check `git log -- .s1mple/work/active/rm261003abzp-so-v1/` against `d00d3a3`; index `:131`, `:142`; phase `:73`, `:323-424`; W bindings under `.s1mple/work/` | `Pending implementation` |
+| Execution start | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `deb9b96`); index `:131`, `:142`; W bindings under `.s1mple/work/` | Aligned — 0 parent commits since `d00d3a3`; `:131` and `:142` carry `RM261003ABZP-DI1@R2` (Work `Pending`, Not started); only `w261003hege-discuss-context.md` binds DI1. Tooling observed: local Bun 1.3.10, Neovim 0.12.4 — P1-G1-T1 installs Bun 1.4.2, P1-G2-T3 downloads Neovim v0.11.7 per plan context §7. |
 | Each resume after interruption | `Pending implementation` | `Pending implementation` |
 | Before P3-G1-T7 delivery actions | `Pending implementation` | `Pending implementation` |
 | Delivery acceptance | `Pending implementation` | `Pending implementation` |
