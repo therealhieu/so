@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G2 — implementation`
+- **Current Position:** `P2-G2 — verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -353,18 +353,18 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 #### P2-G2 — Workspace Adapters, Effect Runner, and Integration
 
 - [x] Context and dependencies confirmed (P2-G1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P2-G2-T1` — Implement the exclusion matcher.
-- [ ] `P2-G2-T2` — Implement the workspace file adapter and fixtures.
-- [ ] `P2-G2-T3` — Implement the watcher with own-operation suppression.
-- [ ] `P2-G2-T4` — Implement trash adapters.
-- [ ] `P2-G2-T5` — Implement clipboard provider detection.
-- [ ] `P2-G2-T6` — Implement the serial effect runner.
-- [ ] `P2-G2-T7` — Prove save, open, and explorer safety end to end.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Implementation turn completed.
+- [x] `P2-G2-T1` — Implement the exclusion matcher.
+- [x] `P2-G2-T2` — Implement the workspace file adapter and fixtures.
+- [x] `P2-G2-T3` — Implement the watcher with own-operation suppression.
+- [x] `P2-G2-T4` — Implement trash adapters.
+- [x] `P2-G2-T5` — Implement clipboard provider detection.
+- [x] `P2-G2-T6` — Implement the serial effect runner.
+- [x] `P2-G2-T7` — Prove save, open, and explorer safety end to end.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
 - [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
 - [ ] Verification report persisted and separately committed.
 - [ ] Verification report commit SHA recorded.
 - [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
@@ -377,8 +377,8 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` — `Completed`; DEV4 second path reproduced (`:w` between `saved(old)` and rename `fsResult` recreates old file and leaves buffer stuck `writing`); implementer proposed a runner-only fix in `src/app/effects.ts` — assessed by verifier
+- Initial implementation report commit: `39b1d5b`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` — `Pending implementation`
 - Verification report commit: `Pending implementation`
 - Remediation: `Pending implementation`
@@ -390,13 +390,13 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P2-G2-T1` | `Pending implementation` |
-| `P2-G2-T2` | `Pending implementation` |
-| `P2-G2-T3` | `Pending implementation` |
-| `P2-G2-T4` | `Pending implementation` |
-| `P2-G2-T5` | `Pending implementation` |
-| `P2-G2-T6` | `Pending implementation` |
-| `P2-G2-T7` | `Pending implementation` |
+| `P2-G2-T1` | `91373ac`, follow-up `34f4946` |
+| `P2-G2-T2` | `14c09fe` |
+| `P2-G2-T3` | `9ed5898`, fix `d4de279` |
+| `P2-G2-T4` | `2abd7ba` |
+| `P2-G2-T5` | `5772a45`, follow-up `34f4946` |
+| `P2-G2-T6` | `5147858` |
+| `P2-G2-T7` | `d4de279`, `ef110d6` |
 
 ### Part 3 — UI Shell, App, and Delivery
 
@@ -683,7 +683,7 @@ Work: W261003HEGE — editor-foundation
 
 ## Blockers and Deviations
 
-- **DEV4 — Residual rename/write timing window (accepted risk, P2-G1).** Location: `src/core/state/save.ts` `onSaved`, `src/core/state/explorer.ts` `explorerOp`. Evidence: P2-G1-VER1 remediation notes in `p2-g1-implementation-report.md` (`d4abdc3`). The pure reducer cannot see a queued rename, so a write to the old path is still possible if an autosave timer fires before a rename's `fsResult` (rename slower than the 1 s autosave delay) or a user write is issued within the rename's milliseconds. Closing it fully needs a new buffer field, which the lean rule forbids. Impact: low likelihood on local file systems. Required resolution: P2-G2-T7 integration (V13.4) and overall verification assess it against the real serial queue; reopen only if they reproduce it.
+- **DEV4 — Residual rename/write timing window (accepted risk, P2-G1).** Location: `src/core/state/save.ts` `onSaved`, `src/core/state/explorer.ts` `explorerOp`. Evidence: P2-G1-VER1 remediation notes in `p2-g1-implementation-report.md` (`d4abdc3`). The pure reducer cannot see a queued rename, so a write to the old path is still possible if an autosave timer fires before a rename's `fsResult` (rename slower than the 1 s autosave delay) or a user write is issued within the rename's milliseconds. Closing it fully needs a new buffer field, which the lean rule forbids. Impact: low likelihood on local file systems. Required resolution: P2-G2-T7 integration (V13.4) and overall verification assess it against the real serial queue; reopen only if they reproduce it. **Update (P2-G2 implementation, `39b1d5b`):** the in-flight-write + typing + rename + autosave sequence is safe on the real queue; the user-`:w`-during-rename path was reproduced in a throwaway test (old file recreated, buffer stuck `writing`). Reopened for P2-G2 verification and remediation; proposed fix is runner-only (`src/app/effects.ts`: a write queued behind a pending move of its path targets the move's destination after success and reports `saved` with the new path), no new state fields.
 
 - **DEV3 — Verifier-accepted refinements to system design §7 shapes (P2-G1).** Location: `src/core/state/types.ts`, `save.ts`, `explorer.ts`, `disk.ts`. Evidence: `p2-g1-verification-report.md` (`1959b23`) judged each necessary or acceptable. Refinements: `SaveState.writing` = `{version, at, attempt}` and a `now` argument on `writeBuffer`, `requestQuit`, `closeBuffer`, `explorerOp`, `resolveConflict` (backoff needs the start time and attempt; `saved`/`saveFailed` carry no time); `BufferState.closing?: true` (REQ5 `:bd` closes only after flush); registers under `AppState.vim` (§6 and parent); `PromptState`, `Toast`, `MouseEvent` (scroll-only) defined where the design left them open; extra files `src/core/state/result.ts`, `test/support/state.ts`, `src/core/state/status.test.ts`. Impact: system design §7 text differs from code in these spots; no G1 contract or AppState top-level field change. Required resolution: none for execution; candidates for the pending parent-synchronization list. Carry-over to P2-G2: autosave/timer `now` consistency and the `"conflict"` reason string must be proven against the real effect runner and file adapter.
 
