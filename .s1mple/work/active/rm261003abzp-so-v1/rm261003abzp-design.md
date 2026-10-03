@@ -9,7 +9,7 @@ Use `None — <reason>` for sections or fields that do not apply. Diagrams and c
 ## Baseline and Goals
 
 - **Context:** `rm261003abzp-roadmap-context.md@R2` - empty repository; Alfred code available to port (Markdown parse, Obsidian syntax, vim core, terminal graphics, Bases); scope change 2026-10-03: Markdown-first on a language-neutral core.
-- **Requirements:** `rm261003abzp-requirements.md` - RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3 … RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3 (approved).
+- **Requirements:** `rm261003abzp-requirements.md` - RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3 … RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3 (approved).
 - **Research:** `rm261003abzp-research.md`
 - **Reconciliation:** `rm261003abzp-requirements.md` Research Reconciliation — Complete.
 - **Goals:**
@@ -20,7 +20,7 @@ Use `None — <reason>` for sections or fields that do not apply. Diagrams and c
 - **Binding constraints:**
   - `.s1mple/S1MPLE.md` Implementation - "Keep it lean and simple": no monorepo, no server between UI and core, no speculative plugin system.
   - RM261003ABZP-REQ11@R3 - only `src/ui/` imports `@opentui/*`; `src/core/` imports no I/O, UI, or runtime APIs; `src/core/kernel/` imports nothing from `filetypes/`, `lang/`, or `features/`.
-  - RM261003ABZP-REQ10@R3 - no tool may depend on the TypeScript compiler API (TypeScript 7 ships none, `RM261003ABZP-RF13`).
+  - RM261003ABZP-REQ10@R4 - no tool may depend on the TypeScript compiler API (TypeScript 7 ships none, `RM261003ABZP-RF13`).
 
 ## System Architecture
 
@@ -164,11 +164,8 @@ so/
 ├── [A] tsconfig.json                Purpose: strict ESM, noEmit, TS 7          Decisions: DES15
 ├── [A] biome.json                   Purpose: format + lint                      Decisions: DES15
 ├── [A] knip.json                    Purpose: dead-code check                    Decisions: DES15
-├── [A] release-please-config.json   Purpose: Conventional Commits → SemVer; initial-version 0.1.0  Decisions: DES15
-├── [A] .release-please-manifest.json Purpose: release-please version manifest ({".": "0.0.0"})  Decisions: DES15
 ├── [A] .github/workflows/ci.yml     Purpose: check ∥ test+bench jobs on pull requests  Decisions: DES15, DES16
-├── [A] .github/workflows/release-please.yml Purpose: release PR on main; calls release.yml when a release is created  Decisions: DES15
-├── [A] .github/workflows/release.yml Purpose: compile ×4 + native smoke ×4 + publish (on `v*` tag or workflow_call)  Decisions: DES15
+├── [A] .github/workflows/release.yml Purpose: compile ×4 + native smoke ×4; publish on a `v*` tag pushed at the user's request; manual run = dry run, no publish  Decisions: DES15
 ├── [A] bin/so                        Purpose: `#!/usr/bin/env bun` entry for source runs  Decisions: DES1
 ├── [A] src/app/
 │   ├── main.ts                      Purpose: CLI, wiring, lifecycle            Symbols: main, parseArgs   Decisions: DES1, DES2
@@ -845,14 +842,14 @@ Unit tests sit next to code as `*.test.ts`.
 | Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R2) | RM261003ABZP-V1@R1 |
 | Migration and backfill | None — greenfield; Obsidian files are read as-is and written in place | None — no prior data format |
 | Mixed-version compatibility | Obsidian file compatibility (Markdown, links, frontmatter, `.base`); Kanban `type` constant isolated in `core/features/bases/types.ts` and verified against an Obsidian-saved file (RM261003ABZP-DES12@R2) | RM261003ABZP-V10@R1 |
-| Rollout and rollback | SemVer releases via release-please; users roll back by installing a previous release binary (RM261003ABZP-DES15@R3) | RM261003ABZP-V14@R1 |
+| Rollout and rollback | SemVer releases only when the user asks, from a pushed `v*` tag; users roll back by installing a previous release binary (RM261003ABZP-DES15@R4) | RM261003ABZP-V14@R2 |
 | Known extension needs | Registries: commands and file-type-scoped keymaps (DES5), syntax extensions (DES6), block renderers and decoration providers (DES9), editor-kind views and widget painters (DES10), Bases view types (DES12), file types and highlighters (DES17) — RM261003ABZP-REQ11@R3 | RM261003ABZP-V16@R2 |
 | Evolution toward code editing and notebooks | Kernel boundary (DES1) keeps editing language-neutral; future work adds registrations only: an LSP client is a workspace adapter whose results become `mark`/`line` decorations and file-type commands (`gd` → definition); tree-sitter replaces lowlight behind `Highlighter`; a notebook is a new editor kind whose cells each hold a `TextBuffer`. None of these is built in v1 (RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3 deferrals) | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V18@R1 |
 
 - **System transition:**
 
 ```text
-empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable → knowledge features → release binaries
+empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable → knowledge features → release binaries (on request)
                                   └→ rollback: previous release binary; files are plain Markdown, no state migration
 ```
 
@@ -1049,22 +1046,22 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
       - **Unique risk:** indexing blocking the main thread.
       - **Predecessors:** None
 
-- **RM261003ABZP-S10@R1 — Development, CI, and release are fast and automatic**
+- **RM261003ABZP-S10@R2 — Development and CI are fast; releases are manual and proven by a dry run**
   - **Definition:** This document
-  - **Outcome:** `bun run check` < 30 s; CI < 3 min; release produces four checksummed binaries that start.
-  - **Requirements:** RM261003ABZP-REQ10@R3
-  - **Design:** RM261003ABZP-DES15@R3
-  - **Predecessors:** None
+  - **Outcome:** `bun run check` < 30 s; CI < 3 min; a dry run of the release workflow produces four checksummed binaries that start, without publishing; nothing is released unless the user asks.
+  - **Requirements:** RM261003ABZP-REQ10@R4
+  - **Design:** RM261003ABZP-DES15@R4
+  - **Predecessors:** RM261003ABZP-S10@R1
   - **Verification:**
-    - **RM261003ABZP-V14@R1 — Check timing, CI timing, and release dry run**
+    - **RM261003ABZP-V14@R2 — Check timing, CI timing, and non-publishing release dry run**
       - **Definition:** This document
-      - **Success:** RM261003ABZP-S10@R1
-      - **Scenario:** time `bun run check` locally; read CI run durations; run the release workflow on a pre-release tag.
-      - **Expected result:** < 30 s; < 3 min; GitHub Release with 4 binaries + `SHA256SUMS`; smoke jobs print `so <version>` on macOS and Linux.
+      - **Success:** RM261003ABZP-S10@R2
+      - **Scenario:** time `bun run check` locally; read CI run durations; run the release workflow manually on `main` (`gh workflow run release.yml`).
+      - **Expected result:** < 30 s; < 3 min; the run's `dist` artifact holds 4 binaries + `SHA256SUMS`; the four native smoke jobs print `so 0.0.0-dev+<short sha>`; the publish job is skipped, and no tag or GitHub Release is created.
       - **Method and target:** non-test check on CI and release workflows
       - **Environment:** GitHub Actions
-      - **Unique risk:** slow feedback loops; binaries missing OpenTUI's native library.
-      - **Predecessors:** None
+      - **Unique risk:** slow feedback loops; binaries missing OpenTUI's native library or the index worker; an accidental release.
+      - **Predecessors:** RM261003ABZP-V14@R1
 
 - **RM261003ABZP-S11@R1 — Foundations stay clean and the terminal is always restored**
   - **Definition:** This document
@@ -1121,7 +1118,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 ## Design Decisions and Traceability
 
 - **RM261003ABZP-DES1@R2 — One process, one package, four layers, and a language-neutral kernel, with a tested import boundary**
-  - **Requirements:** RM261003ABZP-REQ11@R3 - pure core, enforced boundaries, language-neutral kernel; RM261003ABZP-REQ10@R3 - fast checks
+  - **Requirements:** RM261003ABZP-REQ11@R3 - pure core, enforced boundaries, language-neutral kernel; RM261003ABZP-REQ10@R4 - fast checks
   - **Decision:** `src/core` (pure), `src/workspace` (I/O), `src/ui` (OpenTUI), `src/preview` (HTTP), wired only in `src/app`. Inside the core, `kernel/` (text, editor, vim, commands, view) imports only `kernel/`; `filetypes/`, `lang/`, and `features/` build on it; `state/` and `config/` compose everything. A `bun test` boundary test using `Bun.Transpiler.scanImports` enforces both the layer rules and the kernel rule.
   - **Explanation:** System Architecture diagram; Project Structure; `test/boundaries.test.ts`. One package keeps install and CI fast; the test needs no TypeScript API (`RM261003ABZP-RF13`). The kernel rule is what keeps `so` able to become a code or notebook editor: Markdown cannot leak into editing, and a new language is a new folder plus registrations.
   - **Evidence:** `rm261003abzp-roadmap-context.md@R1` - Alfred needed six packages because of its kernel; `so` has no server boundary. `rm261003abzp-roadmap-context.md@R2` - scope change: leave room for code editing and notebooks.
@@ -1260,15 +1257,15 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Dependencies:** RM261003ABZP-DES5@R2
   - **Predecessors:** RM261003ABZP-DES14@R1
 
-- **RM261003ABZP-DES15@R3 — Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile**
-  - **Requirements:** RM261003ABZP-REQ10@R3 - fast checks, CI, release; RM261003ABZP-REQ11@R3 - Conventional Commits, SemVer
-  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache, triggered on pull requests only, a newer push cancelling the superseded run; release-please on `main`, which calls the release workflow through `workflow_call` when it creates a release (a manually pushed `v*` tag also triggers it); release workflow: `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, every `bun build --compile` (local `build` and release) listing `src/app/main.ts` and `src/workspace/index-worker.ts` as entrypoints so the binary embeds the index worker, `SHA256SUMS`, smoke `so --version` natively for each target (`macos-15` arm64, `macos-15-intel` x64, `ubuntu-24.04` x64, `ubuntu-24.04-arm` arm64) before publishing.
+- **RM261003ABZP-DES15@R4 — Bun-native toolchain, two-job CI, manual tag releases, and single-runner cross-compile**
+  - **Requirements:** RM261003ABZP-REQ10@R4 - fast checks, CI, release; RM261003ABZP-REQ11@R3 - Conventional Commits, SemVer
+  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache, triggered on pull requests only, a newer push cancelling the superseded run; no workflow creates a release, tag, or release pull request on its own; release workflow `release.yml`, triggered by a `v*` tag pushed at the user's request (publishes) or by `workflow_dispatch` (dry run: same build and smoke, version `0.0.0-dev+<short sha>`, no tag and no GitHub Release): `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, every `bun build --compile` (local `build` and release) listing `src/app/main.ts` and `src/workspace/index-worker.ts` as entrypoints so the binary embeds the index worker, `SHA256SUMS`, smoke `so --version` natively for each target (`macos-15` arm64, `macos-15-intel` x64, `ubuntu-24.04` x64, `ubuntu-24.04-arm` arm64), then publish to a GitHub Release with generated notes only for a tag run.
   - **Explanation:** Project Structure (`package.json`, `.github/workflows/*`).
-  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided; user decision 2026-10-03 for PR-only CI (private repository, billed macOS minutes); `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF7 - one runner cross-compiles all four targets, and only a native runner proves each binary starts; RF9 - a release created by release-please with `GITHUB_TOKEN` does not trigger tag workflows, so the build is wired to its outputs; delivered in `.github/workflows/` (PR #1); a single-entrypoint binary drops the worker (`.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md` Discussion Evidence), fixed in `package.json` and `release.yml` (PR #2).
-  - **Research:** `RM261003ABZP-RF3`, `RM261003ABZP-RF13`, `RM261003ABZP-RF14`; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (current RM261003ABZP-REQ10@R3)
-  - **Tradeoffs:** unsigned macOS binaries (signing deferred); release-please adds a bot PR; pushes to `main` run no CI, so `main` relies on the pull-request run of its merge head; four smoke runners add billed macOS minutes per release only.
+  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided; user decision 2026-10-03 for PR-only CI (private repository, billed macOS minutes); `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF7 - one runner cross-compiles all four targets, and only a native runner proves each binary starts; RF9 - a release created by release-please with `GITHUB_TOKEN` does not trigger tag workflows, so the build is wired to its outputs; delivered in `.github/workflows/` (PR #1); a single-entrypoint binary drops the worker (`.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md` Discussion Evidence), fixed in `package.json` and `release.yml` (PR #2); user decision 2026-10-04 for manual releases only, after release-please failed on every push to `main` (`GitHub Actions is not permitted to create or approve pull requests`).
+  - **Research:** `RM261003ABZP-RF3`, `RM261003ABZP-RF13`, `RM261003ABZP-RF14`; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (current RM261003ABZP-REQ10@R4); RF14's release-please is dropped by the user's manual-release decision
+  - **Tradeoffs:** unsigned macOS binaries (signing deferred); no CHANGELOG file — release notes come from GitHub's generated notes, and the version is whatever tag the user asks for; pushes to `main` run no CI, so `main` relies on the pull-request run of its merge head; four smoke runners add billed macOS minutes per release and per phase-exit dry run only. Rejected keeping release-please on manual dispatch: it needs a repository setting to open pull requests and adds a two-step release.
   - **Dependencies:** RM261003ABZP-DES1@R2
-  - **Predecessors:** RM261003ABZP-DES15@R1, RM261003ABZP-DES15@R2
+  - **Predecessors:** RM261003ABZP-DES15@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES15@R3
 
 - **RM261003ABZP-DES16@R1 — Performance by construction plus benchmark gates**
   - **Requirements:** RM261003ABZP-REQ9@R2 - performance targets
@@ -1301,7 +1298,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
 | RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R2 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R3 - dev, CI, release | RM261003ABZP-DES15@R3, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ10@R4 - dev, CI, release | RM261003ABZP-DES15@R4, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
 | RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
 
 ## Unresolved Items
@@ -1310,7 +1307,7 @@ None — open technical confirmations are delivery constraints with named verifi
 
 ## Approval
 
-- **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3
-- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
-- **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R1, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
-- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint).
+- **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3
+- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1, RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
+- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint). On 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing dry run: DES15@R4, S10@R2, V14@R2.
