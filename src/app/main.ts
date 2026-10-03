@@ -170,16 +170,13 @@ async function main(argv: string[]): Promise<void> {
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
-  const base = initialState({
-    root: ws.root,
-    cols: renderer.width,
-    rows: renderer.height,
-    color: noColor ? "nocolor" : "color",
-  });
   const store = createStore(
-    base.config.color === "never"
-      ? { ...base, terminal: { ...base.terminal, color: "nocolor" } }
-      : base,
+    initialState({
+      root: ws.root,
+      cols: renderer.width,
+      rows: renderer.height,
+      color: noColor ? "nocolor" : "color",
+    }),
     createUpdate(reg),
     runner.run,
   );
