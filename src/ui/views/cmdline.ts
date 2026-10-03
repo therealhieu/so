@@ -24,7 +24,7 @@ export class CommandLine extends Renderable {
 
   constructor(
     ctx: RenderContext,
-    private readonly deps: Pick<ViewDeps, "commands">,
+    private readonly deps: Pick<ViewDeps, "reg">,
   ) {
     super(ctx, { position: "absolute", left: 0, top: 0, zIndex: 30 });
   }
@@ -34,7 +34,7 @@ export class CommandLine extends Renderable {
     const typing = s.vim.mode === "cmdline";
     this.items =
       typing && s.vim.cmdline.startsWith(":") && s.vim.cmdline.length > 1
-        ? cmdlineCompletions(s, this.deps).slice(0, MAX_ITEMS)
+        ? cmdlineCompletions(s, this.deps.reg).slice(0, MAX_ITEMS)
         : [];
     const rows = s.terminal.rows;
     const listH = this.items.length === 0 ? 0 : this.items.length + 2;
@@ -91,7 +91,7 @@ export class CommandLine extends Renderable {
   /** Completions in a float ending above the statusline, `name · title`. */
   private list(buf: OptimizedBuffer, theme: ReturnType<typeof themeOf>): void {
     const lines = this.items.map((id) => {
-      const title = this.deps.commands.get(id)?.title;
+      const title = this.deps.reg.commands.get(id)?.title;
       return title === undefined ? `:${id}` : `:${id} · ${title}`;
     });
     const s = this.s;

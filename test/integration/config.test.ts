@@ -78,11 +78,7 @@ async function start(config?: string) {
       result: parseConfig(text),
       reload: false,
     });
-  const shell = createShell(t.renderer, {
-    fileTypes: reg.fileTypes,
-    commands: reg.commands,
-    now: clock,
-  });
+  const shell = createShell(t.renderer, { reg, now: clock });
   shell.attach(store);
 
   const keys = (seq: string) => {

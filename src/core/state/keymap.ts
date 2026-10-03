@@ -2,6 +2,8 @@ import type { AppConfig } from "../config/schema";
 import type { Binding } from "../kernel/commands/defaults";
 import { Keymap, type KeyScope } from "../kernel/commands/keymap";
 import { splitKeys } from "../kernel/vim/keys";
+import { activeBuffer } from "./buffers";
+import type { AppState } from "./types";
 import type { Registries } from "./update";
 
 /** The config's `[keys.<mode>]` and `[filetypes.<id>.keys.<mode>]` entries as bindings. */
@@ -58,4 +60,14 @@ export function keymapFor(reg: Registries, config: AppConfig): Keymap {
     byConfig.set(config, km);
   }
   return km;
+}
+
+/** Where keys resolve now: the explorer's mode, or the vim mode and the active buffer's file type. */
+export function keyScope(s: AppState): KeyScope {
+  const b = activeBuffer(s);
+  const inExplorer = s.panels.explorer.focused;
+  const mode = inExplorer ? "explorer" : s.vim.mode;
+  return b === undefined || inExplorer
+    ? { mode }
+    : { mode, filetype: b.fileType };
 }

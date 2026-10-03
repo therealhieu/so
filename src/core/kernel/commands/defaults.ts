@@ -35,5 +35,11 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
 ];
 
-/** Which-key labels by prefix sequence; none of the built-in prefixes has one yet. */
-export const defaultGroups: Readonly<Record<string, string>> = {};
+/** Which-key group labels by prefix sequence. */
+export const defaultGroups: Readonly<Record<string, string>> = {
+  "<leader>f": "find",
+  "<leader>s": "search",
+  "<leader>b": "buffer",
+  "<leader>w": "window",
+  "<leader>u": "ui",
+};

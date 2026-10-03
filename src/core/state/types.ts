@@ -3,6 +3,7 @@ import type { ConfigResult } from "../config/toml";
 import type { NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
+import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
@@ -48,6 +49,7 @@ export type TimerId =
   | `autosave:${BufferId}`
   | `retry:${BufferId}`
   | `toast:${number}`
+  | "whichKey"
   | "saveState";
 
 /**
@@ -124,7 +126,11 @@ export type PromptState = {
 export type Overlay =
   | { kind: "none" }
   | { kind: "prompt"; prompt: PromptState }
-  | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean };
+  | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean }
+  | { kind: "whichKey"; whichKey: WhichKeyState };
+
+/** The which-key popup: the pending prefix and the scope its keys resolve in. */
+export type WhichKeyState = { prefix: Key[]; scope: KeyScope };
 
 /** The per-workspace state file: positions and layout, never note text. */
 export type PersistedState = {

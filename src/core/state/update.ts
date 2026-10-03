@@ -21,6 +21,7 @@ import {
   snapshotSession,
 } from "./session";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
+import { onWhichKeyTimer } from "./whichkey";
 
 export type Update = (
   state: AppState,
@@ -62,7 +63,7 @@ export function createUpdate(reg: Registries): Update {
       case "trashAvailable":
         return none(withTrash(state, action.available));
       case "timer":
-        return onTimerAction(state, action);
+        return onTimerAction(state, action, reg);
       case "saved":
         return onSaved(state, action);
       case "saveFailed":
@@ -105,11 +106,13 @@ export function createUpdate(reg: Registries): Update {
   };
 }
 
-/** A timer fired: the session save, or a buffer or toast timer. */
+/** A timer fired: which-key, the session save, or a buffer or toast timer. */
 function onTimerAction(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
+  reg: Registries,
 ): Result {
+  if (a.id === "whichKey") return onWhichKeyTimer(s, reg);
   if (a.id === "saveState")
     return {
       state: s,

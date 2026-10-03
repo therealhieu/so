@@ -77,11 +77,7 @@ export async function mountShell(o: MountOptions) {
       result: parseConfig(o.config),
       reload: false,
     });
-  const shell = createShell(t.renderer, {
-    fileTypes: reg.fileTypes,
-    commands: reg.commands,
-    now: () => now,
-  });
+  const shell = createShell(t.renderer, { reg, now: () => now });
   shell.attach(store);
   for (const [dir, entries] of Object.entries(TREE))
     store.dispatch({ type: "dirListed", dir, entries });

@@ -1,4 +1,3 @@
-import type { KeyScope } from "../kernel/commands/keymap";
 import type { Register } from "../kernel/editor/registers";
 import { handleKey } from "../kernel/vim/engine";
 import { exCompletions } from "../kernel/vim/ex";
@@ -10,11 +9,12 @@ import { EX_ALIASES, executeEx, runCommand } from "./commands";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
-import { keymapFor } from "./keymap";
+import { keymapFor, keyScope } from "./keymap";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
+import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
 
 const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
   ...s,
@@ -31,20 +31,33 @@ export function handleKeyAction(
   a: { key: Key; now: number },
   reg: Registries,
 ): Result {
-  if (s.overlay.kind === "conflict") return conflictKey(s, a, reg);
-  if (s.overlay.kind === "prompt") return promptKey(s, a.key, a.now);
+  switch (s.overlay.kind) {
+    case "conflict":
+      return conflictKey(s, a, reg);
+    case "prompt":
+      return promptKey(s, a.key, a.now);
+    case "whichKey":
+      return whichKeyKey(s, a, reg);
+  }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
   const b = activeBuffer(s);
   const inExplorer = s.panels.explorer.focused;
-  const mode = inExplorer ? "explorer" : s.vim.mode;
-  const scope: KeyScope =
-    b === undefined || inExplorer ? { mode } : { mode, filetype: b.fileType };
+  const scope = keyScope(s);
+  const { mode } = scope;
+  const keymap = keymapFor(reg, s.config);
   const seq = [...s.vim.pending, a.key];
-  const hit = keymapFor(reg, s.config).lookup(scope, seq);
+  const hit = keymap.lookup(scope, seq);
   if (hit.kind === "command")
     return runCommand(setVim(s, { pending: [] }), hit.id, a.now, reg);
-  if (hit.kind === "prefix") return none(setVim(s, { pending: seq }));
+  if (hit.kind === "prefix")
+    return armWhichKey(setVim(s, { pending: seq }), scope);
+  // A leader prefix has no vim meaning, so its unbound continuation stops here.
+  if (
+    s.vim.pending[0] === s.config.leader &&
+    keymap.lookup(scope, s.vim.pending).kind === "prefix"
+  )
+    return noMapping(s, seq);
   const idle = s.vim.pending.length === 0 && mode !== "insert";
   if (a.key === ":" && idle && (inExplorer || mode === "normal"))
     return none(setVim(s, { mode: "cmdline", cmdline: ":", pending: [] }));

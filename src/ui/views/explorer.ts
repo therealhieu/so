@@ -78,7 +78,7 @@ export class ExplorerView extends Renderable {
 
   constructor(
     ctx: RenderContext,
-    private readonly deps: Pick<ViewDeps, "fileTypes">,
+    private readonly deps: Pick<ViewDeps, "reg">,
   ) {
     super(ctx, { position: "absolute", left: 0, top: 1, zIndex: 20 });
   }
@@ -248,7 +248,7 @@ export class ExplorerView extends Renderable {
         ? row.open
           ? "▾ "
           : "▸ "
-        : row.path === "" || isNote(this.deps.fileTypes, row.path) // a new row shows as a note
+        : row.path === "" || isNote(this.deps.reg.fileTypes, row.path) // a new row shows as a note
           ? "◇ "
           : "≡ ";
       const indent = ` ${"  ".repeat(row.depth)}`;

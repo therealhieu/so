@@ -210,11 +210,7 @@ async function main(argv: string[]): Promise<void> {
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   const renderer = await createRenderer();
-  const shell = createShell(renderer, {
-    fileTypes: reg.fileTypes,
-    commands: reg.commands,
-    now: clock,
-  });
+  const shell = createShell(renderer, { reg, now: clock });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
   const indexHost = createIndexHost({

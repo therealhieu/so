@@ -313,7 +313,7 @@ export class EditorView extends Renderable {
       visible: { from: this.topLine, to: this.topLine + rows },
     };
     try {
-      const ft = this.deps.fileTypes.get(b.fileType);
+      const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
       const selection =
         this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;

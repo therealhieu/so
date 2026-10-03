@@ -4,16 +4,15 @@ import {
   createCliRenderer,
   type Renderable,
 } from "@opentui/core";
-import type { FileTypeRegistry } from "../core/filetypes/registry";
-import type { CommandRegistry } from "../core/kernel/commands/registry";
-import type { CommandContext, CommandResult } from "../core/state/commands";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
+import type { Registries } from "../core/state/update";
 import { createKeyNormalizer } from "./input";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
 import { ToastStack } from "./overlays/notify";
 import { PromptView } from "./overlays/prompt";
+import { WhichKeyView } from "./overlays/whichkey";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -45,8 +44,8 @@ export const layoutClass = (cols: number): LayoutClass =>
 
 /** What the views read besides the state. `now` is the effect runner's clock. */
 export type ShellDeps = {
-  fileTypes: FileTypeRegistry;
-  commands: CommandRegistry<CommandContext, CommandResult>;
+  /** The registries `update` reads; views use them for titles, file types, and keys. */
+  reg: Registries;
   now: () => number;
 };
 
@@ -85,6 +84,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const overlays = new OverlayHost(renderer, [
         new PromptView(renderer),
         new ConflictView(renderer),
+        new WhichKeyView(renderer, ctx),
       ]);
       const views: View[] = [
         new Bufferline(renderer),
