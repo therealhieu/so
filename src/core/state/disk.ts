@@ -18,6 +18,7 @@ import type {
   Stamp,
   TextFile,
 } from "./types";
+import type { Registries } from "./update";
 
 const sameStamp = (a: Stamp, b: Stamp) =>
   a.mtimeMs === b.mtimeMs && a.size === b.size && a.hash === b.hash;
@@ -57,9 +58,14 @@ export function markDeleted(s: AppState, id: BufferId): Result {
 }
 
 /** A read-back of an open buffer's file: same stamp → nothing; clean → reload; dirty → conflict. */
-export function onDiskLoaded(s: AppState, b: BufferState, f: TextFile): Result {
+export function onDiskLoaded(
+  s: AppState,
+  b: BufferState,
+  f: TextFile,
+  reg: Registries,
+): Result {
   if (sameStamp(b.stamp, f.stamp) && b.disk === "present") return none(s);
-  if (!b.dirty) return reload(s, b.id, f);
+  if (!b.dirty) return reload(s, b.id, f, reg);
   return {
     state: {
       ...setBuffer(s, b.id, { save: { kind: "idle" } }),
@@ -70,7 +76,12 @@ export function onDiskLoaded(s: AppState, b: BufferState, f: TextFile): Result {
 }
 
 /** Replace the buffer with the disk text as one undo step. */
-function reload(s: AppState, id: BufferId, f: TextFile): Result {
+function reload(
+  s: AppState,
+  id: BufferId,
+  f: TextFile,
+  reg: Registries,
+): Result {
   const b = s.buffers[id];
   if (b === undefined) return none(s);
   const { body, finalNewline } = splitFile(f);
@@ -109,18 +120,23 @@ function reload(s: AppState, id: BufferId, f: TextFile): Result {
     byId[w.id] = { ...w, content: { ...w.content, cursor: { line, col } } };
   }
   const state: AppState = {
-    ...setBuffer(s, id, {
-      text,
-      undo,
-      bom: f.bom,
-      eol: f.eol,
-      finalNewline,
-      stamp: f.stamp,
-      savedVersion: text.version,
-      dirty: false,
-      disk: "present",
-      save: { kind: "idle" },
-    }),
+    ...setBuffer(
+      s,
+      id,
+      {
+        text,
+        undo,
+        bom: f.bom,
+        eol: f.eol,
+        finalNewline,
+        stamp: f.stamp,
+        savedVersion: text.version,
+        dirty: false,
+        disk: "present",
+        save: { kind: "idle" },
+      },
+      reg,
+    ),
     windows: { ...s.windows, byId },
     overlay:
       s.overlay.kind === "conflict" && s.overlay.bufferId === id
@@ -140,12 +156,13 @@ export function resolveConflict(
   s: AppState,
   choice: "keep" | "take" | "diff",
   now: number,
+  reg: Registries,
 ): Result {
   const o = s.overlay;
   if (o.kind !== "conflict") return none(s);
   if (choice === "diff")
     return none({ ...s, overlay: { ...o, showDiff: !o.showDiff } });
-  if (choice === "take") return reload(s, o.bufferId, o.disk);
+  if (choice === "take") return reload(s, o.bufferId, o.disk, reg);
   const kept: AppState = {
     ...setBuffer(s, o.bufferId, { stamp: o.disk.stamp, disk: "present" }),
     overlay: { kind: "none" },

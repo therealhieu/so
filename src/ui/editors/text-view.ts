@@ -90,9 +90,6 @@ function selectionOf(s: AppState, text: TextBuffer): Range | undefined {
   return { start: a, end: { line: b.line, col: b.col + 1 } };
 }
 
-/** File types' analyses, cached per immutable text version. */
-const analyses = new WeakMap<TextBuffer, unknown>();
-
 /**
  * The text editor of one window: an optional winbar, a gutter of relative
  * line numbers, and the rows `layoutText` lays out with the file type's
@@ -239,11 +236,6 @@ export class EditorView extends Renderable {
     try {
       const ft = this.deps.fileTypes.get(b.fileType);
       const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
-      let analysis = analyses.get(b.text);
-      if (analysis === undefined && ft?.analyze !== undefined) {
-        analysis = ft.analyze(b.text);
-        analyses.set(b.text, analysis);
-      }
       const selection =
         this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
       return layoutText(
@@ -254,7 +246,7 @@ export class EditorView extends Renderable {
           searchMarks(s.vim.search),
           selectionMarks(selection),
         ],
-        analysis,
+        b.analysis,
       );
     } catch {
       const out: RenderLine[] = [];

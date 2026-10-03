@@ -11,7 +11,8 @@ import { requestQuit, writeBuffer } from "./save";
 import type { AppState, Effect } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
 const writes = (effects: Effect[]) => effects.filter((e) => e.kind === "write");
 
 /** Open `path` through the reducer: read effect, then fileLoaded. */
@@ -37,7 +38,7 @@ function dirty(s: AppState, text = "mine"): AppState {
     },
     text,
   }).buffer;
-  return setBuffer(s, 1, { text: edited, dirty: true });
+  return setBuffer(s, 1, { text: edited, dirty: true }, reg);
 }
 
 test("a loaded file opens as a buffer of its file type in the active window", () => {
@@ -192,13 +193,13 @@ test("an external change to a dirty buffer opens a conflict and writes nothing",
     ),
   ).toEqual([]);
 
-  const diff = resolveConflict(r.state, "diff", 0);
+  const diff = resolveConflict(r.state, "diff", 0, reg);
   expect(diff.state.overlay).toMatchObject({
     kind: "conflict",
     showDiff: true,
   });
 
-  const keep = resolveConflict(r.state, "keep", 0);
+  const keep = resolveConflict(r.state, "keep", 0, reg);
   expect(keep.state.overlay).toEqual({ kind: "none" });
   expect(writes(keep.effects)).toEqual([
     { kind: "write", path: "a.md", text: "mine\n", expected: stamp(2) },
@@ -207,7 +208,7 @@ test("an external change to a dirty buffer opens a conflict and writes nothing",
     "Kept your version — saved",
   ]);
 
-  const take = resolveConflict(r.state, "take", 0);
+  const take = resolveConflict(r.state, "take", 0, reg);
   expect(take.state.overlay).toEqual({ kind: "none" });
   expect(textOf(take.state)).toBe("theirs");
   expect(take.state.buffers[1]).toMatchObject({

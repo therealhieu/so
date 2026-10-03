@@ -65,6 +65,8 @@ export type BufferState = {
   save: SaveState;
   /** `:bd` is waiting for this buffer's write before closing it. */
   closing?: true;
+  /** The file type's analysis of `text` at its current version (`Doc` for Markdown). */
+  analysis?: unknown;
 };
 
 export type WindowState = {

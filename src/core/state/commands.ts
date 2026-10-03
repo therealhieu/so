@@ -98,7 +98,7 @@ export function executeEx(
   const typed = line.trim();
   if (typed === "") return none(s);
   const ex = parseEx(typed);
-  if (ex !== undefined && "pattern" in ex) return substitute(s, ex, now);
+  if (ex !== undefined && "pattern" in ex) return substitute(s, ex, now, reg);
   const id = ex && EX_ALIASES[ex.cmd + (ex.bang ? "!" : "")];
   if (ex === undefined || id === undefined)
     return message(s, `E492: Not an editor command: ${typed}`, "error");
@@ -124,6 +124,7 @@ function substitute(
     global: boolean;
   },
   now: number,
+  reg: Registries,
 ): Result {
   const w = activeWindow(s);
   const b = activeBuffer(s);
@@ -162,11 +163,16 @@ function substitute(
   if (lastLine < 0) return notFound;
   const cursor = { line: lastLine, col: firstNonBlank(text.line(lastLine)) };
   const edited = setWindow(
-    setBuffer(s, b.id, {
-      text,
-      undo: b.undo.push({ edits, inverses, cursorBefore: w.content.cursor }),
-      dirty: text.version !== b.savedVersion,
-    }),
+    setBuffer(
+      s,
+      b.id,
+      {
+        text,
+        undo: b.undo.push({ edits, inverses, cursorBefore: w.content.cursor }),
+        dirty: text.version !== b.savedVersion,
+      },
+      reg,
+    ),
     { ...w, content: { ...w.content, cursor } },
   );
   const searched: AppState = {

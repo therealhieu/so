@@ -12,7 +12,8 @@ import { scheduleAutosave } from "./save";
 import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
 
 const dirtyA = (): AppState => {
   const s = openBuffer(fresh(), "a.md", "hello");
@@ -22,7 +23,7 @@ const dirtyA = (): AppState => {
     range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
     text: "x",
   }).buffer;
-  return setBuffer(s, 1, { text, dirty: true });
+  return setBuffer(s, 1, { text, dirty: true }, reg);
 };
 
 /** Type "x" at the start of buffer 1 at time `now`, as an Insert key would. */
@@ -33,7 +34,7 @@ function typeX(s: AppState, now: number): Result {
     range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
     text: "x",
   }).buffer;
-  return scheduleAutosave(setBuffer(s, 1, { text, dirty: true }), 1, now);
+  return scheduleAutosave(setBuffer(s, 1, { text, dirty: true }, reg), 1, now);
 }
 
 const ops = (effects: Effect[]) =>

@@ -29,7 +29,7 @@ export function handleKeyAction(
   a: { key: Key; now: number },
   reg: Registries,
 ): Result {
-  if (s.overlay.kind === "conflict") return conflictKey(s, a);
+  if (s.overlay.kind === "conflict") return conflictKey(s, a, reg);
   if (s.overlay.kind === "prompt") return promptKey(s, a.key, a.now);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
@@ -51,13 +51,19 @@ export function handleKeyAction(
 }
 
 /** `k` keep, `t` take, `d` toggle the diff, `q` back from the diff; other keys wait. */
-function conflictKey(s: AppState, a: { key: Key; now: number }): Result {
+function conflictKey(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
   const back =
     a.key === "q" && s.overlay.kind === "conflict" && s.overlay.showDiff;
   const choice = back
     ? "diff"
     : ({ k: "keep", t: "take", d: "diff" } as const)[a.key as "k" | "t" | "d"];
-  return choice === undefined ? none(s) : resolveConflict(s, choice, a.now);
+  return choice === undefined
+    ? none(s)
+    : resolveConflict(s, choice, a.now, reg);
 }
 
 /** Edit the ":" command line; Tab completes ex names, then command ids. */
@@ -148,9 +154,9 @@ function runVim(
   const top = w.content.scroll;
   const scroll =
     line < top ? line : line >= top + env.rows ? line - env.rows + 1 : top;
+  const edited = setBuffer(s, b.id, { text: r.s.text, undo: r.s.undo }, reg);
   const next: AppState = {
-    ...s,
-    buffers: { ...s.buffers, [b.id]: { ...b, text: r.s.text, undo: r.s.undo } },
+    ...edited,
     windows: {
       ...s.windows,
       byId: {

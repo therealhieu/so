@@ -1,3 +1,4 @@
+import type { FileType } from "../filetypes/registry";
 import { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import { closeWindow } from "../kernel/editor/windows";
@@ -37,14 +38,51 @@ export const buffersUnder = (s: AppState, path: string): BufferState[] =>
     (b) => b.path === path || b.path.startsWith(`${path}/`),
   );
 
+/**
+ * Re-analyze `b` when its text version changed. A failing analysis leaves the
+ * buffer without one, so the file still opens and edits.
+ */
+export function withAnalysis(
+  b: BufferState,
+  ft: FileType | undefined,
+): BufferState {
+  if (ft?.analyze === undefined) return b;
+  const prev = b.analysis as { version?: number } | undefined;
+  if (prev?.version === b.text.version) return b;
+  try {
+    return { ...b, analysis: ft.analyze(b.text, b.analysis) };
+  } catch {
+    const { analysis: _, ...rest } = b;
+    return rest;
+  }
+}
+
+/** Patch a buffer; a patch that replaces `text` re-analyzes it with its file type. */
+export function setBuffer(
+  s: AppState,
+  id: BufferId,
+  patch: Partial<Omit<BufferState, "text">>,
+): AppState;
+export function setBuffer(
+  s: AppState,
+  id: BufferId,
+  patch: Partial<BufferState> & { text: TextBuffer },
+  reg: Registries,
+): AppState;
 export function setBuffer(
   s: AppState,
   id: BufferId,
   patch: Partial<BufferState>,
+  reg?: Registries,
 ): AppState {
   const b = s.buffers[id];
   if (b === undefined) return s;
-  return { ...s, buffers: { ...s.buffers, [id]: { ...b, ...patch } } };
+  const next = { ...b, ...patch };
+  const analyzed =
+    patch.text === undefined || reg === undefined
+      ? next
+      : withAnalysis(next, reg.fileTypes.get(next.fileType));
+  return { ...s, buffers: { ...s.buffers, [id]: analyzed } };
 }
 
 export function setWindow(s: AppState, w: WindowState): AppState {
@@ -185,27 +223,30 @@ export function onFileLoaded(
   reg: Registries,
 ): Result {
   const open = bufferForPath(s, a.path);
-  if (open !== undefined) return onDiskLoaded(s, open, a.file);
+  if (open !== undefined) return onDiskLoaded(s, open, a.file, reg);
   const ft = reg.fileTypes.forPath(a.path);
   const { body, finalNewline } = splitFile(a.file);
   const text = createTextBuffer(body);
   const id = s.nextBufferId;
-  const b: BufferState = {
-    id,
-    path: a.path,
-    fileType: ft.id,
-    view: ft.views[0]?.id ?? "source",
-    text,
-    undo: new UndoHistory(),
-    bom: a.file.bom,
-    eol: a.file.eol,
-    finalNewline,
-    stamp: a.file.stamp,
-    savedVersion: text.version,
-    dirty: false,
-    disk: "present",
-    save: { kind: "idle" },
-  };
+  const b: BufferState = withAnalysis(
+    {
+      id,
+      path: a.path,
+      fileType: ft.id,
+      view: ft.views[0]?.id ?? "source",
+      text,
+      undo: new UndoHistory(),
+      bom: a.file.bom,
+      eol: a.file.eol,
+      finalNewline,
+      stamp: a.file.stamp,
+      savedVersion: text.version,
+      dirty: false,
+      disk: "present",
+      save: { kind: "idle" },
+    },
+    ft,
+  );
   const explorer = { ...s.panels.explorer, focused: false };
   return none(
     showBuffer(
