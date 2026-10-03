@@ -56,7 +56,13 @@ Not established.
 
 **Implementation**
 
-Keep it lean and simple (user decision, 2026-10-03). No other custom rules are established.
+Keep it lean and simple (user decision, 2026-10-03).
+
+| Rule | Forbidden | Example |
+|---|---|---|
+| No work-process details in code (user decision, 2026-10-03) | Work, requirement, design, phase, or goal identifiers in comments, doc comments, identifiers, test names, SQL comments, or log messages | `// DES7@R1: pin the deadline` |
+
+Code explains itself in domain terms. Traceability belongs in `.s1mple/` work documents and commit message bodies, not in the codebase.
 
 **Verification**
 
