@@ -56,11 +56,11 @@ Not established.
 
 **Implementation**
 
-Keep it lean and simple (user decision, 2026-10-03).
+Keep it lean and simple.
 
 | Rule | Forbidden | Example |
 |---|---|---|
-| No work-process details in code (user decision, 2026-10-03) | Work, requirement, design, phase, or goal identifiers in comments, doc comments, identifiers, test names, SQL comments, or log messages | `// DES7@R1: pin the deadline` |
+| No work-process details in code | Work, requirement, design, phase, or goal identifiers in comments, doc comments, identifiers, test names, SQL comments, or log messages | `// DES7@R1: pin the deadline` |
 
 Code explains itself in domain terms. Traceability belongs in `.s1mple/` work documents and commit message bodies, not in the codebase.
 
@@ -70,7 +70,7 @@ Not established.
 
 **Delivery**
 
-User decision, 2026-10-03. After verification passes:
+After verification passes:
 
 ```text
 open a PR → CI passes and all conflicts with the base branch are resolved
