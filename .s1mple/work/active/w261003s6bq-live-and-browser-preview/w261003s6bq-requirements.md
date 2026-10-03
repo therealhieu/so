@@ -22,7 +22,7 @@
 
 **Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-04, with the criteria "stable, simple, easy to maintain and extend" and "follow industry standards and comply project standards". Under that delegation the agent aligned the overview (topics T1–T4), decided each requirement below by choosing the option that best meets those criteria, and skipped external research because the open questions are local behaviour that installed packages and a planning spike settle (Discussion Evidence below).
 
-Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R2) was decided by the user on 2026-10-04; the mechanism (embedded files, same-origin Content Security Policy) was chosen under the same self-drive delegation.
+Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R2) was decided by the user on 2026-10-04; the mechanism (embedded files, same-origin Content Security Policy) was chosen under the same self-drive delegation. Loading web images in the terminal (W261003S6BQ-REQ2@R2) and in the page (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04.
 
 # Table of Contents
 
@@ -32,12 +32,12 @@ Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-R
 4. [Standards and Constraints](#4-standards-and-constraints)
 5. [Current Requirements](#5-current-requirements)
    - [W261003S6BQ-REQ1@R1: Inherited DI3 obligations](#w261003s6bq-req1r1-inherited-di3-obligations)
-   - [W261003S6BQ-REQ2@R1: Images through OpenTUI's native decoder and drawImage](#w261003s6bq-req2r1-images-through-opentuis-native-decoder-and-drawimage)
+   - [W261003S6BQ-REQ2@R2: Images through OpenTUI's native decoder and drawImage](#w261003s6bq-req2r2-images-through-opentuis-native-decoder-and-drawimage)
    - [W261003S6BQ-REQ3@R1: Math and Mermaid text renderers](#w261003s6bq-req3r1-math-and-mermaid-text-renderers)
    - [W261003S6BQ-REQ4@R1: Note embeds through unlisted buffers](#w261003s6bq-req4r1-note-embeds-through-unlisted-buffers)
    - [W261003S6BQ-REQ5@R1: Folds, widget rows, and scrolling](#w261003s6bq-req5r1-folds-widget-rows-and-scrolling)
    - [W261003S6BQ-REQ6@R1: View input wiring and restored views](#w261003s6bq-req6r1-view-input-wiring-and-restored-views)
-   - [W261003S6BQ-REQ7@R2: Preview page delivery and locally served browser libraries](#w261003s6bq-req7r2-preview-page-delivery-and-locally-served-browser-libraries)
+   - [W261003S6BQ-REQ7@R3: Preview page delivery and locally served browser libraries](#w261003s6bq-req7r3-preview-page-delivery-and-locally-served-browser-libraries)
    - [W261003S6BQ-REQ8@R1: Preview follow protocol and browser launch](#w261003s6bq-req8r1-preview-follow-protocol-and-browser-launch)
 6. [Research Impact Review](#6-research-impact-review)
 7. [Historical Requirement Revisions](#7-historical-requirement-revisions)
@@ -83,7 +83,7 @@ key → update → markdown analyze → Doc
 
 ## In Scope
 
-- Everything in RM261003ABZP-DI3@R2 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:332-349`), as refined by W261003S6BQ-REQ2@R1 … W261003S6BQ-REQ8@R1.
+- Everything in RM261003ABZP-DI3@R2 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:332-349`), as refined by W261003S6BQ-REQ2@R2 … W261003S6BQ-REQ8@R1.
 - The G4 outputs DI4 consumes, with the signatures in the phase design (`…phase-2…md:205-216`, `:72`).
 - The `beautiful-mermaid` dependency (exact pin) for Mermaid text art, and the `katex` and `mermaid` dependencies (exact pins) served to the browser page.
 
@@ -92,7 +92,7 @@ key → update → markdown analyze → Doc
 - The `base` block renderer and `base` widget painter (DI4 through G4).
 - Persisted fold state; any mutating preview route; live views, folding, or outline for code files (`…phase-2…md:350-355`).
 - Nested embed expansion: an embed inside an embedded note renders as a link (W261003S6BQ-REQ4@R1).
-- SVG images in the terminal: they show the text placeholder; the browser preview shows them (W261003S6BQ-REQ2@R1).
+- SVG images in the terminal: they show the text placeholder; the browser preview shows them (W261003S6BQ-REQ2@R2).
 - Restoring a buffer's persisted `view` from the session file (W261003S6BQ-REQ6@R1). Future trigger: a user request to remember the view per note.
 - Daily notes, templates, Bases (RM261003ABZP-DI4@R2); the PH2 exit dry run and any release.
 
@@ -103,15 +103,15 @@ key → update → markdown analyze → Doc
 
   | Parent requirement | Current W requirements |
   |---|---|
-  | RM261003ABZP-REQ5@R2 - live preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R1, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ6@R1 |
-  | RM261003ABZP-REQ8@R2 - browser preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1 |
+  | RM261003ABZP-REQ5@R2 - live preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R2, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ6@R1 |
+  | RM261003ABZP-REQ8@R2 - browser preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1 |
   | RM261003ABZP-REQ9@R2 - keystroke, open, scrolling | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ3@R1 (first frame), W261003S6BQ-REQ5@R1 (viewport-only scrolling) |
   | RM261003ABZP-REQ11@R3 - registration-only extension, language-neutral kernel | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ6@R1 |
   | RM261003ABZP-REQ10@R4 - budgets kept | W261003S6BQ-REQ1@R1 |
 
 - **Baseline and due-gate assessment:** The parent references in the context binding were re-read on 2026-10-04 and match the phase file and index at `main` `6a04729`. Gate G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (`…phase-2…md:576`, `:580`). No gate is due before requirements approval. G4 is produced by this Work.
 
-  One parent impact is pending reconciliation. On 2026-10-04 the user decided that KaTeX and Mermaid are managed in this repository instead of loaded from jsDelivr (W261003S6BQ-REQ7@R2). That reverses the RM261003ABZP-DES13@R2 tradeoff "rejected bundling KaTeX/Mermaid into the binary", removes the PH2 out-of-scope line and the DI3 exclusion "Bundled KaTeX and Mermaid" (`…phase-2…md:35`, `:353`), changes DI3 scope "from jsDelivr" (`…phase-2…md:344`), and changes the offline expectation of RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1. The exact parent changes are recorded as `Pending parent synchronization` in the system design; parent files are not edited without explicit authorization.
+  One parent impact is pending reconciliation. On 2026-10-04 the user decided that KaTeX and Mermaid are managed in this repository instead of loaded from jsDelivr (W261003S6BQ-REQ7@R2), and later that web images load in the page (W261003S6BQ-REQ7@R3) and in the terminal (W261003S6BQ-REQ2@R2); the latter changes the RM261003ABZP-design Security and privacy row "No network except loopback preview". That reverses the RM261003ABZP-DES13@R2 tradeoff "rejected bundling KaTeX/Mermaid into the binary", removes the PH2 out-of-scope line and the DI3 exclusion "Bundled KaTeX and Mermaid" (`…phase-2…md:35`, `:353`), changes DI3 scope "from jsDelivr" (`…phase-2…md:344`), and changes the offline expectation of RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1. The exact parent changes are recorded as `Pending parent synchronization` in the system design; parent files are not edited without explicit authorization.
 
 ## Affected Interfaces and Actors
 
@@ -166,9 +166,10 @@ key → update → markdown analyze → Doc
 
 - **Keystroke budget** — live preview runs on every keystroke. Protection: viewport-only providers, block-hash caches for renderer output, and the V12 live-preview bench gated in CI.
 - **First frame** — evaluating `beautiful-mermaid` and `elkjs` at startup could push the first frame past 200 ms. Protection: the V13 first-frame bench re-runs on the DI3 PR; W261003S6BQ-REQ3@R1 requires the target to hold.
-- **Stale terminal images** — kitty and sixel placements outlive the cells that drew them. Protection: W261003S6BQ-REQ2@R1 requires clearing on scroll, view change, and buffer switch, verified by the planning spike and V8.
+- **Stale terminal images** — kitty and sixel placements outlive the cells that drew them. Protection: W261003S6BQ-REQ2@R2 requires clearing on scroll, view change, and buffer switch, verified by the planning spike and V8.
 - **Binary size** — `elkjs` (terminal Mermaid) and the embedded `mermaid` and `katex` browser builds add several megabytes to the binary. Accepted: the release smoke test and V14 dry run still pass; no size budget exists.
-- **Private notes in the browser** — the page shows note text, so any script it runs can read it. Protection: W261003S6BQ-REQ7@R2 serves only same-origin, exact-pinned code under a `'self'`-only Content Security Policy.
+- **Private notes in the browser** — the page shows note text, so any script it runs can read it. Protection: W261003S6BQ-REQ7@R3 serves only same-origin, exact-pinned code under a Content Security Policy that allows only same-origin scripts, styles, fonts, and connections; web images may load, and no Referer is sent.
+- **Web image privacy and hangs** — viewing a note with web images tells each image host the viewer's IP address, and a slow host could stall rendering. Protection: W261003S6BQ-REQ2@R2 downloads only visible images, off the render path, with a 10 s timeout and a 16 MiB cap, sends no Cookie or Referer, and `preview.images = "off"` stops all downloads.
 - **Obsidian compatibility** — notes are never rewritten by rendering; only `task.toggle` edits text, as a normal undoable edit.
 - **DI4 contract** — G4 signatures are fixed by the phase design and must not change.
 
@@ -213,29 +214,32 @@ The requirements below refine these. None waives one.
 
 **Depends On:** None
 
-## W261003S6BQ-REQ2@R1: Images through OpenTUI's native decoder and drawImage
+## W261003S6BQ-REQ2@R2: Images through OpenTUI's native decoder and drawImage
 
 **Requirement ID:** `W261003S6BQ-REQ2`
 
-**Revision:** `R1`
+**Revision:** `R2`
 
-**Previous Revision:** None — initial revision
+**Previous Revision:** `W261003S6BQ-REQ2@R1`
 
 **Replaces:** None
 
 **Research Relationship:** None — not research-informed
 
-**Revision Summary:** None — initial revision
+**Revision Summary:** Web images (`http:` and `https:` targets) now load in the terminal too: `so` downloads them with a timeout and a size cap and keeps them only in the in-memory image cache. The user decided this on 2026-10-04.
 
-**Question:** How are terminal images decoded, drawn on each tier, and tested?
+**Question:** How are terminal images loaded, decoded, drawn on each tier, and tested?
 
-**Answer:** `src/workspace/images.ts` reads image bytes on request; `src/app` injects that loader into the UI. `src/ui/images.ts` decodes them with OpenTUI's `NativeImage.decode` (png, jpeg, webp, gif), keeps decoded images in a 64 MiB LRU, and the `image` widget painter draws with `OptimizedBuffer.drawImage(…, protocol)`. The protocol comes from a pure `imageTier(images, capabilities)`: `"off"` → text placeholder, `"blocks"` → `blocks`, `"auto"` → OpenTUI's `resolveImageRenderProtocol`. The painter receives the capabilities as an input, so tests inject each tier. SVG files, undecodable bytes, and missing files show `[image: <name>]` in the placeholder style. No image package is added.
+**Answer:** `src/workspace/images.ts` loads image bytes on request: `readImage` reads a workspace file, and `fetchImage` downloads an `http:` or `https:` target with `fetch` (10 s timeout, 16 MiB response cap, no cookies, no Referer, at most 4 downloads at once). `src/app` injects that loader into the UI, which calls it only for images it is about to paint, so a note's web images download when they scroll into view. `src/ui/images.ts` decodes them with OpenTUI's `NativeImage.decode` (png, jpeg, webp, gif), keeps decoded images in a 64 MiB LRU, and the `image` widget painter draws with `OptimizedBuffer.drawImage(…, protocol)`. The protocol comes from a pure `imageTier(images, capabilities)`: `"off"` → text placeholder, `"blocks"` → `blocks`, `"auto"` → OpenTUI's `resolveImageRenderProtocol`. The painter receives the capabilities as an input, so tests inject each tier. SVG files, undecodable bytes, missing files, and failed downloads show `[image: <name>]` in the placeholder style, and so does a web image while it downloads. A failed download is retried after 60 s, so images appear once the internet is back. Downloaded bytes live only in memory; nothing is written to disk. `preview.images = "off"` paints placeholders and downloads nothing. No image package is added.
 
 **Rationale:** OpenTUI already ships a native decoder and kitty, sixel, and block encoders, so porting Alfred's `sharp` and `sixel` path would add a native addon that complicates the four-target single-binary build and duplicate code OpenTUI maintains. A pure tier function makes V8 testable without patching the renderer's private capabilities, which the test renderer cannot override (`testing/test-renderer.d.ts:6-11`).
+
+Web images matter because notes often reference them, and Bun's built-in `fetch` needs no package. Downloading only visible images keeps a long note from starting dozens of downloads, and the memory-only cache avoids a disk cache with its own eviction and staleness rules. The privacy cost is that viewing a note tells each image host the viewer's IP address; `preview.images = "off"` avoids it.
 
 ```text
 widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier → "off" → "[image: diagram.png]"
                                                                → kitty|sixel|blocks → LRU.get(ref) ?? decode(load(ref)) → drawImage(…, protocol)
+load(ref) → http(s) URL ? fetchImage(url) (10 s, 16 MiB, failure → placeholder, retry after 60 s) : readImage(path)
 ```
 
 **Acceptance Criteria:**
@@ -245,6 +249,8 @@ widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier →
 - [ ] Decoded images stay within a 64 MiB LRU; evicted images are disposed.
 - [ ] Scrolling an image partly off screen, switching view, and switching buffer leave no stale kitty or sixel placement (planning spike, then a component check).
 - [ ] Only `src/ui` imports `@opentui/core`; `src/workspace/images.ts` reads bytes only and refuses paths outside the workspace.
+- [ ] Against a local test server, `fetchImage` returns a PNG's bytes; a response over 16 MiB, a non-2xx status, a timeout, and a non-`http(s)` URL each fail without throwing into the UI and paint `[image: <name>]`; requests carry no Cookie or Referer header.
+- [ ] A failed web image is fetched again only after 60 s; with `preview.images = "off"` no request is made.
 
 **Depends On:** W261003S6BQ-REQ1@R1
 
@@ -367,28 +373,30 @@ widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier →
 
 **Depends On:** W261003S6BQ-REQ1@R1
 
-## W261003S6BQ-REQ7@R2: Preview page delivery and locally served browser libraries
+## W261003S6BQ-REQ7@R3: Preview page delivery and locally served browser libraries
 
 **Requirement ID:** `W261003S6BQ-REQ7`
 
-**Revision:** `R2`
+**Revision:** `R3`
 
-**Previous Revision:** `W261003S6BQ-REQ7@R1`
+**Previous Revision:** `W261003S6BQ-REQ7@R2`
 
 **Replaces:** None
 
 **Research Relationship:** None — not research-informed
 
-**Revision Summary:** The page no longer loads KaTeX and Mermaid from jsDelivr. Both become exact-pinned npm dependencies whose browser builds are embedded in the binary and served by the preview server from its own origin, under a Content Security Policy that allows only that origin. Math and diagrams now work offline. The user decided this on 2026-10-04 so that third-party code never runs in a page that shows private notes.
+**Revision Summary:** Images in the page may also load from the web (`http:` and `https:`), so a note's web images show whenever the internet is available. Scripts, styles, fonts, and connections stay same-origin, and KaTeX and Mermaid stay embedded. The user decided this on 2026-10-04.
 
 **Question:** How is the page delivered from a single binary, and where do KaTeX and Mermaid come from?
 
-**Answer:** `katex` and `mermaid` are exact-pinned npm dependencies, imported only from `src/preview/`. Their browser builds (KaTeX script, stylesheet, and the woff2 fonts it references; Mermaid's minified bundle), together with the page's own `page.html`, `page.js`, and `page.css`, are imported as embedded files so `bun build --compile` includes them. The server serves the page at `/` and the files at `/assets/<name>` with exact content types. Every response that serves the page or an asset carries `Content-Security-Policy` restricted to `'self'` (no inline script, no third-party origin, no form action, no framing; inline styles are allowed because Mermaid writes per-diagram `<style>` into its SVG, and CSS alone cannot run code or reach another origin), `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`. A KaTeX or Mermaid render error shows that block's source. The page follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout, with no forms and no editing controls.
+**Answer:** `katex` and `mermaid` are exact-pinned npm dependencies, imported only from `src/preview/`. Their browser builds (KaTeX script, stylesheet, and the woff2 fonts it references; Mermaid's minified bundle), together with the page's own `page.html`, `page.js`, and `page.css`, are imported as embedded files so `bun build --compile` includes them. The server serves the page at `/` and the files at `/assets/<name>` with exact content types. Every response that serves the page or an asset carries a `Content-Security-Policy` that allows scripts, styles, fonts, and connections only from `'self'` and images from `'self'`, `data:`, `http:`, and `https:` (no inline script, no form action, no framing; inline styles are allowed because Mermaid writes per-diagram `<style>` into its SVG, and CSS alone cannot run code or reach another origin), `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`. `renderHtml` keeps an `http:` or `https:` image URL as the image `src`; every other image target resolves to `/file/<path>` or is dropped. Offline, a web image shows the browser's broken-image icon and its alt text. A KaTeX or Mermaid render error shows that block's source. The page follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout, with no forms and no editing controls.
 
 **Rationale:** Notes are private, and a script from a third-party origin runs with full access to the page. Serving pinned packages from the app's own origin removes that trust in jsDelivr, makes the page work offline, and lets a same-origin Content Security Policy prove that nothing leaves the machine. Exact npm pins and the lockfile give the same tamper protection SRI gave, through the project's existing dependency rules. The cost is a larger binary (Mermaid's bundle is several megabytes), which the project accepts: it has no size budget.
 
+Web images are allowed because notes often reference them. An image cannot run code, and because no Referer is sent, the image host learns the viewer's IP address and the image URL but nothing from the note.
+
 ```text
-browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; …)
+browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: http: https:; connect-src 'self'; …)
         → GET /assets/page.js, /assets/katex.min.js, /assets/mermaid.min.js, /assets/katex.min.css, /assets/fonts/*.woff2   (embedded in the binary)
         → EventSource /events, fetch /render?path=…                                                               (same origin only)
 ```
@@ -398,6 +406,7 @@ browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; sty
 - [ ] `package.json` pins `katex` and `mermaid` exactly, and `test/boundaries.test.ts` `PACKAGE_HOMES` allows them only in `src/preview/`.
 - [ ] A compiled binary serves `/` and every `/assets/*` file with no `node_modules` and no other file on disk besides the workspace; an unknown asset returns 404.
 - [ ] The page and every served file reference no origin other than the server's own; `/` responds with the Content Security Policy, `nosniff`, and `no-referrer` headers.
+- [ ] A note containing `![chart](https://example.com/chart.png)` renders `<img src="https://example.com/chart.png" alt="chart">`; a `javascript:` image target never reaches the output; the policy's `img-src` allows `http:` and `https:` while `script-src`, `font-src`, and `connect-src` stay `'self'`.
 - [ ] Offline, math and Mermaid render in the page; a malformed formula or diagram shows its source (UV9@R1 manual checklist).
 - [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
 
@@ -431,7 +440,7 @@ browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; sty
 - [ ] With the launcher missing, `:Preview` shows a toast containing `http://127.0.0.1:<port>/` and the server keeps serving.
 - [ ] `:PreviewStop` and a clean exit deliver `stopped` before the stream closes (V11@R3), and the statusline `preview` segment disappears.
 
-**Depends On:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R2
+**Depends On:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R3
 
 # 6. Research Impact Review
 
@@ -445,7 +454,7 @@ None — research was skipped.
 - Persisted `view` written but not restored: `src/core/state/session.ts:92`, `src/core/state/buffers.ts:337`.
 - M2 S15 box art and the demo embed cap: `ui-mockups/m2-live-preview.html` states S11, S15, S16.
 
-Placement and clearing of kitty and sixel images in a partly scrolled view remain to be confirmed by a planning spike (W261003S6BQ-REQ2@R1).
+Placement and clearing of kitty and sixel images in a partly scrolled view remain to be confirmed by a planning spike (W261003S6BQ-REQ2@R2).
 
 # 7. Historical Requirement Revisions
 
@@ -477,5 +486,80 @@ Placement and clearing of kitty and sixel images in a partly scrolled view remai
 - [ ] Every CDN `<script>` and `<link>` has an exact version, an `integrity` hash, and `crossorigin`.
 - [ ] Offline, the page renders math and Mermaid as source and still follows edits (UV9@R1 manual checklist).
 - [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
+
+**Depends On:** W261003S6BQ-REQ1@R1
+
+## W261003S6BQ-REQ7@R2: Preview page delivery and locally served browser libraries
+
+**Requirement ID:** `W261003S6BQ-REQ7`
+
+**Revision:** `R2`
+
+**Previous Revision:** `W261003S6BQ-REQ7@R1`
+
+**Replaces:** None
+
+**Status:** Revised by `W261003S6BQ-REQ7@R3`
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** The page no longer loads KaTeX and Mermaid from jsDelivr. Both become exact-pinned npm dependencies whose browser builds are embedded in the binary and served by the preview server from its own origin, under a Content Security Policy that allows only that origin. Math and diagrams now work offline. The user decided this on 2026-10-04 so that third-party code never runs in a page that shows private notes.
+
+**Question:** How is the page delivered from a single binary, and where do KaTeX and Mermaid come from?
+
+**Answer:** `katex` and `mermaid` are exact-pinned npm dependencies, imported only from `src/preview/`. Their browser builds (KaTeX script, stylesheet, and the woff2 fonts it references; Mermaid's minified bundle), together with the page's own `page.html`, `page.js`, and `page.css`, are imported as embedded files so `bun build --compile` includes them. The server serves the page at `/` and the files at `/assets/<name>` with exact content types. Every response that serves the page or an asset carries `Content-Security-Policy` restricted to `'self'` (no inline script, no third-party origin, no form action, no framing; inline styles are allowed because Mermaid writes per-diagram `<style>` into its SVG, and CSS alone cannot run code or reach another origin), `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`. A KaTeX or Mermaid render error shows that block's source. The page follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout, with no forms and no editing controls.
+
+**Rationale:** Notes are private, and a script from a third-party origin runs with full access to the page. Serving pinned packages from the app's own origin removes that trust in jsDelivr, makes the page work offline, and lets a same-origin Content Security Policy prove that nothing leaves the machine. Exact npm pins and the lockfile give the same tamper protection SRI gave, through the project's existing dependency rules. The cost is a larger binary (Mermaid's bundle is several megabytes), which the project accepts: it has no size budget.
+
+```text
+browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; …)
+        → GET /assets/page.js, /assets/katex.min.js, /assets/mermaid.min.js, /assets/katex.min.css, /assets/fonts/*.woff2   (embedded in the binary)
+        → EventSource /events, fetch /render?path=…                                                               (same origin only)
+```
+
+**Acceptance Criteria:**
+
+- [ ] `package.json` pins `katex` and `mermaid` exactly, and `test/boundaries.test.ts` `PACKAGE_HOMES` allows them only in `src/preview/`.
+- [ ] A compiled binary serves `/` and every `/assets/*` file with no `node_modules` and no other file on disk besides the workspace; an unknown asset returns 404.
+- [ ] The page and every served file reference no origin other than the server's own; `/` responds with the Content Security Policy, `nosniff`, and `no-referrer` headers.
+- [ ] Offline, math and Mermaid render in the page; a malformed formula or diagram shows its source (UV9@R1 manual checklist).
+- [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
+
+**Depends On:** W261003S6BQ-REQ1@R1
+
+## W261003S6BQ-REQ2@R1: Images through OpenTUI's native decoder and drawImage
+
+**Requirement ID:** `W261003S6BQ-REQ2`
+
+**Revision:** `R1`
+
+**Previous Revision:** None — initial revision
+
+**Replaces:** None
+
+**Status:** Revised by `W261003S6BQ-REQ2@R2`
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** None — initial revision
+
+**Question:** How are terminal images decoded, drawn on each tier, and tested?
+
+**Answer:** `src/workspace/images.ts` reads image bytes on request; `src/app` injects that loader into the UI. `src/ui/images.ts` decodes them with OpenTUI's `NativeImage.decode` (png, jpeg, webp, gif), keeps decoded images in a 64 MiB LRU, and the `image` widget painter draws with `OptimizedBuffer.drawImage(…, protocol)`. The protocol comes from a pure `imageTier(images, capabilities)`: `"off"` → text placeholder, `"blocks"` → `blocks`, `"auto"` → OpenTUI's `resolveImageRenderProtocol`. The painter receives the capabilities as an input, so tests inject each tier. SVG files, undecodable bytes, and missing files show `[image: <name>]` in the placeholder style. No image package is added.
+
+**Rationale:** OpenTUI already ships a native decoder and kitty, sixel, and block encoders, so porting Alfred's `sharp` and `sixel` path would add a native addon that complicates the four-target single-binary build and duplicate code OpenTUI maintains. A pure tier function makes V8 testable without patching the renderer's private capabilities, which the test renderer cannot override (`testing/test-renderer.d.ts:6-11`).
+
+```text
+widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier → "off" → "[image: diagram.png]"
+                                                               → kitty|sixel|blocks → LRU.get(ref) ?? decode(load(ref)) → drawImage(…, protocol)
+```
+
+**Acceptance Criteria:**
+
+- [ ] With capabilities kitty, sixel (resolution known), none, and `preview.images = "off"`, the painter selects kitty, sixel, blocks, and the placeholder respectively (V8@R1), and the blocks tier writes block characters into the test renderer's cells.
+- [ ] An SVG, a corrupt PNG, and a missing file each paint `[image: <name>]` without throwing and without changing the reserved row count.
+- [ ] Decoded images stay within a 64 MiB LRU; evicted images are disposed.
+- [ ] Scrolling an image partly off screen, switching view, and switching buffer leave no stale kitty or sixel placement (planning spike, then a component check).
+- [ ] Only `src/ui` imports `@opentui/core`; `src/workspace/images.ts` reads bytes only and refuses paths outside the workspace.
 
 **Depends On:** W261003S6BQ-REQ1@R1
