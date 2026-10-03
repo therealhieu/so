@@ -224,3 +224,16 @@ test("l links a mention in a closed file through one applyEdits", () => {
     },
   ]);
 });
+
+test("an undocked panel takes no keys and no focus", () => {
+  const r = runCommand(opened(), "link.backlinks", 0, reg);
+  const narrow = run(r.state, { type: "resize", cols: 80, rows: 24 }).state;
+  const typed = keys(narrow, "j");
+  expect(typed.state.panels.side.cursor).toBe(0);
+  const w = typed.state.windows.byId[typed.state.windows.active];
+  expect(w?.content.cursor.line).toBe(1);
+  const left = keys(r.state, "<C-w>h").state;
+  const small = run(left, { type: "resize", cols: 80, rows: 24 }).state;
+  expect(keys(small, "<C-w>l").state.panels.side.focused).toBe(false);
+  expect(keys(left, "<C-w>l").state.panels.side.focused).toBe(true);
+});

@@ -16,6 +16,14 @@ import type { Registries } from "./update";
 /** Below this width the panel is not docked; its picker opens instead. */
 const DOCK_MIN_COLS = 100;
 
+/** The panel is docked: open on a terminal wide enough for it. */
+export const panelDocked = (s: AppState): boolean =>
+  s.panels.side.open && s.terminal.cols >= DOCK_MIN_COLS;
+
+/** Keys go to the panel: docked and focused. */
+export const panelFocused = (s: AppState): boolean =>
+  panelDocked(s) && s.panels.side.focused;
+
 export type SidePanelRow = {
   section: "linked" | "unlinked" | "outline";
   /** The note the row opens; the shown note itself for outline rows. */

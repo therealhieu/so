@@ -21,6 +21,7 @@ import {
   wrapLine,
 } from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
+import { panelFocused } from "../../core/state/side-panel";
 import type { AppState, BufferState, WindowId } from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
@@ -289,7 +290,7 @@ export class EditorView extends Renderable {
     const focused =
       id === s.windows.active &&
       !s.panels.explorer.focused &&
-      !(s.panels.side.open && s.panels.side.focused) &&
+      !panelFocused(s) &&
       visible;
     if (focused)
       this.cursorAt = {

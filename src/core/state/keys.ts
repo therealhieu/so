@@ -14,7 +14,7 @@ import { keymapFor, keyScope } from "./keymap";
 import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
-import { sidePanelKey } from "./side-panel";
+import { panelFocused, sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
@@ -63,7 +63,7 @@ function routeKey(
   }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
-  const inPanel = s.panels.side.open && s.panels.side.focused;
+  const inPanel = panelFocused(s);
   if (inPanel && s.vim.pending.length === 0) {
     const r = sidePanelKey(s, a, reg);
     if (r !== undefined) return r;
