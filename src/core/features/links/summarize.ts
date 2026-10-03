@@ -12,6 +12,8 @@ export type LinkRef = {
   raw: string;
   range: Range;
   inFrontmatter?: true;
+  /** The trimmed source line, cut to `CONTEXT_MAX` characters: the backlink's context in a closed note. */
+  context?: string;
 };
 export type NoteSummary = {
   path: string;
@@ -29,10 +31,15 @@ export type NoteSummary = {
 
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
+/** Longer than any panel or picker row shows, short enough to keep long paragraph lines out of the index. */
+export const CONTEXT_MAX = 160;
+
+/** Summarize a scanned note; with `lines`, each link also carries its line as context. */
 export function summarize(
   path: string,
   mtime: number,
   scan: DocScan,
+  lines?: { line(i: number): string },
 ): NoteSummary {
   const h1 = scan.headings.find((h) => h.level === 1);
   return {
@@ -60,6 +67,13 @@ export function summarize(
       ...(l.inFrontmatter === undefined
         ? {}
         : { inFrontmatter: true as const }),
+      ...(lines === undefined
+        ? {}
+        : {
+            context: [...lines.line(l.range.start.line).trim()]
+              .slice(0, CONTEXT_MAX)
+              .join(""),
+          }),
     })),
     frontmatter: scan.frontmatter?.data ?? {},
   };

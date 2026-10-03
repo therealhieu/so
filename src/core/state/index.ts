@@ -8,7 +8,7 @@ import {
 import { summarize } from "../features/links/summarize";
 import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
-import { scanDoc } from "../lang/markdown/scan";
+import { linesOf, scanDoc } from "../lang/markdown/scan";
 import { bufferForPath } from "./buffers";
 import { none, toast } from "./result";
 import type { Action, AppState, FileEvent, FsOp, Result } from "./types";
@@ -68,7 +68,9 @@ export function summarizeSaved(s: AppState, path: string): AppState {
   if (doc === undefined) return s;
   return withIx(
     s,
-    applySummaries(s.index.ix, [summarize(path, b.stamp.mtimeMs, doc.scan)]),
+    applySummaries(s.index.ix, [
+      summarize(path, b.stamp.mtimeMs, doc.scan, b.text),
+    ]),
   );
 }
 
@@ -110,5 +112,7 @@ export const summarizeWritten = (
 ): AppState =>
   withIx(
     s,
-    applySummaries(s.index.ix, [summarize(path, mtime, scanDoc(text))]),
+    applySummaries(s.index.ix, [
+      summarize(path, mtime, scanDoc(text), linesOf(text)),
+    ]),
   );

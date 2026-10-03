@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
-import { summarize } from "../features/links/summarize";
+import { CONTEXT_MAX, summarize } from "../features/links/summarize";
 import { splitKeys } from "../kernel/vim/keys";
-import { scanDoc } from "../lang/markdown/scan";
+import { linesOf, scanDoc } from "../lang/markdown/scan";
 import { fullText } from "./buffers";
 import { runCommand } from "./commands";
 import { sidePanelRows } from "./side-panel";
@@ -44,7 +44,10 @@ function opened(cols = 120, path = "plan.md"): AppState {
     base,
     {
       type: "indexBatch",
-      summaries: files.map((p) => summarize(p, 1, scanDoc(NOTES[p] ?? ""))),
+      summaries: files.map((p) => {
+        const text = NOTES[p] ?? "";
+        return summarize(p, 1, scanDoc(text), linesOf(text));
+      }),
       files,
       done: files.length,
       total: files.length,
@@ -119,7 +122,7 @@ test("linked rows come before unlinked rows from the newest search", () => {
   expect(
     sidePanelRows(s).map((x) => [x.section, x.path, x.line, x.text]),
   ).toEqual([
-    ["linked", "a.md", 0, "[[plan]]"],
+    ["linked", "a.md", 0, "see [[plan]]"],
     ["unlinked", "b.md", 0, "the plan is late"],
     ["unlinked", "c.md", 0, "our roadmap"],
   ]);
@@ -128,6 +131,23 @@ test("linked rows come before unlinked rows from the newest search", () => {
     range: { start: { line: 0, col: 4 }, end: { line: 0, col: 11 } },
     text: "roadmap",
   });
+});
+
+test("a linked row in a closed note shows its source line", () => {
+  const s = runCommand(opened(), "link.backlinks", 0, reg).state;
+  expect(Object.values(s.buffers).map((b) => b.path)).toEqual(["plan.md"]);
+  expect(sidePanelRows(s)[0]).toMatchObject({
+    section: "linked",
+    path: "a.md",
+    text: "see [[plan]]",
+  });
+});
+
+test("a link's context is its trimmed line, cut for long lines", () => {
+  const long = `  ${"word ".repeat(60)}[[plan]] end`;
+  const [link] = summarize("d.md", 1, scanDoc(long), linesOf(long)).links;
+  expect(link?.context).toBe(long.trim().slice(0, CONTEXT_MAX));
+  expect(summarize("d.md", 1, scanDoc(long)).links[0]?.context).toBeUndefined();
 });
 
 test("panel keys move, open the row, and leave", () => {

@@ -103,7 +103,7 @@ async function summarizeFile(path: string): Promise<NoteSummary | undefined> {
   }
   if (r.text.length <= CACHE_MAX_CHARS) cache.set(path, r.text);
   else cache.delete(path);
-  return summarize(path, r.stamp.mtimeMs, scanDoc(r.text));
+  return summarize(path, r.stamp.mtimeMs, scanDoc(r.text), linesOf(r.text));
 }
 
 async function scan(): Promise<void> {

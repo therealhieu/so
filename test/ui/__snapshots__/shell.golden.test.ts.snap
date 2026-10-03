@@ -678,33 +678,33 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
    1 # Plan                                                                        │ BACKLINKS · plan                   
    1                                                                               │▾ Linked mentions (31)              
    2 Why this exists.                                                              │ ◇ log/day-01:3                     
-   3                                                                               │   [[plan]]                         
+   3                                                                               │   - [[plan]] today                 
    4 ## Goals                                                                      │ ◇ log/day-01:4                     
-   5                                                                               │   [[plan#Goals]]                   
+   5                                                                               │   - [[plan#Goals]] today           
    6 Ship the editor. ^ship                                                        │ ◇ log/day-01:5                     
-   7                                                                               │   [[plan|the plan]]                
+   7                                                                               │   - [[plan|the plan]] today        
    8 ## Risks                                                                      │ ◇ log/day-02:3                     
-   9                                                                               │   [[plan]]                         
+   9                                                                               │   - [[plan]] today                 
   10 Scope.                                                                        │ ◇ log/day-02:4                     
-    ~                                                                              │   [[plan#Goals]]                   
+    ~                                                                              │   - [[plan#Goals]] today           
     ~                                                                              │ ◇ log/day-02:5                     
-    ~                                                                              │   [[plan|the plan]]                
+    ~                                                                              │   - [[plan|the plan]] today        
     ~                                                                              │ ◇ log/day-03:3                     
-    ~                                                                              │   [[plan]]                         
+    ~                                                                              │   - [[plan]] today                 
     ~                                                                              │ ◇ log/day-03:4                     
-    ~                                                                              │   [[plan#Goals]]                   
+    ~                                                                              │   - [[plan#Goals]] today           
     ~                                                                              │ ◇ log/day-03:5                     
-    ~                                                                              │   [[plan|the plan]]                
+    ~                                                                              │   - [[plan|the plan]] today        
     ~                                                                              │ ◇ log/day-04:3                     
-    ~                                                                              │   [[plan]]                         
+    ~                                                                              │   - [[plan]] today                 
     ~                                                                              │ ◇ log/day-04:4                     
-    ~                                                                              │   [[plan#Goals]]                   
+    ~                                                                              │   - [[plan#Goals]] today           
     ~                                                                              │ ◇ log/day-04:5                     
-    ~                                                                              │   [[plan|the plan]]                
+    ~                                                                              │   - [[plan|the plan]] today        
     ~                                                                              │ ◇ log/day-05:3                     
-    ~                                                                              │   [[plan]]                         
+    ~                                                                              │   - [[plan]] today                 
     ~                                                                              │ ◇ log/day-05:4                     
-    ~                                                                              │   [[plan#Goals]]                   
+    ~                                                                              │   - [[plan#Goals]] today           
     ~                                                                              │ ◇ log/day-05:5                     
     ~                                                                              │ j/k move · ⏎ open · l link it      
     ~                                                                              │ C-w h back to the editor           

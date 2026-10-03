@@ -1,6 +1,6 @@
 import { applySpanEdits } from "../../src/core/features/links/rename";
 import { summarize } from "../../src/core/features/links/summarize";
-import { scanDoc } from "../../src/core/lang/markdown/scan";
+import { linesOf, scanDoc } from "../../src/core/lang/markdown/scan";
 import type { Effect, SearchHit } from "../../src/core/state/types";
 import { textFile } from "./state";
 import type { Mounted } from "./ui";
@@ -50,7 +50,10 @@ export function indexFixture(m: Mounted): void {
   const notes = Object.keys(NOTES);
   m.store.dispatch({
     type: "indexBatch",
-    summaries: notes.map((p) => summarize(p, 1, scanDoc(NOTES[p] ?? ""))),
+    summaries: notes.map((p) => {
+      const text = NOTES[p] ?? "";
+      return summarize(p, 1, scanDoc(text), linesOf(text));
+    }),
     files: Object.keys(FILES),
     done: notes.length,
     total: notes.length,

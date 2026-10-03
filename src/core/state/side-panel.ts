@@ -167,7 +167,10 @@ export function sidePanelRows(s: AppState): SidePanelRow[] {
     section: "linked",
     path: b.from,
     line: b.link.line,
-    text: bufferForPath(s, b.from)?.text.line(b.link.line) ?? b.link.raw,
+    text:
+      bufferForPath(s, b.from)?.text.line(b.link.line) ??
+      b.link.context ??
+      b.link.raw,
   }));
   const unlinked: SidePanelRow[] = [];
   const links = new Map<string, Range[]>();

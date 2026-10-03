@@ -121,7 +121,8 @@ test("the backlinks panel lists Linked before Unlinked, and l links a mention", 
     l.includes("▾ Unlinked mentions (2)"),
   );
   expect(unlinkedHead).toBeGreaterThan(0);
-  expect(frame[unlinkedHead - 2]).toMatch(/│ {3}\[\[plan/);
+  // A linked row in a closed note shows its source line, not only the link.
+  expect(frame[unlinkedHead - 2]).toContain("│   Next: [[plan#Goals]] and");
   expect(frame[unlinkedHead + 1]).toContain("◇ notes/ideas:3");
 
   const from = m.effects.length;
@@ -134,11 +135,11 @@ test("the backlinks panel lists Linked before Unlinked, and l links a mention", 
     .filter((r) => r.section === "linked")
     .map((r) => r.path);
   expect(linked).toContain("notes/ideas.md");
-  // The selection stays on the mention, now a Linked row with its link.
+  // The selection stays on the mention, now a Linked row showing its line.
   frame = await lines(m);
   const moved = frame.findIndex((l) => l.includes("◇ notes/ideas:3"));
   expect(moved).toBeGreaterThan(0);
-  expect(frame[moved + 1]).toContain("│   [[plan]]");
+  expect(frame[moved + 1]).toContain("│   The [[plan]] is to keep files");
   m.keys("j");
   frame = await lines(m);
   const rest = frame.findIndex((l) => l.includes("▾ Unlinked mentions (1)"));
