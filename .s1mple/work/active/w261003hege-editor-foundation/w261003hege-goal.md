@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G2 — implementation`
+- **Current Position:** `P1-G2 — verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -257,17 +257,17 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 #### P1-G2 — Kernel, File Types, and Recorded Vim Table
 
 - [x] Context and dependencies confirmed (P1-G1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P1-G2-T1` — Add text buffer and editor primitives.
-- [ ] `P1-G2-T2` — Add command registry, keymap, and default bindings.
-- [ ] `P1-G2-T3` — Record Neovim 0.11 expectations.
-- [ ] `P1-G2-T4` — Implement the table-driven vim engine.
-- [ ] `P1-G2-T5` — Add the kernel text view.
-- [ ] `P1-G2-T6` — Add file types and windowed highlighting.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Implementation turn completed.
+- [x] `P1-G2-T1` — Add text buffer and editor primitives.
+- [x] `P1-G2-T2` — Add command registry, keymap, and default bindings.
+- [x] `P1-G2-T3` — Record Neovim 0.11 expectations.
+- [x] `P1-G2-T4` — Implement the table-driven vim engine.
+- [x] `P1-G2-T5` — Add the kernel text view.
+- [x] `P1-G2-T6` — Add file types and windowed highlighting.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
 - [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
 - [ ] Verification report persisted and separately committed.
 - [ ] Verification report commit SHA recorded.
 - [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
@@ -280,8 +280,8 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` — `Completed` (knip: G1 symbols plus plan-listed `defaults.ts`, `ex.ts` whose consumers are in Part 2 — orchestrator treats these as within the interim rule's sequencing intent; zero findings still required at P3-G1-T6)
+- Initial implementation report commit: `074f392`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Pending implementation`
 - Verification report commit: `Pending implementation`
 - Remediation: `Pending implementation`
@@ -293,12 +293,12 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G2-T1` | `Pending implementation` |
-| `P1-G2-T2` | `Pending implementation` |
-| `P1-G2-T3` | `Pending implementation` |
-| `P1-G2-T4` | `Pending implementation` |
-| `P1-G2-T5` | `Pending implementation` |
-| `P1-G2-T6` | `Pending implementation` |
+| `P1-G2-T1` | `cf6bff4` |
+| `P1-G2-T2` | `2ba5137` |
+| `P1-G2-T3` | `b1cfdc3`, follow-up `36bc56e` |
+| `P1-G2-T4` | `76f2814` |
+| `P1-G2-T5` | `ed29491` |
+| `P1-G2-T6` | `a17718b` |
 
 ### Part 2 — Core State and Workspace
 
@@ -676,7 +676,7 @@ Work: W261003HEGE — editor-foundation
 ## Implementation Evidence
 
 - **Commits:** `Pending implementation`
-- **Subagent Replacements:** `Pending implementation`
+- **Subagent Replacements:** None. P1-G2 implementer was interrupted by an API usage limit after all six task commits; it was resumed (same agent, full context) to finish group checks and the report.
 - **Changed Files:** `Pending implementation`
 - **Automated Verification:** `Pending implementation`
 - **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
