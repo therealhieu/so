@@ -65,7 +65,7 @@ export function searchPattern(pattern: string): RegExp | undefined {
 }
 
 /** Match start columns in one line, in order. */
-function matchesInLine(
+export function matchesInLine(
   text: string,
   re: RegExp,
 ): { col: number; length: number }[] {
