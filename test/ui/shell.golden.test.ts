@@ -152,6 +152,19 @@ test("the explorer marks notes by their registered file type, in any case", asyn
   expect(tree).toContain(` ≡ config.yaml${" ".repeat(16)}`);
 });
 
+test("a split window's long title is cut in the middle and keeps the file name", async () => {
+  m = await mountShell({ cols: 80, rows: 24 });
+  openNote(m, "projects/archive/2026/quarterly-planning/ideas.md", IDEAS_MD);
+  m.keys(":vs<CR>");
+  const titles = (await m.row(1)).split("│").map((t) => t.trim());
+  expect(titles).toHaveLength(2);
+  for (const title of titles) {
+    expect(title).toStartWith("projects/archive/20");
+    expect(title).toContain("…");
+    expect(title).toEndWith("-planning/ideas.md");
+  }
+});
+
 test("an info toast expires after 3 s and an error toast stays", async () => {
   m = await mountShell({ cols: 120, rows: 36 });
   openNote(m, "notes/ideas.md", IDEAS_MD);

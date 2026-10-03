@@ -15,7 +15,7 @@ import type { RenderLine, Span } from "../../core/kernel/view/types";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import type { AppState, BufferState, WindowId } from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
-import { drawCells, type Theme, themeOf } from "../theme";
+import { drawCells, middle, type Theme, themeOf } from "../theme";
 
 const TABSTOP = 8;
 /** Line numbers: 4 digits and a space. */
@@ -277,7 +277,9 @@ export class EditorView extends Renderable {
     if (s === undefined) return;
     const token =
       this.windowId === s.windows.active ? "winbarActive" : "winbar";
-    const title = ` ${b?.path ?? "[No Name]"}`;
+    // The path is cut in the middle, so a narrow window keeps the file name.
+    const room = this.width - 1 - (b?.dirty ? 2 : 0);
+    const title = ` ${middle(b?.path ?? "[No Name]", Math.max(1, room))}`;
     drawCells(buf, theme.style(token), this.x, this.y, title, this.width);
     if (b?.dirty && [...title].length + 2 <= this.width)
       drawCells(

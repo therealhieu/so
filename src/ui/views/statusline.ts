@@ -6,7 +6,7 @@ import {
 import { statusSegments } from "../../core/state/status";
 import type { AppState } from "../../core/state/types";
 import type { LayoutClass, ViewDeps } from "../shell";
-import { drawCells, themeOf } from "../theme";
+import { drawCells, middle, themeOf } from "../theme";
 
 const BADGES: Readonly<Record<string, [string, string]>> = {
   normal: ["NORMAL", "modeNormal"],
@@ -26,17 +26,8 @@ type Seg = { text: string; token: string };
 
 const cells = (text: string) => [...text].length;
 
-/** Cut the middle of `text` to `width` cells with `…`. */
-function middle(text: string, width: number): string {
-  const c = [...text];
-  if (c.length <= width) return text;
-  if (width <= 1) return "…".slice(0, width);
-  const head = Math.ceil((width - 1) / 2);
-  return `${c.slice(0, head).join("")}…${c.slice(c.length - (width - 1 - head)).join("")}`;
-}
-
 /**
- * Row h−2: `MODE │ view │ path ● │ N words │ ✗ save failed…` on the left and
+ * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ N words` on the left and
  * `Ln:Col` on the right. Narrow terminals drop the view and word segments;
  * the path is cut in the middle when the row is still too long.
  */
@@ -73,8 +64,6 @@ export class Statusline extends Renderable {
       segs.push({ text: seg.view, token: "statusDim" });
     const path: Seg = { text: seg.path ?? "[No Name]", token: "statusline" };
     segs.push(path);
-    if (seg.words !== undefined && !narrow)
-      segs.push({ text: `${seg.words} words`, token: "statusDim" });
     if (seg.saveError !== undefined) {
       const secs = Math.max(
         0,
@@ -85,6 +74,8 @@ export class Statusline extends Renderable {
         token: "statusError",
       });
     }
+    if (seg.words !== undefined && !narrow)
+      segs.push({ text: `${seg.words} words`, token: "statusDim" });
     const right =
       seg.position === undefined
         ? ""

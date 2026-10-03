@@ -155,7 +155,7 @@ exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/ideas.md ● │ 11 words │ ✗ save failed: EACCES · retry in 1s                               1:8 
+ NORMAL  │ source │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s │ 11 words                               1:8 
 save failed: EACCES                                                                                                     
 "
 `;

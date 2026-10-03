@@ -205,6 +205,15 @@ export const resolveTheme = (o: {
 export const themeOf = (s: AppState): Theme =>
   resolveTheme({ color: s.terminal.color, theme: s.config.theme });
 
+/** Cut the middle of `text` to `width` cells with `…`, keeping both ends. */
+export function middle(text: string, width: number): string {
+  const c = [...text];
+  if (c.length <= width) return text;
+  if (width <= 1) return "…".slice(0, width);
+  const head = Math.ceil((width - 1) / 2);
+  return `${c.slice(0, head).join("")}…${c.slice(c.length - (width - 1 - head)).join("")}`;
+}
+
 /**
  * Draw `text` at (x, y), cut or padded to `width` cells. Every painter uses
  * this instead of `fillRect`, so NO_COLOR output carries default colours only.
