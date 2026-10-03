@@ -41,6 +41,7 @@ import {
   type EffectRunner,
   type RunnerDeps,
 } from "./effects";
+import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
@@ -192,6 +193,10 @@ async function main(argv: string[]): Promise<void> {
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
+  const indexHost = createIndexHost({
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
   // Trash, clipboard, and exit are bound once detected or constructed; the
   // runner reads them at call time.
   const deps: RunnerDeps = {
@@ -231,11 +236,14 @@ async function main(argv: string[]): Promise<void> {
   runner.run({ kind: "listDir", dir: "" });
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });
 
-  // Watching and platform detection start after the first frame.
+  // Watching, indexing, and platform detection start after the first frame.
   setImmediate(() => {
-    watchWorkspace(ws.root, ownOps, matcher, (event) =>
-      store.dispatch({ type: "fileChanged", event }),
-    );
+    watchWorkspace(ws.root, ownOps, matcher, (event) => {
+      store.dispatch({ type: "fileChanged", event });
+      indexHost.notify(event);
+    });
+    indexHost.start(ws.root, []);
+    logger.info("first frame", { ms: Math.round(performance.now()) });
     void detectTrash({
       platform: process.platform,
       env: process.env,

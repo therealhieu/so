@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
+import { createIndexHost, type IndexHost } from "../../src/app/index-host";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
 import { initialState } from "../../src/core/state/init";
@@ -68,6 +69,8 @@ export type App = {
   text(path: string): string | undefined;
   /** Focus the explorer and move its selection to `path`. */
   select(path: string): void;
+  /** The index host, when the app was started with one. */
+  index?: IndexHost;
   stop(): void;
 };
 
@@ -77,7 +80,11 @@ export type App = {
  */
 export async function startApp(
   root: string,
-  opts: { trash?: Trash } = {},
+  opts: {
+    trash?: Trash;
+    /** Run the real index host and worker; `spawn` may wrap the worker. */
+    index?: { spawn?: () => Worker };
+  } = {},
 ): Promise<App> {
   const actions: Action[] = [];
   const effects: Effect[] = [];
@@ -115,9 +122,18 @@ export async function startApp(
       runner.run(e);
     },
   );
-  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) =>
-    store.dispatch({ type: "fileChanged", event }),
-  );
+  const index =
+    opts.index === undefined
+      ? undefined
+      : createIndexHost({
+          dispatch: (a) => store.dispatch(a),
+          logger: createLogger({}, root),
+          ...opts.index,
+        });
+  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {
+    store.dispatch({ type: "fileChanged", event });
+    index?.notify(event);
+  });
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);
   const keys = (seq: string) => {
@@ -131,6 +147,7 @@ export async function startApp(
   };
 
   runner.run({ kind: "listDir", dir: "" });
+  index?.start(root, []);
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
   await settle();
 
@@ -168,6 +185,10 @@ export async function startApp(
       if (store.get().panels.explorer.cursor !== path)
         throw new Error(`cannot select ${path}`);
     },
-    stop: stopWatch,
+    ...(index === undefined ? {} : { index }),
+    stop() {
+      stopWatch();
+      index?.stop();
+    },
   };
 }
