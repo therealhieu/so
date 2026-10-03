@@ -70,7 +70,17 @@ Not established.
 
 **Delivery**
 
-Not established.
+User decision, 2026-10-03. After verification passes:
+
+```text
+open a PR → CI passes and all conflicts with the base branch are resolved
+    → git mv .s1mple/work/active/<work> .s1mple/work/done/<work>
+    → push again → CI passes on the new head
+```
+
+- Update path references to the moved folder (`work/active/<work>` → `work/done/<work>`) in `.s1mple/` documents in the same commit. Do not edit parent roadmap folders that stay active.
+- Resolve conflicts by merging or rebasing onto the base branch as the repository prefers. Never force-push without explicit approval.
+- Merging the PR remains the user's decision.
 
 ## 4. Workspace Layout
 
