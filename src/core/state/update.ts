@@ -4,7 +4,9 @@ import type {
 } from "../filetypes/registry";
 import type { Keymap } from "../kernel/commands/keymap";
 import type { CommandRegistry } from "../kernel/commands/registry";
+import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
+import { onFileChanged } from "./disk";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
@@ -22,10 +24,16 @@ export type Registries = {
 };
 
 /** A pure reducer over the given registries; a thrown error keeps the previous state. */
-export function createUpdate(_reg: Registries): Update {
+export function createUpdate(reg: Registries): Update {
   return (state, action) => {
     try {
       switch (action.type) {
+        case "fileLoaded":
+          return onFileLoaded(state, action, reg);
+        case "fileRefused":
+          return onFileRefused(state, action);
+        case "fileChanged":
+          return onFileChanged(state, action.event);
         case "timer":
           return onTimer(state, action);
         case "saved":

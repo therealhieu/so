@@ -94,6 +94,10 @@ export function writeBuffer(
   };
 }
 
+/** Save now on leaving Insert or a buffer, when autosave is on. */
+export const autosaveNow = (s: AppState, id: BufferId, now: number): Result =>
+  s.config.autosave.enabled ? writeBuffer(s, id, now) : none(s);
+
 export function onTimer(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,

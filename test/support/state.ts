@@ -54,7 +54,7 @@ export const stamp = (n: number): Stamp => ({
 export const textFile = (text: string, n = 1): TextFile => ({
   text,
   bom: false,
-  eol: "\n",
+  eol: text.includes("\r\n") ? "\r\n" : "\n",
   stamp: stamp(n),
 });
 
