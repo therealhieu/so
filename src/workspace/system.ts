@@ -45,7 +45,7 @@ export function commandProvider(
 }
 
 /** Copy-only provider writing OSC 52 through the terminal shell's callback. */
-export const osc52Provider = (
+const osc52Provider = (
   osc52: (text: string) => void,
 ): ClipboardProvider => ({
   name: "osc52",

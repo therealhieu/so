@@ -10,7 +10,7 @@ export type ExclusionMatcher = {
 };
 
 /** Dot entries and `node_modules` are never shown. */
-export const ALWAYS_HIDDEN = (name: string): boolean =>
+const ALWAYS_HIDDEN = (name: string): boolean =>
   name.startsWith(".") || name === "node_modules";
 
 /**
