@@ -1,6 +1,6 @@
 {
   "nvim": "0.11.7",
-  "recordedAt": "2026-10-03T07:24:36.072Z",
+  "recordedAt": "2026-10-03T07:50:41.614Z",
   "cases": [
     {
       "id": "h",
@@ -963,7 +963,7 @@
           "col": 0
         }
       },
-      "keys": "fz",
+      "keys": "fq",
       "after": {
         "lines": [
           "foo bar baz",
@@ -972,7 +972,7 @@
         ],
         "cursor": [
           1,
-          11
+          1
         ],
         "mode": "n",
         "regs": {}
@@ -3182,10 +3182,10 @@
           "col": 0
         }
       },
-      "keys": "dfz",
+      "keys": "dfq",
       "after": {
         "lines": [
-          "",
+          "foo bar baz",
           "one two three",
           "alpha beta gamma"
         ],
@@ -3194,16 +3194,7 @@
           1
         ],
         "mode": "n",
-        "regs": {
-          "\"": {
-            "text": "foo bar baz",
-            "type": "v"
-          },
-          "-": {
-            "text": "foo bar baz",
-            "type": "v"
-          }
-        }
+        "regs": {}
       }
     },
     {
@@ -7553,25 +7544,24 @@
           "col": 4
         }
       },
-      "keys": "d2w",
+      "keys": "d3w",
       "after": {
         "lines": [
-          "foo ",
-          "one two three",
+          "foo two three",
           "alpha beta gamma"
         ],
         "cursor": [
           1,
-          4
+          5
         ],
         "mode": "n",
         "regs": {
-          "\"": {
-            "text": "bar baz",
+          "1": {
+            "text": "bar baz\none ",
             "type": "v"
           },
-          "-": {
-            "text": "bar baz",
+          "\"": {
+            "text": "bar baz\none ",
             "type": "v"
           }
         }

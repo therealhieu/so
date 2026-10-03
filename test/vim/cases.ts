@@ -70,7 +70,7 @@ export const cases: VimCase[] = [
   // Motions: find in line
   { id: "f", before: at(PROSE, 0, 0), keys: "fa" },
   { id: "count-f", before: at(PROSE, 0, 0), keys: "2fa" },
-  { id: "f-missing", before: at(PROSE, 0, 0), keys: "fz" },
+  { id: "f-missing", before: at(PROSE, 0, 0), keys: "fq" },
   { id: "big-f", before: at(PROSE, 0, 10), keys: "Fo" },
   { id: "t", before: at(PROSE, 0, 0), keys: "tb" },
   { id: "big-t", before: at(PROSE, 0, 10), keys: "To" },
@@ -120,7 +120,7 @@ export const cases: VimCase[] = [
   { id: "df", before: at(PROSE, 0, 0), keys: "dfa" },
   { id: "dt", before: at(PROSE, 0, 0), keys: "dta" },
   { id: "d-big-f", before: at(PROSE, 0, 9), keys: "dFo" },
-  { id: "df-missing", before: at(PROSE, 0, 0), keys: "dfz" },
+  { id: "df-missing", before: at(PROSE, 0, 0), keys: "dfq" },
   { id: "dh", before: at(PROSE, 0, 4), keys: "dh" },
   { id: "dl", before: at(PROSE, 0, 4), keys: "dl" },
   { id: "dj", before: at(PROSE, 0, 4), keys: "dj" },
@@ -261,7 +261,7 @@ export const cases: VimCase[] = [
   { id: "numbered-shift", before: at(PROSE, 0, 4), keys: "dddddd" },
   { id: "numbered-put", before: at(PROSE, 0, 4), keys: 'dddd"2p' },
   { id: "small-delete-register", before: at(PROSE, 0, 4), keys: "dwx" },
-  { id: "multiline-delete-numbered", before: at(PROSE, 0, 4), keys: "d2w" },
+  { id: "multiline-delete-numbered", before: at(PROSE, 0, 4), keys: "d3w" },
   { id: "named-put-before", before: at(PROSE, 0, 0), keys: '"zyw$"zP' },
 
   // Undo, redo, repeat
