@@ -64,6 +64,21 @@ export function searchPattern(pattern: string): RegExp | undefined {
   }
 }
 
+/**
+ * The message for a search that cannot move the cursor: the pattern is
+ * invalid or matches nowhere in the buffer. `undefined` when it matches.
+ */
+export function searchError(
+  buf: TextBuffer,
+  pattern: string,
+): string | undefined {
+  const re = searchPattern(pattern);
+  const found =
+    re !== undefined &&
+    findMatch(buf, { line: 0, col: 0 }, re, 1) !== undefined;
+  return found ? undefined : `E486: Pattern not found: ${pattern}`;
+}
+
 /** Match start columns in one line, in order. */
 export function matchesInLine(
   text: string,

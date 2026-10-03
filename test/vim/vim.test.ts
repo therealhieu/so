@@ -5,7 +5,8 @@ import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { handleKey } from "../../src/core/kernel/vim/engine";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import type { VimSession } from "../../src/core/kernel/vim/operators";
-import type { VimEnv } from "../../src/core/kernel/vim/types";
+import { searchError } from "../../src/core/kernel/vim/search";
+import type { VimEffect, VimEnv } from "../../src/core/kernel/vim/types";
 import { cases, type VimCase } from "./cases";
 
 type Recorded = VimCase & {
@@ -31,14 +32,18 @@ const MODES: Record<string, string> = {
   c: "cmdline",
 };
 
-function replay(c: VimCase) {
-  let s: VimSession = {
+function session(c: VimCase): VimSession {
+  return {
     text: createTextBuffer(c.before.lines.join("\n")),
     cursor: c.before.cursor,
     undo: new UndoHistory(),
     registers: new Registers(),
     vim: { mode: "normal", pending: [], cmdline: "" },
   };
+}
+
+function replay(c: VimCase) {
+  let s = session(c);
   for (const key of splitKeys(c.keys)) s = handleKey(s, key, ENV).s;
   const lines = Array.from({ length: s.text.lineCount }, (_, i) =>
     s.text.line(i),
@@ -78,3 +83,32 @@ for (const c of recording.cases) {
       expect(replay(c)).toEqual(kernelView(c.after));
     });
 }
+
+// The engine emits the search; core/state shows `searchError` in the message line.
+test("a failed search reports E486 for its pattern", () => {
+  const before = { lines: ["the cat sat"], cursor: { line: 0, col: 0 } };
+  const run = (keys: string) => {
+    let s = session({ id: keys, before, keys });
+    const effects: VimEffect[] = [];
+    for (const key of splitKeys(keys)) {
+      const r = handleKey(s, key, ENV);
+      s = r.s;
+      effects.push(...r.effects);
+    }
+    const search = effects.find((e) => e.kind === "search");
+    if (search?.kind !== "search") throw new Error(`no search for ${keys}`);
+    return { cursor: s.cursor, message: searchError(s.text, search.pattern) };
+  };
+  expect(run("/dog<CR>")).toEqual({
+    cursor: before.cursor,
+    message: "E486: Pattern not found: dog",
+  });
+  expect(run("/\\(<CR>")).toEqual({
+    cursor: before.cursor,
+    message: "E486: Pattern not found: \\(",
+  });
+  expect(run("/cat<CR>")).toEqual({
+    cursor: { line: 0, col: 4 },
+    message: undefined,
+  });
+});
