@@ -1,7 +1,8 @@
-// 200 keystrokes in a note while the real index worker scans 10,000
-// generated notes. Each time runs from the key's arrival, through any index
-// batch queued ahead of it, the store, the reducer, and a rendered frame.
-// Prints {"metric":"indexingKeystrokeP95","ms":<p95>}.
+// 200 keystrokes of prose in a note while the real index worker scans
+// 10,000 generated notes. Each time runs from the key's arrival, through any
+// index batch queued ahead of it, the store, the reducer, and a rendered
+// frame. Prints {"metric":"indexingKeystrokeP95","ms":<p95>} with the
+// slowest key and the batches applied while typing.
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -34,20 +35,23 @@ while (!indexing()) await Bun.sleep(1);
 const keys = [
   "G",
   "o",
-  ...[..."Typing while the index scans [[note-00042]] #idea. ".repeat(4)].slice(
-    0,
-    KEYS - 4,
-  ),
+  ...[
+    ..."Typing a plain sentence while the index scans the notes. ".repeat(4),
+  ].slice(0, KEYS - 4),
   "<Esc>",
   "k",
 ];
 const times: number[] = [];
+const firstDone = m.store.get().index.done;
+let batches = 0;
 try {
   for (const k of keys) {
     if (!indexing())
       throw new Error(`indexing finished after ${times.length} keys`);
     const start = performance.now();
+    const done = m.store.get().index.done;
     await settle();
+    if (m.store.get().index.done !== done) batches++;
     m.keys(k);
     await m.t.renderOnce();
     times.push(performance.now() - start);
@@ -63,6 +67,9 @@ console.log(
   JSON.stringify({
     metric: "indexingKeystrokeP95",
     ms: p95,
+    max: times.at(-1),
     keys: times.length,
+    batches,
+    from: firstDone,
   }),
 );
