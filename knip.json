@@ -1,0 +1,4 @@
+{
+  "entry": ["src/app/main.ts", "scripts/*.ts", "test/**/*.ts"],
+  "project": ["src/**/*.ts"]
+}
