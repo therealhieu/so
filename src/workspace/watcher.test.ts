@@ -44,6 +44,20 @@ test("a move also covers the folders it creates above its target, but not their 
   expect(own.isOwn("archive")).toBe(false);
 });
 
+test("a move carries own write stamps to the new paths, so a late echo stays silent", () => {
+  let now = 0;
+  const own = createOwnOps(() => now);
+  own.noteWrite("a.md", stamp(1));
+  own.noteWrite("notes/one.md", stamp(2));
+  own.noteMove("a.md", "c.md");
+  own.noteMove("notes", "archive/notes");
+  now = 5000;
+  expect(own.isOwn("c.md", stamp(1))).toBe(true);
+  expect(own.isOwn("archive/notes/one.md", stamp(2))).toBe(true);
+  expect(own.isOwn("c.md", stamp(3))).toBe(false);
+  expect(own.isOwn("a.md", stamp(1))).toBe(false);
+});
+
 let root = "";
 let events: FileEvent[] = [];
 let stop = () => {};

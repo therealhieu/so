@@ -21,7 +21,8 @@ const within = (path: string, prefix: string) =>
 
 /**
  * Own writes match by exact stamp, so a later external edit of the same file
- * is still reported. Own moves and removals match by path prefix for 1 s,
+ * is still reported; a move carries those stamps to the new paths, so an echo
+ * that arrives late is still silent. Own moves and removals match by path prefix for 1 s,
  * which absorbs per-child re-reports and replays. A move also covers the
  * folders above its target by exact path, since it may have created them.
  */
@@ -36,6 +37,11 @@ export function createOwnOps(clock = () => performance.now()): OwnOps {
   return {
     noteWrite: (p, s) => writes.set(p, s),
     noteMove: (from, to) => {
+      for (const [p, s] of [...writes])
+        if (within(p, from)) {
+          writes.delete(p);
+          writes.set(to + p.slice(from.length), s);
+        }
       notePath(from);
       notePath(to);
       const parts = to.split("/");
