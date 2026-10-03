@@ -212,6 +212,82 @@ describe("disk changes", () => {
   });
 });
 
+describe("at 80×24", () => {
+  beforeEach(async () => {
+    m.destroy();
+    m = await mountShell({ cols: 80, rows: 24 });
+  });
+
+  /** Frame rows that hold `text` in full, inside a float's right border. */
+  const fits = (frame: string, text: string) =>
+    frame
+      .split("\n")
+      .some((l) => l.includes(text) && l.trimEnd().endsWith("│"));
+
+  test("trash and typed-confirm prompts show their whole text", async () => {
+    m.store.dispatch({ type: "trashAvailable", available: true });
+    select("todo.md");
+    m.keys("d");
+    let frame = await m.frame();
+    for (const text of [
+      "Move to Trash? [y/N]",
+      "todo.md",
+      "y move to Trash   N cancel",
+    ])
+      expect(fits(frame, text)).toBe(true);
+    m.keys("<Esc>");
+    m.store.dispatch({ type: "trashAvailable", available: false });
+    m.keys("d");
+    frame = await m.frame();
+    for (const text of [
+      "✗ Trash is not available",
+      "This cannot be undone. Type the file name to confirm:",
+      "⏎ disabled until the name matches · esc cancel",
+    ])
+      expect(fits(frame, text)).toBe(true);
+  });
+
+  test("the conflict dialog shows its whole text, and its diff stacks in one column", async () => {
+    m.keys("<leader>e");
+    m.open("todo.md", "alpha\nbeta\ngamma\n");
+    m.keys("ccBETA<Esc>");
+    m.store.dispatch({
+      type: "fileChanged",
+      event: { kind: "changed", path: "todo.md", isDir: false },
+    });
+    m.store.dispatch({
+      type: "fileLoaded",
+      path: "todo.md",
+      file: {
+        text: "alpha\nbeta\ngamma\ndelta\n",
+        bom: false,
+        eol: "\n",
+        stamp: { mtimeMs: 7, size: 7, hash: "h7" },
+      },
+    });
+    const dialog = await m.frame();
+    for (const text of [
+      "▲ todo.md changed on disk",
+      "while you have unsaved edits. Nothing was overwritten.",
+      "k keep mine    t take disk    d view diff",
+    ])
+      expect(fits(dialog, text)).toBe(true);
+    expect(dialog).toContain("autosave paused until you choose");
+    m.keys("d");
+    const rows = (await m.frame()).split("\n").map((l) => l.trimEnd());
+    expect(rows[1]).toBe(" yours − · disk +");
+    expect(rows.slice(2, 7)).toEqual([
+      "− BETA",
+      "+ alpha",
+      "  beta",
+      "  gamma",
+      "+ delta",
+    ]);
+    // Body rows 1–21: no side-by-side separator.
+    expect(rows.slice(1, 22).some((l) => l.includes("│"))).toBe(false);
+  });
+});
+
 describe("refused files", () => {
   test("a binary file and a file over 16 MiB do not open", async () => {
     m.store.dispatch({
