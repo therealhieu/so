@@ -1,11 +1,11 @@
 # RM261003ABZP: Obsidian experience — Roadmap Phase
 
-- **Phase:** RM261003ABZP-PH2@R3
+- **Phase:** RM261003ABZP-PH2@R4
 - **Approval status:** Approved
 - **Index:** `rm261003abzp-roadmap-index.md`
 - **History:** `rm261003abzp-roadmap-phase-2-obsidian-experience-revisions.md`
 
-Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. No PH2 Work, PR, implementation, or verification result exists yet.
+Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. W261003S6BQ is assigned to DI3; no PH2 PR, implementation, or verification result exists yet.
 
 ## Phase Definition
 
@@ -32,10 +32,9 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
 - **Out of scope:**
   - Bases layouts beyond table and Kanban (they open as a table with a notice).
   - Configurable calendar week start (Monday is fixed, per RM261003ABZP-UDES8@R1).
-  - Bundling KaTeX or Mermaid into the binary (RM261003ABZP-DES13@R2 tradeoff).
   - Everything in the index's Deferred Scope.
-- **Delivery items:** RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2
-- **Predecessors:** RM261003ABZP-PH2@R1, RM261003ABZP-PH2@R2
+- **Delivery items:** RM261003ABZP-DI3@R3, RM261003ABZP-DI4@R2
+- **Predecessors:** RM261003ABZP-PH2@R1, RM261003ABZP-PH2@R2, RM261003ABZP-PH2@R3
 
 ## Baseline and Dependencies
 
@@ -45,12 +44,12 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - RM261003ABZP-REQ9@R2 (keystroke, open, scrolling).
   - RM261003ABZP-REQ11@R3 (registries for block renderers, decoration providers, file types and editor kinds, and Bases view types).
   - RM261003ABZP-REQ10@R4 (release re-check).
-- **Design:** `rm261003abzp-design.md` - RM261003ABZP-DES5@R2 (Markdown-scoped view, task, and fold commands), RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (Markdown views and the `base` file type)
+- **Design:** `rm261003abzp-design.md` - RM261003ABZP-DES5@R2 (Markdown-scoped view, task, and fold commands), RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (Markdown views and the `base` file type)
 - **Research:** `rm261003abzp-research.md`
 - **UI baseline:**
   - Accepted mockups (`ui-mockups/manifest.md`): RM261003ABZP-M2@R1, RM261003ABZP-M5@R2, RM261003ABZP-M6@R1, RM261003ABZP-M7@R1, and RM261003ABZP-M1@R1 for the statusline segments; manifest AD4.
   - UI requirements (`rm261003abzp-ui-requirements.md`): RM261003ABZP-UREQ3@R2 (Markdown views; non-Markdown painting assertions), RM261003ABZP-UREQ1@R2 (view and preview segments), RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ8@R2, RM261003ABZP-UREQ9@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ11@R1 (PH2 surfaces).
-  - UI design and verification (`rm261003abzp-ui-design.md`): RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1; RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1, RM261003ABZP-US7@R1, RM261003ABZP-US8@R1, RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R1, RM261003ABZP-UV10@R1.
+  - UI design and verification (`rm261003abzp-ui-design.md`): RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R2, RM261003ABZP-UDES11@R1; RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1, RM261003ABZP-US7@R1, RM261003ABZP-US8@R1, RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1.
 - **Research lineage:**
   - RM261003ABZP-RF4: evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2.
   - RM261003ABZP-RF7: evaluated RM261003ABZP-REQ5@R1, RM261003ABZP-REQ8@R1, RM261003ABZP-REQ9@R1 → informed their R2 revisions.
@@ -67,17 +66,17 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
 
 | Producer DI | Consumer DI | Required output | Required before | Required evidence | Integration owner |
 |---|---|---|---|---|---|
-| RM261003ABZP-DI2@R2 | RM261003ABZP-DI3@R2 | **G2:** `parseDoc` with the block cache and `syntaxExtensions` (scan level, plus lazy per-block mdast through `blockNode`); `markdownFileType` with `analyze` and the Markdown key scope; `layoutText` and `lowlightHighlighter` (from DI1); NoteIndex with `resolveLink`; the statusline segment framework; the `Picker` | DI3 execution | DI2 PR merged with RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V18@R1 passing; PH1 exit evidence recorded | RM261003ABZP-DI3@R2 |
+| RM261003ABZP-DI2@R2 | RM261003ABZP-DI3@R3 | **G2:** `parseDoc` with the block cache and `syntaxExtensions` (scan level, plus lazy per-block mdast through `blockNode`); `markdownFileType` with `analyze` and the Markdown key scope; `layoutText` and `lowlightHighlighter` (from DI1); NoteIndex with `resolveLink`; the statusline segment framework; the `Picker` | DI3 execution | DI2 PR merged with RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V18@R1 passing; PH1 exit evidence recorded | RM261003ABZP-DI3@R3 |
 | RM261003ABZP-DI2@R2 | RM261003ABZP-DI4@R2 | **G3:** the `Picker` with preview, the `Prompt`, NoteIndex paths and frontmatter in summaries, `FileTypeRegistry` and `editorViews` (for the `base` editor kind), and the `search` and `write` effects | DI4 execution | as G2 | RM261003ABZP-DI4@R2 |
-| RM261003ABZP-DI3@R2 | RM261003ABZP-DI4@R2 | **G4:** the `blockRenderers` registry, `widget` decorations with row reservation through `layoutText`, the `widgetPainters` registry, and unlisted embed buffers (Contracts, data, and state below) | DI4 execution of the `![[file.base]]` embed renderer only; the rest of DI4 proceeds earlier; the DI4 PR merges after DI3 | DI3 PR merged with RM261003ABZP-V7@R2 and RM261003ABZP-V16@R2 passing | RM261003ABZP-DI4@R2 |
+| RM261003ABZP-DI3@R3 | RM261003ABZP-DI4@R2 | **G4:** the `blockRenderers` registry, `widget` decorations with row reservation through `layoutText`, the `widgetPainters` registry, and unlisted embed buffers (Contracts, data, and state below) | DI4 execution of the `![[file.base]]` embed renderer only; the rest of DI4 proceeds earlier; the DI4 PR merges after DI3 | DI3 PR merged with RM261003ABZP-V7@R2 and RM261003ABZP-V16@R2 passing | RM261003ABZP-DI4@R2 |
 
 G1 is defined in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Cross-Work Dependency Gates.
 
 ## Delivery Flow
 
 ```text
-RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZP-PH1@R3 exit)
-├── RM261003ABZP-DI3@R2 — Live preview + browser preview      ◄─ G2 (DI2)
+RM261003ABZP-PH2@R4 — Obsidian experience            (requires the RM261003ABZP-PH1@R3 exit)
+├── RM261003ABZP-DI3@R3 — Live preview + browser preview      ◄─ G2 (DI2)
 │     Doc → livePreview provider (reveal, folds, widgets) → layoutText → EditorView + widgetPainters
 │     Doc → renderHtml → Bun.serve /render + SSE doc/stopped → read-only page
 │            │ G4 (merged DI3: blockRenderers, widget rows, widget painters, embed buffers)
@@ -99,7 +98,7 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
 ## Phase Design
 
 - **Architecture and boundaries**
-  - **Design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1; Design, System Architecture and Components and Boundaries.
+  - **Design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R1; Design, System Architecture and Components and Boundaries.
   - **Inherited:**
     - `core/lang/markdown` (live-preview provider and `renderHtml`) is pure and fed by the same `Doc`.
     - `core/kernel` stays language-neutral: live preview is a decoration provider, and Bases is a registered file type with its own editor kind.
@@ -107,7 +106,8 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     - Bases evaluation is pure, and writes go through `write` effects.
   - **Phase refinement:**
     - DI3 adds `src/preview/`, which the boundary test already covers from DI1.
-    - Image bytes are loaded by `src/workspace/images.ts`. `src/app` injects the loader into the UI as a function, so `src/ui` never imports file-system modules.
+    - Image bytes are loaded by `src/workspace/images.ts`: `readImage(path)` for workspace files and `fetchImage(url)` for `http:` and `https:` targets. `src/app` injects the loader into the UI as a function, so `src/ui` never imports file-system or network modules.
+    - `src/app/preview-host.ts` owns the running preview server, as `src/app/index-host.ts` owns the index worker.
     - DI3 registers the `live` and `reading` views on `markdownFileType`; `live` becomes the Markdown default view.
     - DI4 registers `baseFileType` (`.base`, editor kind `base`), the `base` `EditorKindSpec` (its `open` creates `{path, view, cursor}`), and `editorViews.base`, and adds the Bases view-type registry (`core/features/bases/views.ts`), one of the registries in the design's Known extension needs.
   - **View:**
@@ -128,11 +128,12 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   | Location | Change and responsibility | Phase-specific detail | Upstream design |
   |---|---|---|---|
   | `src/core/lang/markdown/{live-preview,reveal,file-type}.ts`, `src/core/lang/markdown/renderers/{heading,list,table,callout,code,embed,image,math,mermaid,frontmatter,rule}.ts` | Add / Modify (DI3). The `livePreview` decoration provider for the `live` and `reading` views; reveal; `blockRenderers` registry | Code shapes below. Fenced code uses the PH1 `lowlightHighlighter`. Math and Mermaid text renderers ported from Alfred. | RM261003ABZP-DES9@R3, RM261003ABZP-DES17@R1; Design, `src/core/kernel/view/text-view.ts` (live-preview provider) |
-  | `src/core/lang/markdown/commands.ts` (view, task, fold commands) | Add (DI3) | `view.cycle` (`<leader>m`), `task.toggle` (`Enter`, `<leader>x`), `fold.toggle` (`za`), registered with `filetypes: ["markdown"]` and bound in the `markdown` key scope | RM261003ABZP-DES5@R2, RM261003ABZP-UDES4@R1 |
+  | `src/core/state/markdown-commands.ts` (view, task, fold, Enter, preview commands) | Add (DI3) | `view.cycle` (`<leader>m`), `task.toggle` (`<leader>x`), `fold.toggle` (`za`), `note.enter` (`Enter`: toggles a task, else follows the link; replaces the `<CR>` `link.follow` binding), `preview.start`, `preview.stop`, registered with `filetypes: ["markdown"]` and bound in the `markdown` key scope. Commands read `AppState`, and `core/lang` may not import `core/state`, so they live in `core/state`. | RM261003ABZP-DES5@R2, RM261003ABZP-UDES4@R1 |
   | `src/ui/editors/text-view.ts`, `src/ui/widgets/{registry,image,embed,rule}.ts`, `src/ui/images.ts` | Modify / Add (DI3) | Gutter `sign` painting (`▕` reveal, `⚠` render error); `widgetPainters` by widget type; image tier selection and LRU (64 MiB) | RM261003ABZP-DES10@R2, RM261003ABZP-DES16@R1; UI design Surface: Editor window |
-  | `src/workspace/images.ts` | Add (DI3) | Reads and decodes image files on request; app-injected | RM261003ABZP-DES16@R1 |
-  | `src/core/lang/markdown/html.ts` | Add (DI3) | `renderHtml(doc, ctx)`. `ctx.href(target)` maps wikilinks to `/<path>`, and assets to `/file/<path>`. | RM261003ABZP-DES13@R2 |
-  | `src/preview/{server,page.html}` | Add (DI3) | Routes, Host check, containment, SSE broadcast and stop sequence (Code shapes below); page script per UI design `follow()` | RM261003ABZP-DES13@R2; UI design Surface: Browser preview page |
+  | `src/workspace/images.ts` | Add (DI3) | `readImage(path)` reads a workspace image; `fetchImage(url)` downloads an `http:`/`https:` image with `fetch` (10 s timeout, 16 MiB response cap, at most 4 downloads at once, no cookies, no Referer; disabled by `preview.images = "off"`). Bytes are decoded on request and kept only in the in-memory image cache, never on disk; a failure shows `[image: <name>]` and is retried after 60 s. App-injected | RM261003ABZP-DES16@R1 |
+  | `src/core/lang/markdown/html.ts` | Add (DI3) | `renderHtml(doc, ctx)`. `ctx.href(target)` maps wikilinks to `/<path>`, and assets to `/file/<path>`. | RM261003ABZP-DES13@R3 |
+  | `src/preview/{server,assets,page.html,page.js,page.css}` | Add (DI3) | Routes (including `/assets/*`), Host check, containment, the Content Security Policy, SSE broadcast and stop sequence (Code shapes below); `assets.ts` embeds the page files and the exact-pinned KaTeX and Mermaid builds into the binary; page script per UI design `follow()` | RM261003ABZP-DES13@R3; UI design Surface: Browser preview page |
+  | `src/app/preview-host.ts` | Add (DI3) | Owns the running server; runs the `startPreview`, `stopPreview`, and `openUrl` effects; the exit path stops the preview before terminal restore | RM261003ABZP-DES13@R3 |
   | `src/core/time/format.ts`, `src/core/features/notes/{daily,templates,commands}.ts` | Add (DI4) | Commands `note.today`, `note.yesterday`, `note.tomorrow`, `note.pickDate`, `template.insert`, `note.new` | RM261003ABZP-DES11@R1 |
   | `src/workspace/fs.ts` `createExclusive` | Modify (DI4) | Exclusive create used by daily notes and new notes (Code shapes below) | RM261003ABZP-DES8@R2 |
   | `src/ui/overlays/calendar.ts` | Add (DI4) | `monthGrid` per UI design; marks from 42 `dailyPath` lookups in the NoteIndex | RM261003ABZP-UDES8@R1 |
@@ -141,7 +142,7 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   | `test/fixtures/{tour.md,images/,bases/,templates/,large.ts}`, `test/bench/keystroke.bench.ts` | Add / Modify | `tour.md` holds every element; Bases fixtures are ported from Alfred, plus an Obsidian-saved Kanban `.base`; the 5,000-line TypeScript fixture for the source-view bench | RM261003ABZP-V7@R2, RM261003ABZP-V10@R1, RM261003ABZP-V12@R2, RM261003ABZP-V16@R2 |
 
 - **Runtime and failure flow**
-  - **Design:** RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; Design, Runtime Flows (Keystroke to frame, Open a file, Preview).
+  - **Design:** RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; Design, Runtime Flows (Keystroke to frame, Open a file, Preview).
   - **Phase refinement:**
     - Embed and Base-embed targets load as unlisted buffers through `read` effects. Until a target loads, its widget reserves the configured rows and shows `loading…`. A missing target shows the unresolved-link style.
     - A block renderer that throws renders its block as source with a diagnostic marker (Design, Keystroke to frame failure branch).
@@ -153,8 +154,10 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     key → update → markdown analyze (reparse dirty blocks) → layoutText(view, [highlight, livePreview]) → visible rows only
           ├─ embed/base widget target not loaded → read effect → fileLoaded(unlisted) → re-layout
           └─ renderer throws → block as source + ⚠ marker
-    :Preview → startPreview → 127.0.0.1:<port> → openUrl (fail → toast with URL)
-       edit/switch → debounce 100 ms → SSE "doc" → page GET /render → swap
+    :Preview → preview = starting → startPreview → 127.0.0.1:<port> → previewStarted → openUrl (fail → toast with URL)
+       edit/switch → debounce 100 ms → SSE "doc" {path, version, line} → page GET /render → swap, scroll to the block containing line
+    image target http(s): → fetchImage (10 s, 16 MiB, at most 4 at once, no cookies or Referer) → memory cache → paint
+                          └─ fails → [image: <name>], retried after 60 s
        :PreviewStop | exit → SSE "stopped" to all clients → server.stop(true) → AppState.preview = off
     open .base → forPath → base file type → editorKinds.get("base").open(path, text) → window content {editor: "base", state} → editorViews.base
     :Today → dailyPath(cfg, today) → index has path? open : expandTemplate → createExclusive
@@ -173,22 +176,24 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     - RM261003ABZP-V12@R2 - p95 < 16 ms in live preview and in a 5,000-line TypeScript file.
 
 - **Contracts, data, and state**
-  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1; Design, AppState, RenderLine model, FileType and Decoration model, Preview HTTP routes.
+  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R1; Design, AppState, RenderLine model, FileType and Decoration model, Preview HTTP routes.
   - **Inherited:**
-    - `folds` in text window content, buffer `view` (one of the file type's views: `live | source | reading` for Markdown, `source` otherwise), base window content `{editor: "base", path, view, cursor}`, `preview: off | on(port)`, and the `calendar` overlay come from RM261003ABZP-DES2@R2.
+    - `folds` in text window content, buffer `view` (one of the file type's views: `live | source | reading` for Markdown, `source` otherwise), base window content `{editor: "base", path, view, cursor}`, `preview`, and the `calendar` overlay come from RM261003ABZP-DES2@R2.
     - `TextView` and `layoutText` keep their PH1 shapes; DI3 supplies `folds` and adds providers only.
-    - SSE carries `doc` and `stopped` events.
+    - SSE carries `doc` and `stopped` events; the `doc` payload is `{path, version, line}`, where `line` is the cursor line (RM261003ABZP-DES13@R3).
   - **Phase refinement:**
     - **DI3** adds these fields:
       - `buffers[].view`: default `live` for Markdown; other file types keep `source`.
       - `buffers[].listed`: `false` for embed targets, which are hidden from the bufferline and evicted when no visible widget references them.
-      - `folds` in text window content.
-      - `preview`.
+      - `buffers[].embeds`: `{requested, refused}` embed reads per buffer, so embed tracking adds no top-level field.
+      - `folds` in text window content: `number[]` of folded callout and expanded embed `Block.id` values. It reaches the provider through `PreviewCtx.folds`; the kernel `TextView.folds` keeps its generic hidden-line meaning and is empty for Markdown.
+      - `preview`: `off | starting | on(port)`, the one top-level field the phase allows.
+      - Actions `previewStarted`, `previewStopped`, `previewFailed`, `openUrlFailed`; effects `startPreview`, `stopPreview`, `openUrl`.
     - **DI4** adds these fields:
       - the `overlay` variant `calendar`;
       - base window content `{editor: "base", path, view: { index, sort?: {prop, dir}, grouped: boolean }, cursor: {row, col}}`.
     - No new top-level AppState field is introduced: Base view state belongs to its window content.
-    - `PreviewCtx` gives the live-preview provider a pure `isResolved(target)` that reads NoteIndex. Unresolved links get the `linkUnresolved` token, which is the DI3 part of RM261003ABZP-UREQ6@R1.
+    - `PreviewCtx` gives the live-preview provider a pure `isResolved(target)` and `resolve(target)` that read NoteIndex. Unresolved links get the `linkUnresolved` token, which is the DI3 part of RM261003ABZP-UREQ6@R1.
   - **Shape:** Code shapes and wiring, `src/core/lang/markdown/live-preview.ts` and `src/core/features/bases/views.ts` below.
   - **Verification:**
     - RM261003ABZP-V7@R2 - reveal and fold rows.
@@ -205,7 +210,9 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
       ```ts
       export type PreviewCtx = {
         isResolved(target: string): boolean;                 // pure read of NoteIndex
-        embed(path: string): { doc: Doc } | "loading" | "missing";   // unlisted buffers
+        resolve(target: string): string | undefined;         // resolved path, pure read of NoteIndex
+        embed(path: string): { doc: Doc; text: TextBuffer } | "loading" | "missing";   // unlisted buffers
+        folds: ReadonlySet<number>;                          // folded or expanded Block.id values of the window
         image(ref: string): { rows: number } | "unknown";    // size known after decode; rows reserved meanwhile
         embedMaxRows: number; images: "auto" | "blocks" | "off";
       };
@@ -222,7 +229,7 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     - **Verification:** RM261003ABZP-V7@R2, RM261003ABZP-V12@R2, RM261003ABZP-V16@R2, RM261003ABZP-UV3@R2.
 
   - **`src/preview/server.ts` — broadcast and stop (DI3)**
-    - **Design:** RM261003ABZP-DES13@R2; Design, `src/preview/server.ts`.
+    - **Design:** RM261003ABZP-DES13@R3; Design, `src/preview/server.ts`.
     - **Phase refinement:** This adds the SSE client set, the debounced `doc` broadcast, and the stop order that guarantees `stopped` reaches clients.
     - **Shape:**
 
@@ -230,15 +237,15 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
       const clients = new Set<ReadableStreamDefaultController<string>>();
       const send = (event: "doc" | "stopped", data: unknown) =>
         clients.forEach((c) => c.enqueue(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
-      const unsubscribe = store.subscribe(debounce(100, (s) => { const d = activeDoc(s); if (changed(d)) send("doc", d); }));
+      const unsubscribe = store.subscribe(debounce(100, (s) => { const t = followTarget(s); if (changed(t)) send("doc", t); })); // t = {path, version, line}
       function stop() { unsubscribe(); send("stopped", {}); clients.forEach((c) => c.close()); server.stop(true); }
       ```
 
       `stop` unsubscribes first, then sends `stopped`, then closes each stream before stopping the server. A connected page therefore always sees `Stopped`, not `Reconnecting…`, after `:PreviewStop` or a clean exit.
 
-    - **Callers and wiring:** the `startPreview` and `stopPreview` effects in `src/app/effects.ts`. The app's exit path calls `stop()` before terminal restore.
-    - **Invariants:** hostname `127.0.0.1`; Host allowlist; realpath containment; no mutating route.
-    - **Verification:** RM261003ABZP-V11@R3, RM261003ABZP-UV9@R1.
+    - **Callers and wiring:** the `startPreview` and `stopPreview` effects, run by `src/app/preview-host.ts`. The app's exit path calls `stop()` before terminal restore.
+    - **Invariants:** hostname `127.0.0.1`; Host allowlist; realpath containment; no mutating route; a Content Security Policy that allows code, styles, fonts and connections only from the server's own origin, and images also from the web.
+    - **Verification:** RM261003ABZP-V11@R3, RM261003ABZP-UV9@R2.
 
   - **`src/workspace/fs.ts` `createExclusive` (DI4)**
     - **Design:** RM261003ABZP-DES8@R2, RM261003ABZP-DES11@R1.
@@ -294,7 +301,7 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   - **DI3:**
     - RM261003ABZP-UDES3@R2 - glyph headings `█ ▊ ▌ ▏`, hidden markers, `▕` reveal marker, block reveal, modes; note keys stay out of code files (UV3 `sync.ts` assertions).
     - RM261003ABZP-UDES4@R1 - task toggle, `za` folds and embeds, `embedMaxRows`, image tiers.
-    - RM261003ABZP-UDES10@R1 - page badges `Live`, `Reconnecting…`, `Stopped`, `Offline`; paused-follow; 375 px.
+    - RM261003ABZP-UDES10@R2 - page badges `Live`, `Reconnecting…`, `Stopped`, `Offline`; paused-follow; 375 px; KaTeX and Mermaid served locally, with a render error showing that block's source.
     - Statusline `view` and `preview` segments, completing RM261003ABZP-UDES1@R2's segment order.
     - The unresolved-link style.
     - Accepted mockups: RM261003ABZP-M2@R1, RM261003ABZP-M7@R1, RM261003ABZP-M1@R1.
@@ -308,11 +315,11 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   - Unlisted embed buffers reuse the RM261003ABZP-DES2@R2 `buffers` map, and Base view state lives in the base window content, rather than adding top-level state.
   - `PreviewCtx` keeps the RM261003ABZP-DES9@R3 live-preview provider pure, and the kernel view gains no Markdown types.
   - `createExclusive` strengthens the "never overwrite" rule of RM261003ABZP-REQ1@R3 and RM261003ABZP-REQ6@R2.
-  - The stop order implements the RM261003ABZP-DES13@R2 `stopped` event.
+  - The stop order implements the RM261003ABZP-DES13@R3 `stopped` event.
 
 ## Delivery Items
 
-- **RM261003ABZP-DI3@R2 — Live preview and browser preview**
+- **RM261003ABZP-DI3@R3 — Live preview and browser preview**
   - **Requirements:**
     - RM261003ABZP-REQ5@R2 - Obsidian-style live preview with reveal, rich blocks, embeds, images, and modes.
     - RM261003ABZP-REQ8@R2 - Read-only local browser preview.
@@ -338,10 +345,10 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
       - math and Mermaid text approximations;
       - footnotes; horizontal rules; resolved and unresolved link styles.
     - Note embeds (`![[note]]`, `![[note#Heading]]`) with `embedMaxRows`.
-    - Commands `view.cycle`, `task.toggle`, `fold.toggle`, limited to Markdown and bound in the `markdown` key scope.
+    - Commands `view.cycle`, `task.toggle`, `fold.toggle`, `note.enter`, limited to Markdown and bound in the `markdown` key scope.
     - Widget painters (`image`, `embed`, `rule`) in `src/ui/widgets/`; sign-column painting.
-    - Images: kitty → sixel → blocks → placeholder via the OpenTUI auto protocol; lazy decode with a 64 MiB LRU; `preview.images` config.
-    - `renderHtml` covering the same syntax, with real images, KaTeX, and Mermaid from jsDelivr and a source fallback when offline.
+    - Images: kitty → sixel → blocks → placeholder via the OpenTUI auto protocol; workspace files and web (`http:`/`https:`) images; lazy decode with a 64 MiB LRU; `preview.images` config.
+    - `renderHtml` covering the same syntax, with real images, and KaTeX and Mermaid served from the binary, with the source shown on a render error.
     - Preview server (`:Preview` limited to Markdown; non-Markdown buffers leave the page on the last note): routes, Host allowlist, realpath and hidden-folder containment, SSE `doc` (100 ms debounce) and `stopped`, and `:Preview`/`:PreviewStop`.
     - Page: badges, changed-block highlight, wikilink navigation with a paused-follow banner, theme toggle, 375 px layout, no editing controls.
     - Statusline `view` and `preview` segments.
@@ -350,7 +357,6 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   - **Exclusions:**
     - The `base` block renderer (DI4, through G4).
     - Persisted fold state.
-    - Bundled KaTeX and Mermaid.
     - Any write route in the preview server.
     - Live views, folding, or outline for code files (index Deferred Scope).
   - **Design:**
@@ -359,15 +365,15 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     - RM261003ABZP-DES9@R3 - the live-preview provider, reveal, folds, renderer registry on the kernel view; Design, `src/core/kernel/view/text-view.ts`.
     - RM261003ABZP-DES10@R2 - `EditorView` sign and widget painting, `widgetPainters`, image tiers; Design, `src/ui/editors/text-view.ts`.
     - RM261003ABZP-DES17@R1 - `live` and `reading` views on `markdownFileType`.
-    - RM261003ABZP-DES13@R2 - preview server, SSE `doc` and `stopped`, `renderHtml`; Design, Preview HTTP routes.
+    - RM261003ABZP-DES13@R3 - preview server, SSE `doc` and `stopped`, `renderHtml`, KaTeX and Mermaid from `/assets/*`; Design, Preview HTTP routes.
     - RM261003ABZP-DES14@R2 - `preview.*` config.
     - RM261003ABZP-DES16@R1 - block cache, viewport-only layout, image LRU, benchmarks.
   - **UI scope:**
     - RM261003ABZP-M2@R1 (S1–S16), RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (statusline segments).
     - RM261003ABZP-UREQ3@R2 (Markdown views; non-Markdown painting assertions), RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ6@R1 (unresolved-link style), RM261003ABZP-UREQ1@R2 (segments), RM261003ABZP-UREQ11@R1.
-    - RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES1@R2, RM261003ABZP-UDES11@R1.
+    - RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES10@R2, RM261003ABZP-UDES1@R2, RM261003ABZP-UDES11@R1.
     - UI design surfaces: Editor window, Browser preview page.
-  - **Phase design:** Components and files (DI3 rows); Runtime and failure flow (keystroke, embed, preview branches); Code shapes `src/core/lang/markdown/live-preview.ts` and `src/preview/server.ts`; Contracts, data, and state (DI3 additions).
+  - **Phase design:** Components and files (DI3 rows); Runtime and failure flow (keystroke, embed, preview, web image branches); Code shapes `src/core/lang/markdown/live-preview.ts` and `src/preview/server.ts`; Contracts, data, and state (DI3 additions).
   - **Dependencies:** RM261003ABZP-DI2@R2 - Doc, `markdownFileType` with `analyze`, Markdown key scope, index, statusline framework, Picker (and, through DI2, the DI1 kernel view and highlighter).
   - **Cross-work gates:** Consumer of G2; producer of G4 (this phase, Cross-Work Dependency Gates).
   - **Success:**
@@ -384,16 +390,16 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
     - All definitions are owned by `rm261003abzp-design.md`.
   - **UI success and verification:**
     - RM261003ABZP-US2@R2 via RM261003ABZP-UV3@R2 (including the `sync.ts` source-view and note-key assertions).
-    - RM261003ABZP-US8@R1 via RM261003ABZP-UV9@R1, including a recorded manual check at 1200 px and 375 px in light and dark themes and offline.
+    - RM261003ABZP-US8@R1 via RM261003ABZP-UV9@R2, including a recorded manual check at 1200 px and 375 px in light and dark themes and offline, where math and diagrams still render.
     - RM261003ABZP-US1@R2 via RM261003ABZP-UV1@R2 (full statusline segment order).
-    - RM261003ABZP-US9@R1 via RM261003ABZP-UV10@R1 (unresolved link state; editor surfaces under NO_COLOR, light, and 80×24) and RM261003ABZP-UV9@R1 (page semantics and contrast).
+    - RM261003ABZP-US9@R1 via RM261003ABZP-UV10@R1 (unresolved link state; editor surfaces under NO_COLOR, light, and 80×24) and RM261003ABZP-UV9@R2 (page semantics and contrast).
   - **Downstream work boundary:** The DI3 discussion confirms the OpenTUI image API at the pinned version. It also chooses the math and Mermaid approximation details within M2 and the page's CSS within M7. It may not:
     - parse Markdown in `src/ui`;
     - lay out rows outside the viewport;
     - add a mutating preview route;
     - change the `RenderLine` contract, the `layoutText` signature, or the G4 registry signatures consumed by DI4;
     - add Markdown knowledge to `core/kernel`.
-  - **Predecessors:** RM261003ABZP-DI3@R1
+  - **Predecessors:** RM261003ABZP-DI3@R1, RM261003ABZP-DI3@R2
 
 - **RM261003ABZP-DI4@R2 — Daily notes, templates, and Bases**
   - **Requirements:**
@@ -452,7 +458,7 @@ RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZ
   - **Phase design:** Components and files (DI4 rows); Runtime and failure flow (`:Today`, Base edit, Kanban branches); Code shapes `src/workspace/fs.ts` `createExclusive` and `src/core/features/bases/views.ts`; Contracts, data, and state (DI4 additions); Migration and compatibility.
   - **Dependencies:**
     - RM261003ABZP-DI2@R2 - Picker, Prompt, NoteIndex, write and search effects (and, through DI2, the DI1 `FileTypeRegistry` and `editorViews`).
-    - RM261003ABZP-DI3@R2 - `blockRenderers` and `widgetPainters` registries for embeds only (G4).
+    - RM261003ABZP-DI3@R3 - `blockRenderers` and `widgetPainters` registries for embeds only (G4).
   - **Cross-work gates:** Consumer of G3 and G4 (this phase, Cross-Work Dependency Gates).
   - **Success:**
     - RM261003ABZP-S6@R1 - daily notes and templates match Obsidian output.
@@ -514,8 +520,8 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - RM261003ABZP-US2@R2 (RM261003ABZP-UV3@R2)
   - RM261003ABZP-US6@R1 (RM261003ABZP-UV7@R1)
   - RM261003ABZP-US7@R1 (RM261003ABZP-UV8@R1)
-  - RM261003ABZP-US8@R1 (RM261003ABZP-UV9@R1)
-  - RM261003ABZP-US9@R1 (RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1)
+  - RM261003ABZP-US8@R1 (RM261003ABZP-UV9@R2)
+  - RM261003ABZP-US9@R1 (RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R2)
   - All definitions are owned by `rm261003abzp-ui-design.md`.
 
 ## Release and Exit Criteria
@@ -534,11 +540,11 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - RM261003ABZP-S9@R1 - all REQ9 targets, for notes in live preview and code in source view, gated at 2× in CI; verified by RM261003ABZP-V12@R2, RM261003ABZP-V13@R1
   - RM261003ABZP-S10@R2 - check < 30 s and CI < 3 min at full scope; the release dry-run binaries start; verified by RM261003ABZP-V14@R2
   - RM261003ABZP-S11@R1 - boundary including the kernel rule, registration-only extension including a file type, restore; verified by RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1
-  - RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1, RM261003ABZP-US7@R1, RM261003ABZP-US8@R1, RM261003ABZP-US9@R1 - as in M1, M2, M5@R2, M6, M7; verified by RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R1, RM261003ABZP-UV10@R1
+  - RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1, RM261003ABZP-US7@R1, RM261003ABZP-US8@R1, RM261003ABZP-US9@R1 - as in M1, M2, M5@R2, M6, M7; verified by RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1
 - **Completion evidence required:**
   - Passing CI results for every listed V and UV record on merged DI3 and DI4.
   - RM261003ABZP-V12@R2 and RM261003ABZP-V13@R1 readings on the reference machine.
-  - The RM261003ABZP-UV9@R1 manual checklist.
+  - The RM261003ABZP-UV9@R2 manual checklist.
   - The Obsidian 1.14+ Kanban fixture provenance.
   - A manual release dry run on `main` with the `dist` artifact (four binaries, `SHA256SUMS`), green smoke jobs, a skipped publish job, and no tag or GitHub Release.
 - **Cross-work integration verification:** RM261003ABZP-DI4@R2 owns integration because it merges last. Its CI on top of merged DI3 must re-pass RM261003ABZP-V7@R2, RM261003ABZP-V12@R2, and RM261003ABZP-V16@R2 with the `base` renderer registered, and RM261003ABZP-UV3@R2 with a Base embed in `tour.md`.
@@ -549,35 +555,35 @@ Completed child works do not establish phase completion without the required int
 
 | Requirement | Design | Delivery item | Success | Verification |
 |---|---|---|---|---|
-| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI3@R2 | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
+| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI3@R3 | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
 | RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-DES11@R1 | RM261003ABZP-DI4@R2 | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | RM261003ABZP-DI4@R2 | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
-| RM261003ABZP-REQ8@R2 - browser preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R2 | RM261003ABZP-DI3@R2 | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
-| RM261003ABZP-REQ9@R2 - performance (keystroke, open, scroll) | RM261003ABZP-DES16@R1 | RM261003ABZP-DI3@R2 | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R4 - release re-check | RM261003ABZP-DES15@R4 | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 (keep budgets) | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
-| RM261003ABZP-REQ11@R3 - registries, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 (`base` file type and editor kind, Bases view registry) | RM261003ABZP-S11@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1 |
+| RM261003ABZP-REQ8@R2 - browser preview | RM261003ABZP-DES13@R3, RM261003ABZP-DES6@R2 | RM261003ABZP-DI3@R3 | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
+| RM261003ABZP-REQ9@R2 - performance (keystroke, open, scroll) | RM261003ABZP-DES16@R1 | RM261003ABZP-DI3@R3 | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
+| RM261003ABZP-REQ10@R4 - release re-check | RM261003ABZP-DES15@R4 | RM261003ABZP-DI3@R3, RM261003ABZP-DI4@R2 (keep budgets) | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
+| RM261003ABZP-REQ11@R3 - registries, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI3@R3, RM261003ABZP-DI4@R2 (`base` file type and editor kind, Bases view registry) | RM261003ABZP-S11@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1 |
 
 ### UI Coverage
 
 | Accepted mockup / feedback | UI requirement | UI design | Delivery item | UI success | UI verification |
 |---|---|---|---|---|---|
-| RM261003ABZP-M1@R1; Acceptance; AD3; AD4 | RM261003ABZP-UREQ1@R2 (view and preview segments) | RM261003ABZP-UDES1@R2 - Statusline | RM261003ABZP-DI3@R2 | RM261003ABZP-US1@R2 | RM261003ABZP-UV1@R2 (full) |
-| RM261003ABZP-M2@R1, RM261003ABZP-M1@R1; Acceptance; AD3; AD4 | RM261003ABZP-UREQ3@R2 (Markdown views; non-Markdown painting assertions) | RM261003ABZP-UDES3@R2 - Surface: Editor window | RM261003ABZP-DI3@R2 | RM261003ABZP-US2@R2 | RM261003ABZP-UV3@R2 |
-| RM261003ABZP-M2@R1; Acceptance; AD3 | RM261003ABZP-UREQ4@R1 | RM261003ABZP-UDES4@R1 - Surface: Editor window | RM261003ABZP-DI3@R2 | RM261003ABZP-US2@R2 | RM261003ABZP-UV3@R2 |
-| RM261003ABZP-M3@R1, RM261003ABZP-M4@R1; Acceptance; AD3 | RM261003ABZP-UREQ6@R1 (unresolved-link style) | RM261003ABZP-UDES6@R1 - Surface: Links and backlinks | RM261003ABZP-DI3@R2 | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1 (unresolved link) |
+| RM261003ABZP-M1@R1; Acceptance; AD3; AD4 | RM261003ABZP-UREQ1@R2 (view and preview segments) | RM261003ABZP-UDES1@R2 - Statusline | RM261003ABZP-DI3@R3 | RM261003ABZP-US1@R2 | RM261003ABZP-UV1@R2 (full) |
+| RM261003ABZP-M2@R1, RM261003ABZP-M1@R1; Acceptance; AD3; AD4 | RM261003ABZP-UREQ3@R2 (Markdown views; non-Markdown painting assertions) | RM261003ABZP-UDES3@R2 - Surface: Editor window | RM261003ABZP-DI3@R3 | RM261003ABZP-US2@R2 | RM261003ABZP-UV3@R2 |
+| RM261003ABZP-M2@R1; Acceptance; AD3 | RM261003ABZP-UREQ4@R1 | RM261003ABZP-UDES4@R1 - Surface: Editor window | RM261003ABZP-DI3@R3 | RM261003ABZP-US2@R2 | RM261003ABZP-UV3@R2 |
+| RM261003ABZP-M3@R1, RM261003ABZP-M4@R1; Acceptance; AD3 | RM261003ABZP-UREQ6@R1 (unresolved-link style) | RM261003ABZP-UDES6@R1 - Surface: Links and backlinks | RM261003ABZP-DI3@R3 | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1 (unresolved link) |
 | RM261003ABZP-M5@R2; Acceptance; feedback cycle 1; AD2; AD3 | RM261003ABZP-UREQ8@R2 | RM261003ABZP-UDES8@R1 - Surface: Daily notes and templates; Calendar; Picker | RM261003ABZP-DI4@R2 | RM261003ABZP-US6@R1 | RM261003ABZP-UV7@R1 |
 | RM261003ABZP-M6@R1; Acceptance; AD3 | RM261003ABZP-UREQ9@R1 | RM261003ABZP-UDES9@R1 - Surface: Bases views; Base table; Kanban board | RM261003ABZP-DI4@R2 | RM261003ABZP-US7@R1 | RM261003ABZP-UV8@R1 |
-| RM261003ABZP-M7@R1; Acceptance; AD3 | RM261003ABZP-UREQ10@R1 | RM261003ABZP-UDES10@R1 - Surface: Browser preview page | RM261003ABZP-DI3@R2 | RM261003ABZP-US8@R1 | RM261003ABZP-UV9@R1 |
-| RM261003ABZP-M2@R1, RM261003ABZP-M5@R2, RM261003ABZP-M6@R1, RM261003ABZP-M7@R1; Acceptance; AD3 | RM261003ABZP-UREQ11@R1 (PH2 surfaces) | RM261003ABZP-UDES11@R1 - Section 5 policies; Theme | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1 |
+| RM261003ABZP-M7@R1; Acceptance; AD3 | RM261003ABZP-UREQ10@R1 | RM261003ABZP-UDES10@R2 - Surface: Browser preview page | RM261003ABZP-DI3@R3 | RM261003ABZP-US8@R1 | RM261003ABZP-UV9@R2 |
+| RM261003ABZP-M2@R1, RM261003ABZP-M5@R2, RM261003ABZP-M6@R1, RM261003ABZP-M7@R1; Acceptance; AD3 | RM261003ABZP-UREQ11@R1 (PH2 surfaces) | RM261003ABZP-UDES11@R1 - Section 5 policies; Theme | RM261003ABZP-DI3@R3, RM261003ABZP-DI4@R2 | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R2 |
 
 ## Progress
 
-- **Phase delivery status:** Not started
-- **Phase evidence:** None. DI2 merged the G2 and G3 outputs (`9adb285`, PR #2); with the PH1 exit recorded (phase 1 file, Progress), G2 and G3 are met.
+- **Phase delivery status:** In progress
+- **Phase evidence:** None yet; DI3 is in discussion. DI2 merged the G2 and G3 outputs (`9adb285`, PR #2); with the PH1 exit recorded (phase 1 file, Progress), G2 and G3 are met.
 
 | DI | Delivery status | Work | PR | Evidence / blocker |
 |---|---|---|---|---|
-| RM261003ABZP-DI3@R2 | Not started | Pending | Pending | G2 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded. Next: the DI3 discussion, which confirms the OpenTUI image API |
+| RM261003ABZP-DI3@R3 | In progress | W261003S6BQ | Pending | G2 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded. Discuss: system design finalized (`7b9bfa6`, branch `feat/rm261003abzp-di3-live-preview`), with the OpenTUI image API confirmation planned as a verification spike. Next: Plan |
 | RM261003ABZP-DI4@R2 | Not started | Pending | Pending | G3 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded; G4 (DI3) gates only the embed renderer. Next: the DI4 discussion, which confirms the Kanban `type` value |
 
 ## Unresolved Items
@@ -586,17 +592,18 @@ None. The OpenTUI image API and the Kanban `type` value are DI3 and DI4 discussi
 
 ## Approval
 
-- **Approved phase:** RM261003ABZP-PH2@R3
-- **Approved delivery items:** RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2
+- **Approved phase:** RM261003ABZP-PH2@R4
+- **Approved delivery items:** RM261003ABZP-DI3@R3, RM261003ABZP-DI4@R2
 - **Approved phase design:** This document's Phase Design, from Architecture and boundaries through UI realization. Pinned upstream:
-  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
-  - RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1.
+  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
+  - RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R2, RM261003ABZP-UDES11@R1.
 - **Success and verification baseline:**
   - Design-owned: RM261003ABZP-S5@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1.
-  - UI-design-owned: RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1 … RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1 … RM261003ABZP-UV10@R1.
+  - UI-design-owned: RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1 … RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1.
 - **Approval evidence:**
   - R1: the user delegated all decisions on 2026-10-03 ("you self-drive and decide all … don't raise any question to me"; "prevent many DIs and phases split"). Under that delegation the agent approved this phase and its two parallel DIs with gates G2–G4, the widened layout context, unlisted embed buffers and per-buffer Base state, the preview stop order, `createExclusive`, the Bases view-type registry, and the `v1.0.0` release at phase exit.
   - R2: on 2026-10-03 the user asked to leave room for a code editor and notebooks and selected "Apply all six (Recommended)" (`rm261003abzp-roadmap-context.md@R2`). Under the standing delegation the agent approved the PH2@R2 refinements: live preview as a decoration provider with `MarkdownViewInput`/`PreviewCtx`, Markdown-scoped view commands, widget painters, Bases as a registered file type and editor kind with view state in the base window content, the TypeScript bench and `csv` registration proof, and the unchanged phase split and `v1.0.0` release.
   - Post-DI1 synchronization (revisions retained): approved by the user on 2026-10-03. Upstream moved to RM261003ABZP-REQ10@R3, RM261003ABZP-DES8@R2, and RM261003ABZP-DES15@R2. PH2, DI3, and DI4 use `atomicWrite`, exclusive create, and the release workflow unchanged in contract, so no PH or DI outcome, scope, gate, or verification changed.
   - Post-DI2 synchronization (revisions retained): approved by the user on 2026-10-04. Upstream moved to RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, and RM261003ABZP-DES15@R3. DI3 reads mdast per block through `blockNode` instead of a precomputed `Block.node`; the G2 output and every PH2 outcome, scope, gate, and verification are otherwise unchanged.
   - R3: on 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing release dry run. PH2@R3 changes the outcome (release-ready instead of shipping `v1.0.0`), the PH1 entry condition (no `v0.1.0` release required), the release approach, the S10 exit criterion (RM261003ABZP-S10@R2, RM261003ABZP-V14@R2), and the completion evidence. DI3@R2 and DI4@R2 are retained.
+  - R4: on 2026-10-04 the user decided that the browser preview serves KaTeX and Mermaid from the binary and loads web images, and that the terminal editor downloads web images (RM261003ABZP-DES13@R3). PH2@R4 drops the "no bundled KaTeX or Mermaid" exclusion; DI3@R3 changes the `renderHtml` scope to locally served KaTeX and Mermaid, adds web images and `note.enter`, and drops the bundling exclusion. The phase design records the DI3 system-design refinements: `PreviewCtx.folds`, `resolve`, and `embed().text`; folds through `PreviewCtx`; the `line` payload; `src/core/state/markdown-commands.ts`; `note.enter` replacing the `<CR>` binding; `buffers[].embeds`, the `starting` preview state, and the new actions and effects; `src/app/preview-host.ts`; `readImage` and `fetchImage`. DI4@R2 is retained. Approved by the user on 2026-10-04.
