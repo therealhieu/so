@@ -126,21 +126,70 @@ No parent file referenced the moved work folder, and none was edited.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Pending verification`
+- **Verification reports:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p3-g1-verification-report.md` (status `Failed`; finding P3-G1-VER1)
+- **Status:** `Completed`. The local proof passes. The Linux CI bench on the remediated head is pending the orchestrator's push.
+
+Keys typed after `[[` now meet the budget at 10,000 notes, and the designed `indexingKeystrokeP95` bench types a link again, so a completion regression fails `bun run bench`.
+
+**Bench reading applied.** DES10 and section 7 (`scripts/bench-gate.ts`, `test/bench/*`) say only that `indexing-keystroke.bench.ts` "types 200 keys while the status is `indexing`". The typed text is left open, and the section 7 Proposed Shape fixes `TARGETS`/`BENCHES` at five metrics. A sixth metric would therefore change the approved design. Instead, the existing `indexingKeystrokeP95` bench types the pre-`df5aefc` text `"Typing while the index scans [[note-00042]] #idea. "` again. In that text, 44 of the 200 keys run completion, and the bench keeps the `max` and `batches` output. It also prints `to`, the notes indexed when typing ends.
+
+**Completion fix (owning task P2-G2-T5).** `src/core/state/completion.ts`:
+
+```text
+before: every key → linkText × 10,000 + sort 20,000 + rankBy 20,000
+after:  first key per (index, source note) → poolFor builds and sorts once
+        each key → rankBy over the last query's matches (if the query extends it) or the pool
+```
+
+- `poolFor` caches one `Pool` per `NoteIndex` in a `WeakMap`, keyed by the source note. This is sound because `patch` returns a new `NoteIndex` and never mutates it afterwards (deviation 1 above).
+- `noteItems` ranks only `pool.matched` when the query extends `pool.query`. A text matching the longer query is a subsequence match of the shorter one, under either case mode. The matches are kept in list order (`order`), so ties resolve as they do in a full ranking. The empty query returns the first `LIMIT` of the pool without ranking.
+- Headings and blocks modes are unchanged. `CompletionState` and every exported signature are unchanged.
+
+**Measured cost.** A scratch probe ran `mountShell` with the real `createIndexHost` on `makeNoteWorkspace` (10,000 notes), with the index ready. It typed `[[note-0004` and then `<C-n>` and four `<BS>`, three rounds per process:
+
+| | Keys after `[[` (per-round median) | Range of keys after `[[` | Key that opens the popup |
+|---|---|---|---|
+| Before (`aa8016d`) | 15.73–18.47 ms | 12.8–21.9 ms | 0.5–0.9 ms |
+| After (`3126eea`) | 2.81–4.47 ms | 0.8–6.8 ms (one 48.3 ms `<BS>` outlier in 1 of 9 rounds, not reproduced in the final 3 rounds) | 16.8–20.5 ms on the first round, then 0.8–2.2 ms |
+
+On the ready index the pool build costs linkText 9.5–11.3 ms plus sort 3.2–4.0 ms. Ranking costs 2.4–4.7 ms for `n` (10,000 matches) and 1.9–2.6 ms for `note-0004` (37 matches).
 
 ### Finding Closure
 
-None yet.
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P3-G1-VER1` | `src/core/state/completion.ts:poolFor, pools, noteItems` (candidates built once per index and source note; narrowing). `src/core/state/links.test.ts`: tests "note items do not depend on the queries typed before" and "note items follow index changes made while the popup is open". Each test fails under its targeted mutation (always narrowing; never rebuilding on a new index), and both pass on the fix. `test/bench/indexing-keystroke.bench.ts`: link text restored, plus `to`. Direct bench runs: p95 4.12 / 4.51 / 5.01 ms, max 15.6–18.1 ms, `batches` 6, `from` 500 → `to` 3500. `bun run bench` twice → exit 0; `indexingKeystrokeP95` median 4.53 ms (runs 3.99, 5.08, 4.46, 4.62, 4.53) and 3.92 ms (3.92, 3.25, 3.60, 4.09, 4.86), limit 32. With the index ready, keys after `[[` cost 0.8–6.8 ms (table above). `bun run check`, `bun run test:ci` and the completion tests (V23/V29/V43 suites) pass | `3126eea` (P2-G2-T5), `c3309d5` (P3-G1-T1) | `Fixed` |
+
+**P3-G1-VER1 Completion Checklist:**
+
+- [x] Required resolution is implemented: keys after `[[` meet p95 ≤ 16 ms on the reference machine both during indexing (gate median 3.92–4.53 ms) and with the index ready (0.8–6.8 ms per key). Link keys are part of the gated `indexingKeystrokeP95` bench.
+- [x] Required proof passes locally: `bun run bench` exit 0 with `indexingKeystrokeP95` p95 ≤ 16 ms; `bun run check` and `bun run test:ci` green; completion tests pass. The Linux CI bench on the remediated head is pending the orchestrator's push.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Blockers and Unverified Checks
+
+| Report item | Resolution or check | Actual evidence | Commit evidence | Result |
+|---|---|---|---|---|
+| VER1 Linux CI proof: bench job green with the link-typing metric | Needs a CI run on the remediated head; this remediation does not push | Not run. Before the fix, the same link text gave a 43.73 ms Linux median (run 37150055331) | `c3309d5` | Pending the orchestrator's push |
+| Unverified Item: Linux CI median stability (`firstFrame`, `indexReady`, `openFile`) | Only CI on the next push can confirm it | Local medians on this head: firstFrame 117.04 / 113.11 ms, indexReady 907.68 / 899.82 ms, openFile 22.31 / 22.47 ms. This remediation does not touch the startup or open paths | No change | Pending the orchestrator's push |
+| Unverified Item: batch-burst stalls of 22–105 ms (deviation 4) | Not a required check; owned by P2-G1 | The worst bench key, which now includes link keys, is 15.6–18.1 ms locally | No change | Unchanged; reported for routing |
+| Report blockers | None in the verification report | — | — | None |
+
+### Residual Notes
+
+- The key that opens the popup builds the pool: 16.8–20.5 ms on the reference machine, once per index version and source note. During indexing, the first completion key after each batch pays it. It falls outside the keys after `[[` that the finding gates, and outside the p95.
+- The bench's link keys see the index grow from 500 to 3,500 of 10,000 notes, because the design measures typing while the status is `indexing`. The full 10,000-note ready case is shown by the scratch probe above and is not gated.
+- The completion code keeps one module-level `WeakMap` cache. It is a pure memo: tests show that reused and rebuilt pools give the same items.
 
 ## Final Status
 
-`Completed` (initial implementation; pending group verification)
+`Completed`
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all tasks committed; PR #2 green on `ce836ae`; open findings 3–5 reported for routing
+- **Final report status:** `Completed`. P3-G1-VER1 is fixed with local proof. The Linux CI bench on the remediated head is pending the orchestrator's push.
 - **Final report commit:** `Pending — returned to the orchestrator`
-- **Final commits:** `b74f24b`, `c7a8663`, `a840918`, `25dee67`, `380d5cc`, `df5aefc`, `ce836ae`
-- **Final checks:** `bun run check` exit 0 (3.38 s); `bun run test:ci` 115 pass; `bun run build` exit 0; `bun run bench` exit 0 locally and in Linux CI; `bun install --frozen-lockfile` exit 0; `gh pr checks 2` all pass on `ce836ae`
-- **Remaining issues:** Deviations 3 (completion cost, P2-G2), 4 (batch bursts, P2-G1), 5 (PH1 exit medians above targets on Linux CI)
+- **Final commits:** `b74f24b`, `c7a8663`, `a840918`, `25dee67`, `380d5cc`, `df5aefc`, `ce836ae`; remediation `3126eea`, `c3309d5`
+- **Final checks:** `bun install --frozen-lockfile` exit 0 (no changes); `bun run check` exit 0 in 3.24 s, 623 pass; `bun run test:ci` exit 0, 115 pass; `bun run build` exit 0 (325 modules, `dist/so`); `bun run bench` exit 0 twice (`indexingKeystrokeP95` 4.53 / 3.92 ms, all metrics ok)
+- **Remaining issues:** Linux CI confirmation pending the orchestrator's push. Deviations 4 (batch bursts, P2-G1) and 5 (PH1 exit medians on Linux CI) from the initial implementation are unchanged and outside P3-G1-VER1.
