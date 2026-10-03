@@ -271,3 +271,55 @@ test("an open buffer whose text no longer matches is not edited", () => {
   expect(stale).toMatchObject({ stale: true, effects: [] });
   expect(stale.state).toBe(s);
 });
+
+test("a rename while links are still updating is refused and keeps the first plan", () => {
+  const notes = workspace({ "b.md": "[[other]]\n" });
+  const first = move(ready(notes), "projects/roadmap.md");
+  expect(first.state.index.rewrite?.edits.length).toBe(12);
+  const busy = "links still updating — try again when the update finishes";
+
+  // `r` on another note before the first move reports back: no prompt, no op.
+  const second = keys(selecting(first.state, "notes/other.md"), "r");
+  expect(second.state.overlay.kind).toBe("none");
+  expect(second.state.notifications.message?.text).toBe(busy);
+  expect(kinds(second.effects)).toEqual([]);
+  expect(second.state.index.rewrite).toEqual(first.state.index.rewrite);
+
+  // A prompt already open when the rewrite started is refused on Enter.
+  const opened = keys(selecting(ready(notes), "notes/other.md"), "r");
+  const typed = keys(opened.state, "<BS><BS><BS><BS><BS><BS><BS><BS>misc.md");
+  const racing: AppState = {
+    ...typed.state,
+    index: first.state.index,
+  };
+  const submitted = keys(racing, "<CR>");
+  expect(submitted.state.overlay.kind).toBe("none");
+  expect(submitted.state.notifications.message?.text).toBe(busy);
+  expect(kinds(submitted.effects)).toEqual([]);
+
+  // The first plan still applies after its file operation succeeds.
+  const done = update(second.state, {
+    type: "fsResult",
+    op: moveOp(first),
+    ok: true,
+  });
+  expect(
+    applyEdits(done.effects)
+      .map((e) => e.edit.path)
+      .sort(),
+  ).toEqual(Array.from({ length: 12 }, (_, i) => `refs/r${i + 1}.md`).sort());
+  let st = done.state;
+  for (const e of applyEdits(done.effects))
+    st = run(st, {
+      type: "editsApplied",
+      batch: e.batch,
+      path: e.edit.path,
+      ok: true,
+    });
+  expect(toasts(st)).toEqual([["info", "12 files updated"]]);
+  expect(st.index.rewrite).toBeUndefined();
+
+  // Once the batch reports, renaming works again.
+  const again = keys(selecting(st, "notes/other.md"), "r");
+  expect(prompt(again.state)?.title).toBe("Rename");
+});

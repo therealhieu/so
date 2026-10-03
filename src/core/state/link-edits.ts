@@ -24,6 +24,7 @@ import type { Registries } from "./update";
 
 const NOT_READY = "index not ready — try again when indexing finishes";
 const UNAVAILABLE = "links will not be updated (index unavailable)";
+const BUSY = "links still updating — try again when the update finishes";
 
 /** The prompt line for a planned rewrite: "31 links in 12 files will be updated". */
 export function impactText(n: { links: number; files: number }): string {
@@ -39,6 +40,15 @@ export function requireIndex(s: AppState): Result | undefined {
   return status === "idle" || status === "indexing"
     ? message(s, NOT_READY)
     : undefined;
+}
+
+/**
+ * One link rewrite runs at a time: a rename or move submitted while an earlier
+ * one still waits for its file operation or edit results is refused, because
+ * its plan would replace the earlier one and miss the earlier move.
+ */
+function refuseWhileRewriting(s: AppState): Result | undefined {
+  return s.index.rewrite === undefined ? undefined : message(s, BUSY);
 }
 
 /** Live scans of the open notes, by path, so planning sees unsaved text. */
@@ -109,7 +119,7 @@ export function startRename(
 ): Result {
   const s = c.state;
   if (from === "") return none(s);
-  const refused = requireIndex(s);
+  const refused = requireIndex(s) ?? refuseWhileRewriting(s);
   if (refused !== undefined) return refused;
   const prompt: PromptState =
     kind === "rename"
@@ -129,9 +139,12 @@ export function startRename(
 /**
  * Enter on a rename or move prompt: plan the link edits now, keep them until
  * the file operation reports back, and emit the operation. An invalid or
- * unchanged value submits nothing.
+ * unchanged value submits nothing; a rewrite still in flight closes the
+ * prompt with a message and submits nothing.
  */
 export function submitRename(s: AppState, p: PromptState, now: number): Result {
+  const busy = refuseWhileRewriting(s);
+  if (busy !== undefined) return busy;
   const open: AppState = { ...s, overlay: { kind: "prompt", prompt: p } };
   if (p.invalid !== undefined) return none(open);
   const t = targetOf(s, p);
