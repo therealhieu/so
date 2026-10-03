@@ -55,7 +55,6 @@ test("follow opens the heading and records a jump", () => {
   expect(r.effects).toContainEqual({ kind: "read", path: "projects/plan.md" });
   expect(r.state.jumps.entries).toEqual([
     { path: "projects/so.md", line: 2, col: 6 },
-    { path: "projects/plan.md", line: 4, col: 0 },
   ]);
   s = update(r.state, {
     type: "fileLoaded",

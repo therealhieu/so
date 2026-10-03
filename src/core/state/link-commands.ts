@@ -8,7 +8,7 @@ import type { Doc } from "../lang/markdown/doc";
 import { activeBuffer, activeWindow } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { createTarget } from "./explorer";
-import { goTo, pushJump, recordJump } from "./jumps";
+import { goTo, recordJump } from "./jumps";
 import { startRename } from "./link-edits";
 import { openPicker } from "./picker";
 import { none } from "./result";
@@ -66,8 +66,9 @@ function newNotePath(from: string, target: string): string {
 }
 
 /**
- * `gd` / Enter on a link: open its target at the heading or block with a
- * jump recorded, offer to create a missing note, and do nothing off a link.
+ * `gd` / Enter on a link: open its target at the heading or block with the
+ * source recorded as a jump (as Vim does, so the statusline reads "jump 2/2"
+ * after one follow), offer to create a missing note, and do nothing off a link.
  */
 function followLink(c: CommandContext): Result {
   const s = c.state;
@@ -94,13 +95,7 @@ function followLink(c: CommandContext): Result {
     });
   }
   const pos = { line: targetLine(s, target), col: 0 };
-  const jumped = recordJump(s);
-  return goTo(
-    { ...jumped, jumps: pushJump(jumped.jumps, { path: target.path, ...pos }) },
-    target.path,
-    pos,
-    c.now,
-  );
+  return goTo(recordJump(s), target.path, pos, c.now);
 }
 
 /** The file a rename or move is about: the explorer selection while it has focus, else the open file. */

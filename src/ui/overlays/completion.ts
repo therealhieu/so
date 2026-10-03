@@ -11,6 +11,8 @@ import { drawCells, themeOf } from "../theme";
 import { drawFrame } from "./host";
 
 const WIDTH = 48;
+/** Rows below the cursor line under which the popup opens above it. */
+const ABOVE_UNDER = 10;
 const FOOTER = " C-n/C-p · ⏎/Tab accept · esc";
 const cells = (t: string) => [...t].length;
 const basename = (path: string) =>
@@ -57,8 +59,11 @@ export class CompletionView extends Renderable {
     const { cols, rows } = s.terminal;
     const width = Math.min(WIDTH, cols);
     const h = Math.max(1, Math.min(COMPLETION_ROWS, c.items.length)) + 3;
-    // Below the cursor line when it fits above the statusline, else above it.
-    const y = at.y + 1 + h <= rows - 2 ? at.y + 1 : Math.max(0, at.y - h);
+    // Below the cursor line, or above it when fewer than 10 rows remain
+    // above the statusline; never on the cursor row.
+    const below = rows - 2 - (at.y + 1);
+    const y =
+      below >= ABOVE_UNDER && below >= h ? at.y + 1 : Math.max(0, at.y - h);
     const x = Math.max(0, Math.min(cols - width, at.x - cells(typed) - 2));
     this.box = { x, y, w: width, h };
   }
