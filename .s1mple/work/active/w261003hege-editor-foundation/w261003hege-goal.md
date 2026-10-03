@@ -432,7 +432,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Delivery Authorization: `Pending implementation`
+- Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: pending, asked once at the P3-G1-T7 boundary.
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Pending implementation`
 - Initial implementation report commit: `Pending implementation`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Pending implementation`
@@ -682,6 +682,8 @@ Work: W261003HEGE — editor-foundation
 - **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
 
 ## Blockers and Deviations
+
+- **DEV5 — Release-candidate tag out of scope (user decision, 2026-10-03).** Location: P3-G1-T7, V16.1, Overall Verification check "Release dry run". Evidence: user message "don't tag anything. OUt of scope". Impact: no tag is created or pushed; V16.1 (four binaries + `SHA256SUMS`, native smoke before prerelease) is not exercised in this goal and is reported `Not authorized — tag out of scope`; `release.yml` remains statically verified by V16.2. Required resolution: none in this goal; the real release path is proven when a release is cut later.
 
 - **DEV4 — Residual rename/write timing window (accepted risk, P2-G1).** Location: `src/core/state/save.ts` `onSaved`, `src/core/state/explorer.ts` `explorerOp`. Evidence: P2-G1-VER1 remediation notes in `p2-g1-implementation-report.md` (`d4abdc3`). The pure reducer cannot see a queued rename, so a write to the old path is still possible if an autosave timer fires before a rename's `fsResult` (rename slower than the 1 s autosave delay) or a user write is issued within the rename's milliseconds. Closing it fully needs a new buffer field, which the lean rule forbids. Impact: low likelihood on local file systems. Required resolution: P2-G2-T7 integration (V13.4) and overall verification assess it against the real serial queue; reopen only if they reproduce it. **Update (P2-G2 implementation, `39b1d5b`):** the in-flight-write + typing + rename + autosave sequence is safe on the real queue; the user-`:w`-during-rename path was reproduced in a throwaway test (old file recreated, buffer stuck `writing`). Reopened as P2-G2-VER1 and **closed** by `a9a5943` (both timing paths, folder move, chained moves, trash covered by tests that fail without the fix). Original proposal was runner-only (`src/app/effects.ts`: a write queued behind a pending move of its path targets the move's destination after success and reports `saved` with the new path), no new state fields.
 
