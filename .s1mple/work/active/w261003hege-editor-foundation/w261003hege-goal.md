@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — implementation (T1–T6)`
+- **Current Position:** `P3-G1-T7 — delivery (push + PR authorized)`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -408,13 +408,13 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
 - [ ] Implementation turn completed.
-- [ ] `P3-G1-T1` — Add theme and Esc-holding key normalizer.
-- [ ] `P3-G1-T2` — Compose the shell, editor view, views, and toasts.
-- [ ] `P3-G1-T3` — Add prompt and conflict overlays.
-- [ ] `P3-G1-T4` — Wire the composition root, lifecycle, and PTY e2e.
-- [ ] `P3-G1-T5` — Add benchmarks and the bench gate.
-- [ ] `P3-G1-T6` — Verify the whole work locally and assemble G1 evidence.
-- [ ] Delivery Authorization obtained from the execution command or asked once at this boundary by the orchestrator; granted scope recorded.
+- [x] `P3-G1-T1` — Add theme and Esc-holding key normalizer.
+- [x] `P3-G1-T2` — Compose the shell, editor view, views, and toasts.
+- [x] `P3-G1-T3` — Add prompt and conflict overlays.
+- [x] `P3-G1-T4` — Wire the composition root, lifecycle, and PTY e2e.
+- [x] `P3-G1-T5` — Add benchmarks and the bench gate.
+- [x] `P3-G1-T6` — Verify the whole work locally and assemble G1 evidence.
+- [x] Delivery Authorization obtained from the execution command or asked once at this boundary by the orchestrator; granted scope recorded.
 - [ ] `P3-G1-T7` — Verify delivery on GitHub with user authorization.
 - [ ] Every task has commit SHA(s) or justified no-change evidence.
 - [ ] Task-level and group-level checks passed, or delivery checks recorded `Pending delivery authorization`.
@@ -432,7 +432,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: pending, asked once at the P3-G1-T7 boundary.
+- Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: **granted** by the user at the P3-G1-T7 boundary (2026-10-03, answer "Push + open PR"). Granted scope passed to T7: push branch `feat/rm261003abzp-di1-editor-foundation` to `origin`, open PR to `main`, watch CI. No tag, no merge.
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Pending implementation`
 - Initial implementation report commit: `Pending implementation`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Pending implementation`
@@ -447,12 +447,12 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P3-G1-T1` | `Pending implementation` |
-| `P3-G1-T2` | `Pending implementation` |
-| `P3-G1-T3` | `Pending implementation` |
-| `P3-G1-T4` | `Pending implementation` |
-| `P3-G1-T5` | `Pending implementation` |
-| `P3-G1-T6` | `Pending implementation` |
+| `P3-G1-T1` | `8898bd9` |
+| `P3-G1-T2` | `eb4253a`, follow-up `1ba0f67` |
+| `P3-G1-T3` | `55d12a7` |
+| `P3-G1-T4` | `16d7a7a`, follow-up `989b725` |
+| `P3-G1-T5` | `a0b1a58` |
+| `P3-G1-T6` | `37b9e73` |
 | `P3-G1-T7` | `Pending implementation` |
 
 ## Roadmap Evidence
@@ -465,7 +465,7 @@ Keep definitions in the accepted binding (`w261003hege-discuss-context.md`, Road
 |---|---|---|
 | Execution start | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `deb9b96`); index `:131`, `:142`; W bindings under `.s1mple/work/` | Aligned — 0 parent commits since `d00d3a3`; `:131` and `:142` carry `RM261003ABZP-DI1@R2` (Work `Pending`, Not started); only `w261003hege-discuss-context.md` binds DI1. Tooling observed: local Bun 1.3.10, Neovim 0.12.4 — P1-G1-T1 installs Bun 1.4.2, P1-G2-T3 downloads Neovim v0.11.7 per plan context §7. |
 | Each resume after interruption | `Pending implementation` | `Pending implementation` |
-| Before P3-G1-T7 delivery actions | `Pending implementation` | `Pending implementation` |
+| Before P3-G1-T7 delivery actions | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `37b9e73`+goal commit); `git tag` | Aligned — 0 parent commits since `d00d3a3`; no tags exist; DI1 binding unchanged |
 | Delivery acceptance | `Pending implementation` | `Pending implementation` |
 
 Append checks as boundaries are reached. An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
