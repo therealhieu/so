@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — verification`
+- **Current Position:** `P3-G1 — remediation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -420,9 +420,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] Task-level and group-level checks passed, or delivery checks recorded `Pending delivery authorization`.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
 - [ ] Implementer completed the remediation checklist or no remediation was required.
 - [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
 - [ ] Final implementation report commit SHA recorded.
@@ -435,9 +435,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: **granted** by the user at the P3-G1-T7 boundary (2026-10-03, answer "Push + open PR"). Granted scope passed to T7: push branch `feat/rm261003abzp-di1-editor-foundation` to `origin`, open PR to `main`, watch CI. No tag, no merge.
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Completed`
 - Initial implementation report commit: `d4f19de` (pushed)
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
+- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Failed`: P3-G1-VER1 (Major, explorer create/rename prompt is a centred popup, not the inline tree field of M4 S10/S11), VER2 (Minor, shutdown during in-flight autosave → flush `conflict`), VER3 (Minor, statusline order vs M1; split titles truncated at end), VER4 (Minor, UI branches on `.md` for explorer icon), VER5 (Minor, missing tests for paint fallback, narrow diff, 80×24 prompt). V15.2/V15.3 confirmed; all deviations necessary/acceptable
+- Verification report commit: `2a3fc8d`
+- Remediation: assigned to a fresh `s1mple-implementer` (in progress) — orchestrator chose to build the inline field (no user deviation needed); move keeps a text field (picker outside DI1) recorded as a deviation; remediation pushes to PR #1 under the granted push scope and re-confirms CI
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
