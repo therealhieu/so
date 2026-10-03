@@ -12,6 +12,7 @@ import {
   setWindow,
   showBuffer,
 } from "./buffers";
+import { reloadConfig } from "./config";
 import {
   collapse,
   expandOrOpen,
@@ -43,8 +44,8 @@ type AppCommand = Command<CommandContext, CommandResult>;
 
 /** Ex command names (with `!` where it matters) → command ids. */
 export const EX_ALIASES: Readonly<Record<string, string>> = {
-  w: "buffer.write",
-  write: "buffer.write",
+  w: "file.save",
+  write: "file.save",
   q: "app.quit",
   quit: "app.quit",
   wq: "app.quit",
@@ -64,6 +65,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   bdelete: "buffer.delete",
   "bd!": "buffer.deleteForce",
   "bdelete!": "buffer.deleteForce",
+  ConfigReload: "config.reload",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -88,7 +90,10 @@ export function runCommand(
   );
 }
 
-/** Execute a command line (without ":"): `:s`/`:%s`, or an alias of a command id. */
+/**
+ * Execute a command line (without ":"): a registered command id with an
+ * optional argument, `:s`/`:%s`, or an alias of a command id.
+ */
 export function executeEx(
   s: AppState,
   line: string,
@@ -97,6 +102,15 @@ export function executeEx(
 ): Result {
   const typed = line.trim();
   if (typed === "") return none(s);
+  const word = typed.split(/\s+/, 1)[0] ?? "";
+  if (reg.commands.get(word) !== undefined)
+    return runCommand(
+      s,
+      word,
+      now,
+      reg,
+      typed.slice(word.length).trim() || undefined,
+    );
   const ex = parseEx(typed);
   if (ex !== undefined && "pattern" in ex) return substitute(s, ex, now, reg);
   const id = ex && EX_ALIASES[ex.cmd + (ex.bang ? "!" : "")];
@@ -264,7 +278,8 @@ function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
 }
 
 const builtins: AppCommand[] = [
-  { id: "buffer.write", title: "Write buffer", run: writeActive },
+  { id: "file.save", title: "Save file", run: writeActive },
+  { id: "config.reload", title: "Reload config", run: reloadConfig },
   {
     id: "app.quit",
     title: "Quit",

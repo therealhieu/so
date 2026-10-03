@@ -1,4 +1,5 @@
 import type { AppConfig } from "../config/schema";
+import type { ConfigResult } from "../config/toml";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
@@ -156,7 +157,8 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
-  | { type: "mouse"; event: MouseEvent };
+  | { type: "mouse"; event: MouseEvent }
+  | { type: "configLoaded"; result: ConfigResult; reload: boolean };
 
 export type Effect =
   | { kind: "read"; path: string }
@@ -167,7 +169,8 @@ export type Effect =
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
-  | { kind: "exit"; code: number };
+  | { kind: "exit"; code: number }
+  | { kind: "loadConfig" };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

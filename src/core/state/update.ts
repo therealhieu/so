@@ -6,6 +6,7 @@ import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
 import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
+import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { handleKeyAction, onClipboardText } from "./keys";
@@ -59,6 +60,8 @@ export function createUpdate(reg: Registries): Update {
           return onResize(state, action);
         case "mouse":
           return onMouse(state, action.event);
+        case "configLoaded":
+          return onConfigLoaded(state, action, reg);
       }
       const unhandled: never = action;
       return unhandled;

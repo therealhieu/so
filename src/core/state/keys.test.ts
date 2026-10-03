@@ -193,10 +193,10 @@ test("typing autosaves after the delay and leaving Insert saves at once", () => 
   });
 });
 
-test("ex commands run through the same command path as their ids", () => {
+test(":w saves through file.save", () => {
   const s = keys(open("a.md", "hello\n"), "x").state;
   const ex = keys(s, ":w<CR>", 5);
-  expect(ex.effects).toEqual(runCommand(s, "buffer.write", 5, reg).effects);
+  expect(ex.effects).toEqual(runCommand(s, "file.save", 5, reg).effects);
   expect(ex.effects).toContainEqual({
     kind: "write",
     path: "a.md",
@@ -205,6 +205,21 @@ test("ex commands run through the same command path as their ids", () => {
   });
   expect(ex.state.vim.mode).toBe("normal");
   expect(ex.state.vim.cmdline).toBe("");
+});
+
+test(":write and a typed command id save the same way", () => {
+  const s = keys(open("a.md", "hello\n"), "x").state;
+  const saved = runCommand(s, "file.save", 5, reg).effects;
+  expect(keys(s, ":write<CR>", 5).effects).toEqual(saved);
+  expect(keys(s, ":file.save<CR>", 5).effects).toEqual(saved);
+});
+
+test(":ConfigReload requests a reload", () => {
+  const r = keys(open("a.md", "x\n"), ":ConfigReload<CR>");
+  expect(r.effects).toEqual([{ kind: "loadConfig" }]);
+  expect(keys(open("a.md", "x\n"), ":config.reload<CR>").effects).toEqual([
+    { kind: "loadConfig" },
+  ]);
 });
 
 test("an unknown ex command shows E492", () => {
