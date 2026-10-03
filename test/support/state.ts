@@ -6,6 +6,8 @@ import {
 import { defaultBindings } from "../../src/core/kernel/commands/defaults";
 import { Keymap } from "../../src/core/kernel/commands/keymap";
 import { CommandRegistry } from "../../src/core/kernel/commands/registry";
+import { UndoHistory } from "../../src/core/kernel/editor/undo";
+import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
 import { initialState } from "../../src/core/state/init";
@@ -57,3 +59,49 @@ export const textFile = (text: string, n = 1): TextFile => ({
 });
 
 export const fresh = (): AppState => initialState(boot);
+
+/**
+ * Open `text` as a clean buffer saved with `stamp(1)` and show it in the
+ * active window; `text` gets a final newline on disk.
+ */
+export function openBuffer(s: AppState, path: string, text: string): AppState {
+  const id = s.nextBufferId;
+  return {
+    ...s,
+    buffers: {
+      ...s.buffers,
+      [id]: {
+        id,
+        path,
+        fileType: "markdown",
+        view: "source",
+        text: createTextBuffer(text),
+        undo: new UndoHistory(),
+        bom: false,
+        eol: "\n",
+        finalNewline: true,
+        stamp: stamp(1),
+        savedVersion: 0,
+        dirty: false,
+        disk: "present",
+        save: { kind: "idle" },
+      },
+    },
+    nextBufferId: id + 1,
+    windows: {
+      ...s.windows,
+      byId: {
+        ...s.windows.byId,
+        [s.windows.active]: {
+          id: s.windows.active,
+          content: {
+            editor: "text",
+            bufferId: id,
+            cursor: { line: 0, col: 0 },
+            scroll: 0,
+          },
+        },
+      },
+    },
+  };
+}

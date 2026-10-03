@@ -37,11 +37,15 @@ export type TimerId =
   | `retry:${BufferId}`
   | `toast:${number}`;
 
-/** Where a buffer's save stands. `writing.at` is when the write was requested. */
+/**
+ * Where a buffer's save stands. `writing.at` is when the write was requested
+ * and `writing.attempt` counts the failures before it, so a failure can set
+ * `retryAt` and the backoff without a clock.
+ */
 export type SaveState =
   | { kind: "idle" }
   | { kind: "scheduled"; at: number }
-  | { kind: "writing"; version: number; at: number }
+  | { kind: "writing"; version: number; at: number; attempt: number }
   | { kind: "failed"; reason: string; attempt: number; retryAt: number };
 
 export type BufferState = {
