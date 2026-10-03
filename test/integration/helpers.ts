@@ -7,11 +7,16 @@ import { createIndexHost, type IndexHost } from "../../src/app/index-host";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
 import { initialState } from "../../src/core/state/init";
+import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
 import type { Action, BufferState, Effect } from "../../src/core/state/types";
 import { createUpdate } from "../../src/core/state/update";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createLogger } from "../../src/workspace/log";
+import {
+  readStateFile,
+  saveStateFileSync,
+} from "../../src/workspace/state-file";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
@@ -86,6 +91,12 @@ export async function startApp(
     index?: { spawn?: () => Worker };
     /** The environment the debug log reads (`SO_LOG`, `XDG_STATE_HOME`). */
     env?: Record<string, string>;
+    /**
+     * The session state file, loaded before the first listing as `main`
+     * does; `restore` is a start on the folder. The `exit` effect and
+     * `stop` save it, as the lifecycle does on every shutdown path.
+     */
+    state?: { path: string; restore: boolean };
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -109,10 +120,15 @@ export async function startApp(
     },
     clipboard: { name: "none", copy: async () => {} },
     dispatch: (a) => store.dispatch(a),
-    exit: () => {},
+    exit: () => saveSession(),
     logger,
     configPath: join(root, ".no-config.toml"),
+    ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
   });
+  const saveSession = () => {
+    if (opts.state !== undefined)
+      saveStateFileSync(opts.state.path, snapshotSession(store.get()));
+  };
   const update = createUpdate(testRegistries());
   const store: Store = createStore(
     initialState({ root, cols: 100, rows: 30, color: "nocolor" }),
@@ -149,6 +165,12 @@ export async function startApp(
     return w && s.buffers[w.content.bufferId]?.path;
   };
 
+  if (opts.state !== undefined)
+    store.dispatch({
+      type: "stateLoaded",
+      state: parsePersisted(readStateFile(opts.state.path)),
+      restore: opts.state.restore,
+    });
   runner.run({ kind: "listDir", dir: "" });
   // Without a worker, an empty index is ready, so renames are not refused.
   if (index === undefined) store.dispatch({ type: "indexReady" });
@@ -194,6 +216,7 @@ export async function startApp(
     stop() {
       stopWatch();
       index?.stop();
+      saveSession();
     },
   };
 }

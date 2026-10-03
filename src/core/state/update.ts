@@ -14,6 +14,12 @@ import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
+import {
+  onStateLoaded,
+  SAVE_STATE_MS,
+  sessionChanged,
+  snapshotSession,
+} from "./session";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
 
 export type Update = (
@@ -31,54 +37,85 @@ export type Registries = {
   groups: Readonly<Record<string, string>>;
 };
 
-/** A pure reducer over the given registries; a thrown error keeps the previous state. */
+/**
+ * A pure reducer over the given registries; a thrown error keeps the
+ * previous state. A change to the persisted session (re)starts the save
+ * debounce.
+ */
 export function createUpdate(reg: Registries): Update {
+  const step = (state: AppState, action: Action): Result => {
+    switch (action.type) {
+      case "key":
+        return handleKeyAction(state, action, reg);
+      case "clipboardText":
+        return onClipboardText(state, action, reg);
+      case "fileLoaded":
+        return onFileLoaded(state, action, reg);
+      case "fileRefused":
+        return onFileRefused(state, action);
+      case "fileChanged":
+        return onFileChanged(state, action.event);
+      case "dirListed":
+        return onDirListed(state, action);
+      case "fsResult":
+        return onFsResult(state, action, reg);
+      case "trashAvailable":
+        return none(withTrash(state, action.available));
+      case "timer":
+        return onTimerAction(state, action);
+      case "saved":
+        return onSaved(state, action);
+      case "saveFailed":
+        return onSaveFailed(state, action);
+      case "resize":
+        return onResize(state, action);
+      case "mouse":
+        return onMouse(state, action.event);
+      case "configLoaded":
+        return onConfigLoaded(state, action, reg);
+      case "indexBatch":
+        return onIndexBatch(state, action);
+      case "indexReady":
+        return onIndexReady(state);
+      case "indexFailed":
+        return onIndexFailed(state, action);
+      case "editsApplied":
+        return onEditsApplied(state, action);
+      case "stateLoaded":
+        return onStateLoaded(state, action);
+    }
+    const unhandled: never = action;
+    return unhandled;
+  };
   return (state, action) => {
     try {
-      switch (action.type) {
-        case "key":
-          return handleKeyAction(state, action, reg);
-        case "clipboardText":
-          return onClipboardText(state, action, reg);
-        case "fileLoaded":
-          return onFileLoaded(state, action, reg);
-        case "fileRefused":
-          return onFileRefused(state, action);
-        case "fileChanged":
-          return onFileChanged(state, action.event);
-        case "dirListed":
-          return onDirListed(state, action);
-        case "fsResult":
-          return onFsResult(state, action, reg);
-        case "trashAvailable":
-          return none(withTrash(state, action.available));
-        case "timer":
-          return onTimer(state, action);
-        case "saved":
-          return onSaved(state, action);
-        case "saveFailed":
-          return onSaveFailed(state, action);
-        case "resize":
-          return onResize(state, action);
-        case "mouse":
-          return onMouse(state, action.event);
-        case "configLoaded":
-          return onConfigLoaded(state, action, reg);
-        case "indexBatch":
-          return onIndexBatch(state, action);
-        case "indexReady":
-          return onIndexReady(state);
-        case "indexFailed":
-          return onIndexFailed(state, action);
-        case "editsApplied":
-          return onEditsApplied(state, action);
-      }
-      const unhandled: never = action;
-      return unhandled;
+      const r = step(state, action);
+      return action.type !== "stateLoaded" && sessionChanged(state, r.state)
+        ? {
+            state: r.state,
+            effects: [
+              ...r.effects,
+              { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
+            ],
+          }
+        : r;
     } catch (e) {
       return { state: notifyError(state, e), effects: [] };
     }
   };
+}
+
+/** A timer fired: the session save, or a buffer or toast timer. */
+function onTimerAction(
+  s: AppState,
+  a: Extract<Action, { type: "timer" }>,
+): Result {
+  if (a.id === "saveState")
+    return {
+      state: s,
+      effects: [{ kind: "saveState", state: snapshotSession(s) }],
+    };
+  return onTimer(s, a);
 }
 
 function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {

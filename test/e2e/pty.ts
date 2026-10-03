@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import xterm from "@xterm/headless";
 import type { Terminal as PtyTerminal, Subprocess } from "bun";
 
@@ -97,8 +100,15 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const term = new xterm.Terminal({ cols, rows, allowProposedApi: true });
   const probe = new TerminalProbe();
   let done = false;
+  // The session state file goes to a private folder, never the user's.
+  const state = await mkdtemp(join(tmpdir(), "so-pty-state-"));
   const proc = Bun.spawn(argv, {
-    env: { ...process.env, TERM: "xterm-256color", ...o.env },
+    env: {
+      ...process.env,
+      TERM: "xterm-256color",
+      XDG_STATE_HOME: state,
+      ...o.env,
+    },
     terminal: {
       cols,
       rows,
@@ -128,7 +138,13 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
     },
     exited: () => done,
   };
-  await o.script(pty);
+  try {
+    await o.script(pty);
+  } catch (e) {
+    proc.kill("SIGKILL");
+    await rm(state, { recursive: true, force: true });
+    throw e;
+  }
   const exitCode = await proc.exited;
   await Bun.sleep(50);
   // Flush pending writes into the emulator before reading its state.
@@ -137,6 +153,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const buffer = term.buffer.active.type;
   proc.terminal?.close();
   term.dispose();
+  await rm(state, { recursive: true, force: true });
   return {
     exitCode,
     probe,

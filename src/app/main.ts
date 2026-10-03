@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
@@ -24,8 +24,9 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
+import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
-import type { Action } from "../core/state/types";
+import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
@@ -33,6 +34,11 @@ import { createRenderer, createShell } from "../ui/shell";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createLogger, type Logger } from "../workspace/log";
+import {
+  readStateFile,
+  saveStateFileSync,
+  statePath,
+} from "../workspace/state-file";
 import { detectClipboard } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
@@ -123,6 +129,23 @@ function loadStartupConfig(path: string, logger: Logger): Action | undefined {
   return { type: "configLoaded", result, reload: false };
 }
 
+/** Saves the session on shutdown; a failure is logged and never stops the exit. */
+function sessionSaver(
+  path: string | undefined,
+  logger: Logger,
+): ((s: AppState) => void) | undefined {
+  if (path === undefined) return undefined;
+  return (s) => {
+    try {
+      saveStateFileSync(path, snapshotSession(s));
+    } catch (e) {
+      logger.error("state.saveFailed", {
+        reason: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
+}
+
 const readOrNull = (p: string): string | null => {
   try {
     return readFileSync(p, "utf8");
@@ -183,6 +206,7 @@ async function main(argv: string[]): Promise<void> {
   const logger = createLogger(process.env, homedir());
   logger.info("app.startup", { root: ws.root });
   const configFile = configPath(process.env, homedir());
+  const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   const renderer = await createRenderer();
@@ -213,6 +237,7 @@ async function main(argv: string[]): Promise<void> {
     now: clock,
     logger,
     configPath: configFile,
+    ...(stateFile === undefined ? {} : { statePath: stateFile }),
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -228,9 +253,21 @@ async function main(argv: string[]): Promise<void> {
   );
   const config = loadStartupConfig(configFile, logger);
   if (config !== undefined) store.dispatch(config);
+  if (stateFile !== undefined)
+    store.dispatch({
+      type: "stateLoaded",
+      state: parsePersisted(readStateFile(stateFile)),
+      restore: ws.file === undefined,
+    });
   shell.attach(store);
   injectThrow(store);
-  const lifecycle = installLifecycle({ store, shell, runner });
+  const saveSession = sessionSaver(stateFile, logger);
+  const lifecycle = installLifecycle({
+    store,
+    shell,
+    runner,
+    ...(saveSession === undefined ? {} : { saveSession }),
+  });
   deps.exit = lifecycle.exitNow;
 
   runner.run({ kind: "listDir", dir: "" });

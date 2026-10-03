@@ -9,6 +9,7 @@ import { onDiskLoaded } from "./disk";
 import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
+import { awaitsRestore, dropRestored, fillRestored } from "./session";
 import type {
   Action,
   AppState,
@@ -315,7 +316,10 @@ export function onFileLoaded(
   reg: Registries,
 ): Result {
   const open = bufferForPath(s, a.path);
-  if (open !== undefined) return onDiskLoaded(s, open, a.file, reg);
+  if (open !== undefined)
+    return chain(onDiskLoaded(s, open, a.file, reg), (st) =>
+      awaitsRestore(st, a.path) ? fillRestored(st, a.path, open.id) : none(st),
+    );
   const ft = reg.fileTypes.forPath(a.path);
   const { body, finalNewline } = splitFile(a.file);
   const text = createTextBuffer(body);
@@ -340,18 +344,19 @@ export function onFileLoaded(
     ft,
   );
   const explorer = { ...s.panels.explorer, focused: false };
-  return none(
-    showBuffer(
-      {
-        ...s,
-        buffers: { ...s.buffers, [id]: b },
-        nextBufferId: id + 1,
-        panels: { ...s.panels, explorer },
+  const added: AppState = {
+    ...s,
+    buffers: { ...s.buffers, [id]: b },
+    nextBufferId: id + 1,
+    panels: { ...s.panels, explorer },
+  };
+  // A window coming back to its file keeps the recents order it was saved with.
+  return awaitsRestore(s, a.path)
+    ? fillRestored(added, a.path, id)
+    : none({
+        ...showBuffer(added, id),
         recent: touchRecent(s.recent, a.path),
-      },
-      id,
-    ),
-  );
+      });
 }
 
 const REFUSED = {
@@ -365,5 +370,6 @@ export function onFileRefused(
   s: AppState,
   a: Extract<Action, { type: "fileRefused" }>,
 ): Result {
+  if (awaitsRestore(s, a.path)) return dropRestored(s, a.path);
   return message(s, REFUSED[a.reason](a.path), "error");
 }

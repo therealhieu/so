@@ -1,6 +1,6 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { xdgDir } from "./config-file";
+import { soStateDir } from "./state-file";
 
 type Fields = Record<string, string | number | boolean>;
 
@@ -26,10 +26,7 @@ export function createLogger(
   home: string,
 ): Logger {
   if (env.SO_LOG !== "debug") return quiet;
-  const dir = join(
-    xdgDir(env, "XDG_STATE_HOME", join(home, ".local/state")),
-    "so",
-  );
+  const dir = soStateDir(env, home);
   const file = join(dir, "so.log");
   const write = (level: "info" | "error", event: string, fields?: Fields) => {
     try {

@@ -117,3 +117,13 @@ test("loading a file makes it the most recent", () => {
   s = load(s, "b.md", "b\n");
   expect(s.recent).toEqual(["b.md", "a.md"]);
 });
+
+test("jumping back to a file that is not open places the cursor once it loads", () => {
+  let s = load(fresh(), "b.md", "b1\n");
+  s = { ...s, jumps: pushJump(empty, at("a.md", 2, 1)) };
+  const r = jumpBack(s, 0);
+  expect(r.effects).toContainEqual({ kind: "read", path: "a.md" });
+  s = load(r.state, "a.md", "a1\na2\na3\n");
+  expect(cursorOf(s)).toEqual({ path: "a.md", line: 2, col: 1 });
+  expect(s.windows.restore).toBeUndefined();
+});

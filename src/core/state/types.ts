@@ -47,7 +47,8 @@ export type SearchHit = {
 export type TimerId =
   | `autosave:${BufferId}`
   | `retry:${BufferId}`
-  | `toast:${number}`;
+  | `toast:${number}`
+  | "saveState";
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -125,6 +126,19 @@ export type Overlay =
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean };
 
+/** The per-workspace state file: positions and layout, never note text. */
+export type PersistedState = {
+  version: 1;
+  recent: string[];
+  jumps: JumpList;
+  buffers: { path: string; view: string }[];
+  layout: {
+    tree: WindowTree;
+    active: WindowId;
+    windows: { id: WindowId; path: string; cursor: Pos; scroll: number }[];
+  };
+};
+
 /** A position the cursor jumped from; Neovim's jumplist entry. */
 export type JumpEntry = { path: string; line: number; col: number };
 /** `at` is the entry the next <C-o> returns to plus one; `entries.length` when not travelling. */
@@ -163,6 +177,11 @@ export type AppState = {
     byId: Record<WindowId, WindowState>;
     active: WindowId;
     nextWindowId: WindowId;
+    /** Windows of the last session waiting for their file, and how many files were not found. */
+    restore?: {
+      pending: Record<WindowId, { path: string; cursor: Pos; scroll: number }>;
+      missing: number;
+    };
   };
   vim: VimState & {
     registers: Registers;
@@ -209,6 +228,7 @@ export type Action =
       done: number;
       total: number;
     }
+  | { type: "stateLoaded"; state: PersistedState | undefined; restore: boolean }
   | { type: "indexReady" }
   | { type: "indexFailed"; final: boolean; reason: string }
   | {
@@ -231,6 +251,7 @@ export type Effect =
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
   | { kind: "exit"; code: number }
+  | { kind: "saveState"; state: PersistedState }
   | { kind: "loadConfig" }
   | { kind: "applyEdits"; batch: number; edit: FileEdit };
 

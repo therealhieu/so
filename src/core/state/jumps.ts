@@ -1,3 +1,4 @@
+import type { Pos } from "../kernel/text/pos";
 import { activeBuffer, activeWindow, openPath, placeCursor } from "./buffers";
 import { chain, message, none } from "./result";
 import type { AppState, JumpEntry, JumpList, Result } from "./types";
@@ -59,8 +60,22 @@ function jumpTo(s: AppState, at: number, now: number): Result {
   const pos = { line: e.line, col: e.col };
   if (activeBuffer(s)?.path === e.path) return none(placeCursor(moved, pos));
   return chain(openPath(moved, e.path, now), (st) =>
-    none(activeBuffer(st)?.path === e.path ? placeCursor(st, pos) : st),
+    none(
+      activeBuffer(st)?.path === e.path
+        ? placeCursor(st, pos)
+        : awaitLoad(st, e.path, pos),
+    ),
   );
+}
+
+/** The active window shows `path` at `cursor` once its read answers. */
+function awaitLoad(s: AppState, path: string, cursor: Pos): AppState {
+  const restore = s.windows.restore ?? { pending: {}, missing: 0 };
+  const pending = {
+    ...restore.pending,
+    [s.windows.active]: { path, cursor, scroll: 0 },
+  };
+  return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }
 
 /** "jump i/n" once any jump is recorded; the current position counts at the end. */

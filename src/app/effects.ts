@@ -16,6 +16,7 @@ import {
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
+import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
@@ -37,6 +38,8 @@ export type RunnerDeps = {
   logger: Logger;
   /** config.toml, read again for each `loadConfig`. */
   configPath: string;
+  /** The session state file; without one, `saveState` does nothing. */
+  statePath?: string;
 };
 
 export type EffectRunner = {
@@ -289,6 +292,12 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         return;
       case "exit":
         d.exit(e.code);
+        return;
+      case "saveState":
+        if (d.statePath !== undefined)
+          void saveStateFile(d.statePath, e.state).catch((x) =>
+            d.logger.error("state.saveFailed", { reason: msg(x) }),
+          );
         return;
       case "loadConfig":
         void readConfigText(d.configPath)

@@ -51,7 +51,10 @@ test("rename flushes a dirty buffer first, then follows it to the new path", () 
   const done = update(r.state, { type: "fsResult", op, ok: true });
   expect(done.state.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
   expect(done.state.buffers[1]?.undo).toBe(undoBefore);
-  expect(done.effects).toEqual([{ kind: "listDir", dir: "" }]);
+  expect(done.effects).toEqual([
+    { kind: "listDir", dir: "" },
+    { kind: "startTimer", id: "saveState", ms: 2000 },
+  ]);
 });
 
 test("a rename during a write, after typing during it, autosaves the newest text to the new path", () => {
