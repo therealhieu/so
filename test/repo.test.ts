@@ -50,3 +50,16 @@ test("CI runs on pull_request only", () => {
   expect(ci.concurrency.group).toContain("github.event.pull_request.number");
   expect(ci.concurrency["cancel-in-progress"]).toBe(true);
 });
+
+test("compile includes the worker", () => {
+  const sources = [
+    ...Object.values(pkg.scripts as Record<string, string>),
+    ...workflows.values(),
+  ];
+  const compiles = sources
+    .flatMap((text) => text.split("\n"))
+    .filter((line) => /\bbun build\b.*--compile/.test(line));
+  expect(compiles.length).toBeGreaterThanOrEqual(3);
+  for (const line of compiles)
+    expect(line).toContain("src/app/main.ts src/workspace/index-worker.ts");
+});
