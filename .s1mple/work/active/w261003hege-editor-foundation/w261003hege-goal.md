@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1-T7 — delivery (push + PR authorized)`
+- **Current Position:** `P3-G1 — verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -407,7 +407,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 #### P3-G1 — UI Shell, Composition Root, Lifecycle, and Delivery Verification
 
 - [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
-- [ ] Implementation turn completed.
+- [x] Implementation turn completed.
 - [x] `P3-G1-T1` — Add theme and Esc-holding key normalizer.
 - [x] `P3-G1-T2` — Compose the shell, editor view, views, and toasts.
 - [x] `P3-G1-T3` — Add prompt and conflict overlays.
@@ -415,11 +415,11 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] `P3-G1-T5` — Add benchmarks and the bench gate.
 - [x] `P3-G1-T6` — Verify the whole work locally and assemble G1 evidence.
 - [x] Delivery Authorization obtained from the execution command or asked once at this boundary by the orchestrator; granted scope recorded.
-- [ ] `P3-G1-T7` — Verify delivery on GitHub with user authorization.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed, or delivery checks recorded `Pending delivery authorization`.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
+- [x] `P3-G1-T7` — Verify delivery on GitHub with user authorization.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed, or delivery checks recorded `Pending delivery authorization`.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
 - [ ] Verification report persisted and separately committed.
 - [ ] Verification report commit SHA recorded.
 - [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
@@ -433,15 +433,15 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 **Evidence:**
 
 - Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: **granted** by the user at the P3-G1-T7 boundary (2026-10-03, answer "Push + open PR"). Granted scope passed to T7: push branch `feat/rm261003abzp-di1-editor-foundation` to `origin`, open PR to `main`, watch CI. No tag, no merge.
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Completed`
+- Initial implementation report commit: `d4f19de` (pushed)
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Pending implementation`
 - Verification report commit: `Pending implementation`
 - Remediation: `Pending implementation`
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
-- PR, CI run, and release links: `Pending implementation`
+- PR, CI run, and release links: PR https://github.com/therealhieu/so/pull/1 (open, not merged); CI run https://github.com/therealhieu/so/actions/runs/37118234988 green in 40 s (check 15 s, test macos-15 25 s, test ubuntu-24.04 37 s); run 37118408437 green after the report push; release: none (V16.1 not authorized — tag out of scope)
 
 **Task Commit Evidence:**
 
@@ -453,7 +453,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 | `P3-G1-T4` | `16d7a7a`, follow-up `989b725` |
 | `P3-G1-T5` | `a0b1a58` |
 | `P3-G1-T6` | `37b9e73` |
-| `P3-G1-T7` | `Pending implementation` |
+| `P3-G1-T7` | No change — delivery only: push of `feat/rm261003abzp-di1-editor-foundation`, PR #1, CI watched |
 
 ## Roadmap Evidence
 
