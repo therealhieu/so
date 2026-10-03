@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G2 — verification`
+- **Current Position:** `P2-G2 — remediation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -365,9 +365,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [ ] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
 - [ ] Implementer completed the remediation checklist or no remediation was required.
 - [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
 - [ ] Final implementation report commit SHA recorded.
@@ -379,9 +379,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` — `Completed`; DEV4 second path reproduced (`:w` between `saved(old)` and rename `fsResult` recreates old file and leaves buffer stuck `writing`); implementer proposed a runner-only fix in `src/app/effects.ts` — assessed by verifier
 - Initial implementation report commit: `39b1d5b`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
+- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` — `Failed`: P2-G2-VER1 (Major, DEV4 confirmed for rename/move and trash; runner-side fix judged sound with prefix repath, chained moves, trash), P2-G2-VER2 (Major, `biome check .` fails at `system.ts:48-50`), P2-G2-VER3 (Minor, `atomicWrite` temp not exclusive `0600`)
+- Verification report commit: `8868bff`
+- Remediation: assigned to a fresh `s1mple-implementer` (in progress)
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
