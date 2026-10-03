@@ -133,12 +133,45 @@ This group cleared these earlier findings: `DirEntry`, `TimerId`, and the `ignor
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` (commit `8868bff`, `Failed`; kept unchanged)
+- **Status:** `Completed`. All three findings are fixed and committed, and every group check passes. knip still fails, but only on the interim items.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G2-VER1` | `src/app/effects.ts`: when a rename, move, or trash is queued, the runner records it in `unreported` until it dispatches that operation's `fsResult`. A `write` (and each `flush` write) takes a snapshot of `unreported` when it is enqueued. At execution, `follow(path, before)` applies the snapshot in order: each successful move of the path or a folder above it re-paths the write by prefix, so moves chain; a successful trash or permanent removal cancels it; failed operations change nothing. The re-pathed write calls `atomicWrite`, `noteWrite`, and `saved`/`saveFailed` with the new path. A cancelled write answers once with `saveFailed{path: old, reason: "deleted on disk — :w to recreate"}`. The trash `fsResult` has already marked the dirty buffer `deleted`, so autosave stays blocked, `:q` reports E37, and `:w` recreates explicitly. No protocol member or AppState field was added. Tests: five in `test/integration/explorer-ops.test.ts`, each on its own app with no production hook; a `fs.promises.rename` spy or a held `Trash` double holds the path operation. They cover `:w` during a rename, autosave during a rename slower than the autosave delay, a folder move, two chained moves (`notes → box/notes`, then `box → shelf/box`), and trash. One runner test in `src/app/effects.test.ts` covers a removal, a failed rename, and `flush`. **RED** (before the fix): all 6 fail. The rename cases answer `saved` at `d.md`; the folder cases answer `saveFailed` at `notes/one.md`; trash recreates `d.md`. **GREEN:** 6 pass. Each case asserts that the old path is absent, the new path holds the newest text, the buffer is at the new path, `idle`, and clean, and `:q` emits `exit 0`. The trash case instead asserts that `d.md` is absent, the bin holds the trashed text, the buffer is `deleted`, dirty, and not `writing`, `:q` gives `E37: No write since last change (d.md)`, and `:w` then recreates `d.md` with the newest text. | `a9a5943` | `Fixed` |
+| `P2-G2-VER2` | `bunx biome check --write src/workspace/system.ts` joins the `osc52Provider` signature (lines 48–50) onto one line. `bunx biome check .` → exit 0 (81 files, no fixes). `bun run check` → biome and tsc pass, and it stops at knip with exactly the interim items the verification report lists. The initial report's `bunx biome check . → Passed` claim was inaccurate at `34f4946`. It is corrected here, and the original section is kept unchanged. | `7624634` | `Fixed` |
+| `P2-G2-VER3` | `src/workspace/fs.ts:atomicWrite`: the temp is removed first (`rm(tmp, {force: true})`, which unlinks a symlink and never touches its target), then opened with `"wx"` and `0o600` (`O_CREAT\|O_EXCL`). An entry that reappears in between makes the open fail, the `catch` removes the temp, and the target keeps its old bytes. Tests in `src/workspace/fs.test.ts`: `a save over a stale temp file writes into a new private temp` checks a stale `0644` temp; an `open` spy sees mode `0600` when the temp opens, the target keeps `0640`, and no temp remains. `a symlink planted at the temp path is never written through` checks that the link target keeps `keep\n` and the saved file is regular. **RED:** 2 fail (mode `0644`; victim overwritten). **GREEN:** 11/11 in `fs.test.ts`. | `0054294` | `Fixed` |
+
+**P2-G2-VER1 completion checklist:**
+
+- [x] Required resolution is implemented. Writes follow moves by prefix and chain in order. A trash or removal cancels the write, which answers once, so the buffer ends `deleted`, not `writing`. Failed operations leave the write unchanged, and `flush` applies the same rule.
+- [x] Required proof passes. Proofs (a)–(d), plus chained moves, fail before the fix and pass after it. `bun test test/integration src/workspace src/app` passed 5 consecutive runs (68/68 each) and 3 concurrent runs (68/68 each).
+- [x] Change evidence is recorded (table above).
+- [x] Verification evidence is recorded (table above, Final Evidence).
+
+**P2-G2-VER2 completion checklist:**
+
+- [x] Required resolution is implemented. `src/workspace/system.ts` is formatted.
+- [x] Required proof passes. `bunx biome check .` exits 0, and `bun run check` fails only at knip with the interim items.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+**P2-G2-VER3 completion checklist:**
+
+- [x] Required resolution is implemented. Every save writes into a newly created `0600` temp, and the no-temp-left and old-or-new invariants hold (the existing V3.1 test and the new tests pass).
+- [x] Required proof passes. The stale-temp test and the planted-symlink test pass.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+**Remediation notes:**
+
+- **DEV4 residual closed.** Remaining Issues item 1 of the initial section is resolved by `a9a5943`, on both timing paths and for the trash variant.
+- **Parent-synchronization candidates (not applied; parent files stay read-only):**
+  - **§7 runner semantics:** a write enqueued before an earlier rename, move, or trash reported back follows that operation's outcome. Successful moves re-path it by prefix and chain. A successful trash or removal turns it into `saveFailed{reason: "deleted on disk — :w to recreate"}`. Failed operations change nothing.
+  - **§7 `atomicWrite` temp creation:** `rm` the temp, then `open(tmp, "wx", 0o600)`.
+- **Commit body deviation.** `7624634` names its task `P2-G2-T5 — Clipboard provider detection`; the plan's exact title is `Implement clipboard provider detection`. No amend is allowed, so the deviation is recorded here. The `Resolves:` and `Work:` lines are exact.
 
 ## Final Status
 
@@ -146,8 +179,17 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`. All tasks are committed, and all group checks pass except knip, which reports interim items only. The DEV4 residual (item 1) is reported for decision.
+- **Final report status:** `Completed`. Every finding is fixed. Group checks pass, and knip reports only interim items.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `91373ac`, `14c09fe`, `9ed5898`, `2abd7ba`, `5772a45`, `5147858`, `d4de279`, `ef110d6`, `34f4946`.
-- **Final checks:** `bun test src/workspace src/app test/integration` → 60 pass. `bun test src/core test/vim` → 371 pass. `bun test src test/vim` → 415 pass. `bun test test/boundaries.test.ts` → 2 pass. Biome and tsc are clean. `bun run check` fails only on the interim knip items, and its unit stage gives 420 pass. The process-ID scan finds no match.
-- **Remaining issues:** DEV4 second timing path (item 1); hardening notes (item 5).
+- **Final commits:**
+  - Initial: `91373ac`, `14c09fe`, `9ed5898`, `2abd7ba`, `5772a45`, `5147858`, `d4de279`, `ef110d6`, `34f4946`.
+  - Remediation: `7624634` (VER2), `0054294` (VER3), `a9a5943` (VER1).
+- **Final checks:**
+  - **Adapters and integration:** `bun test test/integration src/workspace src/app` → 68 pass, 0 fail (9 files); 5 consecutive runs and 3 concurrent runs.
+  - **Unit suites:** `bun test src test/vim` → 418 pass. `bun test src/core test/vim` → 371 pass (unchanged). `bun test test/boundaries.test.ts` → 2 pass.
+  - **Lint and types:** `bunx biome check .` → exit 0. `bun --bun run tsc --noEmit -p .` → exit 0.
+  - **Fast gate:** `bun run check` → biome and tsc pass, then knip exits 1 with only `@opentui/core`, `@xterm/headless`, `pendingWrites`, `ViewSpec`, `WhichKeyItem`, `WindowId`, `Overlay`, and the `src/app/main.ts` hint. Its unit stage, run directly, gives 423 pass, 0 fail (21 files).
+  - **Process-ID scan:** the verifier's `grep -rnE` over `src test scripts .github bin` and the `w261003|hege|rm261003|abzp|dev[1-4]` scan over the remediation diff find no match.
+- **Remaining issues:**
+  - The watcher has no `error` listener (initial item 5; owned by the P3-G1 lifecycle).
+  - The two §7 parent-synchronization candidates above.
