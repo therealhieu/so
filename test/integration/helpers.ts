@@ -84,6 +84,8 @@ export async function startApp(
     trash?: Trash;
     /** Run the real index host and worker; `spawn` may wrap the worker. */
     index?: { spawn?: () => Worker };
+    /** The environment the debug log reads (`SO_LOG`, `XDG_STATE_HOME`). */
+    env?: Record<string, string>;
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -96,6 +98,7 @@ export async function startApp(
     }
   });
   const ownOps = createOwnOps();
+  const logger = createLogger(opts.env ?? {}, root);
   const runner = createEffectRunner({
     root,
     matcher,
@@ -107,7 +110,7 @@ export async function startApp(
     clipboard: { name: "none", copy: async () => {} },
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
-    logger: createLogger({}, root),
+    logger,
     configPath: join(root, ".no-config.toml"),
   });
   const update = createUpdate(testRegistries());
@@ -127,7 +130,7 @@ export async function startApp(
       ? undefined
       : createIndexHost({
           dispatch: (a) => store.dispatch(a),
-          logger: createLogger({}, root),
+          logger,
           ...opts.index,
         });
   const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {

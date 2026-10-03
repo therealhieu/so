@@ -109,7 +109,7 @@ function loadStartupConfig(path: string, logger: Logger): Action | undefined {
     text = readConfigTextSync(path);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    logger.error("config read failed", { reason: message });
+    logger.error("config.readFailed", { reason: message });
     return {
       type: "configLoaded",
       result: { ok: false, errors: [{ line: 1, message }] },
@@ -119,7 +119,7 @@ function loadStartupConfig(path: string, logger: Logger): Action | undefined {
   if (text === undefined) return undefined;
   const result = parseConfig(text);
   if (!result.ok)
-    logger.error("config invalid", { errors: result.errors.length });
+    logger.error("config.invalid", { errors: result.errors.length });
   return { type: "configLoaded", result, reload: false };
 }
 
@@ -181,7 +181,7 @@ async function main(argv: string[]): Promise<void> {
   }
 
   const logger = createLogger(process.env, homedir());
-  logger.info("startup", { root: ws.root });
+  logger.info("app.startup", { root: ws.root });
   const configFile = configPath(process.env, homedir());
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
@@ -243,7 +243,7 @@ async function main(argv: string[]): Promise<void> {
       indexHost.notify(event);
     });
     indexHost.start(ws.root, []);
-    logger.info("first frame", { ms: Math.round(performance.now()) });
+    logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
     void detectTrash({
       platform: process.platform,
       env: process.env,

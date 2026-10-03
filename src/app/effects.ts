@@ -141,10 +141,15 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         await moveEntry(d.root, op.from, op.to);
         d.ownOps.noteMove(op.from, op.to);
       }
+      d.logger.info("fs.op", {
+        op: op.kind,
+        path: op.from,
+        ...(op.to === undefined ? {} : { to: op.to }),
+      });
       return { type: "fsResult", op, ok: true };
     } catch (x) {
       const reason = msg(x);
-      d.logger.error("file operation failed", {
+      d.logger.error("fs.opFailed", {
         op: op.kind,
         path: op.from,
         reason,
@@ -158,7 +163,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "read":
         void readTextFile(abs(e.path))
           .catch((x) => {
-            d.logger.error("read failed", { path: e.path, reason: msg(x) });
+            d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
             return { refused: "io" as const };
           })
           .then((r) =>
@@ -173,7 +178,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         void listDir(d.root, e.dir, d.matcher).then(
           (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
           (x) => {
-            d.logger.error("listing failed", { path: e.dir, reason: msg(x) });
+            d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
             d.dispatch({
               type: "dirListed",
               dir: e.dir,
@@ -196,7 +201,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             d.ownOps.noteWrite(path, stamp);
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
-            d.logger.error("write failed", { path, reason: msg(x) });
+            d.logger.error("fs.writeFailed", { path, reason: msg(x) });
             d.dispatch({ type: "saveFailed", path, reason: msg(x) });
           }
         });
@@ -209,7 +214,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           const followed = follow(edit.path, before);
           const path = followed ?? edit.path;
           const fail = (reason: string) => {
-            d.logger.error("link edit skipped", { path, reason });
+            d.logger.error("links.skipped", { path, reason });
             d.dispatch({
               type: "editsApplied",
               batch,
@@ -228,6 +233,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           try {
             const stamp = await write(path, restoreFile(cur, text), cur.stamp);
             d.ownOps.noteWrite(path, stamp);
+            d.logger.info("links.edited", { path, links: edit.edits.length });
             d.dispatch({
               type: "editsApplied",
               batch,
@@ -288,12 +294,12 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         void readConfigText(d.configPath)
           .then((text) => parseConfig(text ?? ""))
           .catch((x): ReturnType<typeof parseConfig> => {
-            d.logger.error("config read failed", { reason: msg(x) });
+            d.logger.error("config.readFailed", { reason: msg(x) });
             return { ok: false, errors: [{ line: 1, message: msg(x) }] };
           })
           .then((result) => {
             if (!result.ok)
-              d.logger.error("config invalid", {
+              d.logger.error("config.invalid", {
                 errors: result.errors.length,
               });
             d.dispatch({ type: "configLoaded", result, reload: true });
