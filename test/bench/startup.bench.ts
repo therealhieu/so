@@ -6,7 +6,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { type PtyProcess, ready, runInPty } from "../e2e/pty";
+import { ready, runInPty, statusRow } from "../e2e/pty";
 import { makeNoteWorkspace } from "../fixtures/generate";
 
 const { values } = parseArgs({
@@ -24,9 +24,6 @@ const tmp = await mkdtemp(join(tmpdir(), "so-bench-startup-"));
 const ws = join(tmp, "notes");
 await mkdir(ws);
 await makeNoteWorkspace(ws);
-
-/** The statusline: the second-to-last row of the screen. */
-const statusRow = (p: PtyProcess) => p.screen().split("\n").at(-2) ?? "";
 
 /** Resolve once `pred` holds, polling every millisecond. */
 async function until(pred: () => boolean, ms: number): Promise<void> {
