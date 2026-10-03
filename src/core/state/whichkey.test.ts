@@ -14,6 +14,7 @@ const reg: Registries = {
     { scope: { mode: "normal" }, seq: "<leader>fr", id: "jump.back" },
     { scope: { mode: "normal" }, seq: "<leader>sx", id: "jump.forward" },
     { scope: { mode: "normal" }, seq: "<leader>a", id: "window.split" },
+    { scope: { mode: "explorer" }, seq: "gx", id: "jump.list" },
   ],
 };
 const update = createUpdate(reg);
@@ -157,4 +158,21 @@ test("a key that neither the keymap nor vim knows after g gets a notice", () => 
   expect(s.vim.pending).toEqual([]);
   expect(s.notifications.message?.text).toBe("no mapping for gZ");
   expect(cursorOf(s)).toEqual({ line: 0, col: 0 });
+});
+
+test("an unbound key after an explorer prefix gets a notice", () => {
+  const s0 = opened();
+  const open: AppState = {
+    ...s0,
+    vim: { ...s0.vim, pending: ["g"] },
+    overlay: {
+      kind: "whichKey",
+      whichKey: { prefix: ["g"], scope: { mode: "explorer" } },
+    },
+  };
+  // gg is a vim motion, but the explorer has no vim engine.
+  const s = keys(open, "g").state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.vim.pending).toEqual([]);
+  expect(s.notifications.message?.text).toBe("no mapping for gg");
 });

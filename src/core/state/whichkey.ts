@@ -64,12 +64,16 @@ export const noMapping = (s: AppState, seq: readonly Key[]): Result =>
   message(close(s), `no mapping for ${seqLabel(seq, s.config.leader)}`);
 
 /**
- * Whether the engine accepts `seq` as a command or the start of one. Insert
- * and command-line modes consume every key.
+ * Whether the engine accepts `seq` in `mode` as a command or the start of
+ * one. Insert and command-line modes consume every key; the explorer has no
+ * engine.
  */
-const vimContinues = (mode: string, seq: readonly Key[]): boolean =>
-  !["normal", "visual", "visualLine"].includes(mode) ||
-  parseKeys(seq, mode).kind !== "invalid";
+function vimContinues(mode: string, seq: readonly Key[]): boolean {
+  if (mode === "insert" || mode === "cmdline") return true;
+  if (mode !== "normal" && mode !== "visual" && mode !== "visualLine")
+    return false;
+  return parseKeys(seq, mode).kind !== "invalid";
+}
 
 /**
  * Keys while the popup is open: descend, run, `<BS>` up a level, `<Esc>` close.
@@ -102,7 +106,7 @@ export function whichKeyKey(
       ...withPending(s, seq),
       overlay: { kind: "whichKey", whichKey: { prefix: seq, scope } },
     });
-  if (prefix[0] !== s.config.leader && vimContinues(s.vim.mode, seq))
+  if (prefix[0] !== s.config.leader && vimContinues(scope.mode, seq))
     return undefined;
   return noMapping(s, seq);
 }
