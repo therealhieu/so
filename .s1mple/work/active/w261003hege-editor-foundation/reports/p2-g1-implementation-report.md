@@ -122,12 +122,66 @@ A fresh remediator must preserve these decisions:
 
 ## Remediation
 
-- **Verification reports:** `<pending>`
-- **Status:** `Not required`
+All three findings are fixed in two code commits; the V-case commands are corrected below.
+
+- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` (commit `1959b23`, `Failed`; unchanged)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | **Cause:** `onSaved` re-wrote text typed during a write at once, so the follow-up write targeted the old path behind a queued rename and its reply never resolved. **Change:** `src/core/state/save.ts` `onSaved` now follows the design's own autosave flow (system design "Save and autosave": typed during write → `scheduleAutosave`). Text typed during a write is autosaved after the delay, at the buffer's path at that time, so a rename or move queued behind the write lands first. With autosave off, a pending `:q` or `:bd` still writes at once. No new state, protocol member, or gate: `writable` stays the single gate. **Proof:** `src/core/state/explorer.test.ts` → `a rename during a write, after typing during it, autosaves the newest text to the new path` drives the verifier's sequence through `createUpdate` (edit → autosave timer → edit during the write → explorer keys `r…c.md<CR>` → `saved(a.md)` → `fsResult ok` → autosave timer → `:q` → `saved(c.md)`). It asserts the buffer is `scheduled`, not `writing`, after `saved`, and at `c.md` and not `writing` after `fsResult`. It also asserts that `:q` exits after `saved(c.md)` and that the only disk effects are, in order, `write a.md "xhello"`, `rename a.md→c.md`, and `write c.md "xxhello"`. RED against the old `save.ts` (`git stash` of the fix): 1 fail at the `scheduled` assertion. GREEN: 1 pass. `save.test.ts` → `typing during a write keeps the buffer dirty and writes again` now expects `startTimer autosave:1`, then the write on the timer. The new test `:q with autosave off writes text typed during its flush at once` covers the remaining branch. `bun test src/core test/vim` → 371 pass, 0 fail | `35f40c6` | `Fixed` |
+| `P2-G1-VER2` | `src/core/config/schema.ts`: `ConfigSchema` is no longer exported; it still defines `AppConfig` and `defaults`. `bun run check` → knip lists only the interim items (`@opentui/core`, `ignore`, `@xterm/headless`, `pendingWrites`, `ViewSpec`, `WhichKeyItem`, `WindowId`, `DirEntry`, `TimerId`, `Overlay`); no `ConfigSchema`. `bun --bun run tsc --noEmit -p .` → exit 0 | `b08110a` | `Fixed` |
+| `P2-G1-VER3` | Report-only correction: the V-case commands in Corrected V-Case Commands use a bare pipe (JS-regex alternation) instead of a backslash-escaped pipe, in a code block so they run as written. Each was run as written: V3.3 → 2 pass; V4.1–V4.4 → 9 pass (8 before plus the new autosave-off `:q` test); V5.4 → 4 pass; V7.5 → 3 pass; 0 fail each | No code change — report correction recorded in this section (report commit) | `Fixed` |
+
+**`P2-G1-VER1` Completion Checklist:**
+
+- [x] Required resolution is implemented.
+- [x] Required proof passes.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+**`P2-G1-VER2` Completion Checklist:**
+
+- [x] Required resolution is implemented.
+- [x] Required proof passes.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+**`P2-G1-VER3` Completion Checklist:**
+
+- [x] Required resolution is implemented.
+- [x] Required proof passes.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Corrected V-Case Commands
+
+These replace the four `\|` commands in the Initial Implementation mapping table. They are listed in a code block, not a table, so each can be copied and run exactly as written; `|` is JS-regex alternation for `bun test -t`. The other rows' commands were rerun unchanged and still select tests.
+
+```sh
+bun test src/core/state -t "autosaves once|failed save"                    # V3.3 → 2 pass, 0 fail
+bun test src/core/state/save.test.ts -t "typing during a write"            # V3.5 → 1 pass, 0 fail
+bun test src/core/state/save.test.ts -t ":q"                               # V4.1–V4.3 → 7 pass, 0 fail
+bun test src/core/state/save.test.ts -t ":q|:bd"                           # V4.4 plus :bd → 9 pass, 0 fail
+bun test src/core/state/disk.test.ts -t "deleted on disk"                  # V5.2, V5.3 → 2 pass, 0 fail
+bun test src/core/state -t "external change|save conflict|conflict keys"   # V5.4 → 4 pass, 0 fail
+bun test src/core/state/explorer.test.ts                                   # V13.2, V13.3, V13.5 → 8 pass, 0 fail
+bun test src/core/state/explorer.test.ts -t "rename during a write"        # V13.2 in-flight write → 1 pass, 0 fail
+bun test src/core/state/update.test.ts -t "throwing command"               # V7.3 → 1 pass, 0 fail
+bun test src/core/state/keys.test.ts -t "bound key sequence|explorer keys resolve|filetype binding"  # V7.5 → 3 pass, 0 fail
+bun test src/core/state/keys.test.ts -t '"\+'                              # V10.3 → 2 pass, 0 fail
+bun test src/core/state/keys.test.ts -t "E486"                             # E486 handoff → 1 pass, 0 fail
+bun test test/vim                                                          # V2.1 → 291 pass, 0 fail
+```
+
+`V4.4` gains one test (the autosave-off `:q` test) and `V13.x` gains one (the rename-during-write test) over the initial counts of 8 and 7.
+
+### Remediation Notes
+
+- **Behavior change kept within the design:** text typed during a write is now written on the next autosave timer (default 1 s) instead of at once. The system design's autosave flow specifies this; its §7 `onSaved` comment ("writeBuffer again") disagreed, and the flow version is the one that keeps queued file operations ordered. V3.5 still holds: the buffer stays dirty and a second write with the newer text follows.
+- **Residual timing assumption:** a pure reducer cannot tell whether a rename is still queued. Two paths can still emit a write to the old path before `fsResult` arrives. The first is an autosave timer that fires before the rename completes, which needs a rename to take longer than the autosave delay while it sits directly behind the write. The second is a write the user starts (`:w`, leaving Insert, `:q`) within the rename's latency. No reply-driven write reaches the old path any more. Closing those timing paths by construction would need a new "operation pending" buffer field, which this remediation must not add.
 
 ## Final Status
 
@@ -135,15 +189,14 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`. All five tasks are implemented and committed, and every group check passes except knip, which fails only on the interim findings listed above.
+- **Final report status:** `Completed`. Every verifier finding is `Fixed`, and every group check passes except knip, which reports only the interim items.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `d4937a7`, `579fb73`, `e47b9de`, `6cc2eb0`, `6d97b00`
+- **Final commits:** `d4937a7`, `579fb73`, `e47b9de`, `6cc2eb0`, `6d97b00`; remediation `35f40c6` (`P2-G1-VER1`), `b08110a` (`P2-G1-VER2`).
 - **Final checks:**
-  - `bun test src/core test/vim` → 369 pass, 0 fail.
-  - `bun test test/vim` → 291 pass, 0 todo.
+  - `bun test src/core test/vim` → 371 pass, 0 fail (13 files).
   - `bun test test/boundaries.test.ts` → 2 pass.
-  - `bunx biome check .` → clean.
+  - `bunx biome check .` → 63 files, no findings.
   - `bun --bun run tsc --noEmit -p .` → exit 0.
-  - `bun run check` → knip exits 1 on interim findings only; the unit stage gives 374 pass.
-  - The process-ID and purity scans find no match.
-- **Remaining issues:** the `ConfigSchema` knip finding (deviation 9). Parent synchronization of the protocol refinements in deviations 1–4 stays pending with the main orchestrator.
+  - `bun run check` → biome and tsc pass; knip exits 1 on the interim items only (no `ConfigSchema`). The unit stage, run directly as `bun test src test/boundaries.test.ts test/repo.test.ts test/vim`, gives 376 pass, 0 fail (15 files).
+  - The process-ID scan over `src test scripts` (`*.ts`) and `.github` finds no match.
+- **Remaining issues:** the residual timing assumption in Remediation Notes. Parent synchronization of the protocol refinements in deviations 1–4 stays pending with the main orchestrator.
