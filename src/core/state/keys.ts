@@ -9,6 +9,7 @@ import { activeBuffer, activeWindow, setBuffer } from "./buffers";
 import { EX_ALIASES, executeEx, runCommand } from "./commands";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
+import { keymapFor } from "./keymap";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
@@ -39,7 +40,7 @@ export function handleKeyAction(
   const scope: KeyScope =
     b === undefined || inExplorer ? { mode } : { mode, filetype: b.fileType };
   const seq = [...s.vim.pending, a.key];
-  const hit = reg.keymap.lookup(scope, seq);
+  const hit = keymapFor(reg, s.config).lookup(scope, seq);
   if (hit.kind === "command")
     return runCommand(setVim(s, { pending: [] }), hit.id, a.now, reg);
   if (hit.kind === "prefix") return none(setVim(s, { pending: seq }));

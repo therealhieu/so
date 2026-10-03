@@ -10,7 +10,7 @@ import { fullText } from "./buffers";
 import { runCommand } from "./commands";
 import { cmdlineCompletions } from "./keys";
 import type { Action, AppState, Effect } from "./types";
-import { createUpdate, type Registries } from "./update";
+import { createUpdate } from "./update";
 
 const reg = testRegistries();
 const update = createUpdate(reg);
@@ -86,12 +86,13 @@ test("explorer keys resolve in explorer mode and never edit the buffer", () => {
 });
 
 test("a filetype binding wins over the global binding for the same keys", () => {
-  const r: Registries = testRegistries();
+  const base = testRegistries();
+  const bindings = [...base.bindings];
   for (const [id, scope] of [
     ["test.global", { mode: "normal" }],
     ["test.markdown", { mode: "normal", filetype: "markdown" }],
   ] as const) {
-    r.commands.register({
+    base.commands.register({
       id,
       title: id,
       run: (ctx) => ({
@@ -102,9 +103,9 @@ test("a filetype binding wins over the global binding for the same keys", () => 
         effects: [],
       }),
     });
-    r.keymap.bind(scope, "gx", id);
+    bindings.push({ scope, seq: "gx", id });
   }
-  const u = createUpdate(r);
+  const u = createUpdate({ ...base, bindings });
   const md = keys(open("a.md", "x\n"), "gx", 0, u);
   expect(md.state.notifications.message?.text).toBe("test.markdown");
   const ts = keys(open("a.ts", "x\n"), "gx", 0, u);

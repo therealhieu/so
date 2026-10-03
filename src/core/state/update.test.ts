@@ -37,7 +37,14 @@ test("the store runs effects in order, then notifies subscribers once", () => {
 });
 
 test("a throwing command keeps the previous state and reports the error", () => {
-  const reg = testRegistries();
+  const base = testRegistries();
+  const reg = {
+    ...base,
+    bindings: [
+      ...base.bindings,
+      { scope: { mode: "normal" }, seq: "Q", id: "test.throw" },
+    ],
+  };
   reg.commands.register({
     id: "test.throw",
     title: "Throw",
@@ -45,7 +52,6 @@ test("a throwing command keeps the previous state and reports the error", () => 
       throw new Error("boom");
     },
   });
-  reg.keymap.bind({ mode: "normal" }, "Q", "test.throw");
   const s = deepFreeze({
     ...fresh(),
     panels: { explorer: { ...fresh().panels.explorer, focused: false } },

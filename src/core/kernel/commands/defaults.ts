@@ -1,14 +1,18 @@
 import type { KeyScope } from "./keymap";
 
+/** A key binding; `overridden` marks one that comes from the user's config. */
+export type Binding = {
+  scope: KeyScope;
+  seq: string;
+  id: string;
+  overridden?: true;
+};
+
 /**
  * Built-in bindings. Keymap bindings run before the vim engine, so these
  * sequences never reach it in their mode.
  */
-export const defaultBindings: readonly {
-  scope: KeyScope;
-  seq: string;
-  id: string;
-}[] = [
+export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>e", id: "explorer.toggle" },
   { scope: { mode: "normal" }, seq: "<C-w>h", id: "window.focush" },
   { scope: { mode: "normal" }, seq: "<C-w>j", id: "window.focusj" },
@@ -27,3 +31,6 @@ export const defaultBindings: readonly {
   { scope: { mode: "explorer" }, seq: "d", id: "explorer.delete" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
 ];
+
+/** Which-key labels by prefix sequence; none of the built-in prefixes has one yet. */
+export const defaultGroups: Readonly<Record<string, string>> = {};

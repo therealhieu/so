@@ -3,8 +3,10 @@ import {
   FileTypeRegistry,
   textFileType,
 } from "../../src/core/filetypes/registry";
-import { defaultBindings } from "../../src/core/kernel/commands/defaults";
-import { Keymap } from "../../src/core/kernel/commands/keymap";
+import {
+  defaultBindings,
+  defaultGroups,
+} from "../../src/core/kernel/commands/defaults";
 import { CommandRegistry } from "../../src/core/kernel/commands/registry";
 import { UndoHistory } from "../../src/core/kernel/editor/undo";
 import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
@@ -29,13 +31,12 @@ export function testRegistries(): Registries {
   fileTypes.register(markdownFileType);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
-  const keymap = new Keymap();
-  for (const b of defaultBindings) keymap.bind(b.scope, b.seq, b.id);
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    keymap,
+    bindings: defaultBindings,
+    groups: defaultGroups,
   };
 }
 

@@ -2,7 +2,7 @@ import type {
   EditorKindRegistry,
   FileTypeRegistry,
 } from "../filetypes/registry";
-import type { Keymap } from "../kernel/commands/keymap";
+import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
 import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
@@ -22,7 +22,10 @@ export type Registries = {
   fileTypes: FileTypeRegistry;
   editorKinds: EditorKindRegistry;
   commands: CommandRegistry<CommandContext, CommandResult>;
-  keymap: Keymap;
+  /** Built-in and registered bindings; config overrides are merged per config by `keymapFor`. */
+  bindings: readonly Binding[];
+  /** Which-key group labels by prefix sequence ("<leader>f" → "find"). */
+  groups: Readonly<Record<string, string>>;
 };
 
 /** A pure reducer over the given registries; a thrown error keeps the previous state. */

@@ -8,8 +8,10 @@ import {
   FileTypeRegistry,
   textFileType,
 } from "../core/filetypes/registry";
-import { defaultBindings } from "../core/kernel/commands/defaults";
-import { Keymap } from "../core/kernel/commands/keymap";
+import {
+  defaultBindings,
+  defaultGroups,
+} from "../core/kernel/commands/defaults";
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
@@ -81,9 +83,13 @@ function registries(): Registries {
   fileTypes.register(markdownFileType);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
-  const keymap = new Keymap();
-  for (const b of defaultBindings) keymap.bind(b.scope, b.seq, b.id);
-  return { fileTypes, editorKinds: new EditorKindRegistry(), commands, keymap };
+  return {
+    fileTypes,
+    editorKinds: new EditorKindRegistry(),
+    commands,
+    bindings: defaultBindings,
+    groups: defaultGroups,
+  };
 }
 
 const readOrNull = (p: string): string | null => {
