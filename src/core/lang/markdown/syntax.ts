@@ -234,11 +234,20 @@ export function markdownTarget(dest: string): {
 export const isExternal = (dest: string) =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(dest);
 
-/** `[text](dest "title")` starting at `i`: the end index and destination, or nothing. */
-function parseMarkdownLink(
+type MarkdownLink = {
+  end: number;
+  dest: string;
+  /** The destination as written: inside `<…>` when `angle`. */
+  destStart: number;
+  destEnd: number;
+  angle: boolean;
+};
+
+/** `[text](dest "title")` starting at `i`: the end index and the destination with its span, or nothing. */
+export function parseMarkdownLink(
   text: string,
   i: number,
-): { end: number; dest: string } | undefined {
+): MarkdownLink | undefined {
   let depth = 0;
   let j = i;
   for (; j < text.length; j++) {
@@ -251,11 +260,15 @@ function parseMarkdownLink(
   let k = j + 2;
   while (text[k] === " " || text[k] === "\t") k++;
   let dest: string;
-  if (text[k] === "<") {
+  const angle = text[k] === "<";
+  const destStart = angle ? k + 1 : k;
+  let destEnd: number;
+  if (angle) {
     const close = text.indexOf(">", k + 1);
     if (close === -1) return undefined;
     dest = text.slice(k + 1, close);
     if (dest.includes("<")) return undefined;
+    destEnd = close;
     k = close + 1;
   } else {
     const from = k;
@@ -270,6 +283,7 @@ function parseMarkdownLink(
       } else if (c === " " || c === "\t") break;
     }
     dest = text.slice(from, k);
+    destEnd = k;
   }
   while (text[k] === " " || text[k] === "\t") k++;
   const quote = text[k];
@@ -281,7 +295,7 @@ function parseMarkdownLink(
     while (text[k] === " " || text[k] === "\t") k++;
   }
   if (text[k] !== ")") return undefined;
-  return { end: k + 1, dest };
+  return { end: k + 1, dest, destStart, destEnd, angle };
 }
 
 function scanMarkdownLinks(
