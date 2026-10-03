@@ -2,8 +2,8 @@
 
 ## Status
 
-- **State:** `In Progress`
-- **Current Position:** `Overall verification`
+- **State:** `Complete`
+- **Current Position:** `Complete — awaiting user merge of PR #1 (outside goal)`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -464,9 +464,9 @@ Keep definitions in the accepted binding (`w261003hege-discuss-context.md`, Road
 | Boundary | Accepted references and current sources checked | Assessment and evidence |
 |---|---|---|
 | Execution start | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `deb9b96`); index `:131`, `:142`; W bindings under `.s1mple/work/` | Aligned — 0 parent commits since `d00d3a3`; `:131` and `:142` carry `RM261003ABZP-DI1@R2` (Work `Pending`, Not started); only `w261003hege-discuss-context.md` binds DI1. Tooling observed: local Bun 1.3.10, Neovim 0.12.4 — P1-G1-T1 installs Bun 1.4.2, P1-G2-T3 downloads Neovim v0.11.7 per plan context §7. |
-| Each resume after interruption | `Pending implementation` | `Pending implementation` |
+| Each resume after interruption | P1-G2 implementer resumed after an API usage limit (same agent, same context) | No parent change at resume; no reassessment needed |
 | Before P3-G1-T7 delivery actions | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `37b9e73`+goal commit); `git tag` | Aligned — 0 parent commits since `d00d3a3`; no tags exist; DI1 binding unchanged |
-| Delivery acceptance | `Pending implementation` | `Pending implementation` |
+| Delivery acceptance | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/`; index `:131`, `:142`; W bindings | Aligned — 0 parent commits; DI1@R2 unchanged; only W261003HEGE binds DI1; also confirmed in `5e57bae` |
 
 Append checks as boundaries are reached. An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
 
@@ -478,14 +478,14 @@ Append checks as boundaries are reached. An unresolved relevant change blocks af
 | G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `src/core/kernel/{commands,view}/**`, `src/core/filetypes/registry.ts`, `src/core/lang/code/highlight.ts`; verifier judged no shape change material to G1/parent contracts (`p1-g2-verification-report.md`, `4f078dd`); `layoutText` fixed `0723afc` | Produced locally |
 | G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `src/core/state/{update,store,types}.ts`; protocol additions exactly the five allowed; V7.3, V2.1 (289 cases via `createUpdate`), V7.5 pass (`p2-g1-verification-report.md` `1959b23`; remediation `d4abdc3`) | Produced locally |
 | G1 — P2-G2 outputs | `readTextFile`, `atomicWrite`, watcher, effect runner (V3.1–V3.4, V5.1, V6.4–V6.5) | `src/workspace/{fs,watcher}.ts`, `src/app/effects.ts`; cases pass (`p2-g2-verification-report.md` `8868bff`; remediation `381f558`) | Produced locally |
-| G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | `Pending implementation` | T6 evidence list in `p3-g1-implementation-report.md` (`c773c21`); shell `src/ui/shell.ts`, `editorViews` `src/ui/editors/registry.ts`, `OverlayHost`/`PromptView` `src/ui/overlays/{host,prompt}.ts`, bench `scripts/bench-gate.ts`; PR #1 CI green on `c773c21` (run 37119729032) | `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
+| G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | T6 evidence list in `p3-g1-implementation-report.md` (`c773c21`); shell `src/ui/shell.ts`, `editorViews` `src/ui/editors/registry.ts`, `OverlayHost`/`PromptView` `src/ui/overlays/{host,prompt}.ts`, bench `scripts/bench-gate.ts`; PR #1 CI green on `c773c21` (run 37119729032) | `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
 
 Never treat an approved producer design as delivered implementation. Check gates before their due boundary, not only before marking a group complete.
 
 ### Parent Synchronization
 
 - **Owner:** Main orchestrator
-- **Receipt:** `Pending implementation` — expected `Pending parent synchronization`: no parent-write authorization. Pending updates: discuss-context registration receipt; system design §1 Parent Synchronization items 1–7; Work Progress DI1 stage and PR assignment once the PR exists.
+- **Receipt:** `Pending parent synchronization` (no parent-write authorization; no parent file written): no parent-write authorization. Pending updates: discuss-context registration receipt; system design §1 Parent Synchronization items 1–7; Work Progress DI1 stage and PR assignment once the PR exists.
 
 After stage/blocker changes, PR assignment, reconciliation, or delivery, record the exact DI/W, parent paths, proposed updates, and evidence. With explicit authorization, re-read the parent, preserve concurrent changes, update matching index/phase records, verify both directions, and record changed paths and commit evidence when committing is authorized. Keep parent changes separate from W-only commits. Otherwise report `Pending parent synchronization` and the missing authorization without editing the parent. Implementers and verifiers never perform parent synchronization.
 
@@ -497,23 +497,23 @@ Definitions: system design §8 Design Success Criteria.
 
 | Complete | Criterion | Observable condition | Verification cases | Evidence |
 |---|---|---|---|---|
-| [ ] | `S1` | Exact npm pins, frozen lockfile, SHA-pinned actions, `bun run check` < 30 s | `V1.1`, `V1.2`, `V1.3`, `V1.4` | `Pending implementation` |
-| [ ] | `S2` | Every REQ2 vim command equals recorded Neovim 0.11; recorder refuses non-0.11 | `V2.1`, `V2.2`, `V2.3`, `V2.4` | `Pending implementation` |
-| [ ] | `S3` | Atomic saves keep mode/BOM/EOL/newline, retry with backoff, never overwrite unseen disk version, no temp left | `V3.1`, `V3.2`, `V3.3`, `V3.4`, `V3.5` | `Pending implementation` |
-| [ ] | `S4` | `:q`, `:wq`, `:q!`, `:bd`, `:bd!`, signals, crashes follow REQ5 | `V4.1`, `V4.2`, `V4.3`, `V4.4`, `V4.5` | `Pending implementation` |
-| [ ] | `S5` | External edits reload or conflict; external deletion marks deleted without resurrection; own ops never handled | `V5.1`, `V5.2`, `V5.3`, `V5.4`, `V5.5` | `Pending implementation` |
-| [ ] | `S6` | Open policy and file-type resolution; refused files create no buffer | `V6.1`, `V6.2`, `V6.3`, `V6.4`, `V6.5` | `Pending implementation` |
-| [ ] | `S7` | Layer and kernel boundaries hold; reducer pure and exhaustive | `V7.1`, `V7.2`, `V7.3`, `V7.4`, `V7.5` | `Pending implementation` |
-| [ ] | `S8` | Terminal restored on `:q`, SIGTERM, SIGINT, uncaught exception; `NO_COLOR` has no colour SGR | `V8.1`, `V8.2`, `V8.3` | `Pending implementation` |
-| [ ] | `S9` | Lone legacy Esc → `escape` after `max(escTimeoutMs, 20)` ms; sequences immediate | `V9.1`, `V9.2`, `V9.3` | `Pending implementation` |
-| [ ] | `S10` | `"+` uses first provider in Neovim 0.11 order, OSC 52 and session fallback, failures reported | `V10.1`, `V10.2`, `V10.3`, `V10.4` | `Pending implementation` |
-| [ ] | `S11` | Freedesktop trash on Linux, non-prompting macOS paths, typed-confirm fallback without orphans | `V11.1`, `V11.2`, `V11.3`, `V11.4` | `Pending implementation` |
-| [ ] | `S12` | Explorer hides dot entries, `node_modules`, nested `.gitignore` matches with git precedence; no symlink-loop hang | `V12.1`, `V12.2`, `V12.3`, `V12.4` | `Pending implementation` |
-| [ ] | `S13` | Explorer ops never overwrite, flush before move/trash, keep buffers consistent | `V13.1`, `V13.2`, `V13.3`, `V13.4`, `V13.5` | `Pending implementation` |
-| [ ] | `S14` | DI1 UI states match accepted parent goldens and interactions (UV1 DI1, UV2, UV6, UV10 DI1) | `V14.1`, `V14.2`, `V14.3`, `V14.4` | `Pending implementation` |
-| [ ] | `S15` | CI on pull requests only, cancels superseded runs, both OS, bench on Linux, < 3 min | `V15.1`, `V15.2`, `V15.3` | `Pending implementation` |
-| [ ] | `S16` | `v*` tag → four binaries + `SHA256SUMS`, smoke-tested natively, published only after smoke | `V16.1`, `V16.2` | `Pending implementation` |
-| [ ] | `S17` | Keystroke and open on the 5,000-line fixture viewport-bound within 2× targets | `V17.1` | `Pending implementation` |
+| [x] | `S1` | Exact npm pins, frozen lockfile, SHA-pinned actions, `bun run check` < 30 s | `V1.1`, `V1.2`, `V1.3`, `V1.4` | All cases pass — overall `5e57bae` |
+| [x] | `S2` | Every REQ2 vim command equals recorded Neovim 0.11; recorder refuses non-0.11 | `V2.1`, `V2.2`, `V2.3`, `V2.4` | All cases pass — overall `5e57bae` |
+| [x] | `S3` | Atomic saves keep mode/BOM/EOL/newline, retry with backoff, never overwrite unseen disk version, no temp left | `V3.1`, `V3.2`, `V3.3`, `V3.4`, `V3.5` | All cases pass — overall `5e57bae` |
+| [x] | `S4` | `:q`, `:wq`, `:q!`, `:bd`, `:bd!`, signals, crashes follow REQ5 | `V4.1`, `V4.2`, `V4.3`, `V4.4`, `V4.5` | All cases pass — overall `5e57bae` |
+| [x] | `S5` | External edits reload or conflict; external deletion marks deleted without resurrection; own ops never handled | `V5.1`, `V5.2`, `V5.3`, `V5.4`, `V5.5` | All cases pass — overall `5e57bae` |
+| [x] | `S6` | Open policy and file-type resolution; refused files create no buffer | `V6.1`, `V6.2`, `V6.3`, `V6.4`, `V6.5` | All cases pass — overall `5e57bae` |
+| [x] | `S7` | Layer and kernel boundaries hold; reducer pure and exhaustive | `V7.1`, `V7.2`, `V7.3`, `V7.4`, `V7.5` | All cases pass — overall `5e57bae` |
+| [x] | `S8` | Terminal restored on `:q`, SIGTERM, SIGINT, uncaught exception; `NO_COLOR` has no colour SGR | `V8.1`, `V8.2`, `V8.3` | All cases pass — overall `5e57bae` |
+| [x] | `S9` | Lone legacy Esc → `escape` after `max(escTimeoutMs, 20)` ms; sequences immediate | `V9.1`, `V9.2`, `V9.3` | All cases pass — overall `5e57bae` |
+| [x] | `S10` | `"+` uses first provider in Neovim 0.11 order, OSC 52 and session fallback, failures reported | `V10.1`, `V10.2`, `V10.3`, `V10.4` | All cases pass — overall `5e57bae` |
+| [x] | `S11` | Freedesktop trash on Linux, non-prompting macOS paths, typed-confirm fallback without orphans | `V11.1`, `V11.2`, `V11.3`, `V11.4` | V11.1–V11.3 pass; V11.4 `Pending manual check` |
+| [x] | `S12` | Explorer hides dot entries, `node_modules`, nested `.gitignore` matches with git precedence; no symlink-loop hang | `V12.1`, `V12.2`, `V12.3`, `V12.4` | All cases pass — overall `5e57bae` |
+| [x] | `S13` | Explorer ops never overwrite, flush before move/trash, keep buffers consistent | `V13.1`, `V13.2`, `V13.3`, `V13.4`, `V13.5` | All cases pass — overall `5e57bae` |
+| [x] | `S14` | DI1 UI states match accepted parent goldens and interactions (UV1 DI1, UV2, UV6, UV10 DI1) | `V14.1`, `V14.2`, `V14.3`, `V14.4` | All cases pass — overall `5e57bae` |
+| [x] | `S15` | CI on pull requests only, cancels superseded runs, both OS, bench on Linux, < 3 min | `V15.1`, `V15.2`, `V15.3` | V15.1 local; V15.2, V15.3 on PR #1 CI |
+| [x] | `S16` | `v*` tag → four binaries + `SHA256SUMS`, smoke-tested natively, published only after smoke | `V16.1`, `V16.2` | V16.2 passed; V16.1 `Not authorized — tag out of scope (DEV5)` |
+| [x] | `S17` | Keystroke and open on the 5,000-line fixture viewport-bound within 2× targets | `V17.1` | All cases pass — overall `5e57bae` |
 
 Parent UI chain (verified through S14): `RM261003ABZP-UREQ1@R2, UREQ2@R1, UREQ7@R2, UREQ11@R1 → UDES1@R2, UDES2@R1, UDES7@R2, UDES11@R1 (UDES3@R2 non-Markdown window) → US1@R2, US5@R2, US9@R1 → UV1@R2 (DI1 states), UV2@R1, UV6@R2, UV10@R1 (DI1 states)`.
 
@@ -523,73 +523,73 @@ Definitions: system design §8 Test Suites and Cases; commands follow the owning
 
 | Complete | Case | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | `V1.1` | `bun test test/repo.test.ts -t V1.1` (P1-G1-T1, T2) | Exact versions; `packageManager` `bun@1.4.2` | `Pending implementation` |
-| [ ] | `V1.2` | `bun test test/repo.test.ts -t V1.2` (P1-G1-T2, T3) | Every `uses:` is a 40-hex SHA with version comment | `Pending implementation` |
-| [ ] | `V1.3` | `time bun run check` (P3-G1-T6) | Exit 0 in < 30 s; zero `knip` findings | `Pending implementation` |
-| [ ] | `V1.4` | Docs review vs `package.json` (P1-G1-T5) | Recorded versions equal exactly | `Pending implementation` |
-| [ ] | `V2.1` | `bun test test/vim` (non-ex P1-G2-T4; all cases P2-G1-T5) | Every recorded case equal through `createUpdate`; no todo left | `Pending implementation` |
-| [ ] | `V2.2` | `bun test test/vim -t V2.2` (P1-G2-T3, T4) | `nvim` starts `0.11.`; one entry per case id | `Pending implementation` |
-| [ ] | `V2.3` | `bun test scripts/record-vim.test.ts` (P1-G2-T3) | Exit 1, "requires Neovim 0.11.x" | `Pending implementation` |
-| [ ] | `V2.4` | `bun test src/core/kernel/text` (P1-G2-T1) | Round-trip text, `version + 2`, `lineCount ≥ 1` | `Pending implementation` |
-| [ ] | `V2.5` | None — greenfield (system design §8 Non-test) | No removed paths or symbols; recorded `Not applicable` | `Pending implementation` |
-| [ ] | `V3.1` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Original bytes after injected failure; no `.so-tmp-` | `Pending implementation` |
-| [ ] | `V3.2` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Reload + undo, dirty conflict, own save silent, mode kept | `Pending implementation` |
-| [ ] | `V3.3` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | One write per stage; backoff 1,2,4…30 s | `Pending implementation` |
-| [ ] | `V3.4` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Queued autosave + external write → conflict | `Pending implementation` |
-| [ ] | `V3.5` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | Typing during write keeps dirty; second write | `Pending implementation` |
-| [ ] | `V4.1` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | `:q` flushes then exits 0 | `Pending implementation` |
-| [ ] | `V4.2` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | Save failure cancels quit with message | `Pending implementation` |
-| [ ] | `V4.3` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | E37 blocks quit | `Pending implementation` |
-| [ ] | `V4.4` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | `:q!`, two windows, `:bd!` semantics | `Pending implementation` |
-| [ ] | `V4.5` | `bun test test/e2e/quit.test.ts` (P3-G1-T4) | SIGTERM flushes; slow write bounded at 2 s, restored, stderr names path | `Pending implementation` |
-| [ ] | `V5.1` | `bun test src/workspace/watcher.test.ts` (P2-G2-T3) | Own ops suppressed; external changes reported; loops safe | `Pending implementation` |
-| [ ] | `V5.2` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Clean buffer marked deleted; no resurrection | `Pending implementation` |
-| [ ] | `V5.3` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Dirty deleted buffer blocks `:q`; `:w` recreates | `Pending implementation` |
-| [ ] | `V5.4` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Undoable reload; conflict on dirty | `Pending implementation` |
-| [ ] | `V5.5` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | Folder move re-paths buffers; zero own `fileChanged` | `Pending implementation` |
-| [ ] | `V6.1` | `bun test src/core/filetypes` (P1-G2-T6) | Expected ids for all eight paths | `Pending implementation` |
-| [ ] | `V6.2` | `bun test src/core/lang/code/file-types.test.ts` (P1-G2-T6) | Table integrity; duplicate throws | `Pending implementation` |
-| [ ] | `V6.3` | `bun test src/core/lang/code/highlight.test.ts` (P1-G2-T6) | Windowed code tokens; cache hit; safe failure | `Pending implementation` |
-| [ ] | `V6.4` | `bun test test/integration/open-save.test.ts` (P2-G2-T7) | Binary and > 16 MiB refused; no buffer, no write | `Pending implementation` |
-| [ ] | `V6.5` | `bun test test/integration/open-save.test.ts` (P2-G2-T7) | BOM, CRLF, trailing newline preserved | `Pending implementation` |
-| [ ] | `V7.1` | `bun test test/boundaries.test.ts -t V7.1` (P1-G1-T4; every group) | `src` respects `LAYER_RULES` | `Pending implementation` |
-| [ ] | `V7.2` | `bun test test/boundaries.test.ts -t V7.2` (P1-G1-T4) | Both violation fixtures reported | `Pending implementation` |
-| [ ] | `V7.3` | `bun test src/core/state/update.test.ts` (P2-G1-T1, T5) | Pure on frozen state; thrown command contained | `Pending implementation` |
-| [ ] | `V7.4` | `bun test src/core/kernel/view` (P1-G2-T5) | All decoration kinds; viewport-only requests | `Pending implementation` |
-| [ ] | `V7.5` | `bun test src/core/state/keys.test.ts` (P2-G1-T5; contract P1-G2-T2) | Keymap precedence, explorer mode, filetype scope | `Pending implementation` |
-| [ ] | `V8.1` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | Restore on `:q`, SIGTERM, SIGINT, throw; codes 0,0,0,1 | `Pending implementation` |
-| [ ] | `V8.2` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | `NO_COLOR` → no colour SGR besides 39/49 | `Pending implementation` |
-| [ ] | `V8.3` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | Ctrl-C does not exit; `:q` exits 0 | `Pending implementation` |
-| [ ] | `V9.1` | `bun test src/ui/input.test.ts` (P3-G1-T1) | Esc held to `max(escTimeoutMs, 20)` | `Pending implementation` |
-| [ ] | `V9.2` | `bun test src/ui/input.test.ts` (P3-G1-T1) | Merges split; sequences immediate | `Pending implementation` |
-| [ ] | `V9.3` | `bun test test/ui/esc.test.ts` (P3-G1-T2) | Legacy Esc at 50 ± 10 ms; `\x1b[A` < 10 ms | `Pending implementation` |
-| [ ] | `V10.1` | `bun test src/workspace/system.test.ts` (P2-G2-T5) | Provider order per Neovim 0.11 | `Pending implementation` |
-| [ ] | `V10.2` | `bun test src/workspace/system.test.ts` (P2-G2-T5) | OSC 52 copy; no paste | `Pending implementation` |
-| [ ] | `V10.3` | `bun test src/core/state/keys.test.ts` (P2-G1-T5) | Failure message; paste falls back to `registers["+"]` | `Pending implementation` |
-| [ ] | `V10.4` | `bun test src/app/effects.test.ts` (P2-G2-T6) | One dispatch with `error` | `Pending implementation` |
-| [ ] | `V11.1` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | Spec info file | `Pending implementation` |
-| [ ] | `V11.2` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | Collision naming | `Pending implementation` |
-| [ ] | `V11.3` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | No orphan; no injection | `Pending implementation` |
-| [ ] | `V11.4` | Manual on developer Mac (P3-G1-T7) | Moved to `~/.Trash`, no prompt | `Pending implementation` |
-| [ ] | `V12.1` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Always-hidden and gitignored excluded | `Pending implementation` |
-| [ ] | `V12.2` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Cross-scope precedence | `Pending implementation` |
-| [ ] | `V12.3` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Directory-only pattern | `Pending implementation` |
-| [ ] | `V12.4` | `bun test src/workspace/fs.test.ts` (P2-G2-T2) | Symlinks and loops safe | `Pending implementation` |
-| [ ] | `V13.1` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | E13; bytes identical | `Pending implementation` |
-| [ ] | `V13.2` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Write then rename; re-path | `Pending implementation` |
-| [ ] | `V13.3` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Trash dirty buffer close/keep | `Pending implementation` |
-| [ ] | `V13.4` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | Rename dirty then autosave → new path only | `Pending implementation` |
-| [ ] | `V13.5` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Create targets; E13 and trash failure | `Pending implementation` |
-| [ ] | `V14.1` | `bun test test/ui/shell.golden.test.ts` (P3-G1-T2) | UV1 DI1 goldens at 120×36 and 80×24 | `Pending implementation` |
-| [ ] | `V14.2` | `bun test test/ui/cmdline.test.ts` (P3-G1-T2) | Mode badges, cursor style, E492, completion order | `Pending implementation` |
-| [ ] | `V14.3` | `bun test test/ui/shell.golden.test.ts` (P3-G1-T2) | dark/light/nocolor spans (UV10 DI1) | `Pending implementation` |
-| [ ] | `V14.4` | `bun test test/ui/file-ops.test.ts` (P3-G1-T3) | Every UV6@R2 assertion | `Pending implementation` |
-| [ ] | `V15.1` | `bun test test/repo.test.ts -t V15.1` (P1-G1-T2) | `pull_request` only; PR concurrency; cancel | `Pending implementation` |
-| [ ] | `V15.2` | DI1 PR CI run (P3-G1-T7, authorized) | Both OS green; < 3 min | `Pending implementation` |
-| [ ] | `V15.3` | DI1 PR Linux test job log (P3-G1-T7, authorized) | Bench step printed both medians | `Pending implementation` |
-| [ ] | `V16.1` | `v0.1.0-rc.1` release (P3-G1-T7, authorized) | Four binaries + `SHA256SUMS`; four smoke jobs print `so 0.1.0-rc.1`; prerelease after smoke | `Pending implementation` |
-| [ ] | `V16.2` | `release.yml` review (P1-G1-T3) | `publish` needs `smoke`; four native labels | `Pending implementation` |
-| [ ] | `V17.1` | `bun run bench` (P3-G1-T5) | Keystroke p95 ≤ 32 ms, open ≤ 100 ms medians | `Pending implementation` |
+| [x] | `V1.1` | `bun test test/repo.test.ts -t V1.1` (P1-G1-T1, T2) | Exact versions; `packageManager` `bun@1.4.2` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V1.2` | `bun test test/repo.test.ts -t V1.2` (P1-G1-T2, T3) | Every `uses:` is a 40-hex SHA with version comment | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V1.3` | `time bun run check` (P3-G1-T6) | Exit 0 in < 30 s; zero `knip` findings | Exit 0 in 2.50 s, zero knip findings (overall `5e57bae`); P3-G1 accepted |
+| [x] | `V1.4` | Docs review vs `package.json` (P1-G1-T5) | Recorded versions equal exactly | Passed — docs equal `package.json` (P1-G1 `49720d0`; final docs `a211113`) |
+| [x] | `V2.1` | `bun test test/vim` (non-ex P1-G2-T4; all cases P2-G1-T5) | Every recorded case equal through `createUpdate`; no todo left | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V2.2` | `bun test test/vim -t V2.2` (P1-G2-T3, T4) | `nvim` starts `0.11.`; one entry per case id | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V2.3` | `bun test scripts/record-vim.test.ts` (P1-G2-T3) | Exit 1, "requires Neovim 0.11.x" | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V2.4` | `bun test src/core/kernel/text` (P1-G2-T1) | Round-trip text, `version + 2`, `lineCount ≥ 1` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V2.5` | None — greenfield (system design §8 Non-test) | No removed paths or symbols; recorded `Not applicable` | `Not applicable — greenfield` (no removed paths or symbols) |
+| [x] | `V3.1` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Original bytes after injected failure; no `.so-tmp-` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V3.2` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Reload + undo, dirty conflict, own save silent, mode kept | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V3.3` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | One write per stage; backoff 1,2,4…30 s | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V3.4` | `bun test test/integration/save-safety.test.ts` (P2-G2-T7) | Queued autosave + external write → conflict | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V3.5` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | Typing during write keeps dirty; second write | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V4.1` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | `:q` flushes then exits 0 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V4.2` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | Save failure cancels quit with message | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V4.3` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | E37 blocks quit | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V4.4` | `bun test src/core/state/save.test.ts` (P2-G1-T2) | `:q!`, two windows, `:bd!` semantics | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V4.5` | `bun test test/e2e/quit.test.ts` (P3-G1-T4) | SIGTERM flushes; slow write bounded at 2 s, restored, stderr names path | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V5.1` | `bun test src/workspace/watcher.test.ts` (P2-G2-T3) | Own ops suppressed; external changes reported; loops safe | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V5.2` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Clean buffer marked deleted; no resurrection | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V5.3` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Dirty deleted buffer blocks `:q`; `:w` recreates | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V5.4` | `bun test src/core/state/disk.test.ts` (P2-G1-T3) | Undoable reload; conflict on dirty | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V5.5` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | Folder move re-paths buffers; zero own `fileChanged` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V6.1` | `bun test src/core/filetypes` (P1-G2-T6) | Expected ids for all eight paths | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V6.2` | `bun test src/core/lang/code/file-types.test.ts` (P1-G2-T6) | Table integrity; duplicate throws | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V6.3` | `bun test src/core/lang/code/highlight.test.ts` (P1-G2-T6) | Windowed code tokens; cache hit; safe failure | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V6.4` | `bun test test/integration/open-save.test.ts` (P2-G2-T7) | Binary and > 16 MiB refused; no buffer, no write | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V6.5` | `bun test test/integration/open-save.test.ts` (P2-G2-T7) | BOM, CRLF, trailing newline preserved | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V7.1` | `bun test test/boundaries.test.ts -t V7.1` (P1-G1-T4; every group) | `src` respects `LAYER_RULES` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V7.2` | `bun test test/boundaries.test.ts -t V7.2` (P1-G1-T4) | Both violation fixtures reported | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V7.3` | `bun test src/core/state/update.test.ts` (P2-G1-T1, T5) | Pure on frozen state; thrown command contained | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V7.4` | `bun test src/core/kernel/view` (P1-G2-T5) | All decoration kinds; viewport-only requests | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V7.5` | `bun test src/core/state/keys.test.ts` (P2-G1-T5; contract P1-G2-T2) | Keymap precedence, explorer mode, filetype scope | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V8.1` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | Restore on `:q`, SIGTERM, SIGINT, throw; codes 0,0,0,1 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V8.2` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | `NO_COLOR` → no colour SGR besides 39/49 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V8.3` | `bun test test/e2e/restore.test.ts` (P3-G1-T4) | Ctrl-C does not exit; `:q` exits 0 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V9.1` | `bun test src/ui/input.test.ts` (P3-G1-T1) | Esc held to `max(escTimeoutMs, 20)` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V9.2` | `bun test src/ui/input.test.ts` (P3-G1-T1) | Merges split; sequences immediate | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V9.3` | `bun test test/ui/esc.test.ts` (P3-G1-T2) | Legacy Esc at 50 ± 10 ms; `\x1b[A` < 10 ms | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V10.1` | `bun test src/workspace/system.test.ts` (P2-G2-T5) | Provider order per Neovim 0.11 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V10.2` | `bun test src/workspace/system.test.ts` (P2-G2-T5) | OSC 52 copy; no paste | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V10.3` | `bun test src/core/state/keys.test.ts` (P2-G1-T5) | Failure message; paste falls back to `registers["+"]` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V10.4` | `bun test src/app/effects.test.ts` (P2-G2-T6) | One dispatch with `error` | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V11.1` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | Spec info file | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V11.2` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | Collision naming | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V11.3` | `bun test src/workspace/trash.test.ts` (P2-G2-T4) | No orphan; no injection | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V11.4` | Manual on developer Mac (P3-G1-T7) | Moved to `~/.Trash`, no prompt | `Pending manual check` — explorer trash of a scratch file showed only so's own `Move to Trash? [y/N]`, no OS prompt, file left workspace without error; presence in `~/.Trash` and Put Back not observable (no Full Disk Access; Finder scripting denied) |
+| [x] | `V12.1` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Always-hidden and gitignored excluded | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V12.2` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Cross-scope precedence | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V12.3` | `bun test src/workspace/ignore.test.ts` (P2-G2-T1) | Directory-only pattern | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V12.4` | `bun test src/workspace/fs.test.ts` (P2-G2-T2) | Symlinks and loops safe | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V13.1` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | E13; bytes identical | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V13.2` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Write then rename; re-path | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V13.3` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Trash dirty buffer close/keep | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V13.4` | `bun test test/integration/explorer-ops.test.ts` (P2-G2-T7) | Rename dirty then autosave → new path only | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V13.5` | `bun test src/core/state/explorer.test.ts` (P2-G1-T4) | Create targets; E13 and trash failure | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V14.1` | `bun test test/ui/shell.golden.test.ts` (P3-G1-T2) | UV1 DI1 goldens at 120×36 and 80×24 | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V14.2` | `bun test test/ui/cmdline.test.ts` (P3-G1-T2) | Mode badges, cursor style, E492, completion order | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V14.3` | `bun test test/ui/shell.golden.test.ts` (P3-G1-T2) | dark/light/nocolor spans (UV10 DI1) | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V14.4` | `bun test test/ui/file-ops.test.ts` (P3-G1-T3) | Every UV6@R2 assertion | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V15.1` | `bun test test/repo.test.ts -t V15.1` (P1-G1-T2) | `pull_request` only; PR concurrency; cancel | Passed — group report + overall `5e57bae` (filter selects > 0 tests) |
+| [x] | `V15.2` | DI1 PR CI run (P3-G1-T7, authorized) | Both OS green; < 3 min | Passed — PR #1 run https://github.com/therealhieu/so/actions/runs/37119729032 on `c773c21`: success in 38 s (check 11 s, ubuntu-24.04 34 s, macos-15 25 s) |
+| [x] | `V15.3` | DI1 PR Linux test job log (P3-G1-T7, authorized) | Bench step printed both medians | Passed — Linux job log: `sourceKeystrokeP95 median=11.12ms limit=32ms ok`, `openFile median=16.06ms limit=100ms ok` |
+| [x] | `V16.1` | `v0.1.0-rc.1` release (P3-G1-T7, authorized) | Four binaries + `SHA256SUMS`; four smoke jobs print `so 0.1.0-rc.1`; prerelease after smoke | `Not authorized — tag out of scope (user decision, DEV5)` |
+| [x] | `V16.2` | `release.yml` review (P1-G1-T3) | `publish` needs `smoke`; four native labels | Passed — `publish` needs `smoke`, four native labels (P1-G1 `49720d0`; rechecked overall `5e57bae`) |
+| [x] | `V17.1` | `bun run bench` (P3-G1-T5) | Keystroke p95 ≤ 32 ms, open ≤ 100 ms medians | Passed — local medians 6.44 ms / 8.80 ms (overall `5e57bae`); Linux CI 11.12 ms / 16.06 ms |
 
 ## Overall Verification
 
@@ -620,26 +620,26 @@ Fresh verifier → Passed → Delivery acceptance → Project documentation
 
 | Complete | Check | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | Fast check | `bun run check` | Format, lint, typecheck, knip, unit, boundary, and repo tests pass in < 30 s (V1.3) | `Pending implementation` |
-| [ ] | Integration | `bun test test/integration src/workspace` | V3.1, V3.2, V3.4, V5.1, V5.5, V6.4, V6.5, V11.1–V11.3, V12.4, V13.1, V13.4 pass | `Pending implementation` |
-| [ ] | Component | `bun test test/ui` | V9.3, V14.1–V14.4 pass | `Pending implementation` |
-| [ ] | E2E PTY | `bun test test/e2e` | V4.5, V8.1–V8.3 pass | `Pending implementation` |
-| [ ] | Benchmark gate | `bun run bench` | V17.1 medians within 2× targets | `Pending implementation` |
-| [ ] | CI on PR (user-authorized push + PR) | GitHub Actions `ci.yml` on the DI1 PR | `check` and `test` green on `ubuntu-24.04` and `macos-15`, bench gated on Linux, < 3 min (V15.2, V15.3); otherwise `Pending delivery authorization` | `Pending implementation` |
-| [ ] | Release dry run (user-authorized tag) | Push `v0.1.0-rc.1` | Four binaries + `SHA256SUMS`; four native smoke jobs pass before prerelease publish (V16.1); otherwise `Pending delivery authorization` | `Pending implementation` |
-| [ ] | Manual macOS trash | Trash a file via explorer on macOS | Item in Finder Trash with Put Back, no prompt (V11.4) | `Pending implementation` |
+| [x] | Fast check | `bun run check` | Format, lint, typecheck, knip, unit, boundary, and repo tests pass in < 30 s (V1.3) | Exit 0 in 2.50 s, 432 pass, zero knip |
+| [x] | Integration | `bun test test/integration src/workspace` | V3.1, V3.2, V3.4, V5.1, V5.5, V6.4, V6.5, V11.1–V11.3, V12.4, V13.1, V13.4 pass | 57 pass |
+| [x] | Component | `bun test test/ui` | V9.3, V14.1–V14.4 pass | 36 pass, 15 snapshots |
+| [x] | E2E PTY | `bun test test/e2e` | V4.5, V8.1–V8.3 pass | 8 pass (3 repeated combined runs, 65 pass each) |
+| [x] | Benchmark gate | `bun run bench` | V17.1 medians within 2× targets | 6.44 ms / 8.80 ms medians, exit 0 |
+| [x] | CI on PR (user-authorized push + PR) | GitHub Actions `ci.yml` on the DI1 PR | `check` and `test` green on `ubuntu-24.04` and `macos-15`, bench gated on Linux, < 3 min (V15.2, V15.3); otherwise `Pending delivery authorization` | Passed — run 37119729032 on `c773c21`, 38 s, bench lines printed |
+| [x] | Release dry run (user-authorized tag) | Push `v0.1.0-rc.1` | Four binaries + `SHA256SUMS`; four native smoke jobs pass before prerelease publish (V16.1); otherwise `Pending delivery authorization` | `Not authorized — tag out of scope (DEV5)` |
+| [x] | Manual macOS trash | Trash a file via explorer on macOS | Item in Finder Trash with Put Back, no prompt (V11.4) | `Pending manual check` (see V11.4) |
 
 ### Evidence
 
-- **Status:** `Pending implementation`
+- **Status:** `Passed`
 - **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/overall-verification-report.md`
-- **Report commit:** `Pending implementation`
-- **Findings and owners:** `Pending implementation`
-- **Remediation status:** `Pending implementation`
-- **Remediation commits:** `Pending implementation`
-- **Updated implementation report commits:** `Pending implementation`
-- **Closure evidence:** `Pending implementation`
-- **Remaining issues:** `Pending implementation`
+- **Report commit:** `5e57bae`
+- **Findings and owners:** None (no `OVR-VER` findings)
+- **Remediation status:** Not required
+- **Remediation commits:** Not required
+- **Updated implementation report commits:** Not required
+- **Closure evidence:** orchestrator confirmed `5e57bae` is report-only; verifier re-ran every overall check on `265a9b0` (code identical to pushed `c773c21`)
+- **Remaining issues:** unverified by goal decision — V16.1 (DEV5), V11.4 (`Pending manual check`), V2.5 (`Not applicable`); G1 `Pending — awaiting DI1 PR merge with CI green`; parent synchronization pending authorization. Documentation items raised by the verifier were fixed in `a211113`; the move text-field deviation is now DEV6.
 
 ## Delivery Acceptance
 
@@ -650,7 +650,7 @@ Perform this assessment after overall verification and before the completion sum
 - Synchronize the parent only under the authorization recorded in the Execution Contract, which is currently `Pending authorization`.
 - Never infer phase completion from completed W goals instead of phase integration, release, and exit criteria.
 
-- **Assessment:** `Pending implementation`
+- **Assessment:** Technical work complete and verified against baseline `d00d3a3` (0 parent commits; index `:131`/`:142` DI1@R2; only W261003HEGE binds DI1 — rechecked by the orchestrator and in `5e57bae`). PR #1 open with CI green on `c773c21`. DI1 delivery and G1: `Pending — awaiting DI1 PR merge with CI green` (merge is outside this goal; owner of G1 integration RM261003ABZP-DI2@R2). Release-candidate evidence: none (DEV5). Parent synchronization not performed (no authorization).
 
 ## Project Documentation Finalization
 
@@ -662,8 +662,8 @@ After all groups and overall checks pass, the orchestrator must:
 
 Missing documents, unresolved conflicts, failed checks/commits, or unsafe change isolation block completion. Send implementation defects back to remediation, not into project guidance.
 
-- **Changes or No-change Reason:** `Pending implementation`
-- **Validation and Commit SHA:** `Pending implementation`
+- **Changes or No-change Reason:** `project.md` — Data and Contracts now point to the landed code (`types.ts`, kernel, file types, effect runner, `expected.json`); save/watcher behaviour; runtime switches (`NO_COLOR`, `SO_VERSION`, `SO_TEST*`); sources. `typescript.md` — knip entries match `knip.json` (`ignoreExportsUsedInFile`, zero findings); Error Handling established from `update.ts`, adapters, `lifecycle.ts`. Stack, scripts, test layers, CI trigger, and structure were checked and already matched.
+- **Validation and Commit SHA:** each claim checked against `package.json`, `knip.json`, `ci.yml`, `src/core/state/{types,update,result}.ts`, `src/workspace/fs.ts`, `src/app/{main,lifecycle}.ts`; commit `a211113`
 
 **Commit Message:**
 
@@ -675,13 +675,15 @@ Work: W261003HEGE — editor-foundation
 
 ## Implementation Evidence
 
-- **Commits:** `Pending implementation`
+- **Commits:** branch `feat/rm261003abzp-di1-editor-foundation` from `deb9b96`; task and remediation SHAs in each group's Task Commit Evidence; reports `51c6474`, `49720d0`, `074f392`, `4f078dd`, `874c7b0`, `3525c0a`, `1959b23`, `d4abdc3`, `39b1d5b`, `8868bff`, `381f558`, `d4f19de`, `2a3fc8d`, `c773c21`, `5e57bae`; docs `a211113`
 - **Subagent Replacements:** None. P1-G2 implementer was interrupted by an API usage limit after all six task commits; it was resumed (same agent, full context) to finish group checks and the report.
-- **Changed Files:** `Pending implementation`
-- **Automated Verification:** `Pending implementation`
-- **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
+- **Changed Files:** toolchain/config files, `.github/workflows/*`, `bin/so`, `src/{core,workspace,ui,app}/**`, `scripts/{record-vim,bench-gate}.ts`, `test/**`, `.s1mple/docs/{project.md,languages/typescript.md}`, `.s1mple/S1MPLE.md`, work reports and goal
+- **Automated Verification:** full `bun test` 498 pass; `bun run check` 2.5 s, zero knip; PR CI green (run 37119729032)
+- **Manual Evidence:** V1.4 and V16.2 reviews passed; V15.2, V15.3 GitHub evidence passed; V11.4 `Pending manual check`; V16.1 not authorized (DEV5)
 
 ## Blockers and Deviations
+
+- **DEV6 — Explorer move uses a text field (P3-G1).** Location: `src/ui/overlays/prompt.ts` move prompt. Evidence: P3-G1-VER1 remediation `def2c80`; parent UI design `rm261003abzp-ui-design.md:808, :839` and M4 S12 specify a folder picker, which is outside DI1 scope. Impact: move works through a path text field; create and rename use the inline tree field as specified. Required resolution: parent-synchronization candidate; picker arrives with later DI work.
 
 - **DEV5 — Release-candidate tag out of scope (user decision, 2026-10-03).** Location: P3-G1-T7, V16.1, Overall Verification check "Release dry run". Evidence: user message "don't tag anything. OUt of scope". Impact: no tag is created or pushed; V16.1 (four binaries + `SHA256SUMS`, native smoke before prerelease) is not exercised in this goal and is reported `Not authorized — tag out of scope`; `release.yml` remains statically verified by V16.2. Required resolution: none in this goal; the real release path is proven when a release is cut later.
 
@@ -701,32 +703,35 @@ Replace with `None` or entries containing location, evidence, impact, and requir
 
 ## Final Completion Checklist
 
-- [ ] Every plan part and group is completed.
-- [ ] Every task outcome is implemented.
-- [ ] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
-- [ ] Every subagent replacement has a recorded reason and complete handoff evidence.
-- [ ] Every group persisted one complete verification report.
-- [ ] Every verifier finding and its completion checklist are resolved with closure evidence.
-- [ ] Every group acceptance criterion is satisfied.
-- [ ] Every assigned system design chain and the parent UI chain through S14 are covered.
-- [ ] Every `S` criterion and `V` case has passing evidence. The only exceptions are V15.2, V15.3, and V16.1 recorded `Pending delivery authorization`, V11.4 recorded `Pending manual check`, and V2.5 recorded `Not applicable — greenfield`, each reported explicitly.
-- [ ] The overall-verification report is committed.
-- [ ] Every overall verification check passes with actual evidence, or is reported as a pending delivery check under the Delivery Authorization rule.
-- [ ] Cross-part contracts and handoffs are integrated and verified.
-- [ ] Assigned parent outcomes and cross-work integration have actual evidence against the recorded baseline.
-- [ ] No cross-work gate is due within this execution's scope. G1 is reported `Pending — awaiting DI1 PR merge with CI green` with its evidence list.
-- [ ] The parent baseline was rechecked before any delivery acceptance; delivery state is not inferred from technical completion.
-- [ ] Authorized parent synchronization is recorded, or exact pending administrative updates and authorization needs are reported separately.
-- [ ] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
-- [ ] The overall-verification report path and commit SHA are recorded.
-- [ ] Project documentation matches the completed implementation and its validation passes.
-- [ ] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
-- [ ] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved; administrative parent-sync and out-of-scope delivery follow-ups are reported separately.
-- [ ] Final changes match the complete approved plan.
+- [x] Every plan part and group is completed.
+- [x] Every task outcome is implemented.
+- [x] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
+- [x] Every subagent replacement has a recorded reason and complete handoff evidence.
+- [x] Every group persisted one complete verification report.
+- [x] Every verifier finding and its completion checklist are resolved with closure evidence.
+- [x] Every group acceptance criterion is satisfied.
+- [x] Every assigned system design chain and the parent UI chain through S14 are covered.
+- [x] Every `S` criterion and `V` case has passing evidence. The only exceptions are V15.2, V15.3, and V16.1 recorded `Pending delivery authorization`, V11.4 recorded `Pending manual check`, and V2.5 recorded `Not applicable — greenfield`, each reported explicitly.
+- [x] The overall-verification report is committed.
+- [x] Every overall verification check passes with actual evidence, or is reported as a pending delivery check under the Delivery Authorization rule.
+- [x] Cross-part contracts and handoffs are integrated and verified.
+- [x] Assigned parent outcomes and cross-work integration have actual evidence against the recorded baseline.
+- [x] No cross-work gate is due within this execution's scope. G1 is reported `Pending — awaiting DI1 PR merge with CI green` with its evidence list.
+- [x] The parent baseline was rechecked before any delivery acceptance; delivery state is not inferred from technical completion.
+- [x] Authorized parent synchronization is recorded, or exact pending administrative updates and authorization needs are reported separately.
+- [x] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
+- [x] The overall-verification report path and commit SHA are recorded.
+- [x] Project documentation matches the completed implementation and its validation passes.
+- [x] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
+- [x] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved; administrative parent-sync and out-of-scope delivery follow-ups are reported separately.
+- [x] Final changes match the complete approved plan.
 
 ## Completion Summary
 
-`Pending implementation`
+- **Implementation and verification:** `Complete`. All five groups accepted (P1-G1 passed first time; P1-G2, P2-G1, P2-G2, P3-G1 remediated, 14 findings fixed). Overall verification `Passed` with no findings (`reports/overall-verification-report.md`, `5e57bae`). Project documentation finalized (`a211113`). Every S1–S17 and V case has evidence except V16.1 (not authorized, DEV5), V11.4 (`Pending manual check`), V2.5 (`Not applicable — greenfield`).
+- **Delivery:** push + PR authorized at the T7 boundary; tag refused (DEV5). PR https://github.com/therealhieu/so/pull/1 open, CI green on `c773c21` (run 37119729032, 38 s, both OS, Linux bench gated). Orchestrator commits after `c773c21` (`265a9b0`, `5e57bae`, `a211113`, and this goal update) are local only — the push authorization covered the T7 delivery; pushing them is the user's call. DI1 and G1: `Pending — awaiting DI1 PR merge with CI green`.
+- **Parent synchronization:** `Pending parent synchronization` — no authorization. Pending updates: discuss-context registration receipt; system design §1 Parent Synchronization items 1–7 (including RM261003ABZP-REQ10@R2 "every push and pull request" → "every pull request"); Work Progress DI1 stage and PR #1 assignment; refinement candidates DEV3, DEV6, and the runner/`atomicWrite` semantics from P2-G2/P3-G1 remediation.
+- **Baseline and evidence:** accepted baseline `d00d3a3`, DI1@R2; evidence in this goal's Roadmap Evidence and `.s1mple/work/active/w261003hege-editor-foundation/reports/`.
 
 Report these as separate statuses, never as one interchangeable status:
 
