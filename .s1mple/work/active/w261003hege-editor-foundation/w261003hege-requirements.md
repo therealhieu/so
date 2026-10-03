@@ -29,7 +29,7 @@
 3. [Scope](#3-scope)
 4. [Standards and Constraints](#4-standards-and-constraints)
 5. [Current Requirements](#5-current-requirements)
-   - [W261003HEGE-REQ1@R2: Inherited DI1 obligations](#w261003hege-req1r2-inherited-di1-obligations)
+   - [W261003HEGE-REQ1@R3: Inherited DI1 obligations](#w261003hege-req1r3-inherited-di1-obligations)
    - [W261003HEGE-REQ2@R2: Exact toolchain and dependency pins](#w261003hege-req2r2-exact-toolchain-and-dependency-pins)
    - [W261003HEGE-REQ3@R1: Recorded Neovim expectations](#w261003hege-req3r1-recorded-neovim-expectations)
    - [W261003HEGE-REQ4@R3: Test layers, platforms, and PTY tooling](#w261003hege-req4r3-test-layers-platforms-and-pty-tooling)
@@ -84,7 +84,7 @@ DI1 produces gate G1 for DI2 with every contract at its parent shape.
 
 ## In Scope
 
-- Everything listed in RM261003ABZP-DI1@R2 Scope (phase file, Delivery Items, DI1 Scope) — see W261003HEGE-REQ1@R2.
+- Everything listed in RM261003ABZP-DI1@R2 Scope (phase file, Delivery Items, DI1 Scope) — see W261003HEGE-REQ1@R3.
 - The refinements decided here: version pins (REQ2), Neovim expectation recording (REQ3), test platforms and PTY tooling (REQ4), quit and close rules (REQ5), external deletion and moves (REQ6), clipboard providers (REQ7), trash mechanics (REQ8), exclusion rules (REQ9), explorer operations on open buffers (REQ10), the language set (REQ11), and native smoke of every release binary (REQ12).
 
 ## Out of Scope
@@ -100,12 +100,12 @@ DI1 produces gate G1 for DI2 with every contract at its parent shape.
 
 - **Binding and parent scope:** `w261003hege-discuss-context.md`, Roadmap Binding — RM261003ABZP-DI1@R2 in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (Delivery Items, DI1), phase RM261003ABZP-PH1@R2, producer of gate G1.
 - **Assigned requirement coverage:**
-  - RM261003ABZP-REQ1@R3 → W261003HEGE-REQ1@R2 (inherited), W261003HEGE-REQ5@R1, W261003HEGE-REQ6@R1, W261003HEGE-REQ8@R2, W261003HEGE-REQ9@R1, W261003HEGE-REQ10@R2, W261003HEGE-REQ11@R2.
-  - RM261003ABZP-REQ2@R2 → W261003HEGE-REQ1@R2 (inherited), W261003HEGE-REQ3@R1, W261003HEGE-REQ5@R1 (`:q`, `:q!`, `:bd`), W261003HEGE-REQ7@R2 (`"+`).
-  - RM261003ABZP-REQ9@R2 (harness and gate mechanism only) → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R3.
-  - RM261003ABZP-REQ10@R2 → W261003HEGE-REQ1@R2, W261003HEGE-REQ2@R2, W261003HEGE-REQ4@R3, W261003HEGE-REQ12@R1 (strengthens the DES15 smoke step).
-  - RM261003ABZP-REQ11@R3 → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R3 (restore proof), W261003HEGE-REQ11@R2 (file-type registration).
-  - UI obligations (M1@R1, M4@R1, AD4; UREQ1@R2, UREQ2@R1, UREQ3@R2 non-Markdown part, UREQ7@R2, UREQ11@R1; UDES1@R2, UDES2@R1, UDES3@R2 non-Markdown part, UDES7@R2, UDES11@R1; US1@R2, US5@R2, US9@R1; UV1@R2, UV2@R1, UV6@R2, UV10@R1) stay bound through W261003HEGE-REQ1@R2 and are not redefined here.
+  - RM261003ABZP-REQ1@R3 → W261003HEGE-REQ1@R3 (inherited), W261003HEGE-REQ5@R1, W261003HEGE-REQ6@R1, W261003HEGE-REQ8@R2, W261003HEGE-REQ9@R1, W261003HEGE-REQ10@R2, W261003HEGE-REQ11@R2.
+  - RM261003ABZP-REQ2@R2 → W261003HEGE-REQ1@R3 (inherited), W261003HEGE-REQ3@R1, W261003HEGE-REQ5@R1 (`:q`, `:q!`, `:bd`), W261003HEGE-REQ7@R2 (`"+`).
+  - RM261003ABZP-REQ9@R2 (harness and gate mechanism only) → W261003HEGE-REQ1@R3, W261003HEGE-REQ4@R3.
+  - RM261003ABZP-REQ10@R2 → W261003HEGE-REQ1@R3, W261003HEGE-REQ2@R2, W261003HEGE-REQ4@R3, W261003HEGE-REQ12@R1 (strengthens the DES15 smoke step).
+  - RM261003ABZP-REQ11@R3 → W261003HEGE-REQ1@R3, W261003HEGE-REQ4@R3 (restore proof), W261003HEGE-REQ11@R2 (file-type registration).
+  - UI obligations (M1@R1, M4@R1, AD4; UREQ1@R2, UREQ2@R1, UREQ3@R2 non-Markdown part, UREQ7@R2, UREQ11@R1; UDES1@R2, UDES2@R1, UDES3@R2 non-Markdown part, UDES7@R2, UDES11@R1; US1@R2, US5@R2, US9@R1; UV1@R2, UV2@R1, UV6@R2, UV10@R1) stay bound through W261003HEGE-REQ1@R3 and are not redefined here.
 - **Baseline and due-gate assessment:** On 2026-10-03 the current index and phase file match the accepted binding (PH1@R2, DI1@R2, the REQ/DES/S/V and UI revisions above); DI1 has no prerequisite and no gate is due before requirements approval. No W other than W261003HEGE is bound to DI1. Every refinement here adds behaviour the parent leaves open and changes no shared contract (Command, KeyScope, FileType, ViewSpec, EditorKindSpec, Decoration, RenderLine, layoutText, Action/Effect DI1 variants). Two accepted-message additions — `deleted on disk` (REQ6) and the conflict-on-quit text (REQ5) — reuse the accepted message-line and toast visuals under manifest AD4, so no mockup revision is needed. After research: RF2 confirms the parent OpenTUI shape and RF8 confirms recursive `fs.watch` on both platforms, so the phase file's return-to-design condition (line 423) is not met. REQ4@R3 narrows the CI trigger of RM261003ABZP-REQ10@R2 ("CI on every push and pull request") to pull requests only, on the user's explicit instruction. The < 3 min budget still applies to each run. This parent change is approved by the user and pending parent synchronization. REQ8@R2 replaces the Finder mechanism with `NSFileManager` (same outcome: the user's Trash), and REQ12@R1 adds smoke jobs to DES15. Both are refinements, reported as pending parent synchronization in the system design.
 
 ## Affected Interfaces and Actors
@@ -159,19 +159,19 @@ DI1 produces gate G1 for DI2 with every contract at its parent shape.
 
 # 5. Current Requirements
 
-## W261003HEGE-REQ1@R2: Inherited DI1 obligations
+## W261003HEGE-REQ1@R3: Inherited DI1 obligations
 
 **Requirement ID:** `W261003HEGE-REQ1`
 
-**Revision:** `R2`
+**Revision:** `R3`
 
-**Previous Revision:** `W261003HEGE-REQ1@R1`
+**Previous Revision:** `W261003HEGE-REQ1@R2`
 
 **Replaces:** None
 
-**Research Relationship:** `RF2`, `RF4`, `RF5`, `RF7`, `RF9`, and `RF10` evaluated `W261003HEGE-REQ1@R1` and retained it at reconciliation; this revision is design-driven, not research-informed
+**Research Relationship:** `RF2`, `RF4`, `RF5`, `RF7`, `RF9`, and `RF10` evaluated `W261003HEGE-REQ1@R1` and retained it at reconciliation; revisions R2 and R3 are design-driven, not research-informed
 
-**Revision Summary:** System design found that DI1's explorer cannot expand a folder with the phase file's DI1 Effect list, which has no directory listing, and that REQ7's clipboard failure needs a result. The no-addition criterion now allows DI1's own additive protocol needs, which are reported for parent synchronization, while still forbidding anything for later DIs.
+**Revision Summary:** System design review found two more DI1 protocol gaps. The parent design requires a typed-confirm permanent delete when trash is unavailable (RM261003ABZP-DES8@R1), but the phase file's `FsOp` cannot express it. The parent design also refuses unreadable files with `io` (`rm261003abzp-design.md:280`), but the phase file's `fileRefused.reason` lists only `binary` and `tooLarge`. The allowed DI1 additions now name both, so the protocol stays inside an explicit list.
 
 **Question:** Which parent obligations must this Work deliver unchanged?
 
@@ -183,7 +183,7 @@ DI1 produces gate G1 for DI2 with every contract at its parent shape.
 
 - [ ] Every parent REQ, DES, S, V, and UI record listed above maps to at least one design decision in the W261003HEGE system design.
 - [ ] Every G1 output named in the phase file exists on the merged DI1 PR with V1, V2, V15@R2, V17, and V18 passing in CI.
-- [ ] No AppState top-level field, Action, or Effect for a later DI is added. Beyond the phase file's DI1 lists, DI1 adds only the `listDir` Effect and `dirListed` Action (explorer folder listing), an optional `error` field on `clipboardText` (REQ7 failures), and sub-fields inside the DI1 top-level fields. Each is additive for DI2 and reported for parent synchronization.
+- [ ] No AppState top-level field, Action, or Effect for a later DI is added. Beyond the phase file's DI1 lists, DI1 adds only the `listDir` Effect and `dirListed` Action (explorer folder listing), an optional `error` field on `clipboardText` (REQ7 failures), an optional `permanent: true` field on `FsOp` (typed-confirm permanent delete), the `"io"` value of `fileRefused.reason` (unreadable files), and sub-fields inside the DI1 top-level fields. Each is additive for DI2 and reported for parent synchronization.
 - [ ] UV1's DI1 statusline for `scripts/sync.ts` is `MODE │ source │ scripts/sync.ts │ Ln:Col` (the `index` segment arrives in DI2 and `preview` in DI3, per the phase file UI refinement).
 
 **Depends On:** None
@@ -364,7 +364,7 @@ SIGTERM ─► flush (≤ 2 s) ─► restore ─► exit 0
 - [ ] `:q!` after edits exits without writing; the file's bytes are unchanged.
 - [ ] `SIGTERM` after an edit leaves the new text on disk and the terminal restored; a flush blocked past 2 s still restores and exits.
 
-**Depends On:** W261003HEGE-REQ1@R2
+**Depends On:** W261003HEGE-REQ1@R3
 
 ## W261003HEGE-REQ6@R1: Open file deleted or moved outside so
 
@@ -435,7 +435,7 @@ With no read provider, pasting from `"+` returns the last text this session yank
 - [ ] With no provider, `"+yy` emits an OSC 52 sequence carrying the base64 text, and `"+p` pastes the same text.
 - [ ] A failing provider shows `clipboard unavailable`, and the editor state stays valid.
 
-**Depends On:** W261003HEGE-REQ1@R2
+**Depends On:** W261003HEGE-REQ1@R3
 
 ## W261003HEGE-REQ8@R2: Trash mechanics per platform
 
@@ -481,7 +481,7 @@ macOS:  /usr/bin/trash (15+) │ osascript -l JavaScript NSFileManager → "ok"?
 - [ ] When the trash is unavailable, `Enter` is ignored until the exact name is typed (UV6@R2), and then the item is deleted.
 - [ ] On macOS, the trash path used (`/usr/bin/trash` or `NSFileManager`) is checked manually on the developer machine and recorded in the DI1 PR. This replaces the phase file's Finder check.
 
-**Depends On:** W261003HEGE-REQ1@R2
+**Depends On:** W261003HEGE-REQ1@R3
 
 ## W261003HEGE-REQ9@R1: Workspace exclusion rules
 
@@ -516,7 +516,7 @@ macOS:  /usr/bin/trash (15+) │ osascript -l JavaScript NSFileManager → "ok"?
 - [ ] `:e .env` opens the file.
 - [ ] A symlink loop does not hang the explorer.
 
-**Depends On:** W261003HEGE-REQ1@R2
+**Depends On:** W261003HEGE-REQ1@R3
 
 ## W261003HEGE-REQ10@R2: Safe explorer operations and open buffers
 
@@ -599,7 +599,7 @@ Rejected: prompting to overwrite (a new destructive path that the accepted promp
 - [ ] `.md` resolves to `markdown` with exactly one view, `source`. `.sh` resolves to `bash`, and `.toml` to `ini`.
 - [ ] A unit test asserts that every registered language id is one of the 37 bundled grammars, that `shell`, `python-repl`, and `plaintext` have no file type, and that no two file types claim the same extension or file name.
 
-**Depends On:** W261003HEGE-REQ1@R2
+**Depends On:** W261003HEGE-REQ1@R3
 
 ## W261003HEGE-REQ12@R1: Native smoke of every release binary
 
@@ -661,11 +661,42 @@ Rejected: prompting to overwrite (a new destructive path that the accepted promp
 | `RF13` | `W261003HEGE-REQ3@R1` | Supports: v0.11.7 tarballs exist; mode capture needs RPC (`--listen`) | Retained | `W261003HEGE-REQ3@R1` | The recorder mechanism and the 0.11.7 reference are design details within "Neovim 0.11.x" |
 | `RF14` | `W261003HEGE-REQ9@R1` | Supports `ignore` 7.x; precedence across scopes is the caller's job | Retained | `W261003HEGE-REQ9@R1` | Cross-scope `test()` precedence and a nested re-include fixture are design and verification details |
 
-Every relationship has one outcome, and no finding evaluated `None`. No `Deferred` outcome was needed. After reconciliation, `W261003HEGE-REQ4@R2` was revised to `W261003HEGE-REQ4@R3` on the user's instruction (CI on PRs only), and `W261003HEGE-REQ1@R1` was revised to `W261003HEGE-REQ1@R2` for a design-driven reason (section 7). The `RF` rows above still record that they evaluated R1, and none of them informed R2.
+Every relationship has one outcome, and no finding evaluated `None`. No `Deferred` outcome was needed. After reconciliation, `W261003HEGE-REQ4@R2` was revised to `W261003HEGE-REQ4@R3` on the user's instruction (CI on PRs only), and `W261003HEGE-REQ1@R1` was revised to `W261003HEGE-REQ1@R2` and then `W261003HEGE-REQ1@R3`, both for design-driven reasons (section 7). The `RF` rows above still record that they evaluated R1, and none of them informed R2 or R3.
 
 # 7. Historical Requirement Revisions
 
 Historical revisions are append-only, preserve their complete former content, and are inactive. System design and planning must not use them as current inputs.
+
+## W261003HEGE-REQ1@R2: Inherited DI1 obligations
+
+**Requirement ID:** `W261003HEGE-REQ1`
+
+**Revision:** `R2`
+
+**Previous Revision:** `W261003HEGE-REQ1@R1`
+
+**Replaces:** None
+
+**Status:** Revised by `W261003HEGE-REQ1@R3`
+
+**Research Relationship:** `RF2`, `RF4`, `RF5`, `RF7`, `RF9`, and `RF10` evaluated `W261003HEGE-REQ1@R1` and retained it at reconciliation; this revision is design-driven, not research-informed
+
+**Revision Summary:** System design found that DI1's explorer cannot expand a folder with the phase file's DI1 Effect list, which has no directory listing, and that REQ7's clipboard failure needs a result. The no-addition criterion now allows DI1's own additive protocol needs, which are reported for parent synchronization, while still forbidding anything for later DIs.
+
+**Question:** Which parent obligations must this Work deliver unchanged?
+
+**Answer:** All of RM261003ABZP-DI1@R2 as defined in the phase file: its Scope, Exclusions, Design (RM261003ABZP-DES1@R2, DES2@R2, DES3@R1, DES4@R1, DES5@R2, DES8@R1, DES9@R3 kernel view, DES10@R2, DES15@R1, DES16@R1, DES17@R1, and the DI1 part of DES14@R1), the DI1 Phase Design rows and code shapes, the G1 outputs, Success RM261003ABZP-S1@R1, S2@R1, S10@R1, S11@R1 (boundary and restore part), S12@R1, Verification RM261003ABZP-V1@R1, V2@R1, V3@R1, V14@R1, V15@R2, V17@R1, V18@R1, and the UI scope with US1@R2 (UV1@R2 DI1 states, UV2@R1), US5@R2 (UV6@R2), and US9@R1 (UV10@R1 DI1 states). The requirements below refine these; none waives one.
+
+**Rationale:** The roadmap already fixes architecture and contracts, so restating them would only create drift. One explicit inheritance requirement gives planning a single traceable anchor for every parent obligation, and the later requirements cover only what the parent leaves open.
+
+**Acceptance Criteria:**
+
+- [ ] Every parent REQ, DES, S, V, and UI record listed above maps to at least one design decision in the W261003HEGE system design.
+- [ ] Every G1 output named in the phase file exists on the merged DI1 PR with V1, V2, V15@R2, V17, and V18 passing in CI.
+- [ ] No AppState top-level field, Action, or Effect for a later DI is added. Beyond the phase file's DI1 lists, DI1 adds only the `listDir` Effect and `dirListed` Action (explorer folder listing), an optional `error` field on `clipboardText` (REQ7 failures), and sub-fields inside the DI1 top-level fields. Each is additive for DI2 and reported for parent synchronization.
+- [ ] UV1's DI1 statusline for `scripts/sync.ts` is `MODE │ source │ scripts/sync.ts │ Ln:Col` (the `index` segment arrives in DI2 and `preview` in DI3, per the phase file UI refinement).
+
+**Depends On:** None
 
 ## W261003HEGE-REQ4@R2: Test layers, platforms, and PTY tooling
 
