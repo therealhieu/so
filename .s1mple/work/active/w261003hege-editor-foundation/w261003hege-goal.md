@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G1 — verification`
+- **Current Position:** `P2-G1 — remediation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -319,9 +319,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [ ] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
 - [ ] Implementer completed the remediation checklist or no remediation was required.
 - [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
 - [ ] Final implementation report commit SHA recorded.
@@ -333,9 +333,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` — `Completed`; implementer flagged design-shape deviations (SaveState.writing, `now` args, `BufferState.closing`, registers under `AppState.vim`, open shapes, extra files `result.ts`, `test/support/state.ts`) and `ConfigSchema` knip finding outside interim rule — assessed by verifier
 - Initial implementation report commit: `3525c0a`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
+- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Failed`: P2-G1-VER1 (Major, rename/move during in-flight autosave leaves buffer stuck `writing`), P2-G1-VER2 (Minor, `ConfigSchema` export outside interim knip rule), P2-G1-VER3 (Minor, report `-t` filters with `\|` match 0 tests). Flagged design-shape deviations judged necessary/acceptable, not findings
+- Verification report commit: `1959b23`
+- Remediation: assigned to a fresh `s1mple-implementer` (in progress)
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
@@ -682,6 +682,8 @@ Work: W261003HEGE — editor-foundation
 - **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
 
 ## Blockers and Deviations
+
+- **DEV3 — Verifier-accepted refinements to system design §7 shapes (P2-G1).** Location: `src/core/state/types.ts`, `save.ts`, `explorer.ts`, `disk.ts`. Evidence: `p2-g1-verification-report.md` (`1959b23`) judged each necessary or acceptable. Refinements: `SaveState.writing` = `{version, at, attempt}` and a `now` argument on `writeBuffer`, `requestQuit`, `closeBuffer`, `explorerOp`, `resolveConflict` (backoff needs the start time and attempt; `saved`/`saveFailed` carry no time); `BufferState.closing?: true` (REQ5 `:bd` closes only after flush); registers under `AppState.vim` (§6 and parent); `PromptState`, `Toast`, `MouseEvent` (scroll-only) defined where the design left them open; extra files `src/core/state/result.ts`, `test/support/state.ts`, `src/core/state/status.test.ts`. Impact: system design §7 text differs from code in these spots; no G1 contract or AppState top-level field change. Required resolution: none for execution; candidates for the pending parent-synchronization list. Carry-over to P2-G2: autosave/timer `now` consistency and the `"conflict"` reason string must be proven against the real effect runner and file adapter.
 
 - **DEV2 — E486 display handoff to P2-G1-T5.** Location: `src/core/kernel/vim/search.ts` `searchError` (`8ffe88b`). Evidence: P1-G2-VER3 closure; `VimEffect` has no message variant, so the kernel exposes `searchError` and the existing `search` effect. Impact: P2-G1-T5 `applyVimEffects` maps the `search` effect through `searchError` to the message line, proved in `src/core/state/keys.test.ts`. Required resolution: passed to the P2-G1 assignment; verified in P2-G1.
 
