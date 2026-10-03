@@ -1,0 +1,9847 @@
+{
+  "nvim": "0.11.7",
+  "recordedAt": "2026-10-03T07:24:36.072Z",
+  "cases": [
+    {
+      "id": "h",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "h",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-h",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "3h",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "h-at-line-start",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "h",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "l",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "l",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-l-clamps",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "9l",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "j",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "j",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-j",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2j",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "k",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 4
+        }
+      },
+      "keys": "k",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-k-clamps",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "5k",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "j-keeps-column",
+      "before": {
+        "lines": [
+          "long line here",
+          "ab",
+          "",
+          "long line here"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "jjj",
+      "after": {
+        "lines": [
+          "long line here",
+          "ab",
+          "",
+          "long line here"
+        ],
+        "cursor": [
+          4,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dollar-j-sticks-to-end",
+      "before": {
+        "lines": [
+          "abc",
+          "a",
+          "abcdef"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "$jj",
+      "after": {
+        "lines": [
+          "abc",
+          "a",
+          "abcdef"
+        ],
+        "cursor": [
+          3,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "w",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "4w",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          9
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "w-across-lines",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 22
+        }
+      },
+      "keys": "w",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          24
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "b",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 13
+        }
+      },
+      "keys": "b",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-b",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 22
+        }
+      },
+      "keys": "3b",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          14
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "b-across-lines",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 0
+        }
+      },
+      "keys": "b",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          24
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "e",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "e",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "e-from-word-end",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "e",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-e",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "3e",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "W",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          14
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2W",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          24
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-b",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 22
+        }
+      },
+      "keys": "B",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          14
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-e",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "E",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-e",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2E",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          21
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "zero",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "0",
+      "after": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "caret",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "^",
+      "after": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dollar",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 3
+        }
+      },
+      "keys": "$",
+      "after": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": [
+          1,
+          22
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-dollar",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 3
+        }
+      },
+      "keys": "2$",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          13
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-g",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "G",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-g",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "2G",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "gg",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 5
+        }
+      },
+      "keys": "gg",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-gg",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "3gg",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "fa",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2fa",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "f-missing",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "fz",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "Fo",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "t",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "tb",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-t",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "To",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "semicolon-after-f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "fa;",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "comma-after-f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2fa,",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "semicolon-after-t",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "ta;",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          9
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "percent-on-bracket",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "%",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          30
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "percent-before-bracket",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "%",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          30
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "percent-back",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 13
+        }
+      },
+      "keys": "%",
+      "after": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "percent-nested",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "%",
+      "after": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "close-brace",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "}",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-close-brace",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2}",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          6,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "close-brace-at-end",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 7,
+          "col": 0
+        }
+      },
+      "keys": "}",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          8,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "open-brace",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 4,
+          "col": 1
+        }
+      },
+      "keys": "{",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-open-brace",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 7,
+          "col": 1
+        }
+      },
+      "keys": "2{",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-h",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "H",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-h",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "3H",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          3,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-m",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "M",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          11,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-m-short-buffer",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "M",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-l",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "L",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          22,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-l",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "4L",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          19,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ctrl-d",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "<C-d>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          12,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ctrl-d-twice",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "<C-d><C-d>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          23,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ctrl-d-clamps",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 35,
+          "col": 2
+        }
+      },
+      "keys": "<C-d>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          40,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ctrl-u",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 20,
+          "col": 2
+        }
+      },
+      "keys": "<C-u>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          10,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ctrl-u-clamps",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 2
+        }
+      },
+      "keys": "<C-u>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dw",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dw-last-word-on-line",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "dw",
+      "after": {
+        "lines": [
+          "foo bar ",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          8
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dw-on-space-run",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 20
+        }
+      },
+      "keys": "dw",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quuend",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          21
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "x  ",
+            "type": "v"
+          },
+          "-": {
+            "text": "x  ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-count-w",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "d2w",
+      "after": {
+        "lines": [
+          "baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-d-w",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2dw",
+      "after": {
+        "lines": [
+          "baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "counts-multiply",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2d2w",
+      "after": {
+        "lines": [
+          "two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "foo bar baz\none ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dw-across-lines",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "d2w",
+      "after": {
+        "lines": [
+          "foo bar two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          9
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "baz\none ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "baz\none ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "de",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "de",
+      "after": {
+        "lines": [
+          ".bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "db",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "db",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "db-at-line-start",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 0
+        }
+      },
+      "keys": "db",
+      "after": {
+        "lines": [
+          "foo bar ",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          8
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-big-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dW",
+      "after": {
+        "lines": [
+          "qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo.bar(baz) ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo.bar(baz) ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-big-b",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 22
+        }
+      },
+      "keys": "dB",
+      "after": {
+        "lines": [
+          "foo.bar(baz)  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          14
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "qux-quux ",
+            "type": "v"
+          },
+          "-": {
+            "text": "qux-quux ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-big-e",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dE",
+      "after": {
+        "lines": [
+          " qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo.bar(baz)",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo.bar(baz)",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-dollar",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "d$",
+      "after": {
+        "lines": [
+          "foo ",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-zero",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "d0",
+      "after": {
+        "lines": [
+          "bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-caret",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "d^",
+      "after": {
+        "lines": [
+          "  ed line here  ",
+          "x"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "indent",
+            "type": "v"
+          },
+          "-": {
+            "text": "indent",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "df",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dfa",
+      "after": {
+        "lines": [
+          "r baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo ba",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo ba",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dt",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dta",
+      "after": {
+        "lines": [
+          "ar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo b",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-big-f",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 9
+        }
+      },
+      "keys": "dFo",
+      "after": {
+        "lines": [
+          "foaz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "o bar b",
+            "type": "v"
+          },
+          "-": {
+            "text": "o bar b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "df-missing",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dfz",
+      "after": {
+        "lines": [
+          "",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dh",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dh",
+      "after": {
+        "lines": [
+          "foobar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": " ",
+            "type": "v"
+          },
+          "-": {
+            "text": " ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dl",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dl",
+      "after": {
+        "lines": [
+          "foo ar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "b",
+            "type": "v"
+          },
+          "-": {
+            "text": "b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dj",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dj",
+      "after": {
+        "lines": [
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dk",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 4
+        }
+      },
+      "keys": "dk",
+      "after": {
+        "lines": [
+          "foo bar baz"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dj-at-last-line",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 4
+        }
+      },
+      "keys": "dj",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "d-big-g",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "dG",
+      "after": {
+        "lines": [
+          "foo bar baz"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dgg",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "dgg",
+      "after": {
+        "lines": [
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-close-brace",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "d}",
+      "after": {
+        "lines": [
+          "a",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "1\na2",
+            "type": "v"
+          },
+          "\"": {
+            "text": "1\na2",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-close-brace-mid-line",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "ld}",
+      "after": {
+        "lines": [
+          "a",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "1\na2",
+            "type": "v"
+          },
+          "\"": {
+            "text": "1\na2",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "d-percent",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "d%",
+      "after": {
+        "lines": [
+          "f"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "(a, (b c), d)",
+            "type": "v"
+          },
+          "-": {
+            "text": "(a, (b c), d)",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dd",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "dd",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-dd",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2dd",
+      "after": {
+        "lines": [
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dd-last-line",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 4
+        }
+      },
+      "keys": "dd",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dd-only-line",
+      "before": {
+        "lines": [
+          "solo"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "dd",
+      "after": {
+        "lines": [
+          ""
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "solo\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "solo\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dd-indented",
+      "before": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "dd",
+      "after": {
+        "lines": [
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": [
+          1,
+          9
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "\tone\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "\tone\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "cw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "cwxy<Esc>",
+      "after": {
+        "lines": [
+          "foo xy baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "cw-on-space",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 20
+        }
+      },
+      "keys": "cwX<Esc>",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quuX  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          21
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "x",
+            "type": "v"
+          },
+          "-": {
+            "text": "x",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "c-count-w",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "c2wX<Esc>",
+      "after": {
+        "lines": [
+          "X baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "c-dollar",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "c$end<Esc>",
+      "after": {
+        "lines": [
+          "foo end",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "cb",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "cbX<Esc>",
+      "after": {
+        "lines": [
+          "foo Xbaz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "ccnew<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "new",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "cc-keeps-indent",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "ccnew<Esc>",
+      "after": {
+        "lines": [
+          "  new",
+          "x"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "  indented line here  \n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "  indented line here  \n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "cj",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "cjnew<Esc>",
+      "after": {
+        "lines": [
+          "new",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "yw",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yb",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "yb",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "y-dollar",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "y$",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "bar baz",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yy",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "yy",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-yy",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2yy",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yj",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "yj",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yk",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "yk",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "big-y",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "Y",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "bar baz",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "shift-right",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": ">>",
+      "after": {
+        "lines": [
+          "\tfoo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-shift-right",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2>>",
+      "after": {
+        "lines": [
+          "\tfoo bar baz",
+          "\tone two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-right-motion",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": ">j",
+      "after": {
+        "lines": [
+          "\tfoo bar baz",
+          "\tone two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-left-tab",
+      "before": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "<lt><lt>",
+      "after": {
+        "lines": [
+          "one",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-left-spaces",
+      "before": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 9
+        }
+      },
+      "keys": "<lt><lt>",
+      "after": {
+        "lines": [
+          "\tone",
+          "eight",
+          "  two",
+          ""
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-left-partial",
+      "before": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 3
+        }
+      },
+      "keys": "<lt><lt>",
+      "after": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "two",
+          ""
+        ],
+        "cursor": [
+          3,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-right-skips-empty",
+      "before": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "  two",
+          ""
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": ">j",
+      "after": {
+        "lines": [
+          "\tone",
+          "        eight",
+          "\t  two",
+          ""
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "shift-right-paragraph",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": ">ip",
+      "after": {
+        "lines": [
+          "\ta1",
+          "\ta2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "diw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "diw",
+      "after": {
+        "lines": [
+          "foo  baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "diw-on-space",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 21
+        }
+      },
+      "keys": "diw",
+      "after": {
+        "lines": [
+          "foo.bar(baz) qux-quuxend",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          22
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "  ",
+            "type": "v"
+          },
+          "-": {
+            "text": "  ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "daw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "daw",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "daw-last-word",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 9
+        }
+      },
+      "keys": "daw",
+      "after": {
+        "lines": [
+          "foo bar",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": " baz",
+            "type": "v"
+          },
+          "-": {
+            "text": " baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-daw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 0
+        }
+      },
+      "keys": "d2aw",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "one two ",
+            "type": "v"
+          },
+          "-": {
+            "text": "one two ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "diw-punct",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "diw",
+      "after": {
+        "lines": [
+          "foo.(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-big-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "diW",
+      "after": {
+        "lines": [
+          " qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo.bar(baz)",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo.bar(baz)",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-big-w",
+      "before": {
+        "lines": [
+          "foo.bar(baz) qux-quux  end",
+          "next line"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "daW",
+      "after": {
+        "lines": [
+          "qux-quux  end",
+          "next line"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo.bar(baz) ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo.bar(baz) ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-dquote",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "di\"",
+      "after": {
+        "lines": [
+          "call(a, \"\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "q s",
+            "type": "v"
+          },
+          "-": {
+            "text": "q s",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-dquote",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "da\"",
+      "after": {
+        "lines": [
+          "call(a,, [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          8
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": " \"q s\"",
+            "type": "v"
+          },
+          "-": {
+            "text": " \"q s\"",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-dquote-before",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "di\"",
+      "after": {
+        "lines": [
+          "call(a, \"\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "q s",
+            "type": "v"
+          },
+          "-": {
+            "text": "q s",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-squote",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 33
+        }
+      },
+      "keys": "di'",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) '' end"
+        ],
+        "cursor": [
+          1,
+          33
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "z w",
+            "type": "v"
+          },
+          "-": {
+            "text": "z w",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-squote",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 33
+        }
+      },
+      "keys": "da'",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) end"
+        ],
+        "cursor": [
+          1,
+          32
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "'z w' ",
+            "type": "v"
+          },
+          "-": {
+            "text": "'z w' ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-paren",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 7
+        }
+      },
+      "keys": "di(",
+      "after": {
+        "lines": [
+          "call() 'z w' end"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "a, \"q s\", [x, y], {k: v}",
+            "type": "v"
+          },
+          "-": {
+            "text": "a, \"q s\", [x, y], {k: v}",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-paren",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 7
+        }
+      },
+      "keys": "da(",
+      "after": {
+        "lines": [
+          "call 'z w' end"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "(a, \"q s\", [x, y], {k: v})",
+            "type": "v"
+          },
+          "-": {
+            "text": "(a, \"q s\", [x, y], {k: v})",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-paren-nested",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 7
+        }
+      },
+      "keys": "di(",
+      "after": {
+        "lines": [
+          "f(a, (), d)"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "b c",
+            "type": "v"
+          },
+          "-": {
+            "text": "b c",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-paren-on-open",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "dib",
+      "after": {
+        "lines": [
+          "f()"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "a, (b c), d",
+            "type": "v"
+          },
+          "-": {
+            "text": "a, (b c), d",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-bracket",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 17
+        }
+      },
+      "keys": "di[",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          17
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "x, y",
+            "type": "v"
+          },
+          "-": {
+            "text": "x, y",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-bracket",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 17
+        }
+      },
+      "keys": "da[",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", , {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          16
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "[x, y]",
+            "type": "v"
+          },
+          "-": {
+            "text": "[x, y]",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-brace",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 24
+        }
+      },
+      "keys": "di{",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          25
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "k: v",
+            "type": "v"
+          },
+          "-": {
+            "text": "k: v",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-brace",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 24
+        }
+      },
+      "keys": "da{",
+      "after": {
+        "lines": [
+          "call(a, \"q s\", [x, y], ) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          24
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "{k: v}",
+            "type": "v"
+          },
+          "-": {
+            "text": "{k: v}",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-brace-multiline",
+      "before": {
+        "lines": [
+          "if (x) {",
+          "  one;",
+          "  two;",
+          "}"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 3
+        }
+      },
+      "keys": "di{",
+      "after": {
+        "lines": [
+          "if (x) {",
+          "}"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "  one;\n  two;\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "  one;\n  two;\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "da-brace-multiline",
+      "before": {
+        "lines": [
+          "if (x) {",
+          "  one;",
+          "  two;",
+          "}"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 3
+        }
+      },
+      "keys": "da{",
+      "after": {
+        "lines": [
+          "if (x) "
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "{\n  one;\n  two;\n}",
+            "type": "v"
+          },
+          "\"": {
+            "text": "{\n  one;\n  two;\n}",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dip",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "dip",
+      "after": {
+        "lines": [
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "a1\na2\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "a1\na2\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dap",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 3,
+          "col": 1
+        }
+      },
+      "keys": "dap",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          4,
+          2
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "b1\nb2\n\n\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "b1\nb2\n\n\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dip-on-blank",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 5,
+          "col": 0
+        }
+      },
+      "keys": "dip",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "c1"
+        ],
+        "cursor": [
+          6,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "\n\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "\n\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "ciw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 5
+        }
+      },
+      "keys": "ciwNEW<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one NEW three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "two",
+            "type": "v"
+          },
+          "-": {
+            "text": "two",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "ci-dquote",
+      "before": {
+        "lines": [
+          "call(a, \"q s\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "ci\"new<Esc>",
+      "after": {
+        "lines": [
+          "call(a, \"new\", [x, y], {k: v}) 'z w' end"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "q s",
+            "type": "v"
+          },
+          "-": {
+            "text": "q s",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "ci-paren",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 3
+        }
+      },
+      "keys": "ci(z<Esc>",
+      "after": {
+        "lines": [
+          "f(z)"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "a, (b c), d",
+            "type": "v"
+          },
+          "-": {
+            "text": "a, (b c), d",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yi-paren",
+      "before": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 7
+        }
+      },
+      "keys": "yi(",
+      "after": {
+        "lines": [
+          "f(a, (b c), d)"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "b c",
+            "type": "v"
+          },
+          "\"": {
+            "text": "b c",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yaw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 5
+        }
+      },
+      "keys": "yaw",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "two ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "two ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yip",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 3,
+          "col": 1
+        }
+      },
+      "keys": "yip",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          4,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "b1\nb2\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "b1\nb2\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "di-paren-missing",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "di(",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "x",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "x",
+      "after": {
+        "lines": [
+          "foo ar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "b",
+            "type": "v"
+          },
+          "-": {
+            "text": "b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-x",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "3x",
+      "after": {
+        "lines": [
+          "foo  baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "x-at-line-end",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "x",
+      "after": {
+        "lines": [
+          "foo bar ba",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "z",
+            "type": "v"
+          },
+          "-": {
+            "text": "z",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "x-clamps-count",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 9
+        }
+      },
+      "keys": "5x",
+      "after": {
+        "lines": [
+          "foo bar b",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          9
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "az",
+            "type": "v"
+          },
+          "-": {
+            "text": "az",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "x-empty-line",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "x",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-x",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "X",
+      "after": {
+        "lines": [
+          "foobar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": " ",
+            "type": "v"
+          },
+          "-": {
+            "text": " ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-big-x",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 6
+        }
+      },
+      "keys": "3X",
+      "after": {
+        "lines": [
+          "foor baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": " ba",
+            "type": "v"
+          },
+          "-": {
+            "text": " ba",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "big-x-at-start",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "X",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "yy-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "yyp",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yy-big-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "yyP",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yw-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "ywP",
+      "after": {
+        "lines": [
+          "foo foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "foo ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "yw-count-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "yw3p",
+      "after": {
+        "lines": [
+          "ffoo foo foo oo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          13
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "foo ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "xp",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "xp",
+      "after": {
+        "lines": [
+          "ofo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "f",
+            "type": "v"
+          },
+          "-": {
+            "text": "f",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dd-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "ddp",
+      "after": {
+        "lines": [
+          "one two three",
+          "foo bar baz",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-yy-count-p",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2yy2p",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "foo bar baz",
+          "one two three",
+          "foo bar baz",
+          "one two three",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "p-multiline-charwise",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "d3wjp",
+      "after": {
+        "lines": [
+          "foo two three",
+          "alphabar baz",
+          "one  beta gamma"
+        ],
+        "cursor": [
+          2,
+          6
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "bar baz\none ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz\none ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "big-p-multiline-charwise",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "d3wjP",
+      "after": {
+        "lines": [
+          "foo two three",
+          "alphbar baz",
+          "one a beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "bar baz\none ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz\none ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "p-empty-register",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "p",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-j",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "J",
+      "after": {
+        "lines": [
+          "first second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-big-j",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "3J",
+      "after": {
+        "lines": [
+          "first second)third",
+          "",
+          "fifth "
+        ],
+        "cursor": [
+          1,
+          13
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-j-paren",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 0
+        }
+      },
+      "keys": "J",
+      "after": {
+        "lines": [
+          "first",
+          "   second)third",
+          "",
+          "fifth "
+        ],
+        "cursor": [
+          2,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-j-empty-next",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "J",
+      "after": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "fifth "
+        ],
+        "cursor": [
+          3,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-j-trailing-space",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 4,
+          "col": 0
+        }
+      },
+      "keys": "kJ",
+      "after": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "fifth "
+        ],
+        "cursor": [
+          4,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-j-last-line",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 4,
+          "col": 0
+        }
+      },
+      "keys": "J",
+      "after": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": [
+          5,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "r",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "rx",
+      "after": {
+        "lines": [
+          "foo xar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-r",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "3rx",
+      "after": {
+        "lines": [
+          "foo xxx baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "r-too-few",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 9
+        }
+      },
+      "keys": "5rx",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "tilde",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "~",
+      "after": {
+        "lines": [
+          "Foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-tilde",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "5~",
+      "after": {
+        "lines": [
+          "FOO Bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "tilde-at-end",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 10
+        }
+      },
+      "keys": "~",
+      "after": {
+        "lines": [
+          "foo bar baZ",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "onew<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "new",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "Onew<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "new",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "o-autoindent",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "onew<Esc>",
+      "after": {
+        "lines": [
+          "  indented line here  ",
+          "  new",
+          "x"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "o-esc-drops-indent",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "o<Esc>",
+      "after": {
+        "lines": [
+          "  indented line here  ",
+          "",
+          "x"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "3ohi<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "hi",
+          "hi",
+          "hi",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          4,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-a",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz!",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "big-i",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "I>> <Esc>",
+      "after": {
+        "lines": [
+          "  >> indented line here  ",
+          "x"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "i",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "iX<Esc>",
+      "after": {
+        "lines": [
+          "foo Xbar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "a",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "aX<Esc>",
+      "after": {
+        "lines": [
+          "foo bXar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "a-empty-line",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "aX<Esc>",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "X",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "count-i",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "3ihi<Esc>",
+      "after": {
+        "lines": [
+          "foo hihihibar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "insert-backspace",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "iabc<BS><BS>d<Esc>",
+      "after": {
+        "lines": [
+          "foo adbar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "insert-enter",
+      "before": {
+        "lines": [
+          "  indented line here  ",
+          "x"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "ix<CR>y<Esc>",
+      "after": {
+        "lines": [
+          "  indentx",
+          "  yed line here  ",
+          "x"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "insert-stays-in-insert",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "ihello",
+      "after": {
+        "lines": [
+          "foo hellobar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          10
+        ],
+        "mode": "i",
+        "regs": {}
+      }
+    },
+    {
+      "id": "esc-in-normal",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "named-yank-put",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "\"ayyj\"ap",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "foo bar baz",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "a": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "named-small-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "\"adw",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "a": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "named-line-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "\"bdd",
+      "after": {
+        "lines": [
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "b": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "named-change",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "\"ccwX<Esc>",
+      "after": {
+        "lines": [
+          "foo X baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "c": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "count-before-register",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "2\"ayy",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "a": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "yank-register-survives-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "yyjdd\"0p",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "alpha beta gamma",
+          "foo bar baz"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "numbered-shift",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dddddd",
+      "after": {
+        "lines": [
+          ""
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          },
+          "2": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "3": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "numbered-put",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dddd\"2p",
+      "after": {
+        "lines": [
+          "alpha beta gamma",
+          "foo bar baz"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "2": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "small-delete-register",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwx",
+      "after": {
+        "lines": [
+          "foo az",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "b",
+            "type": "v"
+          },
+          "-": {
+            "text": "b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "multiline-delete-numbered",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "d2w",
+      "after": {
+        "lines": [
+          "foo ",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar baz",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar baz",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "named-put-before",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "\"zyw$\"zP",
+      "after": {
+        "lines": [
+          "foo bar bafoo z",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          14
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "z": {
+            "text": "foo ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-redo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwu<C-r>",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-dd",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "ddu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-dd-last-line",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 4
+        }
+      },
+      "keys": "ddu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "alpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-insert-session",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "ihello<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-twice",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "xxxuu",
+      "after": {
+        "lines": [
+          "foo ar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "r",
+            "type": "v"
+          },
+          "-": {
+            "text": "r",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-twice-redo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "xxxuu<C-r>",
+      "after": {
+        "lines": [
+          "foo r baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "r",
+            "type": "v"
+          },
+          "-": {
+            "text": "r",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "onew<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-big-o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "Onew<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-count-dd",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "j2ddu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-cw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "cwX<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "undo-join",
+      "before": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 2
+        }
+      },
+      "keys": "Ju",
+      "after": {
+        "lines": [
+          "first",
+          "   second",
+          ")third",
+          "",
+          "fifth "
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-nothing",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-nothing",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "<C-r>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-after-move",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwjjlu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "redo-after-move",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwujj<C-r>",
+      "after": {
+        "lines": [
+          "foo baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "change-clears-redo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "dwuxu<C-r><C-r>",
+      "after": {
+        "lines": [
+          "foo ar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "b",
+            "type": "v"
+          },
+          "-": {
+            "text": "b",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-dw",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dw.",
+      "after": {
+        "lines": [
+          "baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar ",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-new-count",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 0
+        }
+      },
+      "keys": "dw2.",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "two three",
+            "type": "v"
+          },
+          "-": {
+            "text": "two three",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-keeps-count",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "2x.",
+      "after": {
+        "lines": [
+          "bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "o ",
+            "type": "v"
+          },
+          "-": {
+            "text": "o ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-change",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "ciwX<Esc>w.",
+      "after": {
+        "lines": [
+          "X X baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-append",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A;<Esc>j.",
+      "after": {
+        "lines": [
+          "foo bar baz;",
+          "one two three;",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          14
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dot-o",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "ohi<Esc>.",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "hi",
+          "hi",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dot-dd",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dd.",
+      "after": {
+        "lines": [
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "one two three\n",
+            "type": "V"
+          },
+          "2": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-shift",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": ">>.",
+      "after": {
+        "lines": [
+          "\t\tfoo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dot-replace",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "rxw.",
+      "after": {
+        "lines": [
+          "xoo xar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "dot-after-undo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "dwu.",
+      "after": {
+        "lines": [
+          "bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "dot-put",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "yyp.",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "foo bar baz",
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "search-forward",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>n",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-big-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>nN",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-backward",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "?cat<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-backward-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "?cat<CR>n",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-wraps",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 7
+        }
+      },
+      "keys": "/the<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-missing",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "/dog<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-word-boundary",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/\\<lt>cat\\><CR>nn",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          3,
+          8
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-count-braces",
+      "before": {
+        "lines": [
+          "aa a aaa"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 3
+        }
+      },
+      "keys": "/a\\{3}<CR>",
+      "after": {
+        "lines": [
+          "aa a aaa"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-count-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>2n",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-escape-cancels",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<Esc>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "search-backspace",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/catx<BS><CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "star",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "*",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "star-whole-word",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 2
+        }
+      },
+      "keys": "**",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "hash",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 8
+        }
+      },
+      "keys": "#",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "star-then-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 5
+        }
+      },
+      "keys": "*n",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          3,
+          8
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "d-search-n",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>0dn",
+      "after": {
+        "lines": [
+          "cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "the ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "the ",
+            "type": "v"
+          },
+          "-": {
+            "text": "the ",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-stays",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vll",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "v",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vlld",
+      "after": {
+        "lines": [
+          " bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "foo",
+            "type": "v"
+          },
+          "-": {
+            "text": "foo",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-delete-backward",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 6
+        }
+      },
+      "keys": "vhhd",
+      "after": {
+        "lines": [
+          "foo  baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-multiline-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "vjd",
+      "after": {
+        "lines": [
+          "foo wo three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "bar baz\none t",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz\none t",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-yank",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "vey",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "two",
+            "type": "v"
+          },
+          "\"": {
+            "text": "two",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-change-c",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "vecNEW<Esc>",
+      "after": {
+        "lines": [
+          "foo NEW baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-x",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "vlx",
+      "after": {
+        "lines": [
+          "foo r baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "ba",
+            "type": "v"
+          },
+          "-": {
+            "text": "ba",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-word-object",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 5
+        }
+      },
+      "keys": "viwd",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one  three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "two",
+            "type": "v"
+          },
+          "-": {
+            "text": "two",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-escape",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vll<Esc>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-to-line",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "vV",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "V",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-line-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "Vd",
+      "after": {
+        "lines": [
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-line-multi-delete",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "Vjd",
+      "after": {
+        "lines": [
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "foo bar baz\none two three\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-line-yank",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": "Vjy",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "one two three\nalpha beta gamma\n",
+            "type": "V"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-line-shift",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "Vj>",
+      "after": {
+        "lines": [
+          "\tfoo bar baz",
+          "\tone two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-line-join",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "VjJ",
+      "after": {
+        "lines": [
+          "foo bar baz one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-tilde",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vll~",
+      "after": {
+        "lines": [
+          "FOO bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-replace",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vllrx",
+      "after": {
+        "lines": [
+          "xxx bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "visual-put",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "ywwvep",
+      "after": {
+        "lines": [
+          "foo foo  baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          8
+        ],
+        "mode": "n",
+        "regs": {
+          "0": {
+            "text": "foo ",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar",
+            "type": "v"
+          },
+          "-": {
+            "text": "bar",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-dot",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "vlldj0.",
+      "after": {
+        "lines": [
+          " bar baz",
+          " two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "\"": {
+            "text": "one",
+            "type": "v"
+          },
+          "-": {
+            "text": "one",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "visual-undo",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "vjdu",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "bar baz\none t",
+            "type": "v"
+          },
+          "\"": {
+            "text": "bar baz\none t",
+            "type": "v"
+          }
+        }
+      }
+    },
+    {
+      "id": "ex-substitute-line",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": ":s/cat/dog/<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a dog and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ex-substitute-line-global",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 4
+        }
+      },
+      "keys": ":s/cat/dog/g<CR>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a dog and dogalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ex-substitute-all",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": ":%s/cat/dog/<CR>",
+      "after": {
+        "lines": [
+          "the dog sat",
+          "a dog and catalog",
+          "condog cat"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "ex-substitute-all-global",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": ":%s/cat/dog/g<CR>",
+      "after": {
+        "lines": [
+          "the dog sat",
+          "a dog and dogalog",
+          "condog dog"
+        ],
+        "cursor": [
+          3,
+          1
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    }
+  ]
+}
