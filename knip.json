@@ -1,9 +1,9 @@
 {
   "entry": [
-    "src/app/main.ts",
     "scripts/*.ts",
     "test/**/*.ts",
     "!test/fixtures/boundary-violation/**"
   ],
-  "project": ["src/**/*.ts"]
+  "project": ["src/**/*.ts"],
+  "ignoreExportsUsedInFile": true
 }
