@@ -22,6 +22,8 @@
 
 **Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-03. Under that delegation the agent aligned the overview (topics T1–T5), decided each requirement below by choosing the stable, simple, standards-based option, and skipped external research because local experiments settled the open technical questions (Discussion Evidence below).
 
+Adding the `editor.*` options to DI2 (W261003FX70-REQ7@R2, W261003FX70-REQ10@R1) was approved by the user on 2026-10-03; the defaults and behaviour were decided under the same self-drive delegation.
+
 # Table of Contents
 
 1. [Problem and Desired Outcome](#1-problem-and-desired-outcome)
@@ -35,9 +37,10 @@
    - [W261003FX70-REQ4@R1: Index worker packaging and lifecycle](#w261003fx70-req4r1-index-worker-packaging-and-lifecycle)
    - [W261003FX70-REQ5@R1: Index freshness](#w261003fx70-req5r1-index-freshness)
    - [W261003FX70-REQ6@R1: Link-safe rename, move, and link-mention edits](#w261003fx70-req6r1-link-safe-rename-move-and-link-mention-edits)
-   - [W261003FX70-REQ7@R1: Configuration file, errors, reload, and debug log](#w261003fx70-req7r1-configuration-file-errors-reload-and-debug-log)
+   - [W261003FX70-REQ7@R2: Configuration file, errors, reload, and debug log](#w261003fx70-req7r2-configuration-file-errors-reload-and-debug-log)
    - [W261003FX70-REQ8@R1: Jump list, recent files, and session restore](#w261003fx70-req8r1-jump-list-recent-files-and-session-restore)
    - [W261003FX70-REQ9@R1: Picker matching, preview, and search limits](#w261003fx70-req9r1-picker-matching-preview-and-search-limits)
+   - [W261003FX70-REQ10@R1: Editor display options](#w261003fx70-req10r1-editor-display-options)
 6. [Research Impact Review](#6-research-impact-review)
 7. [Historical Requirement Revisions](#7-historical-requirement-revisions)
 
@@ -90,7 +93,8 @@ The Markdown file type gains a fast whole-document scan (headings, links, tags, 
   - the link-safe edit pipeline (REQ6);
   - config errors, `:ConfigReload`, and `SO_LOG` (REQ7);
   - jump, recents, and session semantics (REQ8);
-  - picker matching, preview, and search limits (REQ9).
+  - picker matching, preview, and search limits (REQ9);
+  - the `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` options (REQ10).
 
 ## Out of Scope
 
@@ -98,9 +102,9 @@ The Markdown file type gains a fast whole-document scan (headings, links, tags, 
 - Config options owned by later DIs: `preview.*` (DI3), `daily.*` and `templates.*` (DI4). In DI2 they are unknown keys and produce config errors.
 - Cutting the real `v0.1.0` release (PH1 exit).
 - Writing parent roadmap files. This run has no parent-write authorization; parent changes are reported as pending synchronization.
-- **Deferred — `editor.tabWidth`, `editor.wrap`, `editor.relativeNumbers`.**
-  - **Reason:** RM261003ABZP-DES14@R1 lists them in AppConfig, but no DI scope assigns them and DI1 has no soft wrap or line-number options. Soft wrap is a `layoutText` and view concern.
-  - **Trigger:** parent synchronization assigns them, with the proposal to give them to RM261003ABZP-DI3@R2, which owns the view work. Until then they are unknown keys.
+- **Deferred — screen-line motions (`gj`, `gk`, `g0`, `g$`) and separate `shiftwidth`/`expandtab` options.**
+  - **Reason:** with soft wrap, `j` and `k` move by buffer lines, as in Vim. Screen-line motions need the window's text width inside the Vim engine, and indentation keeps DI1's tab-based rule with one width.
+  - **Trigger:** user demand after `v0.1.0`.
 - **Deferred — regex search in the grep picker.**
   - **Reason:** literal smart-case search covers note search and avoids catastrophic patterns in the worker.
   - **Trigger:** user demand after `v0.1.0`.
@@ -109,7 +113,7 @@ The Markdown file type gains a fast whole-document scan (headings, links, tags, 
 
 - **Binding and parent scope:** `w261003fx70-discuss-context.md`, Roadmap Binding. RM261003ABZP-DI2@R2 is defined at `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:429-517`, in phase RM261003ABZP-PH1@R2. It consumes gate G1 and produces gates G2 and G3.
 - **Assigned requirement coverage:**
-  - RM261003ABZP-REQ3@R4 → W261003FX70-REQ1@R1 (inherited), W261003FX70-REQ7@R1 (config), W261003FX70-REQ8@R1 (recents, jumps, state), W261003FX70-REQ9@R1 (pickers).
+  - RM261003ABZP-REQ3@R4 → W261003FX70-REQ1@R1 (inherited), W261003FX70-REQ7@R2 (config), W261003FX70-REQ10@R1 (editor options), W261003FX70-REQ8@R1 (recents, jumps, state), W261003FX70-REQ9@R1 (pickers).
   - RM261003ABZP-REQ4@R3 → W261003FX70-REQ1@R1 (inherited), W261003FX70-REQ3@R1 (syntax recognition), W261003FX70-REQ5@R1 (backlinks freshness), W261003FX70-REQ6@R1 (rename, move, link-mention), W261003FX70-REQ8@R1 (`Ctrl-o`/`Ctrl-i`).
   - RM261003ABZP-REQ9@R2 (startup and index part) → W261003FX70-REQ1@R1, W261003FX70-REQ3@R1, W261003FX70-REQ4@R1.
   - RM261003ABZP-REQ11@R3 (`syntaxExtensions`) → W261003FX70-REQ1@R1, W261003FX70-REQ3@R1.
@@ -123,7 +127,8 @@ The Markdown file type gains a fast whole-document scan (headings, links, tags, 
 
     REQ2 and REQ3 keep the parent outcomes and replace only these mechanisms.
   - **Compiled-binary worker.** The parent build command compiles only `src/app/main.ts`, so a release binary would run without its worker. REQ4 adds the worker entrypoint.
-  - **Reporting.** Each of these is a refinement that changes no contract consumed by DI3 or DI4. The system design reports them, with the unassigned `editor.*` options, as pending parent synchronization.
+  - **Reporting.** Each of these is a refinement that changes no contract consumed by DI3 or DI4. The system design reports them as pending parent synchronization.
+  - **Editor options.** RM261003ABZP-DES14@R1 lists `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` in AppConfig, and the editor window's Overflow state (`rm261003abzp-ui-design.md:580`) soft-wraps through `editor.wrap`. No DI scope names them, but DI2's scope includes config "option overrides, including …" (`…phase-1…md:469`). DI2 therefore implements them (REQ10) and reports the assignment for parent synchronization, so v1 cannot ship without them.
 
 ## Affected Interfaces and Actors
 
@@ -179,6 +184,7 @@ These local experiments ran on 2026-10-03 with Bun 1.4.2 on an Apple M1 Max. The
 | Does a `bun build --compile` binary run a `Worker`? | Only when the worker file is passed as an extra entrypoint and loaded with `new URL("./worker.ts", import.meta.url)`. With one entrypoint, or a plain string path, the worker fails silently. | REQ4. |
 | How long does a full mdast parse of 10,000 notes of ~1 KB take? | 11.8 s with gfm and math; 8.6 s with core CommonMark; 36 ms for a line scan of the same notes. | The index cannot summarize through a full mdast parse (REQ3). |
 | How large is the DI1 `openFile` fixture? | 5,000 lines of ~60 bytes (about 300 KB; `test/fixtures/generate.ts:13-22`). A full mdast parse at the measured rate takes about 350 ms. | Whole-document mdast on open would exceed the 100 ms `openFile` gate (REQ3). |
+| What does DI1 do for tabs, line numbers, and long lines? | Tab stops are a constant 8 in the view and the Vim kernel (`src/ui/editors/text-view.ts:20`, `src/core/kernel/vim/motions.ts:34`, `operators.ts:140-142`). The gutter is always relative with the cursor line absolute and 4 digits wide (`text-view.ts:22`, `:200-208`). Long lines scroll horizontally with no `›` marker (`text-view.ts:154-155`). | The defaults below keep DI1's tab and number behaviour; soft wrap and the marker are new view work (REQ10). |
 
 ## Risks and Compatibility
 
@@ -480,19 +486,19 @@ Rejected options:
 
 **Depends On:** W261003FX70-REQ3@R1, W261003FX70-REQ5@R1
 
-## W261003FX70-REQ7@R1: Configuration file, errors, reload, and debug log
+## W261003FX70-REQ7@R2: Configuration file, errors, reload, and debug log
 
 **Requirement ID:** `W261003FX70-REQ7`
 
-**Revision:** `R1`
+**Revision:** `R2`
 
-**Previous Revision:** None — initial revision
+**Previous Revision:** `W261003FX70-REQ7@R1` (section 7)
 
 **Replaces:** None
 
 **Research Relationship:** None — not research-informed
 
-**Revision Summary:** None — initial revision
+**Revision Summary:** The accepted keys gain `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers`, whose behaviour W261003FX70-REQ10@R1 defines. A config containing `[editor]` is no longer rejected as a whole. The acceptance criterion that expected `[editor] tabWidth = 4` to be an unknown key is replaced by invalid-value and unknown-key cases inside `[editor]`.
 
 **Question:** Which options does the config file accept in DI2, how are errors reported, and is there runtime reload and logging?
 
@@ -501,6 +507,7 @@ Rejected options:
 - **Path:** `$XDG_CONFIG_HOME/so/config.toml`, or `~/.config/so/config.toml` when the variable is unset, empty, or relative. A missing file means defaults with no message.
 - **Accepted keys:**
   - `leader` (one key, default Space), `escTimeoutMs`, `autosave.enabled`, `autosave.delayMs`, `theme`, `color`;
+  - `editor.tabWidth` (integer 1–16, default 8), `editor.wrap` (boolean, default `true`), `editor.relativeNumbers` (boolean, default `true`), with behaviour in W261003FX70-REQ10@R1;
   - `[keys.<mode>]` with `"<key-seq>" = "<command-id>"`;
   - `[filetypes.<id>.keys.<mode>]` in the same form.
 
@@ -512,7 +519,7 @@ Rejected options:
 - **`:ConfigReload`:** re-reads the file and applies options and keymaps without a restart. An invalid file keeps the current config and shows the errors.
 - **`SO_LOG=debug`:** appends a log to `$XDG_STATE_HOME/so/so.log` with startup, config, index, worker, and effect failures. The log holds paths and counts, never note content.
 
-**Rationale:** These keys cover every option that has behaviour in DI1 and DI2 (phase file `:469` plus the parent `leader`). Accepting `editor.*` without behaviour would be a silent no-op. Line-precise errors for every kind meet RM261003ABZP-REQ3@R4.
+**Rationale:** These keys cover every option that has behaviour in DI1 and DI2 (phase file `:469` plus the parent `leader`). The `editor.*` options are accepted because DI2 now implements them (W261003FX70-REQ10@R1); accepting them without behaviour would have been a silent no-op, and rejecting them would void a whole config that sets them. Line-precise errors for every kind meet RM261003ABZP-REQ3@R4.
 
 Both `:ConfigReload` and the log are in the parent design assigned to DI2:
 
@@ -523,7 +530,7 @@ Both `:ConfigReload` and the log are in the parent design assigned to DI2:
 
 - [ ] RM261003ABZP-V4@R2 (a)–(i) pass.
 - [ ] `leader = ","` makes `,ff` open the files picker, and which-key shows `,`.
-- [ ] `[editor] tabWidth = 4` produces an unknown-key error naming its line, and defaults apply.
+- [ ] `[editor] tabWidth = 4` is accepted. `[editor] tabWidth = 0` produces an invalid-value error naming its line, `[editor] tabwidth = 4` produces an unknown-key error naming its line, and in both cases defaults apply.
 - [ ] Editing the file and running `:ConfigReload` changes a binding without a restart. An invalid edit keeps the previous binding and shows the error.
 - [ ] With `SO_LOG=debug`, `so.log` is created under the state directory and contains no line of note text from the test workspace. Without it, no log file is created.
 
@@ -638,10 +645,118 @@ Rejected options:
 
 **Depends On:** W261003FX70-REQ4@R1, W261003FX70-REQ5@R1
 
+## W261003FX70-REQ10@R1: Editor display options
+
+**Requirement ID:** `W261003FX70-REQ10`
+
+**Revision:** `R1`
+
+**Previous Revision:** None — initial revision
+
+**Replaces:** None
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** None — initial revision
+
+**Question:** How do `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` behave?
+
+**Answer:**
+
+- **Scope:** all three apply to every editor window and every file type, and also to picker previews. `:ConfigReload` applies them on the next frame.
+- **`editor.tabWidth`** (integer 1–16, default 8):
+  - A tab advances to the next multiple of `tabWidth` display cells when painted.
+  - The Vim engine uses the same width for display columns: the column `j` and `k` remember, and a Normal-mode cursor on a tab sits at the tab's last cell.
+  - `>>` and `<<` shift by `tabWidth` cells and rebuild the indent with tabs then spaces, which is DI1's rule with 8 replaced by `tabWidth`.
+- **`editor.relativeNumbers`** (boolean, default `true`):
+  - `true` keeps DI1's gutter: the cursor line shows its absolute number and other lines show their distance from it.
+  - `false` shows the absolute number on every line.
+  - The gutter is wide enough for the buffer's largest line number (at least 4 digits), so numbers are never clipped.
+- **`editor.wrap`** (boolean, default `true`):
+  - `true`: a line wider than the text area continues on the next screen rows. A row breaks after the last space or tab that fits, or at the width when none fits. Continuation rows have a blank gutter.
+  - With wrap on, `j` and `k` move by buffer lines, as in Vim. The window scrolls so the cursor's screen row stays visible. When one line is taller than the window, the window shows the rows that contain the cursor.
+  - `false`: DI1's horizontal scroll, plus a `›` in the last column of every row whose text continues past the right edge, as the editor window's Overflow state specifies.
+
+**Rationale:** RM261003ABZP-DES14@R1 lists the three options, DI2 owns config option overrides, and the editor window's Overflow state (`rm261003abzp-ui-design.md:580`) depends on `editor.wrap`. Leaving them unowned would let v1 ship without them.
+
+The defaults keep DI1's tab and number behaviour, so the Neovim-recorded cases and DI1 suites keep their meaning. Wrap defaults to on, as in Vim (`wrap`) and Obsidian, because a Markdown paragraph is one long line and horizontal scrolling makes prose unreadable. Breaking at whitespace keeps words whole, like Vim's `linebreak`. Wrapping happens when the editor view paints rows: it splits the `RenderLine` rows that `layoutText` returns, so the `layoutText` contract DI3 consumes is unchanged, and DI3's live-preview rows wrap through the same path.
+
+Rejected options:
+
+- Assigning the options to DI3: PH1, the daily-usable editor, would ship without soft wrap.
+- Wrap off by default: unreadable notes.
+- Character-boundary breaks (Vim's `nolinebreak`): splits words in prose.
+- Moving wrap into `layoutText`: changes a contract DI3 consumes.
+
+**Acceptance Criteria:**
+
+- [ ] With defaults, every DI1 suite and every Neovim-recorded Vim case passes unchanged.
+- [ ] `tabWidth = 4`: `"\tx"` paints `x` at text column 4; `>>` on `"a"` gives `"\ta"`; `j` from `x` onto `"abcdef"` lands on `e`.
+- [ ] `relativeNumbers = false`: every row shows its absolute line number. A 12,000-line buffer shows `12000` unclipped at its last line.
+- [ ] `wrap = true` (default): a 300-character paragraph in an 80-column window paints on several rows, each broken after a space; with the cursor at the paragraph's end the cursor is visible; `j` moves to the next buffer line.
+- [ ] `wrap = false`: the same paragraph is one row, scrolls horizontally with the cursor, and shows `›` in the last column.
+- [ ] Changing `wrap` and running `:ConfigReload` changes the next frame without a restart.
+
+**Depends On:** W261003FX70-REQ7@R2
+
 # 6. Research Impact Review
 
 None — research was skipped. Local experiments (section 4, Discussion Evidence) answered the external unknowns: TOML error positions, compiled-binary workers, and parse cost. The remaining choices follow from the parent design, Neovim and fzf conventions, and project standards.
 
 # 7. Historical Requirement Revisions
 
-None — no requirement has been revised or replaced.
+Historical revisions are not current planning inputs.
+
+## W261003FX70-REQ7
+
+- **Current revision:** `W261003FX70-REQ7@R2` (section 5)
+- **Superseded on:** 2026-10-03, when the user asked for the `editor.*` options to ship instead of staying unowned.
+
+### W261003FX70-REQ7@R1: Configuration file, errors, reload, and debug log
+
+**Requirement ID:** `W261003FX70-REQ7`
+
+**Revision:** `R1`
+
+**Previous Revision:** None — initial revision
+
+**Replaces:** None
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** None — initial revision
+
+**Question:** Which options does the config file accept in DI2, how are errors reported, and is there runtime reload and logging?
+
+**Answer:**
+
+- **Path:** `$XDG_CONFIG_HOME/so/config.toml`, or `~/.config/so/config.toml` when the variable is unset, empty, or relative. A missing file means defaults with no message.
+- **Accepted keys:**
+  - `leader` (one key, default Space), `escTimeoutMs`, `autosave.enabled`, `autosave.delayMs`, `theme`, `color`;
+  - `[keys.<mode>]` with `"<key-seq>" = "<command-id>"`;
+  - `[filetypes.<id>.keys.<mode>]` in the same form.
+
+  Every other key is unknown in DI2.
+- **Errors:**
+  - These each name `config.toml:<line>`: a syntax error, an unknown key, an invalid value, an unknown command id, an unknown file-type id, and an unknown mode.
+  - An invalid file is ignored as a whole; defaults apply and one error toast shows the first error and the count of others.
+  - `:help` marks user bindings with `●`.
+- **`:ConfigReload`:** re-reads the file and applies options and keymaps without a restart. An invalid file keeps the current config and shows the errors.
+- **`SO_LOG=debug`:** appends a log to `$XDG_STATE_HOME/so/so.log` with startup, config, index, worker, and effect failures. The log holds paths and counts, never note content.
+
+**Rationale:** These keys cover every option that has behaviour in DI1 and DI2 (phase file `:469` plus the parent `leader`). Accepting `editor.*` without behaviour would be a silent no-op. Line-precise errors for every kind meet RM261003ABZP-REQ3@R4.
+
+Both `:ConfigReload` and the log are in the parent design assigned to DI2:
+
+- `:ConfigReload` is in RM261003ABZP-DES14@R1's lifecycle. Keeping the keymap overrides in `AppState.config` and deriving the effective keymap from it makes reload a single action rather than a registry rebuild.
+- `SO_LOG` is in DES14@R1's observability row and was moved to DI2 by `w261003hege-system-design.md:294`.
+
+**Acceptance Criteria:**
+
+- [ ] RM261003ABZP-V4@R2 (a)–(i) pass.
+- [ ] `leader = ","` makes `,ff` open the files picker, and which-key shows `,`.
+- [ ] `[editor] tabWidth = 4` produces an unknown-key error naming its line, and defaults apply.
+- [ ] Editing the file and running `:ConfigReload` changes a binding without a restart. An invalid edit keeps the previous binding and shows the error.
+- [ ] With `SO_LOG=debug`, `so.log` is created under the state directory and contains no line of note text from the test workspace. Without it, no log file is created.
+
+**Depends On:** W261003FX70-REQ2@R1
