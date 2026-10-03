@@ -89,3 +89,13 @@ export function resolveLink(
     ? { unresolved: ref.target }
     : { path, ...subpathOf(ref.subpath) };
 }
+
+/** The shortest path suffix of `to` that resolves to `to` from `from` ("plan", then "projects/plan", …); `.md` dropped for notes. */
+export function linkText(ix: NoteIndex, from: string, to: string): string {
+  const segments = (/\.md$/i.test(to) ? stripMd(to) : to).split("/");
+  for (let k = segments.length - 1; k >= 0; k--) {
+    const text = segments.slice(k).join("/");
+    if (resolvePath(ix, from, text) === to) return text;
+  }
+  return to;
+}
