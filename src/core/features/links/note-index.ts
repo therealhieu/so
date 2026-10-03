@@ -28,18 +28,52 @@ const byPosition = (a: Backlink, b: Backlink) =>
 
 const isNote = (path: string) => /\.md$/i.test(path);
 
-function addPath(map: Multi<string>, key: string, path: string) {
-  const list = map.get(key) ?? [];
-  if (list.includes(path)) return;
-  map.set(key, [...list, path].sort(compare));
+/** Where `path` is, or would be inserted, in the sorted `list`. */
+function sortedIndex(list: readonly string[], path: string): number {
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (compare(list[mid] as string, path) < 0) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
-function removePath(map: Multi<string>, key: string, path: string) {
-  const list = map.get(key);
-  if (list === undefined || !list.includes(path)) return;
-  const rest = list.filter((p) => p !== path);
-  if (rest.length === 0) map.delete(key);
-  else map.set(key, rest);
+/**
+ * Sorted path lists under edit. The map is a copy; a list it shares with the
+ * previous index is copied once, on its first change, and edited in place
+ * after that, so a batch costs its own size rather than the lists' sizes.
+ */
+type Lists = { map: Multi<string>; own: Set<readonly string[]> };
+
+const editLists = (base: ReadonlyMap<string, readonly string[]>): Lists => ({
+  map: new Map(base),
+  own: new Set(),
+});
+
+function writable(l: Lists, key: string): string[] {
+  const list = l.map.get(key) ?? [];
+  if (l.own.has(list)) return list as string[];
+  const copy = [...list];
+  l.own.add(copy);
+  l.map.set(key, copy);
+  return copy;
+}
+
+function addPath(l: Lists, key: string, path: string) {
+  const list = l.map.get(key) ?? [];
+  const i = sortedIndex(list, path);
+  if (list[i] !== path) writable(l, key).splice(i, 0, path);
+}
+
+function removePath(l: Lists, key: string, path: string) {
+  const list = l.map.get(key);
+  if (list === undefined) return;
+  const i = sortedIndex(list, path);
+  if (list[i] !== path) return;
+  if (list.length === 1) l.map.delete(key);
+  else writable(l, key).splice(i, 1);
 }
 
 /** Every tag with its parents: "a/b/c" → "a", "a/b", "a/b/c". */
@@ -59,10 +93,7 @@ const linkKeys = (s: NoteSummary) =>
   new Set(s.links.filter((l) => l.target !== "").map((l) => nameKey(l.target)));
 
 function linkSummary(
-  maps: Pick<
-    { [K in keyof NoteIndex]: Multi<string> },
-    "byAlias" | "byTag" | "linkSources"
-  >,
+  maps: Record<"byAlias" | "byTag" | "linkSources", Lists>,
   s: NoteSummary,
   add: boolean,
 ) {
@@ -90,15 +121,21 @@ export function buildIndex(
 ): NoteIndex {
   const notes = summaries.filter((s) => isNote(s.path));
   const all = new Set([...files, ...notes.map((s) => s.path)]);
-  const byBasename: Multi<string> = new Map();
+  const byBasename = editLists(new Map());
   for (const f of all) addPath(byBasename, nameKey(f), f);
-  const maps = { byAlias: new Map(), byTag: new Map(), linkSources: new Map() };
+  const maps = {
+    byAlias: editLists(new Map()),
+    byTag: editLists(new Map()),
+    linkSources: editLists(new Map()),
+  };
   for (const s of notes) linkSummary(maps, s, true);
   const ix: NoteIndex = {
     summaries: new Map(notes.map((s) => [s.path, s])),
     files: all,
-    byBasename,
-    ...maps,
+    byBasename: byBasename.map,
+    byAlias: maps.byAlias.map,
+    byTag: maps.byTag.map,
+    linkSources: maps.linkSources.map,
     backlinks: new Map(),
   };
   const backlinks = new Map<string, Backlink[]>();
@@ -158,11 +195,11 @@ function patch(
 
   const summaries = new Map(ix.summaries);
   const all = new Set(ix.files);
-  const byBasename = new Map(ix.byBasename);
+  const byBasename = editLists(ix.byBasename);
   const maps = {
-    byAlias: new Map(ix.byAlias),
-    byTag: new Map(ix.byTag),
-    linkSources: new Map(ix.linkSources),
+    byAlias: editLists(ix.byAlias),
+    byTag: editLists(ix.byTag),
+    linkSources: editLists(ix.linkSources),
   };
   for (const p of removed) {
     const old = summaries.get(p);
@@ -185,8 +222,10 @@ function patch(
   const next: NoteIndex = {
     summaries,
     files: all,
-    byBasename,
-    ...maps,
+    byBasename: byBasename.map,
+    byAlias: maps.byAlias.map,
+    byTag: maps.byTag.map,
+    linkSources: maps.linkSources.map,
     backlinks,
   };
   for (const p of relink) {
