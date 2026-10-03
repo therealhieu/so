@@ -32,6 +32,18 @@ test("own writes match by exact stamp; own moves and removals by path for one se
   expect(own.isOwn("old.md")).toBe(false);
 });
 
+test("a move also covers the folders it creates above its target, but not their other entries", () => {
+  let now = 0;
+  const own = createOwnOps(() => now);
+  own.noteMove("notes", "archive/2026/notes");
+  expect(own.isOwn("archive")).toBe(true);
+  expect(own.isOwn("archive/2026")).toBe(true);
+  expect(own.isOwn("archive/other.md")).toBe(false);
+  expect(own.isOwn("archive/2026/other.md")).toBe(false);
+  now = 1000;
+  expect(own.isOwn("archive")).toBe(false);
+});
+
 let root = "";
 let events: FileEvent[] = [];
 let stop = () => {};

@@ -22,26 +22,33 @@ const within = (path: string, prefix: string) =>
 /**
  * Own writes match by exact stamp, so a later external edit of the same file
  * is still reported. Own moves and removals match by path prefix for 1 s,
- * which absorbs per-child re-reports and replays.
+ * which absorbs per-child re-reports and replays. A move also covers the
+ * folders above its target by exact path, since it may have created them.
  */
 export function createOwnOps(clock = () => performance.now()): OwnOps {
   const writes = new Map<string, Stamp>();
-  let paths: { prefix: string; until: number }[] = [];
-  const notePath = (prefix: string) => {
+  let paths: { path: string; exact: boolean; until: number }[] = [];
+  const notePath = (path: string, exact = false) => {
     const now = clock();
     paths = paths.filter((x) => x.until > now);
-    paths.push({ prefix, until: now + PATH_WINDOW_MS });
+    paths.push({ path, exact, until: now + PATH_WINDOW_MS });
   };
   return {
     noteWrite: (p, s) => writes.set(p, s),
     noteMove: (from, to) => {
       notePath(from);
       notePath(to);
+      const parts = to.split("/");
+      for (let i = 1; i < parts.length; i++)
+        notePath(parts.slice(0, i).join("/"), true);
     },
-    noteRemove: notePath,
+    noteRemove: (p) => notePath(p),
     isOwn: (p, s) =>
       (s !== undefined && sameStamp(writes.get(p), s)) ||
-      paths.some((x) => x.until > clock() && within(p, x.prefix)),
+      paths.some(
+        (x) =>
+          x.until > clock() && (x.exact ? p === x.path : within(p, x.path)),
+      ),
   };
 }
 
