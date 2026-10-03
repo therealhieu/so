@@ -98,15 +98,44 @@ test("typing during a write keeps the buffer dirty and writes again", () => {
 
   const saved = update(s, { type: "saved", path: "a.md", stamp: stamp(2) });
   expect(saved.state.buffers[1]?.dirty).toBe(true);
-  expect(writes(saved.effects)).toEqual([
+  expect(saved.effects).toEqual([
+    { kind: "startTimer", id: "autosave:1", ms: 1000 },
+  ]);
+  const timer = update(saved.state, {
+    type: "timer",
+    id: "autosave:1",
+    now: 2000,
+  });
+  expect(writes(timer.effects)).toEqual([
     { kind: "write", path: "a.md", text: "xxhello\n", expected: stamp(2) },
   ]);
-  const again = update(saved.state, {
+  const again = update(timer.state, {
     type: "saved",
     path: "a.md",
     stamp: stamp(3),
   });
   expect(again.state.buffers[1]?.dirty).toBe(false);
+});
+
+test(":q with autosave off writes text typed during its flush at once", () => {
+  let s = openBuffer(fresh(), "a.md", "hello");
+  s = {
+    ...s,
+    config: { ...s.config, autosave: { enabled: false, delayMs: 1000 } },
+  };
+  s = requestQuit(typeX(s, 1, 0).state, { force: false }, 500).state;
+  s = typeX(s, 1, 600).state;
+
+  const saved = update(s, { type: "saved", path: "a.md", stamp: stamp(2) });
+  expect(writes(saved.effects)).toEqual([
+    { kind: "write", path: "a.md", text: "xxhello\n", expected: stamp(2) },
+  ]);
+  const exit = update(saved.state, {
+    type: "saved",
+    path: "a.md",
+    stamp: stamp(3),
+  });
+  expect(exit.effects).toEqual([{ kind: "exit", code: 0 }]);
 });
 
 test(":q flushes dirty buffers, then exits", () => {

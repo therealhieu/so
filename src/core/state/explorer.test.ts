@@ -5,9 +5,11 @@ import {
   stamp,
   testRegistries,
 } from "../../../test/support/state";
+import { splitKeys } from "../kernel/vim/keys";
 import { setBuffer } from "./buffers";
 import { createTarget, explorerOp, toggleExplorer } from "./explorer";
-import type { AppState, Effect, FsOp } from "./types";
+import { scheduleAutosave } from "./save";
+import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
 
 const update = createUpdate(testRegistries());
@@ -22,6 +24,17 @@ const dirtyA = (): AppState => {
   }).buffer;
   return setBuffer(s, 1, { text, dirty: true });
 };
+
+/** Type "x" at the start of buffer 1 at time `now`, as an Insert key would. */
+function typeX(s: AppState, now: number): Result {
+  const b = s.buffers[1];
+  if (b === undefined) throw new Error("no buffer");
+  const text = b.text.apply({
+    range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
+    text: "x",
+  }).buffer;
+  return scheduleAutosave(setBuffer(s, 1, { text, dirty: true }), 1, now);
+}
 
 const ops = (effects: Effect[]) =>
   effects.filter((e) => e.kind !== "cancelTimer" && e.kind !== "listDir");
@@ -38,6 +51,56 @@ test("rename flushes a dirty buffer first, then follows it to the new path", () 
   expect(done.state.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
   expect(done.state.buffers[1]?.undo).toBe(undoBefore);
   expect(done.effects).toEqual([{ kind: "listDir", dir: "" }]);
+});
+
+test("a rename during a write, after typing during it, autosaves the newest text to the new path", () => {
+  const disk: Effect[] = [];
+  const step = (r: Result): AppState => {
+    disk.push(
+      ...r.effects.filter((e) => e.kind === "write" || e.kind === "rename"),
+    );
+    return r.state;
+  };
+  const act = (s: AppState, a: Action) => step(update(s, a));
+  const keys = (s: AppState, seq: string, now: number) =>
+    splitKeys(seq).reduce((st, key) => act(st, { type: "key", key, now }), s);
+
+  let s = openBuffer(fresh(), "a.md", "hello");
+  s = act(s, {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  });
+  expect(s.panels.explorer).toMatchObject({ focused: true, cursor: "a.md" });
+  s = step(typeX(s, 0));
+  s = act(s, { type: "timer", id: "autosave:1", now: 1000 });
+  expect(s.buffers[1]?.save.kind).toBe("writing");
+  s = step(typeX(s, 1100));
+
+  s = keys(s, "r<BS><BS><BS><BS>c.md<CR>", 1200);
+  const op: FsOp = { kind: "rename", from: "a.md", to: "c.md" };
+  s = act(s, { type: "saved", path: "a.md", stamp: stamp(2) });
+  expect(s.buffers[1]).toMatchObject({
+    dirty: true,
+    save: { kind: "scheduled" },
+  });
+
+  s = act(s, { type: "fsResult", op, ok: true });
+  expect(s.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
+  expect(s.buffers[1]?.save.kind).not.toBe("writing");
+
+  s = act(s, { type: "timer", id: "autosave:1", now: 2200 });
+  s = keys(s, ":q<CR>", 2300);
+  expect(s.terminal.quit).toEqual({ code: 0, waiting: [1] });
+  const exit = update(s, { type: "saved", path: "c.md", stamp: stamp(3) });
+  expect(exit.effects).toEqual([{ kind: "exit", code: 0 }]);
+  expect(exit.state.buffers[1]).toMatchObject({ dirty: false });
+
+  expect(disk).toEqual([
+    { kind: "write", path: "a.md", text: "xhello\n", expected: stamp(1) },
+    { kind: "rename", op },
+    { kind: "write", path: "c.md", text: "xxhello\n", expected: stamp(2) },
+  ]);
 });
 
 test("moving a folder re-paths every buffer below it", () => {

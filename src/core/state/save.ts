@@ -138,8 +138,17 @@ export function onSaved(
       save: { kind: "idle" },
     }),
   );
-  // Typed during the write: write the newer text now.
-  if (dirty) return chain(r, (st) => writeBuffer(st, b.id, writing?.at ?? 0));
+  // Typed during the write: autosave the newer text after the delay, so a
+  // rename or move queued behind this write lands first and the write
+  // follows the buffer. Without autosave, a pending `:q` or `:bd` writes now.
+  const at = writing?.at ?? 0;
+  const pending = s.terminal.quit !== undefined || b.closing === true;
+  if (dirty)
+    return chain(r, (st) =>
+      pending && !st.config.autosave.enabled
+        ? writeBuffer(st, b.id, at)
+        : scheduleAutosave(st, b.id, at),
+    );
   const closed = b.closing ? chain(r, (st) => removeBuffer(st, b.id)) : r;
   return chain(closed, (st) => advanceQuit(st, b.id));
 }
