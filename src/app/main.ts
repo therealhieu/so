@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
+import { parseConfig } from "../core/config/toml";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -23,11 +25,14 @@ import {
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
 import { createStore, type Store } from "../core/state/store";
+import type { Action } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
+import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createExclusionMatcher } from "../workspace/ignore";
+import { createLogger, type Logger } from "../workspace/log";
 import { detectClipboard } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
@@ -92,6 +97,31 @@ function registries(): Registries {
   };
 }
 
+/**
+ * config.toml as it is at startup: undefined when there is none (defaults
+ * stay), its parse result otherwise. A file that cannot be read is an error
+ * at line 1, so the defaults apply with an error toast.
+ */
+function loadStartupConfig(path: string, logger: Logger): Action | undefined {
+  let text: string | undefined;
+  try {
+    text = readConfigTextSync(path);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    logger.error("config read failed", { reason: message });
+    return {
+      type: "configLoaded",
+      result: { ok: false, errors: [{ line: 1, message }] },
+      reload: false,
+    };
+  }
+  if (text === undefined) return undefined;
+  const result = parseConfig(text);
+  if (!result.ok)
+    logger.error("config invalid", { errors: result.errors.length });
+  return { type: "configLoaded", result, reload: false };
+}
+
 const readOrNull = (p: string): string | null => {
   try {
     return readFileSync(p, "utf8");
@@ -149,6 +179,9 @@ async function main(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
+  const logger = createLogger(process.env, homedir());
+  logger.info("startup", { root: ws.root });
+  const configFile = configPath(process.env, homedir());
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   const renderer = await createRenderer();
@@ -173,6 +206,8 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
     now: clock,
+    logger,
+    configPath: configFile,
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -186,6 +221,8 @@ async function main(argv: string[]): Promise<void> {
     createUpdate(reg),
     runner.run,
   );
+  const config = loadStartupConfig(configFile, logger);
+  if (config !== undefined) store.dispatch(config);
   shell.attach(store);
   injectThrow(store);
   const lifecycle = installLifecycle({ store, shell, runner });

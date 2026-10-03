@@ -10,6 +10,7 @@ import { createStore, type Store } from "../../src/core/state/store";
 import type { Action, BufferState, Effect } from "../../src/core/state/types";
 import { createUpdate } from "../../src/core/state/update";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
+import { createLogger } from "../../src/workspace/log";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
@@ -99,6 +100,8 @@ export async function startApp(
     clipboard: { name: "none", copy: async () => {} },
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
+    logger: createLogger({}, root),
+    configPath: join(root, ".no-config.toml"),
   });
   const update = createUpdate(testRegistries());
   const store: Store = createStore(

@@ -201,9 +201,12 @@ export const resolveTheme = (o: {
   theme: "dark" | "light";
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
 
-/** The theme for the state's colour mode and configured theme. */
+/** The theme for the state's colour mode and configured theme; `color = "never"` turns colour off. */
 export const themeOf = (s: AppState): Theme =>
-  resolveTheme({ color: s.terminal.color, theme: s.config.theme });
+  resolveTheme({
+    color: s.config.color === "never" ? "nocolor" : s.terminal.color,
+    theme: s.config.theme,
+  });
 
 /** Cut the middle of `text` to `width` cells with `…`, keeping both ends. */
 export function middle(text: string, width: number): string {

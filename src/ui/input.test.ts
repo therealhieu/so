@@ -43,7 +43,7 @@ const key = (name: string, o: Partial<KeyInput> = {}): KeyInput => ({
 });
 const ESC = key("escape", { sequence: "\x1b" });
 
-function setup(escTimeoutMs: number) {
+function setup(escTimeoutMs: number | (() => number)) {
   const time = fakeTime();
   const out: [string, number][] = [];
   const n = createKeyNormalizer({
@@ -65,6 +65,23 @@ test("a raw Esc is held until the configured timeout, counting OpenTUI's 20 ms",
   expect(out).toEqual([]);
   time.advance(1);
   expect(out).toEqual([["<Esc>", 50]]);
+});
+
+test("a timeout given as a function is read at each Esc", () => {
+  let timeout = 50;
+  const { time, out, n } = setup(() => timeout);
+  n.feed(ESC);
+  time.advance(30);
+  expect(out).toEqual([["<Esc>", 30]]);
+  timeout = 200;
+  n.feed(ESC);
+  time.advance(179);
+  expect(out).toHaveLength(1);
+  time.advance(1);
+  expect(out).toEqual([
+    ["<Esc>", 30],
+    ["<Esc>", 210],
+  ]);
 });
 
 test("a timeout at or below 20 ms and a kitty Esc pass at once", () => {

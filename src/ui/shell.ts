@@ -111,7 +111,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       };
       store.subscribe(paint);
       const normalizer = createKeyNormalizer({
-        escTimeoutMs: store.get().config.escTimeoutMs,
+        escTimeoutMs: () => store.get().config.escTimeoutMs,
         now: deps.now,
         setTimer: (fn, ms) => setTimeout(fn, ms),
         clear: (t) => clearTimeout(t),

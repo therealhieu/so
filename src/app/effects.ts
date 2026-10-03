@@ -1,5 +1,7 @@
 import { join } from "node:path";
+import { parseConfig } from "../core/config/toml";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
+import { readConfigText } from "../workspace/config-file";
 import {
   atomicWrite,
   createEntry,
@@ -11,6 +13,7 @@ import {
   sameStamp,
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
+import type { Logger } from "../workspace/log";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
@@ -28,6 +31,10 @@ export type RunnerDeps = {
   dispatch: (a: Action) => void;
   exit: (code: number) => void;
   now?: () => number;
+  /** The debug log; effect failures are recorded with paths and reasons only. */
+  logger: Logger;
+  /** config.toml, read again for each `loadConfig`. */
+  configPath: string;
 };
 
 export type EffectRunner = {
@@ -134,7 +141,13 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       }
       return { type: "fsResult", op, ok: true };
     } catch (x) {
-      return { type: "fsResult", op, ok: false, reason: msg(x) };
+      const reason = msg(x);
+      d.logger.error("file operation failed", {
+        op: op.kind,
+        path: op.from,
+        reason,
+      });
+      return { type: "fsResult", op, ok: false, reason };
     }
   }
 
@@ -142,7 +155,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     switch (e.kind) {
       case "read":
         void readTextFile(abs(e.path))
-          .catch(() => ({ refused: "io" as const }))
+          .catch((x) => {
+            d.logger.error("read failed", { path: e.path, reason: msg(x) });
+            return { refused: "io" as const };
+          })
           .then((r) =>
             d.dispatch(
               "refused" in r
@@ -154,13 +170,15 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "listDir":
         void listDir(d.root, e.dir, d.matcher).then(
           (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
-          (x) =>
+          (x) => {
+            d.logger.error("listing failed", { path: e.dir, reason: msg(x) });
             d.dispatch({
               type: "dirListed",
               dir: e.dir,
               entries: null,
               reason: msg(x),
-            }),
+            });
+          },
         );
         return;
       case "write": {
@@ -176,6 +194,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             d.ownOps.noteWrite(path, stamp);
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
+            d.logger.error("write failed", { path, reason: msg(x) });
             d.dispatch({ type: "saveFailed", path, reason: msg(x) });
           }
         });
@@ -222,6 +241,21 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         return;
       case "exit":
         d.exit(e.code);
+        return;
+      case "loadConfig":
+        void readConfigText(d.configPath)
+          .then((text) => parseConfig(text ?? ""))
+          .catch((x): ReturnType<typeof parseConfig> => {
+            d.logger.error("config read failed", { reason: msg(x) });
+            return { ok: false, errors: [{ line: 1, message: msg(x) }] };
+          })
+          .then((result) => {
+            if (!result.ok)
+              d.logger.error("config invalid", {
+                errors: result.errors.length,
+              });
+            d.dispatch({ type: "configLoaded", result, reload: true });
+          });
         return;
     }
   };
