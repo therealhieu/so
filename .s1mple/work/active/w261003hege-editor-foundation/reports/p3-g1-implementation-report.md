@@ -152,12 +152,58 @@ A fresh remediator must keep these decisions:
 
 ## Remediation
 
-- **Verification reports:** None yet.
-- **Status:** `Not required`
+Every finding in the P3-G1 verification report is fixed in follow-up commits on top of `56b3826`. The original verification report is unchanged.
+
+- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` (commit `2a3fc8d`, `Failed`)
+- **Status:** `Completed`
+- **Remediation range:** `56b3826..383f232` (6 commits; 13 files, +346 / −55)
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P3-G1-VER1` | **Change:** `a` and `r` edit the name in the explorer tree, as in M4 S10/S11 and the parent surface contract (`rm261003abzp-ui-design.md:807, 837-838`). `src/ui/views/explorer.ts:treeField` selects the open create/rename prompt; `rows` inserts a new `◇` row after the selection at the target folder's depth for create, or puts the field on the selected row for rename. The field row is highlighted, its text uses the new `treeField` token (underline; nocolor inverse + underline), and the hardware cursor (`line`) sits after the typed text. `PromptView` hides itself for these prompts and keeps the float for move, trash confirm, and typed confirm; the unused create hint is removed. The prompt state, `AppState`, and the protocol are unchanged. If the explorer were closed, the float is used, so a prompt is never invisible.<br>**Verification:** `bun test test/ui/file-ops.test.ts` → 11 pass. New `a opens a name field in the tree under the target folder` asserts the tree rows `▸ notes`, `▸ scripts`, `≡ config.yaml`, `◇`, `◇ todo.md` (field directly under `config.yaml` at the root), the cursor at (6, 5) after typing `ide`, and `  ◇ draft` indented under `notes`; no float text. `r edits the name in place; m asks for the new path` asserts the `todo.md` row becomes `◇ todo.txt` in place with the cursor at (10, 5), and move still shows `Move to` / `❯ todo.md`. The 8 earlier file-ops tests pass (the create and rename tests were rewritten to the inline placement). A scratch render at 120×36 and 80×24 (floating tree) showed the same rows. | `def2c80` | `Fixed` |
+| `P3-G1-VER2` | **Change:** `src/app/effects.ts:createEffectRunner` keeps, per path, the stamp its last write checked against and the stamp it left (`own`). A write whose `expected` is the stamp so's own earlier write replaced (its `saved` not yet seen by `update`, e.g. the shutdown flush behind an autosave) expects the stamp that write left. Any other disk change still fails with `conflict`. The flush stays on the serial queue, so it runs after the in-flight write and within `FLUSH_BOUND_MS`.<br>**Verification:** RED before the fix: `bun test src/app/effects.test.ts -t "flush"` → `a flush behind an in-flight autosave of the same file writes the newest text` failed with `error: conflict` (the verifier's sequence `run(write v1, s0)` → `flush([write v2, s0])`). GREEN: 13 pass; the disk ends `v2`, the flush resolves (so lifecycle adds the path to `saved` and prints no `so: unsaved:`), and the only action is the autosave's `saved`. The companion `a flush still refuses a file changed on disk after so's own write` rejects with `conflict` and keeps the external text. `bun test test/integration test/e2e/quit.test.ts` → 23 pass. | `236362d` | `Fixed` |
+| `P3-G1-VER3` | **Change:** `src/ui/views/statusline.ts` pushes the save-error segment right after the path, before `words` (M1 `shared/term.js:294-310`). `middle` moves to `src/ui/theme.ts` and `EditorView.paintWinbar` (`src/ui/editors/text-view.ts`) cuts the winbar path in the middle, leaving room for ` ●`.<br>**Verification:** goldens regenerated on purpose with `bun test test/ui/shell.golden.test.ts -u` (whole file; a `-t` filter with `-u` drops unmatched snapshots). `git diff` of the snapshot file shows exactly one changed line, in `shell at 120×36 > a failed save…`: `NORMAL │ source │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s │ 11 words … 1:8`. The other 14 snapshots are byte-identical. New test `a split window's long title is cut in the middle and keeps the file name` (80×24, `projects/archive/2026/quarterly-planning/ideas.md`, `:vs`): both titles start `projects/archive/20`, contain `…`, and end `-planning/ideas.md`. It fails with the old `paintWinbar` (checked by stashing the fix) and passes with it. | `b8401db` | `Fixed` |
+| `P3-G1-VER4` | **Change:** `src/core/state/explorer.ts:isNote(fileTypes, path)` asks the file-type registry (`forPath`, case-insensitive) whether the path is Markdown, the same rule `statusSegments` uses. `ExplorerView` takes `Pick<ViewDeps, "fileTypes">` and uses it; the `.md` branch is gone.<br>**Verification:** `grep -rn '\.md' src/ui` → no matches. New test `the explorer marks notes by their registered file type, in any case` shows `◇ NOTE.MD` and `≡ config.yaml`. It fails before the fix (stash check) and passes after. | `5124916` | `Fixed` |
+| `P3-G1-VER5` | **Change:** tests only. `test/support/ui.ts` exposes the mount's registries (`reg`). `test/ui/shell.golden.test.ts`: `a window whose layout throws still shows the file's raw lines` registers a file type whose `analyze` throws, opens `notes/data.broken`, and asserts `   1 first line`, `second line`, then `~`. A mutation that rethrows in the `catch` of `EditorView.layout` makes it fail. `test/ui/file-ops.test.ts` `at 80×24`: the trash confirm (`Move to Trash? [y/N]`, `todo.md`, `y move to Trash   N cancel`), the typed confirm (`✗ Trash is not available`, `This cannot be undone. Type the file name to confirm:`, `⏎ disabled until the name matches · esc cancel`), and the conflict dialog (`▲ todo.md changed on disk`, `while you have unsaved edits. Nothing was overwritten.`, `k keep mine    t take disk    d view diff`) each appear whole on a row that ends with the float's `│`; the footer `autosave paused until you choose` is present. The diff shows the stacked header ` yours − · disk +`, then `− BETA`, `+ alpha`, `  beta`, `  gamma`, `+ delta` in one column, and no `│` in body rows 1–21.<br>**Verification:** `bun test test/ui` → 36 pass, 15 snapshots, 5 runs in a row. | `13fa5e1` (raw lines), `383f232` (80×24) | `Fixed` |
+
+**Completion checklists** (all four items per finding: resolution implemented, proof passes, change evidence recorded, verification evidence recorded):
+
+| Finding | Resolution | Proof | Change evidence | Verification evidence |
+|---|---|---|---|---|
+| `P3-G1-VER1` | [x] | [x] | [x] | [x] |
+| `P3-G1-VER2` | [x] | [x] | [x] | [x] |
+| `P3-G1-VER3` | [x] | [x] | [x] | [x] |
+| `P3-G1-VER4` | [x] | [x] | [x] | [x] |
+| `P3-G1-VER5` | [x] | [x] | [x] | [x] |
+
+### Remediation Deviations
+
+1. **Move keeps the text-field float (deviation, orchestrator decision).**
+   - **Location:** `src/ui/overlays/prompt.ts:PromptView` (`Move to`, `❯ <path>`).
+   - **Design:** the parent surface contract specifies `m` → "folder picker with destination preview" (`rm261003abzp-ui-design.md:808, 839`; M4 S12).
+   - **Reason:** the picker files are outside DI1 (plan Execution Rules exclude picker overlays), so DI1 keeps a path field.
+   - **Impact:** the move UI differs from M4 S12 until the picker lands; the core `FsOp` and the move behaviour do not change.
+   - **Parent sync:** pending with the other parent items; the later DI that adds the picker replaces this float.
+2. **Inline field details not drawn by M4.** The inline `a`/`r` field has no "name exists → inline error" or rename impact line. The core reports errors through toasts and links are outside DI1, as before.
+3. **Earlier deviations stand.** Items 1–13 of the Initial Implementation still apply, except item 10's icon rule (now from the file-type registry, VER4).
+
+### Remediation Verification
+
+- `time bun run check` → `Passed` — exit 0 in 2.19 s (real); biome clean (109 files), tsc clean, `bun --bun run knip` exit 0 with no output, 432 pass.
+- `bun test test/ui` ×5 → `Passed` — 5/5 runs: 36 pass, 0 fail, 15 snapshots.
+- `bun test test/e2e` ×5 → `Passed` — 5/5 runs: 8 pass, 0 fail (4.32–4.44 s).
+- `bun test src test/vim` → `Passed` — 427 pass.
+- Full `bun test` → `Passed` — 498 pass, 15 snapshots, 0 fail.
+- `bun run test:ci` → `Passed` — 65 pass.
+- `bun run bench` → `Passed` — exit 0; `sourceKeystrokeP95 median=3.97ms limit=32ms ok`, `openFile median=7.67ms limit=100ms ok`.
+- `bun test test/boundaries.test.ts` → `Passed` — 2 pass.
+- `bun install --frozen-lockfile` → `Passed` — no changes.
+- Process-ID scan (`grep -rnE` for W/RM ids, `REQ|DES|UREQ|UDES|UV|US<n>`, `V<n>.<n>`, `P<n>-G<n>`, `PH/DI<n>`, `M<n>@`, `AD<n>`, `DEV<n>`, `RF<n>`, `-VER<n>` over `src test scripts bin .github knip.json package.json biome.json tsconfig.json`; plus `S<n>`/`M<n>`/`mockup` over the added lines) → `Passed` — 0 matches.
+- Self-review of `56b3826..383f232` → no open defects.
+- **PR CI (plain `git push` of `d4f19de..383f232`):** run https://github.com/therealhieu/so/actions/runs/37119637536 on head `383f232` → `success`, event `pull_request`, 11:26:03Z → 11:26:36Z (33 s). `check` 10 s (432 pass); `test (ubuntu-24.04)` 29 s and `test (macos-15)` 26 s (65 pass, 0 fail on each). Linux bench: `sourceKeystrokeP95 median=7.65ms limit=32ms ok`, `openFile median=21.46ms limit=100ms ok`.
+- The CI run for the report commit that follows is recorded by the orchestrator with the report SHA, because writing it here would need a self-referential commit.
 
 ## Final Status
 
@@ -165,11 +211,11 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`. T1–T6 are implemented and verified. T7 ran within the authorized scope (push + PR, no tag). PR #1 has green CI on both OS.
+- **Final report status:** `Completed`. T1–T6 are implemented and verified, T7 ran within the authorized scope (push + PR, no tag), and every P3-G1 verification finding (VER1–VER5) is fixed with passing local checks and green PR CI on both OS.
 - **Final report commit:** returned to the orchestrator after this report is committed.
 - **Final commits:**
 
-  | Task | Commits |
+  | Task or finding | Commits |
   |---|---|
   | T1 | `8898bd9` |
   | T2 | `eb4253a`, `1ba0f67` |
@@ -178,14 +224,20 @@ None
   | T5 | `a0b1a58` |
   | T6 | `37b9e73` |
   | T7 | No commit (delivery only) |
+  | VER1 | `def2c80` |
+  | VER2 | `236362d` |
+  | VER3 | `b8401db` |
+  | VER4 | `5124916` |
+  | VER5 | `13fa5e1`, `383f232` |
 
 - **Final checks:**
-  - `bun run check` → exit 0.
-  - `bun run test:ci` → 59 pass.
+  - `bun run check` → exit 0 in 2.19 s, 0 knip findings.
+  - `bun run test:ci` → 65 pass.
+  - Full `bun test` → 498 pass.
   - `bun run bench` → exit 0.
-  - PR CI run https://github.com/therealhieu/so/actions/runs/37118234988 → success, 40 s.
+  - PR CI run https://github.com/therealhieu/so/actions/runs/37119637536 → success, 33 s.
 - **Remaining issues:**
   - V11.4: `~/.Trash` presence and Put Back are `Pending manual check`.
   - V16.1: `Not authorized — tag out of scope (user decision)`.
   - G1: `Pending — awaiting DI1 PR merge with CI green`.
-  - Parent synchronization: items 1–7 pending.
+  - Parent synchronization: items 1–7 pending, plus the move-picker deviation above.
