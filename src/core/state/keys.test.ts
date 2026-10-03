@@ -8,6 +8,7 @@ import {
 import { splitKeys } from "../kernel/vim/keys";
 import { fullText } from "./buffers";
 import { runCommand } from "./commands";
+import { cmdlineCompletions } from "./keys";
 import type { Action, AppState, Effect } from "./types";
 import { createUpdate, type Registries } from "./update";
 
@@ -237,6 +238,13 @@ test("Tab completes an ex name, then a command id", () => {
   expect(keys(fresh(), ":explorer.t<Tab>").state.vim.cmdline).toBe(
     ":explorer.toggle",
   );
+});
+
+test("Tab completes an abbreviation to its full ex name, listed first", () => {
+  expect(keys(fresh(), ":vs<Tab>").state.vim.cmdline).toBe(":vsplit");
+  const typed = keys(fresh(), ":vs").state;
+  expect(cmdlineCompletions(typed, reg)).toEqual(["vsplit"]);
+  expect(cmdlineCompletions(keys(fresh(), ":e").state, reg)[0]).toBe("edit");
 });
 
 test("conflict keys keep, take, or diff", () => {

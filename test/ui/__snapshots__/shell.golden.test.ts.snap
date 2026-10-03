@@ -1,0 +1,514 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`shell at 120×36 startup shows the explorer focused and an empty window 1`] = `
+"                                                                                                                ~/notes 
+ NOTES  ~/notes               │    ~                                                                                    
+ ▸ notes                      │    ~                                                                                    
+ ▸ scripts                    │    ~                                                                                    
+ ≡ config.yaml                │    ~                                                                                    
+ ◇ todo.md                    │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+                              │    ~                                                                                    
+ EXPLORER  │ [No Name]                                                                                                  
+                                                                                                                        
+"
+`;
+
+exports[`shell at 120×36 explorer hidden with a note open 1`] = `
+" ideas.md                                                                                                       ~/notes 
+   1 # Ideas                                                                                                            
+   1                                                                                                                    
+   2 A terminal editor for notes.                                                                                       
+   3 - keep files plain                                                                                                 
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/ideas.md │ 11 words                                                                       1:1 
+                                                                                                                        
+"
+`;
+
+exports[`shell at 120×36 a vertical split shows winbars and a separator 1`] = `
+" ideas.md                                                                                                       ~/notes 
+ notes/ideas.md                                            │ notes/ideas.md                                             
+   1 # Ideas                                               │   1 # Ideas                                                
+   1                                                       │   1                                                        
+   2 A terminal editor for notes.                          │   2 A terminal editor for notes.                           
+   3 - keep files plain                                    │   3 - keep files plain                                     
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
+ NORMAL  │ source │ notes/ideas.md │ 11 words                                                                       1:1 
+                                                                                                                        
+"
+`;
+
+exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
+" ideas.md ●                                                                                                     ~/notes 
+   1 # Ideasx                                                                                                           
+   1                                                                                                                    
+   2 A terminal editor for notes.                                                                                       
+   3 - keep files plain                                                                                                 
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/ideas.md ● │ 11 words │ ✗ save failed: EACCES · retry in 1s                               1:8 
+save failed: EACCES                                                                                                     
+"
+`;
+
+exports[`shell at 120×36 info and error toasts stack at the top right 1`] = `
+" ideas.md ●                                                                                                     ~/notes 
+   1 # Ideasy                                                                  ╭──────────────────────────────────────╮ 
+   1                                                                           │ ✗ Move to Trash failed: permission   │ 
+   2 A terminal editor for notes.                                              │ denied                               │ 
+   3 - keep files plain                                                        ╰──────────────────────────────────────╯ 
+    ~                                                                          ╭──────────────────────────────────────╮ 
+    ~                                                                          │ ✓ Kept your version — saved          │ 
+    ~                                                                          ╰──────────────────────────────────────╯ 
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/ideas.md ● │ 11 words                                                                     1:8 
+                                                                                                                        
+"
+`;
+
+exports[`shell at 120×36 a code file shows the source view and no word count 1`] = `
+" sync.ts                                                                                                        ~/notes 
+   1 import { readFile } from "node:fs/promises";                                                                       
+   1                                                                                                                    
+   2 export async function sync(dir: string): Promise<number> {                                                         
+   3         const text = await readFile(dir, "utf8"); // whole file                                                    
+   4         return text.length;                                                                                        
+   5 }                                                                                                                  
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ scripts/sync.ts                                                                                 1:1 
+                                                                                                                        
+"
+`;
+
+exports[`shell at 80×24 startup shows the explorer focused and an empty window 1`] = `
+"                                                                                
+╭──────────────────────────────╮                                                
+│ NOTES  ~/notes               │                                                
+│ ▸ notes                      │                                                
+│ ▸ scripts                    │                                                
+│ ≡ config.yaml                │                                                
+│ ◇ todo.md                    │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+│                              │                                                
+╰──────────────────────────────╯                                                
+ EXPLORER  │ [No Name]                                                          
+                                                                                
+"
+`;
+
+exports[`shell at 80×24 explorer hidden with a note open 1`] = `
+" ideas.md                                                                       
+   1 # Ideas                                                                    
+   1                                                                            
+   2 A terminal editor for notes.                                               
+   3 - keep files plain                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/ideas.md                                                   1:1 
+                                                                                
+"
+`;
+
+exports[`shell at 80×24 a vertical split shows winbars and a separator 1`] = `
+" ideas.md                                                                       
+ notes/ideas.md                        │ notes/ideas.md                         
+   1 # Ideas                           │   1 # Ideas                            
+   1                                   │   1                                    
+   2 A terminal editor for notes.      │   2 A terminal editor for notes.       
+   3 - keep files plain                │   3 - keep files plain                 
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+    ~                                  │    ~                                   
+ NORMAL  │ notes/ideas.md                                                   1:1 
+                                                                                
+"
+`;
+
+exports[`shell at 80×24 a failed save shows its reason and retry time 1`] = `
+" ideas.md ●                                                                     
+   1 # Ideasx                                                                   
+   1                                                                            
+   2 A terminal editor for notes.                                               
+   3 - keep files plain                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s           1:8 
+save failed: EACCES                                                             
+"
+`;
+
+exports[`shell at 80×24 info and error toasts stack at the top right 1`] = `
+" ideas.md ●                                                                     
+   1 # Ideasy                          ╭──────────────────────────────────────╮ 
+   1                                   │ ✗ Move to Trash failed: permission   │ 
+   2 A terminal editor for notes.      │ denied                               │ 
+   3 - keep files plain                ╰──────────────────────────────────────╯ 
+    ~                                  ╭──────────────────────────────────────╮ 
+    ~                                  │ ✓ Kept your version — saved          │ 
+    ~                                  ╰──────────────────────────────────────╯ 
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/ideas.md ●                                                 1:8 
+                                                                                
+"
+`;
+
+exports[`shell at 80×24 a code file shows the source view and no word count 1`] = `
+" sync.ts                                                                        
+   1 import { readFile } from "node:fs/promises";                               
+   1                                                                            
+   2 export async function sync(dir: string): Promise<number> {                 
+   3         const text = await readFile(dir, "utf8"); // whole file            
+   4         return text.length;                                                
+   5 }                                                                          
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ scripts/sync.ts                                                  1:1 
+                                                                                
+"
+`;
+
+exports[`themes dark: badges, selection, cursorline, dirty marker, error toast 1`] = `
+{
+  "cursorline": {
+    "attrs": 0,
+    "bg": "35,36,51,255",
+    "fg": "122,162,247,255",
+  },
+  "dirtyMarker": {
+    "attrs": 0,
+    "bg": "22,22,30,255",
+    "fg": "224,175,104,255",
+  },
+  "errorToast": {
+    "attrs": 1,
+    "bg": "31,35,53,255",
+    "fg": "247,118,142,255",
+  },
+  "insertBadge": {
+    "attrs": 1,
+    "bg": "158,206,106,255",
+    "fg": "21,22,30,255",
+  },
+  "normalBadge": {
+    "attrs": 1,
+    "bg": "122,162,247,255",
+    "fg": "21,22,30,255",
+  },
+  "selection": {
+    "attrs": 0,
+    "bg": "45,63,118,255",
+    "fg": "192,202,245,255",
+  },
+}
+`;
+
+exports[`themes light: badges, selection, cursorline, dirty marker, error toast 1`] = `
+{
+  "cursorline": {
+    "attrs": 0,
+    "bg": "213,215,225,255",
+    "fg": "46,125,233,255",
+  },
+  "dirtyMarker": {
+    "attrs": 0,
+    "bg": "208,213,227,255",
+    "fg": "140,108,62,255",
+  },
+  "errorToast": {
+    "attrs": 1,
+    "bg": "214,216,226,255",
+    "fg": "198,67,67,255",
+  },
+  "insertBadge": {
+    "attrs": 1,
+    "bg": "88,117,57,255",
+    "fg": "233,233,237,255",
+  },
+  "normalBadge": {
+    "attrs": 1,
+    "bg": "46,125,233,255",
+    "fg": "233,233,237,255",
+  },
+  "selection": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+}
+`;
+
+exports[`themes nocolor: badges, selection, cursorline, dirty marker, error toast 1`] = `
+{
+  "cursorline": {
+    "attrs": 0,
+    "bg": "default",
+    "fg": "default",
+  },
+  "dirtyMarker": {
+    "attrs": 0,
+    "bg": "default",
+    "fg": "default",
+  },
+  "errorToast": {
+    "attrs": 1,
+    "bg": "default",
+    "fg": "default",
+  },
+  "insertBadge": {
+    "attrs": 33,
+    "bg": "default",
+    "fg": "default",
+  },
+  "normalBadge": {
+    "attrs": 33,
+    "bg": "default",
+    "fg": "default",
+  },
+  "selection": {
+    "attrs": 32,
+    "bg": "default",
+    "fg": "default",
+  },
+}
+`;

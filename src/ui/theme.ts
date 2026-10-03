@@ -1,4 +1,5 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
+import type { AppState } from "../core/state/types";
 
 /** Terminal attributes for one token. */
 export type Style = { fg: RGBA; bg: RGBA; attrs: number };
@@ -198,6 +199,10 @@ export const resolveTheme = (o: {
   color: "color" | "nocolor";
   theme: "dark" | "light";
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
+
+/** The theme for the state's colour mode and configured theme. */
+export const themeOf = (s: AppState): Theme =>
+  resolveTheme({ color: s.terminal.color, theme: s.config.theme });
 
 /**
  * Draw `text` at (x, y), cut or padded to `width` cells. Every painter uses

@@ -77,12 +77,7 @@ function cmdlineKey(
     case "<CR>":
       return executeEx(normal(s), line.slice(1), a.now, reg);
     case "<Tab>": {
-      const typed = line.slice(1);
-      const ft = activeBuffer(s)?.fileType;
-      const ids = reg.commands.list(ft).map((c) => c.id);
-      const [first] = typed.includes(" ")
-        ? []
-        : exCompletions(typed, [...Object.keys(EX_ALIASES), ...ids]);
+      const [first] = cmdlineCompletions(s, reg);
       return none(
         first === undefined ? s : setVim(s, { cmdline: `:${first}` }),
       );
@@ -92,6 +87,34 @@ function cmdlineKey(
         [...a.key].length === 1 ? setVim(s, { cmdline: line + a.key }) : s,
       );
   }
+}
+
+const EX_NAMES = Object.keys(EX_ALIASES);
+const bare = (name: string) => name.replace(/!$/, "");
+/** Full ex names only: an abbreviation ("vs") gives way to the name it shortens ("vsplit"). */
+const FULL_EX_NAMES = EX_NAMES.filter(
+  (n) =>
+    !EX_NAMES.some(
+      (m) =>
+        m.length > n.length &&
+        EX_ALIASES[m] === EX_ALIASES[n] &&
+        m.endsWith("!") === n.endsWith("!") &&
+        bare(m).startsWith(bare(n)),
+    ),
+);
+
+/**
+ * What Tab offers for the ":" line, as Vim does: full ex names first, then
+ * the command ids available for the active file type. Empty after a space.
+ */
+export function cmdlineCompletions(
+  s: AppState,
+  reg: Pick<Registries, "commands">,
+): string[] {
+  const typed = s.vim.cmdline.slice(1);
+  if (typed.includes(" ")) return [];
+  const ids = reg.commands.list(activeBuffer(s)?.fileType).map((c) => c.id);
+  return exCompletions(typed, [...FULL_EX_NAMES, ...ids]);
 }
 
 /** The active window's viewport: the statusline and command line take two rows. */

@@ -208,7 +208,7 @@ const kindOf = (s: AppState, path: string) =>
   )?.kind;
 
 /** Paths shown in the tree, top to bottom. */
-function visiblePaths(s: AppState, dir = ""): string[] {
+export function visiblePaths(s: AppState, dir = ""): string[] {
   const ex = s.panels.explorer;
   return (ex.entries[dir] ?? []).flatMap((e) => {
     const path = join(dir, e.name);
