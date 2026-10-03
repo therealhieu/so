@@ -112,3 +112,49 @@ test("groups without bindings in the scope are not shown", () => {
   const s = update(keys(opened(), " ").state, TIMER).state;
   expect(whichKeyRows(s, reg).some((r) => r.label === "+buffer")).toBe(false);
 });
+
+const note = (): AppState =>
+  update(fresh(), {
+    type: "fileLoaded",
+    path: "a.md",
+    file: textFile("one\ntwo\nthree\n"),
+  }).state;
+const cursorOf = (s: AppState) =>
+  s.windows.byId[s.windows.active]?.content.cursor;
+
+test("a vim key after the popup opens on g still reaches the editor", () => {
+  const atEnd = keys(note(), "G").state;
+  expect(cursorOf(atEnd)).toEqual({ line: 2, col: 0 });
+  const g = keys(atEnd, "g").state;
+  expect(g.vim.pending).toEqual(["g"]);
+  const open = update(g, TIMER).state;
+  expect(open.overlay).toMatchObject({ kind: "whichKey" });
+
+  const s = keys(open, "g").state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.vim.pending).toEqual([]);
+  expect(cursorOf(s)).toEqual({ line: 0, col: 0 });
+  expect(s.notifications.message).toBeUndefined();
+});
+
+test("a key bound under g still runs from the popup", () => {
+  const linked = update(fresh(), {
+    type: "fileLoaded",
+    path: "a.md",
+    file: textFile("[[b]]\n"),
+  }).state;
+  const open = update(keys(linked, "g").state, TIMER).state;
+  const s = keys(open, "d").state;
+  expect(s.vim.pending).toEqual([]);
+  expect(s.notifications.message).toBeUndefined();
+  expect(s.overlay).toMatchObject({ kind: "prompt" });
+});
+
+test("a key that neither the keymap nor vim knows after g gets a notice", () => {
+  const open = update(keys(note(), "g").state, TIMER).state;
+  const s = keys(open, "Z").state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.vim.pending).toEqual([]);
+  expect(s.notifications.message?.text).toBe("no mapping for gZ");
+  expect(cursorOf(s)).toEqual({ line: 0, col: 0 });
+});

@@ -97,6 +97,20 @@ describe("in a note", () => {
     ]);
   });
 
+  test("gg after the g popup opens still goes to the first line", async () => {
+    m = await opened("notes/plan.md");
+    m.keys("Gg");
+    m.advance(300);
+    expect(
+      (await m.frame()).split("\n").some((l) => l.startsWith("╭─ g")),
+    ).toBe(true);
+    m.keys("g");
+    const s = m.store.get();
+    expect(s.overlay.kind).toBe("none");
+    expect(s.windows.byId[s.windows.active]?.content.cursor.line).toBe(0);
+    expect(s.notifications.message).toBeUndefined();
+  });
+
   test("find files ranks by fuzzy score and C-n moves the selection", async () => {
     m = await opened("notes/plan.md");
     m.keys("<leader>ffsrd");

@@ -1,5 +1,6 @@
 import type { KeyScope } from "../kernel/commands/keymap";
 import { type Key, splitKeys } from "../kernel/vim/keys";
+import { parseKeys } from "../kernel/vim/parser";
 import { runCommand } from "./commands";
 import { keymapFor, keyScope } from "./keymap";
 import { message, none } from "./result";
@@ -62,12 +63,25 @@ const close = (s: AppState): AppState => ({
 export const noMapping = (s: AppState, seq: readonly Key[]): Result =>
   message(close(s), `no mapping for ${seqLabel(seq, s.config.leader)}`);
 
-/** Keys while the popup is open: descend, run, `<BS>` up a level, `<Esc>` close. */
+/**
+ * Whether the engine accepts `seq` as a command or the start of one. Insert
+ * and command-line modes consume every key.
+ */
+const vimContinues = (mode: string, seq: readonly Key[]): boolean =>
+  !["normal", "visual", "visualLine"].includes(mode) ||
+  parseKeys(seq, mode).kind !== "invalid";
+
+/**
+ * Keys while the popup is open: descend, run, `<BS>` up a level, `<Esc>` close.
+ * `undefined` hands the key back with the prefix still pending: outside a
+ * leader prefix, an unbound key that Vim understands (`gg` after `g`) belongs
+ * to the engine, as if the popup had never opened.
+ */
 export function whichKeyKey(
   s: AppState,
   a: { key: Key; now: number },
   reg: Registries,
-): Result {
+): Result | undefined {
   if (s.overlay.kind !== "whichKey") return none(s);
   const { prefix, scope } = s.overlay.whichKey;
   if (a.key === "<Esc>") return none(close(s));
@@ -88,6 +102,8 @@ export function whichKeyKey(
       ...withPending(s, seq),
       overlay: { kind: "whichKey", whichKey: { prefix: seq, scope } },
     });
+  if (prefix[0] !== s.config.leader && vimContinues(s.vim.mode, seq))
+    return undefined;
   return noMapping(s, seq);
 }
 

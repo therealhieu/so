@@ -55,7 +55,10 @@ function routeKey(
     case "prompt":
       return promptKey(s, a.key, a.now);
     case "whichKey":
-      return whichKeyKey(s, a, reg);
+      return (
+        whichKeyKey(s, a, reg) ??
+        bindingOrVim({ ...s, overlay: { kind: "none" } }, a, reg)
+      );
     case "picker":
     case "palette":
     case "help":
@@ -63,6 +66,15 @@ function routeKey(
   }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
+  return bindingOrVim(s, a, reg);
+}
+
+/** No overlay and no ":" line: the side panel, then keymap bindings, then the engine. */
+function bindingOrVim(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
   const inPanel = panelFocused(s);
   if (inPanel && s.vim.pending.length === 0) {
     const r = sidePanelKey(s, a, reg);
