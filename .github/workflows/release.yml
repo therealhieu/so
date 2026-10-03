@@ -1,0 +1,56 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+permissions:
+  contents: write
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ env.TAG }}
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - run: bun install --frozen-lockfile --os="*" --cpu="*"
+      - run: |
+          V="${TAG#v}"
+          for t in darwin-arm64 darwin-x64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" src/app/main.ts --outfile dist/so-$t; done
+          for t in linux-x64 linux-arm64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" --define 'process.env.OPENTUI_LIBC="glibc"' src/app/main.ts --outfile dist/so-$t; done
+          (cd dist && sha256sum so-* > SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dist
+          path: dist/
+  smoke:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - { os: macos-15, t: darwin-arm64 }
+          - { os: macos-15-intel, t: darwin-x64 }
+          - { os: ubuntu-24.04, t: linux-x64 }
+          - { os: ubuntu-24.04-arm, t: linux-arm64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+      - run: chmod +x so-${{ matrix.t }} && test "$(./so-${{ matrix.t }} --version)" = "so ${TAG#v}"
+  publish:
+    needs: smoke
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+      - run: gh release create "$TAG" so-* SHA256SUMS --title "$TAG" $([[ "$TAG" == *-* ]] && echo --prerelease) --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}

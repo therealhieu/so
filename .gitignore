@@ -39,3 +39,6 @@ pnpm-debug.log*
 # Tooling
 .playwright-mcp/
 .tmp/
+
+# Benchmarks
+.so-bench/

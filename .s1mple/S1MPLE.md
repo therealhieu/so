@@ -56,7 +56,13 @@ Not established.
 
 **Implementation**
 
-Keep it lean and simple (user decision, 2026-10-03). No other custom rules are established.
+Keep it lean and simple.
+
+| Rule | Forbidden | Example |
+|---|---|---|
+| No work-process details in code | Work, requirement, design, phase, or goal identifiers in comments, doc comments, identifiers, test names, SQL comments, or log messages | `// DES7@R1: pin the deadline` |
+
+Code explains itself in domain terms. Traceability belongs in `.s1mple/` work documents and commit message bodies, not in the codebase.
 
 **Verification**
 
@@ -64,7 +70,11 @@ Not established.
 
 **Delivery**
 
-Not established.
+1. Open a PR; make CI pass and resolve conflicts with the base branch.
+2. Move the work folder from `work/active/` to `work/done/` and update `.s1mple/` references to it.
+3. Push again; CI must pass on the new head.
+
+Never force-push or merge without the user's approval.
 
 ## 4. Workspace Layout
 
