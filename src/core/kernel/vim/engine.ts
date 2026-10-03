@@ -494,10 +494,12 @@ function beginInsert(
   repeat: number,
   repeatOpens: boolean,
 ): void {
+  // With no edit yet ("i", "a", "A", "I"), undo returns to the insertion
+  // point, where Neovim saves the cursor on the session's first change.
   const block = run.block ?? {
     edits: [],
     inverses: [],
-    cursorBefore: run.before,
+    cursorBefore: run.s.cursor,
   };
   delete run.block;
   updateVim(run, {

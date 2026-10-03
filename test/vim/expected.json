@@ -1,6 +1,6 @@
 {
   "nvim": "0.11.7",
-  "recordedAt": "2026-10-03T07:50:41.614Z",
+  "recordedAt": "2026-10-03T08:41:44.693Z",
   "cases": [
     {
       "id": "h",
@@ -7775,6 +7775,278 @@
         "cursor": [
           1,
           5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-append-end",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          11
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-append-end",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>u<C-r>",
+      "after": {
+        "lines": [
+          "foo bar baz!",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-append-end-after-move",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>u0<C-r>",
+      "after": {
+        "lines": [
+          "foo bar baz!",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-append-end-two-chars",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 1,
+          "col": 2
+        }
+      },
+      "keys": "A!!<Esc>u0<C-r>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three!!",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          14
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-append",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "aZ<Esc>u",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-append",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "aZ<Esc>u0<C-r>",
+      "after": {
+        "lines": [
+          "foo bZar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          6
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-insert-at-indent",
+      "before": {
+        "lines": [
+          "   foo bar"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "IZ<Esc>u",
+      "after": {
+        "lines": [
+          "   foo bar"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-insert-at-indent",
+      "before": {
+        "lines": [
+          "   foo bar"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 8
+        }
+      },
+      "keys": "IZ<Esc>u$<C-r>",
+      "after": {
+        "lines": [
+          "   Zfoo bar"
+        ],
+        "cursor": [
+          1,
+          4
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "redo-append-end-after-dot",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>j.uu<C-r>",
+      "after": {
+        "lines": [
+          "foo bar baz!",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          12
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "undo-dot-append-end",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "A!<Esc>j0.u",
+      "after": {
+        "lines": [
+          "foo bar baz!",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          2,
+          13
         ],
         "mode": "n",
         "regs": {}
