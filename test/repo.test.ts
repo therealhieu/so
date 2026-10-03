@@ -17,7 +17,7 @@ async function loadWorkflows(): Promise<Map<string, string>> {
 
 const workflows = await loadWorkflows();
 
-test("V1.1 exact npm pins", () => {
+test("exact npm pins", () => {
   const versions = Object.values({
     ...pkg.dependencies,
     ...pkg.devDependencies,
@@ -28,7 +28,7 @@ test("V1.1 exact npm pins", () => {
   expect(pkg.packageManager).toBe("bun@1.4.2");
 });
 
-test("V1.2 SHA-pinned actions", () => {
+test("SHA-pinned actions", () => {
   expect([...workflows.keys()]).toContain("ci.yml");
   for (const [name, text] of workflows) {
     for (const line of text.split("\n")) {
@@ -41,7 +41,7 @@ test("V1.2 SHA-pinned actions", () => {
   }
 });
 
-test("V15.1 CI runs on pull_request only", () => {
+test("CI runs on pull_request only", () => {
   const ci = Bun.YAML.parse(workflows.get("ci.yml") ?? "") as {
     on: Record<string, unknown>;
     concurrency: { group: string; "cancel-in-progress": boolean };

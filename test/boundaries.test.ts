@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { isBuiltin } from "node:module";
 import { dirname, join } from "node:path";
 
-// Layer rules from rm261003abzp-design.md:50-57. The longest matching `from` prefix wins.
+// Layer rules of the four-layer architecture. The longest matching `from` prefix wins.
 // `allow`: src prefixes a relative import may resolve into.
 // `packages`: "any" (ui only), "no-ui" (no @opentui), "pure" (no @opentui, runtime, or I/O), "none".
 type PackagePolicy = "any" | "no-ui" | "pure" | "none";
@@ -87,7 +87,7 @@ function checkImports(source: string, path: string): string[] {
 const fixture = (name: string) =>
   Bun.file(`test/fixtures/boundary-violation/${name}`).text();
 
-test("V7.1 src respects LAYER_RULES", async () => {
+test("src respects LAYER_RULES", async () => {
   const violations: string[] = [];
   for await (const path of new Bun.Glob("src/**/*.ts").scan()) {
     if (path.endsWith(".test.ts")) continue;
@@ -96,7 +96,7 @@ test("V7.1 src respects LAYER_RULES", async () => {
   expect(violations).toEqual([]);
 });
 
-test("V7.2 violation fixtures are reported", async () => {
+test("violation fixtures are reported", async () => {
   expect(
     checkImports(await fixture("core-imports-fs.ts"), "src/core/state/x.ts"),
   ).toHaveLength(1);
