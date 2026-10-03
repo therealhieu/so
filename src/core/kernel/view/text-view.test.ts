@@ -122,6 +122,54 @@ test("block replace swaps whole lines for a widget row", () => {
   ]);
 });
 
+test("block replace that starts above the viewport hides its visible lines", () => {
+  const widget = { type: "table", data: null, rows: 3 };
+  const rows = layoutText(
+    {
+      ...view(["a", "| t |", "| - |", "| r |", "b"], { from: 2, to: 5 }),
+      rows: 10,
+    },
+    [
+      fixed({
+        kind: "replace",
+        range: { start: { line: 1, col: 0 }, end: { line: 3, col: 5 } },
+        block: true,
+        widget,
+      }),
+    ],
+    undefined,
+  );
+  expect(rows).toEqual([
+    { sourceLine: 2, spans: [], widget },
+    { sourceLine: 4, spans: [{ text: "b", style: "text" }] },
+  ]);
+});
+
+test("inline replace across a line break hides both parts", () => {
+  const rows = layoutText(
+    view(["one %%note", "still%% two"]),
+    [
+      fixed({
+        kind: "replace",
+        range: { start: { line: 0, col: 4 }, end: { line: 1, col: 7 } },
+        block: false,
+        spans: [{ text: "…", style: "comment" }],
+      }),
+    ],
+    undefined,
+  );
+  expect(rows).toEqual([
+    {
+      sourceLine: 0,
+      spans: [
+        { text: "one ", style: "text" },
+        { text: "…", style: "comment" },
+      ],
+    },
+    { sourceLine: 1, spans: [{ text: " two", style: "text" }] },
+  ]);
+});
+
 test("block widget inserts rows below its line", () => {
   const widget = { type: "image", data: { src: "a.png" }, rows: 3 };
   const rows = layoutText(

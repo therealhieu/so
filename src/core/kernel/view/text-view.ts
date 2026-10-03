@@ -13,7 +13,8 @@ const PLAIN: StyleToken = "text";
 /**
  * Lay out the visible lines with every provider's decorations. Later
  * providers win where marks overlap. A block widget goes above its line when
- * it sits at column 0 and below it otherwise.
+ * it sits at column 0 and below it otherwise. A block `replace` hides every
+ * visible line it covers and shows its row once, at its first visible line.
  */
 export function layoutText(
   v: TextView,
@@ -35,7 +36,11 @@ export function layoutText(
   for (let line = v.visible.from; line < last && rows < v.rows; line++) {
     if (v.folds.has(line)) continue;
     const block = decos.find(
-      (d) => d.kind === "replace" && d.block && d.range.start.line === line,
+      (d) =>
+        d.kind === "replace" &&
+        d.block &&
+        d.range.start.line <= line &&
+        d.range.end.line >= line,
     );
     if (block?.kind === "replace") {
       if (block.spans !== undefined || block.widget !== undefined)
@@ -104,8 +109,10 @@ function layoutLine(
       if (cols !== undefined) styles.fill(d.style, cols[0], cols[1]);
     } else if (d.kind === "replace" && !d.block) {
       const cols = onLine(d.range, line, text.length);
-      if (cols === undefined || d.range.start.line !== line) continue;
+      if (cols === undefined) continue;
       for (let c = cols[0]; c < cols[1]; c++) hidden[c] = true;
+      // Replacement content shows once, on the range's first line.
+      if (d.range.start.line !== line) continue;
       if (d.spans !== undefined)
         inserts.set(cols[0], [...(inserts.get(cols[0]) ?? []), ...d.spans]);
       if (d.widget !== undefined) widget = d.widget;
