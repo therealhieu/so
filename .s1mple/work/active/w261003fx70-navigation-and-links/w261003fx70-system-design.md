@@ -8,7 +8,7 @@
 
 **Research Source:** None
 
-**Current Requirement Revisions:** W261003FX70-REQ1@R1, W261003FX70-REQ2@R1, W261003FX70-REQ3@R1, W261003FX70-REQ4@R1, W261003FX70-REQ5@R1, W261003FX70-REQ6@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1
+**Current Requirement Revisions:** W261003FX70-REQ1@R1, W261003FX70-REQ2@R1, W261003FX70-REQ3@R1, W261003FX70-REQ4@R1, W261003FX70-REQ5@R1, W261003FX70-REQ6@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1, W261003FX70-REQ10@R1
 
 **Research Reconciliation:** None — research skipped
 
@@ -41,7 +41,7 @@
 - [x] UI/frontend technical design stays within the Design Boundary; UI/UX realization is deferred to `s1mple-discuss-ui`.
 - [x] Every omitted structure, code preview, test level, or non-test check explains why it does not apply.
 
-**Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-03. Under that delegation the agent finalized decisions W261003FX70-DES1 … W261003FX70-DES10 below.
+**Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-03. Under that delegation the agent finalized decisions W261003FX70-DES1 … W261003FX70-DES10 below. Adding the `editor.*` options to DI2 (W261003FX70-REQ7@R2, W261003FX70-REQ10@R1) was approved by the user on 2026-10-03; W261003FX70-DES11 was decided under the same delegation.
 
 # Table of Contents
 
@@ -64,6 +64,7 @@
    - [W261003FX70-DES8: Navigation state and session](#w261003fx70-des8-navigation-state-and-session)
    - [W261003FX70-DES9: Discovery and link UI](#w261003fx70-des9-discovery-and-link-ui)
    - [W261003FX70-DES10: Benchmarks and CI](#w261003fx70-des10-benchmarks-and-ci)
+   - [W261003FX70-DES11: Editor display options](#w261003fx70-des11-editor-display-options)
 
 # 1. Design Goals, Constraints, and Requirement Coverage
 
@@ -72,7 +73,7 @@
 - Deliver every RM261003ABZP-DI2@R2 obligation on top of the merged DI1 contracts, extending them only additively (W261003FX70-REQ1@R1).
 - Keep the 10,000-note budgets by construction: whole-document facts come from a linear scan, mdast is lazy per block, and the index is built off the main thread (W261003FX70-REQ3@R1, W261003FX70-REQ4@R1).
 - Make every link edit safe: plans are pure, closed files are re-validated at write time, and every resolved link keeps its target (W261003FX70-REQ6@R1).
-- Keep keys, config, and discovery registration-driven: one effective keymap derived from defaults, file-type bindings, and config; one pure picker source model (W261003FX70-REQ7@R1, W261003FX70-REQ9@R1).
+- Keep keys, config, and discovery registration-driven: one effective keymap derived from defaults, file-type bindings, and config; one pure picker source model (W261003FX70-REQ7@R2, W261003FX70-REQ9@R1).
 - Persist navigation outside the workspace with Neovim semantics (W261003FX70-REQ8@R1).
 
 ## Requirement Coverage
@@ -156,7 +157,7 @@
   - **Verification:** V11, V12, V13, V14, V15, V24, V34, V38
   - **Research Support:** None
 
-- `W261003FX70-REQ7@R1` — Configuration file, errors, reload, and debug log
+- `W261003FX70-REQ7@R2` — Configuration file, errors, reload, and debug log
   - **Coverage Outcome:** System design required
   - **System Design:** `W261003FX70-DES7`
   - **How Addressed:**
@@ -164,6 +165,7 @@
     - `onConfigLoaded` validates bindings against the registries, then applies the config or keeps the previous one and shows a toast.
     - `keymapFor(reg, config)` derives the effective keymap, including the leader. `:ConfigReload` emits `loadConfig`.
     - `createLogger` writes `so.log` only when `SO_LOG=debug`.
+    - `ConfigSchema` accepts the `editor` table; its behaviour is W261003FX70-REQ10@R1's.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/core/config/{schema,toml}.ts`; `src/core/state/{config,keymap}.ts`; `src/core/kernel/commands/keymap.ts` — `Keymap`; `src/core/kernel/vim/keys.ts` — `splitKeys`; `src/workspace/{config-file,log}.ts`; `src/ui/{shell,theme}.ts`
   - **Callers and Wiring:** `src/app/main.ts` startup; `src/app/effects.ts` `loadConfig`
@@ -204,6 +206,21 @@
   - **Verification:** V16, V29, V34, V42
   - **Research Support:** None
 
+- `W261003FX70-REQ10@R1` — Editor display options
+  - **Coverage Outcome:** System design required
+  - **System Design:** `W261003FX70-DES11`
+  - **How Addressed:**
+    - `VimEnv.tabWidth` carries `config.editor.tabWidth` into the engine's display-column helpers and `>>`/`<<`.
+    - `wrapLine` in the kernel view computes where each screen row of a line starts. `EditorView` paints those rows, keeps the cursor's row visible, and draws `›` when wrap is off.
+    - The gutter width follows the line count, and `relativeNumbers` chooses relative or absolute numbers.
+  - **Existing Evidence:** None — system change required
+  - **Affected Files and Symbols:** `src/core/kernel/view/wrap.ts` — `wrapLine`, `rowOf`; `src/core/kernel/vim/{types,motions,operators,engine}.ts` — `VimEnv`, `Run`, `cursorDisplayCol`, `colForDisplay`, `shift`; `src/core/state/keys.ts` — `envOf`; `src/ui/editors/text-view.ts` — `EditorView`, `paintLine`, `paintPreview`; `src/core/config/schema.ts` — `ConfigSchema`
+  - **Callers and Wiring:** `handleKey` through `runVim`; `WindowTree` and `PickerView` paint through `EditorView` and `paintPreview`
+  - **Runtime Flow:** Editor paint with display options; Config load and reload
+  - **Success Criteria:** S21
+  - **Verification:** V18, V19, V39, V48, V57, V58, V59
+  - **Research Support:** None
+
 ## Assigned Parent Obligation Coverage
 
 - **Parent Baseline**
@@ -213,16 +230,16 @@
 
 - **Navigation, commands, configuration, and state**
   - **Parent:** RM261003ABZP-REQ3@R4; RM261003ABZP-DES5@R2; RM261003ABZP-DES14@R1; RM261003ABZP-S3@R1 / RM261003ABZP-V4@R2
-  - **Work Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1
+  - **Work Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1, W261003FX70-REQ10@R1
   - **Coverage Outcome:** System design required
-  - **Work Design:** W261003FX70-DES7, W261003FX70-DES8, W261003FX70-DES9
+  - **Work Design:** W261003FX70-DES7, W261003FX70-DES8, W261003FX70-DES9, W261003FX70-DES11
   - **Existing Evidence:** None — system change required
-  - **Success Criteria:** S13, S15, S16, S17
-  - **Verification:** V17–V22, V26–V29, V31, V39, V40, V42
+  - **Success Criteria:** S13, S15, S16, S17, S21
+  - **Verification:** V17–V22, V26–V29, V31, V39, V40, V42, V57–V59
   - **Treatment:** Refined.
     - The TOML parser changes from `Bun.TOML.parse` to `toml-eslint-parser`, because Bun reports no TOML line (requirements, Discussion Evidence).
     - The keymap is derived per config, so `:ConfigReload` works without a registry rebuild.
-    - The `editor.*` options are deferred to parent assignment. Every other DES14@R1 behaviour is inherited.
+    - The `editor.*` options, which no DI scope named, are implemented here (DES11) under DI2's config option overrides. Every other DES14@R1 behaviour is inherited.
 
 - **Links, backlinks, tags, and rename**
   - **Parent:** RM261003ABZP-REQ4@R3; RM261003ABZP-DES7@R3; RM261003ABZP-DES6@R1; RM261003ABZP-DES8@R2 (rename and link-mention writes); RM261003ABZP-S4@R1 / RM261003ABZP-V5@R1, RM261003ABZP-V6@R2
@@ -308,7 +325,7 @@
   | 3 | `rm261003abzp-design.md:378`, `:590` (DES6@R1, DES7@R3 wiring) | Index summaries come from the scan level of `parseDoc`; mdast is lazy per block | 11.8 s for 10,000 notes; ~350 ms for the `openFile` fixture |
   | 4 | `rm261003abzp-design.md:710`; `…phase-1…md:221-222` | `planRename(ix, moves, open)` without `read`; additive Actions `indexFailed`, `editsApplied`, `previewLoaded`; additive Effects `loadConfig`, `applyEdits`, `readPreview`; TimerId `whichKey`, `saveState`, `search` | DES1, DES6 |
   | 5 | `rm261003abzp-design.md` DES15@R2 build command; `…phase-1…md:132` | Every `bun build --compile` lists `src/workspace/index-worker.ts` as a second entrypoint | requirements Discussion Evidence (single-entrypoint binary drops the worker) |
-  | 6 | `rm261003abzp-design.md:426` (AppConfig `editor.*`) | Assign `editor.tabWidth`, `editor.wrap`, `editor.relativeNumbers` to RM261003ABZP-DI3@R2 | no DI scope assigns them; DI2 rejects them as unknown keys |
+  | 6 | `rm261003abzp-design.md:426` (AppConfig `editor.*`); `…phase-1…md:469` (DI2 config scope) | Record `editor.tabWidth` (1–16, default 8), `editor.wrap` (default `true`), and `editor.relativeNumbers` (default `true`) as delivered by RM261003ABZP-DI2@R2 | no DI scope named them; the user approved adding them to DI2 on 2026-10-03; W261003FX70-REQ10@R1, DES11 |
   | 7 | `…phase-1…md:141` | Fuzzy matching lives at `src/core/kernel/text/fuzzy.ts` (palette and pickers use it, so it is not link-specific) | DES3 |
   | 8 | `…phase-1…md:259-267` | Worker messages gain optional fields: `batch.files`, `search.mode`/`names`/`exclude`, `results.capped` | DES4 |
   | 9 | `rm261003abzp-design.md` DES5@R2 command ids | The save command id is `file.save` (V4 (b) binds it); DI1's `buffer.write` is renamed | V4@R2 scenario (b) |
@@ -331,9 +348,9 @@
 | Concern | Applicability | Design Location or Reason |
 |---|---|---|
 | Security and privacy | Applicable | The state file and log are written outside the workspace (`$XDG_STATE_HOME/so/`), the state file with mode `0600` (`src/workspace/state-file.ts` `saveStateFile`; V32). The log never contains note text (`src/workspace/log.ts`; V41). Grep is literal, so a regular-expression denial of service is impossible (`index-worker.ts` `searchFile`; V34). Link edits are validated against expected text before writing (`applyEdits`; V38). |
-| Configuration | Applicable | DES7: `configPath`, `parseConfig`, `ConfigSchema`, `onConfigLoaded`, `keymapFor`, `:ConfigReload`; V17–V20, V31, V39. |
+| Configuration | Applicable | DES7: `configPath`, `parseConfig`, `ConfigSchema`, `onConfigLoaded`, `keymapFor`, `:ConfigReload`; DES11: the `editor` options; V17–V20, V31, V39, V57–V59. |
 | Observability | Applicable | `SO_LOG=debug` → `createLogger` in `src/workspace/log.ts`, used by `src/app/{main,effects,index-host}.ts` for startup, config errors, worker crashes and restarts, index ready (count and ms), and effect failures; V33, V41. Index status is also user-visible in the statusline (V44). |
-| Performance and scalability | Applicable | DES2 two-level parse; DES4 worker batching (500 summaries per batch); DES9 viewport-only preview; DES10 bench targets `firstFrame`, `indexReady`, `indexingKeystrokeP95`; V49–V51. |
+| Performance and scalability | Applicable | DES2 two-level parse; DES4 worker batching (500 summaries per batch); DES9 viewport-only preview; DES10 bench targets `firstFrame`, `indexReady`, `indexingKeystrokeP95`; DES11 wraps only the lines on screen; V49–V51. |
 | Concurrency | Applicable | The worker runs off the main thread with message passing only (DES4). Search ids drop stale results (DES9). `applyEdits` runs on the serial file-system queue behind the rename that produced it (DES6), and `follow` re-paths queued writes. |
 | Retry and idempotency | Applicable | The worker restarts once (DES4; V36). `applyEdits` checks the expected text, so a repeated or stale edit is skipped rather than applied twice (DES6; V38). State saves are whole-file atomic replacements (DES8). |
 | Migration and rollout | Applicable | The state file starts at `"version": 1`, and missing, corrupt, or unknown versions load as empty (DES8; V32). DI1's `buffer.write` id is renamed to `file.save`; no user config exists before DI2, so nothing migrates. See Migration and Delivery. |
@@ -363,6 +380,7 @@
   - `src/core/state/{jumps,recent,session}.ts`, `src/workspace/state-file.ts` — Traces to `W261003FX70-DES8`
   - `src/core/state/{whichkey,picker,completion,side-panel}.ts`, `src/ui/overlays/{whichkey,picker,completion}.ts`, `src/ui/views/side-panel.ts` — Traces to `W261003FX70-DES9`
   - `test/bench/{startup,indexing-keystroke}.bench.ts`, `scripts/bench-gate.ts` — Traces to `W261003FX70-DES10`
+  - `src/core/kernel/view/wrap.ts` — `wrapLine`, `rowOf`; `tabWidth` in `src/core/kernel/vim/*` and `src/ui/editors/text-view.ts` — Traces to `W261003FX70-DES11`
 
 # 2. System Context and Architecture
 
@@ -514,6 +532,27 @@ The major tradeoff is two parse levels instead of one. One `syntaxExtensions` re
 - **Must Not Own:**
   - Applying config to state (`state/config.ts`).
 
+## Editor display options
+
+- **Target:** `src/core/kernel/view/wrap.ts`, `src/core/kernel/vim/{types,motions,operators,engine}.ts`, `src/ui/editors/text-view.ts`
+- **Kind:** pure kernel helpers plus the editor view
+- **Responsibilities:**
+  - Compute the display-column start of each wrapped screen row of a painted line.
+  - Expand tabs with `tabWidth` in the engine and the view.
+  - Paint wrapped rows, the gutter, and the `›` overflow marker, and keep the cursor's screen row visible.
+- **Collaborators:**
+
+  ```text
+  state.config.editor → envOf → VimEnv.tabWidth → cursorDisplayCol / colForDisplay / shift
+  state.config.editor → EditorView.show / renderSelf → layoutText rows → wrapLine → paintLine per screen row
+  ```
+
+- **Boundary Contract:** section 6, `AppConfig`; section 7, `src/core/kernel/view/wrap.ts`
+- **Detailed Design:** section 7, per file
+- **Must Not Own:**
+  - Line layout and decorations (`layoutText`, unchanged).
+  - Cursor movement by screen rows (`gj`/`gk` are deferred).
+
 ## Discovery and link UI
 
 - **Target:** `src/ui/overlays/{whichkey,picker,completion}.ts`, `src/ui/views/side-panel.ts`, `src/ui/views/statusline.ts`
@@ -588,9 +627,9 @@ so/
 │   ├── core/
 │   │   ├── config/
 │   │   │   ├── [M] schema.ts
-│   │   │   │       Contains: strict schema with leader, keys, filetypes keys
+│   │   │   │       Contains: strict schema with leader, editor, keys, filetypes keys
 │   │   │   │       Symbols: ConfigSchema, AppConfig, defaults, KeyBindingsSchema
-│   │   │   │       Decisions: DES7
+│   │   │   │       Decisions: DES7, DES11
 │   │   │   └── [A] toml.ts
 │   │   │           Contains: TOML parse with locations, zod validation, issue → line mapping
 │   │   │           Symbols: parseConfig, ConfigResult, ConfigError, BindingSource
@@ -610,10 +649,14 @@ so/
 │   │   │   │   └── [M] defaults.ts        Contains: DI2 global bindings and groups Symbols: defaultBindings, defaultGroups, Binding   Decisions: DES7, DES8, DES9
 │   │   │   ├── text/
 │   │   │   │   └── [A] fuzzy.ts           Symbols: fuzzyScore, FuzzyMatch, rankBy     Decisions: DES3
+│   │   │   ├── view/
+│   │   │   │   └── [A] wrap.ts            Symbols: cellWidth, displayWidth, wrapLine, rowOf   Decisions: DES11
 │   │   │   └── vim/
 │   │   │       ├── [M] keys.ts            Contains: leader parameter                Symbols: splitKeys, NAMED   Decisions: DES7
-│   │   │       ├── [M] engine.ts          Contains: jumped effect for jump motions  Symbols: moveCursor, cmdlineKey, JUMP_MOTIONS   Decisions: DES8
-│   │   │       └── [M] types.ts           Symbols: VimEffect                        Decisions: DES8
+│   │   │       ├── [M] engine.ts          Contains: jumped effect for jump motions; run.tab from env   Symbols: handleKey, moveCursor, cmdlineKey, JUMP_MOTIONS   Decisions: DES8, DES11
+│   │   │       ├── [M] motions.ts         Contains: tab width parameter, TABSTOP removed   Symbols: cursorDisplayCol, colForDisplay   Decisions: DES11
+│   │   │       ├── [M] operators.ts       Contains: shift by run.tab                Symbols: Run, shift, atWant   Decisions: DES11
+│   │   │       └── [M] types.ts           Symbols: VimEffect, VimEnv                Decisions: DES8, DES11
 │   │   ├── lang/markdown/
 │   │   │   ├── [A] blocks.ts              Symbols: BlockKind, BlockSpan, splitBlocks     Decisions: DES2
 │   │   │   ├── [A] syntax.ts              Symbols: SyntaxExtension, syntaxExtensions     Decisions: DES2
@@ -627,7 +670,7 @@ so/
 │   │       │                                       CompletionState, WhichKeyState, LinkRewrite, PersistedState   Decisions: DES1
 │   │       ├── [M] update.ts              Symbols: Registries, createUpdate, onTimerAction   Decisions: DES1, DES7
 │   │       ├── [M] init.ts                Symbols: initialState                    Decisions: DES1
-│   │       ├── [M] keys.ts                Symbols: handleKeyAction, applyVimEffects, cmdlineCompletions   Decisions: DES7, DES8, DES9
+│   │       ├── [M] keys.ts                Symbols: handleKeyAction, applyVimEffects, cmdlineCompletions, envOf   Decisions: DES7, DES8, DES9, DES11
 │   │       ├── [M] commands.ts            Symbols: EX_ALIASES, executeEx, builtins (file.save)   Decisions: DES7, DES8, DES9
 │   │       ├── [M] buffers.ts             Symbols: onFileLoaded, openPath, withAnalysis, applyBufferEdits   Decisions: DES2, DES5, DES6, DES8
 │   │       ├── [M] save.ts                Symbols: onSaved, onTimer                 Decisions: DES5
@@ -651,7 +694,8 @@ so/
 │   │   ├── [M] shell.ts                   Contains: new overlay views and side panel; per-key escTimeoutMs   Symbols: createShell   Decisions: DES7, DES9
 │   │   ├── [M] theme.ts                   Contains: config.color "never" forces nocolor   Symbols: themeOf   Decisions: DES7
 │   │   ├── editors/
-│   │   │   └── [M] text-view.ts           Contains: analysis read from state; paintPreview   Symbols: EditorView, paintPreview   Decisions: DES2, DES9
+│   │   │   └── [M] text-view.ts           Contains: analysis read from state; paintPreview; soft wrap, gutter width,
+│   │   │                                    relative/absolute numbers, › marker, tab width   Symbols: EditorView, paintLine, paintPreview   Decisions: DES2, DES9, DES11
 │   │   ├── overlays/
 │   │   │   ├── [A] whichkey.ts            Symbols: WhichKeyView                     Decisions: DES9
 │   │   │   ├── [A] picker.ts              Symbols: PickerView                       Decisions: DES9
@@ -677,11 +721,13 @@ so/
     │   ├── [M] state.ts                   Symbols: testRegistries                   Decisions: DES7
     │   └── [M] ui.ts                      Symbols: mountShell (index status, config) Decisions: DES9
     ├── vim/
+    │   ├── [M] vim.test.ts                Contains: env passes tabWidth 8          Decisions: DES11
     │   ├── [M] cases.ts                   Contains: jump motion + <C-o>/<C-i> cases Decisions: DES8
     │   └── [M] expected.json              Contains: recorded Neovim results        Decisions: DES8
     ├── ui/
     │   ├── [A] discovery.test.ts          Decisions: DES9
     │   ├── [A] links.test.ts              Decisions: DES9
+    │   ├── [A] editor-options.test.ts     Decisions: DES11
     │   ├── [M] shell.golden.test.ts (+ __snapshots__)   Decisions: DES9
     │   └── [M] file-ops.test.ts           Decisions: DES6
     ├── integration/
@@ -904,6 +950,26 @@ onConfigLoaded: result.ok && validateBindings(reg, result) ok → state.config =
 ```
 
 **Detailed Control Flow:** section 7, `src/core/config/toml.ts`, `src/core/state/config.ts`
+
+`state.config.editor` is read on every key (`envOf`) and every frame (`EditorView`), so a reload changes tab width, wrap, and numbers on the next key and frame without other wiring.
+
+## Editor paint with display options
+
+**Participating Symbols:** `EditorView.show`, `EditorView.renderSelf`, `layoutText`, `wrapLine`, `rowOf`, `paintLine`, `gutterWidth`
+
+**Illustrative Flow:**
+
+```text
+show: topLine ← core scroll (DI1 rule) → wrap off: leftCol from cursor display col (DI1)
+      wrap on:  leftCol = 0; screen row of cursor = Σ rows(topLine … cursor line − 1) + rowOf(cursor line, cursor col)
+                → while it is ≥ window rows and topLine < cursor line: topLine++
+                → cursor line taller than the window: skipRows = rowOf − rows + 1 (its first rows are hidden)
+renderSelf: layoutText(view) → RenderLine[] → for each: starts = wrap ? wrapLine(text, textW, tab) : [leftCol]
+            → row 0: number (relative or absolute) │ row ≥ 1: blank gutter → paintLine(spans, {leftCol: start, endCol: next start, tabWidth})
+            → wrap off and text wider than leftCol + textW → "›" in the last column; stop at window rows
+```
+
+**Detailed Control Flow:** section 7, `src/ui/editors/text-view.ts`, `src/core/kernel/view/wrap.ts`
 
 ## Failure and Recovery Rules
 
@@ -1147,6 +1213,7 @@ IndexHost → ToWorker → worker; worker → FromWorker → IndexHost → Actio
 **Includes:**
 
 - `leader`, `escTimeoutMs`, `autosave`, `theme`, `color`.
+- `editor: { tabWidth: 1–16 = 8, wrap = true, relativeNumbers = true }`.
 - `keys: Record<Mode, Record<seq, id>>`.
 - `filetypes: Record<id, {keys}>`.
 - `ConfigResult = {ok: true, config, sources: BindingSource[]} | {ok: false, errors: ConfigError[]}`.
@@ -1154,12 +1221,12 @@ IndexHost → ToWorker → worker; worker → FromWorker → IndexHost → Actio
 **Usage:**
 
 ```text
-parseConfig → configLoaded → onConfigLoaded(validateBindings) → state.config → keymapFor / themeOf / shell normalizer
+parseConfig → configLoaded → onConfigLoaded(validateBindings) → state.config → keymapFor / themeOf / shell normalizer / envOf / EditorView
 ```
 
 **Rules:**
 
-- **Compatibility:** Unknown keys, including `editor.*`, `preview.*`, and `daily.*`, are errors in DI2.
+- **Compatibility:** Unknown keys, including `preview.*` and `daily.*`, are errors in DI2. `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` are accepted; any other key under `[editor]` is unknown.
 - **Invariants:** The file applies whole or not at all.
 - **Ownership and Lifecycle:** Read at startup and on `:ConfigReload`.
 
@@ -1402,7 +1469,7 @@ The new fields fall into four groups:
 
 - **Change:** Modify
 - **Decisions:** DES1, DES7, DES8
-- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1
+- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1
 - **Responsibilities:** the registries type and the pure reducer switch.
 - **Affected Callers/Consumers:** `src/app/main.ts` `registries`, `test/support/state.ts` `testRegistries`, every `reg.keymap` reader (`src/core/state/keys.ts:39`)
 - **Construction/Wiring:** `createUpdate(reg)` in `main.ts:175`
@@ -1832,12 +1899,12 @@ export function applyBufferEdits(s: AppState, edit: FileEdit, now: number, reg: 
 ## `src/ui/editors/text-view.ts`
 
 - **Change:** Modify
-- **Decisions:** DES2, DES9
-- **Requirements:** W261003FX70-REQ3@R1, W261003FX70-REQ9@R1
-- **Responsibilities:** paint windows; paint picker previews through the same layout.
+- **Decisions:** DES2, DES9, DES11
+- **Requirements:** W261003FX70-REQ3@R1, W261003FX70-REQ9@R1, W261003FX70-REQ10@R1
+- **Responsibilities:** paint windows with the configured tab width, wrap, and line numbers; paint picker previews through the same layout.
 - **Affected Callers/Consumers:** `WindowTree`, `PickerView`
 - **Construction/Wiring:** `registerEditorView("text", …)` (`src/app/main.ts:147`)
-- **Dependencies:** `layoutText`, `highlightMarks`, `paintLine`
+- **Dependencies:** `layoutText`, `highlightMarks`, `paintLine`, `wrapLine`, `rowOf`, `cursorDisplayCol`
 
 **Symbol Changes:**
 
@@ -1846,6 +1913,10 @@ export function applyBufferEdits(s: AppState, edit: FileEdit, now: number, reg: 
 | `analyses` | `src/ui/editors/text-view.ts:93-94` — UI-side `WeakMap` cache | removed | — |
 | `EditorView.rows` | `:224-260` — computes `ft.analyze(b.text)` when missing | passes `b.analysis` to `layoutText` | — |
 | `paintPreview` | None — new symbol | paints a `TextFile` or open `TextBuffer` in source view centred on `line`, with a match mark | `PickerView` |
+| `TABSTOP`, `GUTTER` | `:20-22` — constants 8 and 5 | removed; tab width from `s.config.editor.tabWidth`; `gutterWidth(lineCount) = max(4, digits(lineCount)) + 1` | — |
+| `paintLine` | `:34-72` — options `{ leftCol, cursorline }`, tabs of 8 | options `{ leftCol, endCol?, tabWidth, cursorline }`; display columns are counted from the line start, cells from `leftCol` up to `endCol` are painted | `EditorView`, `paintPreview`, `PickerView` |
+| `EditorView.show` | `:127-166` — horizontal `leftCol` from the cursor | wrap on: `leftCol = 0`, `topLine` and `skipRows` chosen so the cursor's screen row is visible; wrap off: DI1 rule | — |
+| `EditorView.renderSelf` | `:175-222` — one screen row per `RenderLine`, relative numbers | one or more screen rows per `RenderLine`; number on the first row only; absolute numbers when `relativeNumbers` is false; `›` on overflowing rows when wrap is off | — |
 
 **Existing Shape:** `src/ui/editors/text-view.ts:240-246`
 
@@ -1877,8 +1948,90 @@ export function paintPreview(buf: OptimizedBuffer, theme: Theme, r: Rect, p: {
 
 The editor view stops owning analysis. `paintPreview` shares `layoutText` and `paintLine` with `EditorView`, so previews look exactly like the source view. The optional `view` parameter lets DI3 pass `reading` for notes without a contract change (W261003FX70-REQ9@R1).
 
-- **Invariants:** No `analyze` call in `src/ui` (V54).
-- **Verification Coverage:** S5 — V51; S17 — V42; obsolete reference — V54
+**Existing Shape (display):** `src/ui/editors/text-view.ts:154-155`, `:199-208`
+
+```ts
+    const textW = Math.max(1, r.w - GUTTER);
+    this.leftCol = dc >= textW ? dc - textW + 1 : 0;
+    // …
+      const num = isCursor ? row.sourceLine + 1 : Math.abs(row.sourceLine - cursorLine);
+      drawCells(buf, theme.style(isCursor ? "gutterCursor" : "gutter"), this.x, y + i,
+        `${String(num).padStart(GUTTER - 1)} `, GUTTER);
+```
+
+DI1 always scrolls horizontally, always numbers relatively, and clips numbers above 9,999 to four cells.
+
+**Proposed Shape (display):**
+
+```ts
+const gutterWidth = (lineCount: number) => Math.max(4, String(lineCount).length) + 1;
+
+  // renderSelf, per RenderLine `row` from layoutText:
+  const { tabWidth, wrap, relativeNumbers } = s.config.editor;
+  const text = row.spans.map((sp) => sp.text).join("");
+  const starts = wrap ? wrapLine(text, textW, tabWidth) : [this.leftCol];
+  starts.forEach((start, k) => {
+    if (k < skip || y >= bottom) return;                          // skip: hidden first rows of a too-tall cursor line
+    const num = k > 0 ? "" : relativeNumbers && !isCursor ? Math.abs(row.sourceLine - cursorLine) : row.sourceLine + 1;
+    drawCells(buf, theme.style(isCursor && k === 0 ? "gutterCursor" : "gutter"), this.x, y, `${String(num).padStart(gw - 1)} `, gw);
+    paintLine(buf, theme, { x: this.x + gw, y, width: textW }, row.spans,
+              { leftCol: start, endCol: starts[k + 1], tabWidth, cursorline: isCursor && active });
+    if (!wrap && displayWidth(text, tabWidth) > start + textW)
+      drawCells(buf, theme.style("dim"), this.x + gw + textW - 1, y, "›", 1);
+    y++;
+  });
+```
+
+`wrapLine` returns the display column where each screen row starts, so `paintLine` paints the same spans once per row between `leftCol` and `endCol`. Spans and their styles are never split, and tabs expand from the line start on every row. With wrap off, `starts` is the single DI1 `leftCol`, so the DI1 path is the one-row case of the same loop. `show` uses `rowOf(starts, cursorDisplayCol(line, col, tabWidth))` to place the cursor and to advance `topLine` (or set `skip`) until the cursor's row fits. The core's line-based `scroll` stays the lower bound, as in DI1. `paintPreview` calls the same loop, so previews follow the options.
+
+- **Invariants:** No `analyze` call in `src/ui` (V54). Every character of a visible line is painted exactly once across its rows (V57). With default options and lines narrower than the text area, frames equal DI1's (V48).
+- **Verification Coverage:** S5 — V51; S17 — V42; S21 — V59; obsolete reference — V54
+
+## `src/core/kernel/view/wrap.ts`
+
+- **Change:** Add
+- **Decisions:** DES11
+- **Requirements:** W261003FX70-REQ10@R1
+- **Responsibilities:** compute screen-row starts for soft wrap and map a display column to its row.
+- **Affected Callers/Consumers:** `src/ui/editors/text-view.ts` (`EditorView`, `paintPreview`)
+- **Construction/Wiring:** None — pure functions
+- **Dependencies:** None (kernel rule: no packages)
+
+**Symbol Changes:**
+
+| Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
+|---|---|---|---|
+| `cellWidth` | None — new symbol | cells a character takes at display column `v` | `wrapLine`, `paintLine` |
+| `displayWidth` | None — new symbol | cells a whole line takes | `EditorView` (`›` marker) |
+| `wrapLine` | None — new symbol | display-column starts of each screen row | `EditorView` |
+| `rowOf` | None — new symbol | row index of a display column | `EditorView.show` |
+
+**Existing Shape:** None — new file. DI1 has no wrapping.
+
+**Proposed Shape:**
+
+```ts
+/** Cells `ch` takes at display column `v`: a tab reaches the next multiple of `tabWidth`. */
+export const cellWidth = (ch: string, v: number, tabWidth: number) => (ch === "\t" ? tabWidth - (v % tabWidth) : 1);
+
+/** Cells `text` takes from column 0. */
+export function displayWidth(text: string, tabWidth: number): number;
+
+/**
+ * Display columns where each screen row of `text` starts, for rows of at most `width` cells.
+ * A row breaks after the last space or tab that fits, or at the width when none fits.
+ * A character never straddles two rows. Returns [0] when the text fits.
+ */
+export function wrapLine(text: string, width: number, tabWidth: number): number[];
+
+/** Index of the row whose start is the greatest one ≤ `col`. */
+export function rowOf(starts: readonly number[], col: number): number;
+```
+
+The functions work on display columns rather than string offsets, so they compose with `paintLine`'s `leftCol` and with the engine's `cursorDisplayCol`. They live in the kernel view next to `layoutText` because they are language-neutral and DI3's live-preview rows wrap through them unchanged. Character widths follow DI1's rule (one cell per character, tabs to the next stop).
+
+- **Invariants:** `starts[0] === 0`; starts strictly increase; every row is ≤ `width` cells, except a single tab wider than `width`, which takes a row alone.
+- **Verification Coverage:** S21 — V57
 
 ## `src/core/features/links/summarize.ts`
 
@@ -2514,7 +2667,7 @@ The explorer keeps its DI1 tree and buffer behaviour, and delegates link work. `
 
 - **Change:** Modify
 - **Decisions:** DES4, DES6, DES7, DES8, DES9
-- **Requirements:** W261003FX70-REQ4@R1, W261003FX70-REQ6@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1
+- **Requirements:** W261003FX70-REQ4@R1, W261003FX70-REQ6@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1, W261003FX70-REQ9@R1
 - **Responsibilities:** run the new effects.
 - **Affected Callers/Consumers:** `src/app/main.ts`, `test/integration/*`
 - **Construction/Wiring:** `createEffectRunner(deps)` in `main.ts`
@@ -2599,10 +2752,10 @@ The write is registered as an own write, so the watcher stays silent and `onEdit
 ## `src/core/config/schema.ts`
 
 - **Change:** Modify
-- **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1
+- **Decisions:** DES7, DES11
+- **Requirements:** W261003FX70-REQ7@R2, W261003FX70-REQ10@R1
 - **Responsibilities:** the strict config schema and defaults.
-- **Affected Callers/Consumers:** `toml.ts`, `init.ts`, `keymap.ts`, `src/ui/{shell,theme}.ts`, `save.ts` (`autosave`)
+- **Affected Callers/Consumers:** `toml.ts`, `init.ts`, `keymap.ts`, `src/ui/{shell,theme}.ts`, `save.ts` (`autosave`), `keys.ts` `envOf` and `text-view.ts` (`editor`)
 - **Construction/Wiring:** None
 - **Dependencies:** `zod`
 
@@ -2610,7 +2763,7 @@ The write is registered as an own write, so the watcher stays silent and `onEdit
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `ConfigSchema` | `src/core/config/schema.ts:3-13` — four non-strict options | strict object with `leader`, `keys`, `filetypes`; exported | `toml.ts` |
+| `ConfigSchema` | `src/core/config/schema.ts:3-13` — four non-strict options | strict object with `leader`, `editor`, `keys`, `filetypes`; exported | `toml.ts` |
 | `AppConfig`, `defaults` | `:15-17` | same names, wider type | readers |
 
 **Existing Shape:** `src/core/config/schema.ts:3-13`
@@ -2637,6 +2790,11 @@ export const ConfigSchema = z.strictObject({
   autosave: z.strictObject({ enabled: z.boolean().default(true), delayMs: z.number().int().min(0).default(1000) }).prefault({}),
   theme: z.enum(["dark", "light"]).default("dark"),
   color: z.enum(["auto", "never"]).default("auto"),
+  editor: z.strictObject({
+    tabWidth: z.number().int().min(1).max(16).default(8),
+    wrap: z.boolean().default(true),
+    relativeNumbers: z.boolean().default(true),
+  }).prefault({}),
   keys: KeysByMode.default({}),
   filetypes: z.record(z.string().min(1), z.strictObject({ keys: KeysByMode.default({}) })).default({}),
 });
@@ -2644,16 +2802,16 @@ export type AppConfig = z.infer<typeof ConfigSchema>;
 export const defaults: AppConfig = ConfigSchema.parse({});
 ```
 
-`strictObject` turns unknown keys into zod issues with a path, which `parseConfig` maps to lines. `leader` is checked with the kernel `splitKeys`, so `"<space>"` and `","` are both one key.
+`strictObject` turns unknown keys into zod issues with a path, which `parseConfig` maps to lines. `leader` is checked with the kernel `splitKeys`, so `"<space>"` and `","` are both one key. The `editor` defaults equal DI1's behaviour except `wrap`, which W261003FX70-REQ10@R1 turns on; `prefault({})` lets a file without `[editor]` get all three defaults.
 
-- **Invariants:** `defaults` parses `{}`.
-- **Verification Coverage:** S13 — V18, V19
+- **Invariants:** `defaults` parses `{}`; `defaults.editor` is `{ tabWidth: 8, wrap: true, relativeNumbers: true }`.
+- **Verification Coverage:** S13 — V18, V19; S21 — V19
 
 ## `src/core/config/toml.ts`
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ2@R1, W261003FX70-REQ7@R1
+- **Requirements:** W261003FX70-REQ2@R1, W261003FX70-REQ7@R2
 - **Responsibilities:** TOML text → `ConfigResult` with lines.
 - **Affected Callers/Consumers:** `src/app/main.ts` (startup), `src/app/effects.ts` (`loadConfig`)
 - **Construction/Wiring:** None
@@ -2707,7 +2865,7 @@ The parser lives in pure core because it does no I/O, and the boundary allowlist
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1
+- **Requirements:** W261003FX70-REQ7@R2
 - **Responsibilities:** apply a `ConfigResult`, or report its errors.
 - **Affected Callers/Consumers:** `update.ts`; `config.reload` command
 - **Construction/Wiring:** None
@@ -2750,7 +2908,7 @@ The config applies whole or not at all. Valid modes are the DI1 modes plus `expl
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1, W261003FX70-REQ1@R1
+- **Requirements:** W261003FX70-REQ7@R2, W261003FX70-REQ1@R1
 - **Responsibilities:** derive the effective bindings and trie per config.
 - **Affected Callers/Consumers:** `keys.ts` (lookup), `whichkey.ts`, `picker.ts` (help and commands sources)
 - **Construction/Wiring:** None — module-level `WeakMap<AppConfig, …>` memo
@@ -2789,7 +2947,7 @@ A config binding with the same scope and sequence replaces the registered one an
 
 - **Change:** Modify
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1
+- **Requirements:** W261003FX70-REQ7@R2
 - **Responsibilities:** a configurable leader.
 - **Affected Callers/Consumers:** `keymapFor`; tests that call `splitKeys` (`test/vim/vim.test.ts:73`, `test/support/ui.ts`)
 - **Construction/Wiring:** None
@@ -2834,7 +2992,7 @@ The leader is data passed in, so the kernel stays language-neutral and the defau
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1
+- **Requirements:** W261003FX70-REQ7@R2
 - **Responsibilities:** the XDG config path and reading the text.
 - **Affected Callers/Consumers:** `main.ts`, `effects.ts`
 - **Construction/Wiring:** None
@@ -2872,7 +3030,7 @@ The startup read is synchronous, because the first frame needs the theme and lea
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003FX70-REQ7@R1
+- **Requirements:** W261003FX70-REQ7@R2
 - **Responsibilities:** the debug log.
 - **Affected Callers/Consumers:** `main.ts`, `effects.ts`, `index-host.ts`
 - **Construction/Wiring:** `createLogger(process.env, home)` in `main`
@@ -2956,7 +3114,7 @@ These are the leader-map assumptions accepted in `ui-mockups/manifest.md:40-46`.
 
 - **Change:** Modify
 - **Decisions:** DES7, DES8, DES9
-- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1
+- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1
 - **Responsibilities:** built-in commands, ex aliases, and `:` execution.
 - **Affected Callers/Consumers:** `keys.ts`, `src/core/state/keys.test.ts:198`
 - **Construction/Wiring:** `registerBuiltins` (`src/core/state/commands.ts:354-358`)
@@ -3102,6 +3260,54 @@ The set covers the jump motions DI1 implements that Neovim records in its jumpli
 
 - **Invariants:** Existing recorded vim cases are unchanged (the effect is ignored by text, cursor, and register comparisons).
 - **Verification Coverage:** S16 — V27
+
+## `src/core/kernel/vim/motions.ts`, `src/core/kernel/vim/operators.ts`, and `VimEnv`
+
+- **Change:** Modify
+- **Decisions:** DES11
+- **Requirements:** W261003FX70-REQ10@R1
+- **Responsibilities:** use the configured tab width for display columns and indentation shifts.
+- **Affected Callers/Consumers:** `engine.ts` (`execute`, `cmdlineKey`, `vertical`), `operators.ts` (`atWant`, `shift`), `src/core/state/keys.ts` (`envOf`), `src/ui/editors/text-view.ts` (`cursorDisplayCol`), `test/vim/vim.test.ts` (env)
+- **Construction/Wiring:** `envOf` reads `s.config.editor.tabWidth`
+- **Dependencies:** None
+
+**Symbol Changes:**
+
+| Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
+|---|---|---|---|
+| `VimEnv` | `src/core/kernel/vim/types.ts:56` — `{ topLine, rows }` | `{ topLine, rows, tabWidth }` | `handleKey`, `envOf`, vim tests |
+| `Run` | `src/core/kernel/vim/operators.ts:11` | adds `tab: number`, set from `env.tabWidth` in `handleKey` | operators, motions |
+| `TABSTOP` | `src/core/kernel/vim/motions.ts:34` — constant 8 | removed | — |
+| `cursorDisplayCol`, `colForDisplay` | `:65-79` — tabs of 8 | take `tabWidth` as a third argument | `engine.ts:87`, `:646`, `motions.ts:256`, `operators.ts:127`, `text-view.ts:152-153` |
+| `shift` | `src/core/kernel/vim/operators.ts:132-150` — steps and tab stops of 8 | steps and tab stops of `run.tab` | `>>`, `<<`, Visual `>`/`<` |
+| `envOf` | `src/core/state/keys.ts:124-127` | adds `tabWidth: s.config.editor.tabWidth` | `runVim` |
+
+**Existing Shape:** `src/core/kernel/vim/operators.ts:138-142`
+
+```ts
+      for (const c of indent)
+        width = c === "\t" ? width + 8 - (width % 8) : width + 1;
+      const next = Math.max(0, width + dir * 8);
+      const text = "\t".repeat(Math.floor(next / 8)) + " ".repeat(next % 8);
+```
+
+DI1 hard-codes 8 here and in `motions.ts`, which matches Vim's defaults (`tabstop=8`, `shiftwidth=8`, `noexpandtab`).
+
+**Proposed Shape:**
+
+```ts
+export type VimEnv = { topLine: number; rows: number; tabWidth: number };
+
+      const t = run.tab;
+      for (const c of indent) width = c === "\t" ? width + t - (width % t) : width + 1;
+      const next = Math.max(0, width + dir * t);
+      const text = "\t".repeat(Math.floor(next / t)) + " ".repeat(next % t);
+```
+
+The width travels in `VimEnv`, which the state layer already builds per key, so the kernel stays free of config and the reducer stays the only reader of `AppState`. One width serves as both tab stop and shift width, like Vim with `shiftwidth=0`. With the default 8 every DI1 code path computes the same values.
+
+- **Invariants:** With `tabWidth` 8 the recorded Neovim cases are unchanged (V48, V58).
+- **Verification Coverage:** S21 — V58
 
 ## `src/core/state/jumps.ts` and `src/core/state/recent.ts`
 
@@ -3481,7 +3687,7 @@ The data stays a pure function, as the UI design's code shape requires (`rm26100
 
 - **Change:** Add (whichkey, picker, completion, side-panel); Modify (prompt, window-tree, shell, theme)
 - **Decisions:** DES7, DES9, DES6
-- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R1, W261003FX70-REQ9@R1
+- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ7@R2, W261003FX70-REQ9@R1
 - **Responsibilities:** paint the DI2 overlays and panel from state; size the editor area next to the docked panel; read config live.
 - **Affected Callers/Consumers:** `createShell`
 - **Construction/Wiring:** `OverlayHost` gets the three new views (`src/ui/shell.ts:85-88`); `SidePanelView` joins `views` and the focus order
@@ -3533,7 +3739,7 @@ The views paint state and never decide behaviour, as the UI design's implementat
 
 - **Change:** Modify
 - **Decisions:** DES4, DES7, DES8, DES9
-- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ4@R1, W261003FX70-REQ7@R1, W261003FX70-REQ8@R1
+- **Requirements:** W261003FX70-REQ1@R1, W261003FX70-REQ4@R1, W261003FX70-REQ7@R2, W261003FX70-REQ8@R1
 - **Responsibilities:** composition root.
 - **Affected Callers/Consumers:** `bin/so`, e2e tests
 - **Construction/Wiring:** as in section 5, Construction and Wiring Flow
@@ -3739,6 +3945,7 @@ The gate keeps the parent mechanism (fail above 2×). The PH1 exit evidence for 
 | `S18` | The accepted DI2 UI states render: completion popup placement and insertion, follow and create prompt, backlinks panel, rename and move impact, statusline index/backlinks/jump segments, picker selection under NO_COLOR, light theme, and 80×24. | REQ1; DES9 |
 | `S19` | Every added package is exactly pinned, imported only from its home, and used (knip clean). | REQ2; DES2, DES7 |
 | `S20` | DI1 suites V1@R1, V17@R1, V18@R1 and the boundary test still pass on the DI2 PR. | REQ1 |
+| `S21` | `editor.tabWidth` sets tab display, `j`/`k` columns, and shifts; `editor.relativeNumbers` switches relative and absolute numbers in a gutter that never clips; `editor.wrap` soft-wraps at whitespace with the cursor always visible, or scrolls horizontally with `›`; all three apply to previews and after `:ConfigReload`; defaults keep DI1 behaviour for lines that fit. | REQ7, REQ10; DES7, DES11 |
 
 ## Test Suites and Cases
 
@@ -3848,11 +4055,11 @@ src/ & test/
 │   ├── V17 syntax error on line 7 (`e = = 5`)
 │   │   ├── Expect: { ok: false, errors: [{ line: 7, … }] } [S13]
 │   │   └── Unique risk: V4 (c) without a line
-│   ├── V18 unknown key `[editor] tabWidth = 4` at line 3; `autosave.delayMs = "x"` at line 5; `leader = "ab"`
-│   │   ├── Expect: errors at lines 3, 5, and the leader line, in source order [S13]
+│   ├── V18 under `[editor]`: unknown key `tabwidth = 4` at line 3 and `tabWidth = 0` at line 4; `autosave.delayMs = "x"` at line 6; `leader = "ab"`
+│   │   ├── Expect: errors at lines 3, 4, 6, and the leader line, in source order [S13, S21]
 │   │   └── Unique risk: unknown keys accepted silently, or reported without a line
-│   └── V19 valid file with leader, escTimeoutMs, autosave, theme, color, [keys.normal], [filetypes.markdown.keys.normal]
-│       ├── Expect: ok; config equals expected; bindings carry their lines [S13]
+│   └── V19 valid file with leader, escTimeoutMs, autosave, theme, color, [editor] tabWidth = 4, wrap = false, relativeNumbers = false, [keys.normal], [filetypes.markdown.keys.normal]; and an empty file
+│       ├── Expect: ok; config equals expected; bindings carry their lines; the empty file gives editor { tabWidth: 8, wrap: true, relativeNumbers: true } [S13, S21]
 │       └── Unique risk: valid options rejected
 ├── src/core/state/config.test.ts [Unit]
 │   Purpose: applying and validating config
@@ -4006,8 +4213,8 @@ src/ & test/
 │   Real: configPath, readConfigText, parseConfig, store, runner, shell normalizer
 │   Infra: filesystem (tmp XDG dirs)
 │   Doubles: None
-│   └── V39 RM261003ABZP-V4@R2 (b), (c), (f); edit the file and :ConfigReload; then an invalid edit and :ConfigReload; escTimeoutMs and theme changed on reload
-│       ├── Expect: `<leader>w` saves (b); toast names config.toml:7 and defaults apply (c); (f) per scope; reload applies the new binding, escTimeoutMs, and theme; invalid reload keeps the previous binding and shows the error [S13]
+│   └── V39 RM261003ABZP-V4@R2 (b), (c), (f); edit the file and :ConfigReload; then an invalid edit and :ConfigReload; escTimeoutMs, theme, and editor.wrap changed on reload
+│       ├── Expect: `<leader>w` saves (b); toast names config.toml:7 and defaults apply (c); (f) per scope; reload applies the new binding, escTimeoutMs, theme, and wrap (the next frame paints a long line on one row with `›`); invalid reload keeps the previous binding and shows the error [S13, S21]
 │       └── Unique risk: reload not reaching the keymap or input normalizer
 ├── test/integration/session.test.ts [Integration]
 │   Purpose: session persistence across runs
@@ -4073,6 +4280,30 @@ src/ & test/
 │   └── V47 start dist/so on a 50-note workspace on ubuntu-24.04 and macos-15
 │       ├── Expect: statusline shows "index ready" within 10 s [S11]
 │       └── Unique risk: release binaries silently missing the worker
+├── src/core/kernel/view/wrap.test.ts [Unit]
+│   Purpose: wrap row starts
+│   SUT: wrapLine, rowOf, cellWidth, displayWidth
+│   Infra: None
+│   Doubles: None
+│   └── V57 a 30-character line at width 80; a 300-character paragraph at width 80; a 200-character word at width 80; "a\tb" rows near a boundary with tabWidth 4; rowOf at each start and at the last column
+│       ├── Expect: [0] for the short line; every paragraph row ends after a space and is ≤ 80 cells; the word breaks at 80 and 160; no tab straddles two rows; slicing the text at the starts and joining gives the text back; rowOf returns the containing row [S21]
+│       └── Unique risk: lost, duplicated, or split characters at row breaks
+├── src/core/kernel/vim/tab-width.test.ts [Unit]
+│   Purpose: the engine with a non-default tab width
+│   SUT: handleKey with env.tabWidth 4 and 8
+│   Infra: None
+│   Doubles: None
+│   └── V58 tabWidth 4: cursor on x in "\tx", then j onto "abcdef"; `>>` on "a"; `<<` on "\t\ta"; tabWidth 8: the same keys
+│       ├── Expect: tabWidth 4 → cursor on "e", "\ta", "\ta"; tabWidth 8 → the results DI1 gives today (cursor on "abcdef"'s last column, "\ta", "\ta") [S21]
+│       └── Unique risk: the engine and the view disagreeing about where a tab ends
+├── test/ui/editor-options.test.ts [Component]
+│   Purpose: wrap, numbers, and tab width as painted
+│   Real: OpenTUI test renderer, shell, store, reducer
+│   Infra: None
+│   Doubles: config set through configLoaded
+│   └── V59 at 80×24: a note with a 300-character paragraph then "next"; defaults then `$` then `j`; wrap = false then `$`; relativeNumbers = false; a 12,000-line buffer then `G`; tabWidth = 4 with "\tx"; a picker preview at 120 columns of the paragraph
+│       ├── Expect: defaults → paragraph on 4+ rows broken after spaces, blank gutter on continuation rows, cursor cell on the last row after `$`, `j` lands on "next"; wrap = false → one row, `›` in the last column, the row scrolled to show the cursor; absolute numbers on every row; "12000" unclipped; x painted at text column 4; the preview paragraph wraps [S21]
+│       └── Unique risk: display options correct in pure helpers but wrong in the painted frame
 ├── DI1 suites (unchanged) [Integration, E2E]
 │   └── V48 test/integration/{save-safety,open-save,explorer-ops}.test.ts, test/e2e/{restore,quit}.test.ts, test/ui/file-ops.test.ts refused cases
 │       ├── Expect: RM261003ABZP-V1@R1, V17@R1, V18@R1 pass on the DI2 PR in both CI runners [S20]
@@ -4097,7 +4328,7 @@ src/ & test/
     │   ├── Expect: zero findings with the worker as an entry and every added package used [S19]
     │   └── Unique risk: unused dependencies or an unreferenced worker file
     ├── V54 Obsolete-reference check
-    │   ├── Expect: no `Bun.TOML`, no `ft.analyze(`/`analyses` in src/ui, no `"buffer.write"`, no `"<leader>": " "` entry, in src or test [S3, S13]
+    │   ├── Expect: no `Bun.TOML`, no `ft.analyze(`/`analyses` in src/ui, no `"buffer.write"`, no `"<leader>": " "` entry, no `TABSTOP` constant, in src or test [S3, S13, S21]
     │   └── Unique risk: dead parallel paths kept alive
     ├── V55 Pins (test/repo.test.ts, existing) and CI frozen lockfile
     │   ├── Expect: every package exact; `bun install --frozen-lockfile` passes [S19]
@@ -4116,6 +4347,7 @@ src/ & test/
 - Integration cases cover only real collaboration risks: the worker thread (V34, V36), disk validation and atomic writes (V38), config file wiring (V39), cross-run persistence (V40), and log content (V41).
 - Component cases assert only the UI verification records' presentation and interaction risks (V42–V46). They reuse state-level behaviour proven by unit tests instead of re-testing it.
 - Each binary-only and performance risk has one dedicated check (V47, V49–V51, V56).
+- Editor options are proven once per level: row starts and tab arithmetic as units (V57, V58), the painted frame as one component suite (V59), parsing and reload through the existing config cases (V18, V19, V39).
 - DI1 suites are re-run, not duplicated (V48).
 
 ## Test Quality Rules
@@ -4346,7 +4578,7 @@ src/ & test/
 - **Live settings:** the shell reads `escTimeoutMs` per key; `themeOf` honours `color = "never"`.
 - **Log:** `SO_LOG=debug` uses `createLogger`.
 
-**Requirements Addressed:** W261003FX70-REQ7@R1, W261003FX70-REQ2@R1, W261003FX70-REQ1@R1
+**Requirements Addressed:** W261003FX70-REQ7@R2, W261003FX70-REQ2@R1, W261003FX70-REQ1@R1
 
 **Research Support:** None (local experiment: `Bun.TOML.parse` gives no TOML line)
 
@@ -4362,7 +4594,7 @@ src/ & test/
 
 **Tradeoffs:**
 
-- `editor.*`, `preview.*`, and `daily.*` are errors until assigned.
+- `preview.*` and `daily.*` are errors until DI3 and DI4 add them.
 - The parent names `Bun.TOML.parse`, so the parser change is a reported deviation.
 
 **Success Criteria:** S13, S14, S15
@@ -4478,3 +4710,46 @@ src/ & test/
 **Verification Impact:**
 
 - V49, V50, V51 — the medians are recorded in `.so-bench/results.json`, and the gate passes.
+
+## W261003FX70-DES11: Editor display options
+
+**Question:** How do `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` reach the engine and the editor view without changing `layoutText`?
+
+**Decision:**
+
+- **Config:** `ConfigSchema.editor` with defaults 8, `true`, `true`.
+- **Tab width:** `VimEnv.tabWidth` from `envOf`; the engine's display-column helpers and `shift` take it; `TABSTOP` is removed.
+- **Wrap:** `wrapLine`, `rowOf`, and `displayWidth` in `src/core/kernel/view/wrap.ts` compute row starts by display column; `EditorView` paints each `RenderLine` once per row through `paintLine`'s `leftCol`/`endCol`, keeps the cursor row visible, and draws `›` when wrap is off.
+- **Numbers:** the gutter width follows the line count; `relativeNumbers` chooses relative or absolute numbers.
+
+**Requirements Addressed:** W261003FX70-REQ10@R1, W261003FX70-REQ7@R2
+
+**Research Support:** None
+
+**Rationale:** Wrapping the rows `layoutText` already returns keeps its contract, which DI3 consumes, and lets DI3's live-preview rows wrap without new code. Passing the width through `VimEnv` keeps the kernel config-free. Defaults equal to DI1's behaviour (except wrap) keep the Neovim-recorded cases and DI1 suites meaningful.
+
+**Code Impact:**
+
+- `src/core/kernel/view/wrap.ts` — new
+- `src/core/kernel/vim/{types,motions,operators,engine}.ts` — `VimEnv`, `Run`, `cursorDisplayCol`, `colForDisplay`, `shift`
+- `src/core/state/keys.ts` — `envOf`
+- `src/core/config/schema.ts` — `editor`
+- `src/ui/editors/text-view.ts` — `paintLine`, `EditorView.show`, `EditorView.renderSelf`, gutter
+
+**Detailed Design:** section 7, `src/core/kernel/view/wrap.ts`, `src/core/kernel/vim/motions.ts`, `src/core/kernel/vim/operators.ts`, and `VimEnv`, `src/ui/editors/text-view.ts`, `src/core/config/schema.ts`
+
+**Tradeoffs:**
+
+- `j` and `k` move by buffer lines in wrapped text; `gj`/`gk` are deferred because they need the window's text width in the engine.
+- One width serves as tab stop and shift width; separate `shiftwidth` and `expandtab` are deferred.
+- Rejected: wrapping inside `layoutText` (changes a DI3 contract), assigning the options to DI3 (PH1 would ship without soft wrap), and character-boundary breaks (splits words in prose).
+
+**Success Criteria:** S21
+
+**Verification Impact:**
+
+- V57 — row starts.
+- V58 — engine tab width.
+- V59 — painted frame.
+- V18, V19, V39 — parsing, defaults, and reload.
+- V48, V54 — DI1 behaviour kept; `TABSTOP` gone.
