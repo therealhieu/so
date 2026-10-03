@@ -10,40 +10,48 @@ beforeAll(async () => {
 });
 afterAll(() => m.destroy());
 
-/** Milliseconds from now until `pred` holds, polling every millisecond. */
-async function elapsedUntil(pred: () => boolean): Promise<number> {
+/**
+ * Milliseconds from now until a store update satisfies `pred`, timed at the
+ * update itself so polling delay does not count.
+ */
+function dispatchedWithin(pred: () => boolean): Promise<number> {
   const start = performance.now();
-  while (!pred()) {
-    if (performance.now() - start > 1000) throw new Error("timed out");
-    await Bun.sleep(1);
-  }
-  return performance.now() - start;
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      stop();
+      reject(new Error("timed out"));
+    }, 1000);
+    const stop = m.store.subscribe(() => {
+      if (!pred()) return;
+      clearTimeout(timeout);
+      stop();
+      resolve(performance.now() - start);
+    });
+  });
 }
 
 const median = (xs: number[]) =>
-  [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] ?? NaN;
+  [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] ?? Number.NaN;
 
 test("a legacy Esc byte leaves Insert after the 50 ms timeout", async () => {
   const times: number[] = [];
   for (let i = 0; i < 5; i++) {
     m.keys("i");
     expect(m.store.get().vim.mode).toBe("insert");
+    const done = dispatchedWithin(() => m.store.get().vim.mode === "normal");
     m.t.mockInput.pressEscape();
-    times.push(await elapsedUntil(() => m.store.get().vim.mode === "normal"));
+    times.push(await done);
   }
   for (const t of times) expect(t).toBeGreaterThanOrEqual(40);
   expect(median(times)).toBeLessThanOrEqual(60);
 });
 
 test("an arrow key's escape sequence reaches the store at once", async () => {
-  let dispatched = 0;
-  const stop = m.store.subscribe(() => dispatched++);
   const times: number[] = [];
   for (let i = 0; i < 5; i++) {
-    const before = dispatched;
+    const done = dispatchedWithin(() => true);
     m.t.mockInput.pressKey("ARROW_UP");
-    times.push(await elapsedUntil(() => dispatched > before));
+    times.push(await done);
   }
-  stop();
   for (const t of times) expect(t).toBeLessThan(10);
 });
