@@ -1,4 +1,4 @@
-import type { Action, Effect, FileEvent } from "../core/state/types";
+import type { Action, Effect, FileEvent, SearchHit } from "../core/state/types";
 import type { FromWorker, ToWorker } from "../workspace/index-worker";
 import type { Logger } from "../workspace/log";
 
@@ -7,7 +7,10 @@ export type IndexHost = {
   start(root: string, ignore: string[]): void;
   /** Forward a watcher event, so other programs' changes reach the index. */
   notify(e: FileEvent): void;
-  /** Search the worker's texts; answers one `searchResults`, empty while the worker is down. */
+  /**
+   * Search the worker's texts; answers one `searchResults`, empty while the
+   * worker is down or when it crashes before answering.
+   */
   search(e: Extract<Effect, { kind: "search" }>): void;
   stop(): void;
 };
@@ -30,7 +33,8 @@ const spawnWorker = () => new Worker(workerUrl(import.meta.url));
  * Spawn the index worker and turn its messages into actions. An `error`
  * message, an `error` event, or an exit before `stop` is a crash: the first
  * one restarts the worker with a fresh scan, the second leaves the index
- * unavailable for the rest of the session.
+ * unavailable for the rest of the session. Searches the crashed worker had
+ * not answered are answered empty.
  */
 export function createIndexHost(d: {
   dispatch: (a: Action) => void;
@@ -42,8 +46,12 @@ export function createIndexHost(d: {
   let worker: Worker | undefined;
   let crashes = 0;
   let stopped = false;
+  /** Search ids posted to the current worker and not yet answered. */
+  let searching = new Set<number>();
 
   const send = (m: ToWorker) => worker?.postMessage(m);
+  const answer = (id: number, hits: SearchHit[] = [], capped = false) =>
+    d.dispatch({ type: "searchResults", id, hits, capped });
 
   function launch(): void {
     if (scan === undefined) return;
@@ -59,6 +67,9 @@ export function createIndexHost(d: {
       const final = crashes > 1;
       d.logger.error("index.crashed", { reason, final });
       d.dispatch({ type: "indexFailed", final, reason });
+      const unanswered = searching;
+      searching = new Set();
+      for (const id of unanswered) answer(id);
       if (!final) launch();
     };
     w.onmessage = (e: MessageEvent<FromWorker>) => {
@@ -79,14 +90,10 @@ export function createIndexHost(d: {
           ms: Math.round(performance.now() - startedAt),
         });
         d.dispatch({ type: "indexReady" });
-      } else if (m.t === "results")
-        d.dispatch({
-          type: "searchResults",
-          id: m.id,
-          hits: m.hits,
-          capped: m.capped ?? false,
-        });
-      else if (m.t === "error") crashed(m.message);
+      } else if (m.t === "results") {
+        searching.delete(m.id);
+        answer(m.id, m.hits, m.capped ?? false);
+      } else if (m.t === "error") crashed(m.message);
     };
     w.addEventListener("error", (e) => crashed(e.message || "worker error"));
     w.addEventListener("close", () => crashed("worker exited"));
@@ -106,14 +113,10 @@ export function createIndexHost(d: {
     },
     search(e) {
       if (worker === undefined) {
-        d.dispatch({
-          type: "searchResults",
-          id: e.id,
-          hits: [],
-          capped: false,
-        });
+        answer(e.id);
         return;
       }
+      searching.add(e.id);
       const { kind: _, ...rest } = e;
       send({ t: "search", ...rest });
     },

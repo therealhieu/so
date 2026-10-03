@@ -114,3 +114,50 @@ test("grep through the picker reaches the worker and lists its hits", async () =
     ["a.md:2  the needle here", "scripts/sync.ts:1  const needle = 1;"],
   );
 });
+
+test("a search in flight when the worker crashes is answered once", async () => {
+  const s = spawner();
+  const real = s.spawn;
+  // The first worker never answers a search, so one is still in flight at the crash.
+  s.spawn = () => {
+    const w = real();
+    if (s.workers.length === 1) {
+      const post = w.postMessage.bind(w);
+      w.postMessage = (m: { t: string }) => {
+        if (m.t !== "search") post(m);
+      };
+    }
+    return w;
+  };
+  app = await startApp(await tmpWorkspace({ "a.md": "the needle here\n" }), {
+    index: s,
+  });
+  await waitFor(() => status() === "ready");
+  await app.open("a.md");
+  app.keys(" sgneedle");
+  const posted = () =>
+    app?.effects.find(
+      (e): e is Extract<typeof e, { kind: "search" }> =>
+        e.kind === "search" && e.query === "needle",
+    );
+  await waitFor(() => posted() !== undefined);
+  const id = posted()?.id ?? -1;
+  const o = state().overlay;
+  expect(o.kind === "picker" && o.picker.search).toEqual({
+    id,
+    pending: true,
+    capped: false,
+  });
+
+  s.workers[0]?.terminate();
+  await waitFor(() => s.workers.length === 2 && status() === "ready");
+  await Bun.sleep(100);
+  const answers = app.actions.filter(
+    (a) => a.type === "searchResults" && a.id === id,
+  );
+  expect(answers).toEqual([
+    { type: "searchResults", id, hits: [], capped: false },
+  ]);
+  const after = state().overlay;
+  expect(after.kind === "picker" && after.picker.search?.pending).toBe(false);
+});
