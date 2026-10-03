@@ -1,0 +1,131 @@
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  atomicWrite,
+  createEntry,
+  listDir,
+  moveEntry,
+  readTextFile,
+  removeEntry,
+  stampOfFile,
+} from "./fs";
+import { createExclusionMatcher } from "./ignore";
+
+let root = "";
+const matcher = () =>
+  createExclusionMatcher(root, (p) => {
+    try {
+      return readFileSync(p, "utf8");
+    } catch {
+      return null;
+    }
+  });
+
+beforeAll(async () => {
+  root = await mkdtemp(join(tmpdir(), "so-fs-"));
+  await mkdir(join(root, "notes"));
+  await writeFile(join(root, "notes/a.md"), "# a\n");
+  await writeFile(join(root, "b.md"), "b\n");
+  await writeFile(join(root, ".env"), "SECRET=1\n");
+  await writeFile(join(root, ".gitignore"), "build/\n");
+  await mkdir(join(root, "build"));
+  await mkdir(join(root, "loopy"));
+  await symlink("..", join(root, "loopy/up"));
+  await symlink("notes", join(root, "linked"));
+  await symlink("b.md", join(root, "b-link.md"));
+});
+
+afterAll(async () => {
+  await rm(root, { recursive: true, force: true });
+});
+
+test("listing shows symlinks with their target kind and skips excluded entries", async () => {
+  expect(await listDir(root, "", matcher())).toEqual([
+    { name: "linked", kind: "dir" },
+    { name: "loopy", kind: "dir" },
+    { name: "notes", kind: "dir" },
+    { name: "b-link.md", kind: "file" },
+    { name: "b.md", kind: "file" },
+  ]);
+});
+
+test("a linked folder lists only when it is expanded", async () => {
+  expect(await listDir(root, "linked", matcher())).toEqual([
+    { name: "a.md", kind: "file" },
+  ]);
+});
+
+test("a folder containing a symlink loop lists without recursion", async () => {
+  expect(await listDir(root, "loopy", matcher())).toEqual([
+    { name: "up", kind: "dir" },
+  ]);
+  expect(await listDir(root, "loopy/up/loopy/up", matcher())).toHaveLength(5);
+});
+
+test("a hidden file opens by path", async () => {
+  const r = await readTextFile(join(root, ".env"));
+  expect(r).toMatchObject({ text: "SECRET=1\n", bom: false, eol: "\n" });
+});
+
+test("a read error refuses the file as io", async () => {
+  expect(await readTextFile(join(root, "missing.md"))).toEqual({
+    refused: "io",
+  });
+  expect(await readTextFile(join(root, "notes"))).toEqual({ refused: "io" });
+});
+
+test("a read and a later write of the same bytes give equal stamps", async () => {
+  const p = join(root, "stamp.md");
+  const written = await atomicWrite(p, "same\n");
+  const read = await readTextFile(p);
+  expect("stamp" in read && read.stamp).toEqual(written);
+  expect(await stampOfFile(p, await stat(p))).toEqual(written);
+});
+
+test("a write against a stale stamp is refused as a conflict", async () => {
+  const p = join(root, "conflict.md");
+  const seen = await atomicWrite(p, "one\n");
+  await writeFile(p, "external\n");
+  await expect(atomicWrite(p, "mine\n", seen)).rejects.toThrow("conflict");
+  expect(await readFile(p, "utf8")).toBe("external\n");
+  expect((await readdir(root)).some((n) => n.includes(".so-tmp-"))).toBe(false);
+});
+
+test("create and move never overwrite an existing entry", async () => {
+  await expect(createEntry(root, "b.md", false)).rejects.toThrow(
+    "E13: File exists (b.md)",
+  );
+  await expect(createEntry(root, "notes", true)).rejects.toThrow(
+    "E13: File exists (notes)",
+  );
+  await expect(moveEntry(root, "notes/a.md", "b.md")).rejects.toThrow(
+    "E13: File exists (b.md)",
+  );
+  expect(await readFile(join(root, "b.md"), "utf8")).toBe("b\n");
+  expect(await readFile(join(root, "notes/a.md"), "utf8")).toBe("# a\n");
+});
+
+test("create makes missing parents; move and remove act on real paths", async () => {
+  await createEntry(root, "projects/new/idea.md", false);
+  await createEntry(root, "ideas", true);
+  expect(await readFile(join(root, "projects/new/idea.md"), "utf8")).toBe("");
+  expect((await stat(join(root, "ideas"))).isDirectory()).toBe(true);
+  await moveEntry(root, "projects", "archive/projects");
+  expect(
+    await readFile(join(root, "archive/projects/new/idea.md"), "utf8"),
+  ).toBe("");
+  await removeEntry(root, "archive");
+  await expect(stat(join(root, "archive"))).rejects.toThrow();
+});
