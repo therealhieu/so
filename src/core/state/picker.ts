@@ -7,9 +7,9 @@ import type { Binding } from "../kernel/commands/defaults";
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
-import { activeBuffer, bufferForPath, openPath, placeCursor } from "./buffers";
+import { activeBuffer, bufferForPath, openPath } from "./buffers";
 import { type CommandContext, runCommand } from "./commands";
-import { recordJump } from "./jumps";
+import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
 import { chain, message, none } from "./result";
 import type {
@@ -99,13 +99,9 @@ const fileItem = (path: string, line?: number): Candidate =>
 /** Close the picker, record a jump, and open `path` (at `line`). */
 function openAt(s: AppState, path: string, now: number, line?: number): Result {
   const closed = recordJump({ ...s, overlay: { kind: "none" } });
-  return chain(openPath(closed, path, now), (st) =>
-    none(
-      line !== undefined && activeBuffer(st)?.path === path
-        ? placeCursor(st, { line, col: 0 })
-        : st,
-    ),
-  );
+  return line === undefined
+    ? openPath(closed, path, now)
+    : goTo(closed, path, { line, col: 0 }, now);
 }
 
 const acceptFile: PickerSource["accept"] = (s, item, now) =>

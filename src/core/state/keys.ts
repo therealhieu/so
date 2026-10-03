@@ -6,6 +6,7 @@ import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
 import { activeBuffer, activeWindow, setBuffer } from "./buffers";
 import { EX_ALIASES, executeEx, runCommand } from "./commands";
+import { completionKey, maybeOpenCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
@@ -28,6 +29,21 @@ const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
  * keys in its own mode and never passes them to the engine.
  */
 export function handleKeyAction(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
+  if (s.overlay.kind === "completion") {
+    const r = completionKey(s, a, reg);
+    if (r !== undefined) return r;
+  }
+  const r = routeKey(s, a, reg);
+  return r.state.overlay.kind === "completion" || r.state.vim.mode === "insert"
+    ? { ...r, state: maybeOpenCompletion(r.state) }
+    : r;
+}
+
+function routeKey(
   s: AppState,
   a: { key: Key; now: number },
   reg: Registries,
@@ -152,6 +168,19 @@ const envOf = (s: AppState, w: WindowState): VimEnv => ({
   rows: Math.max(1, s.terminal.rows - 2),
   tabWidth: s.config.editor.tabWidth,
 });
+
+/** Feed keys to the engine one by one, as if typed. */
+export function typeKeys(
+  s: AppState,
+  keys: readonly Key[],
+  now: number,
+  reg: Registries,
+): Result {
+  return keys.reduce<Result>(
+    (r, key) => chain(r, (st) => runVim(st, key, now, reg)),
+    none(s),
+  );
+}
 
 /** Feed one key to the engine for the active buffer and apply its effects. */
 function runVim(

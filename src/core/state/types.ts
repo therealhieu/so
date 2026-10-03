@@ -124,12 +124,24 @@ export type PromptState = {
   invalid?: string;
 };
 
+export type CompletionState = {
+  /** The position just after "[[". */
+  anchor: Pos;
+  mode: "notes" | "headings" | "blocks";
+  /** The resolved note whose headings or blocks are listed. */
+  target?: string;
+  query: string;
+  items: { insert: string; label: string; detail?: string }[];
+  selected: number;
+};
+
 export type Overlay =
   | { kind: "none" }
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean }
   | { kind: "whichKey"; whichKey: WhichKeyState }
-  | { kind: "picker" | "palette" | "help"; picker: PickerState };
+  | { kind: "picker" | "palette" | "help"; picker: PickerState }
+  | { kind: "completion"; completion: CompletionState };
 
 /** One picker row; `matches` are the label's matched character positions. */
 export type PickerItem = {

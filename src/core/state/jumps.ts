@@ -57,13 +57,20 @@ function jumpTo(s: AppState, at: number, now: number): Result {
   const e = s.jumps.entries[at];
   if (e === undefined) return none(s);
   const moved: AppState = { ...s, jumps: { ...s.jumps, at } };
-  const pos = { line: e.line, col: e.col };
-  if (activeBuffer(s)?.path === e.path) return none(placeCursor(moved, pos));
-  return chain(openPath(moved, e.path, now), (st) =>
+  return goTo(moved, e.path, { line: e.line, col: e.col }, now);
+}
+
+/**
+ * Show `path` in the active window with the cursor at `pos`, once its read
+ * answers when it is not open yet.
+ */
+export function goTo(s: AppState, path: string, pos: Pos, now: number): Result {
+  if (activeBuffer(s)?.path === path) return none(placeCursor(s, pos));
+  return chain(openPath(s, path, now), (st) =>
     none(
-      activeBuffer(st)?.path === e.path
+      activeBuffer(st)?.path === path
         ? placeCursor(st, pos)
-        : awaitLoad(st, e.path, pos),
+        : awaitLoad(st, path, pos),
     ),
   );
 }

@@ -14,6 +14,11 @@ import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { initialState } from "../../src/core/state/init";
+import {
+  linkBindings,
+  linkCommands,
+  linkGroups,
+} from "../../src/core/state/link-commands";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
 
@@ -31,12 +36,13 @@ export function testRegistries(): Registries {
   fileTypes.register(markdownFileType);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
+  for (const c of linkCommands) commands.register(c);
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    bindings: defaultBindings,
-    groups: defaultGroups,
+    bindings: [...defaultBindings, ...linkBindings],
+    groups: { ...defaultGroups, ...linkGroups },
   };
 }
 

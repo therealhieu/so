@@ -5,10 +5,14 @@ import {
   testRegistries,
   textFile,
 } from "../../../test/support/state";
+import { parseConfig } from "../config/toml";
+import { summarize } from "../features/links/summarize";
 import { splitKeys } from "../kernel/vim/keys";
+import { scanDoc } from "../lang/markdown/scan";
 import { fullText } from "./buffers";
 import { runCommand } from "./commands";
 import { cmdlineCompletions } from "./keys";
+import { linkBindings } from "./link-commands";
 import type { Action, AppState, Effect } from "./types";
 import { createUpdate } from "./update";
 
@@ -341,4 +345,83 @@ test("buffers cycle with :bn and :bp", () => {
   expect(update(keys(s, ":bn<CR>").state, action).state.buffers[1]?.dirty).toBe(
     true,
   );
+});
+
+function withNotes(s: AppState, notes: Record<string, string>): AppState {
+  const files = Object.keys(notes);
+  const indexed = update(s, {
+    type: "indexBatch",
+    summaries: files.map((p) => summarize(p, 1, scanDoc(notes[p] ?? ""))),
+    files,
+    done: files.length,
+    total: files.length,
+  }).state;
+  return update(indexed, { type: "indexReady" }).state;
+}
+const NOTE = "See [[plan]] today\n";
+const CODE = "const plan = 1;\n";
+
+test("note keys work in notes and do nothing in code files", () => {
+  const notes = withNotes(fresh(), { "notes/plan.md": "# Plan\n" });
+  const md = keys(open("notes/a.md", NOTE, notes), "6lgd");
+  expect(md.effects).toContainEqual({ kind: "read", path: "notes/plan.md" });
+
+  const ts = keys(open("scripts/sync.ts", CODE, notes), "6lgd");
+  expect(ts.effects.filter((e) => e.kind === "read")).toEqual([]);
+  expect(ts.state.overlay.kind).toBe("none");
+  expect(textOf(ts.state)).toBe(CODE.trimEnd());
+});
+
+test("note commands show the file-type notice elsewhere", () => {
+  const s = keys(open("scripts/sync.ts", CODE), ":link.follow<CR>").state;
+  expect(s.notifications.message?.text).toBe(
+    "not available for typescript files",
+  );
+});
+
+test("palette and : completion hide note commands outside notes", () => {
+  const ids = (s: AppState) => {
+    const r = runCommand(s, "command.palette", 0, reg).state;
+    return r.overlay.kind === "palette"
+      ? r.overlay.picker.items.map((i) => i.key)
+      : [];
+  };
+  const md = open("notes/a.md", NOTE);
+  const ts = open("scripts/sync.ts", CODE);
+  expect(ids(md)).toContain("link.follow");
+  expect(ids(ts)).not.toContain("link.follow");
+  expect(ids(ts)).not.toContain("search.headings");
+  expect(ids(ts)).toContain("search.tags");
+  expect(cmdlineCompletions(keys(md, ":link.").state, reg)).toContain(
+    "link.follow",
+  );
+  expect(cmdlineCompletions(keys(ts, ":link.").state, reg)).toEqual([]);
+});
+
+test("leader overrides apply per scope", () => {
+  const config = parseConfig(
+    [
+      "[keys.normal]",
+      '"<leader>w" = "file.save"',
+      "[filetypes.markdown.keys.normal]",
+      '"<leader>w" = "search.headings"',
+    ].join("\n"),
+  );
+  const s = update(fresh(), {
+    type: "configLoaded",
+    result: config,
+    reload: false,
+  }).state;
+  const md = keys(open("notes/a.md", "# A\n", s), "x<leader>w");
+  expect(md.state.overlay.kind).toBe("picker");
+  const ts = keys(open("scripts/sync.ts", CODE, s), "x<leader>w");
+  expect(ts.state.overlay.kind).toBe("none");
+  expect(ts.effects.some((e) => e.kind === "write")).toBe(true);
+});
+
+test("every note binding is scoped to markdown", () => {
+  expect(linkBindings.length).toBeGreaterThan(0);
+  for (const b of linkBindings) expect(b.scope.filetype).toBe("markdown");
+  for (const id of new Set(linkBindings.map((b) => b.id)))
+    expect(reg.commands.get(id)).toBeDefined();
 });

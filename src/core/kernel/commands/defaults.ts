@@ -23,6 +23,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>ff", id: "file.find" },
   { scope: { mode: "normal" }, seq: "<leader>fr", id: "file.recent" },
   { scope: { mode: "normal" }, seq: "<leader>sg", id: "search.grep" },
+  { scope: { mode: "normal" }, seq: "<leader>st", id: "search.tags" },
   { scope: { mode: "normal" }, seq: "<leader>sc", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>:", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>?", id: "help.keymap" },

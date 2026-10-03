@@ -24,6 +24,11 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
+import {
+  linkBindings,
+  linkCommands,
+  linkGroups,
+} from "../core/state/link-commands";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
@@ -95,12 +100,13 @@ function registries(): Registries {
   fileTypes.register(markdownFileType);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
+  for (const c of linkCommands) commands.register(c);
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    bindings: defaultBindings,
-    groups: defaultGroups,
+    bindings: [...defaultBindings, ...linkBindings],
+    groups: { ...defaultGroups, ...linkGroups },
   };
 }
 

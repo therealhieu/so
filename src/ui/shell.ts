@@ -8,6 +8,7 @@ import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import type { Registries } from "../core/state/update";
 import { createKeyNormalizer } from "./input";
+import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
 import { ToastStack } from "./overlays/notify";
@@ -87,6 +88,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new ConflictView(renderer),
         new WhichKeyView(renderer, ctx),
         new PickerView(renderer, ctx),
+        new CompletionView(renderer, () => windows.cursor()),
       ]);
       const views: View[] = [
         new Bufferline(renderer),

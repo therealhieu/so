@@ -40,7 +40,8 @@ export function treeField(s: AppState): PromptState | undefined {
   if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
   const p = s.overlay.prompt;
   return p.kind === "input" &&
-    (p.op.kind === "create" || p.op.kind === "rename")
+    (p.op.kind === "create" ||
+      (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
     ? p
     : undefined;
 }
