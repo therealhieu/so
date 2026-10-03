@@ -8,13 +8,13 @@
 
 **Research Source:** None
 
-**Current Requirement Revisions:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R1, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ6@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1
+**Current Requirement Revisions:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R2, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ6@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1
 
 **Research Reconciliation:** None — research skipped
 
-**Unresolved Items:** None — the parent text changes for W261003S6BQ-REQ7@R2 follow a user decision and are recorded as a pending parent synchronization (Assigned Parent Obligation Coverage); they await the user's authorization to edit the roadmap and are not an open design decision.
+**Unresolved Items:** None — the parent text changes for W261003S6BQ-REQ7@R3 and W261003S6BQ-REQ2@R2 follow user decisions and are recorded as a pending parent synchronization (Assigned Parent Obligation Coverage); they await the user's authorization to edit the roadmap and are not an open design decision.
 
-**Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-04, with the criteria "stable, simple, easy to maintain and extend" and "follow industry standards and comply project standards". Under that delegation the agent decided the system-design topics (folds, view input, render keys and G4, embed and image data flow, reading mode and commands, preview server and lifecycle, configuration, verification) by choosing the option that best meets those criteria. Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R2) was decided by the user on 2026-10-04; the delivery mechanism (embedded files, same-origin Content Security Policy) and the inline-style allowance for Mermaid were chosen under the same delegation.
+**Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-04, with the criteria "stable, simple, easy to maintain and extend" and "follow industry standards and comply project standards". Under that delegation the agent decided the system-design topics (folds, view input, render keys and G4, embed and image data flow, reading mode and commands, preview server and lifecycle, configuration, verification) by choosing the option that best meets those criteria. Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04; the delivery mechanism (embedded files, same-origin Content Security Policy) and the inline-style allowance for Mermaid were chosen under the same delegation. Loading web images in the terminal (W261003S6BQ-REQ2@R2) and in the browser page (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04; the download limits, the memory-only cache, and the retry interval were chosen under the same delegation.
 
 **Design Boundary:** This artifact is authoritative for whole-system architecture and technical design, including UI/frontend applications, routes, modules, components, state ownership, contracts, files, symbols, boundaries, wiring, and verification when material. UI/UX look and feel, visual composition, concrete interaction treatment, responsive presentation, accessibility realization, mockups, and accepted UI-design authority belong to `s1mple-discuss-ui`.
 
@@ -74,9 +74,9 @@
 ## Goals
 
 - Render Markdown in `live` and `reading` views as one pure decoration provider over the existing `Doc`, with no change to `core/kernel` and no Markdown in `src/ui` (W261003S6BQ-REQ1@R1, W261003S6BQ-REQ6@R1).
-- Show images, embeds, math, and Mermaid inside the 16 ms keystroke budget, with heavy work cached by block hash and kept out of `AppState` where it is presentation-only (W261003S6BQ-REQ2@R1, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1).
+- Show images, embeds, math, and Mermaid inside the 16 ms keystroke budget, with heavy work cached by block hash and kept out of `AppState` where it is presentation-only (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1).
 - Keep folds and reserved rows correct under edits and scrolling without layout in the reducer (W261003S6BQ-REQ5@R1).
-- Serve a read-only, local-only browser mirror from the same `Doc`, with the page, KaTeX, and Mermaid embedded in the single binary and loaded only from the server's own origin (W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1).
+- Serve a read-only, local-only browser mirror from the same `Doc`, with the page, KaTeX, and Mermaid embedded in the single binary and loaded only from the server's own origin (W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1).
 - Ship the G4 outputs DI4 consumes with the phase-design signatures, and prove registration-only extension with a `csv` file type (W261003S6BQ-REQ1@R1).
 
 ## Requirement Coverage
@@ -92,16 +92,16 @@
   - **Success Criteria:** S1, S2, S3, S9, S10, S11, S12, S14, S15, S16, S17, S18
   - **Verification:** V1–V5, V20–V24, V26–V34, V36–V45
   - **Research Support:** None
-- `W261003S6BQ-REQ2@R1` — Images through OpenTUI's native decoder and `drawImage`.
+- `W261003S6BQ-REQ2@R2` — Images through OpenTUI's native decoder and `drawImage`.
   - **Coverage Outcome:** System design required
   - **System Design:** W261003S6BQ-DES7
-  - **How Addressed:** `src/workspace/images.ts` reads bytes; `src/ui/images.ts` decodes, caches (64 MiB LRU), and selects the tier with the pure `imageTier`; the `image` widget painter draws with `drawImage`.
+  - **How Addressed:** `src/workspace/images.ts` reads workspace files and downloads `http:`/`https:` images (10 s, 16 MiB, at most 4 at once); `src/ui/images.ts` decodes, caches (64 MiB LRU), and selects the tier with the pure `imageTier`; the `image` widget painter draws with `drawImage`.
   - **Existing Evidence:** None — system change required
-  - **Affected Files and Symbols:** `src/workspace/images.ts` — `readImage`; `src/ui/images.ts` — `imageTier`, `ImageCache`; `src/ui/widgets/image.ts` — `paintImage`; `src/ui/shell.ts` — `ShellDeps.loadImage`
+  - **Affected Files and Symbols:** `src/workspace/images.ts` — `readImage`, `fetchImage`, `createImageLoader`; `src/core/lang/markdown/renderers/image.ts` — `isWebUrl`, `imageRenderer`; `src/ui/images.ts` — `imageTier`, `ImageCache`; `src/ui/widgets/image.ts` — `paintImage`; `src/ui/shell.ts` — `ShellDeps.loadImage`
   - **Callers and Wiring:** `src/app/main.ts` injects `loadImage`; `registerWidgetPainter("image", …)`
   - **Runtime Flow:** Image load and repaint
   - **Success Criteria:** S8
-  - **Verification:** V17, V18, V19, V40
+  - **Verification:** V17, V18, V19, V40, V50, V51
   - **Research Support:** None
 - `W261003S6BQ-REQ3@R1` — Math and Mermaid text renderers.
   - **Coverage Outcome:** System design required
@@ -147,7 +147,7 @@
   - **Success Criteria:** S1, S16
   - **Verification:** V1, V2, V3, V38
   - **Research Support:** None
-- `W261003S6BQ-REQ7@R2` — Preview page delivery and locally served browser libraries.
+- `W261003S6BQ-REQ7@R3` — Preview page delivery and locally served browser libraries.
   - **Coverage Outcome:** System design required
   - **System Design:** W261003S6BQ-DES12
   - **How Addressed:** exact-pinned `katex` and `mermaid` browser builds and the page's own files are embedded through `type: "file"` imports in `assets.ts` and served at `/` and `/assets/<name>` under a same-origin CSP, `nosniff`, and `no-referrer`; render errors show source.
@@ -174,7 +174,7 @@
 
 - **Parent Baseline**
   - **Binding:** `w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R3 / RM261003ABZP-DI3@R2).
-  - **Assessment:** Aligned, with one user-approved change pending parent reconciliation. The phase file, index, design, and UI design were re-read on 2026-10-04 at `main` `6a04729` and match the binding. This design refines the phase design in seven places, all additive or internal, which change no PH, DI, REQ, S, or V definition (items 1–7 below). Separately, on 2026-10-04 the user decided that KaTeX and Mermaid are served from the binary instead of jsDelivr (W261003S6BQ-REQ7@R2); that reverses a parent design tradeoff and a phase exclusion, so it needs parent text changes (item 8). All eight items are listed under `Pending parent synchronization` below; parent files are not edited by this work without explicit authorization.
+  - **Assessment:** Aligned, with two user decisions pending parent reconciliation. The phase file, index, design, and UI design were re-read on 2026-10-04 at `main` `6a04729` and match the binding. This design refines the phase design in seven places, all additive or internal, which change no PH, DI, REQ, S, or V definition (items 1–7 below). Separately, on 2026-10-04 the user decided that KaTeX and Mermaid are served from the binary instead of jsDelivr (W261003S6BQ-REQ7@R3); that reverses a parent design tradeoff and a phase exclusion, so it needs parent text changes (item 8). The user also decided that web images load in the terminal and in the page (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ7@R3), which makes web image downloads the one outbound network use and changes the design's security row (item 9). All nine items are listed under `Pending parent synchronization` below; parent files are not edited by this work without explicit authorization.
     1. `PreviewCtx` gains `folds: ReadonlySet<number>` and `resolve(target): string | undefined`, and `embed()` returns `{ doc, text }` instead of `{ doc }` (all additive for DI4's `BlockRenderer`).
     2. The window fold set reaches the provider through `PreviewCtx.folds`; kernel `TextView.folds` keeps its generic hidden-line meaning and is empty for Markdown in v1 (the UI design's Editor window note said `TextView.folds` would carry it).
     3. The SSE `doc` payload carries `line` (the cursor line) instead of `anchor`; the page scrolls to the block containing it.
@@ -183,7 +183,8 @@
     6. New state, actions, and effects: buffer fields `BufferState.listed` and `BufferState.embeds` (additive within the RM261003ABZP-DES2@R2 buffers map), `WindowState.content.folds`, `AppState.preview` (the one top-level field the phase allows, with a `starting` variant added to the parent's `off | on(port)`); actions `previewStarted`, `previewStopped`, `previewFailed`, `openUrlFailed`; effects `startPreview`, `stopPreview`, `openUrl`.
     7. `src/app/preview-host.ts` owns the running server, mirroring `index-host.ts`.
     8. KaTeX and Mermaid are exact-pinned dependencies embedded in the binary and served from the preview's own origin under a same-origin Content Security Policy (user decision 2026-10-04; W261003S6BQ-DES12).
-  - **Pending parent synchronization:** Approved direction, not an unresolved item: the user requested item 8 directly, and items 1–7 are additive refinements. Proposed parent changes:
+    9. Web images load in the terminal through `fetchImage` in `src/workspace/images.ts` (10 s, 16 MiB, at most 4 at once, no Cookie or Referer, memory-only cache, 60 s retry) and in the browser page through `img-src 'self' data: http: https:` (user decision 2026-10-04; W261003S6BQ-DES7, W261003S6BQ-DES10, W261003S6BQ-DES12).
+  - **Pending parent synchronization:** Approved direction, not an unresolved item: the user requested items 8 and 9 directly, and items 1–7 are additive refinements. Proposed parent changes:
 
     | Parent location | Current text | Proposed change |
     |---|---|---|
@@ -195,6 +196,8 @@
     | same, `:387` and `rm261003abzp-ui-design.md` RM261003ABZP-UV9@R1 Action (`:2246`) | manual check "…and offline" / "toggle offline" | Keep the offline toggle; the expected result becomes "math and diagrams render offline; only same-origin requests" |
     | `rm261003abzp-ui-design.md` RM261003ABZP-UDES10@R1 (`:108`) and the M7 state table Error row (`:1060`) | "KaTeX/Mermaid with source fallback"; "KaTeX/Mermaid unavailable (offline CDN): source shown … `Math rendering unavailable offline`" | "KaTeX/Mermaid served locally"; Error row: "KaTeX/Mermaid render error: that block's source shown with a render-error label" |
     | `rm261003abzp-ui-design.md:62`, `rm261003abzp-ui-requirements.md:202` | cite RM261003ABZP-DES13@R2 | cite RM261003ABZP-DES13@R3 |
+    | `rm261003abzp-design.md` cross-cutting Security and privacy row | "No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2)" | State that the only outbound network use is downloading web images referenced by notes the user views, in the terminal (`fetchImage`: 10 s, 16 MiB, no Cookie or Referer, `preview.images = "off"` disables) and in the browser page (`img-src` allows `http:` and `https:`); everything else stays loopback-only (RM261003ABZP-DES13@R3) |
+    | RM261003ABZP-DES13@R3 Decision and Tradeoffs (with item 8) | — | The CSP allows code, styles, fonts, and connections only from the server's own origin, and images also from the web; Tradeoffs add that loading a web image reveals the viewer's IP address to that image's host (no Referer is sent) |
     | Phase design shapes and state (items 1–7) | as listed above | Record `PreviewCtx.folds`, `resolve`, and `embed().text`; folds through `PreviewCtx`; `line` payload; `markdown-commands.ts` home; `note.enter`; the buffer fields `listed` and `embeds`, `WindowState.content.folds`, `AppState.preview` with its `starting` variant, and the new actions and effects; `preview-host.ts` |
   - **Design Approval Gates:** G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing and the PH1 exit recorded (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:576`, `:580`). No gate is due at design approval. G4 is produced here (W261003S6BQ-DES2, W261003S6BQ-DES4, W261003S6BQ-DES6).
 
@@ -210,12 +213,12 @@
 
 - **Terminal images**
   - **Parent:** RM261003ABZP-DES10@R2 (image tiers, `widgetPainters`), RM261003ABZP-DES16@R1 (64 MiB LRU); RM261003ABZP-V8@R1
-  - **Work Requirements:** W261003S6BQ-REQ2@R1
+  - **Work Requirements:** W261003S6BQ-REQ2@R2
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES6, W261003S6BQ-DES7
   - **Existing Evidence:** None — system change required
   - **Success Criteria:** S8
-  - **Verification:** V17, V18, V19, V40 (V18 is the V8@R1 case)
+  - **Verification:** V17, V18, V19, V40, V50, V51 (V18 is the V8@R1 case)
   - **Treatment:** Refined — OpenTUI's native decoder, a pure tier function, capabilities injected into the painter.
 
 - **Markdown-scoped commands**
@@ -230,7 +233,7 @@
 
 - **Browser preview**
   - **Parent:** RM261003ABZP-REQ8@R2; RM261003ABZP-DES13@R2; RM261003ABZP-S8@R1 with RM261003ABZP-V11@R3
-  - **Work Requirements:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1
+  - **Work Requirements:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES9, W261003S6BQ-DES10, W261003S6BQ-DES11, W261003S6BQ-DES12
   - **Existing Evidence:** None — system change required
@@ -240,7 +243,7 @@
 
 - **Browser library delivery**
   - **Parent:** RM261003ABZP-DES13@R2 (Decision "from jsDelivr" and the tradeoff rejecting bundling); `rm261003abzp-roadmap-phase-2-obsidian-experience.md:35` (PH2 Out of scope), `:344` (DI3 scope "from jsDelivr"), `:353` (DI3 Exclusions "Bundled KaTeX and Mermaid"); RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1 offline wording
-  - **Work Requirements:** W261003S6BQ-REQ7@R2
+  - **Work Requirements:** W261003S6BQ-REQ7@R3
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES10, W261003S6BQ-DES12
   - **Existing Evidence:** None — system change required
@@ -333,7 +336,7 @@
 
 | Concern | Applicability | Design Location or Reason |
 |---|---|---|
-| Security and privacy | Applicable | `src/preview/server.ts` `startPreviewServer`: `127.0.0.1` bind, Host allowlist, realpath + hidden + excluded containment, GET-only routes; `html.ts` escapes every text and attribute and never passes raw HTML; every response carries `SECURITY_HEADERS` (same-origin-only CSP with inline styles for Mermaid, `nosniff`, `no-referrer`; section 6 routes), `/file/*` is sandboxed by `FILE_CSP`, and `/assets/*` serves only the embedded, exact-pinned `ASSETS` (W261003S6BQ-DES9, DES10, DES12); V26–V31, V34, V48 |
+| Security and privacy | Applicable | `src/preview/server.ts` `startPreviewServer`: `127.0.0.1` bind, Host allowlist, realpath + hidden + excluded containment, GET-only routes; `html.ts` escapes every text and attribute and never passes raw HTML; every response carries `SECURITY_HEADERS` (CSP with same-origin scripts, fonts, and connections, inline styles for Mermaid, and web images allowed; `nosniff`, `no-referrer`; section 6 routes); web images in the terminal come only from `fetchImage` (10 s, 16 MiB, no Cookie or Referer), `/file/*` is sandboxed by `FILE_CSP`, and `/assets/*` serves only the embedded, exact-pinned `ASSETS` (W261003S6BQ-DES9, DES10, DES12); V26–V31, V34, V48 |
 | Configuration | Applicable | `src/core/config/schema.ts` `preview` section (W261003S6BQ-DES13); V39 |
 | Observability | Applicable | `src/app/preview-host.ts` logs `preview.started`, `preview.stopped`, `preview.failed` and `src/app/effects.ts` logs `browser.openFailed` through the existing debug logger, paths and ports only (W261003S6BQ-DES11); V32 |
 | Performance and scalability | Applicable | Viewport-only provider and render caches (W261003S6BQ-DES2, DES3), one layout per frame (DES6), image LRU (DES7); bench targets (DES14); V44, V45. The binary grows by several MB of embedded browser files (no size budget); startup is unaffected because `type: "file"` imports are paths, read only when the browser asks (DES12); V35, V44 |
@@ -390,7 +393,7 @@ core/lang/markdown                                   core/state                 
                        ▲                                                                       └► widgetPainters(image, embed, rule)
  src/preview/server ───┘  ◄── store.subscribe (debounce 100 ms) ── followTarget(s)                    image ─► ImageCache ─► drawImage
                                                                                                        ▲ loadImage (app-injected)
- core/state: embeds.syncEmbeds (update wrapper) ─► per-buffer reads ─► fileLoaded(listed:false)        └── src/workspace/images.readImage
+ core/state: embeds.syncEmbeds (update wrapper) ─► per-buffer reads ─► fileLoaded(listed:false)        └── src/workspace/images.createImageLoader (readImage | fetchImage)
  core/state: preview.ts (:Preview/:PreviewStop) ─► startPreview/stopPreview/openUrl effects ─► src/app/preview-host
 ```
 
@@ -776,7 +779,7 @@ so/
 │   └── workspace/
 │       ├── [A] images.ts
 │       │       Contains: contained image byte reads
-│       │       Symbols: readImage
+│       │       Symbols: readImage, fetchImage, createImageLoader
 │       │       Decisions: DES7
 │       └── [M] system.ts
 │               Contains: browser launcher
@@ -909,22 +912,25 @@ listed note closed / embed removed → syncEmbeds → unlisted buffers no listed
 
 ## Image load and repaint
 
-**Participating Symbols:** `imageRenderer`, `PreviewCtx.image`, `ViewHost.imageSize`, `paintImage`, `ImageCache`, `loadImage`, `readImage`, `imageTier`
+**Participating Symbols:** `imageRenderer`, `isWebUrl`, `PreviewCtx.image`, `ViewHost.imageSize`, `paintImage`, `ImageCache`, `loadImage`, `createImageLoader`, `readImage`, `fetchImage`, `imageTier`
 
 **Illustrative Flow:**
 
 ```text
-imageRenderer → ctx.images === "off" → replace with "[image: name]" spans (no widget)
+imageRenderer → ctx.images === "off" → replace with "[image: name]" spans (no widget, nothing loaded)
+             → ref = isWebUrl(target) ? target : ctx.resolve(target)
              → ctx.image(ref) → "unknown" → widget{type:"image", data:{path,name}, rows:1} ("◌ name")
                               → {rows}     → widget{type:"image", data:{path,name}, rows}
 paintImage → imageTier(...) → cache.get(path):
-     miss → cache.load(path) → loadImage(path) → bytes → imageInfo + NativeImage.decode → store → renderer.requestRender()
+     miss → cache.load(ref) → loadImage(ref) → bytes → imageInfo + NativeImage.decode → store → renderer.requestRender()
+            loadImage: isWebUrl(ref) ? fetchImage(ref) (≤ 4 in flight, 10 s, 16 MiB) : readImage(root, ref)
      decoded → drawImage(image, x, y, cols, rows, …, protocol)
-     failed (svg / corrupt / missing) → placeholder "[image: name]"
+     failed (svg / corrupt / missing / download error) → placeholder "[image: name]"; next paint ≥ 60 s later loads again
 next frame → host.imageSize(path) known → ctx.image → rows → layout reserves them
 ```
 
 1. Bytes and decoded images never enter `AppState`; the repaint is a render request, not an action.
+2. Only painted images load, so a web image downloads when it first scrolls into view; downloaded bytes are decoded and kept only in the in-memory LRU, never written to disk.
 
 **Detailed Control Flow:** section 7, `src/ui/images.ts`, `src/ui/widgets/image.ts`, `src/core/lang/markdown/renderers/image.ts`
 
@@ -972,7 +978,7 @@ server.stop: unsubscribe → send "stopped" → close streams → Bun server.sto
 - **Block renderer throws** — Detected by the `try` around each renderer call in `livePreview`; represented as a `line` decoration with sign `{ text: "⚠", style: "signError" }` on the block's first line and no other decorations for that block; the block shows as source.
 - **Whole layout throws** — Detected by `EditorView.layoutFrame`'s existing `catch` (`src/ui/editors/text-view.ts:420-429`); raw lines are painted.
 - **Embed target missing or refused** — Detected by `ctx.embed` returning `"missing"` (the target is in the laid-out buffer's `embeds.refused`, or neither open nor requested); the embed renders in the `linkUnresolved` style; a refused path is not requested again while it stays in `refused`, which is cleared when the embed leaves the note or the buffer is reopened.
-- **Image unreadable, SVG, or undecodable** — Detected by `ImageCache.load` (`readImage` rejection or `ImageError`); represented as `{ failed: true }` in the cache; painted as `[image: <name>]`; retried only after eviction or a resize clears the entry.
+- **Image unreadable, SVG, undecodable, or download failed** — Detected by `ImageCache.load` (`readImage` or `fetchImage` rejection, including timeout, non-2xx status, and the 16 MiB cap, or `ImageError`); represented as `{ failed: true }` with its failure time in the cache; painted as `[image: <name>]`; the first paint 60 s or more after the failure loads it again, so web images appear once the network is back.
 - **Mermaid unsupported or parse error** — Detected by `mermaidText`; represented as `{ kind: "source", label }`; rendered as the fenced source with the label row.
 - **Read-only edit** — Detected in `runVim` (engine text version changed or mode became insert); handled by discarding the result and setting the hint message.
 - **Server start fails** (port bind error) — Detected by `PreviewHost.start` catching `Bun.serve`; represented as `previewFailed{reason}`; error toast `preview failed: <reason>`; state stays off.
@@ -991,7 +997,7 @@ src/app/main.ts
                → viewContexts = new ViewContextRegistry() ; viewContexts.register("markdown", markdownViewContext)
   builtinRenderers()                                  (registers heading … image renderers once)
   registerEditorView("text", …) ; registerWidgetPainter("image" | "embed" | "text" | "rule", …)
-  createShell(renderer, { reg, now, loadImage: (p) => readImage(root, p) })
+  createShell(renderer, { reg, now, loadImage: createImageLoader(root) })
   previewHost = createPreviewHost({ root, store: () => store, isExcluded: matcher.isExcludedPath, logger, dispatch })
   deps.preview = previewHost ; deps.openUrl = (url) => openUrl(url, process.platform)
   installLifecycle({ …, stopPreview: previewHost.stop })
@@ -1265,7 +1271,7 @@ reducer → effect → src/app/effects.ts → previewHost / openUrl → action �
 - `GET /render?path=<rel>` → HTML fragment of that note (current note when omitted); 404 when not a contained Markdown file.
 - `GET /file/<rel>` → contained workspace file bytes with a type from the extension.
 - Any other method → 405; Host not allowlisted → 403.
-- Every response carries `SECURITY_HEADERS`: `Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`; page and asset responses add `Cache-Control: no-cache`.
+- Every response carries `SECURITY_HEADERS`: `Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: http: https:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`; page and asset responses add `Cache-Control: no-cache`.
 
 **Usage:**
 
@@ -1276,7 +1282,7 @@ page → EventSource("/events") → doc → fetch("/render?path=") → swap arti
 
 **Rules:**
 
-- **Compatibility:** Parent routes kept; `/assets/*` is new (W261003S6BQ-REQ7@R2); the `doc` payload field `line` replaces `anchor` (parent sync item 3).
+- **Compatibility:** Parent routes kept; `/assets/*` is new (W261003S6BQ-REQ7@R3); the `doc` payload field `line` replaces `anchor` (parent sync item 3).
 - **Invariants:** Bound to `127.0.0.1`; Host ∈ {`127.0.0.1:<port>`, `localhost:<port>`}; every served workspace path's realpath is inside the workspace realpath and not hidden or excluded; `/assets/*` reads only the files `ASSETS` names (embedded in the compiled binary; package files under `node_modules` when run from source); the page and assets reference no origin other than the server's own; no route writes.
 - **Ownership and Lifecycle:** Exists between `previewStarted` and `previewStopped` or exit.
 
@@ -1318,7 +1324,7 @@ GET /assets/katex.min.js → ASSETS.get → new Response(Bun.file(path), { heade
 **Includes:**
 
 - `href(target)` → `/<path>` or `undefined` (unresolved).
-- `asset(target)` → `/file/<path>` or `undefined`.
+- `asset(target)` → `/file/<path>` or `undefined`. `renderHtml` uses an `http:` or `https:` image target as the `src` unchanged (`isWebUrl`) and calls `asset` only for other targets; any other scheme resolves to `undefined` and the image renders as its alt text.
 - `embed(path)` → `{ doc, text }` or `undefined`.
 
 **Usage:**
@@ -1690,7 +1696,7 @@ export const embedRenderer: BlockRenderer = (block, v, { ctx }) => {
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003S6BQ-REQ2@R1
+- **Requirements:** W261003S6BQ-REQ2@R2
 - **Responsibilities:** Image widget or text placeholder.
 - **Affected Callers/Consumers:** registry; `paintImage`
 - **Construction/Wiring:** `builtinRenderers`
@@ -1700,7 +1706,7 @@ export const embedRenderer: BlockRenderer = (block, v, { ctx }) => {
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `imageRenderer` | None — new symbol | below | registry |
+| `imageRenderer`, `isWebUrl` | None — new symbol | below | registry; `html.ts`, `src/workspace/images.ts` (`isWebUrl`) |
 
 **Existing Shape:** None — new file or symbol
 
@@ -1713,9 +1719,10 @@ No image rendering exists.
 **Proposed Shape:**
 
 ```ts
+export const isWebUrl = (target: string) => /^https?:\/\//i.test(target);
 export const imageRenderer: BlockRenderer = (block, _v, { ctx }) => {
   const { target, alt } = embedLink(block);
-  const path = ctx.resolve(target);
+  const path = isWebUrl(target) ? target : ctx.resolve(target);
   const name = alt ?? basename(target);
   if (ctx.images === "off" || path === undefined)
     return [{ kind: "replace", range: wholeBlock(block), block: true, spans: [{ text: `[image: ${name}]`, style: "imagePlaceholder" }] }];
@@ -1725,7 +1732,7 @@ export const imageRenderer: BlockRenderer = (block, _v, { ctx }) => {
 };
 ```
 
-With images off or an unresolved target the renderer emits the placeholder text directly, so that tier needs no painter. Otherwise it reserves one row until the size is known, then the rows that `ctx.image` computed for this window's width.
+A web target is passed through as the image reference, so the widget's `path` is either a workspace path or an `http(s)` URL. With images off or an unresolved target the renderer emits the placeholder text directly, so that tier needs no painter and nothing is loaded or downloaded. Otherwise it reserves one row until the size is known, then the rows that `ctx.image` computed for this window's width.
 
 - **Invariants:**
   - The renderer never decodes.
@@ -1823,7 +1830,7 @@ export function renderHtml(doc: Doc, text: TextBuffer, ctx: HtmlCtx, depth = 0):
 }
 ```
 
-`renderHtml` walks every block (the browser shows the whole note), wraps each in a `section` carrying its first line and hash, and serializes the block's mdast with handlers for CommonMark, GFM, math (inline `<span class="math" data-tex>` and display `<div class="math" data-tex>`, with the escaped TeX also as text content), and the Obsidian nodes (`wikiLink`, `embed`, `highlight`, `tag`, `comment` dropped, `inlineFootnote`, callouts as `<aside class="callout" data-type>`). Every text node and attribute goes through `escapeHtml`, and raw HTML nodes are emitted as escaped text, so note content can never inject script into a page that can read `/file/*`. Mermaid fences become `<pre class="mermaid">` with escaped source; task checkboxes are `disabled`. Embeds recurse one level through `ctx.embed`. The page's script turns math and Mermaid elements into KaTeX and SVG after each swap; because the fragment already carries the escaped source, a render error simply leaves it in place.
+`renderHtml` walks every block (the browser shows the whole note), wraps each in a `section` carrying its first line and hash, and serializes the block's mdast with handlers for CommonMark, GFM, math (inline `<span class="math" data-tex>` and display `<div class="math" data-tex>`, with the escaped TeX also as text content), and the Obsidian nodes (`wikiLink`, `embed`, `highlight`, `tag`, `comment` dropped, `inlineFootnote`, callouts as `<aside class="callout" data-type>`). Every text node and attribute goes through `escapeHtml`, and raw HTML nodes are emitted as escaped text, so note content can never inject script into a page that can read `/file/*`. Images use an `http:` or `https:` target as the `src` unchanged and `ctx.asset` for everything else, so web images load in the browser while local ones go through `/file/*`. Mermaid fences become `<pre class="mermaid">` with escaped source; task checkboxes are `disabled`. Embeds recurse one level through `ctx.embed`. The page's script turns math and Mermaid elements into KaTeX and SVG after each swap; because the fragment already carries the escaped source, a render error simply leaves it in place.
 
 - **Invariants:**
   - No unescaped note text in the output.
@@ -1881,7 +1888,7 @@ The registry mirrors `FileTypeRegistry`: one builder per file type, duplicates r
 
 - **Change:** Add
 - **Decisions:** DES1, DES4, DES5, DES7
-- **Requirements:** W261003S6BQ-REQ6@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ2@R1
+- **Requirements:** W261003S6BQ-REQ6@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ2@R2
 - **Responsibilities:** Build `PreviewCtx` from state.
 - **Affected Callers/Consumers:** `ViewContextRegistry` (registered for `markdown`)
 - **Construction/Wiring:** `registries()` and `testRegistries()`
@@ -2506,7 +2513,7 @@ The registry follows `editorViews`. `paintEmbed` is registered for both `embed` 
 
 - **Change:** Add
 - **Decisions:** DES7
-- **Requirements:** W261003S6BQ-REQ2@R1
+- **Requirements:** W261003S6BQ-REQ2@R2
 - **Responsibilities:** Tier decision, decoded-image LRU, image painting.
 - **Affected Callers/Consumers:** `EditorView` (via `deps.images`), `paintImage`, `createShell`
 - **Construction/Wiring:** `createShell` builds one `ImageCache` with `deps.loadImage` and `renderer.requestRender`
@@ -2537,7 +2544,7 @@ export function imageTier(images: "auto" | "blocks" | "off", caps: TerminalCapab
   return resolveImageRenderProtocol("auto", caps, hasResolution);
 }
 export class ImageCache {
-  constructor(o: { load: (path: string) => Promise<Uint8Array>; repaint: () => void; limitBytes?: number /* 64 MiB */ });
+  constructor(o: { load: (ref: string) => Promise<Uint8Array>; repaint: () => void; now: () => number; limitBytes?: number /* 64 MiB */; retryMs?: number /* 60 s */ });
   get(path: string): { image: NativeImage } | { failed: true } | undefined; // undefined starts a load
   size(path: string): { width: number; height: number } | undefined;
   cellAspect(): number;  // from renderer.resolution when known, else 0.5
@@ -2545,18 +2552,18 @@ export class ImageCache {
 export const paintImage: WidgetPainter = (t, w) => { /* tier → placeholder | cache.get → "◌ name" | drawImage(…, tier) */ };
 ```
 
-`imageTier` is the whole tier policy in one pure function. `ImageCache.get` starts at most one load per path; when it finishes, it stores the decoded image (counting `width × height × 4` bytes), evicts least-recently-used images past 64 MiB with `dispose()`, and calls `repaint`, which is `renderer.requestRender`. `paintImage` reads capabilities from `t.deps` (injectable in tests through `MountOptions.capabilities`), paints `◌ name` while loading, `[image: name]` for a failed load (SVG has no decoder and fails as `unsupported-format`), and otherwise calls `drawImage` with the tier as `protocol`.
+`imageTier` is the whole tier policy in one pure function. `ImageCache.get` starts at most one load per reference (workspace path or web URL); a failed entry records its failure time, and a `get` 60 s or more later drops it and starts a new load; when it finishes, it stores the decoded image (counting `width × height × 4` bytes), evicts least-recently-used images past 64 MiB with `dispose()`, and calls `repaint`, which is `renderer.requestRender`. `paintImage` reads capabilities from `t.deps` (injectable in tests through `MountOptions.capabilities`), paints `◌ name` while loading, `[image: name]` for a failed load (SVG has no decoder and fails as `unsupported-format`), and otherwise calls `drawImage` with the tier as `protocol`.
 
 - **Invariants:**
   - At most 64 MiB of decoded pixels retained.
   - Only `src/ui` imports `@opentui/core`.
-- **Verification Coverage:** S8 — V17, V18, V19, V40
+- **Verification Coverage:** S8 — V17, V18, V19, V40, V51
 
 ## `src/ui/{shell,theme}.ts`, `src/ui/views/{statusline,bufferline}.ts`
 
 - **Change:** Modify
 - **Decisions:** DES2, DES4, DES6, DES7, DES11
-- **Requirements:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ8@R1
+- **Requirements:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R2, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ8@R1
 - **Responsibilities:** Image dependency injection, style tokens, preview segment, listed tabs.
 - **Affected Callers/Consumers:** `src/app/main.ts`, `test/support/ui.ts`
 - **Construction/Wiring:** `createShell(renderer, { reg, now, loadImage })`
@@ -2590,14 +2597,15 @@ Views get registries, a clock, and dispatch.
 export type ShellDeps = {
   reg: Registries;
   now: () => number;
-  loadImage: (path: string) => Promise<Uint8Array>;
+  /** Bytes for a workspace path or an http(s) URL. */
+  loadImage: (ref: string) => Promise<Uint8Array>;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => { caps: TerminalCapabilities | null; hasResolution: boolean };
 };
 export type ViewDeps = ShellDeps & { dispatch: Store["dispatch"]; images: ImageCache };
 ```
 
-`createShell` builds one `ImageCache` with `loadImage` and `renderer.requestRender` and passes it to every view. `capabilities` defaults to `{ caps: renderer.capabilities, hasResolution: renderer.resolution !== null }`; tests override it, which is how V18 selects each tier in the test renderer.
+`createShell` builds one `ImageCache` with `loadImage`, `renderer.requestRender`, and `deps.now` and passes it to every view. `capabilities` defaults to `{ caps: renderer.capabilities, hasResolution: renderer.resolution !== null }`; tests override it, which is how V18 selects each tier in the test renderer.
 
 - **Invariants:**
   - Theme tokens keep NO_COLOR attribute fallbacks like the existing table.
@@ -2607,17 +2615,19 @@ export type ViewDeps = ShellDeps & { dispatch: Store["dispatch"]; images: ImageC
 
 - **Change:** Add / Modify
 - **Decisions:** DES7, DES11
-- **Requirements:** W261003S6BQ-REQ2@R1, W261003S6BQ-REQ8@R1
-- **Responsibilities:** Contained image reads; browser launch.
+- **Requirements:** W261003S6BQ-REQ2@R2, W261003S6BQ-REQ8@R1
+- **Responsibilities:** Contained image reads and bounded web image downloads; browser launch.
 - **Affected Callers/Consumers:** `src/app/main.ts` (injection), `src/app/effects.ts` (`openUrl`)
 - **Construction/Wiring:** injected closures
-- **Dependencies:** `node:fs/promises` `realpath`, `readFile`; `Bun.spawn`
+- **Dependencies:** `node:fs/promises` `realpath`, `readFile`; global `fetch`; `Bun.spawn`; `isWebUrl`
 
 **Symbol Changes:**
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `readImage` | None — new symbol | `(root, rel) => Promise<Uint8Array>`; rejects outside the workspace realpath or over 32 MiB | main |
+| `readImage` | None — new symbol | `(root, rel) => Promise<Uint8Array>`; rejects outside the workspace realpath or over 32 MiB | `createImageLoader` |
+| `fetchImage` | None — new symbol | `(url, o?) => Promise<Uint8Array>`; `http(s)` only, 10 s timeout, 16 MiB cap, no Cookie or Referer, rejects on a non-2xx status | `createImageLoader` |
+| `createImageLoader` | None — new symbol | `(root, o?) => (ref) => Promise<Uint8Array>`; web refs go to `fetchImage` with at most 4 downloads in flight, others to `readImage` | main |
 | `openUrl` | None — new symbol (`system.ts` has `commandProvider` at `:17`) | `(url, platform, spawn?) => Promise<void>`; `open` on darwin, `xdg-open` otherwise; rejects on non-zero exit | effects |
 
 **Existing Shape:** `src/workspace/system.ts:17-33`
@@ -2643,19 +2653,31 @@ export async function openUrl(url: string, platform: string, spawn = Bun.spawn):
   if ((await p.exited) !== 0) throw new Error(`${argv[0]} failed`);
 }
 export async function readImage(root: string, rel: string): Promise<Uint8Array>;
+export const WEB_IMAGE = { timeoutMs: 10_000, maxBytes: 16 * 2 ** 20, maxInFlight: 4 } as const;
+export async function fetchImage(url: string, o: { fetch?: typeof fetch; timeoutMs?: number } = {}): Promise<Uint8Array> {
+  if (!isWebUrl(url)) throw new Error("not a web image");
+  const res = await (o.fetch ?? fetch)(url, { credentials: "omit", referrerPolicy: "no-referrer", redirect: "follow",
+    signal: AbortSignal.timeout(o.timeoutMs ?? WEB_IMAGE.timeoutMs) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return readCapped(res, WEB_IMAGE.maxBytes); // rejects once Content-Length or the streamed body exceeds the cap
+}
+export function createImageLoader(root: string, o: { fetch?: typeof fetch } = {}): (ref: string) => Promise<Uint8Array>;
 ```
 
 `openUrl` follows `commandProvider`: argv, no shell, non-zero exit throws, and a missing launcher surfaces as a spawn error. `readImage` resolves the realpath and refuses anything outside the workspace realpath, mirroring the server's containment.
 
+`fetchImage` is the only outbound network call in `so`. It uses Bun's built-in `fetch`, so no package is added; the timeout covers the whole download, the body is read as a stream and abandoned at 16 MiB, and no Cookie or Referer is sent. `createImageLoader` queues web downloads so at most four run at once, which keeps a note with many web images from opening dozens of connections; the `ImageCache` already guarantees one load per reference.
+
 - **Invariants:**
   - The URL is always `http://127.0.0.1:<port>/…` built by `previewUrl`.
-- **Verification Coverage:** S8, S12 — V32, V40
+  - `fetchImage` requests only `http:` and `https:` URLs, never reads more than 16 MiB, and never runs longer than 10 s.
+- **Verification Coverage:** S8, S12 — V32, V40, V50
 
 ## `src/preview/server.ts`
 
 - **Change:** Add
 - **Decisions:** DES10, DES12
-- **Requirements:** W261003S6BQ-REQ8@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ1@R1
+- **Requirements:** W261003S6BQ-REQ8@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ1@R1
 - **Responsibilities:** Routes, security headers, Host check, containment, SSE, debounced follow, stop order.
 - **Affected Callers/Consumers:** `src/app/preview-host.ts`
 - **Construction/Wiring:** `createPreviewHost` calls `startPreviewServer`
@@ -2685,7 +2707,7 @@ The phase fixes the client set, the debounced subscription, and the stop order.
 import { ASSETS, PAGE, type PreviewAsset } from "./assets";
 export const SECURITY_HEADERS = {
   "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
-    "img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "img-src 'self' data: http: https:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
 } as const;
@@ -2730,7 +2752,7 @@ Every response carries `SECURITY_HEADERS`, so the page loads script, fonts, and 
 
 - **Change:** Add
 - **Decisions:** DES12
-- **Requirements:** W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1
+- **Requirements:** W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1
 - **Responsibilities:** Name every file the browser may load and embed it in the binary; the page shell, its follow script, and its stylesheet; KaTeX and Mermaid rendering in the page.
 - **Affected Callers/Consumers:** `startPreviewServer` (`PAGE`, `ASSETS`); the browser
 - **Construction/Wiring:** `with { type: "file" }` imports; `bun build --compile` embeds every imported file, and `Bun.file` reads it back from the binary
@@ -2829,7 +2851,7 @@ async function renderBlocks() {
 
 `page.html` has no inline script or style, so the page's own code needs no nonce or hash. `page.js` is a deferred classic script that runs after KaTeX and Mermaid (deferred scripts run in document order) and owns the theme toggle, badges, paused-follow banner, and follow loop. It differs from the UI-design sketch only in using `line`: `scrollToLine` scrolls to the last `section` whose `data-line` is at most `line`, and `flashNew` highlights sections with a new hash. After every swap, `renderBlocks` runs KaTeX with `throwOnError: false`, which renders a malformed formula as its source in the error colour, and keeps a failing Mermaid block's escaped `<pre>` with a `render-error` class that `page.css` labels. `securityLevel: "strict"` sanitizes Mermaid labels and disables click handlers; `suppressErrorRendering` stops Mermaid from inserting its own error diagram.
 
-Mermaid styles each diagram with a per-diagram `<style>` element and `style` attributes inside the SVG, which no hash or nonce can cover, so under `style-src 'self'` every diagram would be unstyled. The policy therefore allows `'unsafe-inline'` for styles only. Inline CSS cannot run code, and it cannot send note text out, because `default-src 'none'`, `img-src 'self' data:`, `font-src 'self'`, and `connect-src 'self'` block every external URL. Scripts stay `'self'`-only.
+Mermaid styles each diagram with a per-diagram `<style>` element and `style` attributes inside the SVG, which no hash or nonce can cover, so under `style-src 'self'` every diagram would be unstyled. The policy therefore allows `'unsafe-inline'` for styles only. Inline CSS cannot run code. Images may load from the web (`img-src 'self' data: http: https:`) so a note's web images show when the internet is available; a CSS `url()` could therefore request an external image, but CSS cannot read the page, so it can only reveal what the note itself already references, and a note's raw HTML and styles are escaped as text, so note content cannot add CSS. `font-src 'self'` and `connect-src 'self'` keep every other request on the server's origin, and scripts stay `'self'`-only.
 
 - **Invariants:**
   - The page and every asset reference no origin other than the server's own.
@@ -2951,7 +2973,7 @@ The live keystroke bench mirrors `source-keystroke.bench.ts` on the 5,000-line n
 
 - **Change:** Modify / Add
 - **Decisions:** DES1, DES3, DES6, DES7, DES8, DES12, DES14
-- **Requirements:** W261003S6BQ-REQ3@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ1@R1
+- **Requirements:** W261003S6BQ-REQ3@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ1@R1
 - **Responsibilities:** Dependency homes; test wiring parity with `main.ts`; fixtures.
 - **Affected Callers/Consumers:** every UI and state test
 - **Construction/Wiring:** `testRegistries()` adds `viewContexts`, markdown commands and bindings, and calls `builtinRenderers()`; `mountShell` registers painters and accepts `capabilities`, `images` loader overrides
@@ -3020,12 +3042,12 @@ const homes = PACKAGE_HOMES[packageName(specifier)];
 | `S5` | Embeds render capped with `… N more lines`, expand with `za`, show `loading…` and unresolved states, stop at one level, and their buffers stay invisible and are evicted; a refused target is not requested again, and request state lives on the embedding note, never top-level or persisted | REQ4; DES4 |
 | `S6` | Folds follow block ids: survive inserts above, reset on edit or deletion, `[!x]-` starts folded | REQ5; DES5 |
 | `S7` | The cursor row stays visible with tall widgets; only visible rows are laid out; signs and widget rows paint | REQ5, REQ1; DES6 |
-| `S8` | Image tiers, placeholders, the 64 MiB LRU, and repaint-on-load behave as specified, with no stale placement after scroll, view, or buffer change | REQ2; DES7 |
+| `S8` | Image tiers, placeholders, the 64 MiB LRU, repaint-on-load, web image downloads (limits, no Cookie or Referer, 60 s retry), and `images = "off"` making no request behave as specified, with no stale placement after scroll, view, or buffer change | REQ2; DES7 |
 | `S9` | Reading view refuses edits with the hint; `Enter`, `<leader>x`, `za`, `<leader>m` work on notes and are unbound on code files | REQ1, REQ6; DES8 |
 | `S10` | `renderHtml` covers the same syntax, escapes all note text, and tags blocks with `data-line` and `data-hash` | REQ8; DES9 |
 | `S11` | The server is local-only and read-only: 403 for foreign Host, 404 for escapes and hidden or excluded files, 405 for non-GET | REQ1, REQ8; DES10 |
 | `S12` | Edits reach the page as `doc` within 300 ms; code files send none; stop delivers `stopped` first; launch failure toasts the URL; a second `:Preview` reuses the port | REQ8; DES10, DES11 |
-| `S13` | The compiled binary serves the page and every embedded asset without `node_modules`; every response carries the same-origin Content Security Policy, `nosniff`, and `no-referrer`; the page references only its own origin; unknown assets are 404; math and diagrams render offline and render errors show source | REQ7; DES10, DES12 |
+| `S13` | The compiled binary serves the page and every embedded asset without `node_modules`; every response carries the Content Security Policy (same-origin scripts, styles, fonts, and connections; web images allowed), `nosniff`, and `no-referrer`; the page references only its own origin; unknown assets are 404; math and diagrams render offline and render errors show source | REQ7; DES10, DES12 |
 | `S14` | `preview.*` defaults and validation hold | REQ1, REQ4; DES13 |
 | `S15` | All bench targets pass the 2× CI gate, including first frame with `beautiful-mermaid` | REQ1, REQ3; DES14 |
 | `S16` | `EditorView` and the kernel contain no Markdown; a `csv` file type and a `grid` editor kind work by registration only | REQ1, REQ6; DES1, DES14 |
@@ -3094,7 +3116,7 @@ src/ + test/
 │   Infra: None
 │   Doubles: HtmlCtx stub
 │   ├── V20 tour.md
-│   │   ├── Expect: one <section data-line data-hash> per block; wikilinks href "/<path>"; unresolved link class; images src "/file/<path>"; task inputs disabled; mermaid <pre class="mermaid">; math spans with data-tex [S10]
+│   │   ├── Expect: one <section data-line data-hash> per block; wikilinks href "/<path>"; unresolved link class; images src "/file/<path>"; a web image keeps src "https://example.com/chart.png"; a javascript: image target yields no src; task inputs disabled; mermaid <pre class="mermaid">; math spans with data-tex [S10]
 │   │   └── Unique risk: HTML and terminal disagree on structure
 │   └── V21 note with <script>alert(1)</script>, an attribute-breaking link title, and a raw HTML block
 │       ├── Expect: no unescaped "<script" or quote breakout in output [S10]
@@ -3158,9 +3180,19 @@ src/ + test/
 │   ├── V19 three images of 30 MiB decoded size; get same path twice before load resolves
 │   │   ├── Expect: one load call; after the third, the first is disposed and total ≤ 64 MiB; repaint called per load [S8]
 │   │   └── Unique risk: unbounded memory or duplicate loads
-│   └── V40 corrupt PNG bytes; SVG bytes; loader rejection
-│       ├── Expect: {failed:true} for each without throwing [S8]
-│       └── Unique risk: crash on bad images
+│   ├── V40 corrupt PNG bytes; SVG bytes; loader rejection
+│   │   ├── Expect: {failed:true} for each without throwing [S8]
+│   │   └── Unique risk: crash on bad images
+│   └── V51 loader rejects at t=0; get at t=59 s; get at t=60 s with the loader now resolving PNG bytes
+│       ├── Expect: {failed:true} at 59 s with no new load call; a second load call at 60 s, then the decoded image and a repaint [S8]
+│       └── Unique risk: web images never appear after the network returns, or failed loads retried on every frame
+├── src/workspace/images.test.ts [Integration]
+│   Purpose: bounded web image downloads and loader dispatch
+│   Infra: local Bun.serve on 127.0.0.1:0
+│   Doubles: None
+│   └── V50 GET a 1 KiB PNG; a 17 MiB body; a 404; a handler that never responds (timeoutMs 200); "ftp://x/a.png"; 6 concurrent slow images through createImageLoader; a workspace path through createImageLoader
+│       ├── Expect: PNG bytes returned; the 17 MiB body, the 404, the timeout, and ftp each reject; the server saw no Cookie or Referer header; at most 4 requests in flight; the workspace path reads the file without a request [S8]
+│       └── Unique risk: a hung or huge download, leaked headers, or a connection burst
 ├── test/ui/live-preview.test.ts [Integration] (component, OpenTUI test renderer)
 │   Purpose: painting, cursor fit, tiers, read-only, UV3
 │   Real: store, reducer, registries, EditorView, painters
@@ -3230,7 +3262,7 @@ src/ + test/
 │   │   ├── Expect: client reads "event: stopped" before end-of-stream; then connect refused [S12, S11]
 │   │   └── Unique risk: page shows Reconnecting… instead of Stopped
 │   └── V34 GET /, /assets/katex.min.js, /assets/nope.js, /file/diagram.svg
-│       ├── Expect: / is 200 text/html; charset=utf-8 with no <form> or contenteditable; /assets/katex.min.js is 200 text/javascript; charset=utf-8 with the package file's bytes; /assets/nope.js is 404; all three carry Content-Security-Policy equal to SECURITY_HEADERS' policy, X-Content-Type-Options: nosniff, Referrer-Policy: no-referrer; /file/diagram.svg carries FILE_CSP (with sandbox) [S13, S11]
+│       ├── Expect: / is 200 text/html; charset=utf-8 with no <form> or contenteditable; /assets/katex.min.js is 200 text/javascript; charset=utf-8 with the package file's bytes; /assets/nope.js is 404; all three carry Content-Security-Policy equal to SECURITY_HEADERS' policy, whose img-src is 'self' data: http: https: and whose script-src, font-src, and connect-src are 'self', X-Content-Type-Options: nosniff, Referrer-Policy: no-referrer; /file/diagram.svg carries FILE_CSP (with sandbox) [S13, S11]
 │       └── Unique risk: missing or loosened policy, wrong asset type that nosniff would block, or an asset route that serves unknown names
 ├── test/integration/preview-server.test.ts → V32 (same suite) openUrl with a spawn stub exiting 1; effect runner with failing openUrl
 │   ├── Expect: openUrl rejects; runner dispatches openUrlFailed with the URL; logger records browser.openFailed without note text [S12]
@@ -3470,9 +3502,9 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 **Question:** How are images decoded, sized, drawn, and tested?
 
-**Decision:** `readImage` (workspace) supplies bytes through an app-injected `loadImage`; `ImageCache` (UI) decodes with `NativeImage.decode`, keeps 64 MiB LRU, and requests a repaint on load; `imageTier` wraps `resolveImageRenderProtocol`; `paintImage` draws with `drawImage(…, protocol)` or a placeholder; sizes reach core only through `ViewHost.imageSize`.
+**Decision:** `createImageLoader` (workspace) supplies bytes through an app-injected `loadImage`, reading workspace files with `readImage` and downloading `http(s)` images with `fetchImage` (10 s, 16 MiB, at most 4 at once, no Cookie or Referer); `ImageCache` (UI) decodes with `NativeImage.decode`, keeps 64 MiB LRU, and requests a repaint on load; `imageTier` wraps `resolveImageRenderProtocol`; `paintImage` draws with `drawImage(…, protocol)` or a placeholder; sizes reach core only through `ViewHost.imageSize`.
 
-**Requirements Addressed:** W261003S6BQ-REQ2@R1
+**Requirements Addressed:** W261003S6BQ-REQ2@R2
 
 **Research Support:** None
 
@@ -3480,7 +3512,7 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 **Code Impact:**
 
-- `src/workspace/images.ts` — `readImage`
+- `src/workspace/images.ts` — `readImage`, `fetchImage`, `createImageLoader`
 - `src/ui/images.ts` — `imageTier`, `ImageCache`
 - `src/ui/widgets/image.ts` — `paintImage`
 - `src/core/lang/markdown/renderers/image.ts` — `imageRenderer`
@@ -3492,12 +3524,14 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 - Placement clearing is OpenTUI's; the V43 spike confirms it before painters are built.
 - SVG shows a placeholder in the terminal.
+- Viewing a note with web images tells each image host the viewer's IP address; `preview.images = "off"` stops all downloads. Rejected: a disk cache (eviction and staleness rules for little gain over the in-memory LRU) and downloading every image when the note opens (many connections for images never viewed).
+- A failed image reappears only on a paint 60 s or more after the failure, not on a timer, so an idle window keeps the placeholder until the next render.
 
 **Success Criteria:** S8
 
 **Verification Impact:**
 
-- V17 — rows; V18 — tiers (V8@R1); V19, V40 — cache; V43 — spike.
+- V17 — rows; V18 — tiers (V8@R1); V19, V40 — cache; V51 — retry after failure; V50 — web downloads; V43 — spike.
 
 ## W261003S6BQ-DES8: Markdown commands and read-only views
 
@@ -3565,7 +3599,7 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 **Decision:** `startPreviewServer({root, store, isExcluded})` binds `127.0.0.1:0`, enforces the Host allowlist (403), GET only (405), realpath + hidden + injected-exclusion containment (404); serves the page at `/` and `/<path>`, the embedded files at `/assets/<name>` (only `ASSETS` keys, else 404), `/render`, `/file/*`, `/events`; every response carries `SECURITY_HEADERS` (same-origin Content Security Policy, `nosniff`, `no-referrer`) and `/file/*` uses the sandboxing `FILE_CSP`; broadcasts `doc {path, version, line}` after a 100 ms debounce from `followTarget`; stops in the order unsubscribe → `stopped` → close → `server.stop(true)`.
 
-**Requirements Addressed:** W261003S6BQ-REQ8@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ1@R1
+**Requirements Addressed:** W261003S6BQ-REQ8@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ1@R1
 
 **Research Support:** None
 
@@ -3623,9 +3657,9 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 **Question:** How does the page ship in the binary, and where do KaTeX and Mermaid come from?
 
-**Decision:** `katex` and `mermaid` are exact-pinned npm dependencies imported only from `src/preview/`. `assets.ts` imports the page's `page.html`, `page.js`, and `page.css`, KaTeX's script, stylesheet, and woff2 fonts, and Mermaid's minified browser bundle `with { type: "file" }`, so `bun build --compile` embeds them; the server serves them at `/` and `/assets/<name>` with exact content types and `SECURITY_HEADERS`. `page.html` has no inline script or style. `page.js` follows `doc` events, renders math with KaTeX (`throwOnError: false`) and diagrams with Mermaid (`securityLevel: "strict"`), and keeps a block's source on a render error. Styles allow `'unsafe-inline'` for Mermaid; scripts, fonts, images, and connections are `'self'` only.
+**Decision:** `katex` and `mermaid` are exact-pinned npm dependencies imported only from `src/preview/`. `assets.ts` imports the page's `page.html`, `page.js`, and `page.css`, KaTeX's script, stylesheet, and woff2 fonts, and Mermaid's minified browser bundle `with { type: "file" }`, so `bun build --compile` embeds them; the server serves them at `/` and `/assets/<name>` with exact content types and `SECURITY_HEADERS`. `page.html` has no inline script or style. `page.js` follows `doc` events, renders math with KaTeX (`throwOnError: false`) and diagrams with Mermaid (`securityLevel: "strict"`), and keeps a block's source on a render error. Styles allow `'unsafe-inline'` for Mermaid; images may also load from `http:` and `https:` so web images show; scripts, fonts, and connections are `'self'` only.
 
-**Requirements Addressed:** W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1
+**Requirements Addressed:** W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1
 
 **Research Support:** None
 
