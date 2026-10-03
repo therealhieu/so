@@ -1,6 +1,9 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import * as fsp from "node:fs/promises";
 import {
+  chmod,
+  lstat,
   mkdir,
   mkdtemp,
   readdir,
@@ -101,6 +104,43 @@ test("a write against a stale stamp is refused as a conflict", async () => {
   await expect(atomicWrite(p, "mine\n", seen)).rejects.toThrow("conflict");
   expect(await readFile(p, "utf8")).toBe("external\n");
   expect((await readdir(root)).some((n) => n.includes(".so-tmp-"))).toBe(false);
+});
+
+const tempFor = (name: string) => join(root, `.${name}.so-tmp-${process.pid}`);
+
+test("a save over a stale temp file writes into a new private temp", async () => {
+  const p = join(root, "stale.md");
+  await writeFile(p, "old\n");
+  await chmod(p, 0o640);
+  await writeFile(tempFor("stale.md"), "leftover\n");
+  await chmod(tempFor("stale.md"), 0o644);
+  const realOpen = fsp.open;
+  const modes: number[] = [];
+  const spy = spyOn(fsp, "open").mockImplementation(async (...args) => {
+    const fd = await realOpen(...args);
+    if (String(args[0]).includes(".so-tmp-"))
+      modes.push((await fd.stat()).mode & 0o777);
+    return fd;
+  });
+  try {
+    await atomicWrite(p, "new\n");
+  } finally {
+    spy.mockRestore();
+  }
+  expect(modes).toEqual([0o600]);
+  expect(await readFile(p, "utf8")).toBe("new\n");
+  expect((await stat(p)).mode & 0o777).toBe(0o640);
+  expect((await readdir(root)).some((n) => n.includes(".so-tmp-"))).toBe(false);
+});
+
+test("a symlink planted at the temp path is never written through", async () => {
+  const p = join(root, "planted.md");
+  await writeFile(join(root, "victim.md"), "keep\n");
+  await symlink("victim.md", tempFor("planted.md"));
+  await atomicWrite(p, "new\n");
+  expect(await readFile(join(root, "victim.md"), "utf8")).toBe("keep\n");
+  expect(await readFile(p, "utf8")).toBe("new\n");
+  expect((await lstat(p)).isSymbolicLink()).toBe(false);
 });
 
 test("create and move never overwrite an existing entry", async () => {

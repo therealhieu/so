@@ -111,7 +111,10 @@ export async function atomicWrite(
   );
   const bytes = new TextEncoder().encode(text);
   try {
-    const fd = await open(tmp, "w", 0o600);
+    // A leftover temp (crash, reused pid) or a planted link is removed, and
+    // "wx" refuses any entry that reappears, so the temp is always new and private.
+    await rm(tmp, { force: true });
+    const fd = await open(tmp, "wx", 0o600);
     let st: Stats;
     try {
       await fd.writeFile(bytes);
