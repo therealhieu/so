@@ -131,6 +131,34 @@ test("aliases complete to their note", () => {
   expect(c?.items.map((i) => i.label)).toContainEqual("Linh → linh");
 });
 
+test("note items do not depend on the queries typed before", () => {
+  const items = (seq: string) => {
+    const s = keys(indexed(), seq).state;
+    return s.overlay.kind === "completion"
+      ? s.overlay.completion.items
+      : undefined;
+  };
+  expect(items("Go[[li")).toEqual(items("Go[[lix<BS>"));
+  expect(items("Go[[Lin")).toEqual(items("Go[[Linx<BS>"));
+  expect(items("Go[[p")).toEqual(items("Go[[pz<BS>"));
+  expect(items("Go[[p")?.map((i) => i.insert)).toEqual(["plan"]);
+  expect(items("Go[[pz<BS><BS>")).toEqual(items("Go[["));
+});
+
+test("note items follow index changes made while the popup is open", () => {
+  let s = keys(indexed(), "Go[[pl").state;
+  s = update(s, {
+    type: "indexBatch",
+    summaries: [summarize("projects/plan-b.md", 1, scanDoc("# B\n"))],
+    files: [],
+    done: 4,
+    total: 4,
+  }).state;
+  s = keys(s, "a").state;
+  const c = s.overlay.kind === "completion" ? s.overlay.completion : undefined;
+  expect(c?.items.map((i) => i.insert)).toEqual(["plan", "plan-b"]);
+});
+
 test("the popup closes when the cursor leaves the link or Insert ends", () => {
   let s = keys(indexed(), "Go[[pl").state;
   expect(s.overlay.kind).toBe("completion");

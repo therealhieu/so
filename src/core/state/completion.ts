@@ -1,3 +1,4 @@
+import type { NoteIndex } from "../features/links/note-index";
 import { linkText, resolvePath } from "../features/links/resolve";
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
@@ -16,6 +17,8 @@ const LIMIT = 50;
 
 type Item = CompletionState["items"][number];
 type Candidate = Item & { text: string };
+/** A note or alias candidate with its place in the unranked list. */
+type NoteCandidate = Candidate & { order: number };
 
 /** The `[[…` the cursor is typing in: the position after "[[" and the text up to the cursor. */
 function typedLink(s: AppState): { anchor: Pos; typed: string } | undefined {
@@ -45,9 +48,28 @@ function ranked(cands: readonly Candidate[], query: string): Item[] {
     .map(({ item: { text: _, ...item } }) => item);
 }
 
-/** Notes by their shortest link text from `from`, and aliases as "alias → link". */
-function noteItems(s: AppState, from: string, query: string): Item[] {
-  const ix = s.index.ix;
+/**
+ * The note and alias candidates for one index and source note, and the
+ * candidates the last query matched, in list order.
+ */
+type Pool = {
+  from: string;
+  all: readonly NoteCandidate[];
+  query: string;
+  matched: readonly NoteCandidate[];
+};
+
+/**
+ * One pool per index: an index is never changed after it is built, so its
+ * candidates stay valid until the next index replaces it. The pool is a
+ * cache only; reusing it gives the same items as rebuilding it.
+ */
+const pools = new WeakMap<NoteIndex, Pool>();
+
+/** Notes by their shortest link text from `from`, then aliases as "alias → link". */
+function poolFor(ix: NoteIndex, from: string): Pool {
+  const cached = pools.get(ix);
+  if (cached?.from === from) return cached;
   const notes: Candidate[] = [];
   const aliases: Candidate[] = [];
   for (const [path, summary] of ix.summaries) {
@@ -63,7 +85,34 @@ function noteItems(s: AppState, from: string, query: string): Item[] {
   }
   const byText = (a: Candidate, b: Candidate) =>
     a.text < b.text ? -1 : a.text > b.text ? 1 : 0;
-  return ranked([...notes.sort(byText), ...aliases.sort(byText)], query);
+  const all = [...notes.sort(byText), ...aliases.sort(byText)].map(
+    (c, order) => ({ ...c, order }),
+  );
+  const pool = { from, all, query: "", matched: all };
+  pools.set(ix, pool);
+  return pool;
+}
+
+/**
+ * The ranked notes and aliases for `query`. A query that extends the last
+ * one can only match texts the last one matched, so only those are ranked.
+ */
+function noteItems(s: AppState, from: string, query: string): Item[] {
+  const pool = poolFor(s.index.ix, from);
+  const strip = ({ text: _, order: __, ...item }: NoteCandidate): Item => item;
+  if (query === "") {
+    pool.query = "";
+    pool.matched = pool.all;
+    return pool.all.slice(0, LIMIT).map(strip);
+  }
+  const hits = rankBy(
+    query.startsWith(pool.query) ? pool.matched : pool.all,
+    query,
+    (c) => c.text,
+  );
+  pool.query = query;
+  pool.matched = hits.map((h) => h.item).sort((a, b) => a.order - b.order);
+  return hits.slice(0, LIMIT).map((h) => strip(h.item));
 }
 
 /** The completion for the text after "[[": notes, then headings after "#", blocks after "#^". */
