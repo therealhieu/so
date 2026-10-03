@@ -3,7 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { statusSegments } from "../../core/state/status";
+import { type StatusSegments, statusSegments } from "../../core/state/status";
 import type { AppState } from "../../core/state/types";
 import type { LayoutClass, ViewDeps } from "../shell";
 import { drawCells, middle, themeOf } from "../theme";
@@ -24,11 +24,25 @@ const badgeOf = (mode: string): [string, string] =>
 
 type Seg = { text: string; token: string };
 
+const count = (n: number) => n.toLocaleString("en-US");
+
+function indexSegment(seg: StatusSegments): Seg {
+  if (seg.index === "ready")
+    return { text: "◆ index ready", token: "statusDim" };
+  if (seg.index === "unavailable")
+    return { text: "✗ index unavailable", token: "statusError" };
+  const p = seg.indexProgress ?? { done: 0, total: 0 };
+  return {
+    text: `◌ indexing ${count(p.done)}/${count(p.total)}`,
+    token: "statusDim",
+  };
+}
+
 const cells = (text: string) => [...text].length;
 
 /**
- * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ N words` on the left and
- * `Ln:Col` on the right. Narrow terminals drop the view and word segments;
+ * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ← N backlinks │ N words │ index`
+ * on the left and `Ln:Col` on the right. Narrow terminals drop the view and word segments;
  * the path is cut in the middle when the row is still too long.
  */
 export class Statusline extends Renderable {
@@ -74,8 +88,11 @@ export class Statusline extends Renderable {
         token: "statusError",
       });
     }
+    if (seg.backlinks !== undefined)
+      segs.push({ text: `← ${seg.backlinks} backlinks`, token: "statusDim" });
     if (seg.words !== undefined && !narrow)
       segs.push({ text: `${seg.words} words`, token: "statusDim" });
+    if (seg.index !== undefined) segs.push(indexSegment(seg));
     const right =
       seg.position === undefined
         ? ""

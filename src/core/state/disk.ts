@@ -6,6 +6,7 @@ import {
   splitFile,
 } from "./buffers";
 import { dirname, pruneTree, relist } from "./explorer";
+import { indexAfterFileEvent } from "./index";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
@@ -33,7 +34,8 @@ const cancelSaves = (id: BufferId): Effect[] => [
  * open file reads it back (the read decides reload or conflict); anything else
  * relists the folders shown in the explorer.
  */
-export function onFileChanged(s: AppState, e: FileEvent): Result {
+export function onFileChanged(prev: AppState, e: FileEvent): Result {
+  const s = indexAfterFileEvent(prev, e);
   if (e.kind === "removed") {
     const open = buffersUnder(s, e.path).filter((b) => b.disk === "present");
     const marked = open.reduce<Result>(

@@ -2,6 +2,7 @@ import type { FileTypeRegistry } from "../filetypes/registry";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { buffersUnder, openPath, removeBuffer } from "./buffers";
 import { markDeleted } from "./disk";
+import { indexAfterFsOp } from "./index";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
@@ -97,18 +98,19 @@ const withEffect = (r: Result, e: Effect): Result => ({
 });
 
 export function onFsResult(
-  s: AppState,
+  prev: AppState,
   a: Extract<Action, { type: "fsResult" }>,
 ): Result {
   const { op } = a;
   if (!a.ok)
     return op.kind === "trash" && !op.permanent
       ? toast(
-          withTrash(s, false),
+          withTrash(prev, false),
           "error",
           `Move to Trash failed: ${a.reason ?? "unknown error"}`,
         )
-      : message(s, a.reason ?? "operation failed", "error");
+      : message(prev, a.reason ?? "operation failed", "error");
+  const s = indexAfterFsOp(prev, op);
   switch (op.kind) {
     case "rename":
     case "move": {

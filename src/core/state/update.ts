@@ -9,6 +9,7 @@ import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
+import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
@@ -62,6 +63,12 @@ export function createUpdate(reg: Registries): Update {
           return onMouse(state, action.event);
         case "configLoaded":
           return onConfigLoaded(state, action, reg);
+        case "indexBatch":
+          return onIndexBatch(state, action);
+        case "indexReady":
+          return onIndexReady(state);
+        case "indexFailed":
+          return onIndexFailed(state, action);
       }
       const unhandled: never = action;
       return unhandled;

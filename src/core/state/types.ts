@@ -1,5 +1,7 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
+import type { NoteIndex } from "../features/links/note-index";
+import type { NoteSummary } from "../features/links/summarize";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
@@ -118,6 +120,14 @@ export type Overlay =
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean };
 
+/** The workspace index: its build status and the one NoteIndex in the process. Never persisted. */
+export type IndexState = {
+  status: "idle" | "indexing" | "ready" | "unavailable";
+  done: number;
+  total: number;
+  ix: NoteIndex;
+};
+
 export type Toast = { id: number; level: "info" | "error"; text: string };
 
 export type MouseEvent = { kind: "scroll"; delta: number };
@@ -145,6 +155,7 @@ export type AppState = {
   };
   config: AppConfig;
   terminal: TerminalState;
+  index: IndexState;
 };
 
 export type Action =
@@ -166,7 +177,16 @@ export type Action =
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
   | { type: "mouse"; event: MouseEvent }
-  | { type: "configLoaded"; result: ConfigResult; reload: boolean };
+  | { type: "configLoaded"; result: ConfigResult; reload: boolean }
+  | {
+      type: "indexBatch";
+      summaries: NoteSummary[];
+      files: string[];
+      done: number;
+      total: number;
+    }
+  | { type: "indexReady" }
+  | { type: "indexFailed"; final: boolean; reason: string };
 
 export type Effect =
   | { kind: "read"; path: string }

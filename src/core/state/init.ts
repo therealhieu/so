@@ -1,4 +1,5 @@
 import { defaults } from "../config/schema";
+import { emptyIndex } from "../features/links/note-index";
 import { Registers } from "../kernel/editor/registers";
 import type { AppState, TerminalState } from "./types";
 
@@ -39,5 +40,6 @@ export function initialState(boot: {
     notifications: { toasts: [] },
     config: defaults,
     terminal: { cols: boot.cols, rows: boot.rows, color: boot.color },
+    index: { status: "idle", done: 0, total: 0, ix: emptyIndex() },
   };
 }
