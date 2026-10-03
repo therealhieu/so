@@ -356,7 +356,22 @@ export const syntaxExtensions: readonly SyntaxExtension[] = [
   { name: "blockId", scan: scanBlockId },
 ];
 
-/** Run every scanner over one line of a prose block. */
+const byStart = (a: { range: Range }, b: { range: Range }) =>
+  a.range.start.col - b.range.start.col;
+
+/** Sort the entries added since `from` by column, so each line's facts are in source order. */
+function sortTail<T>(list: T[], from: number, compare: (a: T, b: T) => number) {
+  if (list.length - from > 1)
+    list.splice(from, list.length - from, ...list.slice(from).sort(compare));
+}
+
+/** Run every scanner over one line of a prose block; results stay in source order. */
 export function scanLine(text: string, line: number, out: ScanOut): void {
+  const links = out.links.length;
+  const tags = out.tags.length;
+  const excluded = out.excluded.length;
   for (const ext of syntaxExtensions) ext.scan?.(text, line, 0, out);
+  sortTail(out.links, links, byStart);
+  sortTail(out.tags, tags, byStart);
+  sortTail(out.excluded, excluded, (a, b) => a.start.col - b.start.col);
 }
