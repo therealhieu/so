@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G1 — remediation`
+- **Current Position:** `P2-G2 — implementation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -316,18 +316,18 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] `P2-G1-T4` — Implement explorer operations reducer.
 - [x] `P2-G1-T5` — Route keys, ex commands, clipboard paste, and status.
 - [x] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
+- [x] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
 - [x] Verification report persisted and separately committed.
 - [x] Verification report commit SHA recorded.
 - [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
@@ -335,24 +335,24 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - Initial implementation report commit: `3525c0a`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Failed`: P2-G1-VER1 (Major, rename/move during in-flight autosave leaves buffer stuck `writing`), P2-G1-VER2 (Minor, `ConfigSchema` export outside interim knip rule), P2-G1-VER3 (Minor, report `-t` filters with `\|` match 0 tests). Flagged design-shape deviations judged necessary/acceptable, not findings
 - Verification report commit: `1959b23`
-- Remediation: assigned to a fresh `s1mple-implementer` (in progress)
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Remediation: `Completed` by a fresh `s1mple-implementer`; all three findings `Fixed` (residual VER1 timing window recorded as DEV4)
+- Final implementation report commit: `d4abdc3`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): P2-G1-VER1 → `35f40c6` (`onSaved` schedules autosave for text typed during a write; reducer test of the exact sequence, RED→GREEN); P2-G1-VER2 → `b08110a` (`ConfigSchema` un-exported); P2-G1-VER3 → report-only correction in `d4abdc3` (13 `-t` commands each select > 0 tests)
+- Closure evidence: orchestrator validated report commits `3525c0a`, `1959b23`, `d4abdc3`; verification report unchanged since `1959b23`; working tree clean; rerun `bun test src/core test/vim` → 0 fail. Accepted 2026-10-03.
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P2-G1-T1` | `d4937a7` |
-| `P2-G1-T2` | `579fb73` |
+| `P2-G1-T1` | `d4937a7`, remediation `b08110a` |
+| `P2-G1-T2` | `579fb73`, remediation `35f40c6` |
 | `P2-G1-T3` | `e47b9de` |
 | `P2-G1-T4` | `6cc2eb0` |
 | `P2-G1-T5` | `6d97b00` |
 
 #### P2-G2 — Workspace Adapters, Effect Runner, and Integration
 
-- [ ] Context and dependencies confirmed (P2-G1 accepted).
+- [x] Context and dependencies confirmed (P2-G1 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P2-G2-T1` — Implement the exclusion matcher.
 - [ ] `P2-G2-T2` — Implement the workspace file adapter and fixtures.
@@ -476,7 +476,7 @@ Append checks as boundaries are reached. An unresolved relevant change blocks af
 |---|---|---|---|
 | G1 — `…phase-1…md:73`; due before RM261003ABZP-DI2@R2 execution (outside this goal); P1-G1 outputs | `bun run check`, `ci.yml` (V1.1, V1.2, V15.1) | `package.json` `check` script, `.github/workflows/ci.yml`; V1.1/V1.2/V15.1 pass (`p1-g1-verification-report.md`, `49720d0`); knip interim findings only | Produced locally; GitHub run pending P3-G1-T7 |
 | G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `src/core/kernel/{commands,view}/**`, `src/core/filetypes/registry.ts`, `src/core/lang/code/highlight.ts`; verifier judged no shape change material to G1/parent contracts (`p1-g2-verification-report.md`, `4f078dd`); `layoutText` fixed `0723afc` | Produced locally |
-| G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `Pending implementation` | `Pending implementation` |
+| G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `src/core/state/{update,store,types}.ts`; protocol additions exactly the five allowed; V7.3, V2.1 (289 cases via `createUpdate`), V7.5 pass (`p2-g1-verification-report.md` `1959b23`; remediation `d4abdc3`) | Produced locally |
 | G1 — P2-G2 outputs | `readTextFile`, `atomicWrite`, watcher, effect runner (V3.1–V3.4, V5.1, V6.4–V6.5) | `Pending implementation` | `Pending implementation` |
 | G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | `Pending implementation` | `Pending implementation` — final gate status is `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
 
@@ -682,6 +682,8 @@ Work: W261003HEGE — editor-foundation
 - **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
 
 ## Blockers and Deviations
+
+- **DEV4 — Residual rename/write timing window (accepted risk, P2-G1).** Location: `src/core/state/save.ts` `onSaved`, `src/core/state/explorer.ts` `explorerOp`. Evidence: P2-G1-VER1 remediation notes in `p2-g1-implementation-report.md` (`d4abdc3`). The pure reducer cannot see a queued rename, so a write to the old path is still possible if an autosave timer fires before a rename's `fsResult` (rename slower than the 1 s autosave delay) or a user write is issued within the rename's milliseconds. Closing it fully needs a new buffer field, which the lean rule forbids. Impact: low likelihood on local file systems. Required resolution: P2-G2-T7 integration (V13.4) and overall verification assess it against the real serial queue; reopen only if they reproduce it.
 
 - **DEV3 — Verifier-accepted refinements to system design §7 shapes (P2-G1).** Location: `src/core/state/types.ts`, `save.ts`, `explorer.ts`, `disk.ts`. Evidence: `p2-g1-verification-report.md` (`1959b23`) judged each necessary or acceptable. Refinements: `SaveState.writing` = `{version, at, attempt}` and a `now` argument on `writeBuffer`, `requestQuit`, `closeBuffer`, `explorerOp`, `resolveConflict` (backoff needs the start time and attempt; `saved`/`saveFailed` carry no time); `BufferState.closing?: true` (REQ5 `:bd` closes only after flush); registers under `AppState.vim` (§6 and parent); `PromptState`, `Toast`, `MouseEvent` (scroll-only) defined where the design left them open; extra files `src/core/state/result.ts`, `test/support/state.ts`, `src/core/state/status.test.ts`. Impact: system design §7 text differs from code in these spots; no G1 contract or AppState top-level field change. Required resolution: none for execution; candidates for the pending parent-synchronization list. Carry-over to P2-G2: autosave/timer `now` consistency and the `"conflict"` reason string must be proven against the real effect runner and file adapter.
 
