@@ -1,6 +1,5 @@
 import { linkMentionEdit, type MentionHit } from "../features/links/mentions";
 import { backlinksOf } from "../features/links/note-index";
-import type { Pos, Range } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
@@ -8,8 +7,9 @@ import { activeBuffer, bufferForPath } from "./buffers";
 import type { CommandContext } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { startMentionEdit } from "./link-edits";
-import { GREP_LIMIT, openPicker } from "./picker";
-import { none } from "./result";
+import { hitRange, unlinkedHits } from "./mentions";
+import { GREP_LIMIT, openPicker, refreshPicker } from "./picker";
+import { chain, none } from "./result";
 import type { Action, AppState, Result, SidePanelState } from "./types";
 import type { Registries } from "./update";
 
@@ -29,7 +29,7 @@ export type SidePanelRow = {
   /** The note the row opens; the shown note itself for outline rows. */
   path?: string;
   line: number;
-  /** Linked: the line with the link (the link itself for a closed note); unlinked: the line; outline: the indented heading. */
+  /** Linked: the line with the link; unlinked: the line; outline: the indented heading. */
   text: string;
   hit?: MentionHit;
 };
@@ -81,13 +81,16 @@ export const answersMentions = (
   a: Extract<Action, { type: "searchResults" }>,
 ): boolean => s.panels.side.mentions?.id === a.id;
 
+/** The mentions arrived: the panel shows them, and an open backlinks picker lists them. */
 export function onMentionResults(
   s: AppState,
   a: Extract<Action, { type: "searchResults" }>,
+  reg: Registries,
 ): Result {
-  return none(
-    setSide(s, { mentions: { id: a.id, pending: false, hits: a.hits } }),
-  );
+  const next = setSide(s, {
+    mentions: { id: a.id, pending: false, hits: a.hits },
+  });
+  return refreshPicker(next, reg, "backlinks");
 }
 
 /**
@@ -103,7 +106,7 @@ export function toggleSidePanel(
   const path = shownNote(s);
   if (s.terminal.cols < DOCK_MIN_COLS)
     return kind === "backlinks"
-      ? openPicker(c, "backlinks", path)
+      ? openBacklinksPicker(c, path)
       : openPicker(c, "headings");
   const side = s.panels.side;
   const same = side.open && side.kind === kind;
@@ -119,6 +122,16 @@ export function toggleSidePanel(
     : none(shown);
 }
 
+/** The backlinks picker for `path`: linked notes now, its unlinked mentions once the search answers. */
+export function openBacklinksPicker(
+  c: CommandContext,
+  path: string | undefined,
+): Result {
+  return chain(openPicker(c, "backlinks", path), (st) =>
+    path === undefined ? none(st) : requestMentions(st, path),
+  );
+}
+
 /** The backlinks panel follows the active note: a new note asks for its mentions. */
 export function followShownNote(prev: AppState, r: Result): Result {
   const side = r.state.panels.side;
@@ -132,18 +145,6 @@ export function followShownNote(prev: AppState, r: Result): Result {
     return r;
   const asked = requestMentions(r.state, path);
   return { state: asked.state, effects: [...r.effects, ...asked.effects] };
-}
-
-const before = (a: Pos, b: Pos) =>
-  a.line < b.line || (a.line === b.line && a.col < b.col);
-const overlaps = (a: Range, b: Range) =>
-  before(a.start, b.end) && before(b.start, a.end);
-
-/** Link ranges in `path`: the live scan when it is open, else its summary. */
-function linkRanges(s: AppState, path: string): Range[] {
-  const doc = bufferForPath(s, path)?.analysis as Doc | undefined;
-  if (doc !== undefined) return doc.scan.links.map((l) => l.range);
-  return (s.index.ix.summaries.get(path)?.links ?? []).map((l) => l.range);
 }
 
 /**
@@ -172,27 +173,19 @@ export function sidePanelRows(s: AppState): SidePanelRow[] {
       b.link.context ??
       b.link.raw,
   }));
-  const unlinked: SidePanelRow[] = [];
-  const links = new Map<string, Range[]>();
-  for (const h of s.panels.side.mentions?.hits ?? []) {
-    const range = {
-      start: { line: h.line, col: h.col },
-      end: { line: h.line, col: h.col + h.len },
-    };
-    let ranges = links.get(h.path);
-    if (ranges === undefined) {
-      ranges = linkRanges(s, h.path);
-      links.set(h.path, ranges);
-    }
-    if (ranges.some((r) => overlaps(r, range))) continue;
-    unlinked.push({
+  const unlinked = unlinkedHits(s).map(
+    (h): SidePanelRow => ({
       section: "unlinked",
       path: h.path,
       line: h.line,
       text: h.text,
-      hit: { path: h.path, range, text: h.text.slice(h.col, h.col + h.len) },
-    });
-  }
+      hit: {
+        path: h.path,
+        range: hitRange(h),
+        text: h.text.slice(h.col, h.col + h.len),
+      },
+    }),
+  );
   return [...linked, ...unlinked];
 }
 

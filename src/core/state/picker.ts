@@ -11,6 +11,7 @@ import { activeBuffer, bufferForPath, openPath } from "./buffers";
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
+import { unlinkedHits } from "./mentions";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -139,6 +140,29 @@ const grepItem = (h: SearchHit): PickerItem => {
   };
 };
 
+/** Notes linking to `target`, then its unlinked mentions from the newest mentions search. */
+function backlinkCandidates(s: AppState, target?: string): Candidate[] {
+  if (target === undefined) return [];
+  const linked = backlinksOf(s.index.ix, target).map(
+    (b): Candidate => ({
+      key: `${b.from}:${b.link.line}:${b.link.col}`,
+      text: `${b.from}:${b.link.line + 1}`,
+      path: b.from,
+      line: b.link.line,
+    }),
+  );
+  const unlinked = unlinkedHits(s).map(
+    (h): Candidate => ({
+      key: `unlinked ${h.path}:${h.line}:${h.col}`,
+      text: `${h.path}:${h.line + 1}`,
+      detail: "unlinked mention",
+      path: h.path,
+      line: h.line,
+    }),
+  );
+  return [...linked, ...unlinked];
+}
+
 export const pickerSources: Readonly<Record<string, PickerSource>> = {
   files: {
     id: "files",
@@ -231,18 +255,8 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     id: "backlinks",
     title: "Backlinks",
     indexed: true,
-    items: (s, _r, q, target) =>
-      ranked(
-        (target === undefined ? [] : backlinksOf(s.index.ix, target)).map(
-          (b) => ({
-            key: `${b.from}:${b.link.line}:${b.link.col}`,
-            text: `${b.from}:${b.link.line + 1}`,
-            path: b.from,
-            line: b.link.line,
-          }),
-        ),
-        q,
-      ),
+    items: (s, _r, q, target) => ranked(backlinkCandidates(s, target), q),
+    total: (s, _r, target) => backlinkCandidates(s, target).length,
     accept: acceptFile,
     preview: previewFile,
   },
@@ -339,6 +353,32 @@ function requestPreview(s: AppState): Result {
         state: next,
         effects: [{ kind: "readPreview", id, path: target.path }],
       };
+}
+
+/**
+ * Re-list an open `source` picker after its inputs changed, keeping the
+ * query and, where it still exists, the selection.
+ */
+export function refreshPicker(
+  s: AppState,
+  reg: Registries,
+  source: string,
+): Result {
+  const p = pickerOf(s);
+  const src = pickerSources[source];
+  if (p?.source !== source || src === undefined) return none(s);
+  const items = src.items(s, reg, p.query, p.arg);
+  const total = src.total?.(s, reg, p.arg) ?? items.length;
+  const selected = Math.min(p.selected, Math.max(0, items.length - 1));
+  return requestPreview(withPicker(s, { ...p, items, total, selected }));
+}
+
+/** A resize across `PREVIEW_MIN_COLS` shows or drops the open picker's preview. */
+export function onPickerResize(s: AppState, prevCols: number): Result {
+  const wide = (cols: number) => cols >= PREVIEW_MIN_COLS;
+  return pickerOf(s) !== undefined && wide(prevCols) !== wide(s.terminal.cols)
+    ? requestPreview(s)
+    : none(s);
 }
 
 /** Open the `id` picker with an empty query. */

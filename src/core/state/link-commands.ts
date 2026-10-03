@@ -12,7 +12,11 @@ import { goTo, recordJump } from "./jumps";
 import { startRename } from "./link-edits";
 import { openPicker } from "./picker";
 import { none } from "./result";
-import { linkMentionAtPanel, toggleSidePanel } from "./side-panel";
+import {
+  linkMentionAtPanel,
+  openBacklinksPicker,
+  toggleSidePanel,
+} from "./side-panel";
 import type { AppState, Result } from "./types";
 
 type AppCommand = Command<CommandContext, CommandResult>;
@@ -139,7 +143,7 @@ export const linkCommands: readonly AppCommand[] = [
     id: "search.backlinks",
     title: "Search backlinks of this note",
     filetypes: ["markdown"],
-    run: (c) => openPicker(c, "backlinks", activeBuffer(c.state)?.path),
+    run: (c) => openBacklinksPicker(c, activeBuffer(c.state)?.path),
   },
   { id: "search.tags", title: "Tags", run: (c) => openPicker(c, "tags") },
   {

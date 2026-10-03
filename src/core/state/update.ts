@@ -12,7 +12,12 @@ import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
-import { onPreviewLoaded, onSearchResults, onSearchTimer } from "./picker";
+import {
+  onPickerResize,
+  onPreviewLoaded,
+  onSearchResults,
+  onSearchTimer,
+} from "./picker";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
@@ -92,7 +97,7 @@ export function createUpdate(reg: Registries): Update {
         return onStateLoaded(state, action);
       case "searchResults":
         return answersMentions(state, action)
-          ? onMentionResults(state, action)
+          ? onMentionResults(state, action, reg)
           : onSearchResults(state, action);
       case "previewLoaded":
         return onPreviewLoaded(state, action);
@@ -135,10 +140,10 @@ function onTimerAction(
 }
 
 function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {
-  return none({
-    ...s,
-    terminal: { ...s.terminal, cols: a.cols, rows: a.rows },
-  });
+  return onPickerResize(
+    { ...s, terminal: { ...s.terminal, cols: a.cols, rows: a.rows } },
+    s.terminal.cols,
+  );
 }
 
 /** Scroll the active window, keeping at least its last line on screen. */

@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import { summarize } from "../features/links/summarize";
 import { splitKeys } from "../kernel/vim/keys";
+import { scanDoc } from "../lang/markdown/scan";
 import { runCommand } from "./commands";
 import { GREP_LIMIT, PREVIEW_MIN_COLS, SEARCH_DEBOUNCE_MS } from "./picker";
 import type { Action, AppState, Effect, PickerState, SearchHit } from "./types";
@@ -171,6 +173,80 @@ test("preview loads only at 100 columns or wider", () => {
     result: { refused: "binary" },
   }).state;
   expect(picker(fresh).preview?.refused).toBe("binary");
+});
+
+test("a resize across 100 columns shows or drops the open picker's preview", () => {
+  const narrow = run(indexed(PREVIEW_MIN_COLS - 1), "file.find").state;
+  const resize = (s: AppState, cols: number) =>
+    update(s, { type: "resize", cols, rows: 36 });
+
+  const widened = resize(narrow, 120);
+  expect(widened.effects.filter((e) => e.kind === "readPreview")).toEqual([
+    {
+      kind: "readPreview",
+      id: picker(widened.state).preview?.id ?? -1,
+      path: "notes/ideas.md",
+    },
+  ]);
+  expect(resize(widened.state, 130).effects).toEqual([]);
+
+  const narrowed = resize(widened.state, PREVIEW_MIN_COLS - 1);
+  expect(narrowed.effects).toEqual([]);
+  expect(picker(narrowed.state).preview).toBeUndefined();
+});
+
+test("the backlinks picker lists linking notes, then unlinked mentions", () => {
+  const notes: Record<string, string> = {
+    "plan.md": "# Plan\n",
+    "a.md": "see [[plan]]\n",
+    "b.md": "the plan is late\n",
+  };
+  const files = Object.keys(notes);
+  let s: AppState = { ...fresh(), terminal: { ...fresh().terminal, cols: 80 } };
+  for (const a of [
+    {
+      type: "indexBatch",
+      summaries: files.map((p) => summarize(p, 1, scanDoc(notes[p] ?? ""))),
+      files,
+      done: files.length,
+      total: files.length,
+    },
+    { type: "indexReady" },
+    { type: "fileLoaded", path: "plan.md", file: textFile("# Plan\n") },
+  ] satisfies Action[])
+    s = update(s, a).state;
+
+  for (const [cols, id] of [
+    [80, "link.backlinks"],
+    [120, "search.backlinks"],
+  ] as const) {
+    const opened = run({ ...s, terminal: { ...s.terminal, cols } }, id);
+    expect(picker(opened.state)).toMatchObject({
+      source: "backlinks",
+      arg: "plan.md",
+    });
+    expect(picker(opened.state).items.map((i) => i.label)).toEqual(["a.md:1"]);
+    const asked = opened.effects.find(
+      (e): e is Extract<Effect, { kind: "search" }> => e.kind === "search",
+    );
+    expect(asked).toMatchObject({ mode: "mentions", exclude: "plan.md" });
+
+    const answered = update(opened.state, {
+      type: "searchResults",
+      id: asked?.id ?? -1,
+      hits: [
+        { path: "b.md", line: 0, col: 4, len: 4, text: "the plan is late" },
+        { path: "a.md", line: 0, col: 6, len: 4, text: "see [[plan]]" },
+      ],
+      capped: false,
+    }).state;
+    const p = picker(answered);
+    expect(p.items.map((i) => [i.label, i.detail])).toEqual([
+      ["a.md:1", undefined],
+      ["b.md:1", "unlinked mention"],
+    ]);
+    expect(p.total).toBe(2);
+  }
 });
 
 test("recent hides removed files", () => {
