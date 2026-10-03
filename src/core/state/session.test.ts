@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
+import { jumpBack } from "./jumps";
 import { parsePersisted, snapshotSession } from "./session";
 import type { Action, AppState, Effect, PersistedState } from "./types";
 import { createUpdate } from "./update";
@@ -155,5 +156,16 @@ test("the save timer saves the current snapshot", () => {
   const a: Action = { type: "timer", id: "saveState", now: 0 };
   expect(update(s, a).effects).toEqual([
     { kind: "saveState", state: snapshotSession(s) },
+  ]);
+});
+
+test("a window waiting for a jump target saves without the wait marker", () => {
+  const s = {
+    ...fresh(),
+    jumps: { entries: [{ path: "a.md", line: 1, col: 0 }], at: 1 },
+  };
+  const waiting = jumpBack(s, 0).state;
+  expect(snapshotSession(waiting).layout.windows).toEqual([
+    { id: 1, path: "a.md", cursor: { line: 1, col: 0 }, scroll: 0 },
   ]);
 });

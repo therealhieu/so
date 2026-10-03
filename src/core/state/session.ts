@@ -78,7 +78,10 @@ export function snapshotSession(s: AppState): PersistedState {
         cursor: w.content.cursor,
         scroll: w.content.scroll,
       });
-    else if (pending[id] !== undefined) windows.push({ id, ...pending[id] });
+    else if (pending[id] !== undefined) {
+      const { path, cursor, scroll } = pending[id];
+      windows.push({ id, path, cursor, scroll });
+    }
   }
   return {
     version: 1,
@@ -214,14 +217,25 @@ export function fillRestored(
   );
 }
 
-/** `path` could not be opened: its waiting windows stay empty and count as missing. */
+/** Whether a jump or link follow is waiting for `path` to load. */
+export const awaitsNavigation = (s: AppState, path: string): boolean =>
+  Object.values(s.windows.restore?.pending ?? {}).some(
+    (p) => p.path === path && p.navigated === true,
+  );
+
+/**
+ * `path` could not be opened: its waiting windows stay empty. It counts as
+ * missing from the last session only when a restored window waited for it.
+ */
 export function dropRestored(s: AppState, path: string): Result {
   const restore = s.windows.restore;
   if (restore === undefined) return none(s);
+  const waiting = Object.values(restore.pending).filter((p) => p.path === path);
   const pending = Object.fromEntries(
     Object.entries(restore.pending).filter(([, p]) => p.path !== path),
   );
-  return finish(s, pending, restore.missing + 1);
+  const missed = waiting.some((p) => p.navigated !== true) ? 1 : 0;
+  return finish(s, pending, restore.missing + missed);
 }
 
 function finish(

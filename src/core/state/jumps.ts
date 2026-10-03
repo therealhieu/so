@@ -80,7 +80,7 @@ function awaitLoad(s: AppState, path: string, cursor: Pos): AppState {
   const restore = s.windows.restore ?? { pending: {}, missing: 0 };
   const pending = {
     ...restore.pending,
-    [s.windows.active]: { path, cursor, scroll: 0 },
+    [s.windows.active]: { path, cursor, scroll: 0, navigated: true as const },
   };
   return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }

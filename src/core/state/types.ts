@@ -240,9 +240,16 @@ export type AppState = {
     byId: Record<WindowId, WindowState>;
     active: WindowId;
     nextWindowId: WindowId;
-    /** Windows of the last session waiting for their file, and how many files were not found. */
+    /**
+     * Windows waiting for their file, and how many files of the last session
+     * were not found. `navigated` marks a wait from a jump or link follow,
+     * which reports its own refusal instead of counting as missing.
+     */
     restore?: {
-      pending: Record<WindowId, { path: string; cursor: Pos; scroll: number }>;
+      pending: Record<
+        WindowId,
+        { path: string; cursor: Pos; scroll: number; navigated?: true }
+      >;
       missing: number;
     };
   };

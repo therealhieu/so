@@ -126,4 +126,19 @@ test("jumping back to a file that is not open places the cursor once it loads", 
   s = load(r.state, "a.md", "a1\na2\na3\n");
   expect(cursorOf(s)).toEqual({ path: "a.md", line: 2, col: 1 });
   expect(s.windows.restore).toBeUndefined();
+  expect(s.recent).toEqual(["a.md", "b.md"]);
+});
+
+test("jumping back to a file that cannot be read shows why, not a session notice", () => {
+  let s = load(fresh(), "b.md", "b1\n");
+  s = { ...s, jumps: pushJump(empty, at("gone.md", 0)) };
+  s = update(s, { type: "key", key: "<C-o>", now: 0 }).state;
+  s = update(s, { type: "fileRefused", path: "gone.md", reason: "io" }).state;
+  expect(s.notifications.message).toMatchObject({
+    text: "cannot read file — not opened (gone.md)",
+    level: "error",
+  });
+  expect(s.notifications.toasts).toEqual([]);
+  expect(s.windows.restore).toBeUndefined();
+  expect(cursorOf(s).path).toBe("b.md");
 });

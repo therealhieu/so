@@ -9,7 +9,12 @@ import { onDiskLoaded } from "./disk";
 import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
-import { awaitsRestore, dropRestored, fillRestored } from "./session";
+import {
+  awaitsNavigation,
+  awaitsRestore,
+  dropRestored,
+  fillRestored,
+} from "./session";
 import type {
   Action,
   AppState,
@@ -350,13 +355,15 @@ export function onFileLoaded(
     nextBufferId: id + 1,
     panels: { ...s.panels, explorer },
   };
+  const recent = touchRecent(s.recent, a.path);
+  if (!awaitsRestore(s, a.path))
+    return none({ ...showBuffer(added, id), recent });
   // A window coming back to its file keeps the recents order it was saved with.
-  return awaitsRestore(s, a.path)
-    ? fillRestored(added, a.path, id)
-    : none({
-        ...showBuffer(added, id),
-        recent: touchRecent(s.recent, a.path),
-      });
+  return fillRestored(
+    awaitsNavigation(s, a.path) ? { ...added, recent } : added,
+    a.path,
+    id,
+  );
 }
 
 const REFUSED = {
@@ -370,6 +377,9 @@ export function onFileRefused(
   s: AppState,
   a: Extract<Action, { type: "fileRefused" }>,
 ): Result {
-  if (awaitsRestore(s, a.path)) return dropRestored(s, a.path);
-  return message(s, REFUSED[a.reason](a.path), "error");
+  const refused = (st: AppState) =>
+    message(st, REFUSED[a.reason](a.path), "error");
+  if (!awaitsRestore(s, a.path)) return refused(s);
+  const dropped = dropRestored(s, a.path);
+  return awaitsNavigation(s, a.path) ? chain(dropped, refused) : dropped;
 }
