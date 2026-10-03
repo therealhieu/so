@@ -84,12 +84,46 @@ Remaining issues for the verifier:
 
 ## Remediation
 
-- **Verification reports:** None yet
-- **Status:** `Not required`
+All six findings of the P2-G2 verification report are fixed in seven follow-up commits on top of `3ce604a`. Every group gate passes on the final head `aec8689`. Two fixes add an optional field to a designed shape. These are recorded below as deviations for orchestrator acceptance and design synchronization.
+
+- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g2-verification-report.md` (commit `3ce604a`, status `Failed`; unchanged)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G2-VER1` | **Change:** `src/core/state/whichkey.ts:whichKeyKey` now returns `undefined` for an unbound key after a non-leader prefix when the engine accepts the sequence in the popup's scope mode (`vimContinues` uses `parseKeys`; Insert and command-line modes consume every key; the explorer has no engine). `src/core/state/keys.ts:routeKey` then closes the popup and sends the key through the new `bindingOrVim`, with the pending `g` kept. Leader prefixes and keys with no keymap or Vim meaning still get `no mapping for …`. The 300 ms timer and `<leader>` handling are unchanged. **Proof:** `src/core/state/whichkey.test.ts` "a vim key after the popup opens on g still reaches the editor" (`G`, `g`, timer, `g` → `{ line: 0, col: 0 }`, no message), "a key bound under g still runs from the popup" (`gd` → create prompt), "a key that neither the keymap nor vim knows after g gets a notice" (`no mapping for gZ`), "an unbound key after an explorer prefix gets a notice"; UI case `test/ui/discovery.test.ts` "gg after the g popup opens still goes to the first line". Both `g` cases fail with the source reverted (2 fail), and the explorer case fails against `af2d40c`. `bun test src/core/state/whichkey.test.ts` → 9 pass. `bun test test/vim` → 297 pass. The V21 tests are unchanged and pass. | `af2d40c`, `aec8689` (`P2-G2-T3`) | `Fixed` |
+| `P2-G2-VER2` | **Change:** `src/core/features/links/summarize.ts:LinkRef.context?` (new optional field) and `summarize(path, mtime, scan, lines?)`: each link carries its trimmed source line, cut to `CONTEXT_MAX` = 160 characters. The worker (`src/workspace/index-worker.ts:summarizeFile`) and the notes `so` writes (`src/core/state/index.ts:summarizeSaved, summarizeWritten`) pass their lines, so the main thread never reads or scans other notes. `src/core/state/side-panel.ts:sidePanelRows` uses the open buffer's line, then `link.context`, then `link.raw`. **Proof:** `src/core/state/side-panel.test.ts` "a linked row in a closed note shows its source line" (`see [[plan]]`, only `plan.md` open) and "a link's context is its trimmed line, cut for long lines". `test/ui/links.test.ts` asserts `Next: [[plan#Goals]] and` and, after `l`, `The [[plan]] is to keep files`. **Golden:** `shell.golden` "the backlinks panel shows Linked then Unlinked mentions 2" was re-recorded deliberately. Its diff is 14 lines, each `[[plan…]]` row becoming `- [[plan]] today` / `- [[plan#Goals]] today` / `- [[plan\|the plan]] today`. Reviewed against parent M4@R1 S6 (`◇ path:line` then the source line, cut at the panel width, e.g. `- [ ] Review [[so-roadmap]] milestones`): it matches. No other snapshot changed. `bun run test:ci` → 115 pass, 25 snapshots. | `0821c58` (`P2-G2-T6`, `P2-G2-T7`) | `Fixed` |
+| `P2-G2-VER3` | **Change:** `src/core/state/types.ts` `windows.restore.pending[*].navigated?: true` (new optional field) is set by `src/core/state/jumps.ts:awaitLoad`, which serves jumps, `gd`, picker accept, and panel Enter. `src/core/state/session.ts:dropRestored` counts a path as missing only when a restored window waited for it. The new `awaitsNavigation` lets `src/core/state/buffers.ts:onFileRefused` show the `REFUSED` message for a navigation wait. `snapshotSession` copies only `path`, `cursor` and `scroll`, so the marker never reaches the state file. **Self-review fix with the same cause:** `onFileLoaded` now touches recents for a navigation wait; restored windows still do not. Before this, a file first opened by `gd` or `<C-o>` never entered recents. **Proof:** `src/core/state/jumps.test.ts` "jumping back to a file that cannot be read shows why, not a session notice" (`cannot read file — not opened (gone.md)`, level `error`, no toasts, `restore` cleared) and the extended "jumping back to a file that is not open…" (recent `["a.md", "b.md"]`). `src/core/state/session.test.ts` "a window waiting for a jump target saves without the wait marker". The V28 session tests are unchanged and pass (8 pass). | `80005b4` (`P2-G2-T1`, `P2-G2-T2`) | `Fixed` |
+| `P2-G2-VER4` | **Change:** `src/app/index-host.ts:createIndexHost` keeps `searching`, the ids posted to the current worker and not yet answered. A `results` message removes its id. On a crash or exit (`crashed`), every unanswered id is answered with an empty `searchResults` after `indexFailed`, before any restart. This covers grep and the mentions search. `stop()` (app shutdown) dispatches nothing, because no state consumer remains. **Proof:** `test/integration/index-host.test.ts` "a search in flight when the worker crashes is answered once": the first worker drops `search` messages, and the test waits for the posted `search` effect, terminates the worker, and observes exactly `[{ type: "searchResults", id, hits: [], capped: false }]` with `picker.search.pending === false`. It fails with the source reverted (1 fail). It passed 3 runs in a row → 5 pass each. | `4549967` (`P2-G2-T4`) | `Fixed` |
+| `P2-G2-VER5` | **Change (unlinked hits, as designed):** `src/core/state/picker.ts:backlinkCandidates` lists `backlinksOf(arg)` and then the unlinked hits, with detail `unlinked mention` and `total` over both lists. The new `src/core/state/side-panel.ts:openBacklinksPicker` serves `link.backlinks` below 100 columns and `search.backlinks`. It opens the picker and calls `requestMentions`. `onMentionResults` calls the new `refreshPicker`, which re-lists the open picker and keeps its query. The unlinked filter moved to the new `src/core/state/mentions.ts:unlinkedHits` and is shared with `sidePanelRows`. **Change (resize):** `src/core/state/update.ts:onResize` → `picker.ts:onPickerResize` requests or drops the preview when cols cross `PREVIEW_MIN_COLS`. **Proof:** `src/core/state/picker.test.ts` "a resize across 100 columns shows or drops the open picker's preview" (99 → 120 emits exactly one `readPreview`; 120 → 130 emits nothing; → 99 drops the preview) and "the backlinks picker lists linking notes, then unlinked mentions" (at 80 and 120 columns: `a.md:1`, then `b.md:1` `unlinked mention`; a hit inside `[[plan]]` is dropped; `total` 2). `bun test src/core/state/picker.test.ts` → 11 pass. | `33f85bf` (`P2-G2-T4`, `P2-G2-T6`) | `Fixed` |
+| `P2-G2-VER6` | **Change:** `test/integration/session.test.ts` run 1 starts the real index (`index: {}`) and waits for `ready`. In the second split it moves to `[[c]]` in `b.md` (`Gkw`) and follows it with `gd`, then waits until `c.md` is active. Run 2 asserts windows `a.md` (3,0) and `c.md` (0,0), recent `["c.md", "b.md", "a.md"]`, and jumps `{ entries: [a.md:3:0, b.md:0:0, b.md:2:3], at: 3 }`, where `b.md:2:3` is the follow's source. **Proof:** `bun test test/integration/session.test.ts` → 2 pass, 5 runs in a row. | `dddab1c` (`P2-G2-T2`) | `Fixed` |
+
+### Remediation Deviations
+
+These are decisions a fresh remediator or the orchestrator must preserve or accept.
+
+1. **`LinkRef.context?: string`** (VER2) is an optional field the design section 7 `LinkRef` shape does not list. The design expected `raw` to serve as the backlinks context, which the parent requirement and M4 S6 contradict. The field is filled only where the source text is already in hand: the worker, written notes, and saved buffers. It is capped at 160 characters to keep long paragraph lines out of the index. **Impact:** an additive optional field in the worker summary protocol; the index stays in memory only. Report it for Work design synchronization.
+2. **`windows.restore.pending[*].navigated?: true`** (VER3) is an optional sub-field of the designed `types.ts` shape. The design routes jump waits through `windows.restore` (section 7 `jumps.ts`), and that shape cannot otherwise tell a navigation wait from a session-restore wait. **Impact:** an additive optional field; it is never persisted. Report it for Work design synchronization.
+3. **New module `src/core/state/mentions.ts`** (`unlinkedHits`, `hitRange`) is shared by the panel and the picker. It avoids an import cycle, because `side-panel.ts` already imports `picker.ts`.
+4. **Backlinks picker rows:** unlinked rows read `path:line` with detail `unlinked mention`, and Enter opens the line. Linking a mention stays a panel action (`l`), because the picker uses letters for its query.
+5. **Which-key hand-back** is decided by the popup's scope mode, not `s.vim.mode`. The explorer keeps the notice for every unbound key.
+6. **V27 recorder** was not re-run. No remediation commit touches the engine, `test/vim/cases.ts`, or `expected.json`, and `bun test test/vim` passes (297).
+
+### Remediation Self-Review
+
+I reviewed the complete remediation diff `3ce604a..aec8689` (26 files, +555/−135). For the group diff `d1f8f67..8a358ce`, I re-read the files each finding touches: `keys.ts`, `whichkey.ts`, `jumps.ts`, `session.ts`, `buffers.ts`, `picker.ts`, `side-panel.ts`, `update.ts`, `index-host.ts`, `summarize.ts`, and `index.ts`. The review found two issues, both fixed and committed. First, the which-key hand-back used `s.vim.mode`, which would have dropped the explorer notice (`aec8689`). Second, navigation loads skipped recents (`80005b4`). Searching the added lines of `src`, `test`, and `scripts` for work-process identifiers finds 0 matches.
+
+### Remediation Group Verification
+
+- `bun run check` → `Passed` — exit 0 in 3 s; biome checked 187 files; `tsc` and knip are clean; 620 pass, 0 fail.
+- `bun test src test/vim` → `Passed` — 614 pass, 0 fail.
+- `bun run test:ci` → `Passed` — 115 pass, 0 fail, 25 snapshots on each of 5 runs (3 after `dddab1c` and 2 on `aec8689`).
+- `bun run build` → `Passed` — exit 0; `dist/so` compiled with the index worker.
+- `bun test test/e2e/binary-index.test.ts` → `Passed` — 1 pass.
+- Verification report → unchanged (`git diff --quiet 3ce604a HEAD` on the file).
+- Uncommitted group changes → None. `w261003fx70-goal.md` holds only the orchestrator edit, which was never staged.
 
 ## Final Status
 
@@ -97,8 +131,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — every task is implemented and committed, and every group check passes.
+- **Final report status:** `Completed` — every verification finding is fixed and committed, and every group check passes on `aec8689`.
 - **Final report commit:** returned to the orchestrator
-- **Final commits:** `dac97f9`, `d54b648`, `78f7ae4`, `6e033f9`, `cc57d9f`, `6b53486`, `46b4384`, `e2c0ed3`, `8a358ce`
-- **Final checks:** `bun run check` exit 0 (3 s); `bun test src test/vim` 604 pass; `bun run test:ci` 113 pass ×5; `bun run build` exit 0; `bun test test/e2e/binary-index.test.ts` 1 pass
-- **Remaining issues:** the items listed under Deviations and Remaining Issues
+- **Final commits:** `dac97f9`, `d54b648`, `78f7ae4`, `6e033f9`, `cc57d9f`, `6b53486`, `46b4384`, `e2c0ed3`, `8a358ce`; remediation `af2d40c`, `0821c58`, `80005b4`, `4549967`, `33f85bf`, `dddab1c`, `aec8689`
+- **Final checks:** `bun run check` exit 0 (3 s, 620 pass); `bun test src test/vim` 614 pass; `bun run test:ci` 115 pass ×5; `bun run build` exit 0; `bun test test/e2e/binary-index.test.ts` 1 pass
+- **Remaining issues:** two optional shape additions need orchestrator acceptance and design synchronization: `LinkRef.context?` and `windows.restore.pending[*].navigated?` (Remediation Deviations 1–2). The verification report's unverified items still stand: concurrent state-file saves, and picker items not refreshing on a later `indexBatch`.
