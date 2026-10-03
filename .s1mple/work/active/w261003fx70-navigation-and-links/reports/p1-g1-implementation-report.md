@@ -87,10 +87,10 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-Two of the three findings are fixed and committed. VER2 is `Blocked`: the in-scope resolution (the palette ranks titles) cannot make `link.backlinks` rank first without changing an approved design decision.
+All three findings are fixed and committed. VER2 first came back `Blocked`, because the designed `search.backlinks` title "Backlinks" won the `back` tie. The orchestrator then approved a title change, recorded as a goal deviation for design and parent sync, and VER2 is closed with it.
 
 - **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md` (status `Failed`; findings P1-G1-VER1, P1-G1-VER2, P1-G1-VER3). The report is unchanged.
-- **Status:** `Blocked`
+- **Status:** `Completed`
 
 ### Baseline and Gate Evidence
 
@@ -103,7 +103,7 @@ Two of the three findings are fixed and committed. VER2 is `Blocked`: the in-sco
 | Finding | Change and verification evidence | Commit evidence | Result |
 |---|---|---|---|
 | `P1-G1-VER1` | See "VER1 — linear scan" below. Baseline at `51218a5`: 80 KB of `[` took 5375 ms. After the fix it takes 2.5 ms, and every probed pattern grows about linearly. `bun test src/core/lang/markdown/scan.test.ts` → 8 pass. The new test "scanning a long line takes time linear in its length" fails on the `51218a5` code (timed out after 5000 ms, 20.7 s run). `bun run check` → exit 0, 483 pass, zero knip findings | `c5f9f15` (Tasks `P1-G1-T2`, `P1-G1-T3`) | `Fixed` |
-| `P1-G1-VER2` | No code change. Over the designed command set, ranking "back" on titles gives `search.backlinks "Backlinks" 104 \| link.backlinks "Toggle backlinks panel" 104`. Ranking on ids gives `jump.back 104 \| link.backlinks 104 \| search.backlinks 104`. Both tie at 104, and the fixed "shorter text first" tie-break never puts `link.backlinks` first. See "VER2 — blocker" below | No change — every in-scope option fails; evidence below | `Blocked` |
+| `P1-G1-VER2` | `src/core/kernel/text/fuzzy.test.ts` test "a command query ranks the backlinks panel title first" ranks all 15 designed and existing command titles, including "Jump to older position", "Jump to newer position", and "Search backlinks of this note". It expects `["Toggle backlinks panel", "Search backlinks of this note"]`. `bun test src/core/kernel/text/fuzzy.test.ts` → 6 pass. With the former title "Backlinks", the same ranking puts "Backlinks" first (probe: both score 104, and the shorter text wins). `bun run check` → exit 0, 483 pass. See "VER2 — decision" below | `8c5d2bc` (Task `P1-G1-T9`) | `Fixed` |
 | `P1-G1-VER3` | See "VER3 — wrapped spans" below. The verifier's probes now give scan 0 / mdast 0 for both ``a `code\n[[x]] still` b`` and `a $x\n[[m]] y$ b`. `bun test src/core/lang/markdown` passes: the new scan test and the corpus note `wrapped.md`, with `ALLOWED_DIFFERENCES` still empty. On the `51218a5` code, conformance fails with `wrapped.md: links` and `wrapped.md: tags`, and the scan test fails | `b6f7e1e` (Tasks `P1-G1-T3`, `P1-G1-T5`) | `Fixed` |
 
 #### VER1 — linear scan
@@ -145,23 +145,19 @@ A run of inline content ends at:
   - `scan.test.ts` "code and math that wrap across a paragraph's lines hide syntax" covers a paragraph, a quote, and two list items, with exact multi-line ranges.
   - `test/fixtures/markdown-corpus/wrapped.md` covers code, math, a double-backtick run, a quote, list items, and a table.
 
-#### VER2 — blocker
+#### VER2 — decision
 
-The orchestrator's constraint keeps `SCORE`, the tie-break (score desc → shorter text → alphabetical), the ids, and the `back` → `link.backlinks` expectation. The resolution it proposed has the palette rank titles, with `jump.back` and `jump.forward` titled "Jump to older position" and "Jump to newer position".
+The first remediation pass found no ranked text that put `link.backlinks` first. That held for titles, ids, `id title`, and `title id`: each tie at 104 went to `search.backlinks` "Backlinks" or to `jump.back`. The orchestrator then chose to rename one command title. `SCORE`, the tie-break, the ids, and the `back` → `link.backlinks` expectation stay unchanged.
 
-- **Why it fails.** The jump titles do drop out of `back`. But the design fixes `search.backlinks` with the title "Backlinks" (system design section 7, `features/links/commands.ts`). That title scores the same 104 as "Toggle backlinks panel", because `b` gets the boundary bonus at the string start and after a space, and it wins as the shorter text.
-- **Other texts.** Ranking on `id title` or `title id` puts `search.backlinks` first too. Ranking on ids puts `jump.back` first.
-- **Conclusion.** No ranked text holds under the fixed constants, tie-break, ids, and titles. The V16 test was not changed, because a test asserting the expectation would fail.
+P2-G2 must preserve these decisions (built in `P2-G2-T4`):
 
-Each way out changes an approved decision, so the choice belongs to the orchestrator and the user:
+- The palette (`commands` picker source) ranks commands on their **titles**.
+- `search.backlinks` is titled "Search backlinks of this note", not "Backlinks".
+- `jump.back` is titled "Jump to older position" and `jump.forward` "Jump to newer position". Neither matches `back`.
+- `link.backlinks` stays "Toggle backlinks panel".
+- No command title may tie "Toggle backlinks panel" on `back` at equal or shorter length.
 
-| Option | Example | Effect |
-|---|---|---|
-| Rename the `search.backlinks` title so it is longer than 22 characters, and rank on titles | "Search backlinks of this note" | `link.backlinks` wins the tie on length. Also give the `jump.*` titles that do not match `back`. Changes the designed title |
-| Amend V16 / UV4 `back` → `link.backlinks` | Expect `back` to list `link.backlinks` among the tied top results | Changes the requirement and parent UV4 wording (parent sync) |
-| Add a palette-specific tie-break | Rank on titles, then on a command priority | Changes the documented tie-break for the palette |
-
-If the first option is chosen, P2-G2 must preserve one rule: the palette ranks command titles, and no command title other than "Toggle backlinks panel" may tie it on `back` at equal or shorter length.
+The V16 test ranks those titles, so a title change that breaks the rule fails it.
 
 ### Group Verification After Remediation
 
@@ -178,15 +174,15 @@ If the first option is chosen, P2-G2 must preserve one rule: the palette ranks c
 
 ## Final Status
 
-`Blocked`
+`Completed`
 
 ### Final Evidence
 
-- **Final report status:** `Blocked`. P1-G1-VER1 and P1-G1-VER3 are fixed. P1-G1-VER2 needs a decision that changes an approved design item.
+- **Final report status:** `Completed`. P1-G1-VER1, P1-G1-VER2, and P1-G1-VER3 are fixed, and every group check passes.
 - **Final report commit:** Returned to the orchestrator.
 - **Final commits:**
   - Initial: `053554d`, `f187c97`, `954d000`, `fd5160e`, `b88247e`, `9030b30`, `8f42a33`, `bcb22e2`, `98ece8d`.
-  - Remediation: `c5f9f15` (VER1), `b6f7e1e` (VER3).
+  - Remediation: `c5f9f15` (VER1), `b6f7e1e` (VER3), `8c5d2bc` (VER2).
 - **Final checks:**
   - `bun run check` exit 0 (483 pass, 2.70 s);
   - unit suites 112 pass;
@@ -194,5 +190,5 @@ If the first option is chosen, P2-G2 must preserve one rule: the palette ranks c
   - frozen install no changes;
   - `bun run test:ci` 65 pass.
 - **Remaining issues:**
-  - P1-G1-VER2. Choose one option from "VER2 — blocker".
+  - Design and parent sync for the `search.backlinks` title and the "palette ranks titles" rule. The orchestrator records these as a goal deviation.
   - Outside the findings: the mdast-only footnote transform (`/\^\[([^\]\n]+)\]/g`) and `pointAt` stay quadratic on pathological text nodes. They run lazily per block, not in `scanBlock` or `scanDoc`, so they were left unchanged.
