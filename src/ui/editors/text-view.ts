@@ -287,7 +287,10 @@ export class EditorView extends Renderable {
     }
     const visible = line >= this.topLine && row < rows;
     const focused =
-      id === s.windows.active && !s.panels.explorer.focused && visible;
+      id === s.windows.active &&
+      !s.panels.explorer.focused &&
+      !(s.panels.side.open && s.panels.side.focused) &&
+      visible;
     if (focused)
       this.cursorAt = {
         x: r.x + gw + x,

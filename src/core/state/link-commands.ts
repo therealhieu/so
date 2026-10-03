@@ -12,6 +12,7 @@ import { goTo, pushJump, recordJump } from "./jumps";
 import { startRename } from "./link-edits";
 import { openPicker } from "./picker";
 import { none } from "./result";
+import { linkMentionAtPanel, toggleSidePanel } from "./side-panel";
 import type { AppState, Result } from "./types";
 
 type AppCommand = Command<CommandContext, CommandResult>;
@@ -116,6 +117,24 @@ export const linkCommands: readonly AppCommand[] = [
     run: followLink,
   },
   {
+    id: "link.backlinks",
+    title: "Toggle backlinks panel",
+    filetypes: ["markdown"],
+    run: (c) => toggleSidePanel(c, "backlinks"),
+  },
+  {
+    id: "link.linkMention",
+    title: "Link this mention",
+    filetypes: ["markdown"],
+    run: linkMentionAtPanel,
+  },
+  {
+    id: "view.outline",
+    title: "Toggle outline",
+    filetypes: ["markdown"],
+    run: (c) => toggleSidePanel(c, "outline"),
+  },
+  {
     id: "search.headings",
     title: "Headings in note",
     filetypes: ["markdown"],
@@ -145,7 +164,9 @@ const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
 export const linkBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "gd", id: "link.follow" },
   { scope: md("normal"), seq: "<CR>", id: "link.follow" },
+  { scope: md("normal"), seq: "<leader>lb", id: "link.backlinks" },
   { scope: md("normal"), seq: "<leader>lr", id: "file.rename" },
+  { scope: md("normal"), seq: "<leader>o", id: "view.outline" },
   { scope: md("normal"), seq: "<leader>sh", id: "search.headings" },
   { scope: md("normal"), seq: "<leader>sb", id: "search.backlinks" },
 ];

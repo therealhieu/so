@@ -54,7 +54,10 @@ test("a throwing command keeps the previous state and reports the error", () => 
   });
   const s = deepFreeze({
     ...fresh(),
-    panels: { explorer: { ...fresh().panels.explorer, focused: false } },
+    panels: {
+      ...fresh().panels,
+      explorer: { ...fresh().panels.explorer, focused: false },
+    },
   });
   const r = createUpdate(reg)(s, { type: "key", key: "Q", now: 0 });
   expect(r.effects).toEqual([]);

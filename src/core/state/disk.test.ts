@@ -234,6 +234,7 @@ test("changes outside open buffers relist listed folders", () => {
   const s: AppState = {
     ...fresh(),
     panels: {
+      ...fresh().panels,
       explorer: { ...fresh().panels.explorer, expanded: ["notes"] },
     },
   };

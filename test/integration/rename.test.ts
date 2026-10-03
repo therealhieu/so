@@ -2,6 +2,8 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseConfig } from "../../src/core/config/toml";
+import { backlinksOf } from "../../src/core/features/links/note-index";
+import { sidePanelRows } from "../../src/core/state/side-panel";
 import { type App, startApp, tmpWorkspace, waitFor } from "./helpers";
 
 let app: App;
@@ -87,4 +89,52 @@ test("closed files are rewritten atomically and stale files are skipped", async 
   app.keys(":w<CR>");
   await waitFor(() => app.buffer("d.md")?.dirty === false);
   expect(await disk("d.md")).toBe("ee [[roadmap]]\n");
+});
+
+test("linking a mention edits an open dirty buffer in memory and a closed file atomically", async () => {
+  await writeFile(join(app.root, "goal.md"), "# Goal\n");
+  await writeFile(join(app.root, "m1.md"), "the goal is near\n");
+  await writeFile(join(app.root, "m2.md"), "our goal again\n");
+  await waitFor(() =>
+    ["goal.md", "m1.md", "m2.md"].every((p) =>
+      app.store.get().index.ix.summaries.has(p),
+    ),
+  );
+  await app.open("m1.md");
+  app.keys("A!<Esc>");
+  expect(app.buffer("m1.md")?.dirty).toBe(true);
+
+  await app.open("goal.md");
+  app.keys(" lb");
+  expect(app.store.get().panels.side).toMatchObject({
+    kind: "backlinks",
+    open: true,
+    focused: true,
+  });
+  const unlinked = () =>
+    sidePanelRows(app.store.get())
+      .filter((r) => r.section === "unlinked")
+      .map((r) => r.path);
+  await waitFor(() => app.store.get().panels.side.mentions?.pending === false);
+  expect(unlinked()).toEqual(["m1.md", "m2.md"]);
+
+  app.keys("l");
+  expect(app.text("m1.md")).toBe("the [[goal]] is near!");
+  expect(app.buffer("m1.md")?.dirty).toBe(true);
+  expect(unlinked()).toEqual(["m2.md"]);
+
+  app.keys("l");
+  await waitFor(() => app.store.get().index.rewrite === undefined);
+  expect(await disk("m2.md")).toBe("our [[goal]] again\n");
+  expect(unlinked()).toEqual([]);
+  const linked = () =>
+    backlinksOf(app.store.get().index.ix, "goal.md").map((b) => b.from);
+  expect(linked()).toEqual(["m2.md"]);
+
+  // The open note joins Linked once it is saved.
+  await app.open("m1.md");
+  app.keys(":w<CR>");
+  await waitFor(() => app.buffer("m1.md")?.dirty === false);
+  expect(await disk("m1.md")).toBe("the [[goal]] is near!\n");
+  expect(linked()).toEqual(["m1.md", "m2.md"]);
 });

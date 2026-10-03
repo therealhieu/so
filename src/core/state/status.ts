@@ -3,6 +3,7 @@ import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { activeBuffer, activeWindow } from "./buffers";
+import { jumpSegment } from "./jumps";
 import type { AppState } from "./types";
 
 export type StatusSegments = {
@@ -19,6 +20,8 @@ export type StatusSegments = {
   /** Absent until the first batch. */
   index?: "indexing" | "ready" | "unavailable";
   indexProgress?: { done: number; total: number };
+  /** "jump i/n" once a jump is recorded. */
+  jump?: string;
 };
 
 const wordCounts = new WeakMap<TextBuffer, number>();
@@ -62,5 +65,7 @@ export function statusSegments(s: AppState): StatusSegments {
   if (index !== "idle") seg.index = index;
   if (index === "indexing")
     seg.indexProgress = { done: s.index.done, total: s.index.total };
+  const jump = jumpSegment(s.jumps);
+  if (jump !== undefined) seg.jump = jump;
   return seg;
 }

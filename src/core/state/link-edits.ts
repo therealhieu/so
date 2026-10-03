@@ -25,6 +25,7 @@ import type { Registries } from "./update";
 const NOT_READY = "index not ready — try again when indexing finishes";
 const UNAVAILABLE = "links will not be updated (index unavailable)";
 const BUSY = "links still updating — try again when the update finishes";
+const MENTION_CHANGED = "mention changed — not linked";
 
 /** The prompt line for a planned rewrite: "31 links in 12 files will be updated". */
 export function impactText(n: { links: number; files: number }): string {
@@ -226,6 +227,34 @@ export function beginRewrite(s: AppState, reg: Registries): Result {
     { state: out.state, effects: [...out.effects, ...effects] },
     (st) => finish({ ...st, index: { ...st.index, rewrite } }),
   );
+}
+
+/**
+ * Link one unlinked mention: an open buffer is edited in memory, a closed
+ * file through `applyEdits`, and the batch reports like a rename. A mention
+ * whose text changed in the open buffer is left alone.
+ */
+export function startMentionEdit(
+  s: AppState,
+  edit: FileEdit,
+  now: number,
+  reg: Registries,
+): Result {
+  const busy = refuseWhileRewriting(s);
+  if (busy !== undefined) return busy;
+  if (
+    bufferForPath(s, edit.path) !== undefined &&
+    applyBufferEdits(s, edit, now, reg).stale
+  )
+    return toast(s, "error", MENTION_CHANGED);
+  const rewrite: LinkRewrite = {
+    batch: now,
+    edits: [edit],
+    pending: [],
+    updated: [],
+    skipped: [],
+  };
+  return beginRewrite({ ...s, index: { ...s.index, rewrite } }, reg);
 }
 
 /** One closed file's result; the batch's last one reports the whole batch. */

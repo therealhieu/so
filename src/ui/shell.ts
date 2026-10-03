@@ -18,6 +18,7 @@ import { WhichKeyView } from "./overlays/whichkey";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
+import { SidePanelView } from "./views/side-panel";
 import { Statusline } from "./views/statusline";
 import { WindowTree } from "./views/window-tree";
 
@@ -83,6 +84,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const windows = new WindowTree(renderer, ctx);
       const explorer = new ExplorerView(renderer, ctx);
       const cmdline = new CommandLine(renderer, ctx);
+      const side = new SidePanelView(renderer);
       const overlays = new OverlayHost(renderer, [
         new PromptView(renderer),
         new ConflictView(renderer),
@@ -94,13 +96,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new Bufferline(renderer),
         windows,
         explorer,
+        side,
         new Statusline(renderer, ctx),
         cmdline,
         new ToastStack(renderer),
         overlays,
       ];
-      // Focus order: an overlay, then the command line, the explorer, the active window.
-      const focus: View[] = [overlays, cmdline, explorer, windows];
+      // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
+      const focus: View[] = [overlays, cmdline, explorer, side, windows];
       for (const v of views) renderer.root.add(v);
       const paint = (s: AppState) => {
         const lc = layoutClass(s.terminal.cols);

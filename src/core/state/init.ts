@@ -35,6 +35,7 @@ export function initialState(boot: {
         cursor: "",
         trash: "unknown",
       },
+      side: { kind: "backlinks", open: false, focused: false, cursor: 0 },
     },
     overlay: { kind: "none" },
     notifications: { toasts: [] },

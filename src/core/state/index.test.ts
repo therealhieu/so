@@ -2,7 +2,10 @@ import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import { backlinksOf, buildIndex } from "../features/links/note-index";
 import { summarize } from "../features/links/summarize";
+import { splitKeys } from "../kernel/vim/keys";
 import { scanDoc } from "../lang/markdown/scan";
+import { runCommand } from "./commands";
+import { sidePanelRows } from "./side-panel";
 import type { Action, AppState, FsOp } from "./types";
 import { createUpdate } from "./update";
 
@@ -186,4 +189,22 @@ test("the index derived maps equal a rebuild after main-thread updates", () => {
   );
   expect(s.index.ix.backlinks).toEqual(rebuilt.backlinks);
   expect(s.index.ix.byBasename).toEqual(rebuilt.byBasename);
+});
+
+test("the outline shows a new heading before saving", () => {
+  let s = run(fresh(), {
+    type: "fileLoaded",
+    path: "a.md",
+    file: textFile("# A\n\ntext\n"),
+  });
+  s = runCommand(s, "view.outline", 0, testRegistries()).state;
+  const titles = () =>
+    sidePanelRows(s)
+      .filter((r) => r.section === "outline")
+      .map((r) => r.text.trim());
+  expect(titles()).toEqual(["A"]);
+  for (const key of splitKeys("<C-w>hGo## New<Esc>"))
+    s = run(s, { type: "key", key, now: 0 });
+  expect(s.buffers[1]?.dirty).toBe(true);
+  expect(titles()).toEqual(["A", "New"]);
 });

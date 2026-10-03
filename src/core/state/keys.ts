@@ -14,6 +14,7 @@ import { keymapFor, keyScope } from "./keymap";
 import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
+import { sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
@@ -62,6 +63,11 @@ function routeKey(
   }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
+  const inPanel = s.panels.side.open && s.panels.side.focused;
+  if (inPanel && s.vim.pending.length === 0) {
+    const r = sidePanelKey(s, a, reg);
+    if (r !== undefined) return r;
+  }
   const b = activeBuffer(s);
   const inExplorer = s.panels.explorer.focused;
   const scope = keyScope(s);
@@ -82,7 +88,8 @@ function routeKey(
   const idle = s.vim.pending.length === 0 && mode !== "insert";
   if (a.key === ":" && idle && (inExplorer || mode === "normal"))
     return none(setVim(s, { mode: "cmdline", cmdline: ":", pending: [] }));
-  if (inExplorer || b === undefined) return none(setVim(s, { pending: [] }));
+  if (inExplorer || inPanel || b === undefined)
+    return none(setVim(s, { pending: [] }));
   return runVim(s, a.key, a.now, reg);
 }
 

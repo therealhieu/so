@@ -21,6 +21,11 @@ import {
   sessionChanged,
   snapshotSession,
 } from "./session";
+import {
+  answersMentions,
+  followShownNote,
+  onMentionResults,
+} from "./side-panel";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
 import { onWhichKeyTimer } from "./whichkey";
 
@@ -42,7 +47,7 @@ export type Registries = {
 /**
  * A pure reducer over the given registries; a thrown error keeps the
  * previous state. A change to the persisted session (re)starts the save
- * debounce.
+ * debounce, and the backlinks panel follows the active note.
  */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
@@ -86,7 +91,9 @@ export function createUpdate(reg: Registries): Update {
       case "stateLoaded":
         return onStateLoaded(state, action);
       case "searchResults":
-        return onSearchResults(state, action);
+        return answersMentions(state, action)
+          ? onMentionResults(state, action)
+          : onSearchResults(state, action);
       case "previewLoaded":
         return onPreviewLoaded(state, action);
     }
@@ -95,7 +102,7 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = step(state, action);
+      const r = followShownNote(state, step(state, action));
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {
             state: r.state,

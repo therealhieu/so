@@ -115,6 +115,7 @@ test("moving a folder re-paths every buffer below it", () => {
   s = {
     ...s,
     panels: {
+      ...s.panels,
       explorer: { ...s.panels.explorer, expanded: ["notes", "archive"] },
     },
   };
@@ -239,7 +240,7 @@ test("toggle opens and focuses the explorer, then closes it", () => {
   expect(closed).toMatchObject({ open: false, focused: false });
   const reopened = toggleExplorer({
     ...fresh(),
-    panels: { explorer: closed },
+    panels: { ...fresh().panels, explorer: closed },
   });
   expect(reopened.state.panels.explorer).toMatchObject({
     open: true,

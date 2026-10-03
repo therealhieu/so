@@ -126,7 +126,12 @@ export async function startApp(
     ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
     ...(opts.index === undefined
       ? {}
-      : { index: { search: (e) => index?.search(e) } }),
+      : {
+          index: {
+            search: (e) => index?.search(e),
+            notify: (e) => index?.notify(e),
+          },
+        }),
   });
   const saveSession = () => {
     if (opts.state !== undefined)

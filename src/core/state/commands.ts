@@ -272,13 +272,21 @@ function split(s: AppState, dir: "row" | "column"): Result {
   return none(w === undefined ? next : setWindow(next, { ...w, id }));
 }
 
+/**
+ * Move focus between windows; the docked side panel sits right of them:
+ * `l` past the last window enters it, `h` leaves it.
+ */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
+  const side = s.panels.side;
+  const setSide = (focused: boolean): AppState => ({
+    ...s,
+    panels: { ...s.panels, side: { ...side, focused } },
+  });
+  if (side.open && side.focused) return none(dir === "h" ? setSide(false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
-  return none(
-    target === undefined
-      ? s
-      : { ...s, windows: { ...s.windows, active: target } },
-  );
+  if (target === undefined)
+    return none(dir === "l" && side.open ? setSide(true) : s);
+  return none({ ...s, windows: { ...s.windows, active: target } });
 }
 
 const builtins: AppCommand[] = [

@@ -227,7 +227,11 @@ export function toggleExplorer(s: AppState): Result {
   const ex = s.panels.explorer;
   if (ex.open && ex.focused)
     return none(setExplorer(s, { open: false, focused: false }));
-  const opened = setExplorer(s, { open: true, focused: true });
+  const side = { ...s.panels.side, focused: false };
+  const opened = setExplorer(
+    { ...s, panels: { ...s.panels, side } },
+    { open: true, focused: true },
+  );
   return ex.entries[""] === undefined
     ? { state: opened, effects: [{ kind: "listDir", dir: "" }] }
     : none(opened);

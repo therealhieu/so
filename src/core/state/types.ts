@@ -124,6 +124,17 @@ export type PromptState = {
   invalid?: string;
 };
 
+/** The docked backlinks or outline panel of the active note. */
+export type SidePanelState = {
+  kind: "backlinks" | "outline";
+  open: boolean;
+  focused: boolean;
+  /** Selected row. */
+  cursor: number;
+  /** The unlinked-mentions search for the shown note; results with another id are dropped. */
+  mentions?: { id: number; pending: boolean; hits: SearchHit[] };
+};
+
 export type CompletionState = {
   /** The position just after "[[". */
   anchor: Pos;
@@ -239,7 +250,7 @@ export type AppState = {
     registers: Registers;
     pendingPaste?: { bufferId: BufferId; before: boolean };
   };
-  panels: { explorer: ExplorerState };
+  panels: { explorer: ExplorerState; side: SidePanelState };
   overlay: Overlay;
   notifications: {
     toasts: Toast[];

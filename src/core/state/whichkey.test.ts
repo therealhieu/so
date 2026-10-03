@@ -64,6 +64,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "?", label: "Help: keymap", group: false },
     { key: "a", label: "Split window", group: false },
     { key: "e", label: "Toggle explorer", group: false },
+    { key: "o", label: "Toggle outline", group: false },
     { key: "f", label: "+find", group: true },
     { key: "l", label: "+links", group: true },
     { key: "s", label: "+search", group: true },

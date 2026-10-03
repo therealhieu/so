@@ -404,7 +404,7 @@ test("leader overrides apply per scope", () => {
       "[keys.normal]",
       '"<leader>w" = "file.save"',
       "[filetypes.markdown.keys.normal]",
-      '"<leader>w" = "search.headings"',
+      '"<leader>w" = "link.backlinks"',
     ].join("\n"),
   );
   const s = update(fresh(), {
@@ -413,7 +413,7 @@ test("leader overrides apply per scope", () => {
     reload: false,
   }).state;
   const md = keys(open("notes/a.md", "# A\n", s), "x<leader>w");
-  expect(md.state.overlay.kind).toBe("picker");
+  expect(md.state.panels.side).toMatchObject({ kind: "backlinks", open: true });
   const ts = keys(open("scripts/sync.ts", CODE, s), "x<leader>w");
   expect(ts.state.overlay.kind).toBe("none");
   expect(ts.effects.some((e) => e.kind === "write")).toBe(true);

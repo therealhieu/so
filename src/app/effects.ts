@@ -41,8 +41,11 @@ export type RunnerDeps = {
   configPath: string;
   /** The session state file; without one, `saveState` does nothing. */
   statePath?: string;
-  /** Answers `search`; without one, every search finds nothing. */
-  index?: Pick<IndexHost, "search">;
+  /**
+   * Answers `search`; without one, every search finds nothing. Own writes
+   * are reported to it, since the watcher keeps them silent.
+   */
+  index?: Pick<IndexHost, "search" | "notify">;
 };
 
 export type EffectRunner = {
@@ -205,6 +208,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           try {
             const stamp = await write(path, e.text, e.expected);
             d.ownOps.noteWrite(path, stamp);
+            d.index?.notify({ kind: "changed", path, isDir: false });
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
             d.logger.error("fs.writeFailed", { path, reason: msg(x) });
@@ -239,6 +243,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           try {
             const stamp = await write(path, restoreFile(cur, text), cur.stamp);
             d.ownOps.noteWrite(path, stamp);
+            d.index?.notify({ kind: "changed", path, isDir: false });
             d.logger.info("links.edited", { path, links: edit.edits.length });
             d.dispatch({
               type: "editsApplied",

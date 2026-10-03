@@ -83,3 +83,12 @@ test("backlinks show only for notes and not while indexing", () => {
   expect(statusSegments(code).backlinks).toBeUndefined();
   expect(statusSegments(code).index).toBe("ready");
 });
+
+test("the statusline shows the jump position", () => {
+  let s = open("a.md", "one\ntwo\nthree\n");
+  expect(statusSegments(s).jump).toBeUndefined();
+  s = withIndex(s, { type: "key", key: "G", now: 0 });
+  expect(statusSegments(s).jump).toBe("jump 2/2");
+  s = withIndex(s, { type: "key", key: "<C-o>", now: 0 });
+  expect(statusSegments(s).jump).toBe("jump 1/2");
+});
