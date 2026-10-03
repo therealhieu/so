@@ -1,4 +1,5 @@
 import { createTestRenderer } from "@opentui/core/testing";
+import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { initialState } from "../../src/core/state/init";
 import { createStore } from "../../src/core/state/store";
@@ -20,6 +21,8 @@ export type MountOptions = {
   color?: AppState["terminal"]["color"];
   theme?: AppState["config"]["theme"];
   kittyKeyboard?: boolean;
+  /** config.toml text, loaded as at startup before the shell attaches. */
+  config?: string;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -68,6 +71,12 @@ export async function mountShell(o: MountOptions) {
     if (e.kind === "startTimer") timers.set(e.id, now + e.ms);
     if (e.kind === "cancelTimer") timers.delete(e.id);
   });
+  if (o.config !== undefined)
+    store.dispatch({
+      type: "configLoaded",
+      result: parseConfig(o.config),
+      reload: false,
+    });
   const shell = createShell(t.renderer, {
     fileTypes: reg.fileTypes,
     commands: reg.commands,

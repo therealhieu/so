@@ -1,0 +1,153 @@
+import { afterEach, expect, test } from "bun:test";
+import { type Mounted, mountShell } from "../support/ui";
+
+/** A 300-character paragraph of short words separated by single spaces. */
+const PARA = Array.from({ length: 60 }, (_, i) => `word${i}`)
+  .join(" ")
+  .slice(0, 300)
+  .trimEnd();
+const TEXT_W = 75; // 80 columns minus the 5-cell gutter
+
+let m: Mounted;
+afterEach(() => m.destroy());
+
+async function mount(config?: string) {
+  m = await mountShell(
+    config === undefined
+      ? { cols: 80, rows: 24 }
+      : { cols: 80, rows: 24, config },
+  );
+  m.keys("<leader>e");
+}
+
+async function lines(): Promise<string[]> {
+  return (await m.frame()).split("\n");
+}
+
+/** The hardware cursor's screen cell. */
+async function cursorAt() {
+  await m.frame();
+  const c = m.t.renderer.getCursorState();
+  return { x: c.x - 1, y: c.y - 1 };
+}
+
+/** The screen row where buffer line 1 starts. */
+const firstRow = (frame: string[]) => frame.findIndex((l) => /^ {3}1 /.test(l));
+
+test("a long paragraph wraps after spaces with a blank continuation gutter", async () => {
+  await mount();
+  m.open("notes/long.md", `${PARA}\nnext\n`);
+  const frame = await lines();
+  const y0 = firstRow(frame);
+  expect(y0).toBeGreaterThanOrEqual(0);
+  const rows: string[] = [];
+  for (let y = y0; !(frame[y] ?? "").startsWith("   1 next"); y++) {
+    const row = frame[y] ?? "";
+    expect(row.slice(0, 5)).toBe(y === y0 ? "   1 " : "     ");
+    rows.push(row.slice(5));
+  }
+  expect(rows.length).toBeGreaterThanOrEqual(4);
+  for (const r of rows.slice(0, -1))
+    expect(r.trimEnd().length).toBeLessThan(TEXT_W);
+  expect(rows.map((r) => r.trimEnd()).join(" ")).toBe(PARA);
+
+  m.keys("$");
+  const last = rows.length - 1;
+  const lastText = (rows[last] ?? "").trimEnd();
+  expect(await cursorAt()).toEqual({
+    x: 5 + lastText.length - 1,
+    y: y0 + last,
+  });
+
+  m.keys("j");
+  const s = m.store.get();
+  expect(s.windows.byId[s.windows.active]?.content.cursor).toEqual({
+    line: 1,
+    col: 3,
+  });
+  expect(await cursorAt()).toEqual({ x: 8, y: y0 + rows.length });
+});
+
+test("wrap off scrolls the row with an overflow marker", async () => {
+  await mount("[editor]\nwrap = false\n");
+  m.open("notes/long.md", `${PARA}\nnext\n`);
+  let frame = await lines();
+  const y0 = firstRow(frame);
+  expect(frame[y0]).toBe(`   1 ${PARA.slice(0, TEXT_W - 1)}›`);
+  expect(frame[y0 + 1]?.startsWith("   1 next")).toBe(true);
+
+  m.keys("$");
+  frame = await lines();
+  expect(frame[y0]).toBe(`   1 ${PARA.slice(PARA.length - TEXT_W)}`);
+  expect(await cursorAt()).toEqual({ x: 79, y: y0 });
+
+  m.keys("0");
+  frame = await lines();
+  expect(frame[y0]?.endsWith("›")).toBe(true);
+});
+
+test("absolute numbers on every row", async () => {
+  await mount("[editor]\nrelativeNumbers = false\n");
+  m.open("notes/a.md", "one\ntwo\nthree\n");
+  m.keys("j");
+  const frame = await lines();
+  const y0 = firstRow(frame);
+  expect(frame.slice(y0, y0 + 3).map((l) => l.slice(0, 9))).toEqual([
+    "   1 one ",
+    "   2 two ",
+    "   3 thre",
+  ]);
+});
+
+test("a wide gutter shows five-digit numbers unclipped", async () => {
+  await mount("[editor]\nrelativeNumbers = false\n");
+  const text = Array.from({ length: 12000 }, (_, i) => `line ${i + 1}`);
+  m.open("notes/big.md", `${text.join("\n")}\n`);
+  m.keys("G");
+  const frame = await lines();
+  const bottom = frame.findIndex((l) => l.startsWith("12000 line 12000"));
+  expect(bottom).toBeGreaterThan(0);
+  expect(frame[bottom - 1]?.startsWith("11999 line 11999")).toBe(true);
+  expect(await cursorAt()).toEqual({ x: 6, y: bottom });
+});
+
+test("relative numbers keep the cursor line absolute in a wide gutter", async () => {
+  await mount();
+  const text = Array.from({ length: 12000 }, (_, i) => `line ${i + 1}`);
+  m.open("notes/big.md", `${text.join("\n")}\n`);
+  m.keys("G");
+  const frame = await lines();
+  const bottom = frame.findIndex((l) => l.startsWith("12000 line 12000"));
+  expect(frame[bottom - 1]?.startsWith("    1 line 11999")).toBe(true);
+});
+
+test("tab width 4 paints at column 4", async () => {
+  await mount("[editor]\ntabWidth = 4\n");
+  m.open("notes/t.md", "\tx\nabcdef\n");
+  const frame = await lines();
+  const y0 = firstRow(frame);
+  expect(frame[y0]?.slice(0, 10)).toBe("   1     x");
+  m.keys("lj");
+  const s = m.store.get();
+  expect(s.windows.byId[s.windows.active]?.content.cursor).toEqual({
+    line: 1,
+    col: 4,
+  });
+  expect(await cursorAt()).toEqual({ x: 9, y: y0 + 1 });
+});
+
+test("a line taller than the window shows the rows holding the cursor", async () => {
+  await mount();
+  const long = Array.from({ length: 400 }, (_, i) => `w${i}`).join(" ");
+  m.open("notes/tall.md", `${long}\n`);
+  m.keys("$");
+  const frame = await lines();
+  const c = await cursorAt();
+  const row = frame[c.y] ?? "";
+  expect(row.trimEnd().endsWith("w399")).toBe(true);
+  expect(c.x).toBe(row.trimEnd().length - 1);
+  expect(frame.some((l) => /^ {3}1 /.test(l))).toBe(false);
+  m.keys("0");
+  const top = await lines();
+  expect(top.some((l) => l.startsWith("   1 w0 w1 "))).toBe(true);
+});
