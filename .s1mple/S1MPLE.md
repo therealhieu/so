@@ -70,17 +70,11 @@ Not established.
 
 **Delivery**
 
-After verification passes:
+1. Open a PR; make CI pass and resolve conflicts with the base branch.
+2. Move the work folder from `work/active/` to `work/done/` and update `.s1mple/` references to it.
+3. Push again; CI must pass on the new head.
 
-```text
-open a PR → CI passes and all conflicts with the base branch are resolved
-    → git mv .s1mple/work/active/<work> .s1mple/work/done/<work>
-    → push again → CI passes on the new head
-```
-
-- Update path references to the moved folder (`work/active/<work>` → `work/done/<work>`) in `.s1mple/` documents in the same commit. Do not edit parent roadmap folders that stay active.
-- Resolve conflicts by merging or rebasing onto the base branch as the repository prefers. Never force-push without explicit approval.
-- Merging the PR remains the user's decision.
+Never force-push or merge without the user's approval.
 
 ## 4. Workspace Layout
 
