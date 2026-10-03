@@ -61,12 +61,45 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** `Not yet run`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g1-verification-report.md` (commit `360acf4`, status `Failed`)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | `src/core/state/link-edits.ts:refuseWhileRewriting` (new) — while `index.rewrite` is set, `startRename` refuses with the message `links still updating — try again when the update finishes` and opens no prompt; `submitRename` checks the same first, so a prompt open when a rewrite starts closes on Enter with that message and emits no FsOp. The stored plan is never replaced. Test `src/core/state/link-edits.test.ts` "a rename while links are still updating is refused and keeps the first plan": move `notes/plan.md` (12-file plan), then `r` on `notes/other.md` → no overlay, the message, no effects, rewrite unchanged; Enter on an already open rename prompt with a rewrite in flight → overlay closed, the message, no effects; first `fsResult ok` → 12 `applyEdits` (`refs/r1.md`…`refs/r12.md`); all reported → one toast `12 files updated`, rewrite cleared; `r` works again. RED: with only `link-edits.ts` reverted, `bun test src/core/state/link-edits.test.ts` → 7 pass, 1 fail (the new test). GREEN: → 8 pass, 0 fail. `bun run check` → exit 0, 547 pass, 3.17 s real. `bun test test/integration/rename.test.ts src/core/state/link-edits.test.ts` → 9 pass, 0 fail. | `6160105` (`P2-G1-T5`) | `Fixed` |
+
+**P2-G1-VER1 completion checklist:**
+
+- [x] Required resolution is implemented — a second rename or move is refused with a visible message while a rewrite is in flight, so every submitted rename either applies its plan or tells the user why not.
+- [x] Required proof passes — the unit test above, `bun run check`, and `bun test test/integration/rename.test.ts`.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Unverified Item — intermittent e2e timeouts
+
+Cause found and fixed for the binary test; no cause found in this group for the `restore.test.ts` timeout.
+
+- **Binary first launch (group-attributable, fixed in `7e92e84`, `P2-G1-T6`).** Every `bun run build` writes a new `dist/so`, and its first launch waits for macOS to assess the binary. Measured: two identical rebuilds then `dist/so --version` → 0.74 s and 0.76 s real (0.07 s user); a second launch → 0.06 s. A fresh build timed in a PTY: first frame 789–798 ms on first launch, 104–121 ms afterwards. That wait counted against `ready(p)`'s 5 s first-frame budget and grows on a busy host. `test/e2e/binary-index.test.ts` now launches `dist/so --version` once inside the 120 s `beforeAll` (which already holds the build). The test body dropped from 0.88–0.98 s to 0.21–0.24 s (3 isolated runs). The in-setup build already had its own 120 s budget, so it was not the cause.
+- **`restore.test.ts` (unchanged DI1 test).** Not reproduced. Suite time at the group base `3b70f7f` (temporary worktree, 3 runs): 2.25, 2.04, 2.06 s; at HEAD: 1.96, 1.97, 1.97 s, so the index worker added no startup cost there. The slowest test in that file runs 0.23–0.26 s against Bun's 5 s per-test limit. The verifier's failure needed a ~20× host slowdown, which points to transient host load.
+- **Reproduction attempts, all passing (87/87 each):** combined command 4 runs before the fix (20.7–21.0 s); 3 runs under 20 busy `yes` processes on 10 cores; 2 rounds of the combined command in parallel with `bun run check` and `bun test test/integration test/ui`; 2 rounds of two combined commands in parallel (both rebuilding `dist/so`). After the fix: combined 3 runs (20.7–20.9 s) and `bun run test:ci` 2 runs (21.1–21.4 s), all 87 pass; slowest test 2.27 s (the flush-bound quit test, by design).
+- **CI:** stability on `ubuntu-24.04` and `macos-15` is not observable locally; it is checked when the PR runs.
+
+### Remediation Verification
+
+- `bun run check` → `Passed` — exit 0, 547 pass across 45 files, 3.17 s real.
+- `bun test src/workspace src/core/state` → `Passed` — 131 pass, 0 fail.
+- `bun test test/integration test/ui test/e2e` → `Passed` — 3 consecutive runs, 87 pass, 0 fail each (20.72–20.86 s).
+- `bun run test:ci` → `Passed` — 2 consecutive runs, 87 pass each.
+- `bun run build` → `Passed` — 308 modules, `dist/so` compiled with both entrypoints.
+- `bun test test/repo.test.ts` → `Passed` — 4 pass.
+- Group diff self-review (`git diff 3b70f7f..HEAD`, 39 files including this report and the verification report) → `Passed` — no work-process identifiers in added code, test, or config lines; no `node:`, `bun`, or `@opentui` import in changed non-test `src/core` files; no `@opentui` import outside `src/ui`.
+
+### Remediation Notes
+
+- With the refusal in place, `followMove` and the `previous batch + 1` term in `submitRename` (Deviations and Remaining Issues, item 5) are no longer reached from explorer rename or move, because no rename or move can start while a rewrite is stored. Both are kept unchanged as harmless guards; removing them is outside the finding.
+- A create or trash during an in-flight rewrite is still allowed. A trashed pending file is reported by the runner as skipped (`removed`) in the batch toast, so it is not silent.
 
 ## Final Status
 
@@ -74,8 +107,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all seven tasks are committed and every group check passes.
+- **Final report status:** `Completed` — P2-G1-VER1 is fixed and the binary-test timeout cause is fixed; every group check passes.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `3314e5d`, `b6d889c`, `27b8c68`, `7eac2b1`, `31b12b6`, `f768344`, `808bc7e`, `7a79f41`
-- **Final checks:** `bun run check` exit 0 (546 pass, 4.0 s); `bun test src/workspace src/core/state` 130 pass; `bun test test/integration test/ui test/e2e` 87 pass; `bun run build` compiled; `bun test test/repo.test.ts` 4 pass.
-- **Remaining issues:** None
+- **Final commits:** `3314e5d`, `b6d889c`, `27b8c68`, `7eac2b1`, `31b12b6`, `f768344`, `808bc7e`, `7a79f41`, `6160105`, `7e92e84`
+- **Final checks:** `bun run check` exit 0 (547 pass, 3.17 s); `bun test src/workspace src/core/state` 131 pass; `bun test test/integration test/ui test/e2e` 87 pass ×3; `bun run test:ci` 87 pass ×2; `bun run build` compiled; `bun test test/repo.test.ts` 4 pass.
+- **Remaining issues:** None. CI stability on `ubuntu-24.04` and `macos-15` is confirmed only when the PR runs.
