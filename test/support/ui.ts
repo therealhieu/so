@@ -1,3 +1,4 @@
+import type { CapturedSpan } from "@opentui/core";
 import { createTestRenderer } from "@opentui/core/testing";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
@@ -130,3 +131,21 @@ export async function mountShell(o: MountOptions) {
 }
 
 export type Mounted = Awaited<ReturnType<typeof mountShell>>;
+
+/** The colours and attributes of the cell at (`x`, `y`) in captured spans. */
+export function cellStyle(
+  lines: { spans: CapturedSpan[] }[],
+  x: number,
+  y: number,
+) {
+  let col = 0;
+  for (const sp of lines[y]?.spans ?? []) {
+    if (x < col + sp.width) {
+      const color = (c: CapturedSpan["fg"]) =>
+        c.intent === "default" ? "default" : c.toInts().join(",");
+      return { fg: color(sp.fg), bg: color(sp.bg), attrs: sp.attributes };
+    }
+    col += sp.width;
+  }
+  return undefined;
+}

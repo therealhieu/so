@@ -1,14 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { CapturedSpan } from "@opentui/core";
-import { type Mounted, mountShell } from "../support/ui";
+import type { SearchHit } from "../../src/core/state/types";
+import { answerSearch, indexFixture, NOTES, SYNC_TS } from "../support/notes";
+import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
-const SYNC_TS = `import { readFile } from "node:fs/promises";
-
-export async function sync(dir: string): Promise<number> {
-\tconst text = await readFile(dir, "utf8"); // whole file
-\treturn text.length;
-}
-`;
 const IDEAS_MD =
   "# Ideas\n\nA terminal editor for notes.\n- keep files plain\n";
 
@@ -196,20 +190,6 @@ test("an info toast expires after 3 s and an error toast stays", async () => {
   expect(frame).toContain("✗ Move to Trash failed");
 });
 
-/** The style of the first cell of screen row `y` at column `x`. */
-function cellStyle(lines: { spans: CapturedSpan[] }[], x: number, y: number) {
-  let col = 0;
-  for (const sp of lines[y]?.spans ?? []) {
-    if (x < col + sp.width) {
-      const color = (c: CapturedSpan["fg"]) =>
-        c.intent === "default" ? "default" : c.toInts().join(",");
-      return { fg: color(sp.fg), bg: color(sp.bg), attrs: sp.attributes };
-    }
-    col += sp.width;
-  }
-  return undefined;
-}
-
 describe("themes", () => {
   for (const theme of ["dark", "light", "nocolor"] as const) {
     test(`${theme}: badges, selection, cursorline, dirty marker, error toast`, async () => {
@@ -258,4 +238,93 @@ describe("themes", () => {
       }
     });
   }
+});
+
+describe("index and panels at 120×36", () => {
+  const MENTIONS: SearchHit[] = [
+    {
+      path: "notes/ideas.md",
+      line: 2,
+      col: 4,
+      len: 4,
+      text: "The plan is to keep files plain.",
+    },
+  ];
+
+  test("indexing progress shows in the statusline", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    openNote(m, "notes/ideas.md", IDEAS_MD);
+    m.store.dispatch({
+      type: "indexBatch",
+      summaries: [],
+      files: [],
+      done: 4210,
+      total: 10000,
+    });
+    expect(await m.row(-2)).toContain("◌ indexing 4,210/10,000");
+    expect(await m.frame()).toMatchSnapshot();
+  });
+
+  test("the index-ready toast and the statusline segments", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    openNote(m, "notes/plan.md", NOTES["notes/plan.md"] ?? "");
+    indexFixture(m);
+    const frame = await m.frame();
+    expect(frame).toContain("✓ index ready");
+    expect(segments(await m.row(-2))).toEqual([
+      "NORMAL",
+      "source",
+      "notes/plan.md",
+      "← 31 backlinks",
+      "14 words",
+      "◆ index ready",
+      "1:1",
+    ]);
+    expect(frame).toMatchSnapshot();
+  });
+
+  test("the outline panel marks the current heading", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    indexFixture(m);
+    m.advance(3000);
+    openNote(m, "notes/plan.md", NOTES["notes/plan.md"] ?? "");
+    m.keys("5G<leader>o");
+    const frame = await m.frame();
+    expect(frame).toContain(" OUTLINE");
+    expect(frame).toContain("▸ Goals");
+    expect(frame).toMatchSnapshot();
+  });
+
+  test("the backlinks panel shows Linked then Unlinked mentions", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    indexFixture(m);
+    m.advance(3000);
+    openNote(m, "notes/ideas.md", NOTES["notes/ideas.md"] ?? "");
+    m.open("projects/so-roadmap.md", NOTES["projects/so-roadmap.md"] ?? "");
+    m.keys("<leader>lb");
+    answerSearch(m, [
+      { ...(MENTIONS[0] as SearchHit), text: "The so roadmap is next." },
+    ]);
+    expect(await m.frame()).toMatchSnapshot();
+    m.open("notes/plan.md", NOTES["notes/plan.md"] ?? "");
+    answerSearch(m, MENTIONS);
+    const frame = await m.frame();
+    expect(frame).toContain("▾ Linked mentions (31)");
+    expect(frame).toMatchSnapshot();
+  });
+
+  test("a code file shows source, path, index, and position only", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    indexFixture(m);
+    m.advance(3000);
+    openNote(m, "scripts/sync.ts", SYNC_TS);
+    expect(segments(await m.row(-2))).toEqual([
+      "NORMAL",
+      "source",
+      "scripts/sync.ts",
+      "◆ index ready",
+      "1:1",
+    ]);
+    expect(await m.frame()).toMatchSnapshot();
+  });
 });
