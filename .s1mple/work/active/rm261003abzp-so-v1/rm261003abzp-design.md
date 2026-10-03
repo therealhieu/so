@@ -57,7 +57,7 @@ Not established — empty repository (only .s1mple/ guidance)
                    nothing outside core/state and core/config imports them
 ```
 
-The core owns all product behavior; the three edge layers are adapters. This reuses Alfred's parsing, Obsidian syntax, vim, terminal-graphics knowledge, and Bases engine by porting them into `core/` (Alfred's kernel, client, protocol, chat, Git, SQLite, Ink, and Next.js are not reused). Main tradeoff: one process keeps latency and code minimal, but a CPU-heavy task on the main thread would stall input — so scanning, parsing for the index, and full-text search run in a worker (RM261003ABZP-DES7@R3).
+The core owns all product behavior; the three edge layers are adapters. This reuses Alfred's parsing, Obsidian syntax, vim, terminal-graphics knowledge, and Bases engine by porting them into `core/` (Alfred's kernel, client, protocol, chat, Git, SQLite, Ink, and Next.js are not reused). Main tradeoff: one process keeps latency and code minimal, but a CPU-heavy task on the main thread would stall input — so scanning, parsing for the index, and full-text search run in a worker (RM261003ABZP-DES7@R4).
 
 Inside the core, the kernel edits and lays out text for any language; Markdown is one registered file type whose parser, live-preview decorations, and highlighter plug into the kernel (RM261003ABZP-DES1@R2, RM261003ABZP-DES17@R1). A code editor or notebook later adds file types, decoration providers, and editor kinds; the kernel does not change. Tradeoff: one more indirection (the file-type registry) between an open buffer and its Markdown behaviour, accepted because it is also what Bases and plain text files need in v1.
 
@@ -100,7 +100,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** language parsing (lives in `lang/`), file reading (workspace).
 
 - **Core — languages (Markdown and code highlighting)**
-  - **Decisions:** RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1
   - **Location:** `src/core/lang/markdown/`, `src/core/lang/code/`
   - **Responsibilities:** Markdown block splitting, per-block parse cache, Obsidian syntax extensions, `Doc` model; the live-preview decoration provider with reveal rules and block renderers; pure HTML rendering for the preview; the `markdown` file type. `lang/code` wraps lowlight as `Highlighter`s and registers code file types (TypeScript, JavaScript, JSON, YAML, TOML, shell, Python, CSS, HTML, …) used for code files and fenced code blocks.
   - **Collaborators:** `update` → `markdown.analyze(buf, prevDoc)` → `Doc`; UI → `layoutText(view, [highlight, livePreview(doc)])` → paint; preview → `renderHtml(doc, ctx)`
@@ -109,10 +109,10 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** terminal escape output, image decoding, HTTP.
 
 - **Core — links feature**
-  - **Decisions:** RM261003ABZP-DES7@R3
+  - **Decisions:** RM261003ABZP-DES7@R4
   - **Location:** `src/core/features/links/`
-  - **Responsibilities:** `NoteSummary` extraction, `NoteIndex` (names, aliases, headings, blocks, links, tags, backlinks) plus the workspace file list for the file picker, link resolution rule, rename planning, fuzzy matching, full-text search functions.
-  - **Collaborators:** index worker → `summarize(path, text)` → `NoteIndex.apply(delta)`; `update` → `resolveLink`, `planRename`
+  - **Responsibilities:** `NoteSummary` extraction, `NoteIndex` (names, aliases, headings, blocks, links, tags, backlinks) plus the workspace file list for the file picker, link resolution rule, rename planning, full-text search functions. Fuzzy ranking is kernel text code (`src/core/kernel/text/fuzzy.ts`) because the palette and every picker use it.
+  - **Collaborators:** index worker → `scanDoc(text)` → `summarize(path, mtime, scan, lines)` → `NoteIndex.apply(delta)`; `update` → `resolveLink`, `planRename`
   - **Contracts:** NoteSummary and NoteIndex; LinkTarget
   - **Code shape:** `src/core/features/links/note-index.ts` `NoteIndex`; `src/core/features/links/resolve.ts` `resolveLink`; `src/core/features/links/rename.ts` `planRename`
   - **Must not own:** file scanning (worker), persistence.
@@ -127,7 +127,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** file writes (expressed as `write` effects).
 
 - **Workspace adapters**
-  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1
   - **Location:** `src/workspace/`
   - **Responsibilities:** atomic save, text read with binary and size checks, create, rename, move, delete-to-trash; directory watcher with own-write suppression; index worker (scan, summarize, search); config and state files; clipboard; opening URLs/browser.
   - **Collaborators:** app effect runner → `workspace/*` → `dispatch(resultAction)`
@@ -175,14 +175,14 @@ so/
 │   └── effects.ts                   Purpose: effect runner                     Symbols: runEffect         Decisions: DES2
 ├── [A] src/core/
 │   ├── kernel/                      Purpose: language-neutral editor kernel; imports only kernel  Decisions: DES1
-│   │   ├── text/                    Purpose: TextBuffer, Edit, Pos, Range       Symbols: TextBuffer, Edit  Decisions: DES3
+│   │   ├── text/                    Purpose: TextBuffer, Edit, Pos, Range, fuzzy ranking  Symbols: TextBuffer, Edit, fuzzyScore, rankBy  Decisions: DES3, DES7
 │   │   ├── editor/                  Purpose: undo, registers, windows           Symbols: UndoStack, Registers  Decisions: DES3
 │   │   ├── vim/                     Purpose: modes, parser, motions, operators, text objects, ex  Symbols: handleKey, motions, textObjects  Decisions: DES4
 │   │   ├── commands/                Purpose: registry, file-type-scoped keymap trie, which-key  Symbols: CommandRegistry, Keymap, KeyScope  Decisions: DES5
 │   │   └── view/                    Purpose: viewport text layout from decorations  Symbols: layoutText, Decoration, RenderLine  Decisions: DES9
 │   ├── filetypes/                   Purpose: FileType contract, registry, `text` fallback  Symbols: FileTypeRegistry, FileType, Highlighter  Decisions: DES17
 │   ├── lang/
-│   │   ├── markdown/                Purpose: block split, parse cache, Obsidian extensions, live-preview provider, HTML  Symbols: parseDoc, Doc, livePreview, renderHtml, markdownFileType  Decisions: DES6, DES9, DES13
+│   │   ├── markdown/                Purpose: block split, linear scan, lazy mdast, parse cache, Obsidian extensions, live-preview provider, HTML  Symbols: parseDoc, Doc, scanDoc, blockNode, livePreview, renderHtml, markdownFileType  Decisions: DES6, DES9, DES13
 │   │   └── code/                    Purpose: lowlight highlighter, code file types  Symbols: lowlightHighlighter, codeFileTypes  Decisions: DES17
 │   ├── features/
 │   │   ├── links/                   Purpose: summaries, index, file list, resolve, rename, search  Symbols: NoteIndex, resolveLink, planRename  Decisions: DES7
@@ -190,7 +190,7 @@ so/
 │   │   └── notes/                   Purpose: daily notes, templates             Symbols: dailyPath, expandTemplate  Decisions: DES11
 │   ├── time/                        Purpose: Moment-subset formatter            Symbols: formatDate        Decisions: DES11
 │   ├── state/                       Purpose: AppState, Action, Effect, update  Symbols: update, AppState  Decisions: DES2
-│   └── config/                      Purpose: config schema and defaults         Symbols: ConfigSchema, defaults  Decisions: DES14
+│   └── config/                      Purpose: config schema, defaults, TOML parse with line numbers  Symbols: ConfigSchema, defaults, parseConfig  Decisions: DES14
 ├── [A] src/workspace/
 │   ├── fs.ts                        Purpose: readTextFile (binary/size/BOM/EOL), atomicWrite, create, rename, move  Symbols: readTextFile, atomicWrite  Decisions: DES8, DES17
 │   ├── trash.ts                     Purpose: freedesktop trash, macOS trash (`/usr/bin/trash` or NSFileManager)  Symbols: moveToTrash  Decisions: DES8
@@ -243,7 +243,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/core/state/update.ts` `update`; `src/core/kernel/view/text-view.ts` `layoutText`; `src/ui/shell.ts` `createShell`
 
 - **Startup**
-  - **Decisions:** RM261003ABZP-DES1@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES1@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
   - **Participants:** `app/main` → register file types (`markdown`, `base`, code types, `text` fallback) → `loadConfig`, `loadState` → `createStore` → `createShell` (first frame) → `startIndexWorker` → `watchWorkspace`
   - **Flow:**
 
@@ -301,18 +301,18 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/workspace/fs.ts` `atomicWrite`; `src/workspace/watcher.ts` `watchWorkspace`
 
 - **Follow, complete, and rename links**
-  - **Decisions:** RM261003ABZP-DES7@R3, RM261003ABZP-DES5@R2
-  - **Participants:** `update` → `resolveLink(index, sourcePath, target)` → open buffer + jump; `planRename(index, from, to)` → `write` effects
+  - **Decisions:** RM261003ABZP-DES7@R4, RM261003ABZP-DES5@R2
+  - **Participants:** `update` → `resolveLink(index, sourcePath, target)` → open buffer + jump; `planRename(index, moves, open)` → `applyEdits` effect
   - **Flow:**
 
     ```text
     gd on [[plan#Goals]] → resolveLink → {path:"projects/plan.md", heading:"Goals"} → push jumplist → open → cursor at heading
                          → unresolved → prompt "Create projects/plan.md?" → create effect
-    rename a.md → b.md → planRename → [{path, edits[]}…] → apply to open buffers in memory + write effects for closed files
+    rename a.md → b.md → planRename(index, [{from, to}], open scans) → [{path, edits[]}…] → apply to open buffers in memory + applyEdits for closed files (each span checked against its expected text)
                        → fs rename → notify "12 files updated"
     ```
 
-  - **Failure and recovery:** a link-rewrite write fails → remaining writes continue; failures are listed in a notification with paths; the rename itself is rolled back only if the file rename failed (links already rewritten are reported, not reverted).
+  - **Failure and recovery:** a second rename or move while a link rewrite is in flight is refused with `links still updating — try again when the update finishes` and changes nothing; a closed file whose span no longer matches the expected text is skipped unchanged and reported; a link-rewrite write fails → remaining writes continue; failures are listed in a notification with paths; the rename itself is rolled back only if the file rename failed (links already rewritten are reported, not reverted).
   - **Contracts and state:** NoteIndex; LinkTarget
   - **Control flow:** `src/core/features/links/resolve.ts` `resolveLink`; `src/core/features/links/rename.ts` `planRename`
 
@@ -370,11 +370,11 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/core/kernel/text/text-buffer.ts`
 
 - **Doc model — Data model**
-  - **Decisions:** RM261003ABZP-DES6@R1
+  - **Decisions:** RM261003ABZP-DES6@R2
   - **Purpose:** parsed Markdown shared by live preview, index summaries, and HTML preview.
-  - **Participants:** `parseDoc` (the `markdown` file type's `analyze`) → `Doc` → live-preview provider, `summarize`, `renderHtml`
-  - **Meaning:** `Doc { frontmatter?, blocks: Block[] }`; `Block { id, kind, startLine, endLine, hash, node }` where `node` is mdast extended with Obsidian nodes (`wikiLink`, `embed`, `tag`, `highlight`, `comment`, `callout`, `blockId`, `footnote*`, `math`).
-  - **Ownership and lifecycle:** recomputed per buffer version; unchanged blocks reused by hash.
+  - **Participants:** `parseDoc` (the `markdown` file type's `analyze`) → `Doc` → live-preview provider, `summarize`, `renderHtml`; the index worker calls `scanDoc(text)` for the scan level only
+  - **Meaning:** two levels. Scan level: `Doc { version, frontmatter?, blocks: Block[], scan: DocScan }`; `Block { id, kind, startLine, endLine, hash, scan: BlockScan }`, where `BlockScan` holds headings, links, tags, block ids, and excluded ranges (code, math, comments) from one linear pass. mdast level: `blockNode(doc, block, text)` returns the block's mdast, extended with Obsidian nodes (`wikiLink`, `embed`, `tag`, `highlight`, `comment`, `callout`, `blockId`, `footnote*`, `math`), parsed on first request and cached by block hash.
+  - **Ownership and lifecycle:** the scan level is recomputed per buffer version, reusing unchanged blocks by hash; mdast is built lazily per block, only for blocks a consumer asks for (live preview on screen, HTML preview).
   - **Invariants:** blocks cover the document without overlap; a fenced code block or frontmatter is never split.
   - **State flow:** `None`
   - **Shape:** `src/core/lang/markdown/doc.ts`
@@ -400,12 +400,12 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/core/filetypes/types.ts`, `src/core/kernel/view/decorations.ts`
 
 - **NoteSummary and NoteIndex — Data model**
-  - **Decisions:** RM261003ABZP-DES7@R3
+  - **Decisions:** RM261003ABZP-DES7@R4
   - **Purpose:** workspace-wide link, tag, heading, and block knowledge, plus the workspace file list.
-  - **Participants:** worker `summarize` → `NoteSummary` → main `NoteIndex.apply`
-  - **Meaning:** `NoteSummary { path, mtime, title, aliases, tags, headings[{text, level, line}], blocks[{id, line}], links[{target, subpath?, alias?, line, col, kind:"wiki"|"md"|"embed"}], frontmatter }`. `NoteIndex` holds summaries by path plus derived maps: basename → paths, alias → paths, tag → paths, target path → backlinks; and `files` — every non-excluded workspace path — for the file picker.
+  - **Participants:** worker `scanDoc` → `summarize` → `NoteSummary` → main `NoteIndex.apply`
+  - **Meaning:** `NoteSummary { path, mtime, title, aliases, tags, headings[{text, level, line}], blocks[{id, line}], links[{target, subpath?, alias?, line, col, kind:"wiki"|"md"|"embed", raw, range, context?}], frontmatter }`; `raw` and `range` let rename plan edits without reading the file, and `context` is the trimmed source line (≤ 160 characters) shown as a closed note's backlink context. `NoteIndex` holds summaries by path plus derived maps: basename → paths, alias → paths, tag → paths, target path → backlinks; and `files` — every non-excluded workspace path — for the file picker.
   - **Ownership and lifecycle:** built at startup by the worker; updated per file event and per buffer save; never persisted.
-  - **Invariants:** derived maps are rebuilt only for changed paths; only Markdown files are summarized; resolution order is fixed (RM261003ABZP-DES7@R3).
+  - **Invariants:** derived maps are rebuilt only for changed paths; only Markdown files are summarized; resolution order is fixed (RM261003ABZP-DES7@R4).
   - **State flow:** `empty → indexing(n/total) → ready → (fileEvent) ready`
   - **Shape:** `src/core/features/links/note-index.ts`
 
@@ -420,10 +420,10 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/preview/server.ts`
 
 - **AppConfig — Data model**
-  - **Decisions:** RM261003ABZP-DES14@R1, RM261003ABZP-DES5@R2
+  - **Decisions:** RM261003ABZP-DES14@R2, RM261003ABZP-DES5@R2
   - **Purpose:** user options and keymap overrides.
-  - **Participants:** `config-file.loadConfig` → `ConfigSchema` (zod) → `AppState.config`
-  - **Meaning:** `leader`, `escTimeoutMs` (50; effective `max(escTimeoutMs, 20)` because OpenTUI resolves a legacy lone Esc at 20 ms), `autosave` (`{ enabled: true, delayMs: 1000 }`), `editor` (`tabWidth`, `wrap`, `relativeNumbers`), `preview` (`mode: "live"`, `embedMaxRows`, `images: "auto"|"blocks"|"off"`), `daily` (`folder`, `format`, `template`), `templates.folder`, `theme`, `color` (overrides `NO_COLOR`), `keys.<mode>` (`"<key-seq>" = "<command-id>"`, global), `filetypes.<id>.keys.<mode>` (same form, one file type).
+  - **Participants:** `config-file.loadConfig` → `parseConfig` (`toml-eslint-parser` AST → `ConfigSchema` (zod), errors carry the TOML line) → `AppState.config`
+  - **Meaning:** `leader`, `escTimeoutMs` (50; effective `max(escTimeoutMs, 20)` because OpenTUI resolves a legacy lone Esc at 20 ms), `autosave` (`{ enabled: true, delayMs: 1000 }`), `editor` (`tabWidth` 1–16, default 8; `wrap`, default `true`; `relativeNumbers`, default `true`), `preview` (`mode: "live"`, `embedMaxRows`, `images: "auto"|"blocks"|"off"`), `daily` (`folder`, `format`, `template`), `templates.folder`, `theme`, `color` (overrides `NO_COLOR`), `keys.<mode>` (`"<key-seq>" = "<command-id>"`, global), `filetypes.<id>.keys.<mode>` (same form, one file type).
   - **Ownership and lifecycle:** read at startup and on `:ConfigReload`.
   - **Invariants:** unknown keys and invalid values produce errors with file and line; the invalid file is ignored as a whole and defaults apply.
   - **State flow:** `None`
@@ -559,9 +559,9 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S2@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1
 
 - **`src/core/lang/markdown/doc.ts`**
-  - **Decisions:** RM261003ABZP-DES6@R1
+  - **Decisions:** RM261003ABZP-DES6@R2
   - **Change:** Add (ported from `alfred/apps/tui/src/view/markdown/parse.ts` and `alfred/packages/view-model/src/markdown/obsidian-syntax.ts`)
-  - **Responsibilities:** split into blocks, parse each block with micromark + GFM + math + Obsidian extensions, reuse unchanged blocks.
+  - **Responsibilities:** split into blocks, scan each block linearly for links, tags, headings, and block ids, parse a block to mdast with micromark + GFM + math + Obsidian extensions only when asked, reuse unchanged blocks.
   - **Current source:** `alfred/apps/tui/src/view/markdown/parse.ts:40-44` (imports `mdast-util-from-markdown`, `micromark-extension-gfm`, `micromark-extension-math`)
   - **Current shape:**
 
@@ -575,18 +575,20 @@ Unit tests sit next to code as `*.test.ts`.
   - **Proposed shape:**
 
     ```ts
-    export type Block = { id: number; kind: BlockKind; startLine: number; endLine: number; hash: string; node: MdNode };
-    export type Doc = { version: number; frontmatter?: Frontmatter; blocks: Block[] };
+    export type Block = { id: number; kind: BlockKind; startLine: number; endLine: number; hash: string; scan: BlockScan };
+    export type Doc = { version: number; frontmatter?: Frontmatter; blocks: Block[]; scan: DocScan };
 
     export function splitBlocks(buf: TextBuffer): { startLine: number; endLine: number }[]; // blank-line bounded; fences, frontmatter, $$ kept whole; lists kept whole
-    export function parseDoc(buf: TextBuffer, prev?: Doc): Doc;   // reparse only ranges whose hash changed
-    export const syntaxExtensions: SyntaxExtension[];             // wikiLink, embed, tag, highlight, comment, callout, blockId — registration point
+    export function parseDoc(buf: TextBuffer, prev?: Doc): Doc;   // rescan only ranges whose hash changed
+    export function scanDoc(text: string): DocScan;               // scan level only; used by the index worker
+    export function blockNode(doc: Doc, block: Block, text: (from: number, to: number) => string): MdNode; // lazy mdast, cached by hash
+    export const syntaxExtensions: SyntaxExtension[];             // wikiLink, embed, tag, highlight, comment, callout, blockId — one definition for both levels
     ```
 
-    Block-level reparse keeps per-keystroke work proportional to the edited block (`RM261003ABZP-RF7`). Obsidian syntax is applied as mdast transforms registered in `syntaxExtensions`.
+    Block-level reparse keeps per-keystroke work proportional to the edited block (`RM261003ABZP-RF7`). Whole-document facts (links, tags, headings, block ids, frontmatter) come from the linear scan level, and mdast is built lazily per block: parsing every note to mdast took 11.8 s for 10,000 notes and about 350 ms for the `openFile` fixture, missing RM261003ABZP-V13@R1 and the open budget. Each Obsidian syntax is defined once in `syntaxExtensions` for both levels, and a conformance test checks that the levels agree.
 
   - **Dependencies:** `mdast-util-from-markdown`, `micromark-extension-gfm`, `mdast-util-gfm`, `micromark-extension-math`, `mdast-util-math`, `yaml`
-  - **Callers and wiring:** registered as the `markdown` file type's `analyze`; `update` runs it after edits; worker `summarize`; preview `renderHtml`.
+  - **Callers and wiring:** registered as the `markdown` file type's `analyze`; `update` runs it after edits; the worker runs `scanDoc` before `summarize`; live preview and `renderHtml` call `blockNode`.
   - **Invariants:** `parseDoc(buf, prev)` equals `parseDoc(buf)` structurally (cache is transparent).
   - **Verification:** RM261003ABZP-S5@R1, RM261003ABZP-V7@R2; RM261003ABZP-S9@R1, RM261003ABZP-V12@R2
 
@@ -689,7 +691,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S12@R1, RM261003ABZP-V18@R1; RM261003ABZP-S9@R1, RM261003ABZP-V12@R2; RM261003ABZP-S11@R1, RM261003ABZP-V16@R2
 
 - **`src/core/features/links/resolve.ts` and `src/core/features/links/rename.ts`**
-  - **Decisions:** RM261003ABZP-DES7@R3
+  - **Decisions:** RM261003ABZP-DES7@R4
   - **Change:** Add
   - **Responsibilities:** deterministic link resolution; format-preserving rename planning.
   - **Current source:** None — new surface
@@ -707,8 +709,11 @@ Unit tests sit next to code as `*.test.ts`.
     export function resolveLink(ix: NoteIndex, from: string, raw: string): LinkTarget | { unresolved: string };
     // order: exact root path (with/without .md) → alias → basename candidates ranked by
     //        (same folder as `from`) → (shortest path) → (alphabetical)
-    export function planRename(ix: NoteIndex, from: string, to: string, read: (p: string) => string): FileEdit[];
-    // keeps link kind (wiki/md), alias, #heading / #^block; writes the shortest unique form of `to`
+    export type PathMove = { from: string; to: string };
+    export type FileEdit = { path: string; edits: { range: Range; expected: string; text: string }[] };
+    export function planRename(ix: NoteIndex, moves: readonly PathMove[], open: ReadonlyMap<string, DocScan>): FileEdit[];
+    // keeps link kind (wiki/md), alias, #heading / #^block; writes the shortest unique form of `to`;
+    // link spans come from open buffers' scans and from summaries (`raw`, `range`), so planning reads no file
     ```
 
   - **Dependencies:** NoteIndex
@@ -834,13 +839,13 @@ Unit tests sit next to code as `*.test.ts`.
 
 | Concern | Mechanism and canonical design location | Verification or reason not applicable |
 |---|---|---|
-| Security and privacy | No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2); config is data (TOML), never executed (RM261003ABZP-DES14@R1); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
-| Configuration and observability | XDG TOML config validated by schema; errors as notifications; `so --version`; `SO_LOG=debug` writes a log to `$XDG_STATE_HOME/so/so.log` without note content (RM261003ABZP-DES14@R1) | RM261003ABZP-V4@R2 |
+| Security and privacy | No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2); config is data (TOML), never executed (RM261003ABZP-DES14@R2); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
+| Configuration and observability | XDG TOML config validated by schema; errors as notifications; `so --version`; `SO_LOG=debug` writes a log to `$XDG_STATE_HOME/so/so.log` without note content (RM261003ABZP-DES14@R2) | RM261003ABZP-V4@R2 |
 | Performance and scalability | Viewport-only layout, block parse cache, worker index and search, frame coalescing, lazy image decode with cache (RM261003ABZP-DES16@R1) | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
 | Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R2) | RM261003ABZP-V1@R1 |
 | Migration and backfill | None — greenfield; Obsidian files are read as-is and written in place | None — no prior data format |
 | Mixed-version compatibility | Obsidian file compatibility (Markdown, links, frontmatter, `.base`); Kanban `type` constant isolated in `core/features/bases/types.ts` and verified against an Obsidian-saved file (RM261003ABZP-DES12@R2) | RM261003ABZP-V10@R1 |
-| Rollout and rollback | SemVer releases via release-please; users roll back by installing a previous release binary (RM261003ABZP-DES15@R2) | RM261003ABZP-V14@R1 |
+| Rollout and rollback | SemVer releases via release-please; users roll back by installing a previous release binary (RM261003ABZP-DES15@R3) | RM261003ABZP-V14@R1 |
 | Known extension needs | Registries: commands and file-type-scoped keymaps (DES5), syntax extensions (DES6), block renderers and decoration providers (DES9), editor-kind views and widget painters (DES10), Bases view types (DES12), file types and highlighters (DES17) — RM261003ABZP-REQ11@R3 | RM261003ABZP-V16@R2 |
 | Evolution toward code editing and notebooks | Kernel boundary (DES1) keeps editing language-neutral; future work adds registrations only: an LSP client is a workspace adapter whose results become `mark`/`line` decorations and file-type commands (`gd` → definition); tree-sitter replaces lowlight behind `Highlighter`; a notebook is a new editor kind whose cells each hold a `TextBuffer`. None of these is built in v1 (RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3 deferrals) | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V18@R1 |
 
@@ -902,7 +907,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** every command is reachable by name in the palette, leader sequences show which-key hints, pickers filter fuzzily, and config overrides apply or fail safely.
   - **Requirements:** RM261003ABZP-REQ3@R4
-  - **Design:** RM261003ABZP-DES5@R2, RM261003ABZP-DES14@R1
+  - **Design:** RM261003ABZP-DES5@R2, RM261003ABZP-DES14@R2
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V4@R2 — Keymap, which-key, palette, file-type scope, and config**
@@ -919,7 +924,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** link following, completion, backlinks, and tags match the index; rename updates every reference while preserving format.
   - **Requirements:** RM261003ABZP-REQ4@R3
-  - **Design:** RM261003ABZP-DES7@R3
+  - **Design:** RM261003ABZP-DES7@R4
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V5@R1 — Resolution rule**
@@ -945,7 +950,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** each element listed in RM261003ABZP-REQ5@R2 renders as specified, reveal follows the cursor line or block, and images use the best available protocol.
   - **Requirements:** RM261003ABZP-REQ5@R2
-  - **Design:** RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2
+  - **Design:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V7@R2 — Layout golden tests**
@@ -1022,7 +1027,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** the targets in RM261003ABZP-REQ9@R2 are met on the reference machine and gated at 2× in CI.
   - **Requirements:** RM261003ABZP-REQ9@R2
-  - **Design:** RM261003ABZP-DES16@R1, RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES7@R3, RM261003ABZP-DES17@R1
+  - **Design:** RM261003ABZP-DES16@R1, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES7@R4, RM261003ABZP-DES17@R1
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V12@R2 — Keystroke and open-file benchmarks**
@@ -1048,7 +1053,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** `bun run check` < 30 s; CI < 3 min; release produces four checksummed binaries that start.
   - **Requirements:** RM261003ABZP-REQ10@R3
-  - **Design:** RM261003ABZP-DES15@R2
+  - **Design:** RM261003ABZP-DES15@R3
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V14@R1 — Check timing, CI timing, and release dry run**
@@ -1165,25 +1170,25 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Dependencies:** RM261003ABZP-DES2@R2
   - **Predecessors:** RM261003ABZP-DES5@R1
 
-- **RM261003ABZP-DES6@R1 — micromark/mdast with Obsidian extensions and block-level reparse**
+- **RM261003ABZP-DES6@R2 — micromark/mdast with Obsidian extensions and block-level reparse**
   - **Requirements:** RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2
-  - **Decision:** port Alfred's micromark + GFM + math parsing and Obsidian syntax into `core/lang/markdown` as the `markdown` file type's `analyze`; split into blocks and reparse only changed blocks; one `Doc` feeds layout, index, and HTML.
+  - **Decision:** port Alfred's micromark + GFM + math parsing and Obsidian syntax into `core/lang/markdown` as the `markdown` file type's `analyze`; split into blocks and reparse only changed blocks; one `Doc` with two levels feeds layout, index, and HTML: a linear scan level (links, tags, headings, block ids, frontmatter) used by the index and link features, and mdast built lazily per block for live preview and HTML. Each Obsidian syntax is defined once in `syntaxExtensions` for both levels.
   - **Explanation:** Doc model; `src/core/lang/markdown/doc.ts`.
-  - **Evidence:** `alfred/apps/tui/src/view/markdown/parse.ts:40-44` - existing micromark pipeline.
+  - **Evidence:** `alfred/apps/tui/src/view/markdown/parse.ts:40-44` - existing micromark pipeline; `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (DES2, Assigned Parent Obligation Coverage) - a full mdast parse took 11.8 s for 10,000 notes and about 350 ms for the `openFile` fixture; delivered in `src/core/lang/markdown/` (PR #2).
   - **Research:** `RM261003ABZP-RF7` - micromark conformant but not incremental; block reparse meets budgets; evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2
-  - **Tradeoffs:** block splitting must handle lists, fences, and frontmatter carefully; rejected OpenTUI's tree-sitter Markdown (UI-layer dependency, no Obsidian syntax) and Lezer (skips link reference validation; another parser to learn).
+  - **Tradeoffs:** block splitting must handle lists, fences, and frontmatter carefully; two parse levels must agree, which the shared `syntaxExtensions` registry and a conformance test enforce; rejected OpenTUI's tree-sitter Markdown (UI-layer dependency, no Obsidian syntax) and Lezer (skips link reference validation; another parser to learn).
   - **Dependencies:** RM261003ABZP-DES3@R1
-  - **Predecessors:** None
+  - **Predecessors:** RM261003ABZP-DES6@R1
 
-- **RM261003ABZP-DES7@R3 — Worker-built in-memory index with a documented resolution rule**
+- **RM261003ABZP-DES7@R4 — Worker-built in-memory index with a documented resolution rule**
   - **Requirements:** RM261003ABZP-REQ4@R3 - links, backlinks, tags, rename; RM261003ABZP-REQ3@R4 - pickers and full-text search; RM261003ABZP-REQ9@R2 - non-blocking index
-  - **Decision:** a Bun `Worker` lists every non-excluded workspace file, summarizes Markdown notes, and answers full-text queries over Markdown notes and other text files that pass the REQ1 text checks; the main thread holds `NoteIndex` (summaries plus the file list) under `core/features/links`; resolution order: root path → alias → basename ranked by same folder, shortest path, alphabetical; `planRename` rewrites link spans only; `link.linkMention` wraps one unlinked mention in `[[…]]` in its source note through a span edit (open buffer in memory, closed file via `write`).
+  - **Decision:** a Bun `Worker` lists every non-excluded workspace file, summarizes Markdown notes from the scan level of `parseDoc`, and answers full-text queries over Markdown notes and other text files that pass the REQ1 text checks; the main thread holds `NoteIndex` (summaries plus the file list) under `core/features/links`; resolution order: root path → alias → basename ranked by same folder, shortest path, alphabetical; `planRename(ix, moves, open)` rewrites link spans only, from open buffers' scans and the summaries' link spans, without reading files; one link rewrite runs at a time; `link.linkMention` wraps one unlinked mention in `[[…]]` in its source note through a span edit (open buffer in memory, closed file via `write`).
   - **Explanation:** NoteSummary and NoteIndex; `resolve.ts`; `rename.ts`.
-  - **Evidence:** `rm261003abzp-roadmap-context.md@R1` - Alfred used SQLite; `so` has no persistence need for the index.
+  - **Evidence:** `rm261003abzp-roadmap-context.md@R1` - Alfred used SQLite; `so` has no persistence need for the index; `.s1mple/work/done/w261003fx70-navigation-and-links/` system design DES3, DES4, DES6 and goal deviations D2, D3; delivered in `src/core/features/links/` and `src/workspace/index-worker.ts` (PR #2).
   - **Research:** `RM261003ABZP-RF8` - duplicate resolution undocumented; evaluated RM261003ABZP-REQ4@R1 → informed RM261003ABZP-REQ4@R2 (current RM261003ABZP-REQ4@R3)
   - **Tradeoffs:** reindex on every start (< 3 s target); searching all text files reads more bytes than notes alone, bounded by `.gitignore` exclusion and the 16 MiB per-file limit; rejected SQLite (persistence and schema cost without need) and ripgrep (external binary).
-  - **Dependencies:** RM261003ABZP-DES6@R1, RM261003ABZP-DES17@R1
-  - **Predecessors:** RM261003ABZP-DES7@R1, RM261003ABZP-DES7@R2
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R1
+  - **Predecessors:** RM261003ABZP-DES7@R1, RM261003ABZP-DES7@R2, RM261003ABZP-DES7@R3
 
 - **RM261003ABZP-DES8@R2 — Atomic saves, directory watching, own-write stamps, and trash adapters**
   - **Requirements:** RM261003ABZP-REQ1@R3 - safe file management
@@ -1202,7 +1207,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `alfred/apps/tui/src/view/editor/reveal-units.ts` - reveal units reference. Industry precedent: CodeMirror 6 decorations (the basis of Obsidian's live preview), Neovim extmarks and conceal, VS Code decorations.
   - **Research:** `RM261003ABZP-RF7` - per-element reveal in Obsidian; block reveal for multi-line constructs; evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2
   - **Tradeoffs:** block reveal shifts more text than Obsidian's per-span reveal; one decoration list per frame instead of direct painting, accepted because it is bounded by visible lines; rejected OpenTUI `MarkdownRenderable` conceal (UI-owned parsing, no Obsidian syntax) and a Markdown-specific `layoutViewport` (would make every future language reimplement layout).
-  - **Dependencies:** RM261003ABZP-DES6@R1, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R1
   - **Predecessors:** RM261003ABZP-DES9@R1, RM261003ABZP-DES9@R2
 
 - **RM261003ABZP-DES10@R2 — OpenTUI shell with editor-kind views, widget painters, normalized input, and guaranteed terminal restore**
@@ -1232,7 +1237,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `alfred/packages/vault/src/domain/bases/parser.ts:19`, `evaluator.ts:164` - no file-system or Bun imports (context assumption).
   - **Research:** `RM261003ABZP-RF9` - layouts, Kanban rules; evaluated RM261003ABZP-REQ7@R1 → informed RM261003ABZP-REQ7@R2
   - **Tradeoffs:** follows an early-access Obsidian layout; guarded by the constant, a fixture, and the table fallback. Bases is the first non-text editor kind, so the seam a notebook needs is exercised in v1 rather than designed speculatively.
-  - **Dependencies:** RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
   - **Predecessors:** RM261003ABZP-DES12@R1
 
 - **RM261003ABZP-DES13@R2 — `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering**
@@ -1242,28 +1247,28 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** user decision "no Next.js".
   - **Research:** `RM261003ABZP-RF12` - binding, Host check, containment, SSE; evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2
   - **Tradeoffs:** math and diagrams need network in the browser (fallback to source); rejected bundling KaTeX/Mermaid into the binary (multi-MB size) and WebSocket (bidirectional not needed).
-  - **Dependencies:** RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4
   - **Predecessors:** RM261003ABZP-DES13@R1
 
-- **RM261003ABZP-DES14@R1 — TOML config at XDG path validated by schema; per-workspace state at XDG state path**
+- **RM261003ABZP-DES14@R2 — TOML config at XDG path validated by schema; per-workspace state at XDG state path**
   - **Requirements:** RM261003ABZP-REQ3@R4 - configuration and state
-  - **Decision:** `Bun.TOML.parse` + zod schema (`core/config/schema.ts`); config path honors XDG rules (relative values ignored); invalid config → error notice + defaults; state JSON at `$XDG_STATE_HOME/so/<sha256(realpath(root)).slice(0,16)>/state.json` holding recent notes, jump list, open buffers, window layout.
+  - **Decision:** `toml-eslint-parser` (1.0.3, exact pin) + zod schema (`core/config/schema.ts`, `core/config/toml.ts`), so every error names the TOML line; `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers` are delivered with DI2; config path honors XDG rules (relative values ignored); invalid config → error notice + defaults; state JSON at `$XDG_STATE_HOME/so/<sha256(realpath(root)).slice(0,16)>/state.json` holding recent notes, jump list, open buffers, window layout.
   - **Explanation:** AppConfig; `src/workspace/config-file.ts`; `src/workspace/state-file.ts`.
-  - **Evidence:** `rm261003abzp-research.md` S21, S9, S30.
+  - **Evidence:** `rm261003abzp-research.md` S21, S9, S30; `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md` Discussion Evidence - `Bun.TOML.parse` errors report the JavaScript call site, not the TOML line; the editor options were approved by the user for DI2 on 2026-10-03; delivered in `src/core/config/` (PR #2).
   - **Research:** `RM261003ABZP-RF15` - TOML, XDG rules, state home; evaluated RM261003ABZP-REQ3@R1 → informed RM261003ABZP-REQ3@R2 (current RM261003ABZP-REQ3@R4)
-  - **Tradeoffs:** TOML instead of the proposal's `config.ts` — no code execution and simpler validation, at the cost of no scripting in config (agent decision under delegation).
+  - **Tradeoffs:** TOML instead of the proposal's `config.ts` — no code execution and simpler validation, at the cost of no scripting in config (agent decision under delegation). One pinned parser dependency instead of Bun's built-in parser, for line-numbered errors.
   - **Dependencies:** RM261003ABZP-DES5@R2
-  - **Predecessors:** None
+  - **Predecessors:** RM261003ABZP-DES14@R1
 
-- **RM261003ABZP-DES15@R2 — Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile**
+- **RM261003ABZP-DES15@R3 — Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile**
   - **Requirements:** RM261003ABZP-REQ10@R3 - fast checks, CI, release; RM261003ABZP-REQ11@R3 - Conventional Commits, SemVer
-  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache, triggered on pull requests only, a newer push cancelling the superseded run; release-please on `main`, which calls the release workflow through `workflow_call` when it creates a release (a manually pushed `v*` tag also triggers it); release workflow: `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, `SHA256SUMS`, smoke `so --version` natively for each target (`macos-15` arm64, `macos-15-intel` x64, `ubuntu-24.04` x64, `ubuntu-24.04-arm` arm64) before publishing.
+  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache, triggered on pull requests only, a newer push cancelling the superseded run; release-please on `main`, which calls the release workflow through `workflow_call` when it creates a release (a manually pushed `v*` tag also triggers it); release workflow: `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, every `bun build --compile` (local `build` and release) listing `src/app/main.ts` and `src/workspace/index-worker.ts` as entrypoints so the binary embeds the index worker, `SHA256SUMS`, smoke `so --version` natively for each target (`macos-15` arm64, `macos-15-intel` x64, `ubuntu-24.04` x64, `ubuntu-24.04-arm` arm64) before publishing.
   - **Explanation:** Project Structure (`package.json`, `.github/workflows/*`).
-  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided; user decision 2026-10-03 for PR-only CI (private repository, billed macOS minutes); `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF7 - one runner cross-compiles all four targets, and only a native runner proves each binary starts; RF9 - a release created by release-please with `GITHUB_TOKEN` does not trigger tag workflows, so the build is wired to its outputs; delivered in `.github/workflows/` (PR #1).
+  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided; user decision 2026-10-03 for PR-only CI (private repository, billed macOS minutes); `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF7 - one runner cross-compiles all four targets, and only a native runner proves each binary starts; RF9 - a release created by release-please with `GITHUB_TOKEN` does not trigger tag workflows, so the build is wired to its outputs; delivered in `.github/workflows/` (PR #1); a single-entrypoint binary drops the worker (`.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md` Discussion Evidence), fixed in `package.json` and `release.yml` (PR #2).
   - **Research:** `RM261003ABZP-RF3`, `RM261003ABZP-RF13`, `RM261003ABZP-RF14`; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (current RM261003ABZP-REQ10@R3)
   - **Tradeoffs:** unsigned macOS binaries (signing deferred); release-please adds a bot PR; pushes to `main` run no CI, so `main` relies on the pull-request run of its merge head; four smoke runners add billed macOS minutes per release only.
   - **Dependencies:** RM261003ABZP-DES1@R2
-  - **Predecessors:** RM261003ABZP-DES15@R1
+  - **Predecessors:** RM261003ABZP-DES15@R1, RM261003ABZP-DES15@R2
 
 - **RM261003ABZP-DES16@R1 — Performance by construction plus benchmark gates**
   - **Requirements:** RM261003ABZP-REQ9@R2 - performance targets
@@ -1272,7 +1277,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's 64 MiB image budget precedent.
   - **Research:** `RM261003ABZP-RF2` - in-process metrics; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
   - **Tradeoffs:** benchmarks add CI time (bounded by the 3 min budget); terminal display latency is outside the measurement.
-  - **Dependencies:** RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES9@R3
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES9@R3
   - **Predecessors:** None
 
 - **RM261003ABZP-DES17@R1 — File-type registry, highlighter interface, and text-file open policy**
@@ -1289,14 +1294,14 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 |---|---|---|---|---|
 | RM261003ABZP-REQ1@R3 - folder workspace, text files, safe file management | RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R1 | `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; `src/core/filetypes/`; Open a file and Save and external change flows | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
 | RM261003ABZP-REQ2@R2 - vim editing | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES10@R2 | `src/core/kernel/text/`, `src/core/kernel/editor/`, `src/core/kernel/vim/`, `src/ui/input.ts` | RM261003ABZP-S2@R1 | RM261003ABZP-V2@R1, RM261003ABZP-V3@R1 |
-| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1 | `src/core/kernel/commands/`, `src/ui/overlays/`, `src/workspace/config-file.ts`, `state-file.ts` | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
-| RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R3, RM261003ABZP-DES6@R1 | `src/core/features/links/` | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
-| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | `src/core/lang/markdown/`, `src/core/kernel/view/`, `src/ui/editors/`, `src/ui/widgets/` | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
+| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1 | `src/core/kernel/commands/`, `src/ui/overlays/`, `src/workspace/config-file.ts`, `state-file.ts` | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
+| RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R4, RM261003ABZP-DES6@R2 | `src/core/features/links/` | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
+| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | `src/core/lang/markdown/`, `src/core/kernel/view/`, `src/ui/editors/`, `src/ui/widgets/` | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
 | RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-DES11@R1 | `src/core/time/`, `src/core/features/notes/` | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
-| RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R1 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
+| RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R2 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R3 - dev, CI, release | RM261003ABZP-DES15@R2, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ10@R3 - dev, CI, release | RM261003ABZP-DES15@R3, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
 | RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
 
 ## Unresolved Items
@@ -1306,6 +1311,6 @@ None — open technical confirmations are delivery constraints with named verifi
 ## Approval
 
 - **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3
-- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 - **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R1, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
-- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke).
+- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint).

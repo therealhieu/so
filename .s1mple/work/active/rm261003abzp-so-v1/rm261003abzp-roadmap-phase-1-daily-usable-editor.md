@@ -5,7 +5,7 @@
 - **Index:** `rm261003abzp-roadmap-index.md`
 - **History:** `rm261003abzp-roadmap-phase-1-daily-usable-editor-revisions.md`
 
-Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. DI1 is delivered by W261003HEGE in PR #1; see Progress.
+Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. DI1 is delivered by W261003HEGE in PR #1 and DI2 by W261003FX70 in PR #2; see Progress.
 
 ## Phase Definition
 
@@ -46,7 +46,7 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - RM261003ABZP-REQ9@R2 (startup and index targets)
   - RM261003ABZP-REQ10@R3
   - RM261003ABZP-REQ11@R3 (boundaries including the kernel rule, restore, standards, registries for commands, syntax, file types, highlighters, decoration providers, and editor kinds)
-- **Design:** `rm261003abzp-design.md` - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3 (kernel text view and decorations; the live-preview provider is PH2), RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Design:** `rm261003abzp-design.md` - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3 (kernel text view and decorations; the live-preview provider is PH2), RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 - **Research:** `rm261003abzp-research.md`
 - **UI baseline:**
   - Accepted mockups (`ui-mockups/manifest.md`): RM261003ABZP-M1@R1, RM261003ABZP-M3@R1, RM261003ABZP-M4@R1, RM261003ABZP-M2@R1 (source-mode visuals only, reused for non-Markdown files); manifest AD4 (non-Markdown states reuse accepted visuals).
@@ -129,26 +129,26 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
 
   | Location | Change and responsibility | Phase-specific detail | Upstream design |
   |---|---|---|---|
-  | `package.json`, `tsconfig.json`, `biome.json`, `knip.json`, `release-please-config.json` (`"initial-version": "0.1.0"`), `.release-please-manifest.json` (`{ ".": "0.0.0" }`), `.github/workflows/{ci,release-please,release}.yml`, `bin/so` | Add (DI1). Toolchain, two CI jobs on pull requests, release through release-please or a tag | `check` job: `bun run check`. `test` job: component, e2e, and bench. CI runs on pull requests only. release-please calls the release workflow through `workflow_call`; smoke runs natively on four runners. The release workflow is exercised once on a manually pushed pre-release tag (`v0.1.0-rc.1`; release-please does not create rc tags) for RM261003ABZP-V14@R1. DI1 discussion confirms the release-please-action config keys against current docs. | RM261003ABZP-DES15@R2; Design, Project Structure |
+  | `package.json`, `tsconfig.json`, `biome.json`, `knip.json`, `release-please-config.json` (`"initial-version": "0.1.0"`), `.release-please-manifest.json` (`{ ".": "0.0.0" }`), `.github/workflows/{ci,release-please,release}.yml`, `bin/so` | Add (DI1). Toolchain, two CI jobs on pull requests, release through release-please or a tag | `check` job: `bun run check`. `test` job: component, e2e, and bench. CI runs on pull requests only. Every `bun build --compile` (local `build` and release) lists `src/app/main.ts` and `src/workspace/index-worker.ts` as entrypoints (DI2), so the binary embeds the index worker. release-please calls the release workflow through `workflow_call`; smoke runs natively on four runners. The release workflow is exercised once on a manually pushed pre-release tag (`v0.1.0-rc.1`; release-please does not create rc tags) for RM261003ABZP-V14@R1. DI1 discussion confirms the release-please-action config keys against current docs. | RM261003ABZP-DES15@R3; Design, Project Structure |
   | `test/boundaries.test.ts` | Add (DI1). Import rules, including the kernel rule | Two deliberate-violation fixtures under `test/fixtures/boundary-violation/`: a core file importing `node:fs`, and a `core/kernel` file importing `core/lang/markdown` | RM261003ABZP-DES1@R2; RM261003ABZP-V15@R2 |
   | `src/core/state/{types,update,store}.ts` | Add (DI1); Modify (DI2) | The unions and AppState grow per DI (Contracts, data, and state below) | RM261003ABZP-DES2@R2; Design, Action and Effect protocol, AppState |
   | `src/core/kernel/commands/{registry,keymap,defaults}.ts` | Add (DI1); Modify (DI2) | DI1: registry with `filetypes?`, trie keyed by `KeyScope` (DI1 binds globally only), vim/ex/explorer/file bindings, `<leader>e`. DI2: Markdown-scoped `gd` and `Enter`, `list(filetype)` for palette and `:` completion, which-key items merged across scopes, help rows with scope labels, config overrides (`[keys.<mode>]`, `[filetypes.<id>.keys.<mode>]`) with an `overridden` flag, the `not available for <type> files` notice | RM261003ABZP-DES5@R2; Design, `src/core/kernel/commands/registry.ts` |
   | `src/core/kernel/{text,editor,vim}/*` | Add (DI1) | TextBuffer, undo blocks, registers, window tree; engine tables; ex commands with completion | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1 |
   | `src/core/kernel/view/{types,text-view}.ts` | Add (DI1) | `RenderLine`, `TextView`, `Decoration`, and `layoutText` at their final shapes. DI1 providers emit only `mark` decorations (highlighter, search match, selection); `replace`, `widget`, and `line` decorations are first produced by the DI3 live-preview provider (Code shapes below). | RM261003ABZP-DES9@R3 (kernel view; the live-preview provider is DI3) |
 | `src/core/filetypes/registry.ts`, `src/core/lang/code/{highlight,file-types}.ts`, `src/core/lang/markdown/file-type.ts` | Add (DI1); Modify (DI2, DI3) | DI1: `FileTypeRegistry` with the `text` fallback and `EditorKindRegistry`; code file types; `lowlightHighlighter` (200-line look-back, cached per buffer version); `markdown` with the `source` view and Markdown highlighting. DI2 adds Markdown `analyze` (`parseDoc`). DI3 adds the `live` and `reading` views. | RM261003ABZP-DES17@R1, RM261003ABZP-DES9@R3; Design, `src/core/filetypes/registry.ts` |
-  | `src/core/config/schema.ts` | Add (DI1); Modify (DI2) | DI1: zod schema and defaults used directly. DI2: loaded from file with errors that carry file and line. | RM261003ABZP-DES14@R1; Design, AppConfig |
-  | `src/core/lang/markdown/{doc,blocks,syntax}.ts` | Add (DI2) | `parseDoc` with block cache and Obsidian syntax extensions (`syntaxExtensions` registry). Used by the index, link-at-cursor, and the `markdown` file type's `analyze` in PH1, and by the live-preview provider in DI3. | RM261003ABZP-DES6@R1; Design, `src/core/lang/markdown/doc.ts` |
-  | `src/core/features/links/{note-index,summarize,resolve,rename,mentions,fuzzy,commands}.ts` | Add (DI2) | `mentions.ts` holds the `link.linkMention` span edit (Code shapes below); `commands.ts` registers link commands with `filetypes: ["markdown"]` | RM261003ABZP-DES7@R3; Design, `resolve.ts` and `rename.ts` |
+  | `src/core/config/schema.ts` | Add (DI1); Modify (DI2) | DI1: zod schema and defaults used directly. DI2: loaded from file through `toml-eslint-parser` (`src/core/config/toml.ts` `parseConfig`) with errors that carry file and line; adds `editor.tabWidth` (1–16, default 8), `editor.wrap` (default `true`), and `editor.relativeNumbers` (default `true`). | RM261003ABZP-DES14@R2; Design, AppConfig |
+  | `src/core/lang/markdown/{doc,blocks,syntax,scan,mdast}.ts` | Add (DI2) | `parseDoc` with block cache and Obsidian syntax extensions (`syntaxExtensions` registry, one definition for both levels). The linear scan level (`scanDoc`) feeds the index, link-at-cursor, and the `markdown` file type's `analyze` in PH1; mdast is built lazily per block (`blockNode`) for the live-preview provider and HTML in DI3. | RM261003ABZP-DES6@R2; Design, `src/core/lang/markdown/doc.ts` |
+  | `src/core/features/links/{note-index,summarize,resolve,rename,mentions,commands}.ts`, `src/core/kernel/text/fuzzy.ts` | Add (DI2) | `mentions.ts` holds the `link.linkMention` span edit (Code shapes below); `commands.ts` registers link commands with `filetypes: ["markdown"]`. Fuzzy ranking lives in the kernel because the palette and every picker use it; the palette ranks command titles. | RM261003ABZP-DES7@R4; Design, `resolve.ts` and `rename.ts` |
   | `src/workspace/{fs,watcher,trash,system}.ts` | Add (DI1) | `fs.ts` holds `readTextFile` (16 MiB limit, NUL in the first 8 KiB, fatal UTF-8 decode; BOM and line ending kept for save). Recursive `fs.watch` is confirmed on macOS and Linux in the DI1 integration test. A fallback is not designed here; a failure returns to design. | RM261003ABZP-DES8@R2, RM261003ABZP-DES17@R1; Design, `src/workspace/fs.ts` |
-  | `src/workspace/{config-file,state-file}.ts` | Add (DI2) | The state file carries `"version": 1` (Migration below) | RM261003ABZP-DES14@R1 |
-  | `src/workspace/index-worker.ts` | Add (DI2) | Message protocol in Code shapes below. Lists every non-excluded file; summarizes notes; searches notes and text files within the 16 MiB limit, skipping binary files | RM261003ABZP-DES7@R3 |
+  | `src/workspace/{config-file,state-file}.ts` | Add (DI2) | The state file carries `"version": 1` (Migration below) | RM261003ABZP-DES14@R2 |
+  | `src/workspace/index-worker.ts` | Add (DI2) | Message protocol in Code shapes below. Lists every non-excluded file; summarizes notes; searches notes and text files within the 16 MiB limit, skipping binary files | RM261003ABZP-DES7@R4 |
   | `src/ui/{shell,input,theme}.ts`, `src/ui/editors/{registry,text-view}.ts`, `src/ui/views/{bufferline,explorer,statusline,cmdline}.ts`, `src/ui/overlays/{host,prompt,conflict,notify}.ts` | Add (DI1) | `EditorView` paints `RenderLine[]` from `layoutText`. `editorViews` maps only `text` in DI1 (`base` arrives in DI4); `src/ui/widgets/` arrives with the first widget in DI3. The statusline hides backlinks and words for non-Markdown files. OpenTUI paint and buffer APIs are confirmed at the pinned version. | RM261003ABZP-DES10@R2; UI design Composition Model |
   | `src/ui/overlays/{whichkey,picker,completion}.ts`, `src/ui/views/side-panel.ts` | Add (DI2) | One `Picker` serves the sources files (every non-excluded file), recent, grep (notes and text files), headings, tags, backlinks, commands (filtered by file type), and help (with scope labels) | RM261003ABZP-DES10@R2, RM261003ABZP-UDES5@R2, RM261003ABZP-UDES6@R1 |
   | `src/app/{main,effects}.ts` | Add (DI1); Modify (DI2) | DI2 adds worker start and restart, config and state loading, and the `search` and `saveState` effects | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2 |
-  | `test/e2e/`, `test/bench/`, `test/fixtures/` | Add (DI1); Modify (DI2) | DI1: PTY restore test, bench harness, 5,000-line note, code, CRLF + BOM, and binary fixtures, and the 17 MiB file generated at test time for RM261003ABZP-V18@R1. DI2: 10,000-note generator and the RM261003ABZP-V13@R1 bench. DI3: the 5,000-line TypeScript fixture for RM261003ABZP-V12@R2. | RM261003ABZP-DES15@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 |
+  | `test/e2e/`, `test/bench/`, `test/fixtures/` | Add (DI1); Modify (DI2) | DI1: PTY restore test, bench harness, 5,000-line note, code, CRLF + BOM, and binary fixtures, and the 17 MiB file generated at test time for RM261003ABZP-V18@R1. DI2: 10,000-note generator and the RM261003ABZP-V13@R1 bench. DI3: the 5,000-line TypeScript fixture for RM261003ABZP-V12@R2. | RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 |
 
 - **Runtime and failure flow**
-  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; Design, Runtime Flows (Keystroke to frame, Startup, Open a file, Save and external change, Follow, complete, and rename links).
+  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; Design, Runtime Flows (Keystroke to frame, Startup, Open a file, Save and external change, Follow, complete, and rename links).
   - **Phase refinement:**
     - DI1 startup has no index. The first frame comes from a shallow `readdir` and the opened file, so the DI1 first frame already meets the < 200 ms budget.
     - Every open (`so <file>`, explorer, `:e`, and from DI2 pickers and link follow) goes through `readTextFile` from DI1; a refused file never creates a buffer.
@@ -156,6 +156,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - Until the worker reports `ready`, link features answer from the partial index and the statusline shows `◌ indexing n/total`.
     - A worker crash restarts the worker once. A second crash shows `index unavailable` while editing continues.
     - Between the DI1 and DI2 merges, explorer rename and move change only the file. DI2 routes `file.rename` and `file.move` through `planRename`. No release is cut in between.
+    - One link rewrite runs at a time. A second rename or move before the first one's edits report back shows `links still updating — try again when the update finishes` and changes nothing.
   - **Flow:**
 
     ```text
@@ -178,7 +179,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - RM261003ABZP-V18@R1 - open policy and BOM/EOL-preserving save.
 
 - **Contracts, data, and state**
-  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1; Design, Action and Effect protocol, AppState, NoteSummary and NoteIndex, AppConfig, FileType and Decoration model.
+  - **Design:** RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1; Design, Action and Effect protocol, AppState, NoteSummary and NoteIndex, AppConfig, FileType and Decoration model.
   - **Inherited:**
     - `update` is pure and synchronous, and time arrives in actions.
     - Every failing effect returns a success or failure action.
@@ -218,8 +219,10 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
         | { kind: "clipboardWrite"; text: string } | { kind: "clipboardRead" } | { kind: "exit"; code: number };
       export type FsOp = { kind: "create" | "rename" | "move" | "trash"; from: string; to?: string; dir?: boolean; permanent?: true };
       export function createStore(initial: AppState, update: Update, run: (e: Effect) => void): Store;  // update = createUpdate(registries)
-      // DI2 adds: Action indexBatch | indexReady | searchResults | configLoaded | stateLoaded;
-      //           Effect search | saveState
+      // DI2 adds: Action indexBatch | indexReady | indexFailed | searchResults | configLoaded | stateLoaded
+      //                  | editsApplied | previewLoaded;
+      //           Effect search | saveState | loadConfig | applyEdits | readPreview;
+      //           TimerId "whichKey" | "saveState" | "search"
       ```
 
       Every effect that can fail answers with a result action (`fileLoaded`/`fileRefused`, `saved`/`saveFailed`, `dirListed`, `fsResult`, `clipboardText`). `listDir`/`dirListed` give the explorer a shallow listing for the first frame, `fileRefused` `"io"` reports an unreadable file, `clipboardText.error` reports a failed paste, and `FsOp.permanent` marks a delete that the user confirmed by typing when no trash is available. `key` and `timer` carry `now`, so autosave and which-key timing are pure functions of the actions.
@@ -252,7 +255,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - **Verification:** RM261003ABZP-V18@R1 - file types, refusal, BOM/EOL save; RM261003ABZP-V15@R2 - kernel imports; DI1 bench harness (keystroke and open in source view; an early guard, not S9 evidence); RM261003ABZP-UV1@R2 goldens.
 
   - **`src/workspace/index-worker.ts` — DI2 worker protocol**
-    - **Design:** RM261003ABZP-DES7@R3; Design, NoteSummary and NoteIndex, Startup flow.
+    - **Design:** RM261003ABZP-DES7@R4; Design, NoteSummary and NoteIndex, Startup flow.
     - **Phase refinement:** The message set between the main thread and the worker.
     - **Shape:**
 
@@ -260,20 +263,21 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
       export type ToWorker =
         | { t: "scan"; root: string; ignore: string[] }                 // hidden dirs + .gitignore patterns
         | { t: "changed"; paths: string[] } | { t: "removed"; paths: string[] }
-        | { t: "search"; id: number; query: string; limit: number };   // full-text and unlinked mentions
+        | { t: "search"; id: number; query: string; limit: number;     // full-text and unlinked mentions
+            mode?: "text" | "mentions"; names?: string[]; exclude?: string };
       export type FromWorker =
-        | { t: "batch"; summaries: NoteSummary[]; done: number; total: number }
-        | { t: "ready" } | { t: "results"; id: number; hits: SearchHit[] } | { t: "error"; message: string };
+        | { t: "batch"; summaries: NoteSummary[]; done: number; total: number; files?: string[] }
+        | { t: "ready" } | { t: "results"; id: number; hits: SearchHit[]; capped?: boolean } | { t: "error"; message: string };
       ```
 
       The app forwards each `FromWorker` message as an action (`indexBatch`, `indexReady`, `searchResults`). The watcher's `fileChanged` events become `changed` and `removed` messages. Search ids let `update` drop stale results when the query has changed.
 
-    - **Callers and wiring:** `src/app/main.ts` spawns the worker after the first frame. The `search` effect posts `search`. The worker owns file reading for summaries and text search.
+    - **Callers and wiring:** `src/app/main.ts` spawns the worker after the first frame. The `search` effect posts `search`. The worker owns file reading for summaries and text search, and summarizes each note from `scanDoc` (the scan level) without building mdast. The optional fields are additive: `files` carries the workspace file list, `mode`, `names`, and `exclude` select an unlinked-mentions search, and `capped` marks a result list cut at `limit`.
     - **Invariants:** the main thread never scans or reads every note. The worker never writes files.
     - **Verification:** RM261003ABZP-V13@R1 - typing during indexing still meets the keystroke budget. RM261003ABZP-UV4@R2 - files and grep picker rows, including non-Markdown files.
 
   - **`src/core/features/links/mentions.ts` — DI2 `link.linkMention`**
-    - **Design:** RM261003ABZP-DES7@R3 (`link.linkMention`); UI design RM261003ABZP-UDES6@R1.
+    - **Design:** RM261003ABZP-DES7@R4 (`link.linkMention`); UI design RM261003ABZP-UDES6@R1.
     - **Phase refinement:** The span edit and how it reaches open and closed notes.
     - **Shape:**
 
@@ -293,7 +297,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - **Verification:** RM261003ABZP-V6@R2 case (b); RM261003ABZP-UV5@R1 - the mention moves to Linked.
 
 - **Migration and compatibility**
-  - **Design:** RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R2; Design, Cross-cutting and Evolution (no prior data format).
+  - **Design:** RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3; Design, Cross-cutting and Evolution (no prior data format).
   - **Phase refinement:**
     - No migration exists. Notes stay plain Obsidian-compatible files, and `.obsidian/` is never read or written.
     - The state file starts with `"version": 1`. A missing, corrupt, or unknown-version file loads as empty state, so a later format change needs no migration code.
@@ -319,7 +323,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
   - These refinements implement the pinned DES and UDES revisions without changing any requirement.
   - Introducing state per DI ends at the exact RM261003ABZP-DES2@R2 shape.
   - DI1's kernel view is the final RM261003ABZP-DES9@R3 contract; later DIs add providers and file-type registrations only.
-  - The worker protocol and `linkMentionEdit` make RM261003ABZP-DES7@R3 concrete without adding responsibilities.
+  - The worker protocol and `linkMentionEdit` make RM261003ABZP-DES7@R4 concrete without adding responsibilities.
 
 ## Delivery Items
 
@@ -384,7 +388,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - RM261003ABZP-DES9@R3 - kernel text view and decorations (no live-preview provider); Design, `src/core/kernel/view/text-view.ts`.
     - RM261003ABZP-DES10@R2 - OpenTUI shell, editor views, input, restore; Design, `src/ui/editors/text-view.ts` and `src/ui/input.ts`.
     - RM261003ABZP-DES17@R1 - file-type registry, highlighter, text-file open policy; Design, Open a file flow, `src/core/filetypes/registry.ts`, `src/workspace/fs.ts`.
-    - RM261003ABZP-DES15@R2 - toolchain, CI, release; Design, Project Structure.
+    - RM261003ABZP-DES15@R3 - toolchain, CI, release; Design, Project Structure.
     - RM261003ABZP-DES16@R1 - frame coalescing and bench gates; Design, Keystroke to frame flow.
   - **UI scope:**
     - RM261003ABZP-M1@R1, RM261003ABZP-M4@R1 (S10–S17 explorer and conflict states); manifest AD4.
@@ -466,7 +470,7 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
       - rename and move with impact prompt and link rewrite across open (in memory) and closed (atomic write) notes.
     - Config and state:
       - XDG TOML loading with file and line errors and fallback to defaults;
-      - keymap overrides (`[keys.<mode>]` and `[filetypes.<id>.keys.<mode>]`) and option overrides, including `escTimeoutMs`, autosave, and `theme`/`color`;
+      - keymap overrides (`[keys.<mode>]` and `[filetypes.<id>.keys.<mode>]`) and option overrides, including `escTimeoutMs`, autosave, `theme`/`color`, and `editor.tabWidth`, `editor.wrap`, and `editor.relativeNumbers`;
       - state file with recents, jumps, open buffers, and window layout (`"version": 1`, debounced 2 s and on exit).
     - Statusline: index progress and backlinks count segments (backlinks for notes only).
     - Performance: 10,000-note generator and the RM261003ABZP-V13@R1 benchmark in CI.
@@ -477,12 +481,12 @@ RM261003ABZP-PH1@R2 — Daily-usable editor
     - Reading or writing `.obsidian/`.
   - **Design:**
     - RM261003ABZP-DES5@R2 - which-key, palette, help, and overrides read one registry; file-type-scoped keys and commands; Design, `src/core/kernel/commands/registry.ts`.
-    - RM261003ABZP-DES6@R1 - block-cached Doc and syntax extensions; Design, `src/core/lang/markdown/doc.ts`.
-    - RM261003ABZP-DES7@R3 - worker index, file list, text search, resolution order, rename, link-mention; Design, NoteSummary and NoteIndex, `resolve.ts` and `rename.ts`.
+    - RM261003ABZP-DES6@R2 - block-cached Doc with a scan level and lazy mdast, and syntax extensions; Design, `src/core/lang/markdown/doc.ts`.
+    - RM261003ABZP-DES7@R4 - worker index, file list, text search, resolution order, rename, link-mention; Design, NoteSummary and NoteIndex, `resolve.ts` and `rename.ts`.
     - RM261003ABZP-DES17@R1 - `markdown` file type `analyze`; search respects the open policy limits.
     - RM261003ABZP-DES8@R2 - writes for rename and link-mention through `atomicWrite`.
     - RM261003ABZP-DES10@R2 - overlays and side panel.
-    - RM261003ABZP-DES14@R1 - TOML config and XDG state; Design, AppConfig.
+    - RM261003ABZP-DES14@R2 - TOML config and XDG state; Design, AppConfig.
     - RM261003ABZP-DES16@R1 - worker keeps indexing off the input path; Design, Startup flow.
   - **UI scope:**
     - RM261003ABZP-M3@R1, RM261003ABZP-M4@R1 (S1–S9, S18), RM261003ABZP-M1@R1 (panel and indexing states).
@@ -565,14 +569,14 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
 
 ## Release and Exit Criteria
 
-- **Release approach:** RM261003ABZP-DES15@R2:
+- **Release approach:** RM261003ABZP-DES15@R3:
   - release-please accumulates Conventional Commits on `main`.
   - The release PR is merged only after the PH1 exit evidence below passes, which tags `v0.1.0`.
   - The release workflow cross-compiles four binaries, publishes `SHA256SUMS`, and smoke-tests `so --version` on macOS and Linux.
 - **Compatibility:** Notes stay valid Obsidian files, other text files keep their BOM and line endings, and `so` writes nothing into the workspace except the user's files. `.obsidian/` is never touched.
 - **Rollback:**
   - Before `v0.1.0`, revert the offending PR on `main`.
-  - After `v0.1.0`, users reinstall a previous binary (RM261003ABZP-DES15@R2). A corrupt or unknown-version state file loads as empty.
+  - After `v0.1.0`, users reinstall a previous binary (RM261003ABZP-DES15@R3). A corrupt or unknown-version state file loads as empty.
 - **Exit criteria:**
   - RM261003ABZP-S1@R1 - complete old-or-new files, no silent overwrite; verified by RM261003ABZP-V1@R1
   - RM261003ABZP-S2@R1 - Neovim-equal results; verified by RM261003ABZP-V2@R1, RM261003ABZP-V3@R1
@@ -598,10 +602,10 @@ Completed child works do not establish phase completion without the required int
 |---|---|---|---|---|
 | RM261003ABZP-REQ1@R3 - folder workspace, text files, safe files | RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI1@R2 | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
 | RM261003ABZP-REQ2@R2 - vim editing | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES10@R2 | RM261003ABZP-DI1@R2 | RM261003ABZP-S2@R1 | RM261003ABZP-V2@R1, RM261003ABZP-V3@R1 |
-| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1 | RM261003ABZP-DI2@R2 (registry core in RM261003ABZP-DI1@R2) | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
-| RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R3, RM261003ABZP-DES6@R1 | RM261003ABZP-DI2@R2 | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
+| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI2@R2 (registry core in RM261003ABZP-DI1@R2) | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
+| RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R4, RM261003ABZP-DES6@R2 | RM261003ABZP-DI2@R2 | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
 | RM261003ABZP-REQ9@R2 - performance (startup, index; harness) | RM261003ABZP-DES16@R1 | RM261003ABZP-DI1@R2 (harness), RM261003ABZP-DI2@R2 | RM261003ABZP-S9@R1 | RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R3 - development, CI, release | RM261003ABZP-DES15@R2, RM261003ABZP-DES1@R2 | RM261003ABZP-DI1@R2 | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ10@R3 - development, CI, release | RM261003ABZP-DES15@R3, RM261003ABZP-DES1@R2 | RM261003ABZP-DI1@R2 | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
 | RM261003ABZP-REQ11@R3 - foundations (boundary and kernel rule, restore, file-type registration) | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI1@R2, RM261003ABZP-DI2@R2 (syntax registry) | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
 
 ### UI Coverage
@@ -619,12 +623,12 @@ Completed child works do not establish phase completion without the required int
 ## Progress
 
 - **Phase delivery status:** In progress
-- **Phase evidence:** DI1 merged to `main` (`c98aa19`, PR #1) with CI green; PH1 exit evidence and the `v0.1.0` release are pending DI2.
+- **Phase evidence:** DI1 merged to `main` (`c98aa19`, PR #1) and DI2 merged (`9adb285`, PR #2), both with CI green. The PH1 exit record and the `v0.1.0` release are pending (Release and Exit Criteria).
 
 | DI | Delivery status | Work | PR | Evidence / blocker |
 |---|---|---|---|---|
 | RM261003ABZP-DI1@R2 | Completed | W261003HEGE | PR #1 | Merged 2026-10-03T11:00:09Z as `c98aa19` with CI green; `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md` (all groups accepted, no findings). G1 closed. Open, not blocking DI2: the manual macOS Trash check (W261003HEGE V11.4) and the `v0.1.0-rc.1` release dry run (RM261003ABZP-V14@R1, W261003HEGE V16.1, tag not yet authorized) |
-| RM261003ABZP-DI2@R2 | Not started | Pending | Pending | G1 met; branch `feat/rm261003abzp-di2-navigation-and-links` created; next: `s1mple-discuss` |
+| RM261003ABZP-DI2@R2 | Completed | W261003FX70 | PR #2 | Merged 2026-10-03T21:50:57Z as `9adb285` with CI green (`check`, `test` on ubuntu-24.04 and macos-15); `.s1mple/work/done/w261003fx70-navigation-and-links/reports/overall-verification-report.md` (Passed; all five groups accepted, no findings). G2 and G3 outputs merged; PH2 still waits for the PH1 exit. Open, not blocking: one Linux CI bench run below every target is the only RM261003ABZP-V13@R1 evidence, after earlier runs swung about 1.7× (PH1 exit decision); max keystroke latency while indexing (20–45 ms) is reported but not gated |
 
 ## Unresolved Items
 
@@ -642,7 +646,7 @@ A material mismatch returns to roadmap design clarification.
 - **Approved phase:** RM261003ABZP-PH1@R2
 - **Approved delivery items:** RM261003ABZP-DI1@R2, RM261003ABZP-DI2@R2
 - **Approved phase design:** This document's Phase Design, from Architecture and boundaries through UI realization. Pinned upstream:
-  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
+  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
   - RM261003ABZP-UDES1@R2, RM261003ABZP-UDES2@R1, RM261003ABZP-UDES3@R2 (non-Markdown source view), RM261003ABZP-UDES5@R2, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES7@R2, RM261003ABZP-UDES11@R1.
 - **Success and verification baseline:**
   - Design-owned: RM261003ABZP-S1@R1, RM261003ABZP-S2@R1, RM261003ABZP-S3@R1, RM261003ABZP-S4@R1, RM261003ABZP-S9@R1, RM261003ABZP-S10@R1, RM261003ABZP-S11@R1, RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R1, RM261003ABZP-V15@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1.
@@ -651,3 +655,4 @@ A material mismatch returns to roadmap design clarification.
   - R1: the user delegated all decisions on 2026-10-03 ("you self-drive and decide all … don't raise any question to me"; "prevent many DIs and phases split"). Under that delegation the agent approved this phase and its two DIs, the per-DI state introduction, the source-only DI1 layout, the worker protocol, `linkMentionEdit`, the state-file version, and the `v0.1.0` release at phase exit.
   - R2: on 2026-10-03 the user asked to leave room for a code editor and notebooks and selected "Apply all six (Recommended)" (`rm261003abzp-roadmap-context.md@R2`). Under the standing delegation the agent approved the PH1@R2 refinements: the kernel, file-type registry, highlighter, and text-file open policy in DI1; file-type-scoped keys, all-file pickers, and text search in DI2; the same phase split and `v0.1.0` release.
   - Post-DI1 synchronization (revisions retained): approved by the user on 2026-10-03. Upstream moved to RM261003ABZP-REQ10@R3, RM261003ABZP-DES8@R2, and RM261003ABZP-DES15@R2. The DI1 code shapes now match the delivered unions, and the trash, CI, and release wording matches PR #1. No PH or DI outcome, scope, gate, or verification changed.
+  - Post-DI2 synchronization (revisions retained): approved by the user on 2026-10-04. Upstream moved to RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, and RM261003ABZP-DES15@R3. The DI2 code shapes now match the delivered unions and worker protocol. No PH or DI outcome, scope, gate, or verification changed.
