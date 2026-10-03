@@ -683,7 +683,11 @@ Work: W261003HEGE — editor-foundation
 
 ## Blockers and Deviations
 
-`Pending implementation`
+- **DEV1 — No work-process identifiers in code (user-approved, 2026-10-03).**
+  - Location: `.s1mple/S1MPLE.md` §3 Implementation (commit `59dff86`); plan previews that name tests `"V<id> …"` (e.g. `w261003hege-plan-1-toolchain-and-kernel.md:177`) and every `-t V<id>` command in plan parts and this goal's Verification Cases.
+  - Evidence: user added the rule mid-execution and chose "Apply strictly" for test names.
+  - Impact: tests are named by behavior only; each `-t V<id>` check runs as `-t "<behavior test name>"` (or the whole file). Implementation reports map every V case → test file, test name, and command; verifiers use that mapping. Requirements, design, scope, and expected results are unchanged.
+  - Required resolution: include the rule in every implementer, verifier, and remediation assignment; verifiers treat any REQ/DES/S/V/phase/goal/task identifier in `src/`, `test/`, `scripts/`, or workflow files as a finding.
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
 
