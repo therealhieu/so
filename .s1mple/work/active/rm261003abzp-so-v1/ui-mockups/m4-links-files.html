@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M4 Links &amp; files</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content, esc = M.esc;
+  const DOCS = {
+    "projects/so-roadmap.md": C.roadmap,
+    "projects/garden-app.md": C.garden,
+    "index.md": C.index,
+    "daily/2026-10-03.md": C.daily,
+    "daily/2026-10-02.md": "# Friday, October 2\n\n## Review\n- Boundary test green on CI (1m 48s)\n- Vim motions: 23 of 31 done\n- demoed [[so-roadmap#Goals]] to Linh",
+    "people/linh.md": "---\naliases: [Linh]\ntags: [people]\n---\n# Linh\n\nHelping with [[so-roadmap]] UX.\nSuggested the kitty graphics fallback order.",
+  };
+  // the version another program (e.g. Obsidian on a synced folder) wrote to disk
+  const DISK_ROADMAP = C.roadmap.replace("- Keep notes as plain files — no vault, no sync", "- Keep notes as plain files — no vault, no lock-in").replace("- 10-03 vim motions: w b e f t done", "- 10-03 vim motions: w b e f t done\n- 10-03 synced from laptop");
+  const RESOLVE = { "garden-app": "projects/garden-app.md", "people/linh": "people/linh.md", index: "index.md", "daily/2026-10-02": "daily/2026-10-02.md", "so-roadmap": "projects/so-roadmap.md", "daily/2026-10-03": "daily/2026-10-03.md" };
+  const FOLDERS = ["/", "areas/", "daily/", "people/", "projects/", "projects/archive/", "templates/"];
+  const LINKED = [
+    { path: "index.md", line: 3, ctx: "- [[so-roadmap]] — current focus" },
+    { path: "daily/2026-10-03.md", line: 9, ctx: "- [ ] Review [[so-roadmap]] milestones" },
+    { path: "daily/2026-10-02.md", line: 6, ctx: "- demoed [[so-roadmap#Goals]] to Linh" },
+    { path: "projects/garden-app.md", line: 12, ctx: "- Reuse the [[so-roadmap#Goals|so goals]] format" },
+    { path: "people/linh.md", line: 7, ctx: "Helping with [[so-roadmap]] UX." },
+  ];
+  const UNLINKED = [
+    { path: "inbox.md", line: 2, ctx: "ask Minh about the so roadmap demo", hit: "so roadmap" },
+    { path: "projects/reading-list.md", line: 14, ctx: "DDIA ch.3 ties into the so roadmap", hit: "so roadmap" },
+  ];
+
+  function init() {
+    return {
+      path: "projects/so-roadmap.md", doc: M.md.parse(C.roadmap), st: { cur: { l: 30, c: 37 }, view: "live", vim: "normal", top: 0 },
+      dirty: false, explorer: true, focus: "editor", tree: C.tree.map((r) => Object.assign({}, r)), treeSel: 5,
+      side: false, sideSel: 0, unlinked: UNLINKED.slice(),
+      jumps: [], jpos: 0, prompt: null, conflict: null, diff: null, reloaded: null,
+      trash: "available", cmdline: null, msg: "", pending: null, ctrlw: false, noteName: "so-roadmap",
+    };
+  }
+  // window view over app state so the shared vim helper can edit app.doc in place
+  const W = (app) => ({ get doc() { return app.doc; }, set doc(v) { app.doc = v; }, get undo() { return app.undo; }, set undo(v) { app.undo = v; }, st: app.st });
+
+  /* ---------- links and jumps ---------- */
+  function linkAt(app) {
+    const raw = app.doc[app.st.cur.l].raw, c = app.st.cur.c;
+    const re = /!?\[\[([^\]]+)\]\]/g;
+    let m, first = null;
+    while ((m = re.exec(raw))) { const hit = { target: m[1].split("|")[0].split("#")[0], sub: (m[1].split("|")[0].split("#")[1] || ""), from: m.index, to: m.index + m[0].length }; if (!first) first = hit; if (c >= hit.from && c < hit.to) return hit; }
+    return first;
+  }
+  function openPath(app, path, line, push) {
+    if (push !== false) { app.jumps = app.jumps.slice(0, app.jpos); app.jumps.push({ path: app.path, l: app.st.cur.l, c: app.st.cur.c }); app.jpos = app.jumps.length; }
+    app.path = path; app.doc = M.md.parse(DOCS[path]); app.st.cur = { l: line || 0, c: 0 }; app.st.top = 0;
+    app.noteName = path.split("/").pop().replace(/\.md$/, "");
+    app.focus = "editor";
+  }
+  function follow(app) {
+    const L = linkAt(app);
+    if (!L) { app.msg = '<span class="dim">no link under the cursor</span>'; return; }
+    const path = RESOLVE[L.target];
+    if (!path) { app.prompt = { kind: "create", path: (L.target.includes("/") ? "" : app.path.replace(/[^/]+$/, "")) + L.target + ".md" }; return; }
+    let line = 0;
+    if (L.sub) { const lines = DOCS[path].split("\n"); line = Math.max(0, lines.findIndex((x) => x.replace(/^#+ /, "") === L.sub)); }
+    openPath(app, path, line);
+    app.msg = `<span class="dim">"${esc(path)}"${L.sub ? " #" + esc(L.sub) : ""} · C-o to jump back</span>`;
+  }
+  function jump(app, dir) {
+    if (dir < 0) {
+      if (app.jpos === 0) { app.msg = '<span class="dim">at the oldest jump</span>'; return; }
+      if (app.jpos === app.jumps.length) app.jumps.push({ path: app.path, l: app.st.cur.l, c: app.st.cur.c });
+      app.jpos--;
+    } else {
+      if (app.jpos >= app.jumps.length - 1) { app.msg = '<span class="dim">at the newest jump</span>'; return; }
+      app.jpos++;
+    }
+    const j = app.jumps[app.jpos];
+    app.path = j.path; app.doc = M.md.parse(DOCS[j.path]); app.st.cur = { l: j.l, c: j.c }; app.st.top = 0;
+    app.noteName = j.path.split("/").pop().replace(/\.md$/, "");
+    app.msg = `<span class="dim">jump ${app.jpos + 1}/${app.jumps.length} · ${esc(j.path)}:${j.l + 1}</span>`;
+  }
+
+  /* ---------- prompts ---------- */
+  function startRename(app) { app.prompt = { kind: "rename", value: app.noteName, orig: app.noteName }; }
+  function doRename(app, value) {
+    const from = app.path, to = app.path.replace(/[^/]+$/, value + ".md");
+    DOCS[to] = DOCS[from]; app.path = to; app.noteName = value;
+    const row = app.tree.find((r) => r.path === from); if (row) { row.name = value + ".md"; row.path = to; }
+    M.toast(app, "ok", "12 files updated", `${from} → ${to} · 31 links rewritten (aliases, #headings and ^blocks kept)`, 5000);
+  }
+  function treeAction(app, k) {
+    const r = app.tree[app.treeSel];
+    const parent = r.kind === "dir" ? r.path + "/" : r.path.replace(/[^/]+$/, "");
+    if (k === "a") { app.tree.splice(app.treeSel + 1, 0, { depth: r.kind === "dir" ? r.depth + 1 : r.depth, kind: "md", name: "", edit: "", path: parent, isNew: true }); app.treeSel++; app.prompt = { kind: "tree-edit", mode: "create" }; return; }
+    if (k === "r") { r.edit = r.name; app.prompt = { kind: "tree-edit", mode: "rename", orig: r.name }; return; }
+    if (k === "m") { app.prompt = { kind: "move", query: "", sel: 4, item: r.path }; return; }
+    if (k === "d") { app.prompt = app.trash === "available" ? { kind: "trash", item: r.path } : { kind: "typed", item: r.path, value: "" }; return; }
+  }
+
+  /* ---------- rendering ---------- */
+  function sidePanel(app) {
+    const L = [`<span class="t-h3">▾ Linked mentions</span> <span class="dim">(${LINKED.length + 2})</span>`];
+    const sel = (i) => app.focus === "side" && app.sideSel === i;
+    LINKED.forEach((e, i) => {
+      L.push(`<span class="${sel(i) ? "pick-sel" : ""}"> <span class="t-wiki" style="text-decoration:none">◇ ${esc(e.path.replace(/\.md$/, ""))}</span><span class="dim">:${e.line}</span></span>`);
+      L.push(`   <span class="dim">${esc(e.ctx.length > 30 ? e.ctx.slice(0, 29) + "…" : e.ctx)}</span>`);
+    });
+    L.push(' <span class="dim">+2 more</span>', "");
+    L.push(`<span class="t-h2">▾ Unlinked mentions</span> <span class="dim">(${app.unlinked.length})</span>`);
+    app.unlinked.forEach((e, j) => {
+      const i = LINKED.length + j;
+      const at = e.ctx.indexOf(e.hit);
+      const ctx = esc(e.ctx.slice(Math.max(0, at - 12), at)) + `<span class="t-hl">${esc(e.hit)}</span>` + esc(e.ctx.slice(at + e.hit.length, at + e.hit.length + 8));
+      L.push(`<span class="${sel(i) ? "pick-sel" : ""}"> <span class="muted">◇ ${esc(e.path.replace(/\.md$/, ""))}</span><span class="dim">:${e.line}</span></span>`);
+      L.push(`   <span class="dim">…${ctx}…</span>`);
+    });
+    if (!app.unlinked.length) L.push(' <span class="dim">none</span>');
+    L.push("", ...(app.focus === "side" ? ['<span class="dim">j/k move · ⏎ open · l link it</span>', '<span class="dim">C-w h back to the editor</span>'] : ['<span class="dim">C-w l to focus this panel</span>']));
+    return { title: "BACKLINKS · " + app.noteName, lines: L };
+  }
+  function promptOverlay(app) {
+    const p = app.prompt;
+    if (!p) return "";
+    if (p.kind === "rename") {
+      const box = M.ui.center(app, 64, 12);
+      const body = [
+        ` <span class="muted">Rename note</span>  <span class="dim">${esc(app.path)}</span>`,
+        "",
+        ` <span class="t-h2">❯</span> <span class="cur-under">${esc(p.value)}</span><span class="cur"> </span><span class="dim">.md</span>`,
+        "",
+        ` <span class="t-warn">⟳</span> Links to update: <span class="t-b">31 links in 12 files</span>`,
+        ` <span class="dim">  index.md · daily/2026-10-03.md · daily/2026-10-02.md</span>`,
+        ` <span class="dim">  garden-app.md · people/linh.md · +7 more</span>`,
+        ` <span class="dim">  formats kept: [[x|alias]] [[x#Heading]] [[x#^block]] [](x.md)</span>`,
+      ].map((h) => `<div class="ln">${h}</div>`).join("");
+      return M.ui.float({ x: box.x, y: box.y, w: box.w, h: box.h, title: "Rename", body: body + '<div class="ln ffoot"> ⏎ rename and update links · esc cancel</div>' });
+    }
+    if (p.kind === "trash") {
+      const box = M.ui.center(app, 52, 7);
+      return M.ui.float({ x: box.x, y: box.y, w: box.w, h: box.h, title: "Delete", style: "border-color:var(--warn)", body: [` Move to Trash?`, ` <span class="t-b">${esc(p.item)}</span>`, "", ` <span class="wk-key">y</span> move to Trash   <span class="wk-key">N</span> cancel`].map((h) => `<div class="ln">${h}</div>`).join("") });
+    }
+    if (p.kind === "typed") {
+      const name = p.item.split("/").pop();
+      const box = M.ui.center(app, 62, 10);
+      const ok = p.value === name;
+      return M.ui.float({ x: box.x, y: box.y, w: box.w, h: box.h, title: "Delete permanently", style: "border-color:var(--error)", body: [
+        ` <span class="t-err">✗ Trash is not available</span> <span class="dim">(macOS refused · no permission)</span>`,
+        ` This cannot be undone. Type the file name to confirm:`,
+        ` <span class="t-b">${esc(name)}</span>`,
+        "",
+        ` <span class="t-h2">❯</span> ${esc(p.value)}<span class="cur"> </span>`,
+        "",
+        ok ? ` <span class="t-err">⏎ delete permanently</span> <span class="dim">· esc cancel</span>` : ` <span class="dim">⏎ disabled until the name matches · esc cancel</span>`,
+      ].map((h) => `<div class="ln">${h}</div>`).join("") });
+    }
+    if (p.kind === "move") {
+      const its = FOLDERS.filter((f) => M.ui.fuzzy(f, p.query) > 0);
+      p.sel = M.clamp(p.sel, 0, Math.max(0, its.length - 1));
+      return M.ui.picker(app, { title: "Move " + p.item.split("/").pop() + " to…", query: p.query, items: its.map((f) => ({ html: ` <span class="ic-dir">▸</span> ${M.ui.highlightHits(f, p.query)}` })), sel: p.sel, preview: [` <span class="muted">${esc(p.item)}</span>`, ` <span class="dim">→</span> <span class="t-b">${esc((its[p.sel] || "") + p.item.split("/").pop())}</span>`, "", ' <span class="t-warn">⟳</span> links in 12 files will be rewritten', ' <span class="dim">shortest unique form is kept</span>'], w: 80, h: 14, foot: "⏎ move here · esc cancel" });
+    }
+    return "";
+  }
+  function conflictOverlay(app) {
+    const box = M.ui.center(app, 66, 11);
+    return M.ui.float({ x: box.x, y: box.y, w: box.w, h: box.h, title: "File changed on disk", style: "border-color:var(--warn)", body: [
+      ` <span class="t-warn">▲</span> <span class="t-b">${esc(app.path)}</span> changed on disk`,
+      `   <span class="dim">while you have unsaved edits (1 line). Nothing was overwritten.</span>`,
+      "",
+      `   <span class="dim">disk:</span>  modified 09:41:07 by another program`,
+      `   <span class="dim">yours:</span> 1 unsaved change since 09:40:52`,
+      "",
+      ` <span class="wk-key">k</span> keep mine    <span class="wk-key">t</span> take disk    <span class="wk-key">d</span> view diff`,
+    ].map((h) => `<div class="ln">${h}</div>`).join("") + '<div class="ln ffoot"> autosave is paused for this note until you choose</div>' });
+  }
+  function diffView(app) {
+    const mine = app.doc.map((l) => l.raw), disk = DISK_ROADMAP.split("\n");
+    const rows = [];
+    let i = 0, j = 0;
+    while (i < mine.length || j < disk.length) {
+      if (mine[i] === disk[j]) { rows.push([" ", mine[i], " ", disk[j]]); i++; j++; continue; }
+      if (disk.indexOf(mine[i], j) < 0 && i < mine.length) {
+        if (j < disk.length && mine.indexOf(disk[j], i) < 0) { rows.push(["-", mine[i], "+", disk[j]]); i++; j++; }
+        else { rows.push(["-", mine[i], " ", ""]); i++; }
+      } else { rows.push([" ", "", "+", disk[j]]); j++; }
+    }
+    const half = Math.floor((app.cols - 1) / 2);
+    const h = app.rows - 3;
+    const first = Math.max(0, rows.findIndex((r) => r[0] !== " " || r[2] !== " ") - 6);
+    const cell = (sign, text, w) => {
+      const cls = sign === "-" ? "diff-del" : sign === "+" ? "diff-add" : "";
+      return `<div class="ln ${cls}" style="width:${w}ch;overflow:hidden"><span class="dim">${sign === " " ? " " : sign}</span> ${esc((text || "").slice(0, w - 3))}</div>`;
+    };
+    let L = `<div class="ln" style="background:var(--bg-dark)"> <span class="t-b">yours</span> <span class="dim">(buffer, unsaved)</span></div>`, R = `<div class="ln" style="background:var(--bg-dark)"> <span class="t-b">disk</span> <span class="dim">(09:41:07)</span></div>`;
+    rows.slice(first, first + h - 1).forEach((r) => { L += cell(r[0], r[1], half); R += cell(r[2], r[3], app.cols - half - 1); });
+    const sep = `<div class="sep-v">${'<div class="ln"></div>'.repeat(h)}</div>`;
+    return M.ui.bufferline([{ name: "so-roadmap.md", dirty: true }, { name: "diff: yours ↔ disk" }], 1, "") +
+      `<div class="row" style="height:calc(${h}*var(--lh))"><div class="vcol" style="width:${half}ch;flex:none">${L}</div>${sep}<div class="vcol fill">${R}</div></div>` +
+      M.ui.statusline(app, { mode: "CONFLICT", view: "diff", path: app.path, dirty: true, extra: '<span class="t-warn">2 hunks</span>' }) +
+      M.ui.cmdline(app, '<span class="wk-key">k</span> keep mine  <span class="wk-key">t</span> take disk  <span class="wk-key">]c [c</span> next/prev hunk  <span class="wk-key">q</span> back to prompt');
+  }
+  function localEdit(app) {
+    app.doc = M.md.parse(app.doc.map((l) => l.raw).join("\n").replace("- 10-03 vim motions: w b e f t done", "- 10-03 vim motions: w b e f t done; text objects next"));
+    app.dirty = true;
+  }
+  function render(app) {
+    if (app.diff) return diffView(app);
+    let cmd = M.cmdHtml(app, app.msg);
+    if (app.prompt && app.prompt.kind === "create") cmd = `<span class="t-warn">Create ${esc(app.prompt.path)}? [y/N]</span> <span class="cur"> </span>`;
+    const tree = app.tree;
+    const st = app.st;
+    const base = M.shell(app, {
+      explorer: app.explorer, tree, treeSel: app.treeSel, treeFocus: app.focus === "explorer",
+      bufs: [{ name: app.path.split("/").pop(), dirty: app.dirty }, { name: "2026-10-03.md" }], activeBuf: 0,
+      windows: [{ doc: app.doc, st, title: app.path, active: true, ctx: { unresolved: ["plan"] } }],
+      side: app.side ? sidePanel(app) : null,
+      overlayFocus: !!app.prompt || !!app.conflict || app.focus === "side",
+      status: { mode: app.focus === "explorer" ? "EXPLORER" : app.conflict ? "CONFLICT" : M.modeLabel(app, st), view: "live", path: app.path, dirty: app.dirty, backlinks: app.path.endsWith("so-roadmap.md") ? 7 : 2, words: M.words(app.doc), ln: st.cur.l + 1, col: st.cur.c + 1, index: "ready", extra: app.jumps.length ? `<span class="dim">jump ${Math.min(app.jpos + 1, app.jumps.length + 1)}/${app.jumps.length + (app.jpos === app.jumps.length ? 1 : 0)}</span>` : "" },
+      cmd,
+    });
+    let over = promptOverlay(app);
+    if (app.conflict) over += conflictOverlay(app);
+    if (app.showJumps) {
+      const list = app.jumps.concat(app.jpos === app.jumps.length ? [{ path: app.path, l: app.st.cur.l, c: app.st.cur.c }] : []);
+      const h = list.length + 4;
+      over += M.ui.float({ x: 2, y: app.rows - 3 - h, w: 60, h, title: ":jumps", body: `<div class="ln dim"> jump line  file</div>` + list.map((j, i) => `<div class="ln${i === app.jpos ? " pick-sel" : ""}"> ${i === app.jpos ? "&gt;" : " "}${M.padL(Math.abs(i - app.jpos), 3)} ${M.padL(j.l + 1, 5)}  ${esc(j.path)}</div>`).join("") + '<div class="ln ffoot"> C-o older · C-i newer · persisted in $XDG_STATE_HOME/so/</div>' });
+    }
+    return base + over;
+  }
+
+  /* ---------- keys ---------- */
+  function onPromptKey(app, k) {
+    const p = app.prompt;
+    if (p.kind === "create") {
+      app.prompt = null;
+      if (k === "y" || k === "Y") { DOCS[p.path] = "# " + p.path.split("/").pop().replace(/\.md$/, "") + "\n\n"; openPath(app, p.path, 2); app.tree.splice(8, 0, { depth: 1, kind: "md", name: p.path.split("/").pop(), path: p.path }); M.toast(app, "ok", "Created " + p.path, "[[plan]] now resolves · C-o returns to so-roadmap", 3500); app.resolvedPlan = true; }
+      else app.msg = '<span class="dim">not created</span>';
+      return true;
+    }
+    if (p.kind === "rename" || p.kind === "typed") {
+      if (k === "<Esc>") { app.prompt = null; return true; }
+      if (k === "<BS>") { p.value = p.value.slice(0, -1); return true; }
+      if (k === "<CR>") {
+        if (p.kind === "rename") { app.prompt = null; if (p.value && p.value !== p.orig) doRename(app, p.value); return true; }
+        if (p.value === p.item.split("/").pop()) { app.prompt = null; const i = app.tree.findIndex((r) => r.path === p.item); if (i >= 0) app.tree.splice(i, 1); app.treeSel = Math.max(0, i - 1); M.toast(app, "warn", "Deleted permanently", p.item, 3500); }
+        return true;
+      }
+      if (M.isChar(k)) { p.value += k; return true; }
+      return true;
+    }
+    if (p.kind === "trash") {
+      app.prompt = null;
+      if (k === "y" || k === "Y") { const i = app.tree.findIndex((r) => r.path === p.item); if (i >= 0) app.tree.splice(i, 1); app.treeSel = Math.max(0, i - 1); M.toast(app, "ok", "Moved to Trash", p.item + " · restore it from the system Trash", 3500); }
+      return true;
+    }
+    if (p.kind === "move") {
+      if (k === "<Esc>") { app.prompt = null; return true; }
+      if (k === "<C-n>" || k === "<Down>") { p.sel++; return true; }
+      if (k === "<C-p>" || k === "<Up>") { p.sel = Math.max(0, p.sel - 1); return true; }
+      if (k === "<BS>") { p.query = p.query.slice(0, -1); return true; }
+      if (k === "<CR>") { const its = FOLDERS.filter((f) => M.ui.fuzzy(f, p.query) > 0); const dest = its[p.sel]; app.prompt = null; if (dest) M.toast(app, "ok", "Moved to " + dest, `${p.item} · 12 files updated`, 4000); return true; }
+      if (M.isChar(k)) { p.query += k; p.sel = 0; return true; }
+      return true;
+    }
+    if (p.kind === "tree-edit") {
+      const r = app.tree[app.treeSel];
+      if (k === "<Esc>") { if (r.isNew) { app.tree.splice(app.treeSel, 1); app.treeSel--; } else delete r.edit; app.prompt = null; return true; }
+      if (k === "<BS>") { r.edit = r.edit.slice(0, -1); return true; }
+      if (k === "<CR>") {
+        if (!r.edit) return true;
+        const name = /\.\w+$/.test(r.edit) || r.edit.endsWith("/") ? r.edit : r.edit + ".md";
+        app.prompt = null;
+        if (r.isNew) { r.name = name; r.path = r.path + name; delete r.isNew; if (name.endsWith("/")) { r.kind = "dir"; r.name = name.slice(0, -1); } M.toast(app, "ok", "Created " + r.path, "", 2500); }
+        else { const old = r.name; r.name = name; M.toast(app, "ok", "Renamed " + old + " → " + name, name.endsWith(".md") ? "12 files updated" : "", 3500); }
+        delete r.edit; return true;
+      }
+      if (M.isChar(k) || k === "<Space>") { r.edit += k === "<Space>" ? " " : k; return true; }
+      return true;
+    }
+    return true;
+  }
+  function onKey(app, k) {
+    if (app.diff) {
+      if (k === "q" || k === "<Esc>") { app.diff = null; app.conflict = true; return true; }
+      if (k === "k" || k === "t") { app.diff = null; app.conflict = true; return onKey(app, k); }
+      return true;
+    }
+    if (app.conflict) {
+      if (k === "k") { app.conflict = null; app.dirty = false; M.toast(app, "ok", "Kept your version", "saved over the disk copy (atomic write)", 3500); return true; }
+      if (k === "t") { app.conflict = null; app.undo = [app.doc.map((l) => l.raw).join("\n")]; app.doc = M.md.parse(DISK_ROADMAP); app.dirty = false; M.toast(app, "info", "Took disk version", "your edits are one u away", 3500); return true; }
+      if (k === "d") { app.diff = true; return true; }
+      return true;
+    }
+    if (app.prompt) return onPromptKey(app, k);
+    if (app.showJumps && (k === "<Esc>" || k === "q")) { app.showJumps = false; return true; }
+    if (k === "<C-o>") { jump(app, -1); return true; }
+    if (k === "<C-i>" || k === "<Tab>") { jump(app, +1); return true; }
+    if (app.ctrlw) {
+      app.ctrlw = false;
+      if (k === "l") { if (app.focus === "explorer") app.focus = "editor"; else if (app.side) app.focus = "side"; }
+      if (k === "h") { if (app.focus === "side") app.focus = "editor"; else if (app.explorer) app.focus = "explorer"; }
+      return true;
+    }
+    if (k === "<C-w>") { app.ctrlw = true; return true; }
+    if (app.focus === "explorer") {
+      const n = app.tree.length;
+      if (k === "j" || k === "<Down>") app.treeSel = Math.min(n - 1, app.treeSel + 1);
+      else if (k === "k" || k === "<Up>") app.treeSel = Math.max(0, app.treeSel - 1);
+      else if (["a", "r", "m", "d"].includes(k)) treeAction(app, k);
+      else if (k === "<CR>" || k === "l") { const r = app.tree[app.treeSel]; if (r.kind === "dir") r.open = !r.open; else if (DOCS[r.path]) openPath(app, r.path); else M.toast(app, "info", r.path, "opens like any other note", 1800); }
+      else if (k === "<Esc>" || k === "q") app.focus = "editor";
+      else return k !== "<Space>";
+      return true;
+    }
+    if (app.focus === "side") {
+      const n = LINKED.length + app.unlinked.length;
+      if (k === "j" || k === "<Down>") app.sideSel = Math.min(n - 1, app.sideSel + 1);
+      else if (k === "k" || k === "<Up>") app.sideSel = Math.max(0, app.sideSel - 1);
+      else if (k === "<CR>") { const e = app.sideSel < LINKED.length ? LINKED[app.sideSel] : app.unlinked[app.sideSel - LINKED.length]; if (DOCS[e.path]) openPath(app, e.path, e.line - 1); else M.toast(app, "info", e.path + ":" + e.line, "opens at the mention", 1800); }
+      else if (k === "l" && app.sideSel >= LINKED.length) { const e = app.unlinked.splice(app.sideSel - LINKED.length, 1)[0]; app.sideSel = Math.max(0, app.sideSel - 1); M.toast(app, "ok", "Linked mention in " + e.path, `"${e.hit}" → [[so-roadmap|${e.hit}]]`, 3500); }
+      else if (k === "<Esc>" || k === "q") app.focus = "editor";
+      else return k !== "<Space>";
+      return true;
+    }
+    app.msg = "";
+    return M.vim(app, W(app), k, {
+      onFollow: follow, onEnter: (a) => { if (linkAt(a)) { follow(a); return true; } return false; },
+      onChange: (a) => { a.dirty = true; clearTimeout(a._as); a._as = setTimeout(() => { a.dirty = false; a.msg = `<span class="dim">"${esc(a.path)}" written · autosave</span>`; M.render(); }, 1000); },
+      onEx: (a, c) => { if (c === "jumps") a.showJumps = true; else if (c === "w") { a.dirty = false; a.msg = `<span class="dim">"${esc(a.path)}" written</span>`; } else a.msg = `<span class="dim">:${esc(c)} — try :jumps here; other ex commands live in m1</span>`; },
+    });
+  }
+  const leader = () => M.leaderWith({
+    e: (a) => { a.explorer = !a.explorer; a.focus = a.explorer ? "explorer" : "editor"; },
+    "l.b": (a) => { a.side = !a.side; a.focus = a.side ? "side" : "editor"; a.sideSel = 0; },
+    "l.u": (a) => { a.side = true; a.focus = "side"; a.sideSel = LINKED.length; },
+    "l.r": (a) => startRename(a),
+  });
+  function onClick(app, what) {
+    const [kind, i] = what.split(":");
+    if (kind === "tree") { app.treeSel = Number(i); app.focus = "explorer"; }
+  }
+
+  M.create({
+    id: "RM261003ABZP-M4", title: "M4 · Links & files", path: "m4-links-files.html",
+    subtitle: "Following and inspecting links (backlinks panel, gd, jump list, create-on-follow, rename that updates links) and safe file operations (explorer CRUD, Trash, conflict prompt and diff, undoable reload).",
+    init, render, onKey, leader, onClick,
+    leaderAllowed: (app) => !app.prompt && !app.conflict && !app.diff && app.st.vim === "normal" && app.cmdline == null,
+    controls: [{ label: "Trash", options: [["available", "Trash ok"], ["unavailable", "no Trash"]], get: (a) => a.trash, set: (a, v) => (a.trash = v) }],
+    keys: [["gd / Enter", "follow link under cursor"], ["C-o / C-i", "jump back / forward"], [":jumps", "show the jump list"], ["Space l b", "backlinks panel (linked + unlinked)"], ["Space l u", "jump to unlinked mentions"], ["Space l r", "rename note, update links"], ["C-w h / C-w l", "focus explorer / editor / panel"], ["l", "(panel) link an unlinked mention"], ["Space e", "explorer; a r m d = create rename move delete"], ["k t d", "(conflict) keep mine / take disk / diff"]],
+    notes: "Explorer letters <kbd>a r m d</kbd> follow neo-tree / LazyVim conventions (assumption). Trash vs. typed confirmation follows REQ1@R2; use the <b>Trash</b> toggle to see the fallback.",
+    states: [
+      { id: "S1", group: "Links", label: "Cursor on a wikilink", caption: "Cursor is inside [[garden-app]]. Press gd (or Enter) to open it; Ctrl-o comes back.", refs: "REQ4@R2 (gd / Enter follow; jump history)", apply: (a) => { a.st.cur = { l: 30, c: 37 }; } },
+      { id: "S2", group: "Links", label: "After gd — landed in target", caption: "gd opened garden-app.md. The jump list records where you came from (status: jump 2/2). Ctrl-o returns, Ctrl-i goes forward again.", refs: "REQ4@R2, REQ3@R2 (jump history persists)", apply: (a) => { follow(a); } },
+      { id: "S3", group: "Links", label: "Heading link opens at the heading", caption: "Following [[so-roadmap#Goals|so goals]] from garden-app lands on the Goals heading.", refs: "REQ4@R2 (opens at heading or block)", apply: (a) => { follow(a); a.st.cur = { l: 11, c: 14 }; follow(a); } },
+      { id: "S4", group: "Links", label: ":jumps list", caption: "The jump list after three hops; > marks the current position. It is persisted per workspace in $XDG_STATE_HOME/so/.", refs: "REQ3@R2 (jump history persists), REQ4@R2", apply: (a) => { follow(a); a.st.cur = { l: 11, c: 14 }; follow(a); a.st.cur = { l: 9, c: 60 }; follow(a); a.showJumps = true; } },
+      { id: "S5", group: "Links", label: "Follow unresolved link → create?", caption: "[[plan]] has no target (shown in the error colour). gd asks before creating it next to the source note. y creates and opens it; anything else cancels.", refs: "REQ4@R2 (following an unresolved link offers to create)", apply: (a) => { a.st.cur = { l: 31, c: 3 }; follow(a); } },
+      { id: "S6", group: "Backlinks", label: "Backlinks panel — linked + unlinked", caption: "Space l b opens the panel: linked mentions with context lines, then unlinked mentions (plain-text matches of the title or aliases). j/k move, Enter opens.", refs: "REQ4@R2 (backlinks panel lists linked and unlinked mentions with context)", apply: (a) => { a.side = true; a.focus = "side"; } },
+      { id: "S7", group: "Backlinks", label: "Link an unlinked mention", caption: "Cursor on an unlinked mention: press l to turn the text into [[so-roadmap|so roadmap]] in that file.", refs: "REQ4@R2", apply: (a) => { a.side = true; a.focus = "side"; a.sideSel = LINKED.length; } },
+      { id: "S8", group: "Rename", label: "Rename note — preview", caption: "Space l r opens the rename prompt with the impact up front. Edit the name and press Enter.", refs: "REQ4@R2 (rename updates links, keeps format/alias/subpath, reports count)", apply: (a) => { startRename(a); a.prompt.value = "so-plan"; } },
+      { id: "S9", group: "Rename", label: "Rename done — 12 files updated", caption: "After Enter: the buffer, tab and tree show the new name; a toast reports the changed-file count.", refs: "REQ4@R2 (reports the count of changed files)", apply: (a) => { doRename(a, "so-plan"); } },
+      { id: "S10", group: "Explorer", label: "Create note (a)", caption: "In the explorer, a adds an inline name field under the selected folder. Type a name (no extension needed; end with / for a folder) and press Enter.", refs: "REQ1@R2 (create from the explorer)", apply: (a) => { a.focus = "explorer"; a.treeSel = 4; treeAction(a, "a"); a.tree[a.treeSel].edit = "weekly-review"; } },
+      { id: "S11", group: "Explorer", label: "Rename in tree (r)", caption: "r edits the name in place. Renaming a note also rewrites links to it.", refs: "REQ1@R2, REQ4@R2", apply: (a) => { a.focus = "explorer"; a.treeSel = 6; treeAction(a, "r"); a.tree[6].edit = "garden-balcony.md"; } },
+      { id: "S12", group: "Explorer", label: "Move (m) — folder picker", caption: "m opens a folder picker; the preview shows the destination and the link rewrite.", refs: "REQ1@R2 (move), REQ4@R2 (moving updates links)", apply: (a) => { a.focus = "explorer"; a.treeSel = 6; treeAction(a, "m"); a.prompt.query = "arch"; } },
+      { id: "S13", group: "Explorer", label: "Delete (d) → Move to Trash?", caption: "Delete moves the note to the system Trash after a y/N confirmation (freedesktop Trash on Linux, user Trash on macOS).", refs: "REQ1@R2 (delete moves to Trash)", apply: (a) => { a.focus = "explorer"; a.treeSel = 7; a.trash = "available"; treeAction(a, "d"); } },
+      { id: "S14", group: "Explorer", label: "Delete — typed confirmation fallback", caption: "When the Trash is unavailable, deletion is permanent and needs the file name typed exactly. Enter stays disabled until it matches.", refs: "REQ1@R2 (otherwise deletion requires a typed confirmation)", apply: (a) => { a.focus = "explorer"; a.treeSel = 7; a.trash = "unavailable"; treeAction(a, "d"); a.prompt.value = "reading-li"; } },
+      { id: "S15", group: "Disk changes", label: "Conflict prompt", caption: "The note changed on disk while you had unsaved edits. Nothing is overwritten; autosave pauses for this note. k keeps yours, t takes disk, d shows a diff.", refs: "REQ1@R2 (conflict prompt: keep mine / take disk / view diff), DES8@R1", apply: (a) => { localEdit(a); a.conflict = true; } },
+      { id: "S16", group: "Disk changes", label: "Diff: yours ↔ disk", caption: "Side-by-side diff of the buffer and the disk file. k / t resolve from here; q returns to the prompt.", refs: "REQ1@R2 (view diff)", apply: (a) => { localEdit(a); a.conflict = true; a.diff = true; } },
+      { id: "S17", group: "Disk changes", label: "Clean buffer reloaded — u undoes", caption: "With no unsaved edits, an external change reloads silently and says so; u restores the previous text.", refs: "REQ1@R2 (unmodified buffer reloads; reload can be undone)", apply: (a) => { a.undo = [a.doc.map((l) => l.raw).join("\n")]; a.doc = M.md.parse(DISK_ROADMAP); a.st.cur = { l: 14, c: 0 }; M.toast(a, "info", "Reloaded from disk — u to undo", "projects/so-roadmap.md changed by another program", 0); } },
+      { id: "S18", group: "Responsive", label: "Backlinks at 80×24", caption: "Narrow terminals hide the docked side panel; Space l b opens backlinks as a picker instead (see m3 S8).", refs: "UI context (80×24)", apply: (a) => { a.cols = 80; a.rows = 24; a.explorer = false; a.side = true; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

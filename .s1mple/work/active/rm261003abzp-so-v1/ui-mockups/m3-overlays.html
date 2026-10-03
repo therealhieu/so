@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M3 Overlays</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content, esc = M.esc;
+  const FILES = ["projects/so-roadmap.md", "projects/so-architecture.md", "projects/garden-app.md", "projects/reading-list.md", "daily/2026-10-03.md", "daily/2026-10-02.md", "daily/2026-10-01.md", "daily/2026-09-30.md", "areas/health.md", "areas/finances.md", "areas/home.md", "people/linh.md", "people/minh.md", "templates/daily.md", "templates/meeting.md", "templates/project.md", "index.md", "inbox.md", "tour.md", "tasks.base", "reading/designing-data-intensive-apps.md", "reading/the-pragmatic-programmer.md", "meetings/2026-09-29-sync.md", "meetings/2026-10-02-design.md", "scripts/sync.ts", "scripts/crontab", "config.yaml", "attachments/photo.png"];
+  // files picker lists every workspace file, not only notes (REQ3@R4, AD4)
+  const fileIcon = (f) => (f.endsWith(".base") ? ["▦", "ic-base"] : f.endsWith(".md") ? ["◇", "ic-md"] : /\.(png|jpe?g|gif|webp)$/.test(f) ? ["◩", "ic-img"] : ["≡", "ic-text"]);
+  const CORPUS = { "projects/so-roadmap.md": C.roadmap, "daily/2026-10-03.md": C.daily, "projects/garden-app.md": C.garden, "index.md": C.index,
+    "daily/2026-10-02.md": "# Friday, October 2\n\n## Review\n- Boundary test green on CI (1m 48s)\n- Read the kitty keyboard protocol spec\n- Esc timeout 50 ms on legacy terminals", "people/linh.md": "# Linh\n\nHelping with [[so-roadmap]] UX.\nSuggested the kitty graphics fallback order.\n#people", "scripts/sync.ts": C.textFiles["scripts/sync.ts"].text };
+  const HEADINGS = [["so roadmap", 1, 8], ["Goals", 2, 13], ["Open questions", 2, 19], ["Notes", 2, 29], ["Log", 2, 34]];
+  const TAGS = [["#project", 14], ["#daily", 212], ["#so", 9], ["#so/ui", 3], ["#milestone/m1", 2], ["#reading", 31], ["#people", 18], ["#reference", 6], ["#side", 2], ["#terminal", 4]];
+  const BACK = [["index.md", 3, "- [[so-roadmap]] — current focus"], ["daily/2026-10-03.md", 8, "- [ ] Review [[so-roadmap]] milestones"], ["daily/2026-10-02.md", 5, "demoed [[so-roadmap#Goals]] to Linh"], ["projects/garden-app.md", 11, "Reuse the [[so-roadmap#Goals|so goals]] format"], ["people/linh.md", 3, "Helping with [[so-roadmap]] UX."], ["meetings/2026-10-02-design.md", 7, "Decision: see [[so-roadmap]]"], ["inbox.md", 2, "ask Minh about [[so-roadmap]] demo"]];
+  const RECENT = [["daily/2026-10-03.md", "now"], ["projects/so-roadmap.md", "2 min"], ["projects/garden-app.md", "1 h"], ["people/linh.md", "yesterday"], ["tasks.base", "yesterday"], ["meetings/2026-10-02-design.md", "2 days"]];
+  const CMDS = [["note.today", "Daily note: today", "␣nd"], ["note.yesterday", "Daily note: yesterday", ":Yesterday"], ["note.tomorrow", "Daily note: tomorrow", ":Tomorrow"], ["note.pickDate", "Daily note: pick a date", "␣np"], ["note.new", "New note", "␣nn"], ["template.insert", "Insert template", "␣nt", "markdown"], ["file.find", "Find file", "␣ff"], ["file.recent", "Recent notes", "␣fr"], ["file.save", "Save file", ":w  ␣w ●"], ["file.rename", "Rename note (update links)", "␣lr"], ["file.move", "Move note", ""], ["file.delete", "Delete note (to Trash)", ""], ["search.grep", "Search text in workspace", "␣sg"], ["search.headings", "Headings in note", "␣sh", "markdown"], ["search.tags", "Tags", "␣st"], ["search.backlinks", "Backlinks", "␣sb", "markdown"], ["link.follow", "Follow link", "gd", "markdown"], ["link.back", "Jump back", "C-o"], ["view.cycleMode", "Cycle live / source / reading", "␣m", "markdown"], ["task.toggle", "Toggle task checkbox", "␣x", "markdown"], ["view.explorer", "Toggle explorer", "␣e"], ["view.outline", "Toggle outline", "␣o", "markdown"], ["view.backlinks", "Toggle backlinks panel", "␣lb", "markdown"], ["preview.start", "Browser preview", ":Preview"], ["preview.stop", "Stop browser preview", ":PreviewStop"], ["config.reload", "Reload config", ":ConfigReload"], ["help.keymap", "Help: keymap", "␣?"]];
+  // commands carry a file-type scope; lists show only those available for the active buffer (REQ3@R4, UDES5@R2, AD4)
+  const cmdsFor = (app) => CMDS.filter((c) => !c[3] || c[3] === app.ft);
+  // ":" completion: ex commands (REQ2) plus every named command id (REQ3)
+  const EXCMDS0 = [["w", "write"], ["q", "quit window"], ["wq", "write and quit"], ["e", "edit file…"], ["sp", "split"], ["vs", "vertical split"], ["bn", "next buffer"], ["bp", "previous buffer"], ["bd", "delete buffer"], ["s", "substitute"], ["help", "keymap help"], ["Today", "daily note"], ["Yesterday", "daily note"], ["Tomorrow", "daily note"], ["Preview", "browser preview"], ["PreviewStop", "stop preview"], ["ConfigReload", "reload config"]];
+  const cmdMatches = (app, q) => EXCMDS0.concat(cmdsFor(app).map(([id, t]) => [id, t])).filter(([c]) => q === "" || c.toLowerCase().startsWith(q.toLowerCase()) || (q.length > 1 && M.ui.fuzzy(c, q) > 0)).slice(0, 12);
+  const NOTES = [["so-roadmap", "projects/so-roadmap.md", ""], ["so-architecture", "projects/so-architecture.md", ""], ["garden-app", "projects/garden-app.md", ""], ["linh", "people/linh.md", "alias: Linh"], ["syntax", "tour.md", "alias of tour"], ["tour", "tour.md", ""], ["reading-list", "projects/reading-list.md", ""], ["2026-10-03", "daily/2026-10-03.md", ""], ["index", "index.md", "alias: Home"]];
+  const BLOCKS = [["renderer", "- [x] Pick the renderer (OpenTUI)"], ["kanban-q", "Confirm the type string …"]];
+
+  function init() {
+    return { ft: "markdown", path: "projects/so-roadmap.md", w: { doc: M.md.parse(C.roadmap), st: { cur: { l: 29, c: 0 }, view: "live", vim: "normal", top: 0 } }, picker: null, comp: null, help: false, cmdline: null, cmdBase: null, cmdSel: -1, msg: "", pending: null };
+  }
+  function items(app) {
+    const p = app.picker, q = p.query;
+    const rank = (arr, key) => arr.map((x) => [x, M.ui.fuzzy(key(x), q)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+    if (p.kind === "files") return rank(FILES, (x) => x).map((f) => ({ html: ` <span class="${fileIcon(f)[1]}">${fileIcon(f)[0]}</span> ${M.ui.highlightHits(f, q)}`, key: f }));
+    if (p.kind === "grep") {
+      if (!q) return [];
+      const out = [];
+      for (const [path, text] of Object.entries(CORPUS)) text.split("\n").forEach((l, i) => { const at = l.toLowerCase().indexOf(q.toLowerCase()); if (at >= 0) out.push({ key: path, line: i, text: l, html: ` <span class="muted">${esc(path)}</span><span class="dim">:${i + 1}</span>  ${esc(l.slice(Math.max(0, at - 18), at))}<span class="match">${esc(l.slice(at, at + q.length))}</span>${esc(l.slice(at + q.length, at + q.length + 30))}` }); });
+      return out;
+    }
+    if (p.kind === "headings") return rank(HEADINGS, (x) => x[0]).map(([t, l, n]) => ({ key: t, html: ` ${"  ".repeat(l - 1)}<span class="t-h${l}">${"#".repeat(l)}</span> ${M.ui.highlightHits(t, q)}<span class="dim">  :${n}</span>` }));
+    if (p.kind === "tags") return rank(TAGS, (x) => x[0]).map(([t, n]) => ({ key: t, html: ` <span class="t-tag">${M.ui.highlightHits(t, q)}</span><span class="dim">${" ".repeat(Math.max(1, 18 - t.length))}${n} notes</span>` }));
+    if (p.kind === "backlinks") return rank(BACK, (x) => x[0] + x[2]).map(([f, l, t]) => ({ key: f, html: ` <span class="t-wiki" style="text-decoration:none">◇ ${M.ui.highlightHits(f, q)}</span><span class="dim">:${l}</span>` }));
+    if (p.kind === "recent") return rank(RECENT, (x) => x[0]).map(([f, t]) => ({ key: f, html: ` ◇ ${M.ui.highlightHits(f, q)}<span class="dim">  ${t}</span>` }));
+    if (p.kind === "commands") return rank(cmdsFor(app), (x) => x[0] + " " + x[1]).map(([id, t, kb]) => ({ key: id, html: ` ${M.ui.highlightHits(t, q)}${kb ? `<span style="float:right" class="wk-key">${esc(kb)} </span>` : ""}` }));
+    return [];
+  }
+  function preview(app, it) {
+    const p = app.picker;
+    if (!it) return ['<span class="dim"> no match</span>'];
+    if (p.kind === "commands") return [` <span class="t-b">${esc(it.key)}</span>`, "", ' <span class="muted">Runs the named command. Bind it in</span>', ' <span class="muted">~/.config/so/config.toml:</span>', "", ` <span class="t-h4">[keys.normal]</span>`, ` <span class="t-str">"&lt;leader&gt;xx"</span> = <span class="t-str">"${esc(it.key)}"</span>`];
+    if (p.kind === "tags") return [` <span class="t-tag">${esc(it.key)}</span> <span class="dim">— notes</span>`, "", " ◇ projects/so-roadmap.md", " ◇ projects/garden-app.md", " ◇ projects/reading-list.md", ' <span class="dim">…</span>'];
+    const tf = C.textFiles[it.key];
+    if (tf) return [` <span class="muted">${esc(it.key)}</span>`, ""].concat(M.md.parseFile(tf.text, tf.lang || tf.ft).slice(0, 22).map((l) => " " + M.md.source(l)));
+    if (/\.(png|jpe?g|gif|webp)$/.test(it.key)) return [` <span class="muted">${esc(it.key)}</span>`, "", ' <span class="dim">binary file — no preview</span>'];
+    const path = it.key in CORPUS ? it.key : null;
+    const text = path ? CORPUS[path] : p.kind === "headings" ? C.roadmap : `# ${it.key.split("/").pop().replace(/\.md$/, "")}\n\n(preview of ${it.key})\n\nLinked from [[index]].`;
+    const lines = text.split("\n");
+    const hit = it.line != null ? it.line : p.kind === "headings" ? Math.max(0, lines.findIndex((l) => l.replace(/^#+ /, "") === it.key)) : 0;
+    const from = Math.max(0, hit - 3);
+    const doc = M.md.parse(text);
+    const out = [` <span class="muted">${esc(path || it.key)}</span>`, ""];
+    for (let i = from; i < doc.length && out.length < 24; i++) {
+      const rows = M.md.live(doc[i], { width: 50, embeds: C.embeds, unresolved: ["plan"] }, doc);
+      rows.forEach((r, j) => out.push((i === hit && hit > 0 && j === 0 ? '<span class="match">▶</span>' : " ") + r.h));
+    }
+    return out;
+  }
+  const TITLES = { files: "Find files", grep: "Grep workspace", headings: "Headings · so-roadmap", tags: "Tags", backlinks: "Backlinks · so-roadmap", recent: "Recent notes", commands: "Commands" };
+  const open = (kind, query) => (app) => { app.picker = { kind, query: query || "", sel: 0 }; };
+  const leader = (app) => {
+    const m = M.leaderWith({ "f.f": open("files"), "f.r": open("recent"), "s.g": open("grep"), "s.h": open("headings"), "s.t": open("tags"), "s.b": open("backlinks"), "s.c": open("commands"), ":": open("commands"), "?": (a) => (a.help = true), "s.k": (a) => (a.help = true) });
+    // note-only keys are bound for Markdown buffers only (REQ3@R4, AD4)
+    if (app && app.ft && app.ft !== "markdown") { delete m.m; delete m.x; delete m.o; delete m.l.items.b; delete m.l.items.u; delete m.s.items.h; delete m.s.items.b; }
+    return m;
+  };
+  // the active buffer is a TypeScript file (states S18–S21)
+  const setTs = (a) => { const f = C.textFiles["scripts/sync.ts"]; a.ft = f.ft; a.path = "scripts/sync.ts"; a.w = { doc: M.md.parseFile(f.text, f.ft), st: { cur: { l: 9, c: 2 }, view: "source", vim: "normal", top: 0 } }; a.leaderMap = leader(a); };
+
+  function compute(app) {
+    const st = app.w.st;
+    if (st.vim !== "insert") { app.comp = null; return; }
+    const before = app.w.doc[st.cur.l].raw.slice(0, st.cur.c);
+    let m;
+    if ((m = before.match(/\[\[([^\]#|]+)#\^([^\]]*)$/))) app.comp = { stage: "block", note: m[1], q: m[2], sel: app.comp && app.comp.stage === "block" ? app.comp.sel : 0 };
+    else if ((m = before.match(/\[\[([^\]#|]+)#([^\]^]*)$/))) app.comp = { stage: "heading", note: m[1], q: m[2], sel: app.comp && app.comp.stage === "heading" ? app.comp.sel : 0 };
+    else if ((m = before.match(/\[\[([^\]#|]*)$/))) app.comp = { stage: "note", q: m[1], sel: app.comp && app.comp.stage === "note" ? app.comp.sel : 0 };
+    else app.comp = null;
+  }
+  function compItems(app) {
+    const c = app.comp;
+    if (c.stage === "note") return NOTES.map((n) => [n, M.ui.fuzzy(n[0], c.q)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).map(([n]) => ({ ins: n[0], html: ` <span class="t-wiki" style="text-decoration:none">◇</span> ${M.ui.highlightHits(n[0], c.q)} <span class="dim">${esc(n[2] || n[1])}</span>` }));
+    if (c.stage === "heading") return HEADINGS.filter((h) => M.ui.fuzzy(h[0], c.q) > 0).map(([t, l]) => ({ ins: t, html: ` <span class="t-h${l}">${"#".repeat(l)}</span> ${M.ui.highlightHits(t, c.q)}` }));
+    return BLOCKS.filter((b) => M.ui.fuzzy(b[0], c.q) > 0).map(([id, t]) => ({ ins: id, html: ` <span class="t-h2">^${M.ui.highlightHits(id, c.q)}</span> <span class="dim">${esc(t)}</span>` }));
+  }
+  function acceptComp(app) {
+    const its = compItems(app); const it = its[app.comp.sel]; if (!it) return;
+    const st = app.w.st; const arr = app.w.doc.map((x) => x.raw); const raw = arr[st.cur.l];
+    const before = raw.slice(0, st.cur.c), after = raw.slice(st.cur.c);
+    const q = app.comp.q;
+    const nb = before.slice(0, before.length - q.length) + it.ins;
+    const close = app.comp.stage === "note" ? "" : "]]";
+    arr[st.cur.l] = nb + (app.comp.stage === "note" ? "" : close) + after.replace(/^\]\]/, "");
+    st.cur.c = nb.length;
+    app.w.doc = M.md.parse(arr.join("\n"));
+    if (app.comp.stage !== "note") { app.comp = null; st.cur.c += 2; } else { app.comp = null; app.msg = '<span class="dim">type # for headings, #^ for blocks, ]] to close</span>'; arr[st.cur.l] = nb + "]]" + after; app.w.doc = M.md.parse(arr.join("\n")); }
+  }
+
+  function render(app) {
+    const st = app.w.st;
+    const base = M.shell(app, {
+      explorer: app.cols >= 100, tree: C.treeAll, treeSel: app.ft === "markdown" ? 5 : 15, overlayFocus: !!(app.picker || app.help),
+      bufs: [{ name: "so-roadmap.md" }, { name: "2026-10-03.md" }].concat(app.ft !== "markdown" ? [{ name: app.path.split("/").pop() }] : []), activeBuf: app.ft !== "markdown" ? 2 : 0,
+      windows: [{ doc: app.w.doc, st, title: app.path.split("/").pop(), active: true }],
+      status: { mode: app.picker ? "PICKER" : M.modeLabel(app, st), view: st.view, path: app.path, backlinks: app.ft === "markdown" ? 7 : null, words: app.ft === "markdown" ? M.words(app.w.doc) : null, ln: st.cur.l + 1, col: st.cur.c + 1, preview: "off", index: "ready" },
+      cmd: M.cmdHtml(app, app.msg),
+    });
+    let overlay = "";
+    if (app.picker) {
+      const its = items(app);
+      app.picker.sel = M.clamp(app.picker.sel, 0, Math.max(0, its.length - 1));
+      overlay = M.ui.picker(app, { title: TITLES[app.picker.kind], query: app.picker.query, items: its, sel: app.picker.sel, preview: preview(app, its[app.picker.sel]), count: app.picker.kind === "grep" ? `${its.length} matches · 10,000 notes` : app.picker.kind === "files" ? `${its.length}/10,000` : app.picker.kind === "commands" ? `${its.length} · ${app.ft}` : `${its.length}`, promptIcon: app.picker.kind === "commands" ? ":" : "❯" });
+    }
+    if (app.comp) {
+      const its = compItems(app);
+      app.comp.sel = M.clamp(app.comp.sel, 0, Math.max(0, its.length - 1));
+      const h = Math.min(9, its.length + 3);
+      const curY = 1 + (st.curRow || 0);
+      const top = curY + 1 + h <= app.rows - 2 ? curY + 1 : curY - h;
+      const title = app.comp.stage === "note" ? "notes & aliases" : app.comp.stage === "heading" ? `headings · ${app.comp.note}` : `blocks · ${app.comp.note}`;
+      overlay += M.ui.float({ x: Math.min(app.cols - 50, (app.cols >= 100 ? 31 : 0) + 7 + st.cur.c), y: top, w: 48, h, title, body: its.slice(0, h - 3).map((it, i) => `<div class="ln${i === app.comp.sel ? " pick-sel" : ""}">${it.html}</div>`).join("") + `<div class="ln ffoot"> C-n/C-p · ⏎/Tab accept · esc</div>` });
+    }
+    if (app.cmdline != null) {
+      const ms = cmdMatches(app, app.cmdBase != null ? app.cmdBase : app.cmdline);
+      if (ms.length) {
+        const h = Math.min(12, ms.length) + 2;
+        overlay += M.ui.float({ x: 0, y: app.rows - 2 - h, w: 44, h, title: "commands", body: ms.map(([c, d], i) => `<div class="ln${i === app.cmdSel ? " pick-sel" : ""}"> <span class="t-b">${M.ui.highlightHits(c, app.cmdBase != null ? app.cmdBase : app.cmdline)}</span><span class="dim"> ${esc(d)}</span></div>`).join("") });
+      }
+    }
+    if (app.help) {
+      const box = M.ui.center(app, Math.min(app.cols - 4, 110), app.rows - 4);
+      // third element = file-type scope (REQ3@R4): labelled in a Markdown buffer, hidden in other file types
+      const MD = "markdown";
+      const groups0 = [["Editing (vim core)", [["i a A o O", "insert"], ["v V", "visual"], ["d c y > <", "operators"], ["u  C-r", "undo / redo"], [".", "repeat"], ["/ ? n N * #", "search"], [":s :%s", "substitute"]]], ["Navigation", [["gd ⏎", "follow link", MD], ["C-o C-i", "jump back / fwd"], ["C-w h/j/k/l", "windows"], ["␣e", "explorer"], ["␣o", "outline", MD], ["␣ff ␣fr", "files / recent"], ["␣sg", "grep"]]], ["Notes & links", [["␣nd ␣np", "today / pick date"], ["␣nn", "new note"], ["␣nt", "insert template", MD], ["␣lr", "rename / move"], ["␣lb ␣sb", "backlinks", MD], ["␣st", "tags"], ["␣m", "live/source/reading", MD], ["␣x ⏎", "toggle task", MD]]], ["Your overrides (config.toml)", [["␣w", "file.save ●"], ["␣z", "view.zen ●"]]]];
+      const groups = groups0.map(([g, ks]) => [g, ks.filter((k) => !k[2] || k[2] === app.ft)]);
+      const colW = Math.floor((box.w - 4) / 2);
+      const narrowHelp = box.w < 100; // 80×24: short "md" tag so both columns fit
+      const tag = (ft) => (narrowHelp ? ` <span class="dim">${ft === "markdown" ? "md" : esc(ft)}</span>` : `<span class="dim">[${esc(ft)}]</span>`);
+      const col = (gs) => gs.flatMap(([g, ks]) => [`<span class="t-h3">${esc(g)}</span>`].concat(ks.map(([k, d, ft]) => ` <span class="wk-key">${esc(M.pad(k, narrowHelp ? 12 : 13))}</span> ${narrowHelp ? esc(d) : esc(M.pad(d, 21))}${ft ? tag(ft) : ""}`), [""]));
+      const L = col(groups.slice(0, 2)), R = col(groups.slice(2));
+      const n = Math.max(L.length, R.length);
+      let body = "";
+      for (let i = 0; i < Math.min(n, box.h - 4); i++) body += `<div class="ln"> <span style="display:inline-block;width:${colW}ch">${L[i] || ""}</span>${R[i] || ""}</div>`;
+      const scopeNote = app.ft === "markdown" ? (narrowHelp ? "md = Markdown files only" : "[markdown] = Markdown files only") : "markdown-only keys hidden";
+      body += `<div class="ln ffoot"> ${narrowHelp ? "● override" : "● = user override from ~/.config/so/config.toml"} · ${scopeNote} · / filter · esc close</div>`;
+      overlay += M.ui.float({ x: box.x, y: box.y, w: box.w, h: box.h, title: `Keymap (active · ${app.ft})`, body });
+    }
+    return base + overlay;
+  }
+  function onKey(app, k) {
+    if (app.help) { if (k === "<Esc>" || k === "q") app.help = false; return true; }
+    if (app.picker) {
+      const p = app.picker;
+      if (k === "<Esc>") { app.picker = null; return true; }
+      if (k === "<C-n>" || k === "<Down>" || k === "<Tab>") { p.sel++; return true; }
+      if (k === "<C-p>" || k === "<Up>") { p.sel = Math.max(0, p.sel - 1); return true; }
+      if (k === "<CR>") { const it = items(app)[p.sel]; app.picker = null; if (it) M.toast(app, "ok", p.kind === "commands" ? "Ran " + it.key : "Opened " + it.key, p.kind === "grep" ? `line ${it.line + 1}` : p.kind === "headings" ? "cursor moved to heading" : "", 1800); return true; }
+      if (k === "<BS>") { p.query = p.query.slice(0, -1); p.sel = 0; return true; }
+      if (M.isChar(k) || k === "<Space>") { p.query += k === "<Space>" ? " " : k; p.sel = 0; return true; }
+      return true;
+    }
+    if (app.comp) {
+      if (k === "<C-n>" || k === "<Down>") { app.comp.sel++; return true; }
+      if (k === "<C-p>" || k === "<Up>") { app.comp.sel = Math.max(0, app.comp.sel - 1); return true; }
+      if (k === "<CR>" || k === "<Tab>") { acceptComp(app); return true; }
+      if (k === "<Esc>") { app.comp = null; return true; }
+    }
+    app.msg = "";
+    if (app.cmdline != null && k !== "<Tab>") { app.cmdBase = null; app.cmdSel = -1; }
+    const h = M.vim(app, app.w, k, { onTab: (a) => { if (a.cmdBase == null) { a.cmdBase = a.cmdline; a.cmdSel = -1; } const ms = cmdMatches(a, a.cmdBase); if (ms.length) { a.cmdSel = (a.cmdSel + 1) % ms.length; a.cmdline = ms[a.cmdSel][0]; } }, onEx: (a, c) => { a.cmdBase = null; a.cmdSel = -1; if (c === "help") a.help = true; else if (CMDS.some(([id, , , ft]) => id === c && ft && ft !== a.ft)) a.msg = `<span class="t-err">not available for ${a.ft} files</span>`;
+      else if (CMDS.some(([id]) => id === c)) M.toast(a, "ok", "Ran " + c, "named command from the : line", 1800); else M.toast(a, "info", ":" + c, "Ex commands are exercised in m1", 1800); } });
+    compute(app);
+    return h;
+  }
+  const ins = (line, c) => (a) => { const arr = a.w.doc.map((x) => x.raw); const l = 32; arr[l] = line; a.w.doc = M.md.parse(arr.join("\n")); a.w.st.cur = { l, c: c ?? line.length }; a.w.st.vim = "insert"; compute(a); };
+
+  M.create({
+    id: "RM261003ABZP-M3", rev: "R2", title: "M3 · Overlays", path: "m3-overlays.html",
+    subtitle: "Discoverability layer: which-key, the picker family (files, grep, headings, tags, backlinks, recent), command palette, [[ completion, and the help keymap — each filtered by the active buffer's file type.",
+    init, render, onKey, leader,
+    leaderAllowed: (app) => !app.picker && !app.help && app.w.st.vim === "normal",
+    keys: [["Space", "leader — pause 300 ms for which-key"], ["Space f f", "find files (type to filter)"], ["Space s g", "grep workspace"], ["Space s h / t / b", "headings / tags / backlinks"], ["Space f r", "recent notes"], ["Space : / Space s c", "command palette"], [": then Tab", "command line with completion"], [":help", "keymap help (ex command)"], ["Space ?", "keymap help"], ["C-n C-p ↑ ↓", "move in a picker"], ["Enter / Esc", "open / close"], ["i then [[", "link completion; # headings; #^ blocks"]],
+    notes: "Help uses <kbd>Space ?</kbd> (LazyVim convention). REQ3@R2 also names a bare <kbd>?</kbd>, which collides with vim's backward search in REQ2@R2 — recorded as an open item in the manifest.",
+    states: [
+      { id: "S1", group: "which-key", label: "Leader pressed — root groups", caption: "Pausing after Space opens which-key at the bottom: direct actions first, then +groups. Press a letter to continue, Backspace to go back, Esc to cancel.", refs: "REQ3@R2 (which-key popup grouped by prefix), DES5@R1", apply: (a) => { a.leader = { path: [] }; a.wk = true; } },
+      { id: "S2", group: "which-key", label: "Group: +notes", caption: "Space n shows the notes group: daily note, date picker, template, new note.", refs: "REQ3@R2, REQ6@R2", apply: (a) => { a.leader = { path: ["n"] }; a.wk = true; } },
+      { id: "S3", group: "Pickers", label: "Find files — empty query", caption: "Quick switcher over every workspace file (notes, bases, text files, images) with a live preview pane. Start typing to filter fuzzily.", refs: "REQ3@R2 (files picker, fuzzy, preview), REQ3@R4 (every non-excluded file), AD4", apply: open("files") },
+      { id: "S4", group: "Pickers", label: "Find files — query 'srd'", caption: "Matched characters are highlighted; ranking prefers consecutive matches.", refs: "REQ3@R2", apply: open("files", "srd") },
+      { id: "S5", group: "Pickers", label: "Grep — 'kitty'", caption: "Full-text search runs in the index worker; results show path:line and the match in context; preview marks the line.", refs: "REQ3@R2 (full-text search), DES7@R1 (worker search)", apply: open("grep", "kitty") },
+      { id: "S6", group: "Pickers", label: "Headings in note", caption: "Outline-style list of the current note's headings with line numbers.", refs: "REQ3@R2", apply: open("headings") },
+      { id: "S7", group: "Pickers", label: "Tags with counts", caption: "Nested tags (#so/ui) are listed with note counts; Enter opens a list of matching notes.", refs: "REQ3@R2, REQ4@R2 (tags picker with counts)", apply: open("tags") },
+      { id: "S8", group: "Pickers", label: "Backlinks picker", caption: "Every note linking here, with a preview at the linking line.", refs: "REQ3@R2, REQ4@R2", apply: open("backlinks") },
+      { id: "S9", group: "Pickers", label: "Recent notes", caption: "Persisted per workspace under $XDG_STATE_HOME/so/ — survives restarts.", refs: "REQ3@R2 (recent notes persist), DES14@R1", apply: open("recent") },
+      { id: "S10", group: "Commands", label: "Command palette — 'tod'", caption: "Every action is a named command; the palette shows titles, ids and current bindings (● marks a user override).", refs: "REQ3@R2 (palette runs any named command), DES5@R1", apply: open("commands", "tod") },
+      { id: "S11", group: "Commands", label: ": command line with completion", caption: "':' opens the vim command line; a completion list covers ex commands and every named command id. Tab cycles, Enter runs (e.g. note.today or :Today).", refs: "REQ3@R2 (':' runs any named command with completion), REQ2@R2 (ex commands)", apply: (a) => { a.cmdline = "no"; } },
+      { id: "S12", group: "Completion", label: "[[ completion — notes & aliases", caption: "Typing [[ in Insert mode lists notes and aliases (e.g. 'Linh', 'syntax'). Keep typing to filter.", refs: "REQ4@R2 ([[ completion)", apply: ins("Next: compare with [[so", null) },
+      { id: "S13", group: "Completion", label: "[[note# — headings", caption: "After # the list switches to the target note's headings.", refs: "REQ4@R2", apply: ins("Next: compare with [[so-roadmap#Go", null) },
+      { id: "S14", group: "Completion", label: "[[note#^ — block ids", caption: "After #^ the list shows block ids with their text.", refs: "REQ4@R2 (block ids after #^)", apply: ins("Next: compare with [[so-roadmap#^", null) },
+      { id: "S15", group: "Help", label: "Keymap help (with overrides)", caption: "Space ? lists the active keymap by group; bindings from config.toml are marked ●, and bindings scoped to a file type carry its label (<code>[markdown]</code>).", refs: "REQ3@R2 (help shows active keymap incl. overrides), REQ3@R4 (file-type-scoped bindings labelled), UREQ5@R2, AD4", apply: (a) => (a.help = true) },
+      { id: "S16", group: "Responsive", label: "Picker at 80×24", caption: "Narrow terminals drop the preview pane and use the full width for results.", refs: "UI context (80×24)", apply: (a) => { a.cols = 80; a.rows = 24; open("files", "daily")(a); } },
+      { id: "S17", group: "File types", label: "Find files — 'sync' (all file types)", caption: "The files picker matches notes and other files alike: <code>scripts/sync.ts</code> (≡) next to a meeting note (◇). The preview shows a text file with its language colouring; images say <code>binary file — no preview</code>.", refs: "REQ3@R4 (files picker over every non-excluded file), DES17@R1 (highlighter), UREQ5@R2, UDES5@R2, AD4",
+        apply: open("files", "sync") },
+      { id: "S18", group: "File types", label: "which-key in a .ts buffer", caption: "With <code>scripts/sync.ts</code> active, which-key lists only keys bound for this file type: the note-only root keys (m mode cycle, x task, o outline) are gone. +notes stays because opening a daily note works from any buffer.", refs: "REQ3@R4 (keymaps scoped by mode and file type), UREQ5@R2, UDES5@R2 (lookup({mode, filetype})), AD4",
+        apply: (a) => { setTs(a); a.leader = { path: [] }; a.wk = true; } },
+      { id: "S19", group: "File types", label: "Command palette in a .ts buffer", caption: "The palette lists only commands available for TypeScript; the count names the file type. Note-only commands (follow link, cycle mode, toggle task, headings, backlinks, outline, insert template) are not listed." + '<div class=ext><b>Extension point</b> — commands and key bindings carry a file-type scope, and which-key, the palette, the : completion and help all filter by the file type of the active buffer. A later file type registers its own commands and keys, and they appear in these same overlays with no new layout.</div>', refs: "REQ3@R4, UREQ5@R2 (palette lists commands for the active file type), UDES5@R2 (list(activeFiletype)), AD4",
+        apply: (a) => { setTs(a); open("commands")(a); } },
+      { id: "S20", group: "File types", label: "Keymap help in a .ts buffer", caption: "Help shows the keymap active for this buffer; markdown-only bindings are hidden and the footer says so. Compare S15, where they are shown with a <code>[markdown]</code> label.", refs: "REQ3@R4 (help labels file-type-scoped bindings), UREQ5@R2, AD4",
+        apply: (a) => { setTs(a); a.help = true; } },
+      { id: "S21", group: "File types", label: ":link.follow in a .ts buffer", caption: "Running a note-only command by name on the : line in a TypeScript buffer shows <code>not available for typescript files</code> in the message line and changes nothing.", refs: "REQ3@R4, UREQ3@R2 (not available for &lt;type&gt; files), AD4",
+        apply: (a) => { setTs(a); a.msg = '<span class="t-err">not available for typescript files</span>'; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

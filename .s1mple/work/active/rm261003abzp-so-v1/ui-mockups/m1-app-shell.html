@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M1 App shell</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content;
+  const BUFS = (dirty, extra) => [{ name: "so-roadmap.md", dirty }, { name: "2026-10-03.md" }, { name: "garden-app.md" }].concat(extra ? [{ name: extra.split("/").pop() }] : []);
+  const docs = { "projects/so-roadmap.md": C.roadmap, "projects/garden-app.md": C.garden, "daily/2026-10-03.md": C.daily, "index.md": C.index };
+  // Non-Markdown files (R2, AD4/AD5): any UTF-8 text file opens in source view; the explorer lists every file (sample texts in shared content.js)
+  const FILES = C.textFiles;
+  const REFUSED = { "attachments/photo.png": "binary file — not opened", "scripts/fixtures.json": "file too large — not opened (limit 16 MiB)" };
+  const TREE = C.treeAll;
+  const isNote = (w) => w.ft === "markdown";
+
+  function init() {
+    return {
+      win: [{ path: "projects/so-roadmap.md", ft: "markdown", doc: M.md.parse(C.roadmap), st: { cur: { l: 9, c: 2 }, view: "live", vim: "normal", top: 0 } }],
+      active: 0, explorer: true, treeSel: 5, treeFocus: false, side: null,
+      index: "ready", dirty: false, saveError: null, cmdline: null, msg: "", pending: null, ctrlw: false, activeBuf: 0, extra: null,
+    };
+  }
+  const W = (app) => app.win[app.active];
+  function scheduleAutosave(app) {
+    app.dirty = true;
+    clearTimeout(app._as);
+    app._as = setTimeout(() => { if (!app.saveError) { app.dirty = false; app.msg = `<span class="dim">"${W(app).path}" written · autosave</span>`; M.render(); } }, 1000);
+  }
+  function openPath(app, path) {
+    // refused files leave the active buffer unchanged and write nothing (REQ1@R3)
+    if (REFUSED[path]) { app.msg = `<span class="t-err">${REFUSED[path]}</span>`; return; }
+    const f = FILES[path];
+    if (!docs[path] && !f) { M.toast(app, "info", "Not in this mockup", path + " opens like any other note", 2000); return; }
+    const w = W(app);
+    w.path = path; w.st.cur = { l: 0, c: 0 }; w.st.top = 0;
+    if (f) {
+      w.ft = f.ft; w.lang = f.lang || f.ft; w.doc = M.md.parseFile(f.text, w.lang); w.st.view = "source";
+      app.extra = path; app.activeBuf = 3;
+    } else {
+      w.ft = "markdown"; w.doc = M.md.parse(docs[path]); w.st.view = "live";
+      app.activeBuf = { "projects/so-roadmap.md": 0, "daily/2026-10-03.md": 1, "projects/garden-app.md": 2 }[path] ?? 0;
+    }
+    app.leaderMap = leader(app);
+    app.treeFocus = false;
+    app.msg = `<span class="dim">"${path}" ${w.doc.length}L</span>`;
+  }
+  const notAvailable = (a) => { a.msg = `<span class="t-err">not available for ${W(a).ft} files</span>`; };
+  function onEx(app, cmd) {
+    const c = cmd.trim();
+    if (c === "vs" || c === "vsplit") { split(app); return; }
+    if (c === "sp" || c === "split") { split(app); app.msg = '<span class="dim">:sp — horizontal split shown as vertical in this mockup</span>'; return; }
+    if (c === "q" && app.win.length > 1) { app.win.splice(app.active, 1); app.active = 0; return; }
+    if (c === "q" || c === "wq") { M.toast(app, "info", "so exits", "terminal restored: main screen, cursor visible, mouse + kitty keyboard off", 3000); return; }
+    if (c === "w") { app.dirty = false; app.saveError = null; app.msg = `<span class="dim">"${W(app).path}" written</span>`; return; }
+    if (c === "bn") { const order = ["projects/so-roadmap.md", "daily/2026-10-03.md", "projects/garden-app.md"]; openPath(app, order[(app.activeBuf + 1) % 3]); return; }
+    if (c === "bp") { const order = ["projects/so-roadmap.md", "daily/2026-10-03.md", "projects/garden-app.md"]; openPath(app, order[(app.activeBuf + 2) % 3]); return; }
+    if (c.startsWith("e ")) { openPath(app, c.slice(2).trim()); return; }
+    if (c === "Preview") { M.toast(app, "ok", "Preview on http://127.0.0.1:41733", "browser opened · follows this note (see m7)", 3000); app.preview = "127.0.0.1:41733"; return; }
+    app.msg = `<span class="t-err">E492: Not an editor command: ${M.esc(c)}</span>`;
+  }
+  function split(app) {
+    if (app.win.length > 1) return;
+    app.win.push({ path: "projects/garden-app.md", ft: "markdown", doc: M.md.parse(C.garden), st: { cur: { l: 8, c: 0 }, view: "live", vim: "normal", top: 0 } });
+    app.active = 1;
+    app.msg = '<span class="dim">:vs — Ctrl-w h / Ctrl-w l move between windows</span>';
+  }
+  const leader = (app) => {
+    const m = M.leaderWith({
+    e: (a) => { a.explorer = !a.explorer; a.treeFocus = a.explorer; },
+    o: (a) => { a.side = a.side === "outline" ? null : "outline"; },
+    "l.b": (a) => { a.side = a.side === "backlinks" ? null : "backlinks"; },
+    "w.v": (a) => split(a),
+    "w.d": (a) => { if (a.win.length > 1) { a.win.splice(a.active, 1); a.active = 0; } },
+    "b.n": (a) => onEx(a, "bn"), "b.p": (a) => onEx(a, "bp"),
+    });
+    // note-only keys are bound for Markdown buffers only (REQ3@R4, AD4)
+    if (app && app.win && !isNote(W(app))) { delete m.m; delete m.x; delete m.o; delete m.l.items.b; delete m.l.items.u; }
+    return m;
+  };
+
+  function render(app) {
+    const w = W(app);
+    const curHeading = (() => { for (let i = w.st.cur.l; i >= 0; i--) { const m = w.doc[i].raw.match(/^#{1,6} (.*)/); if (m) return m[1]; } return ""; })();
+    const side = app.side === "backlinks" ? { title: "BACKLINKS  so-roadmap", lines: C.backlinksPanel(true) } : app.side === "outline" ? { title: "OUTLINE", lines: C.outlinePanel(curHeading) } : null;
+    let cmd = M.cmdHtml(app, app.msg);
+    if (app.ctrlw) cmd = '<span class="dim">^W</span>';
+    if (app.pending) cmd = `<span class="dim">${app.pending}</span>`;
+    let overlay = "";
+    if (app.cols < 100 && app.side) overlay = M.ui.float({ x: app.cols - 38, y: 1, w: 38, h: app.rows - 4, title: side.title, body: side.lines.slice(0, app.rows - 7).map((l) => `<div class="ln"> ${l}</div>`).join("") });
+    return M.shell(app, {
+      explorer: app.explorer, tree: TREE.map((r) => Object.assign({}, r, r.path === w.path && app.dirty ? { dirty: true } : {})), treeSel: app.treeSel, treeFocus: app.treeFocus,
+      bufs: BUFS(app.dirty && app.activeBuf === 0, app.extra), activeBuf: app.activeBuf,
+      windows: app.win.map((x, i) => ({ doc: x.doc, st: x.st, title: x.path, active: i === app.active, dirty: i === 0 && app.dirty })),
+      side,
+      status: { mode: app.treeFocus ? "EXPLORER" : M.modeLabel(app, w.st), view: w.st.view, path: w.path, dirty: app.dirty, saveError: app.saveError, backlinks: isNote(w) ? 7 : null, words: isNote(w) ? M.words(w.doc) : null, ln: w.st.cur.l + 1, col: w.st.cur.c + 1, preview: app.preview || "off", index: app.index },
+      cmd, overlay,
+    });
+  }
+  function onKey(app, k) {
+    if (app.ctrlw) {
+      app.ctrlw = false;
+      if (k === "h" || k === "<C-h>") { if (app.active > 0) app.active--; else if (app.explorer) app.treeFocus = true; return true; }
+      if (k === "l" || k === "<C-l>") { if (app.treeFocus) app.treeFocus = false; else if (app.active < app.win.length - 1) app.active++; return true; }
+      if (k === "v") { split(app); return true; }
+      if (k === "q") { onEx(app, "q"); return true; }
+      return true;
+    }
+    if (k === "<C-w>") { app.ctrlw = true; return true; }
+    if (app.treeFocus && app.cmdline == null) {
+      if (k === "j" || k === "<Down>") { app.treeSel = Math.min(TREE.length - 1, app.treeSel + 1); return true; }
+      if (k === "k" || k === "<Up>") { app.treeSel = Math.max(0, app.treeSel - 1); return true; }
+      if (k === "<CR>" || k === "l") { const r = TREE[app.treeSel]; if (r.kind === "dir") M.toast(app, "info", "Folder " + (r.open ? "collapsed" : "expanded"), r.path, 1400); else openPath(app, r.path); return true; }
+      if (k === "<Esc>" || k === "q") { app.treeFocus = false; return true; }
+      if (k === "a" || k === "r" || k === "m" || k === "d") { M.toast(app, "info", "Explorer file operations", "a create · r rename · m move · d delete — see m4", 2400); return true; }
+      if (k === "<Space>") return false;
+      return true;
+    }
+    app.msg = app.cmdline == null && k !== ":" ? app.msg : "";
+    const w = W(app);
+    const handled = M.vim(app, w, k, {
+      onEx, onChange: (a) => { const x = W(a); if (!isNote(x)) x.doc = M.md.parseFile(x.doc.map((l) => l.raw).join("\n"), x.lang); scheduleAutosave(a); },
+      onLeaveInsert: (a) => { if (a.dirty && !a.saveError) { a.dirty = false; a.msg = `<span class="dim">"${W(a).path}" written · on leaving Insert</span>`; } },
+      onFollow: (a) => (isNote(W(a)) ? M.toast(a, "info", "gd follows the link under the cursor", "see m4 Links & files", 2000) : notAvailable(a)),
+    });
+    if (handled && w.st.vim !== "insert") Mock.markState(app.stateId);
+    return handled;
+  }
+
+  M.create({
+    id: "RM261003ABZP-M1", rev: "R2", title: "M1 · App shell", path: "m1-app-shell.html",
+    subtitle: "The whole frame: explorer, bufferline, editor windows, side panel, statusline and command line, across vim modes, splits, startup, narrow terminals, and non-Markdown files.",
+    init, render, onKey, leader,
+    leaderAllowed: (app) => app.cmdline == null && W(app).st.vim === "normal",
+    onClick: (app, what) => {
+      const [kind, v] = what.split(":");
+      if (kind === "tree") { app.treeSel = Number(v); app.treeFocus = true; const r = TREE[app.treeSel]; if (r.kind !== "dir") openPath(app, r.path); }
+      if (kind === "buf") onEx(app, ["e projects/so-roadmap.md", "e daily/2026-10-03.md", "e projects/garden-app.md", "e " + app.extra][Number(v)]);
+    },
+    keys: [["j k h l", "move cursor (w b 0 $ gg G { } also work)"], ["i a A o", "Insert mode — type to edit, autosave after 1 s"], ["Esc", "back to Normal (saves on leaving Insert)"], ["v V", "Visual char / line, then y or d"], [":", "command line — try :vs :q :w :bn :Preview"], ["Space", "leader — pause to see which-key"], ["Space e", "toggle explorer (focuses it)"], ["Space o", "toggle outline panel"], ["Space l b", "toggle backlinks panel"], ["Ctrl-w h / l", "move between explorer and windows"], ["Ctrl-w v", "vertical split"], ["click", "explorer rows and buffers are clickable"], [":e scripts/sync.ts", "open a non-Markdown file (also Enter in the explorer)"]],
+    notes: "Statusline segments: MODE │ view │ path ● │ save errors │ ⇠ backlinks │ words │ preview │ index │ Ln:Col. At 80 columns the explorer and side panel become floating overlays and low-priority segments drop. Non-Markdown files show <code>source</code> as the view and drop the note segments (backlinks, words).<br><br><b>Extension points</b> (review notes only, AD5): the sign column is a shared lane (S2); each window hosts content by editor kind (S7); the editor is a generic text view whose look comes from decoration providers, and the statusline picks segments by file type (S15). None of these draw future features.",
+    states: [
+      { id: "S1", group: "Startup", label: "Startup — indexing in background", caption: "First frame appears immediately; the opened note is editable while the worker indexes 10,000 notes. The statusline shows <code>◌ indexing 4,210/10,000</code>, then a toast when ready (watch ~2.5 s).", refs: "REQ9@R2 (start < 200 ms, index < 3 s non-blocking), DES7@R1, DES16@R1",
+        apply: (a) => { a.index = "indexing 4,210/10,000"; let n = 4210; const tick = () => { if (Mock.app().stateId !== "S1") return; n = Math.min(10000, n + 1450); a.index = n >= 10000 ? "ready" : `indexing ${n.toLocaleString("en-US")}/10,000`; if (n >= 10000) M.toast(a, "ok", "Index ready", "10,000 notes · 2.4 s", 3000); else setTimeout(tick, 600); M.render(); }; setTimeout(tick, 600); } },
+      { id: "S2", group: "Modes", label: "Normal mode (live preview)", caption: "Default layout at 120×36: explorer, bufferline, live-preview editor, global statusline. The cursor line shows raw syntax (marked ▕ in the sign column); everything else renders.<div class=ext><b>Extension point</b> — the sign column is a shared lane. Today it carries ▕ (revealed source) and ⚠ (render error, m2); later markers such as diagnostics would use the same column, so the gutter layout does not change.</div>", refs: "REQ1@R2, REQ2@R2, REQ3@R2, REQ5@R2, DES10@R1" },
+      { id: "S3", group: "Modes", label: "Insert mode — typing autosaves", caption: "Bar cursor, green INSERT badge, dirty ● in bufferline/explorer/statusline. Type something: autosave writes ~1 s after you stop, and again when you press Esc.", refs: "REQ1@R2 (autosave), REQ2@R2 (modes, cursor shape)", apply: (a) => { a.win[0].st.vim = "insert"; a.win[0].st.cur = { l: 10, c: 40 }; } },
+      { id: "S4", group: "Modes", label: "Visual (characterwise)", caption: "Selection reveals the raw syntax of every selected line. y yanks, d deletes, Esc leaves.", refs: "REQ2@R2, REQ5@R2 (reveal where the selection is)", apply: (a) => { const st = a.win[0].st; st.vim = "visual"; st.vstart = { l: 9, c: 2 }; st.cur = { l: 10, c: 24 }; } },
+      { id: "S5", group: "Modes", label: "Visual line", caption: "Linewise selection across list items; V-LINE badge.", refs: "REQ2@R2", apply: (a) => { const st = a.win[0].st; st.vim = "vline"; st.vstart = { l: 13, c: 0 }; st.cur = { l: 16, c: 0 }; } },
+      { id: "S6", group: "Modes", label: "Command-line typing :vs", caption: "Command-line mode at the bottom; press Enter to split. Unknown commands show a vim-style E492 error.", refs: "REQ2@R2 (Ex commands)", apply: (a) => { a.cmdline = "vs"; } },
+      { id: "S7", group: "Layout", label: "Vertical split (two notes)", caption: "Two windows with a winbar each (active title bold). Ctrl-w h / Ctrl-w l move focus; :q closes the active window.<div class=ext><b>Extension point</b> — each window hosts content by editor kind: a text view here, a Bases view in m6. A later editor kind would fill a window the same way, inside the same split and winbar.</div>", refs: "REQ2@R2 (:sp :vs, Ctrl-w), UDES1@R2 (content by editor kind)", apply: (a) => { split(a); } },
+      { id: "S8", group: "Layout", label: "Explorer hidden (focus)", caption: "Space e hides the explorer; the editor takes the full width.", refs: "REQ3@R2 (<leader>e)", apply: (a) => { a.explorer = false; } },
+      { id: "S9", group: "Layout", label: "Explorer focused", caption: "EXPLORER mode: j/k move, Enter or l opens, Esc returns. a/r/m/d are file operations (shown in m4).", refs: "REQ1@R2 (browse, CRUD), REQ3@R2", apply: (a) => { a.treeFocus = true; a.treeSel = 6; } },
+      { id: "S10", group: "Layout", label: "Side panel: backlinks", caption: "Right panel lists linked and unlinked mentions with context lines; the statusline count matches.", refs: "REQ4@R2 (backlinks panel)", apply: (a) => { a.side = "backlinks"; } },
+      { id: "S11", group: "Layout", label: "Side panel: outline", caption: "Heading outline follows the cursor (current heading marked ▸).", refs: "REQ3@R2 (<leader>o outline)", apply: (a) => { a.side = "outline"; a.win[0].st.cur = { l: 12, c: 0 }; } },
+      { id: "S12", group: "Responsive", label: "Narrow terminal 80×24", caption: "At 80 columns the explorer opens as a floating overlay instead of a docked pane, the side panel floats too, and the statusline drops view/words/preview segments.", refs: "UI context constraint (80×24), REQ11@R2", apply: (a) => { a.cols = 80; a.rows = 24; a.explorer = true; a.treeFocus = true; } },
+      { id: "S13", group: "Feedback", label: "Notifications (info / warn / error)", caption: "Toasts stack top-right and expire; errors stay until dismissed. Messages never contain note content beyond paths.", refs: "DES2@R1 (notify effects), DES14@R1",
+        apply: (a) => { setTimeout(() => { M.toast(a, "ok", "Renamed plan.md → roadmap.md", "12 files updated", 0); M.toast(a, "warn", "Config: unknown key 'editor.wrapp'", "~/.config/so/config.toml:7 · defaults used", 0); M.toast(a, "error", "Index worker restarted", "link features paused for 0.4 s", 0); }, 30); } },
+      { id: "S14", group: "Feedback", label: "Save failed (disk full)", caption: "A failed write keeps the buffer dirty, shows the reason in the statusline, and retries with backoff (1 s, 2 s, 4 s … 30 s). :w retries now.", refs: "REQ1@R2 (never lose edits), DES8@R1 failure flow",
+        apply: (a) => { a.dirty = true; a.saveError = "ENOSPC (no space left) · retry in 4 s"; setTimeout(() => M.toast(a, "error", "Save failed: projects/so-roadmap.md", "ENOSPC — retrying in 4 s · :w to retry now", 0), 30); } },
+      { id: "S15", group: "File types", label: "Non-Markdown file: scripts/sync.ts", caption: "Enter on <code>scripts/sync.ts</code> in the explorer (or <code>:e scripts/sync.ts</code>) opens it in source view: every line raw with TypeScript colouring and no ▕ marks. The statusline shows <code>source</code> and drops the note segments (backlinks, words). It edits and autosaves like a note. <code>gd</code> shows <code>not available for typescript files</code>; Space m, Space x and Space o are not bound here (pause on Space to see which-key)." + '<div class=ext><b>Extension point</b> — the editor window is a generic text view. Markdown live preview is one decoration provider and the TypeScript highlighter is another; the statusline picks its segments by file type. A later file type adds a provider and its own segments, with no new layout.</div>', refs: "REQ1@R3 (any UTF-8 text file opens), REQ3@R4 (file-type keymaps), DES17@R1 (file-type registry, highlighter), UREQ3@R2, UDES1@R2, UDES3@R2, AD4",
+        apply: (a) => { openPath(a, "scripts/sync.ts"); a.treeSel = 15; a.win[0].st.cur = { l: 9, c: 2 }; a.msg = ""; } },
+      { id: "S16", group: "File types", label: "Unrecognized language → plain text", caption: "A file with no recognized language (<code>scripts/crontab</code>) opens the same way, as plain text without colouring. Statusline and keys match S15.", refs: "REQ1@R3, DES17@R1 (plain-text fallback), UREQ3@R2, AD4",
+        apply: (a) => { openPath(a, "scripts/crontab"); a.treeSel = 16; a.win[0].st.cur = { l: 1, c: 0 }; a.msg = ""; } },
+      { id: "S17", group: "File types", label: "Refused: binary file", caption: "Enter on <code>attachments/photo.png</code> (or <code>:e attachments/photo.png</code>) shows <code>binary file — not opened</code> in the message line (the S6 line used for E492). The active buffer stays unchanged and nothing is written. Images still render inside notes (m2).", refs: "REQ1@R3 (NUL byte or invalid UTF-8 in the first 8 KiB), UREQ3@R2, AD4",
+        apply: (a) => { a.treeFocus = true; a.treeSel = 13; openPath(a, "attachments/photo.png"); } },
+      { id: "S18", group: "File types", label: "Refused: file too large", caption: "<code>scripts/fixtures.json</code> is 92 MiB, over the limit, so the message line shows <code>file too large — not opened (limit 16 MiB)</code>. Nothing else changes.", refs: "REQ1@R3 (16 MiB limit), UREQ3@R2, AD4",
+        apply: (a) => { a.treeFocus = true; a.treeSel = 17; openPath(a, "scripts/fixtures.json"); } },
+      { id: "S19", group: "File types", label: "Non-Markdown file at 80×24", caption: "At 80 columns the statusline drops the view segment exactly as for notes, keeping MODE │ path │ index │ Ln:Col; the note segments are already absent.", refs: "UI context (80×24), UDES1@R2, REQ1@R3, AD4",
+        apply: (a) => { a.cols = 80; a.rows = 24; a.explorer = false; openPath(a, "scripts/sync.ts"); a.win[0].st.cur = { l: 9, c: 2 }; a.msg = ""; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

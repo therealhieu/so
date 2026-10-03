@@ -1,0 +1,287 @@
+# RM261003ABZP: so v1 — Roadmap Index Revisions
+
+- **Current index:** `rm261003abzp-roadmap-index.md`
+- **Purpose:** Append-only history of prior delivery arrangements and approved baselines; not current planning inputs.
+- **Revision scope:** The index records exact PH/DI/S/V revisions, not a separate document revision. Complete record definitions and their transitions remain in their owning phase or design histories.
+
+## Archived Changes
+
+- **RM261003ABZP-PH1@R1, RM261003ABZP-PH2@R1, RM261003ABZP-DI1@R1 … RM261003ABZP-DI4@R1 — Scope change: language-neutral core, any text file**
+  - **Archived at:** 2026-10-03T04:30:49Z
+  - **Change type:** Baseline update
+  - **Reason:** The user asked to leave room for growing `so` into a code editor and notebook host, and selected "Apply all six (Recommended)" (`rm261003abzp-roadmap-context.md@R2`). Requirements, system design, UI artifacts, and both phases were revised.
+  - **Changes:** Outcome and context mention the language-neutral core; approved inputs and UI baseline move to current revisions and add RM261003ABZP-DES17@R1 and manifest AD4; PH1 exit adds RM261003ABZP-S12@R1 / RM261003ABZP-V18@R1; DI ledger outcomes describe the kernel, file types, file-type keymaps, the decoration-provider live preview, and Bases as an editor kind; coverage adds DES17, S12, and V18; Deferred Scope adds code intelligence and notebooks. Phase order, DI split, dependencies, gates, and releases are unchanged.
+  - **Input baseline:** `rm261003abzp-roadmap-context.md@R1` → `@R2`; `rm261003abzp-ui-context.md@R1` → `@R2`; RM261003ABZP-REQ1@R2, RM261003ABZP-REQ3@R3, RM261003ABZP-REQ11@R2 → RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ11@R3; RM261003ABZP-DES1@R1, RM261003ABZP-DES5@R1, RM261003ABZP-DES7@R2, RM261003ABZP-DES9@R2, RM261003ABZP-DES10@R1, RM261003ABZP-DES12@R1 → RM261003ABZP-DES1@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2; added RM261003ABZP-DES17@R1; RM261003ABZP-UREQ1/3/5/7@R1 → @R2; RM261003ABZP-UDES1/3/5/7@R1 → @R2; RM261003ABZP-US1/2/3/5@R1 → @R2; RM261003ABZP-UV1/3/4/6@R1 → @R2; mockup revisions unchanged; manifest AD4 added.
+  - **Phase order:** Unchanged (RM261003ABZP-PH1 → RM261003ABZP-PH2; revisions R1 → R2)
+  - **Baseline transitions:**
+    - RM261003ABZP-PH1@R1, RM261003ABZP-DI1@R1, RM261003ABZP-DI2@R1 → RM261003ABZP-PH1@R2, RM261003ABZP-DI1@R2, RM261003ABZP-DI2@R2 - `rm261003abzp-roadmap-phase-1-daily-usable-editor.md` and its revisions file
+    - RM261003ABZP-PH2@R1, RM261003ABZP-DI3@R1, RM261003ABZP-DI4@R1 → RM261003ABZP-PH2@R2, RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 - `rm261003abzp-roadmap-phase-2-obsidian-experience.md` and its revisions file
+    - None → RM261003ABZP-S12@R1, RM261003ABZP-V18@R1; RM261003ABZP-V4@R1, RM261003ABZP-V7@R1, RM261003ABZP-V12@R1, RM261003ABZP-V15@R1, RM261003ABZP-V16@R1 → @R2; RM261003ABZP-V11@R2 → RM261003ABZP-V11@R3 - `rm261003abzp-design.md` and `rm261003abzp-design-revisions.md`
+  - **Evidence:** `rm261003abzp-roadmap-context.md@R2` - "Apply all six" decision.
+  - **Research provenance:** None — no new research; lineage annotated with current revisions.
+  - **Approval evidence:** User selected "Apply all six (Recommended)" on 2026-10-03 under the standing delegation of 2026-10-03; the agent approved PH1@R2 and PH2@R2.
+  - **Downstream impact:** No Work or PR bindings exist; Work Progress rows are re-checked against the R2 baseline (DI references bumped to R2, checked-at refreshed).
+
+````markdown
+# RM261003ABZP: so v1 — Roadmap Index
+
+- **Status:** Approved
+- **Outcome:** `so` ships as a fast, vim-modal terminal Markdown editor for a plain notes folder. It has Obsidian-compatible links, live preview, daily notes, templates, Bases, and a read-only browser preview, and is released as checksummed binaries for macOS and Linux.
+- **History:** `rm261003abzp-roadmap-index-revisions.md`
+
+Phase files hold the complete PH and DI definitions. This index holds their current references and the delivery order. `Approved` describes the roadmap baseline, not delivered work. No Work, PR, implementation, or verification result exists yet.
+
+## Baseline
+
+- **Context:** `rm261003abzp-roadmap-context.md@R1` - The repository is empty apart from the `.s1mple/` guidance. Alfred (`../alfred`) supplies code that can be ported for Markdown parsing, Obsidian syntax, the vim core, terminal graphics, and Bases.
+- **Requirements:** `rm261003abzp-requirements.md` (Approved); history: `rm261003abzp-requirements-revisions.md`
+- **Design:** `rm261003abzp-design.md` (Approved); history: `rm261003abzp-design-revisions.md`
+- **Research:** `rm261003abzp-research.md` (immutable; reconciliation Complete in the requirements)
+- **UI baseline:**
+  - UI context: `rm261003abzp-ui-context.md@R1`.
+  - Accepted mockups (`ui-mockups/manifest.md`, shared R1, delegated acceptance): RM261003ABZP-M1@R1, RM261003ABZP-M2@R1, RM261003ABZP-M3@R1, RM261003ABZP-M4@R1, RM261003ABZP-M5@R2, RM261003ABZP-M6@R1, RM261003ABZP-M7@R1.
+  - UI requirements (`Ready for UI Design`, `rm261003abzp-ui-requirements.md`): RM261003ABZP-UREQ1@R1 … RM261003ABZP-UREQ7@R1, RM261003ABZP-UREQ8@R2, RM261003ABZP-UREQ9@R1 … RM261003ABZP-UREQ11@R1.
+  - UI design (`Ready for Planning`, `rm261003abzp-ui-design.md`): RM261003ABZP-UDES1@R1 … RM261003ABZP-UDES11@R1, RM261003ABZP-US1@R1 … RM261003ABZP-US9@R1, and RM261003ABZP-UV1@R1 … RM261003ABZP-UV10@R1.
+- **Approved inputs:**
+  - RM261003ABZP-REQ1@R2 - Folder workspace and safe file management
+  - RM261003ABZP-REQ2@R2 - Vim-modal editing with a core command set
+  - RM261003ABZP-REQ3@R3 - LazyVim-style navigation, commands, configuration, and state
+  - RM261003ABZP-REQ4@R3 - Obsidian-compatible links, backlinks, tags, and rename
+  - RM261003ABZP-REQ5@R2 - Obsidian-style live preview
+  - RM261003ABZP-REQ6@R2 - Daily notes and templates
+  - RM261003ABZP-REQ7@R2 - Obsidian Bases table and Kanban views
+  - RM261003ABZP-REQ8@R2 - Read-only local browser preview
+  - RM261003ABZP-REQ9@R2 - Fast and smooth performance targets
+  - RM261003ABZP-REQ10@R2 - Fast development, CI, and release
+  - RM261003ABZP-REQ11@R2 - Maintainable, standards-based foundations
+  - RM261003ABZP-DES1@R1 - One process, one package, four layers with a tested import boundary
+  - RM261003ABZP-DES2@R2 - One store with a pure reducer and data-only effects
+  - RM261003ABZP-DES3@R1 - Line-array TextBuffer with vim undo blocks
+  - RM261003ABZP-DES4@R1 - Table-driven vim engine
+  - RM261003ABZP-DES5@R1 - Command registry and keymap trie as the single extension point for actions
+  - RM261003ABZP-DES6@R1 - micromark/mdast with Obsidian extensions and block-level reparse
+  - RM261003ABZP-DES7@R2 - Worker-built in-memory index with a documented resolution rule
+  - RM261003ABZP-DES8@R1 - Atomic saves, directory watching, own-write stamps, and trash adapters
+  - RM261003ABZP-DES9@R2 - Viewport-only live-preview layout with reveal and registered block renderers
+  - RM261003ABZP-DES10@R1 - OpenTUI shell with a custom editor renderable, normalized input, and guaranteed terminal restore
+  - RM261003ABZP-DES11@R1 - Moment-subset formatter, template expansion, and daily-note commands
+  - RM261003ABZP-DES12@R1 - Ported Bases engine with table and Kanban view models and YAML-preserving write-back
+  - RM261003ABZP-DES13@R2 - `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering
+  - RM261003ABZP-DES14@R1 - TOML config at the XDG path; per-workspace state at the XDG state path
+  - RM261003ABZP-DES15@R1 - Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile
+  - RM261003ABZP-DES16@R1 - Performance by construction plus benchmark gates
+  - RM261003ABZP-UREQ1@R1 … RM261003ABZP-UREQ11@R1 (RM261003ABZP-UREQ8@R2) and RM261003ABZP-UDES1@R1 … RM261003ABZP-UDES11@R1 - the accepted terminal and browser experience (titles in UI Coverage below)
+
+## Delivery Overview
+
+- **First valuable release:** PH1 ships as `v0.1.0`. The user opens a folder, browses and manages notes, edits with vim keys and safe autosave, and finds and jumps between notes through the leader key, pickers, and wikilinks, with links kept intact on rename. This is the requirements' "Minimum valuable release".
+- **Delivery approach:** There are two phases and four substantial DIs, following the user instruction to avoid splitting work into many DIs and phases.
+  - PH1 (DI1 + DI2) delivers the daily-usable editor.
+  - PH2 (DI3 + DI4) adds the Obsidian experience on top of it.
+  - Each DI ships one user-visible capability with its own tests.
+  - Internal layers (tooling, store, parser, index) ship inside the DI that first needs them, not as separate "foundation" items. The exception is DI1, which by design (RM261003ABZP-DES1@R1, Delivery constraints) must land the boundary test and CI before any feature code.
+- **Key constraints:**
+  - The import boundary test and the CI gates exist from the first PR (RM261003ABZP-DES1@R1, RM261003ABZP-DES15@R1).
+  - DI1 confirms the `@opentui/core` paint and image APIs at the pinned version and checks recursive `fs.watch` on macOS and Linux before later DIs depend on them (RM261003ABZP-DES10@R1, RM261003ABZP-DES8@R1).
+  - DI4 confirms the Kanban `type` constant against an Obsidian 1.14+ file before Kanban ships (RM261003ABZP-DES12@R1).
+  - Releases are cut only at phase exit: release-please accumulates commits, and its release PR is merged after the phase exit evidence passes.
+- **Dependencies and parallel opportunities:**
+
+```text
+RM261003ABZP-PH1@R1 — Daily-usable editor  (release v0.1.0)
+├── RM261003ABZP-DI1@R1 — Editor foundation: open folder → vim edit → safe autosave → explorer file ops
+└── RM261003ABZP-DI2@R1 — Navigation and links: leader/which-key/pickers/palette/config → links, backlinks, rename
+        (DI2 depends on DI1)
+
+RM261003ABZP-PH2@R1 — Obsidian experience  (release v1.0.0; depends on PH1)
+├── RM261003ABZP-DI3@R1 — Live preview + browser preview  (depends on DI2)
+└── RM261003ABZP-DI4@R1 — Daily notes, templates + Bases   (depends on DI2; gate on DI3 for the `base` embed renderer)
+
+Parallel: DI3 and DI4 run in parallel once DI2 is merged. DI4 waits for DI3 only before
+executing its `![[file.base]]` embed renderer (PH2 Cross-Work Dependency Gates).
+```
+
+## Phase Sequence
+
+1. **RM261003ABZP-PH1@R1 — Daily-usable editor**
+   - **Outcome:** A terminal user can open a notes folder and edit it daily with vim keys, safe autosave, explorer file management, LazyVim-style discovery (leader, which-key, pickers, palette, help, config), and Obsidian-compatible links, backlinks, tags, and link-safe rename.
+   - **Dependencies:** None
+   - **Delivery items:** RM261003ABZP-DI1@R1, RM261003ABZP-DI2@R1
+   - **Exit criteria:**
+     - RM261003ABZP-S1@R1 - Notes are never lost or silently overwritten; verified by RM261003ABZP-V1@R1
+     - RM261003ABZP-S2@R1 - The core vim command set behaves like Neovim; verified by RM261003ABZP-V2@R1, RM261003ABZP-V3@R1
+     - RM261003ABZP-S3@R1 - Commands are discoverable and configurable; verified by RM261003ABZP-V4@R1
+     - RM261003ABZP-S4@R1 - Links resolve deterministically, and rename and link-mention keep the graph intact; verified by RM261003ABZP-V5@R1, RM261003ABZP-V6@R2
+     - RM261003ABZP-S9@R1 (startup and index part) - First frame < 200 ms and index < 3 s on 10,000 notes, with input staying responsive during indexing; verified by RM261003ABZP-V13@R1
+     - RM261003ABZP-S10@R1 - Check < 30 s, CI < 3 min, release produces four checksummed binaries that start; verified by RM261003ABZP-V14@R1
+     - RM261003ABZP-S11@R1 (boundary and restore part) - Boundary violations fail CI, and the terminal is restored on every exit path; verified by RM261003ABZP-V15@R1, RM261003ABZP-V17@R1
+     - RM261003ABZP-US1@R1 (PH1 states) - Shell, modes, and status are legible for every state delivered by DI1 and DI2; verified by RM261003ABZP-UV1@R1 (PH1 states), RM261003ABZP-UV2@R1
+     - RM261003ABZP-US3@R1 - Commands and notes are discoverable from the keyboard; verified by RM261003ABZP-UV4@R1
+     - RM261003ABZP-US4@R1 - Link interactions show impact first; verified by RM261003ABZP-UV5@R1
+     - RM261003ABZP-US5@R1 - File operations and disk changes never surprise the user; verified by RM261003ABZP-UV6@R1
+     - RM261003ABZP-US9@R1 (PH1 surfaces) - NO_COLOR, light theme, and 80×24 hold for the shell, explorer, prompts, overlays, and side panel; verified by RM261003ABZP-UV10@R1 (PH1 states)
+   - **Delivery status:** Not started
+   - **Progress evidence:** None
+   - **Details:** `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`
+
+2. **RM261003ABZP-PH2@R1 — Obsidian experience**
+   - **Outcome:** Notes render in Obsidian-style live preview with inline images, and `:Preview` mirrors them read-only in the browser. Daily notes and templates take one or two keystrokes. Bases open as editable tables and Kanban boards and embed in notes. Together this completes the v1 scope.
+   - **Dependencies:** RM261003ABZP-PH1@R1 - the editor, store, command registry, Doc parser, index, pickers, and prompts
+   - **Delivery items:** RM261003ABZP-DI3@R1, RM261003ABZP-DI4@R1
+   - **Exit criteria:**
+     - RM261003ABZP-S5@R1 - Live preview renders Obsidian syntax and reveals source at the cursor; verified by RM261003ABZP-V7@R1, RM261003ABZP-V8@R1
+     - RM261003ABZP-S6@R1 - Daily notes and templates match Obsidian output; verified by RM261003ABZP-V9@R1
+     - RM261003ABZP-S7@R1 - Bases views evaluate and edit `.base` files; verified by RM261003ABZP-V10@R1
+     - RM261003ABZP-S8@R1 - Preview is live, read-only, and local-only; verified by RM261003ABZP-V11@R2
+     - RM261003ABZP-S9@R1 - All performance targets hold, including keystroke p95 < 16 ms in live preview; verified by RM261003ABZP-V12@R1, RM261003ABZP-V13@R1 (re-run)
+     - RM261003ABZP-S10@R1 - Fast checks, CI, and release still hold at full scope; verified by RM261003ABZP-V14@R1 (re-run for `v1.0.0`)
+     - RM261003ABZP-S11@R1 - Foundations stay clean, and extension is registration-only; verified by RM261003ABZP-V15@R1, RM261003ABZP-V16@R1, RM261003ABZP-V17@R1
+     - RM261003ABZP-US1@R1 - Complete statusline segment order, including the `view` and `preview` segments; verified by RM261003ABZP-UV1@R1 (full)
+     - RM261003ABZP-US2@R1 - Live preview looks and reveals like the accepted mockup; verified by RM261003ABZP-UV3@R1
+     - RM261003ABZP-US6@R1 - Daily notes and templates take one or two keystrokes; verified by RM261003ABZP-UV7@R1
+     - RM261003ABZP-US7@R1 - Bases editing is keyboard-fast and shows every write; verified by RM261003ABZP-UV8@R1
+     - RM261003ABZP-US8@R1 - The browser page is a faithful, read-only, connection-aware mirror; verified by RM261003ABZP-UV9@R1
+     - RM261003ABZP-US9@R1 - Every surface works under NO_COLOR, in light theme, and at 80×24; verified by RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1
+   - **Delivery status:** Not started
+   - **Progress evidence:** None
+   - **Details:** `rm261003abzp-roadmap-phase-2-obsidian-experience.md`
+
+## Delivery Items
+
+| DI | Valuable outcome | Phase | Dependencies | Work | PR |
+|---|---|---|---|---|---|
+| RM261003ABZP-DI1@R1 | `so [path]` opens a folder in an OpenTUI shell. The user edits with the core vim command set, splits, and buffers, and saves atomically with autosave, external-change handling, and explorer create/rename/move/trash. Tooling, CI, release binaries, the boundary test, and the bench harness ship with it. | RM261003ABZP-PH1@R1 | None | Pending | Pending |
+| RM261003ABZP-DI2@R1 | Leader with which-key, the picker family, palette, help, TOML config, and persisted recents and jumps. Obsidian links, tags, backlinks with link-mention, `[[` completion, and link-safe rename/move, all over a worker-built index. | RM261003ABZP-PH1@R1 | RM261003ABZP-DI1@R1 | Pending | Pending |
+| RM261003ABZP-DI3@R1 | Live preview with reveal, rich blocks, folds, embeds, image tiers, and live/source/reading modes. `:Preview` shows a read-only browser mirror over SSE. Final keystroke benchmarks and registration-only extension proof. | RM261003ABZP-PH2@R1 | RM261003ABZP-DI2@R1 | Pending | Pending |
+| RM261003ABZP-DI4@R1 | `:Today`/`:Yesterday`/`:Tomorrow`, the calendar picker, template insertion, and new-note-from-template. `.base` files open as editable table and Kanban views with frontmatter write-back, plus `![[file.base]]` embeds. | RM261003ABZP-PH2@R1 | RM261003ABZP-DI2@R1; RM261003ABZP-DI3@R1 (embed gate only) | Pending | Pending |
+
+Each DI maps to exactly one future Work and one PR. No W or PR is assigned yet.
+
+## Work Progress
+
+| DI | Work stage | Contract health | Next gate / blocker | Evidence | Checked at |
+|---|---|---|---|---|---|
+| RM261003ABZP-DI1@R1 | Not started | Not assessed | Start `s1mple-discuss` for DI1 | None | 2026-10-03T03:46:40Z (roadmap approval) |
+| RM261003ABZP-DI2@R1 | Not started | Not assessed | DI1 merged (PH1 gate G1) | None | 2026-10-03T03:46:40Z (roadmap approval) |
+| RM261003ABZP-DI3@R1 | Not started | Not assessed | PH1 exit and DI2 merged (PH2 gate G2) | None | 2026-10-03T03:46:40Z (roadmap approval) |
+| RM261003ABZP-DI4@R1 | Not started | Not assessed | PH1 exit and DI2 merged (PH2 gate G3); DI3 embed gate G4 before embed execution | None | 2026-10-03T03:46:40Z (roadmap approval) |
+
+These rows are evidence-backed snapshots, not live telemetry. Delivery status stays in Phase Sequence and in each phase's Progress. Resolve W and PR identities through the Delivery Items ledger. A row stays `Not assessed` until its relevant baseline and coverage have been checked.
+
+The main orchestrator updates authorized index and phase links, and progress, together after re-reading both. Without parent-write authorization, it records the exact pending changes and evidence in the current W artifact's synchronization receipt instead of modifying this index.
+
+## Coverage
+
+| Requirement | Research support | Design | Phase / DI | Success | Verification |
+|---|---|---|---|---|---|
+| RM261003ABZP-REQ1@R2 - folder workspace, safe file management | RM261003ABZP-RF11 - atomic save, directory watching, undoable reload | RM261003ABZP-DES8@R1, RM261003ABZP-DES2@R2 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 | RM261003ABZP-S1@R1 | RM261003ABZP-V1@R1 |
+| RM261003ABZP-REQ2@R2 - vim editing | RM261003ABZP-RF5 - Esc timeout, kitty keyboard; RM261003ABZP-RF6 - line array, undo block | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES10@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 | RM261003ABZP-S2@R1 | RM261003ABZP-V2@R1, RM261003ABZP-V3@R1 |
+| RM261003ABZP-REQ3@R3 - navigation, commands, config, state | RM261003ABZP-RF15 - TOML, XDG, state home | RM261003ABZP-DES5@R1, RM261003ABZP-DES7@R2, RM261003ABZP-DES10@R1, RM261003ABZP-DES14@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI2@R1 (registry and keymap core in RM261003ABZP-DI1@R1) | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R1 |
+| RM261003ABZP-REQ4@R3 - links, backlinks, tags, rename | RM261003ABZP-RF8 - documented resolution rule | RM261003ABZP-DES7@R2, RM261003ABZP-DES6@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI2@R1 | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
+| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-RF4 - kitty/sixel/blocks; RM261003ABZP-RF7 - block reparse, reveal | RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R2, RM261003ABZP-DES10@R1 | RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R1, RM261003ABZP-V8@R1 |
+| RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-RF10 - Moment tokens, `{{time:F}}`, subfolders | RM261003ABZP-DES11@R1 | RM261003ABZP-PH2@R1 / RM261003ABZP-DI4@R1 | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
+| RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-RF9 - layouts, Kanban rules | RM261003ABZP-DES12@R1, RM261003ABZP-DES11@R1 | RM261003ABZP-PH2@R1 / RM261003ABZP-DI4@R1 | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
+| RM261003ABZP-REQ8@R2 - browser preview | RM261003ABZP-RF12 - binding, Host check, containment, SSE | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R1 | RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R2 |
+| RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-RF2 - in-process frame metrics | RM261003ABZP-DES16@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 (harness), RM261003ABZP-DI2@R1 (V13); RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 (V12) | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R1, RM261003ABZP-V13@R1 |
+| RM261003ABZP-REQ10@R2 - development, CI, release | RM261003ABZP-RF3 - compile embeds native lib; RM261003ABZP-RF13 - TS 7, no TS API; RM261003ABZP-RF14 - release-please | RM261003ABZP-DES15@R1, RM261003ABZP-DES1@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ11@R2 - foundations | RM261003ABZP-RF1 - contain OpenTUI; RM261003ABZP-RF4; RM261003ABZP-RF5; RM261003ABZP-RF6; RM261003ABZP-RF13; RM261003ABZP-RF14; RM261003ABZP-RF15 | RM261003ABZP-DES1@R1, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R1, RM261003ABZP-DES10@R1 | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 (V15, V17); RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 (V16) | RM261003ABZP-S11@R1 | RM261003ABZP-V15@R1, RM261003ABZP-V16@R1, RM261003ABZP-V17@R1 |
+
+- **Research lineage:**
+  - RM261003ABZP-RF1:
+    - evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+    - evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF2:
+    - evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+    - evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+  - RM261003ABZP-RF3:
+    - evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+    - evaluated None → informed None (macOS signing deferred)
+  - RM261003ABZP-RF4:
+    - evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF5:
+    - evaluated RM261003ABZP-REQ2@R1 → informed RM261003ABZP-REQ2@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF6:
+    - evaluated RM261003ABZP-REQ2@R1 → informed RM261003ABZP-REQ2@R2
+    - evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF7:
+    - evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2
+    - evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2
+    - evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+  - RM261003ABZP-RF8: evaluated RM261003ABZP-REQ4@R1 → informed RM261003ABZP-REQ4@R2 (current RM261003ABZP-REQ4@R3)
+  - RM261003ABZP-RF9: evaluated RM261003ABZP-REQ7@R1 → informed RM261003ABZP-REQ7@R2
+  - RM261003ABZP-RF10: evaluated RM261003ABZP-REQ6@R1 → informed RM261003ABZP-REQ6@R2
+  - RM261003ABZP-RF11: evaluated RM261003ABZP-REQ1@R1 → informed RM261003ABZP-REQ1@R2
+  - RM261003ABZP-RF12: evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2
+  - RM261003ABZP-RF13:
+    - evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF14:
+    - evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+  - RM261003ABZP-RF15:
+    - evaluated RM261003ABZP-REQ3@R1 → informed RM261003ABZP-REQ3@R2 (current RM261003ABZP-REQ3@R3)
+    - evaluated RM261003ABZP-REQ11@R1 → informed RM261003ABZP-REQ11@R2
+- **Success and verification definitions:**
+  - RM261003ABZP-S1@R1 … RM261003ABZP-S11@R1 and RM261003ABZP-V1@R1 … RM261003ABZP-V17@R1 (with RM261003ABZP-V6@R2 and RM261003ABZP-V11@R2) are owned by `rm261003abzp-design.md`, Success and Verification.
+  - RM261003ABZP-US1@R1 … RM261003ABZP-US9@R1 and RM261003ABZP-UV1@R1 … RM261003ABZP-UV10@R1 are owned by `rm261003abzp-ui-design.md`, UI Success Criteria and Implementation Verifications.
+  - The phases define no new S or V records.
+
+### UI Coverage
+
+| Accepted mockup / feedback | UI requirement | UI design | Phase / DI | UI success | UI verification |
+|---|---|---|---|---|---|
+| RM261003ABZP-M1@R1; Acceptance; AD3 | RM261003ABZP-UREQ1@R1 - Application shell layout and status feedback | RM261003ABZP-UDES1@R1, RM261003ABZP-UDES11@R1 - Surface: Application shell; Component: Statusline, Toast stack | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 (index and side-panel states: RM261003ABZP-DI2@R1); RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 (view and preview segments) | RM261003ABZP-US1@R1 | RM261003ABZP-UV1@R1 |
+| RM261003ABZP-M1@R1; Acceptance; AD3 | RM261003ABZP-UREQ2@R1 - Vim modes, cursor, and command line | RM261003ABZP-UDES2@R1 - Surface: Application shell; Component: Command line | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 | RM261003ABZP-US1@R1 | RM261003ABZP-UV2@R1 |
+| RM261003ABZP-M2@R1, RM261003ABZP-M1@R1; Acceptance; AD3 | RM261003ABZP-UREQ3@R1 - Live preview rendering, reveal, and view modes | RM261003ABZP-UDES3@R1 - Surface: Editor window | RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 | RM261003ABZP-US2@R1 | RM261003ABZP-UV3@R1 |
+| RM261003ABZP-M2@R1; Acceptance; AD3 | RM261003ABZP-UREQ4@R1 - Rich blocks, embeds, and images | RM261003ABZP-UDES4@R1 - Surface: Editor window | RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 | RM261003ABZP-US2@R1 | RM261003ABZP-UV3@R1 |
+| RM261003ABZP-M3@R1; Acceptance; AD1; AD3 | RM261003ABZP-UREQ5@R1 - Discovery overlays | RM261003ABZP-UDES5@R1 - Surface: Overlays; Component: Which-key, Picker, Command line | RM261003ABZP-PH1@R1 / RM261003ABZP-DI2@R1 | RM261003ABZP-US3@R1 | RM261003ABZP-UV4@R1 |
+| RM261003ABZP-M3@R1, RM261003ABZP-M4@R1; Acceptance; AD3 | RM261003ABZP-UREQ6@R1 - Links: completion, following, jump list, backlinks, rename | RM261003ABZP-UDES6@R1 - Surface: Links and backlinks; Component: Completion popup, Prompt | RM261003ABZP-PH1@R1 / RM261003ABZP-DI2@R1 (unresolved-link styling: RM261003ABZP-DI3@R1) | RM261003ABZP-US4@R1 | RM261003ABZP-UV5@R1 |
+| RM261003ABZP-M4@R1, RM261003ABZP-M1@R1; Acceptance; AD3 | RM261003ABZP-UREQ7@R1 - Explorer file operations and disk-change handling | RM261003ABZP-UDES7@R1 - Surface: File operations and disk changes; Component: Prompt, Conflict dialog and diff | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1 (link-impact text on move: RM261003ABZP-DI2@R1) | RM261003ABZP-US5@R1 | RM261003ABZP-UV6@R1 |
+| RM261003ABZP-M5@R2; Acceptance; feedback cycle 1; AD2; AD3 | RM261003ABZP-UREQ8@R2 - Daily notes, date picker, and templates | RM261003ABZP-UDES8@R1 - Surface: Daily notes and templates; Component: Calendar, Picker | RM261003ABZP-PH2@R1 / RM261003ABZP-DI4@R1 | RM261003ABZP-US6@R1 | RM261003ABZP-UV7@R1 |
+| RM261003ABZP-M6@R1; Acceptance; AD3 | RM261003ABZP-UREQ9@R1 - Bases table and Kanban views | RM261003ABZP-UDES9@R1 - Surface: Bases views; Component: Base table, Kanban board | RM261003ABZP-PH2@R1 / RM261003ABZP-DI4@R1 | RM261003ABZP-US7@R1 | RM261003ABZP-UV8@R1 |
+| RM261003ABZP-M7@R1; Acceptance; AD3 | RM261003ABZP-UREQ10@R1 - Browser preview page | RM261003ABZP-UDES10@R1 - Surface: Browser preview page | RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1 | RM261003ABZP-US8@R1 | RM261003ABZP-UV9@R1 |
+| RM261003ABZP-M1@R1 … RM261003ABZP-M7@R1 (RM261003ABZP-M5@R2); Acceptance; AD3 | RM261003ABZP-UREQ11@R1 - Themes, NO_COLOR, narrow terminals, input, accessibility | RM261003ABZP-UDES11@R1 - Section 5 policies; Component: Theme | RM261003ABZP-PH1@R1 / RM261003ABZP-DI1@R1, RM261003ABZP-DI2@R1; RM261003ABZP-PH2@R1 / RM261003ABZP-DI3@R1, RM261003ABZP-DI4@R1 (each DI for its own surfaces) | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1 |
+
+## Deferred Scope
+
+- **Vim macros, Visual block mode, and Ex ranges**
+  - **Reason:** They are outside the core command set that v1 needs.
+  - **Revisit trigger:** User demand after `v1.0.0`.
+  - **Source:** `rm261003abzp-requirements.md`, Deferred Considerations; RM261003ABZP-DES4@R1 Tradeoffs
+- **Plugin API**
+  - **Reason:** Registries cover the known extension needs; a public API would be speculative.
+  - **Revisit trigger:** A concrete third-party extension need.
+  - **Source:** `rm261003abzp-requirements.md`, Deferred Considerations; RM261003ABZP-REQ11@R2
+- **macOS signing and notarization**
+  - **Reason:** Unsigned binaries with checksums keep CD fast and lean.
+  - **Revisit trigger:** Gatekeeper friction reported by users, or distribution through Homebrew cask.
+  - **Source:** `rm261003abzp-requirements.md`, Deferred Considerations; RM261003ABZP-RF3; RM261003ABZP-DES15@R1 Tradeoffs
+- **Cards, List, and Map Bases layouts**
+  - **Reason:** v1 renders table and Kanban; other layouts open as a table with a notice.
+  - **Revisit trigger:** Obsidian stabilizes these layouts and users request them.
+  - **Source:** `rm261003abzp-requirements.md`, Deferred Considerations; RM261003ABZP-REQ7@R2
+- **Graph view, Canvas, mobile, and Windows**
+  - **Reason:** These are outside the terminal editor's v1 scope.
+  - **Revisit trigger:** A new initiative.
+  - **Source:** `rm261003abzp-requirements.md`, Deferred Considerations
+
+## Unresolved Items
+
+None. The pinned OpenTUI paint and image APIs, recursive `fs.watch`, and the Kanban `type` value are delivery confirmations owned by DI1 and DI4, with named verification. They are not open decisions. The user's own review of the mockups is pending: acceptance was delegated, and the user said they will review via the mockups. Feedback from that review enters through the revision rules (mockup edit cycle → UREQ/UDES revisions → affected PH/DI revisions).
+
+## Approval
+
+- **Approved phases:** RM261003ABZP-PH1@R1, RM261003ABZP-PH2@R1
+- **Approved delivery items:** RM261003ABZP-DI1@R1, RM261003ABZP-DI2@R1, RM261003ABZP-DI3@R1, RM261003ABZP-DI4@R1
+- **Approved phase designs:**
+  - `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Phase Design (RM261003ABZP-PH1@R1). Upstream: RM261003ABZP-DES1@R1, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R1, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R2, RM261003ABZP-DES8@R1, RM261003ABZP-DES10@R1, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R1, RM261003ABZP-DES16@R1; RM261003ABZP-UDES1@R1, RM261003ABZP-UDES2@R1, RM261003ABZP-UDES5@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES7@R1, RM261003ABZP-UDES11@R1.
+  - `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Design (RM261003ABZP-PH2@R1). Upstream: RM261003ABZP-DES1@R1, RM261003ABZP-DES2@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R2, RM261003ABZP-DES10@R1, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R1, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R1, RM261003ABZP-DES16@R1; RM261003ABZP-UDES1@R1, RM261003ABZP-UDES3@R1, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1.
+- **Approval evidence:** On 2026-10-03 the user delegated all decisions: "you self-drive and decide all based on the proposal and these criteria: stable, simple, easy to maintain and extend; meet industry standards … just stop when finish the skill workflow then I will review via mockups … don't raise any question to me". The user also asked to "prevent many DIs and phases split". Under that delegation the agent approved:
+  - the two-phase, four-DI arrangement planned in the proposal (PH1 DI1 + DI2; PH2 DI3 + DI4);
+  - releases at phase exit (`v0.1.0`, `v1.0.0`);
+  - the phase refinements in both phase files.
+````

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M2 Live preview</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content;
+  const TOUR = `---
+title: Markdown tour
+tags: [reference, so]
+created: 2026-10-01
+aliases: [tour, syntax]
+---
+# Markdown tour
+
+Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
+Links show their text: [OpenTUI docs](https://opentui.com) and [[so-roadmap|the roadmap]].
+Tags like #reference and #so/ui are coloured. A footnote[^1] stays small.
+%%This comment is hidden in live preview.%%
+
+## Lists and tasks
+- Plain bullet
+  - Nested bullet
+1. First step
+2. Second step
+- [ ] Toggle me with Enter
+- [x] Already done
+
+## Quotes and callouts
+> Simplicity is prerequisite for reliability. — Dijkstra
+
+> [!note] Reveal rule
+> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+
+> [!tip]- Folded tip (za to open)
+> Callouts with a minus sign start folded.
+
+> [!danger] Data safety
+> Saves are atomic: temp file, fsync, rename.
+
+## Table
+| Key | Action | Mode |
+|:---|:---|:---:|
+| \`gd\` | Follow link | normal |
+| \`Space f f\` | Find file | normal |
+| \`Ctrl-o\` | Jump back | normal |
+
+## Code
+\`\`\`ts
+// one-way data flow
+export function update(state: AppState, action: Action) {
+  const next = reduce(state, action);
+  return { state: next, effects: [] };
+}
+\`\`\`
+
+## Embeds and images
+![[so-roadmap#Goals]]
+
+![[diagram.png]]
+
+## Math and diagrams
+Inline math $E = mc^2$ renders as text.
+
+$$
+\\sum_{i=1}^{n} x_i \\le \\frac{a}{b}
+$$
+
+\`\`\`mermaid
+flowchart LR
+  Capture --> Triage --> Plan --> Ship
+  Triage -->|someday| Archive
+\`\`\`
+
+---
+[^1]: Footnotes render at the bottom, dimmed.`;
+
+  const at = (doc, re, n) => { let hit = -1, c = 0; doc.forEach((l, i) => { if (hit < 0 && (typeof re === "string" ? l.raw.startsWith(re) : re.test(l.raw))) { if (c++ === (n || 0)) hit = i; } }); return Math.max(0, hit); };
+  function init() {
+    const doc = M.md.parse(TOUR);
+    return { w: { doc, st: { cur: { l: at(doc, "Text can be"), c: 0 }, view: "live", vim: "normal", top: 0 } }, tier: "kitty", unfold: [], embedMax: 4, cmdline: null, msg: "", pending: null };
+  }
+  const VIEWS = ["live", "source", "reading"];
+  function cycle(app) { const st = app.w.st; st.view = VIEWS[(VIEWS.indexOf(st.view) + 1) % 3]; app.msg = `<span class="dim">mode: ${st.view}${st.view === "reading" ? " (read-only)" : ""}</span>`; }
+  function toggleTask(app) {
+    const l = app.w.st.cur.l, raw = app.w.doc[l].raw;
+    if (!/^\s*- \[[ x]\] /.test(raw)) { app.msg = '<span class="dim">no checkbox on this line</span>'; return; }
+    const arr = app.w.doc.map((x) => x.raw);
+    arr[l] = raw.replace(/\[( |x)\]/, (m, x) => (x === "x" ? "[ ]" : "[x]"));
+    app.w.doc = M.md.parse(arr.join("\n"));
+    app.msg = `<span class="dim">task ${/\[x\]/.test(arr[l]) ? "done" : "reopened"} · autosaved</span>`;
+  }
+  function fold(app) {
+    const ln = app.w.doc[app.w.st.cur.l];
+    if (ln.block && ln.kind.startsWith("callout")) { const b = ln.block; app.unfold = app.unfold.includes(b) ? app.unfold.filter((x) => x !== b) : app.unfold.concat([b]); return; }
+    if (/^!\[\[so-roadmap/.test(ln.raw)) { app.embedMax = app.embedMax === 4 ? 12 : 4; return; }
+    app.msg = '<span class="dim">za folds callouts and embeds</span>';
+  }
+  const leader = () => M.leaderWith({ m: (a) => cycle(a), x: (a) => toggleTask(a), "u.i": (a) => { const t = ["kitty", "sixel", "blocks", "off"]; a.tier = t[(t.indexOf(a.tier) + 1) % 4]; a.msg = `<span class="dim">images: ${a.tier}</span>`; } });
+
+  function render(app) {
+    const st = app.w.st;
+    const ctx = { imageTier: app.tier, unfold: app.unfold, embedMaxRows: app.embedMax };
+    return M.shell(app, {
+      explorer: false, tree: C.tree, treeSel: 16,
+      bufs: [{ name: "tour.md" }, { name: "so-roadmap.md" }], activeBuf: 0,
+      windows: [{ doc: app.w.doc, st, title: "tour.md", active: true, ctx }],
+      status: { mode: st.view === "reading" ? "READING" : M.modeLabel(app, st), view: st.view, path: "tour.md", backlinks: 2, words: M.words(app.w.doc), ln: st.cur.l + 1, col: st.cur.c + 1, preview: "off", index: "ready", extra: `<span class="dim">img:${app.tier}</span>` },
+      cmd: M.cmdHtml(app, app.msg),
+    });
+  }
+  function onKey(app, k) {
+    const st = app.w.st;
+    if (st.view === "reading" && app.cmdline == null) {
+      if (["i", "a", "A", "o", "O", "x", "d"].includes(k)) { app.msg = '<span class="t-warn">reading mode is read-only — Space m to switch</span>'; return true; }
+    }
+    app.msg = "";
+    return M.vim(app, app.w, k, {
+      onEnter: (a) => { toggleTask(a); return true; },
+      onFold: (a) => fold(a),
+      onEx: (a, c) => { if (c === "set conceallevel=0" || c === "source") { st.view = "source"; return; } a.msg = `<span class="dim">:${M.esc(c)}</span>`; },
+      onFollow: (a) => M.toast(a, "info", "gd follows links", "see m4 Links & files", 1800),
+    });
+  }
+  const goLine = (re, n, view) => (a) => { const st = a.w.st; st.cur = { l: at(a.w.doc, re, n), c: 0 }; if (view) st.view = view; };
+
+  M.create({
+    id: "RM261003ABZP-M2", title: "M2 · Live preview", path: "m2-live-preview.html",
+    subtitle: "How a note renders while editing: hidden syntax, cursor-line and block reveal, callouts, tables, code, embeds, images, math, Mermaid; plus source and reading modes.",
+    init, render, onKey, leader,
+    leaderAllowed: (app) => app.cmdline == null && app.w.st.vim === "normal",
+    controls: [
+      { label: "Mode", options: [["live", "live"], ["source", "source"], ["reading", "reading"]], get: (a) => a.w.st.view, set: (a, v) => (a.w.st.view = v) },
+      { label: "Images", options: [["kitty", "kitty"], ["sixel", "sixel"], ["blocks", "blocks"], ["off", "off"]], get: (a) => a.tier, set: (a, v) => (a.tier = v) },
+    ],
+    keys: [["j k", "move — watch which line/block reveals its source"], ["Enter", "toggle task checkbox (also Space x)"], ["Space m", "cycle live → source → reading"], ["za", "fold / unfold callout or embed"], ["Space u i", "cycle image tier"], ["i Esc", "edit and return"], ["gg G { }", "jump"]],
+    notes: "The ▕ mark in the sign column shows rows currently displaying raw source. Reveal is per cursor line for inline syntax and per block (table, callout, code, math, frontmatter, Mermaid) when the cursor is inside it.",
+    states: [
+      { id: "S1", group: "Reveal", label: "Cursor on a blank line — all rendered", caption: "Nothing revealed except the (empty) cursor line: headings with bands, styled inline text, coloured tags, link text only, the %%comment%% line is gone, footnote marker is a superscript.", refs: "REQ5@R2, DES9@R1", apply: goLine(/^$/, 1) },
+      { id: "S2", group: "Reveal", label: "Cursor on an inline-styled line", caption: "Only the cursor line shows its raw markers (** * ~~ == `); the lines above and below stay rendered. Move j/k to see the reveal follow.", refs: "REQ5@R2 (cursor line shows raw inline syntax)", apply: goLine("Text can be") },
+      { id: "S3", group: "Reveal", label: "Cursor inside a table — whole block revealed", caption: "Entering a table shows every row's pipes and the alignment row, so the table never half-renders. Leaving it re-aligns the box-drawn table.", refs: "REQ5@R2 (multi-line blocks show full source while cursor is inside)", apply: (a) => { a.w.st.cur = { l: at(a.w.doc, "| `Space") , c: 4 }; } },
+      { id: "S4", group: "Reveal", label: "Cursor inside a callout", caption: "The whole callout (> [!note] … ) shows source while the cursor is inside; other callouts stay rendered with type glyph and colour.", refs: "REQ5@R2", apply: goLine("> Inline syntax") },
+      { id: "S5", group: "Reveal", label: "Cursor inside a code block", caption: "Fences appear; code keeps syntax highlighting in both states.", refs: "REQ5@R2 (fenced code with highlighting)", apply: goLine("  const next") },
+      { id: "S6", group: "Reveal", label: "Cursor in frontmatter", caption: "Frontmatter normally renders as a Properties block (tags as chips, aliases as a list). Inside it, the raw YAML is shown.", refs: "REQ5@R2 (frontmatter as properties block)", apply: goLine("tags:") },
+      { id: "S7", group: "Modes", label: "Source mode", caption: "Space m → source: every line raw with syntax colouring only. Useful for precise editing.", refs: "REQ5@R2 (<leader>m cycles)", apply: (a) => { goLine("Text can be")(a); a.w.st.view = "source"; } },
+      { id: "S8", group: "Modes", label: "Reading mode (read-only)", caption: "Space m again → reading: nothing reveals, edit keys are refused with a hint, cursorline still navigates.", refs: "REQ5@R2", apply: (a) => { goLine("Text can be")(a); a.w.st.view = "reading"; } },
+      { id: "S9", group: "Rich blocks", label: "Tasks — toggle with Enter", caption: "Press Enter on '- [ ] Toggle me' to check it (also Space x); the change autosaves.", refs: "REQ5@R2 (task checkboxes toggle with Enter or <leader>x)", apply: goLine("- [ ] Toggle") },
+      { id: "S10", group: "Rich blocks", label: "Folded callout", caption: "'> [!tip]-' renders folded (▸ folded) — only its title row shows. Press j to step onto it (the block reveals its source), then za to unfold; za again folds.", refs: "REQ5@R2 (callouts with fold)", apply: (a) => { goLine("> [!tip]")(a); a.w.st.cur.l -= 1; } },
+      { id: "S11", group: "Rich blocks", label: "Note embed (collapsed)", caption: "![[so-roadmap#Goals]] renders the target section inline, capped at a configurable height with '… N more lines'. za expands; Enter opens the note.", refs: "REQ5@R2 (embeds collapsed beyond a configurable height), DES14@R1 preview.embedMaxRows", apply: goLine("## Embeds") },
+      { id: "S12", group: "Images", label: "Image — kitty graphics", caption: "Kitty graphics (kitty, Ghostty, WezTerm, iTerm2): a real picture placed in the text flow; rows are reserved so scrolling stays stable.", refs: "REQ5@R2, REQ11@R2, RF4", apply: (a) => { goLine("## Embeds")(a); a.tier = "kitty"; a.w.st.top = at(a.w.doc, "## Embeds") - 1; } },
+      { id: "S13", group: "Images", label: "Image — Unicode blocks fallback", caption: "Terminal.app and tmux: the same picture approximated with ▀ half-blocks (2 pixels per cell).", refs: "REQ5@R2 (Unicode-block rendering)", apply: (a) => { goLine("## Embeds")(a); a.tier = "blocks"; } },
+      { id: "S14", group: "Images", label: "Image — graphics off", caption: "preview.images = \"off\" (or no graphics): a text placeholder keeps layout and meaning.", refs: "REQ5@R2 (text placeholder), DES14@R1", apply: (a) => { goLine("## Embeds")(a); a.tier = "off"; } },
+      { id: "S15", group: "Math & diagrams", label: "Math and Mermaid as text", caption: "Inline and block math render as Unicode text; the Mermaid flowchart renders as box-drawing art with a hint to zoom.", refs: "REQ5@R2 (math and Mermaid text approximations)", apply: (a) => { goLine("Inline math")(a); a.w.st.top = at(a.w.doc, "## Math"); } },
+      { id: "S16", group: "Math & diagrams", label: "Cursor inside Mermaid — source", caption: "Inside the fence the diagram source is shown for editing; leaving it redraws the art.", refs: "REQ5@R2", apply: goLine("  Capture") },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

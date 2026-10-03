@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so v1 · Mockups</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<style>
+  body.hub { background: var(--page-bg); color: var(--page-fg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--page-dim); margin: 32px 0 10px; }
+  .mid { font: 12px var(--font); color: var(--page-dim); }
+  p.lead { color: var(--page-fg); max-width: 820px; }
+  .how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .how div { background: var(--page-card); border: 1px solid var(--page-border); border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+  .how b { display: block; color: var(--page-accent); margin-bottom: 4px; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--page-card); border: 1px solid var(--page-border); border-radius: 10px; padding: 16px 18px; transition: border-color .15s; }
+  a.card:hover, a.card:focus { border-color: var(--page-accent); outline: none; }
+  a.card h3 { margin: 0 0 2px; font-size: 16px; color: var(--page-fg); }
+  a.card .mid { margin-bottom: 8px; }
+  a.card p { margin: 0 0 10px; color: var(--page-dim); font-size: 13px; }
+  a.card ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
+  a.card .refs { margin-top: 10px; font: 11.5px var(--font); color: var(--page-dim); }
+  table.km { border-collapse: collapse; font-size: 13px; width: 100%; }
+  table.km td, table.km th { border-bottom: 1px solid var(--page-border); padding: 5px 10px 5px 0; text-align: left; vertical-align: top; }
+  table.km th { color: var(--page-dim); font-weight: 600; font-size: 12px; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 820px) { .cols2 { grid-template-columns: 1fr; } }
+  .open li { margin-bottom: 6px; }
+</style>
+</head>
+<body class="hub">
+<div class="wrap">
+  <div class="mid">RM261003ABZP · so v1 · UI mockups · shared R2 · status: Draft (edit cycle 3: M1, M3)</div>
+  <h1>so — vim-modal Markdown editor for the terminal</h1>
+  <p class="lead">Seven interactive mockups cover every v1 surface: the app shell, Obsidian-style live preview, the LazyVim-style overlay layer, links and file safety, daily notes and templates, Bases, and the read-only browser preview. Each page simulates the terminal at 120×36 or 80×24 and responds to real keys.</p>
+
+  <h2>How to review</h2>
+  <div class="how">
+    <div><b>Click a state</b>Every state in the left list jumps straight to that screen, with a caption and the requirement it traces to.</div>
+    <div><b>Then use the keyboard</b>Click the terminal and type: <kbd>j</kbd> <kbd>k</kbd> <kbd>i</kbd> <kbd>Esc</kbd> <kbd>:</kbd>… Press <kbd>Space</kbd> and wait for which-key.</div>
+    <div><b>Switch views</b>Viewport 120×36 / 80×24, theme dark / light / NO_COLOR. NO_COLOR shows state using only bold, underline, reverse and glyphs.</div>
+    <div><b>Offline</b>No network requests: fonts, images, math and diagrams are all local. Content is a realistic sample notes folder.</div>
+  </div>
+
+  <h2>Mockups</h2>
+  <div class="grid">
+    <a class="card" href="m1-app-shell.html"><h3>M1 · App shell</h3><div class="mid">RM261003ABZP-M1 · R2 · 19 states</div>
+      <p>Explorer, bufferline, editor windows, side panel, statusline and command line; modes, splits, autosave, notifications.</p>
+      <ul><li>Startup indexing → ready</li><li>Normal / Insert / Visual / V-line / Command-line</li><li>Split, explorer focus, backlinks and outline panels</li><li>80×24 layout, notifications, save-failed state</li><li>Non-Markdown files: TypeScript source view, plain text, refused binary and too-large files</li></ul>
+      <div class="refs">REQ1 REQ2 REQ3 @R2 · REQ1@R3 REQ3@R4 · DES2 DES8 DES10 DES14 DES17 @R1</div></a>
+    <a class="card" href="m2-live-preview.html"><h3>M2 · Live preview</h3><div class="mid">RM261003ABZP-M2 · R1 · 16 states</div>
+      <p>How a note renders while editing: cursor-line and whole-block reveal, callouts, tables, code, embeds, images, math, Mermaid.</p>
+      <ul><li>Reveal: inline line, table, callout, code, frontmatter</li><li>Live / source / reading modes</li><li>Task toggle, folded callout, embed</li><li>Image tiers: kitty, sixel, Unicode blocks, off</li></ul>
+      <div class="refs">REQ5 @R2 · DES6 DES9 @R1</div></a>
+    <a class="card" href="m3-overlays.html"><h3>M3 · Overlays</h3><div class="mid">RM261003ABZP-M3 · R2 · 21 states</div>
+      <p>Discoverability: which-key, the picker family with live fuzzy filtering and preview, command palette, : completion, [[ completion, help.</p>
+      <ul><li>which-key root and +notes group</li><li>Files, grep, headings, tags, backlinks, recent</li><li>Palette and : line with completion</li><li>[[ → # headings → #^ blocks; keymap help with overrides</li><li>Filtered by file type: which-key, palette, help in a .ts buffer</li></ul>
+      <div class="refs">REQ3 REQ4 @R2 · REQ3@R4 · DES5 DES7 DES14 DES17 @R1</div></a>
+    <a class="card" href="m4-links-files.html"><h3>M4 · Links &amp; files</h3><div class="mid">RM261003ABZP-M4 · R1 · 18 states</div>
+      <p>Following and inspecting links, renaming with link updates, explorer file operations, and disk-change safety.</p>
+      <ul><li>gd, heading links, Ctrl-o / Ctrl-i, :jumps</li><li>Create-on-follow "Create projects/plan.md? [y/N]"</li><li>Backlinks panel linked + unlinked; rename → "12 files updated"</li><li>Explorer a/r/m/d, Trash + typed fallback, conflict + diff, undoable reload</li></ul>
+      <div class="refs">REQ1 REQ4 REQ3 @R2 · DES7 DES8 @R1</div></a>
+    <a class="card" href="m5-daily-templates.html"><h3>M5 · Daily &amp; templates</h3><div class="mid">RM261003ABZP-M5 · R2 · 14 states</div>
+      <p>:Today before/after, adjacent days, calendar date picker, template insertion with variables, new note from template.</p>
+      <ul><li>:Today creates from templates/daily.md</li><li>Calendar with h/j/k/l, H/L months, existing notes marked</li><li>Template source vs expanded preview; literal tokens</li><li>Subfolder date format from config</li></ul>
+      <div class="refs">REQ6 REQ3 @R2 · DES11 @R1</div></a>
+    <a class="card" href="m6-bases.html"><h3>M6 · Bases</h3><div class="mid">RM261003ABZP-M6 · R1 · 16 states</div>
+      <p>Obsidian Bases: table with grouping, sorting, summaries and in-place edits; Kanban with frontmatter-writing card moves.</p>
+      <ul><li>Edit text, number, date, list, checkbox cells</li><li>Kanban by status, None column, H/L moves with diff toast</li><li>Formula grouping disables moves</li><li>View switcher, cards → table notice, embedded ![[tasks.base#Board]]</li></ul>
+      <div class="refs">REQ7 REQ5 @R2 · DES12 @R1</div></a>
+    <a class="card" href="m7-web-preview.html"><h3>M7 · Web preview</h3><div class="mid">RM261003ABZP-M7 · R1 · 10 states</div>
+      <p>The read-only page :Preview serves on 127.0.0.1: images, math, diagrams, live updates, wikilink navigation.</p>
+      <ul><li>Live / reconnecting / stopped / offline</li><li>Follows note switches; wikilinks navigate the preview</li><li>Simulated incoming edit</li><li>Light / dark toggle; 375 px phone width</li></ul>
+      <div class="refs">REQ8 @R2 · DES13 @R1</div></a>
+  </div>
+
+  <h2>Keymap used across mockups</h2>
+  <div class="cols2">
+    <table class="km">
+      <tr><th>Leader (Space)</th><th>Action</th></tr>
+      <tr><td><kbd>Space e</kbd> / <kbd>Space o</kbd></td><td>explorer / outline</td></tr>
+      <tr><td><kbd>Space f f</kbd> <kbd>f r</kbd> <kbd>f b</kbd></td><td>files / recent / buffers</td></tr>
+      <tr><td><kbd>Space s g</kbd> <kbd>s h</kbd> <kbd>s t</kbd> <kbd>s b</kbd> <kbd>s c</kbd></td><td>grep / headings / tags / backlinks / commands</td></tr>
+      <tr><td><kbd>Space n d</kbd> <kbd>n p</kbd> <kbd>n t</kbd> <kbd>n n</kbd></td><td>today / pick date / template / new note</td></tr>
+      <tr><td><kbd>Space l b</kbd> <kbd>l u</kbd> <kbd>l r</kbd></td><td>backlinks panel / unlinked / rename</td></tr>
+      <tr><td><kbd>Space m</kbd> / <kbd>Space x</kbd></td><td>cycle live → source → reading / toggle task</td></tr>
+      <tr><td><kbd>Space :</kbd> / <kbd>Space ?</kbd></td><td>command palette / keymap help</td></tr>
+      <tr><td><kbd>Space u i</kbd> <kbd>u w</kbd> <kbd>u p</kbd></td><td>images / wrap / browser preview</td></tr>
+    </table>
+    <table class="km">
+      <tr><th>Without leader</th><th>Action</th></tr>
+      <tr><td><kbd>gd</kbd> / <kbd>Enter</kbd></td><td>follow link (Enter also toggles a task)</td></tr>
+      <tr><td><kbd>Ctrl-o</kbd> / <kbd>Ctrl-i</kbd></td><td>jump back / forward</td></tr>
+      <tr><td><kbd>za</kbd></td><td>fold callout / expand embed</td></tr>
+      <tr><td><kbd>Ctrl-w h/l</kbd></td><td>move between explorer, windows, panel</td></tr>
+      <tr><td><kbd>:Today</kbd> <kbd>:Yesterday</kbd> <kbd>:Tomorrow</kbd></td><td>daily notes</td></tr>
+      <tr><td><kbd>:Preview</kbd> / <kbd>:PreviewStop</kbd></td><td>browser preview</td></tr>
+      <tr><td><kbd>a r m d</kbd></td><td>(explorer) create / rename / move / delete</td></tr>
+      <tr><td><kbd>i</kbd> <kbd>x</kbd> <kbd>H</kbd>/<kbd>L</kbd> <kbd>v</kbd></td><td>(Bases) edit cell / toggle / move card / views</td></tr>
+    </table>
+  </div>
+
+  <h2>Open items for review</h2>
+  <ul class="open">
+    <li><b>Help key:</b> REQ3@R2 says <kbd>?</kbd> or <kbd>:help</kbd>, but <kbd>?</kbd> is vim's backward search (REQ2@R2). The mockups use <kbd>Space ?</kbd> and <kbd>:help</kbd>; REQ3 should be revised.</li>
+    <li><b>Kanban <code>type</code> value</b> is unverified until checked against a <code>.base</code> file saved by Obsidian 1.14 (REQ7@R2).</li>
+    <li><b>Extension points:</b> captions marked “Extension point” name the generic areas later features plug into (sign column, window content by editor kind, decoration providers, statusline segments and commands by file type). They are review notes, not product UI (manifest AD5).</li>
+    <li><b>Visual fidelity:</b> colours and glyphs approximate an OpenTUI render; final spacing comes from the real renderer.</li>
+  </ul>
+  <p class="mid">Manifest: <code>manifest.md</code> in this folder · Not committed.</p>
+</div>
+</body>
+</html>

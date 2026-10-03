@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M6 Bases</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<style>
+  .kcol { display: flex; flex-direction: column; min-width: 0; padding: 0 1ch; }
+  .kcol.kfocus .khead { color: var(--border-hl); }
+  .card { padding: 0 1ch; margin-bottom: calc(var(--lh) / 2); border-radius: 3px; background: var(--bg-float); }
+  .card .ln { overflow: hidden; text-overflow: ellipsis; }
+  .card-moved { animation: flash 0.9s ease-out; }
+  @keyframes flash { from { background: var(--bg-hl); } to { background: var(--bg-float); } }
+  .bt-tab { padding: 0 1ch; }
+  .bt-tab.on { background: var(--bg-sel); color: var(--fg); font-weight: 700; }
+  .grp-row { background: var(--bg-dark); }
+  .sum-row { border-top: 1px solid var(--border); }
+</style>
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content, esc = M.esc;
+  const TODAY = "2026-10-03";
+
+  /* ---------- sample notes selected by tasks.base (frontmatter properties) ---------- */
+  const ROWS0 = [
+    { file: "kitty-images", status: "doing", project: "so-roadmap", due: "2026-10-05", est: 3, tags: ["so", "ui"], reviewed: true },
+    { file: "vim-text-objects", status: "done", project: "so-roadmap", due: "2026-10-02", est: 5, tags: ["so"], reviewed: true },
+    { file: "esc-timeout", status: "todo", project: "so-roadmap", due: "2026-10-07", est: 1, tags: ["so", "terminal"], reviewed: false },
+    { file: "bases-kanban", status: "todo", project: "so-roadmap", due: "2026-10-12", est: 8, tags: ["so", "bases"], reviewed: false },
+    { file: "preview-sse", status: "todo", project: "so-roadmap", due: "2026-10-20", est: 4, tags: ["so"], reviewed: false },
+    { file: "rename-links", status: "doing", project: "so-roadmap", due: "2026-10-04", est: 5, tags: ["so", "links"], reviewed: true },
+    { file: "moisture-sensor", status: "todo", project: "garden-app", due: "2026-11-01", est: 6, tags: ["side"], reviewed: false },
+    { file: "order-seeds", status: null, project: "garden-app", due: null, est: 1, tags: ["side"], reviewed: false },
+    { file: "ddia-ch3", status: "doing", project: "reading-list", due: "2026-10-10", est: 2, tags: ["reading"], reviewed: false },
+    { file: "pragmatic-programmer", status: "done", project: "reading-list", due: "2026-09-28", est: 3, tags: ["reading"], reviewed: true },
+    { file: "tax-documents", status: "todo", project: "areas/finances", due: "2026-10-15", est: 2, tags: ["admin"], reviewed: false },
+    { file: "call-linh", status: null, project: null, due: "2026-10-03", est: 0.5, tags: ["people"], reviewed: false },
+  ];
+  const COLS = [
+    { key: "file", label: "file", w: 22, kind: "file" },
+    { key: "status", label: "status", w: 8, kind: "text" },
+    { key: "project", label: "project", w: 15, kind: "link" },
+    { key: "due", label: "due", w: 10, kind: "date" },
+    { key: "est", label: "est h", w: 6, kind: "number" },
+    { key: "tags", label: "tags", w: 16, kind: "list" },
+    { key: "reviewed", label: "rev", w: 3, kind: "checkbox" },
+  ];
+  const VIEWS = [
+    { name: "All tasks", type: "table", group: "project", sort: ["due", 1] },
+    { name: "Board", type: "kanban", group: "status", groupKind: "property" },
+    { name: "By priority", type: "kanban", group: "formula.priority", groupKind: "formula" },
+    { name: "Gallery", type: "cards" },
+  ];
+  const priority = (r) => (!r.due ? "later" : r.due <= "2026-10-06" ? "urgent" : r.due <= "2026-10-17" ? "soon" : "later");
+  const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+  const shortDate = (d) => { if (!d) return "—"; const [y, m, dd] = d.split("-"); return ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+m] + " " + +dd; };
+
+  function init() {
+    return { data: ROWS0.map((r) => Object.assign({}, r, { tags: r.tags.slice() })), view: 0, sort: ["due", 1], grouped: true, cell: { r: 0, c: 1 }, colOff: 0, edit: null, kfocus: { col: 1, card: 0 }, moved: null, switcher: null, showDiag: true, note: null, pending: null, msg: "", filterAll: false };
+  }
+
+  /* ---------- table model ---------- */
+  function tableRows(app) {
+    let rows = app.data.slice();
+    if (!app.filterAll) rows = rows.filter((r) => r.status !== "done");
+    const [k, dir] = app.sort || [null, 0];
+    if (k) rows.sort((a, b) => { const x = a[k], y = b[k]; if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+    if (!app.grouped || VIEWS[app.view].type !== "table") return rows.map((r) => ({ row: r }));
+    const groups = {};
+    rows.forEach((r) => { const g = r.project || "None"; (groups[g] = groups[g] || []).push(r); });
+    const order = Object.keys(groups).sort((a, b) => (a === "None") - (b === "None") || a.localeCompare(b));
+    const out = [];
+    order.forEach((g) => { out.push({ group: g, n: groups[g].length }); groups[g].forEach((r) => out.push({ row: r })); });
+    return out;
+  }
+  function cellText(r, col) {
+    const v = r[col.key];
+    if (col.kind === "checkbox") return v ? "☑" : "☐";
+    if (v == null) return "";
+    if (col.kind === "list") return v.map((t) => "#" + t).join(" ");
+    if (col.kind === "number") return String(v);
+    return String(v);
+  }
+  function cellHtml(r, col, w) {
+    const t = cellText(r, col);
+    const fit = t.length > w ? t.slice(0, w - 1) + "…" : t;
+    const pad = (s) => (col.kind === "number" ? M.padL(s, w) : col.kind === "checkbox" ? M.pad(" " + s, w) : M.pad(s, w));
+    const p = pad(fit);
+    if (col.kind === "file") return `<span class="t-wiki" style="text-decoration:none">${esc(p)}</span>`;
+    if (col.kind === "link") return t ? `<span class="t-wiki">${esc(fit)}</span>${" ".repeat(w - fit.length)}` : `<span class="dim">${esc(M.pad("—", w))}</span>`;
+    if (col.kind === "list") return `<span class="t-tag">${esc(p)}</span>`;
+    if (col.kind === "checkbox") return r[col.key] ? `<span class="t-ok">${esc(p)}</span>` : `<span class="dim">${esc(p)}</span>`;
+    if (col.kind === "date") { if (!t) return `<span class="dim">${esc(M.pad("—", w))}</span>`; const late = t < TODAY && r.status !== "done"; const soon = t <= "2026-10-05"; return `<span class="${late ? "t-err" : soon ? "t-warn" : ""}">${esc(p)}</span>`; }
+    if (col.key === "status") return t ? `<span class="${{ todo: "t-info", doing: "t-warn", done: "t-ok" }[t] || ""}">${esc(p)}</span>` : `<span class="dim">${esc(M.pad("—", w))}</span>`;
+    return esc(p);
+  }
+  function visibleCols(app) {
+    const avail = app.cols - 6;
+    const out = [];
+    let used = 0;
+    for (let i = app.colOff; i < COLS.length; i++) { const w = COLS[i].w + 3; if (used + w > avail) break; out.push(i); used += w; }
+    return out;
+  }
+  function ensureColVisible(app) {
+    if (app.cell.c < app.colOff) app.colOff = app.cell.c;
+    while (!visibleCols(app).includes(app.cell.c) && app.colOff < COLS.length - 1) app.colOff++;
+  }
+
+  /* ---------- chrome ---------- */
+  function toolbar(app) {
+    const v = VIEWS[app.view];
+    const tabs = VIEWS.map((x, i) => `<span class="bt-tab${i === app.view ? " on" : ""}" data-click="view:${i}">${i + 1} ${esc(x.name)}</span>`).join("");
+    const narrow = app.cols < 100;
+    let right;
+    if (v.type === "kanban") right = v.groupKind === "formula" ? `<span class="t-warn">⊘ moves off</span> <span class="dim">group: ${esc(v.group)}</span>` : `<span class="dim">group:</span> status <span class="dim">· ${app.data.length} cards</span>`;
+    else {
+      const n = tableRows(app).filter((x) => x.row).length;
+      right = `<span class="dim">⧩</span> ${app.filterAll ? '<span class="dim">folder tasks/</span>' : 'status ≠ done'} <span class="dim">·</span> ⇅ ${app.sort ? esc(app.sort[0]) + (app.sort[1] > 0 ? " ↑" : " ↓") : "none"} <span class="dim">·</span> <span class="t-b">${n}</span> <span class="dim">rows</span>`;
+    }
+    const L1 = `<div class="ln" style="display:flex"> <span class="ic-base">▦</span> <span class="t-b">tasks.base</span>&nbsp;&nbsp;${narrow ? `<span class="bt-tab on">${app.view + 1}/${VIEWS.length} ${esc(v.name)}</span>` : tabs}<span style="margin-left:auto">${narrow && v.type !== "kanban" ? "" : right} </span></div>`;
+    const sep = `<div class="ln dim">${"─".repeat(app.cols)}</div>`;
+    return L1 + sep;
+  }
+  function notices(app) {
+    const v = VIEWS[app.view];
+    const out = [];
+    if (v.type === "cards") out.push(`<div class="ln"> <span class="t-info">ⓘ</span> Layout <span class="t-code">cards</span> isn't supported yet — showing <b>${esc(v.name)}</b> as a table. <span class="dim">The .base file is not changed.</span></div>`);
+    if (app.showDiag && v.type !== "kanban") out.push(`<div class="ln"> <span class="t-warn">▲ 1 diagnostic</span> <span class="dim">tasks.base:14</span> formula.days_left: unknown function <span class="t-code">date.relative()</span> <span class="dim">— column hidden · ! to dismiss</span></div>`);
+    return out.join("");
+  }
+  function renderTable(app, h) {
+    const vcols = visibleCols(app);
+    const hidden = COLS.length - vcols.length;
+    const items = tableRows(app);
+    const rowsOnly = items.filter((x) => x.row);
+    app.cell.r = M.clamp(app.cell.r, 0, Math.max(0, rowsOnly.length - 1));
+    const sep = '<span class="dim"> │ </span>';
+    const head = vcols.map((ci) => { const c = COLS[ci]; const ind = app.sort && app.sort[0] === c.key ? (app.sort[1] > 0 ? "↑" : "↓") : ""; return `<span class="t-b">${esc(M.pad(c.label + (ind ? " " + ind : ""), c.w))}</span>`; }).join(sep);
+    const L = [`<div class="ln">   ${head}${hidden ? `<span class="dim">  › +${hidden} col${hidden > 1 ? "s" : ""}</span>` : ""}</div>`];
+    L.push(`<div class="ln dim">   ${vcols.map((ci) => "─".repeat(COLS[ci].w)).join("─┼─")}</div>`);
+    let ri = -1;
+    const bodyH = h - 4;
+    // scroll so the focused row stays visible
+    const flat = items.map((x) => (x.row ? ++ri : ri));
+    const focusIdx = items.findIndex((x, i) => x.row && flat[i] === app.cell.r);
+    const top = Math.max(0, focusIdx - bodyH + 2);
+    ri = -1;
+    items.forEach((x, i) => { if (x.row) ri++; if (i < top || L.length >= bodyH + 2) return;
+      if (x.group) { L.push(`<div class="ln grp-row"> <span class="t-h3">▾</span> <span class="t-wiki">${esc(x.group)}</span> <span class="dim">(${x.n})</span></div>`); return; }
+      const r = x.row, isRow = ri === app.cell.r;
+      const cells = vcols.map((ci) => {
+        const c = COLS[ci];
+        if (isRow && app.edit && ci === app.cell.c) return editCellHtml(app, c);
+        const html = cellHtml(r, c, c.w);
+        return isRow && ci === app.cell.c ? `<span class="cell-focus">${html}</span>` : html;
+      }).join(sep);
+      L.push(`<div class="ln${isRow ? " cursorline" : ""}">${isRow ? '<span class="t-h2">▌</span>' : " "}  ${cells}</div>`);
+    });
+    while (L.length < bodyH + 2) L.push('<div class="ln"></div>');
+    // summary row (view summaries)
+    const all = rowsOnly.map((x) => x.row);
+    const sum = { file: `count ${all.length}`, status: "", project: "", due: "min " + shortDate(all.map((r) => r.due).filter(Boolean).sort()[0]), est: "Σ " + all.reduce((a, r) => a + (r.est || 0), 0), tags: "", reviewed: Math.round((100 * all.filter((r) => r.reviewed).length) / Math.max(1, all.length)) + "%" };
+    L.push(`<div class="ln dim">   ${vcols.map((ci) => "─".repeat(COLS[ci].w)).join("─┴─")}</div>`);
+    L.push(`<div class="ln">   ${vcols.map((ci) => `<span class="muted">${esc(COLS[ci].kind === "number" ? M.padL(sum[COLS[ci].key], COLS[ci].w) : M.pad(sum[COLS[ci].key], COLS[ci].w))}</span>`).join('<span class="dim">   </span>')}</div>`);
+    return L.join("");
+  }
+  function editCellHtml(app, c) {
+    const e = app.edit;
+    if (c.kind === "list") return `<span class="cell-focus t-tag">${esc(M.pad(e.items.map((t) => "#" + t).join(" ").slice(0, c.w), c.w))}</span>`;
+    return `<span class="cell-focus"><span class="cur-under">${esc(e.value)}</span><span class="cur-bar"> </span>${" ".repeat(Math.max(0, c.w - e.value.length - 1))}</span>`;
+  }
+  function editPopup(app) {
+    const e = app.edit;
+    if (!e) return "";
+    const c = COLS[app.cell.c];
+    const vcols = visibleCols(app);
+    let x = 3; for (const ci of vcols) { if (ci === app.cell.c) break; x += COLS[ci].w + 3; }
+    const items = tableRows(app);
+    let ri = -1, rowLine = 0;
+    items.forEach((it, i) => { if (it.row) ri++; if (it.row && ri === app.cell.r) rowLine = i; });
+    const y = 1 + 2 + (notices(app) ? (notices(app).match(/class="ln"/g) || []).length : 0) + 2 + rowLine + 1;
+    let body, h, w = 34, title;
+    if (c.kind === "text") { const opts = ["todo", "doing", "done"].filter((o) => o.startsWith(e.value)); title = "existing values"; body = opts.map((o, i) => `<div class="ln${i === 0 ? " pick-sel" : ""}"> ${esc(o)}</div>`).join("") + '<div class="ln ffoot"> ⏎ set · Tab complete · esc cancel</div>'; h = opts.length + 3; }
+    else if (c.kind === "date") { const ok = /^\d{4}-\d{2}-\d{2}$/.test(e.value); title = "date"; body = `<div class="ln"> ${ok ? `<span class="t-ok">✓</span> ${esc(new Date(e.value).toDateString())}` : '<span class="t-err">✗ use YYYY-MM-DD</span>'}</div><div class="ln ffoot"> C-a / C-x ±1 day · ⏎ set · esc</div>`; h = 4; }
+    else if (c.kind === "number") { const ok = e.value !== "" && !isNaN(Number(e.value)); title = "number"; body = `<div class="ln"> ${ok ? '<span class="t-ok">✓</span> ' + esc(e.value) : '<span class="t-err">✗ not a number</span>'}</div><div class="ln ffoot"> C-a / C-x ±1 · ⏎ set · esc</div>`; h = 4; }
+    else if (c.kind === "list") { title = "list · tags"; w = 40; body = `<div class="ln"> ${e.items.map((t, i) => `<span class="${i === e.isel ? "pick-sel" : "t-tag"}">#${esc(t)} ×</span>`).join(" ")}</div><div class="ln"> <span class="t-h2">+</span> ${esc(e.value)}<span class="cur-bar"> </span></div><div class="ln ffoot"> ⏎ add · ⏎ on empty writes · BS removes</div>`; h = 5; }
+    else return "";
+    return M.ui.float({ x: Math.min(app.cols - w - 1, x), y: Math.min(app.rows - h - 2, y), w, h, title, body });
+  }
+
+  /* ---------- kanban model ---------- */
+  function columnsOf(app) {
+    const v = VIEWS[app.view];
+    const keys = v.groupKind === "formula" ? ["urgent", "soon", "later"] : ["todo", "doing", "done", null];
+    return keys.map((k) => ({ key: k, label: k == null ? "None" : k, cards: app.data.filter((r) => (v.groupKind === "formula" ? priority(r) === k : (r.status || null) === k)).sort((a, b) => (a.due || "9") < (b.due || "9") ? -1 : 1) }));
+  }
+  function renderKanban(app, h) {
+    const cols = columnsOf(app);
+    app.kfocus.col = M.clamp(app.kfocus.col, 0, cols.length - 1);
+    const fc = cols[app.kfocus.col];
+    app.kfocus.card = M.clamp(app.kfocus.card, 0, Math.max(0, fc.cards.length - 1));
+    const colW = Math.floor((app.cols - 1) / cols.length);
+    const cardRows = Math.max(1, Math.floor((h - 2) / 3.5));
+    const v = VIEWS[app.view];
+    return `<div class="row" style="height:calc(${h}*var(--lh))">` + cols.map((col, ci) => {
+      const focusCol = ci === app.kfocus.col;
+      const start = focusCol ? Math.max(0, app.kfocus.card - cardRows + 1) : 0;
+      const shown = col.cards.slice(start, start + cardRows);
+      const head = `<div class="ln khead${focusCol ? " t-b" : ""}"><span class="${{ todo: "t-info", doing: "t-warn", done: "t-ok", urgent: "t-err", soon: "t-warn", later: "t-info" }[col.key] || "dim"}">●</span> ${esc(col.label)} <span class="dim">${col.cards.length}</span>${col.key == null ? ' <span class="dim">· no status</span>' : ""}</div><div class="ln dim">${"─".repeat(colW - 3)}</div>`;
+      const cards = shown.map((r, i) => {
+        const isF = focusCol && start + i === app.kfocus.card;
+        const meta = [r.project ? r.project.split("/").pop() : null, r.due ? "due " + shortDate(r.due) : null, r.est + "h"].filter(Boolean).join(" · ");
+        const late = r.due && r.due < TODAY && r.status !== "done";
+        return `<div class="card${isF ? " card-focus" : ""}${app.moved === r.file ? " card-moved" : ""}"><div class="ln">${r.status === "done" ? '<span class="t-ok">✓</span> ' : ""}<span class="t-b">${esc(r.file)}</span></div><div class="ln ${late ? "t-err" : "muted"}">${esc(meta)}</div><div class="ln t-tag">${esc(r.tags.map((t) => "#" + t).join(" "))}</div></div>`;
+      }).join("");
+      const more = col.cards.length - (start + shown.length);
+      const empty = col.cards.length === 0 ? '<div class="ln dim">  (empty)</div>' : "";
+      return `<div class="kcol${focusCol ? " kfocus" : ""}" style="width:${colW}ch;flex:none">${head}${cards}${empty}${more > 0 ? `<div class="ln dim">  ↓ ${more} more</div>` : ""}</div>`;
+    }).join("") + "</div>";
+  }
+
+  /* ---------- note with embedded base ---------- */
+  function boardEmbedRows(app) {
+    const cols = columnsOf(Object.assign({}, app, { view: 1 }));
+    const w = 16;
+    const head = cols.map((c) => `<span class="t-b">${esc(M.pad(`${c.label} (${c.cards.length})`, w))}</span>`).join(" ");
+    const lines = [head, cols.map(() => `<span class="dim">${"─".repeat(w)}</span>`).join(" ")];
+    for (let i = 0; i < 3; i++) lines.push(cols.map((c) => { const r = c.cards[i]; return r ? `<span class="${i === 0 ? "" : "muted"}">${esc(M.pad("▪ " + (r.file.length > w - 3 ? r.file.slice(0, w - 3) + "…" : r.file), w))}</span>` : " ".repeat(w); }).join(" "));
+    return lines;
+  }
+  function renderNote(app) {
+    const st = app.note.st;
+    const embeds = Object.assign({}, C.embeds, { "tasks.base#Board": { html: boardEmbedRows(app), label: "Bases · kanban", foot: `up to ${Math.max(...columnsOf(Object.assign({}, app, { view: 1 })).map((c) => c.cards.length - 3))} more per column · ⏎ on the embed opens tasks.base#Board` } });
+    return M.shell(app, {
+      explorer: app.cols >= 100, tree: C.tree, treeSel: 13,
+      bufs: [{ name: "2026-10-03.md" }, { name: "tasks.base" }], activeBuf: 0,
+      windows: [{ doc: app.note.doc, st, title: "daily/2026-10-03.md", active: true, ctx: { embeds } }],
+      status: { mode: M.modeLabel(app, st), view: "live", path: "daily/2026-10-03.md", backlinks: 2, words: M.words(app.note.doc), ln: st.cur.l + 1, col: st.cur.c + 1, index: "ready" },
+      cmd: M.cmdHtml(app, app.msg),
+    });
+  }
+
+  function render(app) {
+    if (app.note) return renderNote(app);
+    const v = VIEWS[app.view];
+    const mainH = app.rows - 3;
+    const noticeHtml = notices(app);
+    const nNotice = (noticeHtml.match(/class="ln"/g) || []).length;
+    const bodyH = mainH - 2 - nNotice;
+    let html = M.ui.bufferline([{ name: "2026-10-03.md" }, { name: "tasks.base", icon: "▦ " }], 1, app.cols >= 100 ? "~/notes" : "");
+    html += `<div class="vcol" style="height:calc(${mainH}*var(--lh))">${toolbar(app)}${noticeHtml}${v.type === "kanban" ? renderKanban(app, bodyH) : renderTable(app, bodyH)}</div>`;
+    const r = v.type === "kanban" ? columnsOf(app)[app.kfocus.col].cards[app.kfocus.card] : (tableRows(app).filter((x) => x.row)[app.cell.r] || {}).row;
+    html += M.ui.statusline(app, { mode: app.edit ? "INSERT" : "BASE", view: v.type === "cards" ? "cards→table" : v.type, path: "tasks.base › " + v.name, extra: r ? `<span class="dim">tasks/${esc(r.file)}.md</span>` : "", index: "ready", ln: v.type === "kanban" ? app.kfocus.col + 1 : app.cell.r + 1, col: v.type === "kanban" ? app.kfocus.card + 1 : app.cell.c + 1 });
+    const hint = v.type === "kanban"
+      ? (v.groupKind === "formula" ? '<span class="dim">h/l j/k move focus · ⏎ open note · H/L disabled (formula grouping) · v views</span>' : '<span class="dim">h/l j/k focus · H/L move card · ⏎ open note · v views · 1-4 switch</span>')
+      : app.edit ? '<span class="dim">editing — ⏎ write to frontmatter · esc cancel</span>' : '<span class="dim">h/j/k/l cell · i edit · x toggle · s sort · g group · ⏎ open note · v views</span>';
+    html += M.ui.cmdline(app, app.msg || hint);
+    if (app.switcher) {
+      const box = M.ui.center(app, 46, VIEWS.length + 4);
+      html += M.ui.float({ x: box.x, y: box.y, w: 46, h: VIEWS.length + 4, title: "Views · tasks.base", body: VIEWS.map((x, i) => `<div class="ln${i === app.switcher.sel ? " pick-sel" : ""}"> ${i + 1}  ${esc(M.pad(x.name, 14))}<span class="dim">${esc(x.type === "cards" ? "cards → shown as table" : x.type + (x.groupKind === "formula" ? " · formula group" : ""))}</span></div>`).join("") + '<div class="ln ffoot"> j/k · ⏎ switch · esc</div>' });
+    }
+    html += editPopup(app);
+    return html;
+  }
+
+  /* ---------- writes ---------- */
+  function fmVal(k, v) { if (v == null) return null; if (Array.isArray(v)) return `${k}: [${v.join(", ")}]`; return `${k}: ${v}`; }
+  function writeToast(app, r, key, before, after, title) {
+    const body = [`<span class="dim">tasks/${esc(r.file)}.md · frontmatter</span>`];
+    const b = fmVal(key, before), a = fmVal(key, after);
+    if (b) body.push(`<span class="diff-del">- ${esc(b)}</span>`);
+    if (a) body.push(`<span class="diff-add">+ ${esc(a)}</span>`);
+    if (!a) body.push('<span class="dim">property removed (None column)</span>');
+    M.toast(app, "ok", title, body, 4200);
+  }
+  function startEdit(app) {
+    const items = tableRows(app).filter((x) => x.row);
+    const r = items[app.cell.r] && items[app.cell.r].row;
+    const c = COLS[app.cell.c];
+    if (!r) return;
+    if (c.kind === "file") { app.msg = '<span class="dim">file names are renamed from the explorer (m4)</span>'; return; }
+    if (c.kind === "checkbox") { const before = r.reviewed; r.reviewed = !r.reviewed; writeToast(app, r, "reviewed", before, r.reviewed, "Wrote reviewed"); return; }
+    if (c.kind === "link") { app.msg = `<span class="dim">project is a link: edit it as [[${esc(r.project || "")}]] — same as text in this mockup</span>`; }
+    app.edit = c.kind === "list" ? { value: "", items: r.tags.slice(), isel: -1 } : { value: r[c.key] == null ? "" : String(r[c.key]) };
+  }
+  function commitEdit(app) {
+    const items = tableRows(app).filter((x) => x.row);
+    const r = items[app.cell.r].row;
+    const c = COLS[app.cell.c];
+    const e = app.edit;
+    const before = Array.isArray(r[c.key]) ? r[c.key].slice() : r[c.key];
+    let val;
+    if (c.kind === "number") { if (e.value === "" || isNaN(Number(e.value))) return; val = Number(e.value); }
+    else if (c.kind === "date") { if (e.value && !/^\d{4}-\d{2}-\d{2}$/.test(e.value)) return; val = e.value || null; }
+    else if (c.kind === "list") { if (e.value.trim()) { e.items.push(e.value.trim().replace(/^#/, "")); e.value = ""; return; } val = e.items; }
+    else val = e.value.trim() || null;
+    app.edit = null;
+    if (JSON.stringify(before) === JSON.stringify(val)) return;
+    r[c.key] = val;
+    writeToast(app, r, c.key === "est" ? "estimate" : c.key, before, val, "Wrote " + c.label);
+  }
+  function bump(app, n) {
+    const e = app.edit, c = COLS[app.cell.c];
+    if (c.kind === "number" && !isNaN(Number(e.value))) e.value = String(Number(e.value || 0) + n);
+    if (c.kind === "date" && /^\d{4}-\d{2}-\d{2}$/.test(e.value)) { const d = new Date(e.value + "T12:00:00"); d.setDate(d.getDate() + n); e.value = d.toISOString().slice(0, 10); }
+  }
+  function moveCard(app, dir) {
+    const v = VIEWS[app.view];
+    const cols = columnsOf(app);
+    const r = cols[app.kfocus.col].cards[app.kfocus.card];
+    if (!r) return;
+    if (v.groupKind === "formula") { M.toast(app, "warn", "Can't move cards in this view", `Grouped by ${v.group} (a formula). Edit due in the table or note instead.`, 4200); return; }
+    const to = app.kfocus.col + dir;
+    if (to < 0 || to >= cols.length) return;
+    const before = r.status;
+    r.status = cols[to].key;
+    app.kfocus.col = to;
+    app.kfocus.card = Math.max(0, columnsOf(app)[to].cards.indexOf(r));
+    app.moved = r.file;
+    clearTimeout(app._mv); app._mv = setTimeout(() => { app.moved = null; }, 900);
+    writeToast(app, r, "status", before, r.status, `Moved to ${cols[to].label}`);
+  }
+
+  function onKey(app, k) {
+    if (app.note) {
+      app.msg = "";
+      const w = { get doc() { return app.note.doc; }, set doc(v) { app.note.doc = v; }, st: app.note.st };
+      return M.vim(app, w, k, { onEnter: (a) => { if (/tasks\.base/.test(a.note.doc[a.note.st.cur.l].raw)) { a.note = null; a.view = 1; a.msg = '<span class="dim">opened tasks.base › Board from the embed · C-o returns</span>'; return true; } return false; } });
+    }
+    if (app.switcher) {
+      const s = app.switcher;
+      if (k === "j" || k === "<Down>") s.sel = Math.min(VIEWS.length - 1, s.sel + 1);
+      else if (k === "k" || k === "<Up>") s.sel = Math.max(0, s.sel - 1);
+      else if (k === "<CR>") { app.view = s.sel; app.switcher = null; }
+      else if (/^[1-4]$/.test(k)) { app.view = Number(k) - 1; app.switcher = null; }
+      else if (k === "<Esc>" || k === "q" || k === "v") app.switcher = null;
+      return true;
+    }
+    if (app.edit) {
+      const e = app.edit, c = COLS[app.cell.c];
+      if (k === "<Esc>") { app.edit = null; return true; }
+      if (k === "<CR>") { commitEdit(app); return true; }
+      if (k === "<C-a>") { bump(app, 1); return true; }
+      if (k === "<C-x>") { bump(app, -1); return true; }
+      if (k === "<Tab>" && c.kind === "text") { const o = ["todo", "doing", "done"].find((x) => x.startsWith(e.value)); if (o) e.value = o; return true; }
+      if (c.kind === "list" && (k === "<C-h>" || k === "<C-l>")) { e.isel = M.clamp(e.isel + (k === "<C-l>" ? 1 : -1), 0, e.items.length - 1); return true; }
+      if (k === "<BS>") { if (c.kind === "list" && e.value === "") { e.items.splice(e.isel >= 0 ? e.isel : e.items.length - 1, 1); e.isel = -1; } else e.value = e.value.slice(0, -1); return true; }
+      if (M.isChar(k) || k === "<Space>") { e.value += k === "<Space>" ? " " : k; return true; }
+      return true;
+    }
+    app.msg = "";
+    const v = VIEWS[app.view];
+    if (/^[1-4]$/.test(k)) { app.view = Number(k) - 1; return true; }
+    if (k === "v") { app.switcher = { sel: app.view }; return true; }
+    if (k === "<Tab>") { app.view = (app.view + 1) % VIEWS.length; return true; }
+    if (k === "!") { app.showDiag = !app.showDiag; return true; }
+    if (v.type === "kanban") {
+      const cols = columnsOf(app);
+      if (k === "h" || k === "<Left>") { app.kfocus.col = Math.max(0, app.kfocus.col - 1); app.kfocus.card = 0; }
+      else if (k === "l" || k === "<Right>") { app.kfocus.col = Math.min(cols.length - 1, app.kfocus.col + 1); app.kfocus.card = 0; }
+      else if (k === "j" || k === "<Down>") app.kfocus.card++;
+      else if (k === "k" || k === "<Up>") app.kfocus.card = Math.max(0, app.kfocus.card - 1);
+      else if (k === "H") moveCard(app, -1);
+      else if (k === "L") moveCard(app, 1);
+      else if (k === "<CR>") { const r = cols[app.kfocus.col].cards[app.kfocus.card]; if (r) M.toast(app, "info", "Open tasks/" + r.file + ".md", "opens in a buffer; C-o returns to the board", 2200); }
+      else return false;
+      return true;
+    }
+    const n = tableRows(app).filter((x) => x.row).length;
+    if (k === "j" || k === "<Down>") app.cell.r = Math.min(n - 1, app.cell.r + 1);
+    else if (k === "k" || k === "<Up>") app.cell.r = Math.max(0, app.cell.r - 1);
+    else if (k === "l" || k === "<Right>") { app.cell.c = Math.min(COLS.length - 1, app.cell.c + 1); ensureColVisible(app); }
+    else if (k === "h" || k === "<Left>") { app.cell.c = Math.max(0, app.cell.c - 1); ensureColVisible(app); }
+    else if (k === "0") { app.cell.c = 0; ensureColVisible(app); }
+    else if (k === "$") { app.cell.c = COLS.length - 1; ensureColVisible(app); }
+    else if (k === "G") app.cell.r = n - 1;
+    else if (k === "i" || k === "a" || k === "c") startEdit(app);
+    else if (k === "x") { if (COLS[app.cell.c].kind === "checkbox") startEdit(app); else app.msg = '<span class="dim">x toggles checkbox cells</span>'; }
+    else if (k === "s") { const key = COLS[app.cell.c].key; app.sort = !app.sort || app.sort[0] !== key ? [key, 1] : app.sort[1] === 1 ? [key, -1] : null; app.msg = `<span class="dim">sort: ${app.sort ? esc(app.sort[0]) + (app.sort[1] > 0 ? " ascending" : " descending") : "file order"} (view only; .base unchanged until :w)</span>`; }
+    else if (k === "g") { app.grouped = !app.grouped; app.msg = `<span class="dim">group by project ${app.grouped ? "on" : "off"}</span>`; }
+    else if (k === "f") { app.filterAll = !app.filterAll; app.msg = `<span class="dim">filter ${app.filterAll ? "off: showing done rows" : "on: status ≠ done"}</span>`; }
+    else if (k === "<CR>") { const r = tableRows(app).filter((x) => x.row)[app.cell.r].row; M.toast(app, "info", "Open tasks/" + r.file + ".md", "opens in a buffer; C-o returns to the table", 2200); }
+    else return false;
+    return true;
+  }
+  function onClick(app, what) {
+    const [kind, i] = what.split(":");
+    if (kind === "view") app.view = Number(i);
+  }
+  const focusCell = (key, file) => (a) => { const rows = tableRows(a).filter((x) => x.row); a.cell = { r: Math.max(0, rows.findIndex((x) => x.row.file === file)), c: COLS.findIndex((c) => c.key === key) }; ensureColVisible(a); };
+  const NOTE = "---\ndate: 2026-10-03\ntags: [daily]\n---\n# Saturday, October 3\n\n## Plan\n- [x] Morning run 5 km\n- [ ] Review [[so-roadmap]] milestones\n\n## Board\n![[tasks.base#Board]]\n\n## Notes\nThe embed is live: moving a card in tasks.base updates it here.";
+
+  M.create({
+    id: "RM261003ABZP-M6", title: "M6 · Bases", path: "m6-bases.html",
+    subtitle: "Obsidian Bases in the terminal: table view with grouping, sorting, summaries and in-place property editing; Kanban with card moves that write frontmatter; view switching; unsupported layouts; embedded views.",
+    init, render, onKey, onClick,
+    leaderAllowed: (app) => !app.edit && !app.switcher,
+    keys: [["h j k l", "move cell / card focus"], ["i", "edit cell (text, number, date, list)"], ["x", "toggle checkbox cell"], ["C-a C-x", "(editing) ±1 for numbers and dates"], ["s", "sort by column (asc → desc → off)"], ["g / f", "toggle grouping / filter"], ["H L", "(Kanban) move card to prev / next column"], ["v / Tab / 1-4", "view switcher / next view / jump"], ["Enter", "open the row's note"], ["!", "dismiss diagnostics"]],
+    notes: "Bases key letters (<kbd>i</kbd> edit, <kbd>H</kbd>/<kbd>L</kbd> move, <kbd>v</kbd> views, <kbd>s</kbd> sort) are proposals — Obsidian has no keymap for these. The Kanban <code>type</code> string is unverified until checked against an Obsidian 1.14 file (REQ7@R2).",
+    states: [
+      { id: "S1", group: "Table", label: "Table — grouped, sorted, summary", caption: "All tasks: toolbar with view tabs, filter and sort summary and row count; rows grouped by project and sorted by due ↑; the summary row shows count, earliest due, Σ estimate and % reviewed. A diagnostic notice explains an unsupported formula without failing.", refs: "REQ7@R2 (table: order, sort, grouping, summaries; diagnostics), DES12@R1", apply: (a) => focusCell("status", "kitty-images")(a) },
+      { id: "S2", group: "Table", label: "Edit text cell (status)", caption: "i on a text cell edits in place; existing values are suggested. Enter writes status into the note's frontmatter (toast shows the diff).", refs: "REQ7@R2 (in-place editing that writes back to the note)", apply: (a) => { focusCell("status", "esc-timeout")(a); startEdit(a); a.edit.value = "do"; } },
+      { id: "S3", group: "Table", label: "Edit number cell", caption: "Number cells validate as you type; Ctrl-a / Ctrl-x step by 1 like vim.", refs: "REQ7@R2", apply: (a) => { focusCell("est", "bases-kanban")(a); startEdit(a); a.edit.value = "8x"; } },
+      { id: "S4", group: "Table", label: "Edit date cell", caption: "Dates edit as YYYY-MM-DD with a readable confirmation; Ctrl-a / Ctrl-x move one day.", refs: "REQ7@R2", apply: (a) => { focusCell("due", "esc-timeout")(a); startEdit(a); a.edit.value = "2026-10-08"; } },
+      { id: "S5", group: "Table", label: "Edit list cell (tags)", caption: "List cells edit as chips: type a value and Enter to add; Backspace on an empty input removes the last chip; Enter on empty input writes the list.", refs: "REQ7@R2", apply: (a) => { focusCell("tags", "esc-timeout")(a); startEdit(a); a.edit.value = "kitty"; } },
+      { id: "S6", group: "Table", label: "Checkbox toggled + write diff", caption: "x (or i) on a checkbox cell toggles it immediately and writes reviewed: true.", refs: "REQ7@R2", apply: (a) => { focusCell("reviewed", "esc-timeout")(a); startEdit(a); } },
+      { id: "S7", group: "Table", label: "Sorted by estimate ↓, ungrouped", caption: "s on a column cycles ascending → descending → off; g toggles grouping. The header arrow shows the active sort.", refs: "REQ7@R2 (sort, grouping)", apply: (a) => { a.sort = ["est", -1]; a.grouped = false; focusCell("est", "bases-kanban")(a); } },
+      { id: "S8", group: "Kanban", label: "Board — columns by status", caption: "Board groups cards by status, with a None column for notes without it. Focus moves with h/j/k/l.", refs: "REQ7@R2 (Kanban by single group-by property; None column)", apply: (a) => { a.view = 1; a.kfocus = { col: 0, card: 0 }; } },
+      { id: "S9", group: "Kanban", label: "Card moved with L — frontmatter diff", caption: "L moved esc-timeout from todo to doing and wrote status: doing; the toast shows the exact frontmatter change.", refs: "REQ7@R2 (moving a card updates that property in the note)", apply: (a) => { a.view = 1; a.kfocus = { col: 0, card: 0 }; moveCard(a, 1); } },
+      { id: "S10", group: "Kanban", label: "Card moved to None", caption: "Moving a card into None removes the property instead of writing an empty value.", refs: "REQ7@R2", apply: (a) => { a.view = 1; a.kfocus = { col: 2, card: 0 }; moveCard(a, 1); } },
+      { id: "S11", group: "Kanban", label: "Formula grouping — moves disabled", caption: "By priority groups by a formula, so there is no property to write: the toolbar says ⊘ moves off and H/L explain why.", refs: "REQ7@R2 (moving is disabled when grouping by a formula or file property)", apply: (a) => { a.view = 2; a.kfocus = { col: 0, card: 1 }; moveCard(a, 1); } },
+      { id: "S12", group: "Views", label: "View switcher", caption: "v lists the base's views with their layout; Enter or 1–4 switches. Tab cycles.", refs: "REQ7@R2 (switching between a base's views from the keyboard)", apply: (a) => { a.switcher = { sel: 1 }; } },
+      { id: "S13", group: "Views", label: "cards layout → table + notice", caption: "Gallery uses the cards layout, which so does not render yet: it opens as a table with a notice and the file stays untouched.", refs: "REQ7@R2 (other types open as a table with a notice), DES12@R1", apply: (a) => { a.view = 3; } },
+      { id: "S14", group: "Views", label: "Embedded ![[tasks.base#Board]]", caption: "A daily note embeds the Board view and live preview renders it inline. Press j j to put the cursor on the embed line (it reveals its ![[…]] source), then Enter opens tasks.base at that view.", refs: "REQ7@R2 (![[file.base#View]] renders inline in live preview), REQ5@R2", apply: (a) => { a.note = { doc: M.md.parse(NOTE), st: { cur: { l: 9, c: 0 }, view: "live", vim: "normal", top: 0 } }; } },
+      { id: "S15", group: "Responsive", label: "Table at 80×24", caption: "Columns that don't fit are hidden on the right (› +N cols); moving with l scrolls them into view.", refs: "UI context (80×24)", apply: (a) => { a.cols = 80; a.rows = 24; focusCell("status", "kitty-images")(a); } },
+      { id: "S16", group: "Responsive", label: "Board at 80×24", caption: "Four columns still fit at 20 columns each; long names truncate and columns show ↓ N more.", refs: "UI context (80×24)", apply: (a) => { a.cols = 80; a.rows = 24; a.view = 1; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

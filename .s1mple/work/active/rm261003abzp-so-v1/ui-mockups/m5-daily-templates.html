@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M5 Daily &amp; templates</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, C = M.content, esc = M.esc;
+  const NOW = new Date(2026, 9, 3, 8, 12, 5); // Saturday, October 3, 2026 08:12
+
+  /* ---------- Moment.js token subset used by {{date:FORMAT}} / {{time:FORMAT}} (REQ6@R2) ---------- */
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const p2 = (n) => String(n).padStart(2, "0");
+  const ord = (n) => n + (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th");
+  function fmt(d, f) {
+    const T = { YYYY: d.getFullYear(), YY: p2(d.getFullYear() % 100), MMMM: MONTHS[d.getMonth()], MMM: MONTHS[d.getMonth()].slice(0, 3), MM: p2(d.getMonth() + 1), M: d.getMonth() + 1, Do: ord(d.getDate()), DD: p2(d.getDate()), D: d.getDate(), dddd: DAYS[d.getDay()], ddd: DAYS[d.getDay()].slice(0, 3), d: d.getDay(), HH: p2(d.getHours()), H: d.getHours(), hh: p2(d.getHours() % 12 || 12), h: d.getHours() % 12 || 12, mm: p2(d.getMinutes()), m: d.getMinutes(), ss: p2(d.getSeconds()), s: d.getSeconds(), A: d.getHours() < 12 ? "AM" : "PM", a: d.getHours() < 12 ? "am" : "pm" };
+    return f.replace(/\[([^\]]*)\]|YYYY|YY|MMMM|MMM|MM|M|Do|DD|D|dddd|ddd|d|HH|H|hh|h|mm|m|ss|s|A|a/g, (m, lit) => (lit != null ? lit : String(T[m])));
+  }
+  function expand(tpl, title, d) {
+    return tpl.replace(/\{\{(title|date|time)(?::([^}]*))?\}\}/g, (m, v, f) => (v === "title" ? title : v === "date" ? fmt(d, f || "YYYY-MM-DD") : fmt(d, f || "HH:mm")));
+  }
+  const TPL = {
+    "templates/daily.md": "---\ndate: {{date}}\ntags: [daily]\n---\n# {{date:dddd, MMMM D}}\n\n## Plan\n- [ ] \n\n## Notes\n\n## Log\n{{time}} started the day",
+    "templates/meeting.md": "## {{title}} · {{date:ddd, MMM Do}} {{time:h:mm a}}\n**Attendees:** \n\n### Agenda\n1. \n\n### Decisions\n- \n\n### Actions\n- [ ] ",
+    "templates/project.md": "---\nstatus: active\ncreated: {{date}}\ntags: [project]\n---\n# {{title}}\n\n## Goals\n- \n\n## Log\n- {{date:MM-DD}} created",
+    "templates/book.md": "---\nauthor: \nstarted: {{date}}\ntags: [reading]\n---\n# {{title}}\n\n> [!quote] Favourite line\n> \n\n## Notes\nWeek {{date:[W]w}} · {{date:Q}}",
+  };
+  const isoOf = (d) => fmt(d, "YYYY-MM-DD");
+  const EXISTING0 = ["2026-09-21", "2026-09-22", "2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"];
+  const DAILY_BODY = {
+    "2026-10-02": "---\ndate: 2026-10-02\ntags: [daily]\n---\n# Friday, October 2\n\n## Plan\n- [x] Boundary test on CI\n- [x] Read kitty keyboard spec\n\n## Review\n- Boundary test green on CI (1m 48s)\n- Vim motions: 23 of 31 done\n\n## Log\n08:40 started the day",
+  };
+
+  function treeRows(app) {
+    const days = app.existing.filter((x) => x >= "2026-09-29").sort();
+    const rows = [{ depth: 0, kind: "dir", name: "daily", open: true, path: "daily" }];
+    if (app.subfolders) {
+      rows.push({ depth: 1, kind: "dir", name: "2026", open: true, path: "daily/2026" }, { depth: 2, kind: "dir", name: "09", open: false, path: "daily/2026/09" }, { depth: 2, kind: "dir", name: "10", open: true, path: "daily/2026/10" });
+      days.filter((x) => x.startsWith("2026-10")).forEach((x) => rows.push({ depth: 3, kind: "md", name: x + ".md", path: "daily/2026/10/" + x + ".md", note: app.fresh === x ? "new" : "" }));
+    } else days.forEach((x) => rows.push({ depth: 1, kind: "md", name: x + ".md", path: "daily/" + x + ".md", note: app.fresh === x ? "new" : "" }));
+    rows.push({ depth: 0, kind: "dir", name: "projects", open: true, path: "projects" });
+    rows.push({ depth: 1, kind: "md", name: "so-roadmap.md", path: "projects/so-roadmap.md" });
+    if (app.created) rows.push({ depth: 1, kind: "md", name: app.created.split("/").pop(), path: app.created, note: "new" });
+    rows.push({ depth: 1, kind: "md", name: "garden-app.md", path: "projects/garden-app.md" });
+    rows.push({ depth: 0, kind: "dir", name: "templates", open: true, path: "templates" });
+    Object.keys(TPL).forEach((t) => rows.push({ depth: 1, kind: "md", name: t.split("/").pop(), path: t }));
+    rows.push({ depth: 0, kind: "md", name: "index.md", path: "index.md" });
+    return rows;
+  }
+
+  function init() {
+    return { path: "index.md", doc: M.md.parse(C.index), st: { cur: { l: 2, c: 0 }, view: "live", vim: "normal", top: 0 }, existing: EXISTING0.slice(), fresh: null, created: null, subfolders: false, cal: null, tpick: null, newNote: null, cmdline: null, msg: "", pending: null, dirty: false };
+  }
+  const W = (app) => ({ get doc() { return app.doc; }, set doc(v) { app.doc = v; }, get undo() { return app.undo; }, set undo(v) { app.undo = v; }, st: app.st });
+  const dailyPath = (app, iso) => (app.subfolders ? `daily/${iso.slice(0, 4)}/${iso.slice(5, 7)}/${iso}.md` : `daily/${iso}.md`);
+
+  function openDaily(app, d, how) {
+    const iso = isoOf(d);
+    const path = dailyPath(app, iso);
+    if (app.existing.includes(iso)) {
+      app.path = path; app.doc = M.md.parse(DAILY_BODY[iso] || expand(TPL["templates/daily.md"], iso, new Date(d.getFullYear(), d.getMonth(), d.getDate(), 8, 40)).replace("- [ ] ", "- [x] Morning run")); app.st.cur = { l: 4, c: 0 }; app.st.top = 0;
+      app.msg = `<span class="dim">"${esc(path)}" · ${how}</span>`;
+    } else {
+      app.existing.push(iso); app.fresh = iso;
+      app.path = path; app.doc = M.md.parse(expand(TPL["templates/daily.md"], iso, new Date(d.getFullYear(), d.getMonth(), d.getDate(), NOW.getHours(), NOW.getMinutes())));
+      app.st.cur = { l: 7, c: 6 }; app.st.top = 0;
+      M.toast(app, "ok", "Created " + path, "from templates/daily.md · {{date:dddd, MMMM D}} → " + fmt(d, "dddd, MMMM D"), 4000);
+    }
+  }
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const curDate = (app) => { const m = app.path.match(/(\d{4}-\d{2}-\d{2})\.md$/); return m ? new Date(+m[1].slice(0, 4), +m[1].slice(5, 7) - 1, +m[1].slice(8, 10)) : NOW; };
+
+  function onEx(app, c) {
+    if (c === "Today") return openDaily(app, NOW, ":Today");
+    if (c === "Yesterday") return openDaily(app, addDays(curDate(app), -1), ":Yesterday (relative to the open daily note)");
+    if (c === "Tomorrow") return openDaily(app, addDays(curDate(app), 1), ":Tomorrow (relative to the open daily note)");
+    app.msg = `<span class="dim">:${esc(c)} — try :Today, :Yesterday, :Tomorrow</span>`;
+  }
+
+  /* ---------- calendar ---------- */
+  function calendar(app) {
+    const sel = app.cal.sel;
+    const first = new Date(sel.getFullYear(), sel.getMonth(), 1);
+    const offset = (first.getDay() + 6) % 7; // Monday first
+    const daysIn = new Date(sel.getFullYear(), sel.getMonth() + 1, 0).getDate();
+    const L = [];
+    const title = `${MONTHS[sel.getMonth()]} ${sel.getFullYear()}`;
+    L.push(`<div class="ln"> <span class="dim">H</span>  <span class="t-b">${esc(M.pad(" ".repeat(Math.floor((26 - title.length) / 2)) + title, 26))}</span>  <span class="dim">L</span></div>`);
+    L.push(`<div class="ln dim"> ${["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((x) => " " + x + " ").join("")}</div>`);
+    let cells = [];
+    for (let i = 0; i < offset; i++) cells.push("    ");
+    for (let d = 1; d <= daysIn; d++) {
+      const date = new Date(sel.getFullYear(), sel.getMonth(), d);
+      const iso = isoOf(date);
+      const has = app.existing.includes(iso);
+      const isToday = iso === isoOf(NOW);
+      const isSel = iso === isoOf(sel);
+      let cls = has ? "t-wiki" : "muted";
+      if (isToday) cls += " t-b";
+      const inner = `${String(d).padStart(2)}${has ? "•" : " "}`;
+      const style = ` style="text-decoration:${isToday && !isSel ? "underline" : "none"}"`;
+      cells.push(isSel ? ` <span class="pick-sel t-b">${inner}</span>` : ` <span class="${cls}"${style}>${inner}</span>`);
+    }
+    for (let i = 0; i < cells.length; i += 7) L.push(`<div class="ln"> ${cells.slice(i, i + 7).join("")}</div>`);
+    while (L.length < 8) L.push('<div class="ln"></div>');
+    const iso = isoOf(sel);
+    L.push(`<div class="ln"> <span class="dim">${esc(fmt(sel, "ddd, MMM D"))}:</span> ${app.existing.includes(iso) ? '<span class="t-wiki" style="text-decoration:none">• open note</span>' : '<span class="t-warn">+ create from template</span>'}</div>`);
+    L.push(`<div class="ln ffoot"> h/l day · j/k week · H/L month</div>`);
+    L.push(`<div class="ln ffoot"> ⏎ open · t today · esc close</div>`);
+    L.push(`<div class="ln ffoot"> • note exists · <u>3</u> today</div>`);
+    const w = 36, h = L.length + 2;
+    const box = M.ui.center(app, w, h);
+    return M.ui.float({ x: box.x, y: box.y, w, h, title: "Daily note · pick a date", body: L.join("") });
+  }
+  function calKey(app, k) {
+    const c = app.cal;
+    const mv = { h: -1, l: 1, j: 7, k: -7, "<Left>": -1, "<Right>": 1, "<Down>": 7, "<Up>": -7 };
+    if (k in mv) { c.sel = addDays(c.sel, mv[k]); return true; }
+    if (k === "H" || k === "L") { const s = c.sel; const n = new Date(s.getFullYear(), s.getMonth() + (k === "L" ? 1 : -1), 1); const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate(); c.sel = new Date(n.getFullYear(), n.getMonth(), Math.min(s.getDate(), dim)); return true; }
+    if (k === "t") { c.sel = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()); return true; }
+    if (k === "<Esc>" || k === "q") { app.cal = null; return true; }
+    if (k === "<CR>") { const d = c.sel; app.cal = null; openDaily(app, d, "date picker"); return true; }
+    return true;
+  }
+
+  /* ---------- template picker + new note ---------- */
+  function tplItems(app) {
+    const q = app.tpick.query;
+    const list = (app.tpick.forNew ? ["(blank note)"] : []).concat(Object.keys(TPL));
+    return list.filter((t) => M.ui.fuzzy(t, q) > 0);
+  }
+  function tplPicker(app) {
+    const its = tplItems(app);
+    const p = app.tpick;
+    p.sel = M.clamp(p.sel, 0, Math.max(0, its.length - 1));
+    const name = its[p.sel];
+    const title = p.forNew ? p.title : app.path.split("/").pop().replace(/\.md$/, "");
+    let preview;
+    if (!name || name === "(blank note)") preview = [' <span class="dim">An empty note with just a title:</span>', "", ` <span class="t-h1">█ ${esc(p.title || "")}</span>`];
+    else {
+      const src = TPL[name].split("\n"), out = expand(TPL[name], title, NOW).split("\n");
+      const n = Math.min(10, Math.max(src.length, out.length));
+      preview = [` <span class="t-h3">SOURCE</span> <span class="dim">${esc(name)}</span>`]
+        .concat(src.slice(0, n).map((l) => " " + esc(l).replace(/\{\{[^}]+\}\}/g, (m) => `<span class="t-tag">${m}</span>`)))
+        .concat(["", ` <span class="t-h4">EXPANDED</span> <span class="dim">title="${esc(title)}" · ${esc(fmt(NOW, "YYYY-MM-DD HH:mm"))}</span>`])
+        .concat(out.slice(0, n).map((l) => " " + esc(l)));
+    }
+    return M.ui.picker(app, { title: p.forNew ? `New note "${p.title}" — start from template` : "Insert template at cursor", query: p.query, items: its.map((t) => ({ html: ` <span class="ic-md">${t.startsWith("(") ? "○" : "◇"}</span> ${M.ui.highlightHits(t.replace(/^templates\//, ""), p.query)}` })), sel: p.sel, preview, h: 28, foot: p.forNew ? "⏎ create note · esc cancel" : "⏎ insert at cursor · esc cancel" });
+  }
+  function insertTemplate(app, name) {
+    const arr = app.doc.map((l) => l.raw);
+    const at = app.st.cur.l + 1;
+    const text = expand(TPL[name], app.path.split("/").pop().replace(/\.md$/, ""), NOW).split("\n");
+    app.undo = [arr.join("\n")];
+    arr.splice(at, 0, ...text);
+    app.doc = M.md.parse(arr.join("\n"));
+    app.st.cur = { l: at, c: 0 };
+    M.toast(app, "ok", "Inserted " + name, `${text.length} lines · {{title}} {{date}} {{time}} expanded · u undoes`, 3500);
+  }
+  function newNotePrompt(app) {
+    const n = app.newNote;
+    const box = M.ui.center(app, 60, 8);
+    const slug = n.value.trim().toLowerCase().replace(/[^\w]+/g, "-").replace(/^-|-$/g, "");
+    return M.ui.float({ x: box.x, y: box.y, w: 60, h: 8, title: "New note", body: [
+      ` <span class="muted">Title</span>`,
+      ` <span class="t-h2">❯</span> ${esc(n.value)}<span class="cur"> </span>`,
+      "",
+      ` <span class="dim">file:</span> ${esc(n.folder)}<span class="t-b">${esc(slug || "untitled")}.md</span>`,
+    ].map((h) => `<div class="ln">${h}</div>`).join("") + '<div class="ln ffoot"> ⏎ next: choose a template (optional) · esc cancel</div>' });
+  }
+  function createNote(app, tpl) {
+    const p = app.tpick;
+    const slug = p.title.toLowerCase().replace(/[^\w]+/g, "-").replace(/^-|-$/g, "");
+    const path = "projects/" + slug + ".md";
+    app.created = path; app.path = path;
+    app.doc = M.md.parse(tpl === "(blank note)" ? `# ${p.title}\n` : expand(TPL[tpl], p.title, NOW));
+    app.st.cur = { l: Math.max(0, app.doc.findIndex((l) => /^- $/.test(l.raw))), c: 2 }; app.st.top = 0; app.st.vim = "insert";
+    M.toast(app, "ok", "Created " + path, tpl === "(blank note)" ? "blank" : "from " + tpl, 3500);
+  }
+
+  function render(app) {
+    const st = app.st;
+    const base = M.shell(app, {
+      explorer: true, tree: treeRows(app), treeSel: Math.max(0, treeRows(app).findIndex((r) => r.path === app.path)), overlayFocus: !!(app.cal || app.tpick || app.newNote),
+      bufs: [{ name: app.path.split("/").pop(), dirty: app.dirty }], activeBuf: 0,
+      windows: [{ doc: app.doc, st, title: app.path, active: true }],
+      status: { mode: app.tpick ? "PICKER" : M.modeLabel(app, st), view: "live", path: app.path, dirty: app.dirty, backlinks: 2, words: M.words(app.doc), ln: st.cur.l + 1, col: st.cur.c + 1, index: "ready" },
+      cmd: M.cmdHtml(app, app.msg),
+    });
+    let over = "";
+    if (app.cal) over += calendar(app);
+    if (app.newNote) over += newNotePrompt(app);
+    if (app.tpick) over += tplPicker(app);
+    if (app.showConfig) {
+      const box = M.ui.center(app, 58, 11);
+      over += M.ui.float({ x: box.x, y: box.y, w: 58, h: 11, title: "~/.config/so/config.toml", body: [
+        `<span class="t-h4">[daily]</span>`,
+        `folder      = <span class="t-str">"daily/"</span>`,
+        `format      = <span class="t-str">"${app.subfolders ? "YYYY/MM/YYYY-MM-DD" : "YYYY-MM-DD"}"</span>`,
+        `template    = <span class="t-str">"templates/daily.md"</span>`,
+        "",
+        `<span class="t-h4">[templates]</span>`,
+        `folder      = <span class="t-str">"templates/"</span>`,
+        "",
+        `<span class="dim">→ today: </span><span class="t-b">${esc(dailyPath(app, isoOf(NOW)))}</span>`,
+      ].map((h) => `<div class="ln"> ${h}</div>`).join("") });
+    }
+    return base + over;
+  }
+  function onKey(app, k) {
+    if (app.showConfig) { if (k === "<Esc>" || k === "q") app.showConfig = false; return true; }
+    if (app.cal) return calKey(app, k);
+    if (app.newNote) {
+      const n = app.newNote;
+      if (k === "<Esc>") { app.newNote = null; return true; }
+      if (k === "<BS>") { n.value = n.value.slice(0, -1); return true; }
+      if (k === "<CR>") { if (n.value.trim()) { app.tpick = { query: "", sel: 0, forNew: true, title: n.value.trim() }; app.newNote = null; } return true; }
+      if (M.isChar(k) || k === "<Space>") { n.value += k === "<Space>" ? " " : k; return true; }
+      return true;
+    }
+    if (app.tpick) {
+      const p = app.tpick;
+      if (k === "<Esc>") { app.tpick = null; return true; }
+      if (k === "<C-n>" || k === "<Down>") { p.sel++; return true; }
+      if (k === "<C-p>" || k === "<Up>") { p.sel = Math.max(0, p.sel - 1); return true; }
+      if (k === "<BS>") { p.query = p.query.slice(0, -1); return true; }
+      if (k === "<CR>") { const t = tplItems(app)[p.sel]; app.tpick = null; if (!t) return true; if (p.forNew) createNote(Object.assign(app, { tpick: p }), t); else insertTemplate(app, t); app.tpick = null; return true; }
+      if (M.isChar(k)) { p.query += k; p.sel = 0; return true; }
+      return true;
+    }
+    app.msg = "";
+    return M.vim(app, W(app), k, { onEx, onChange: (a) => { a.dirty = true; clearTimeout(a._as); a._as = setTimeout(() => { a.dirty = false; M.render(); }, 1000); } });
+  }
+  const leader = () => M.leaderWith({
+    "n.d": (a) => openDaily(a, NOW, "<leader>nd"),
+    "n.p": (a) => { a.cal = { sel: new Date(curDate(a).getFullYear(), curDate(a).getMonth(), curDate(a).getDate()) }; },
+    "n.t": (a) => { a.tpick = { query: "", sel: 0 }; },
+    "n.n": (a) => { a.newNote = { value: "", folder: "projects/" }; },
+  });
+
+  M.create({
+    id: "RM261003ABZP-M5", title: "M5 · Daily & templates", path: "m5-daily-templates.html",
+    subtitle: "Daily notes (:Today, :Yesterday, :Tomorrow, date picker) created from a template, template insertion with variable expansion, and new notes from a template.",
+    init, render, onKey, leader,
+    leaderAllowed: (app) => !app.cal && !app.tpick && !app.newNote && app.st.vim === "normal" && app.cmdline == null,
+    keys: [["Space n d", "today's daily note (= :Today)"], [":Yesterday :Tomorrow", "adjacent days"], ["Space n p", "date picker"], ["h l j k", "(calendar) day / week"], ["H L", "(calendar) month"], ["t", "(calendar) today"], ["Space n t", "insert template at cursor"], ["Space n n", "new note, optional template"]],
+    notes: "Mockup clock: <b>Saturday 2026-10-03 08:12</b>. Calendar weeks start on Monday (assumption). <kbd>H</kbd>/<kbd>L</kbd> for months mirrors LazyVim's buffer prev/next keys inside the float.",
+    states: [
+      { id: "S1", group: "Daily", label: "Before :Today — note missing", caption: "Today's note does not exist yet (daily/ ends at 2026-10-02). The command line holds :Today — press Enter.", refs: "REQ6@R2 (:Today creates from the daily template when missing)", apply: (a) => { a.cmdline = "Today"; } },
+      { id: "S2", group: "Daily", label: "After :Today — created from template", caption: "daily/2026-10-03.md was created from templates/daily.md: {{date}} → 2026-10-03, {{date:dddd, MMMM D}} → Saturday, October 3, {{time}} → 08:12. The cursor waits in the first task.", refs: "REQ6@R2 (example: # Saturday, October 3)", apply: (a) => openDaily(a, NOW, ":Today") },
+      { id: "S3", group: "Daily", label: ":Yesterday from today", caption: ":Yesterday opens the day before the open daily note (it exists, so nothing is created). :Tomorrow goes forward.", refs: "REQ6@R2 (:Yesterday, :Tomorrow)", apply: (a) => { a.existing.push("2026-10-03"); openDaily(a, NOW, ":Today"); onEx(a, "Yesterday"); } },
+      { id: "S4", group: "Daily", label: ":Tomorrow — creates 10-04", caption: "Tomorrow's note is missing, so it is created from the same template with tomorrow's date.", refs: "REQ6@R2", apply: (a) => { a.existing.push("2026-10-03"); openDaily(a, NOW, ":Today"); a.toasts = []; onEx(a, "Tomorrow"); } },
+      { id: "S5", group: "Date picker", label: "Calendar — existing notes marked", caption: "Space n p opens a month calendar. • marks days that already have a note; today is underlined. Move with h/j/k/l, Enter opens or creates.", refs: "REQ6@R2 (a date picker opens adjacent days)", apply: (a) => { a.cal = { sel: new Date(2026, 9, 3) }; } },
+      { id: "S6", group: "Date picker", label: "Calendar — previous month (H)", caption: "H / L page months; the selection keeps its day number. September shows the gaps in the habit.", refs: "REQ6@R2", apply: (a) => { a.cal = { sel: new Date(2026, 8, 23) }; } },
+      { id: "S7", group: "Templates", label: "Template picker — source vs expanded", caption: "Space n t lists templates/; the preview shows the template source (variables highlighted) above what will be inserted.", refs: "REQ6@R2 (<leader>nt; {{title}} {{date}} {{time}} {{date:FORMAT}} {{time:FORMAT}})", apply: (a) => { openDaily(a, NOW, ""); a.toasts = []; a.st.cur = { l: 10, c: 0 }; a.tpick = { query: "", sel: 1 }; } },
+      { id: "S8", group: "Templates", label: "Unsupported tokens stay literal", caption: "book.md uses {{date:[W]w}} and {{date:Q}}: w and Q are not in the supported token list, so they stay as typed; [W] is an escaped literal.", refs: "REQ6@R2 (unsupported tokens stay literal; [literal] escapes)", apply: (a) => { a.tpick = { query: "book", sel: 0 }; } },
+      { id: "S9", group: "Templates", label: "Template inserted at cursor", caption: "The meeting template was inserted below the cursor in today's note with title, date and time expanded. u undoes the whole insert.", refs: "REQ6@R2 (inserts it at the cursor)", apply: (a) => { openDaily(a, NOW, ""); a.toasts = []; a.st.cur = { l: 10, c: 0 }; insertTemplate(a, "templates/meeting.md"); } },
+      { id: "S10", group: "New note", label: "New note — title", caption: "Space n n asks for a title; the file name is derived from it. Enter moves on to the optional template.", refs: "REQ6@R2 (<leader>nn optionally starts from a template)", apply: (a) => { a.newNote = { value: "Q4 planning", folder: "projects/" }; } },
+      { id: "S11", group: "New note", label: "New note — choose template", caption: "(blank note) is first so skipping the template is one Enter. Choosing project.md fills {{title}} with 'Q4 planning'.", refs: "REQ6@R2", apply: (a) => { a.tpick = { query: "", sel: 3, forNew: true, title: "Q4 planning" }; } },
+      { id: "S12", group: "New note", label: "New note — created", caption: "projects/q4-planning.md was created from project.md and opened in Insert mode at the first empty bullet.", refs: "REQ6@R2", apply: (a) => { a.tpick = { forNew: true, title: "Q4 planning" }; createNote(a, "templates/project.md"); a.tpick = null; } },
+      { id: "S13", group: "Config", label: "Date format with subfolders", caption: "[daily] format = \"YYYY/MM/YYYY-MM-DD\" makes :Today create daily/2026/10/2026-10-03.md (folders created as needed).", refs: "REQ6@R2 (configurable folder, format, template; / creates subfolders), REQ3@R2 (config.toml)", apply: (a) => { a.subfolders = true; openDaily(a, NOW, ":Today"); a.showConfig = true; } },
+      { id: "S14", group: "Responsive", label: "Calendar at 80×24", caption: "The calendar is a fixed 36-column float, so it fits narrow terminals unchanged.", refs: "UI context (80×24)", apply: (a) => { a.cols = 80; a.rows = 24; a.cal = { sel: new Date(2026, 9, 3) }; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

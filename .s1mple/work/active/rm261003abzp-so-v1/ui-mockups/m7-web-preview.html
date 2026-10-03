@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M7 Web preview</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<style>
+  /* browser frame (mockup chrome, not part of the product) */
+  .stage > .caption { margin: 0 0 14px; }
+  .window:has(.browser) { display: block; max-width: 100%; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  .browser { max-width: 100%; border: 1px solid var(--page-border); border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.35); container-type: inline-size; outline: none; }
+  .bchrome { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #e8e8ea; border-bottom: 1px solid #d0d0d4; font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #333; }
+  .bchrome .dots span { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; }
+  .bchrome .url { flex: 1; background: #fff; border-radius: 6px; padding: 4px 10px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bchrome .url b { color: #111; font-weight: 500; }
+
+  /* ---------- the product page (served by :Preview) ---------- */
+  .pv { --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0; --soft: #f6f8fa; --accent: #0969da; --tag: #8250df; --hl: #fff8c5; --code: #eff1f3; --bad: #cf222e;
+        --c-note: #0969da; --c-tip: #1a7f37; --c-danger: #cf222e; --c-warn: #9a6700;
+        background: var(--bg); color: var(--fg); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; min-height: 640px; }
+  .pv.dark { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #3d444d; --soft: #151b23; --accent: #4493f8; --tag: #ab7df8; --hl: #6b5a0d; --code: #262c36; --bad: #f85149;
+             --c-note: #4493f8; --c-tip: #3fb950; --c-danger: #f85149; --c-warn: #d29922; }
+  .pv-top { position: sticky; top: 0; display: flex; align-items: center; gap: 10px; padding: 10px 28px; border-bottom: 1px solid var(--border); background: var(--bg); font-size: 13px; color: var(--muted); z-index: 2; }
+  .pv-top .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pv-top .sp { flex: 1; }
+  .live { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); white-space: nowrap; }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: #1a7f37; display: inline-block; }
+  .live.reconnecting i { background: #d29922; animation: pulse 1s infinite; }
+  .live.stopped i, .live.offline i { background: #8c959f; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .themebtn { border: 1px solid var(--border); background: var(--soft); color: var(--fg); border-radius: 6px; padding: 2px 8px; font: inherit; cursor: pointer; }
+  .banner { margin: 0; padding: 10px 28px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .banner.warn { background: color-mix(in srgb, var(--c-warn) 14%, var(--bg)); }
+  .banner.info { background: color-mix(in srgb, var(--c-note) 12%, var(--bg)); }
+  .banner.stop { background: var(--soft); color: var(--muted); }
+  .pv-body { max-width: 760px; margin: 0 auto; padding: 24px 28px 64px; }
+  .pv h1 { font-size: 2em; margin: .2em 0 .5em; padding-bottom: .25em; border-bottom: 1px solid var(--border); line-height: 1.25; }
+  .pv h2 { font-size: 1.45em; margin: 1.4em 0 .6em; padding-bottom: .2em; border-bottom: 1px solid var(--border); line-height: 1.25; }
+  .pv p { margin: 0 0 1em; }
+  .pv a { color: var(--accent); text-decoration: none; }
+  .pv a:hover { text-decoration: underline; }
+  .pv a.wl { cursor: pointer; }
+  .pv a.wl.bad { color: var(--bad); text-decoration: underline dotted; }
+  .pv mark { background: var(--hl); color: inherit; padding: 0 2px; border-radius: 2px; }
+  .pv code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .86em; background: var(--code); padding: .15em .35em; border-radius: 5px; }
+  .pv .tag { color: var(--tag); background: color-mix(in srgb, var(--tag) 12%, transparent); padding: 0 .4em; border-radius: 999px; font-size: .9em; }
+  .pv sup a { font-size: .75em; }
+  .props { border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; margin-bottom: 18px; font-size: 14px; background: var(--soft); }
+  .props summary { color: var(--muted); cursor: pointer; }
+  .props table { border-collapse: collapse; margin-top: 6px; }
+  .props td { padding: 2px 16px 2px 0; vertical-align: top; }
+  .props td:first-child { color: var(--muted); }
+  .pv ul, .pv ol { padding-left: 1.6em; margin: 0 0 1em; }
+  .pv li.task { list-style: none; margin-left: -1.4em; }
+  .pv li.task input { margin-right: .5em; vertical-align: middle; }
+  .pv li.task.done span { color: var(--muted); text-decoration: line-through; }
+  .pv blockquote { margin: 0 0 1em; padding: 0 1em; color: var(--muted); border-left: .25em solid var(--border); }
+  .callout { border-left: 4px solid var(--cc); background: color-mix(in srgb, var(--cc) 9%, var(--bg)); border-radius: 6px; padding: 10px 14px; margin: 0 0 1em; }
+  .callout > summary, .callout .ct { font-weight: 600; color: var(--cc); cursor: default; list-style: none; }
+  .callout > summary { cursor: pointer; }
+  .callout > summary::before { content: "▸ "; }
+  .callout[open] > summary::before { content: "▾ "; }
+  .callout p { margin: 6px 0 0; }
+  .callout.note { --cc: var(--c-note); } .callout.tip { --cc: var(--c-tip); } .callout.danger { --cc: var(--c-danger); }
+  .pv table.md { border-collapse: collapse; margin: 0 0 1em; display: block; overflow-x: auto; }
+  .pv table.md th, .pv table.md td { border: 1px solid var(--border); padding: 6px 13px; }
+  .pv table.md th { background: var(--soft); text-align: left; }
+  .pv table.md tr:nth-child(2n) td { background: var(--soft); }
+  .pv pre { background: var(--code); padding: 14px 16px; border-radius: 8px; overflow-x: auto; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0 0 1em; }
+  .pv pre code { background: none; padding: 0; font-size: inherit; }
+  .k { color: #cf222e; } .s { color: #0a3069; } .f { color: #8250df; } .c { color: #6e7781; font-style: italic; } .ty { color: #953800; }
+  .dark .k { color: #ff7b72; } .dark .s { color: #a5d6ff; } .dark .f { color: #d2a8ff; } .dark .c { color: #8b949e; } .dark .ty { color: #ffa657; }
+  .embed { border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 14px; margin: 0 0 1em; }
+  .embed .eh { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .pv figure { margin: 0 0 1em; }
+  .pv figure img { max-width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; }
+  .pv figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .math-block { text-align: center; margin: 0 0 1em; font-size: 1.25em; overflow-x: auto; }
+  .mermaid-svg { width: 100%; max-width: 640px; display: block; margin: 0 auto 1em; }
+  .mermaid-svg rect { fill: var(--soft); stroke: var(--accent); }
+  .mermaid-svg text { fill: var(--fg); font: 14px -apple-system, sans-serif; }
+  .mermaid-svg path, .mermaid-svg line { stroke: var(--muted); fill: none; }
+  .mermaid-svg .lbl { fill: var(--muted); font-size: 12px; }
+  .footnotes { border-top: 1px solid var(--border); margin-top: 2em; padding-top: .5em; font-size: 13px; color: var(--muted); }
+  .flash { animation: flashbg 1.6s ease-out; }
+  @keyframes flashbg { from { background: var(--hl); } to { background: transparent; } }
+  .back { font-size: 13px; margin-bottom: 8px; }
+  .toastpv { position: sticky; bottom: 12px; margin: 0 auto; width: max-content; max-width: 90%; background: var(--fg); color: var(--bg); font-size: 13px; padding: 6px 12px; border-radius: 6px; }
+  @container (max-width: 520px) {
+    .pv { font-size: 15px; }
+    .pv-top { padding: 8px 14px; flex-wrap: wrap; }
+    .pv-top .path { order: 3; flex-basis: 100%; }
+    .pv-body { padding: 16px 14px 48px; }
+    .banner { padding: 10px 14px; }
+    .pv h1 { font-size: 1.6em; }
+  }
+</style>
+<script src="shared/term.js"></script>
+<script src="shared/content.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  const M = Mock, esc = M.esc;
+  const PORT = 41733;
+  const wl = (target, label, bad) => `<a class="wl${bad ? " bad" : ""}" data-click="nav:${esc(target)}" title="${bad ? "Not created yet" : esc(target)}">${esc(label || target)}</a>`;
+
+  const MERMAID = `<svg class="mermaid-svg" viewBox="0 0 640 170" role="img" aria-label="Flowchart: Capture to Triage to Plan to Ship; Triage to Archive labelled someday">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10" style="fill:currentColor;stroke:none"/></marker></defs>
+    <g style="color:var(--muted)">
+      <rect x="10" y="20" width="110" height="44" rx="8"/><text x="65" y="47" text-anchor="middle">Capture</text>
+      <rect x="175" y="20" width="110" height="44" rx="8"/><text x="230" y="47" text-anchor="middle">Triage</text>
+      <rect x="340" y="20" width="110" height="44" rx="8"/><text x="395" y="47" text-anchor="middle">Plan</text>
+      <rect x="505" y="20" width="110" height="44" rx="8"/><text x="560" y="47" text-anchor="middle">Ship</text>
+      <rect x="175" y="112" width="110" height="44" rx="8"/><text x="230" y="139" text-anchor="middle">Archive</text>
+      <line x1="120" y1="42" x2="173" y2="42" marker-end="url(#ar)"/><line x1="285" y1="42" x2="338" y2="42" marker-end="url(#ar)"/><line x1="450" y1="42" x2="503" y2="42" marker-end="url(#ar)"/>
+      <line x1="230" y1="64" x2="230" y2="110" marker-end="url(#ar)"/><text class="lbl" x="238" y="92">someday</text>
+    </g></svg>`;
+  const MATH_INLINE = `<math><mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup></math>`;
+  const MATH_BLOCK = `<math display="block"><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>x</mi><mi>i</mi></msub><mo>≤</mo><mfrac><mi>a</mi><mi>b</mi></mfrac></mrow></math>`;
+
+  function tour(app) {
+    const h1 = app.edited ? "Markdown tour — updated" : "Markdown tour";
+    return `
+      <details class="props"><summary>Properties · 4</summary><table>
+        <tr><td>title</td><td>Markdown tour</td></tr><tr><td>tags</td><td><span class="tag">#reference</span> <span class="tag">#so</span></td></tr>
+        <tr><td>created</td><td>2026-10-01</td></tr><tr><td>aliases</td><td>tour, syntax</td></tr></table></details>
+      <h1 id="h-tour" class="${app.edited ? "flash" : ""}">${esc(h1)}</h1>
+      <p>Text can be <strong>bold</strong>, <em>italic</em>, <del>struck</del>, <mark>highlighted</mark> or <code>inline code</code>.
+      Links show their text: <a href="#" onclick="return false">OpenTUI docs</a> and ${wl("so-roadmap", "the roadmap")}.
+      Tags like <span class="tag">#reference</span> and <span class="tag">#so/ui</span> are coloured. A footnote<sup><a href="#fn1">1</a></sup> stays small.</p>
+      ${app.edited ? '<p class="flash">Live edits arrive within 300 ms — this paragraph was just typed in the terminal.</p>' : ""}
+      <h2>Lists and tasks</h2>
+      <ul><li>Plain bullet<ul><li>Nested bullet</li></ul></li></ul>
+      <ol><li>First step</li><li>Second step</li></ol>
+      <ul><li class="task"><input type="checkbox" disabled><span>Toggle me with Enter</span></li><li class="task done"><input type="checkbox" checked disabled><span>Already done</span></li></ul>
+      <h2>Quotes and callouts</h2>
+      <blockquote><p>Simplicity is prerequisite for reliability. — Dijkstra</p></blockquote>
+      <div class="callout note"><div class="ct">ⓘ Reveal rule</div><p>Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.</p></div>
+      <details class="callout tip"><summary>Folded tip (za to open)</summary><p>Callouts with a minus sign start folded.</p></details>
+      <div class="callout danger"><div class="ct">⚠ Data safety</div><p>Saves are atomic: temp file, fsync, rename.</p></div>
+      <h2>Table</h2>
+      <table class="md"><tr><th>Key</th><th>Action</th><th style="text-align:center">Mode</th></tr>
+        <tr><td><code>gd</code></td><td>Follow link</td><td style="text-align:center">normal</td></tr>
+        <tr><td><code>Space f f</code></td><td>Find file</td><td style="text-align:center">normal</td></tr>
+        <tr><td><code>Ctrl-o</code></td><td>Jump back</td><td style="text-align:center">normal</td></tr></table>
+      <h2>Code</h2>
+      <pre><code><span class="c">// one-way data flow</span>
+<span class="k">export function</span> <span class="f">update</span>(state: <span class="ty">AppState</span>, action: <span class="ty">Action</span>) {
+  <span class="k">const</span> next = <span class="f">reduce</span>(state, action);
+  <span class="k">return</span> { state: next, effects: [] };
+}</code></pre>
+      <h2>Embeds and images</h2>
+      <div class="embed"><div class="eh">↳ ${wl("so-roadmap", "so-roadmap › Goals")}</div><ul>
+        <li>Ship the editor core by <span class="tag">#milestone/m1</span></li><li>Keep notes as plain files — no vault, no sync</li>
+        <li class="task"><input type="checkbox" disabled><span>Measure keystroke latency on the 5,000-line fixture</span></li>
+        <li class="task done"><input type="checkbox" checked disabled><span>Pick the renderer (OpenTUI)</span></li></ul></div>
+      <figure><img src="${M.md.diagramSvg()}" alt="diagram.png — architecture sketch"><figcaption>diagram.png · served from attachments/ inside the workspace</figcaption></figure>
+      <h2>Math and diagrams</h2>
+      <p>Inline math ${MATH_INLINE} renders inline.</p>
+      <div class="math-block">${MATH_BLOCK}</div>
+      ${MERMAID}
+      <div class="footnotes" id="fn1"><ol><li>Footnotes render at the bottom, dimmed.</li></ol></div>`;
+  }
+  function roadmap() {
+    return `
+      <details class="props"><summary>Properties · 5</summary><table>
+        <tr><td>title</td><td>so roadmap</td></tr><tr><td>tags</td><td><span class="tag">#project</span> <span class="tag">#so</span> <span class="tag">#terminal</span></td></tr>
+        <tr><td>status</td><td>active</td></tr><tr><td>due</td><td>2026-12-15</td></tr><tr><td>related</td><td>${wl("garden-app", "garden-app")}</td></tr></table></details>
+      <h1>so roadmap</h1>
+      <p>A <strong>fast, vim-modal</strong> Markdown editor for my notes folder. See ${wl("index", "Home")} and last week's review in ${wl("daily/2026-10-02", "2026-10-02")}.</p>
+      <h2 id="goals">Goals</h2>
+      <ul><li>Ship the editor core by <span class="tag">#milestone/m1</span></li><li>Keep notes as plain files — no vault, no sync</li>
+        <li class="task"><input type="checkbox" disabled><span>Measure keystroke latency on the 5,000-line fixture</span></li>
+        <li class="task done"><input type="checkbox" checked disabled><span>Pick the renderer (OpenTUI)</span></li></ul>
+      <h2>Open questions</h2>
+      <div class="callout danger" style="--cc:var(--c-warn)"><div class="ct">▲ Kanban type value</div><p>Confirm the <code>type</code> string from a <code>.base</code> file saved by Obsidian 1.14.</p></div>
+      <table class="md"><tr><th>Milestone</th><th>Scope</th><th>Status</th></tr><tr><td>M1</td><td>Editor + links</td><td><mark>in progress</mark></td></tr><tr><td>M2</td><td>Live preview</td><td>planned</td></tr><tr><td>M3</td><td>Bases + preview</td><td>planned</td></tr></table>
+      <h2>Notes</h2>
+      <p>Talked to ${wl("people/linh", "Linh")} about <em>block reveal</em> — tables should show their pipes while the cursor is inside. Related: ${wl("garden-app")}, ${wl("plan", "plan", true)}</p>
+      <h2>Log</h2><ul><li>10-01 scaffolded tooling and CI</li><li>10-02 boundary test green</li><li>10-03 vim motions: w b e f t done</li></ul>`;
+  }
+  function garden() {
+    return `<details class="props"><summary>Properties · 3</summary><table><tr><td>title</td><td>Garden app</td></tr><tr><td>tags</td><td><span class="tag">#project</span> <span class="tag">#side</span></td></tr><tr><td>status</td><td>paused</td></tr></table></details>
+      <h1>Garden app</h1><p>Watering schedule for the balcony. Paused until spring.</p><h2>Ideas</h2>
+      <ul><li>Moisture sensor → notify phone</li><li>Reuse the ${wl("so-roadmap", "so goals")} format for tasks</li><li>See ${wl("people/linh", "Linh")}'s notes on sensors</li></ul>`;
+  }
+  const NOTES = { "tour": { path: "tour.md", html: tour }, "so-roadmap": { path: "projects/so-roadmap.md", html: roadmap }, "garden-app": { path: "projects/garden-app.md", html: garden } };
+
+  function init() { return { note: "tour", followed: true, live: "connected", pageTheme: null, edited: false, offline: false, flashMsg: "", history: [] }; }
+  function render(app) {
+    const theme = app.pageTheme || (app.theme === "light" ? "light" : app.theme === "nocolor" ? "light" : "dark");
+    const n = NOTES[app.note];
+    const liveLabel = { connected: "Live", reconnecting: "Reconnecting…", stopped: "Stopped", offline: "Offline" }[app.live];
+    let banner = "";
+    if (app.live === "reconnecting") banner = `<p class="banner warn">Connection to so lost — retrying every 2 s. The page keeps the last version.</p>`;
+    if (app.live === "stopped") banner = `<p class="banner stop">Preview stopped with <code>:PreviewStop</code>. This page no longer updates — run <code>:Preview</code> in so to start again (new port).</p>`;
+    if (app.live === "offline") banner = `<p class="banner warn"><b>Can't reach so</b> on 127.0.0.1:${PORT}. Showing the copy rendered at 09:41 — links between notes are unavailable until so is running.</p>`;
+    if (!app.followed && app.live === "connected") banner += `<p class="banner info">Showing a linked note. The terminal is still on <b>tour.md</b> — <a data-click="follow">follow so again ↩</a></p>`;
+    const page = `<div class="pv ${theme}">
+      <div class="pv-top"><span class="live ${app.live}"><i></i>${liveLabel}</span><span class="path">${esc(n.path)}</span><span class="sp"></span>
+        <button class="themebtn" data-click="theme" title="Theme (follows the OS by default)">${theme === "dark" ? "☾ Dark" : "☀ Light"}</button></div>
+      ${banner}
+      <div class="pv-body">${app.history.length ? `<div class="back"><a data-click="back">← ${esc(NOTES[app.history[app.history.length - 1]].path)}</a></div>` : ""}${n.html(app)}</div>
+      ${app.flashMsg ? `<div class="toastpv">${app.flashMsg}</div>` : ""}
+    </div>`;
+    const url = `<b>127.0.0.1</b>:${PORT}/${n.path.split("/").map(encodeURIComponent).join("/")}`;
+    return `<div class="bchrome"><span class="dots"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></span><span class="url">🔒︎ ${url}</span></div>${page}`;
+  }
+  function navTo(app, target) {
+    if (target === "plan") { app.flashMsg = "plan.md doesn't exist yet — create it from so (gd on the link)."; clearTimeout(app._t); app._t = setTimeout(() => { app.flashMsg = ""; M.render(); }, 2600); return; }
+    if (!NOTES[target]) { app.flashMsg = `${target}.md opens here in the real preview — not included in this mockup.`; clearTimeout(app._t); app._t = setTimeout(() => { app.flashMsg = ""; M.render(); }, 2600); return; }
+    if (app.live === "offline") { app.flashMsg = "Offline — navigation needs so running."; clearTimeout(app._t); app._t = setTimeout(() => { app.flashMsg = ""; M.render(); }, 2600); return; }
+    app.history.push(app.note); app.note = target; app.followed = false;
+    document.querySelector(".browser") && (document.querySelector(".browser").scrollTop = 0);
+  }
+  function onClick(app, what) {
+    const [kind, arg] = what.split(/:(.*)/s);
+    if (kind === "nav") navTo(app, arg);
+    else if (kind === "back") { app.note = app.history.pop(); if (!app.history.length) app.followed = app.note === "tour"; }
+    else if (kind === "follow") { app.note = "tour"; app.history = []; app.followed = true; }
+    else if (kind === "theme") { const cur = app.pageTheme || (app.theme === "light" || app.theme === "nocolor" ? "light" : "dark"); app.pageTheme = cur === "dark" ? "light" : "dark"; }
+  }
+  function simulateEdit(app) {
+    app.edited = false;
+    setTimeout(() => { const a = M.app(); if (a.stateId !== "S6") return; a.edited = true; a.flashMsg = "Updated from so · 112 ms after the keystroke"; M.render(); setTimeout(() => { a.flashMsg = ""; M.render(); }, 2400); }, 900);
+  }
+
+  M.create({
+    id: "RM261003ABZP-M7", title: "M7 · Web preview", path: "m7-web-preview.html", frame: "browser",
+    subtitle: "The read-only page :Preview serves on 127.0.0.1: full-fidelity render of the current note (images, math, diagrams), live updates, wikilink navigation, connection states, light/dark, phone width.",
+    init, render, onClick,
+    onKey: () => false, leaderAllowed: () => false,
+    keys: [["click", "wikilinks navigate the preview"], ["☾ / ☀", "page theme toggle (defaults to OS)"], [":Preview", "(in so) start, open browser"], [":PreviewStop", "(in so) stop the server"]],
+    notes: "Math is drawn with browser MathML and the diagram with inline SVG so this mockup stays offline; the product uses KaTeX and Mermaid (REQ8@R2). There are deliberately no editing controls — checkboxes are disabled.",
+    states: [
+      { id: "S1", group: "Page", label: "Live — tour note", caption: "The page mirrors the note open in so. Green Live means the event stream is connected; scroll to see callouts, table, code, embed, image, math and the Mermaid diagram.", refs: "REQ8@R2 (renders the same syntax with real images, math, diagrams; read-only), DES13@R1", apply: () => {} },
+      { id: "S2", group: "Page", label: "Followed a note switch", caption: "Switching notes in the terminal (e.g. :e projects/so-roadmap.md) swaps the page within 300 ms; the URL path follows.", refs: "REQ8@R2 (page follows note switches)", apply: (a) => { a.note = "so-roadmap"; } },
+      { id: "S3", group: "Page", label: "Clicked a wikilink", caption: "Clicking 'the roadmap' navigated the preview only; a banner offers to follow the terminal again. Unresolved links (plan) are red and explain how to create them.", refs: "REQ8@R2 (wikilinks navigate the preview), REQ4@R2", apply: (a) => { navTo(a, "so-roadmap"); } },
+      { id: "S4", group: "Page", label: "Dark theme", caption: "The page follows the OS colour scheme; the toggle overrides it for this tab.", refs: "UI context (light/dark)", apply: (a) => { a.pageTheme = "dark"; } },
+      { id: "S5", group: "Page", label: "Light theme", caption: "Light variant with system fonts and GitHub-like Markdown styling.", refs: "UI context (light/dark)", apply: (a) => { a.pageTheme = "light"; } },
+      { id: "S6", group: "Live updates", label: "Incoming edit (auto-plays)", caption: "About a second after this state opens, an edit typed in so arrives: the changed heading and paragraph flash and a toast reports the latency.", refs: "REQ8@R2 (updates within 300 ms of an edit), REQ9@R2", apply: (a) => simulateEdit(a) },
+      { id: "S7", group: "Connection", label: "Reconnecting", caption: "If the event stream drops (so busy or restarting), the badge turns amber and the page keeps the last version while it retries.", refs: "DES13@R1 (SSE)", apply: (a) => { a.live = "reconnecting"; } },
+      { id: "S8", group: "Connection", label: "Stopped (:PreviewStop)", caption: ":PreviewStop closed the server; the page says so and stops updating instead of failing silently.", refs: "REQ8@R2 (:PreviewStop stops it)", apply: (a) => { a.live = "stopped"; } },
+      { id: "S9", group: "Connection", label: "Offline fallback", caption: "Reloading after so exited shows the last rendered copy (kept by the browser) with a clear notice; navigation is disabled.", refs: "DES13@R1", apply: (a) => { a.live = "offline"; } },
+      { id: "S10", group: "Responsive", label: "Phone width 375 px", caption: "At 375 px the header wraps, margins shrink and wide tables/code scroll horizontally inside their box.", refs: "UI context (responsive to 375 px)", apply: (a) => { a.vw = 375; } },
+    ],
+  });
+})();
+</script>
+</body>
+</html>
