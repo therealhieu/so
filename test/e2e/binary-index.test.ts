@@ -17,6 +17,12 @@ beforeAll(async () => {
   });
   if (build.exitCode !== 0)
     throw new Error(`bun run build failed: ${build.stderr.toString()}`);
+  // The first launch of a freshly written binary waits for the OS to assess
+  // it (about 0.75 s on macOS, more on a busy host). Pay that here, inside the
+  // setup budget, so the first-frame wait below times only the app.
+  const warm = Bun.spawnSync([BINARY, "--version"], { stdout: "pipe" });
+  if (warm.exitCode !== 0)
+    throw new Error(`dist/so --version exited ${warm.exitCode}`);
   root = await mkdtemp(join(tmpdir(), "so-bin-"));
   for (let i = 1; i <= 50; i++)
     await writeFile(
