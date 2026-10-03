@@ -20,7 +20,7 @@
 - [x] Deferred decisions are outside the current-requirements ledger.
 - [x] `Unresolved Items` is `None`.
 
-**Approval evidence:** The user asked for a self-driven discussion on 2026-10-03: "self drive /s1mple-discuss about this DI - follow the requirementzs - choose options/designs/options that are stable, simple, easy to maintain and extend with industry compliance". Under that delegation the agent aligned the overview (T1–T5) and decided each requirement below, choosing the recommended option each time. The agent also chose to perform research and accepted every reconciliation outcome in section 6.
+**Approval evidence:** The user decided on 2026-10-03, mid-discussion, that "CI should only run in PR" (W261003HEGE-REQ4@R3). Earlier, the user asked for a self-driven discussion on 2026-10-03: "self drive /s1mple-discuss about this DI - follow the requirementzs - choose options/designs/options that are stable, simple, easy to maintain and extend with industry compliance". Under that delegation the agent aligned the overview (T1–T5) and decided each requirement below, choosing the recommended option each time. The agent also chose to perform research and accepted every reconciliation outcome in section 6.
 
 # Table of Contents
 
@@ -32,7 +32,7 @@
    - [W261003HEGE-REQ1@R2: Inherited DI1 obligations](#w261003hege-req1r2-inherited-di1-obligations)
    - [W261003HEGE-REQ2@R2: Exact toolchain and dependency pins](#w261003hege-req2r2-exact-toolchain-and-dependency-pins)
    - [W261003HEGE-REQ3@R1: Recorded Neovim expectations](#w261003hege-req3r1-recorded-neovim-expectations)
-   - [W261003HEGE-REQ4@R2: Test layers, platforms, and PTY tooling](#w261003hege-req4r2-test-layers-platforms-and-pty-tooling)
+   - [W261003HEGE-REQ4@R3: Test layers, platforms, and PTY tooling](#w261003hege-req4r3-test-layers-platforms-and-pty-tooling)
    - [W261003HEGE-REQ5@R1: Quit and close with unsaved buffers](#w261003hege-req5r1-quit-and-close-with-unsaved-buffers)
    - [W261003HEGE-REQ6@R1: Open file deleted or moved outside so](#w261003hege-req6r1-open-file-deleted-or-moved-outside-so)
    - [W261003HEGE-REQ7@R2: System clipboard provider chain](#w261003hege-req7r2-system-clipboard-provider-chain)
@@ -102,11 +102,11 @@ DI1 produces gate G1 for DI2 with every contract at its parent shape.
 - **Assigned requirement coverage:**
   - RM261003ABZP-REQ1@R3 → W261003HEGE-REQ1@R2 (inherited), W261003HEGE-REQ5@R1, W261003HEGE-REQ6@R1, W261003HEGE-REQ8@R2, W261003HEGE-REQ9@R1, W261003HEGE-REQ10@R2, W261003HEGE-REQ11@R2.
   - RM261003ABZP-REQ2@R2 → W261003HEGE-REQ1@R2 (inherited), W261003HEGE-REQ3@R1, W261003HEGE-REQ5@R1 (`:q`, `:q!`, `:bd`), W261003HEGE-REQ7@R2 (`"+`).
-  - RM261003ABZP-REQ9@R2 (harness and gate mechanism only) → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R2.
-  - RM261003ABZP-REQ10@R2 → W261003HEGE-REQ1@R2, W261003HEGE-REQ2@R2, W261003HEGE-REQ4@R2, W261003HEGE-REQ12@R1 (strengthens the DES15 smoke step).
-  - RM261003ABZP-REQ11@R3 → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R2 (restore proof), W261003HEGE-REQ11@R2 (file-type registration).
+  - RM261003ABZP-REQ9@R2 (harness and gate mechanism only) → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R3.
+  - RM261003ABZP-REQ10@R2 → W261003HEGE-REQ1@R2, W261003HEGE-REQ2@R2, W261003HEGE-REQ4@R3, W261003HEGE-REQ12@R1 (strengthens the DES15 smoke step).
+  - RM261003ABZP-REQ11@R3 → W261003HEGE-REQ1@R2, W261003HEGE-REQ4@R3 (restore proof), W261003HEGE-REQ11@R2 (file-type registration).
   - UI obligations (M1@R1, M4@R1, AD4; UREQ1@R2, UREQ2@R1, UREQ3@R2 non-Markdown part, UREQ7@R2, UREQ11@R1; UDES1@R2, UDES2@R1, UDES3@R2 non-Markdown part, UDES7@R2, UDES11@R1; US1@R2, US5@R2, US9@R1; UV1@R2, UV2@R1, UV6@R2, UV10@R1) stay bound through W261003HEGE-REQ1@R2 and are not redefined here.
-- **Baseline and due-gate assessment:** On 2026-10-03 the current index and phase file match the accepted binding (PH1@R2, DI1@R2, the REQ/DES/S/V and UI revisions above); DI1 has no prerequisite and no gate is due before requirements approval. No W other than W261003HEGE is bound to DI1. Every refinement here adds behaviour the parent leaves open and changes no shared contract (Command, KeyScope, FileType, ViewSpec, EditorKindSpec, Decoration, RenderLine, layoutText, Action/Effect DI1 variants). Two accepted-message additions — `deleted on disk` (REQ6) and the conflict-on-quit text (REQ5) — reuse the accepted message-line and toast visuals under manifest AD4, so no mockup revision is needed. After research: RF2 confirms the parent OpenTUI shape and RF8 confirms recursive `fs.watch` on both platforms, so the phase file's return-to-design condition (line 423) is not met. REQ8@R2 replaces the Finder mechanism with `NSFileManager` (same outcome: the user's Trash), and REQ12@R1 adds smoke jobs to DES15. Both are refinements, reported as pending parent synchronization in the system design.
+- **Baseline and due-gate assessment:** On 2026-10-03 the current index and phase file match the accepted binding (PH1@R2, DI1@R2, the REQ/DES/S/V and UI revisions above); DI1 has no prerequisite and no gate is due before requirements approval. No W other than W261003HEGE is bound to DI1. Every refinement here adds behaviour the parent leaves open and changes no shared contract (Command, KeyScope, FileType, ViewSpec, EditorKindSpec, Decoration, RenderLine, layoutText, Action/Effect DI1 variants). Two accepted-message additions — `deleted on disk` (REQ6) and the conflict-on-quit text (REQ5) — reuse the accepted message-line and toast visuals under manifest AD4, so no mockup revision is needed. After research: RF2 confirms the parent OpenTUI shape and RF8 confirms recursive `fs.watch` on both platforms, so the phase file's return-to-design condition (line 423) is not met. REQ4@R3 narrows the CI trigger of RM261003ABZP-REQ10@R2 ("CI on every push and pull request") to pull requests only, on the user's explicit instruction. The < 3 min budget still applies to each run. This parent change is approved by the user and pending parent synchronization. REQ8@R2 replaces the Finder mechanism with `NSFileManager` (same outcome: the user's Trash), and REQ12@R1 adds smoke jobs to DES15. Both are refinements, reported as pending parent synchronization in the system design.
 
 ## Affected Interfaces and Actors
 
@@ -270,25 +270,26 @@ bun test ─► handleKey(cases) == expected.json
 
 **Depends On:** None
 
-## W261003HEGE-REQ4@R2: Test layers, platforms, and PTY tooling
+## W261003HEGE-REQ4@R3: Test layers, platforms, and PTY tooling
 
 **Requirement ID:** `W261003HEGE-REQ4`
 
-**Revision:** `R2`
+**Revision:** `R3`
 
-**Previous Revision:** `W261003HEGE-REQ4@R1`
+**Previous Revision:** `W261003HEGE-REQ4@R2`
 
 **Replaces:** None
 
-**Research Relationship:** `RF4` evaluated `W261003HEGE-REQ4@R1` and informed this revision (the harness must answer the kitty query); `RF6` evaluated `W261003HEGE-REQ4@R1` and informed this revision (`Bun.Terminal` exists, so the add-on clause is removed; `@xterm/headless` reports only the alternate screen and mouse). `RF2`, `RF3`, `RF5`, `RF7`, and `RF8` evaluated `W261003HEGE-REQ4@R1` with no requirement impact.
+**Research Relationship:** `RF4` and `RF6` evaluated `W261003HEGE-REQ4@R1` and informed `W261003HEGE-REQ4@R2`, whose test content this revision keeps; this revision's trigger change is user-driven, not research-informed.
 
-**Revision Summary:** V17 now uses `Bun.Terminal` unconditionally. Its harness answers OpenTUI's kitty-keyboard query, so the kitty assertion is exercised. The emulator-versus-raw-stream split is named for each mode.
+**Revision Summary:** The user decided on 2026-10-03 that "CI should only run in PR" after a note that macOS runner minutes are expensive for this private repository. The CI workflow now triggers only on pull requests (no push trigger), and a newer push to the same PR cancels the in-progress run. Test content, platforms, and budgets are unchanged from R2.
 
 **Question:** Which test layers run where, and how does V17 observe terminal state?
 
 **Answer:**
 
 - **Local check:** `bun run check` runs format, lint, typecheck, dead-code, the boundary test, and unit tests.
+- **CI trigger:** CI (`check` and `test`) runs only on `pull_request` events, with no push trigger. Concurrency is keyed by the PR, and a newer push cancels the in-progress run. Release workflows are not CI and keep their own triggers.
 - **CI `test` job:** runs component, integration, and e2e tests on both `ubuntu` and `macos` runners, so V1's recursive `fs.watch` and V17's restore are proven on both platforms.
 - **Benchmarks:** run only on one pinned Linux runner image, with the median-of-5, 2× gate.
 - **V17 harness:**
@@ -297,21 +298,23 @@ bun test ─► handleKey(cases) == expected.json
   - Reads the alternate screen and mouse tracking state from `@xterm/headless`.
   - Takes cursor visibility (`?25`) and kitty push/pop (`CSI > … u` / `CSI < u`) from the last matching sequence in the output.
 
-**Rationale:** The parent requires `fs.watch` confirmation and restore on macOS and Linux, and only running both runners proves it. Bench timing needs a fixed machine type. `Bun.Terminal` is built in since Bun 1.3.5 (RF6), so no native add-on is needed. A harness that never answers the kitty query would see kitty "off" without ever turning it on (RF4), so it must answer the query. `@xterm/headless` has no public field for cursor visibility or kitty flags (RF6), which is why those two come from the output stream. Rejected: Linux-only CI, which leaves macOS `fs.watch` unproven, and running benchmarks on both platforms, which is noisier and slower.
+**Rationale:** Running CI only on PRs follows the user's instruction and keeps macOS minutes, billed at a multiple of Linux minutes on private repositories, to the reviews that need them. Every change still reaches `main` through a PR, so every merged change has passed CI. The parent requires `fs.watch` confirmation and restore on macOS and Linux, and only running both runners proves it. Bench timing needs a fixed machine type. `Bun.Terminal` is built in since Bun 1.3.5 (RF6), so no native add-on is needed. A harness that never answers the kitty query would see kitty "off" without ever turning it on (RF4), so it must answer the query. `@xterm/headless` has no public field for cursor visibility or kitty flags (RF6), which is why those two come from the output stream. Rejected: Linux-only CI, which leaves macOS `fs.watch` unproven, and running benchmarks on both platforms, which is noisier and slower.
 
 ```text
-CI:  check (ubuntu) ∥ test[ubuntu, macos] (component, integration, e2e; bench step on ubuntu only)
+CI (on: pull_request only; cancel superseded runs):
+     check (ubuntu) ∥ test[ubuntu, macos] (component, integration, e2e; bench step on ubuntu only)
 V17: Bun.spawn(so, {terminal}) ─ reply CSI ? 0 u ─► exit path ─► xterm: buffer=normal, mouse=none
                                                              └► stream: last ?25 = h, last kitty = CSI < u
 ```
 
 **Acceptance Criteria:**
 
-- [ ] V1 and V17 pass on both `ubuntu` and `macos` runners in the same CI run.
+- [ ] `.github/workflows/ci.yml` triggers only on `pull_request` and declares PR-scoped `concurrency` with `cancel-in-progress: true`; a direct push to a branch starts no CI run.
+- [ ] V1 and V17 pass on both `ubuntu` and `macos` runners in the same PR CI run.
 - [ ] Benchmarks run on a pinned Linux runner image, fail when the median of 5 runs exceeds 2× the target, and cover source-view keystroke and open on the 5,000-line fixture.
 - [ ] V17 observes a kitty push (`CSI > … u`) during the run. After `:q`, `SIGTERM`, `SIGINT`, and an injected uncaught exception it asserts the normal screen buffer, mouse tracking `none`, a final `?25h`, and a final `CSI < u`.
 - [ ] With `NO_COLOR=1`, V17 asserts no colour SGR codes.
-- [ ] CI wall-clock time stays under 3 min, and `bun run check` under 30 s on the reference machine (V14).
+- [ ] PR CI wall-clock time stays under 3 min, and `bun run check` under 30 s on the reference machine (V14).
 
 **Depends On:** W261003HEGE-REQ2@R2
 
@@ -658,11 +661,58 @@ Rejected: prompting to overwrite (a new destructive path that the accepted promp
 | `RF13` | `W261003HEGE-REQ3@R1` | Supports: v0.11.7 tarballs exist; mode capture needs RPC (`--listen`) | Retained | `W261003HEGE-REQ3@R1` | The recorder mechanism and the 0.11.7 reference are design details within "Neovim 0.11.x" |
 | `RF14` | `W261003HEGE-REQ9@R1` | Supports `ignore` 7.x; precedence across scopes is the caller's job | Retained | `W261003HEGE-REQ9@R1` | Cross-scope `test()` precedence and a nested re-include fixture are design and verification details |
 
-Every relationship has one outcome, and no finding evaluated `None`. No `Deferred` outcome was needed. After reconciliation, `W261003HEGE-REQ1@R1` was revised to `W261003HEGE-REQ1@R2` for a design-driven reason (section 7). The `RF` rows above still record that they evaluated R1, and none of them informed R2.
+Every relationship has one outcome, and no finding evaluated `None`. No `Deferred` outcome was needed. After reconciliation, `W261003HEGE-REQ4@R2` was revised to `W261003HEGE-REQ4@R3` on the user's instruction (CI on PRs only), and `W261003HEGE-REQ1@R1` was revised to `W261003HEGE-REQ1@R2` for a design-driven reason (section 7). The `RF` rows above still record that they evaluated R1, and none of them informed R2.
 
 # 7. Historical Requirement Revisions
 
 Historical revisions are append-only, preserve their complete former content, and are inactive. System design and planning must not use them as current inputs.
+
+## W261003HEGE-REQ4@R2: Test layers, platforms, and PTY tooling
+
+**Requirement ID:** `W261003HEGE-REQ4`
+
+**Revision:** `R2`
+
+**Previous Revision:** `W261003HEGE-REQ4@R1`
+
+**Replaces:** None
+
+**Status:** Revised by `W261003HEGE-REQ4@R3`
+
+**Research Relationship:** `RF4` evaluated `W261003HEGE-REQ4@R1` and informed this revision (the harness must answer the kitty query); `RF6` evaluated `W261003HEGE-REQ4@R1` and informed this revision (`Bun.Terminal` exists, so the add-on clause is removed; `@xterm/headless` reports only the alternate screen and mouse). `RF2`, `RF3`, `RF5`, `RF7`, and `RF8` evaluated `W261003HEGE-REQ4@R1` with no requirement impact.
+
+**Revision Summary:** V17 now uses `Bun.Terminal` unconditionally. Its harness answers OpenTUI's kitty-keyboard query, so the kitty assertion is exercised. The emulator-versus-raw-stream split is named for each mode.
+
+**Question:** Which test layers run where, and how does V17 observe terminal state?
+
+**Answer:**
+
+- **Local check:** `bun run check` runs format, lint, typecheck, dead-code, the boundary test, and unit tests.
+- **CI `test` job:** runs component, integration, and e2e tests on both `ubuntu` and `macos` runners, so V1's recursive `fs.watch` and V17's restore are proven on both platforms.
+- **Benchmarks:** run only on one pinned Linux runner image, with the median-of-5, 2× gate.
+- **V17 harness:**
+  - Spawns `so` in a real pseudo-terminal with Bun's built-in `Bun.Terminal` (`Bun.spawn` `terminal` option).
+  - Answers the terminal capability query for the kitty keyboard protocol (`CSI ? u` → `CSI ? 0 u`), so `so` actually enables it.
+  - Reads the alternate screen and mouse tracking state from `@xterm/headless`.
+  - Takes cursor visibility (`?25`) and kitty push/pop (`CSI > … u` / `CSI < u`) from the last matching sequence in the output.
+
+**Rationale:** The parent requires `fs.watch` confirmation and restore on macOS and Linux, and only running both runners proves it. Bench timing needs a fixed machine type. `Bun.Terminal` is built in since Bun 1.3.5 (RF6), so no native add-on is needed. A harness that never answers the kitty query would see kitty "off" without ever turning it on (RF4), so it must answer the query. `@xterm/headless` has no public field for cursor visibility or kitty flags (RF6), which is why those two come from the output stream. Rejected: Linux-only CI, which leaves macOS `fs.watch` unproven, and running benchmarks on both platforms, which is noisier and slower.
+
+```text
+CI:  check (ubuntu) ∥ test[ubuntu, macos] (component, integration, e2e; bench step on ubuntu only)
+V17: Bun.spawn(so, {terminal}) ─ reply CSI ? 0 u ─► exit path ─► xterm: buffer=normal, mouse=none
+                                                             └► stream: last ?25 = h, last kitty = CSI < u
+```
+
+**Acceptance Criteria:**
+
+- [ ] V1 and V17 pass on both `ubuntu` and `macos` runners in the same CI run.
+- [ ] Benchmarks run on a pinned Linux runner image, fail when the median of 5 runs exceeds 2× the target, and cover source-view keystroke and open on the 5,000-line fixture.
+- [ ] V17 observes a kitty push (`CSI > … u`) during the run. After `:q`, `SIGTERM`, `SIGINT`, and an injected uncaught exception it asserts the normal screen buffer, mouse tracking `none`, a final `?25h`, and a final `CSI < u`.
+- [ ] With `NO_COLOR=1`, V17 asserts no colour SGR codes.
+- [ ] CI wall-clock time stays under 3 min, and `bun run check` under 30 s on the reference machine (V14).
+
+**Depends On:** W261003HEGE-REQ2@R2
 
 ## W261003HEGE-REQ1@R1: Inherited DI1 obligations
 
