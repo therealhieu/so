@@ -140,6 +140,8 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   explorerTitle: ["fg-muted", "bg-dark", BOLD, BOLD],
   explorerDir: ["h1", "bg-dark", 0, 0],
   explorerDirty: ["warn", "bg-dark", 0, 0],
+  explorerWarn: ["warn", "bg-dark", 0, 0],
+  explorerError: ["error", "bg-dark", BOLD, BOLD],
   treeSel: ["fg", "bg-hl", 0, UNDERLINE],
   treeSelFocus: ["fg", "bg-sel", 0, INVERSE],
   treeField: ["fg", "bg-sel", UNDERLINE, INVERSE | UNDERLINE],

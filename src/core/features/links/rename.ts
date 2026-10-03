@@ -124,3 +124,36 @@ export function renameImpact(plan: readonly FileEdit[]): {
     files: plan.length,
   };
 }
+
+/**
+ * `text` with `edits` applied from last to first, or `null` when any span no
+ * longer holds its expected text. Lines may end in "\r"; spans never cover it.
+ */
+export function applySpanEdits(
+  text: string,
+  edits: readonly SpanEdit[],
+): string | null {
+  const starts = [0];
+  for (let i = text.indexOf("\n"); i >= 0; i = text.indexOf("\n", i + 1))
+    starts.push(i + 1);
+  const offset = (line: number, col: number) => {
+    const start = starts[line];
+    return start === undefined ? -1 : start + col;
+  };
+  const spans = edits
+    .map((e) => ({
+      from: offset(e.range.start.line, e.range.start.col),
+      to: offset(e.range.end.line, e.range.end.col),
+      e,
+    }))
+    .sort((a, b) => b.from - a.from);
+  let out = text;
+  let limit = text.length;
+  for (const { from, to, e } of spans) {
+    if (from < 0 || to < from || to > limit) return null;
+    if (text.slice(from, to) !== e.expected) return null;
+    out = out.slice(0, from) + e.text + out.slice(to);
+    limit = from;
+  }
+  return out;
+}

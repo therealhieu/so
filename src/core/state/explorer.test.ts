@@ -67,6 +67,7 @@ test("a rename during a write, after typing during it, autosaves the newest text
     splitKeys(seq).reduce((st, key) => act(st, { type: "key", key, now }), s);
 
   let s = openBuffer(fresh(), "a.md", "hello");
+  s = { ...s, index: { ...s.index, status: "ready" } };
   s = act(s, {
     type: "dirListed",
     dir: "",

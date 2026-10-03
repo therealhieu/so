@@ -284,14 +284,18 @@ test("conflict keys keep, take, or diff", () => {
 });
 
 test("explorer prompts create, rename, move, and delete", () => {
-  let s: AppState = update(fresh(), {
-    type: "dirListed",
-    dir: "",
-    entries: [
-      { name: "notes", kind: "dir" },
-      { name: "a.md", kind: "file" },
-    ],
-  }).state;
+  const indexed = fresh();
+  let s: AppState = update(
+    { ...indexed, index: { ...indexed.index, status: "ready" } },
+    {
+      type: "dirListed",
+      dir: "",
+      entries: [
+        { name: "notes", kind: "dir" },
+        { name: "a.md", kind: "file" },
+      ],
+    },
+  ).state;
   const created = keys(s, "adraft<CR>");
   expect(created.effects).toEqual([
     {

@@ -1,5 +1,7 @@
 import { join } from "node:path";
 import { parseConfig } from "../core/config/toml";
+import { applySpanEdits } from "../core/features/links/rename";
+import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
 import { readConfigText } from "../workspace/config-file";
 import {
@@ -196,6 +198,46 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           } catch (x) {
             d.logger.error("write failed", { path, reason: msg(x) });
             d.dispatch({ type: "saveFailed", path, reason: msg(x) });
+          }
+        });
+        return;
+      }
+      case "applyEdits": {
+        const before = [...unreported];
+        void serial(async () => {
+          const { batch, edit } = e;
+          const followed = follow(edit.path, before);
+          const path = followed ?? edit.path;
+          const fail = (reason: string) => {
+            d.logger.error("link edit skipped", { path, reason });
+            d.dispatch({
+              type: "editsApplied",
+              batch,
+              path,
+              ok: false,
+              reason,
+            });
+          };
+          if (followed === null) return fail("removed");
+          const cur = await readTextFile(abs(path)).catch(() => ({
+            refused: "io" as const,
+          }));
+          if ("refused" in cur) return fail(`not readable (${cur.refused})`);
+          const text = applySpanEdits(cur.text, edit.edits);
+          if (text === null) return fail("changed on disk");
+          try {
+            const stamp = await write(path, restoreFile(cur, text), cur.stamp);
+            d.ownOps.noteWrite(path, stamp);
+            d.dispatch({
+              type: "editsApplied",
+              batch,
+              path,
+              ok: true,
+              text,
+              stamp,
+            });
+          } catch (x) {
+            fail(msg(x));
           }
         });
         return;

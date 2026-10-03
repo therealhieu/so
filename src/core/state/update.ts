@@ -11,6 +11,7 @@ import { onFileChanged } from "./disk";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
+import { onEditsApplied } from "./link-edits";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
@@ -48,7 +49,7 @@ export function createUpdate(reg: Registries): Update {
         case "dirListed":
           return onDirListed(state, action);
         case "fsResult":
-          return onFsResult(state, action);
+          return onFsResult(state, action, reg);
         case "trashAvailable":
           return none(withTrash(state, action.available));
         case "timer":
@@ -69,6 +70,8 @@ export function createUpdate(reg: Registries): Update {
           return onIndexReady(state);
         case "indexFailed":
           return onIndexFailed(state, action);
+        case "editsApplied":
+          return onEditsApplied(state, action);
       }
       const unhandled: never = action;
       return unhandled;

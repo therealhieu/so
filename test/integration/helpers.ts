@@ -147,7 +147,9 @@ export async function startApp(
   };
 
   runner.run({ kind: "listDir", dir: "" });
-  index?.start(root, []);
+  // Without a worker, an empty index is ready, so renames are not refused.
+  if (index === undefined) store.dispatch({ type: "indexReady" });
+  else index.start(root, []);
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
   await settle();
 

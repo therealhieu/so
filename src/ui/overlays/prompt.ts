@@ -6,10 +6,15 @@ import {
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
-import { treeField } from "../views/explorer";
+import { impactLine, treeField } from "../views/explorer";
 import { centered, drawFrame } from "./host";
 
 type Line = { text: string; token: string };
+
+function impactLines(p: PromptState): Line[] {
+  const l = impactLine(p, { warn: "floatWarn", error: "floatError" });
+  return l === undefined ? [] : [{ text: ` ${l.text}`, token: l.token }];
+}
 
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const cells = (text: string) => [...text].length;
@@ -68,6 +73,7 @@ function layout(p: PromptState): {
       { text: ` ${p.op.from}`, token: "floatDim" },
       { text: "", token: "float" },
       field,
+      ...impactLines(p),
     ],
     field: 2,
     footer: "⏎ confirm · esc cancel",

@@ -357,18 +357,18 @@ const builtins: AppCommand[] = [
   {
     id: "explorer.create",
     title: "New file or folder",
-    run: (c) => startOp(c.state, "create"),
+    run: (c) => startOp(c, "create"),
   },
   {
     id: "explorer.rename",
     title: "Rename",
-    run: (c) => startOp(c.state, "rename"),
+    run: (c) => startOp(c, "rename"),
   },
-  { id: "explorer.move", title: "Move", run: (c) => startOp(c.state, "move") },
+  { id: "explorer.move", title: "Move", run: (c) => startOp(c, "move") },
   {
     id: "explorer.delete",
     title: "Delete",
-    run: (c) => startOp(c.state, "delete"),
+    run: (c) => startOp(c, "delete"),
   },
 ];
 

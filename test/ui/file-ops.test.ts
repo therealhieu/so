@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { summarize } from "../../src/core/features/links/summarize";
+import { scanDoc } from "../../src/core/lang/markdown/scan";
 import { fullText } from "../../src/core/state/buffers";
 import type { DirEntry, FsOp } from "../../src/core/state/types";
 import { type Mounted, mountShell, TREE } from "../support/ui";
@@ -31,6 +33,22 @@ const tree = async () =>
     .slice(2, 34)
     .map((l) => l.slice(1, 30).trimEnd())
     .filter((l) => l !== "");
+/** A finished index over `notes` (path → text); its toast is dismissed. */
+function indexed(notes: Record<string, string>) {
+  const summaries = Object.entries(notes).map(([p, t]) =>
+    summarize(p, 1, scanDoc(t)),
+  );
+  const files = Object.keys(notes);
+  m.store.dispatch({
+    type: "indexBatch",
+    summaries,
+    files,
+    done: files.length,
+    total: files.length,
+  });
+  m.store.dispatch({ type: "indexReady" });
+  m.advance(3000);
+}
 /** The hardware cursor's screen cell. */
 const cursorAt = async () => {
   await m.frame();
@@ -93,6 +111,7 @@ describe("explorer prompts", () => {
   });
 
   test("r edits the name in place; m asks for the new path", async () => {
+    indexed({ "todo.md": "" });
     select("todo.md");
     m.keys("r");
     let frame = await m.frame();
@@ -102,6 +121,7 @@ describe("explorer prompts", () => {
       "▸ scripts",
       "≡ config.yaml",
       "◇ todo.md",
+      "  No links to update",
     ]);
     expect(await cursorAt()).toEqual({ x: 10, y: 5 });
     m.keys("<BS><BS>txt");
@@ -119,6 +139,35 @@ describe("explorer prompts", () => {
     expect(frame).toContain("❯ todo.md");
     m.keys("<Esc>");
     expect(m.store.get().overlay.kind).toBe("none");
+  });
+
+  test("explorer move shows the link impact before Enter", async () => {
+    indexed({
+      "notes/ideas.md": "[[plan]] and [[plan|the plan]]\n",
+      "notes/plan.md": "# Plan\n",
+      "todo.md": "- [ ] [read](notes/plan.md)\n",
+    });
+    m.keys("l");
+    select("notes/plan.md");
+    m.keys(`m${"<BS>".repeat(13)}archive/roadmap.md`);
+    let frame = await m.frame();
+    expect(frame).toContain("❯ archive/roadmap.md");
+    expect(frame).toContain("3 links in 2 files will be updated");
+    m.keys(`${"<BS>".repeat(18)}notes/ideas.md`);
+    frame = await m.frame();
+    expect(frame).toContain("✗ notes/ideas.md already exists");
+    m.keys("<CR>");
+    expect(effectsOf("move")).toEqual([]);
+    expect(m.store.get().overlay.kind).toBe("prompt");
+  });
+
+  test("rename and move wait for the index", async () => {
+    select("todo.md");
+    m.keys("r");
+    expect(m.store.get().overlay.kind).toBe("none");
+    expect(await m.row(-1)).toContain(
+      "index not ready — try again when indexing finishes",
+    );
   });
 
   test("delete asks to move to the Trash when it is available", async () => {

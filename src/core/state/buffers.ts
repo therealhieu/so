@@ -1,11 +1,13 @@
+import type { FileEdit } from "../features/links/rename";
 import type { FileType } from "../filetypes/registry";
 import { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import { closeWindow } from "../kernel/editor/windows";
+import type { Edit } from "../kernel/text/pos";
 import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
 import { onDiskLoaded } from "./disk";
 import { chain, message, none } from "./result";
-import { autosaveNow } from "./save";
+import { autosaveNow, scheduleAutosave } from "./save";
 import type {
   Action,
   AppState,
@@ -107,6 +109,73 @@ export function saveText(b: BufferState): string {
   return (
     (b.bom ? BOM : "") + (b.eol === "\n" ? body : body.replaceAll("\n", b.eol))
   );
+}
+
+/** The bytes to write for a file read as `f` whose text became `text`: the BOM restored. */
+export const restoreFile = (f: TextFile, text: string): string =>
+  (f.bom ? BOM : "") + text;
+
+/**
+ * Apply `edit` to the open buffer at `edit.path` as one undo step, then
+ * schedule its autosave. Nothing changes (`stale`) when no buffer is open
+ * there or any span's text differs from `expected`.
+ */
+export function applyBufferEdits(
+  s: AppState,
+  edit: FileEdit,
+  now: number,
+  reg: Registries,
+): Result & { stale: boolean } {
+  const b = bufferForPath(s, edit.path);
+  const stale = { state: s, effects: [], stale: true };
+  if (b === undefined) return stale;
+  const spans = [...edit.edits].sort(
+    (x, y) =>
+      y.range.start.line - x.range.start.line ||
+      y.range.start.col - x.range.start.col,
+  );
+  let text = b.text;
+  const edits: Edit[] = [];
+  const inverses: Edit[] = [];
+  for (const span of spans) {
+    const { end } = span.range;
+    if (
+      end.line >= text.lineCount ||
+      end.col > text.line(end.line).length ||
+      text.slice(span.range) !== span.expected
+    )
+      return stale;
+    const e = { range: span.range, text: span.text };
+    const applied = text.apply(e);
+    text = applied.buffer;
+    edits.push(e);
+    inverses.push(applied.inverse);
+  }
+  if (edits.length === 0) return { state: s, effects: [], stale: false };
+  const shown = Object.values(s.windows.byId).find(
+    (w) => w.content.bufferId === b.id,
+  );
+  const cursorBefore = shown?.content.cursor ?? { line: 0, col: 0 };
+  let next = setBuffer(
+    s,
+    b.id,
+    {
+      text,
+      undo: b.undo.push({ edits, inverses, cursorBefore }),
+      dirty: text.version !== b.savedVersion,
+    },
+    reg,
+  );
+  for (const w of Object.values(next.windows.byId)) {
+    if (w.content.bufferId !== b.id) continue;
+    const line = Math.min(w.content.cursor.line, text.lineCount - 1);
+    const col = Math.min(w.content.cursor.col, text.line(line).length);
+    next = setWindow(next, {
+      ...w,
+      content: { ...w.content, cursor: { line, col } },
+    });
+  }
+  return { ...scheduleAutosave(next, b.id, now), stale: false };
 }
 
 /** Window ids in tree order. */

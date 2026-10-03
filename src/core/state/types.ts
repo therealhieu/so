@@ -1,6 +1,7 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
 import type { NoteIndex } from "../features/links/note-index";
+import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
@@ -113,6 +114,10 @@ export type PromptState = {
   title: string;
   value: string;
   op: FsOp;
+  /** Rename and move: the links the operation will update, or why it will not. */
+  impact?: string;
+  /** Why `value` cannot be submitted; Enter does nothing while it is set. */
+  invalid?: string;
 };
 
 export type Overlay =
@@ -126,6 +131,17 @@ export type IndexState = {
   done: number;
   total: number;
   ix: NoteIndex;
+  /** A rename or link-mention waiting for its file operation or its closed-file writes. */
+  rewrite?: LinkRewrite;
+};
+export type LinkRewrite = {
+  batch: number;
+  /** Rename and move: the file operation the edits wait for. */
+  op?: FsOp;
+  edits: FileEdit[];
+  pending: string[];
+  updated: string[];
+  skipped: { path: string; reason: string }[];
 };
 
 export type Toast = { id: number; level: "info" | "error"; text: string };
@@ -186,7 +202,16 @@ export type Action =
       total: number;
     }
   | { type: "indexReady" }
-  | { type: "indexFailed"; final: boolean; reason: string };
+  | { type: "indexFailed"; final: boolean; reason: string }
+  | {
+      type: "editsApplied";
+      batch: number;
+      path: string;
+      ok: boolean;
+      text?: string;
+      stamp?: Stamp;
+      reason?: string;
+    };
 
 export type Effect =
   | { kind: "read"; path: string }
@@ -198,7 +223,8 @@ export type Effect =
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
   | { kind: "exit"; code: number }
-  | { kind: "loadConfig" };
+  | { kind: "loadConfig" }
+  | { kind: "applyEdits"; batch: number; edit: FileEdit };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

@@ -100,3 +100,15 @@ export function indexAfterFileEvent(s: AppState, e: FileEvent): AppState {
   if (e.isDir || isNote(e.path) || s.index.ix.files.has(e.path)) return s;
   return withIx(s, addFiles(s.index.ix, [e.path]));
 }
+
+/** A note `so` rewrote on disk, summarized from the text it wrote. */
+export const summarizeWritten = (
+  s: AppState,
+  path: string,
+  text: string,
+  mtime: number,
+): AppState =>
+  withIx(
+    s,
+    applySummaries(s.index.ix, [summarize(path, mtime, scanDoc(text))]),
+  );
