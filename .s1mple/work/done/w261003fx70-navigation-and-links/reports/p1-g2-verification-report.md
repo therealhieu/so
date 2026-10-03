@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2` — Configuration, keymap, and display options
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`, `P1-G2-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g2-implementation-report.md`
 
 Verified range `0d17997..3ae5716` (task commits `c0c13b3`, `b7dc38c`, `c0d6895`, `02806c5`, `e23fd81`, `9549dda`, `3ae5716`; 44 files, +1834/−123). Each commit body carries its `Task:` trailer. Checks ran once at `HEAD` `5ac78dd` (the implementation report commit; no code change after `3ae5716`).
 

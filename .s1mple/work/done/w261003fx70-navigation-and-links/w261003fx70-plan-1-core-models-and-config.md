@@ -24,11 +24,11 @@ Every package is exactly pinned and imported only from its home.
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
-- System design: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
+- Plan index: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
+- System design: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
 - UI design: `Not applicable — no Work UI design; parent UI obligations are realized by DES9 in Part 2`
-- System requirements: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
+- System requirements: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
 - UI requirements: `Not applicable — parent UREQs bound through W261003FX70-REQ1@R1`
 
 ## Dependencies

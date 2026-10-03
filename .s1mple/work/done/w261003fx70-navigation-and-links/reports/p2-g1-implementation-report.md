@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-2-runtime-index-navigation-ui.md`
+- **Goal:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-2-runtime-index-navigation-ui.md`
 - **Group:** `P2-G1` — Index worker, freshness, and link-safe edits
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`, `P2-G1-T6`, `P2-G1-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -61,7 +61,7 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g1-verification-report.md` (commit `360acf4`, status `Failed`)
+- **Verification reports:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g1-verification-report.md` (commit `360acf4`, status `Failed`)
 - **Status:** `Completed`
 
 ### Finding Closure

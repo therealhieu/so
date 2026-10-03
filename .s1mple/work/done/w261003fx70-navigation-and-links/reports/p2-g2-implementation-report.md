@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-2-runtime-index-navigation-ui.md`
+- **Goal:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-2-runtime-index-navigation-ui.md`
 - **Group:** `P2-G2` — Navigation, session, discovery, and link UI
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`, `P2-G2-T5`, `P2-G2-T6`, `P2-G2-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -34,7 +34,7 @@ Written by the implementer after the initial implementation turn and before retu
 
 - **Starting commit:** `d1f8f6761d9408575b07d4eff1a6171407129b33`
 - **Final commit:** `8a358ce`
-- **Remaining group changes:** None. `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-goal.md` has an orchestrator modification that predates this group and was never staged.
+- **Remaining group changes:** None. `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-goal.md` has an orchestrator modification that predates this group and was never staged.
 
 Commits in order: `dac97f9`, `d54b648`, `78f7ae4`, `6e033f9`, `cc57d9f`, `6b53486`, `46b4384`, `e2c0ed3`, `8a358ce`.
 
@@ -86,7 +86,7 @@ Remaining issues for the verifier:
 
 All six findings of the P2-G2 verification report are fixed in seven follow-up commits on top of `3ce604a`. Every group gate passes on the final head `aec8689`. Two fixes add an optional field to a designed shape. These are recorded below as deviations for orchestrator acceptance and design synchronization.
 
-- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g2-verification-report.md` (commit `3ce604a`, status `Failed`; unchanged)
+- **Verification reports:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g2-verification-report.md` (commit `3ce604a`, status `Failed`; unchanged)
 - **Status:** `Completed`
 
 ### Finding Closure

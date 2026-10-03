@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-1-core-models-and-config.md`
+- **Goal:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-1-core-models-and-config.md`
 - **Group:** `P1-G1` — Markdown model and links core
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`, `P1-G1-T7`, `P1-G1-T8`, `P1-G1-T9`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -89,7 +89,7 @@ Written by the implementer after the initial implementation turn and before retu
 
 All three findings are fixed and committed. VER2 first came back `Blocked`, because the designed `search.backlinks` title "Backlinks" won the `back` tie. The orchestrator then approved a title change, recorded as a goal deviation for design and parent sync, and VER2 is closed with it.
 
-- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md` (status `Failed`; findings P1-G1-VER1, P1-G1-VER2, P1-G1-VER3). The report is unchanged.
+- **Verification reports:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md` (status `Failed`; findings P1-G1-VER1, P1-G1-VER2, P1-G1-VER3). The report is unchanged.
 - **Status:** `Completed`
 
 ### Baseline and Gate Evidence

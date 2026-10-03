@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G2` — Navigation, session, discovery, and link UI
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`, `P2-G2-T5`, `P2-G2-T6`, `P2-G2-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g2-implementation-report.md` (report commit `961f9c5`)
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g2-implementation-report.md` (report commit `961f9c5`)
 
 Inspected change range: `d1f8f67` → `8a358ce` (commits `dac97f9`, `d54b648`, `78f7ae4`, `6e033f9`, `cc57d9f`, `6b53486`, `46b4384`, `e2c0ed3`, `8a358ce`; 75 files, +6,075/−169).
 

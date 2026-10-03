@@ -6,13 +6,13 @@
 
 ## Sources
 
-- Plan context: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
-- System design: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
+- Plan context: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
+- System design: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
 - UI design: Not applicable — this Work has no UI design; parent UI obligations are bound through W261003FX70-REQ1@R1 and realized by system design DES9 (V42–V46)
-- System requirements: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
+- System requirements: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
 - UI requirements: Not applicable — parent UREQs are bound through W261003FX70-REQ1@R1
 - Research: Not needed — the requirements' Discussion Evidence records the local experiments
-- Discussion context: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-discuss-context.md`
+- Discussion context: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-discuss-context.md`
 - UI context: Not applicable — no Work-level UI context
 
 ## Roadmap Contract

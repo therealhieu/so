@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-1-core-models-and-config.md`
+- **Goal:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-1-core-models-and-config.md`
 - **Group:** `P1-G2` — Configuration, keymap, and display options
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`, `P1-G2-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 

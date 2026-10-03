@@ -12,12 +12,12 @@ The finalized system design is the only governing design, it agrees with the req
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline |
-| System design | `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-system-design.md` | Technical authority (`Finalized System Design`, commit `1aa1fae`) |
+| System design | `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` | Technical authority (`Finalized System Design`, commit `1aa1fae`) |
 | UI design | Not applicable — this Work has no UI design; the accepted parent UI design (`rm261003abzp-ui-design.md`) and mockups are bound through W261003FX70-REQ1@R1 and realized by system design DES9 | Visual realization reference only |
-| System requirements | `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-requirements.md` | Required system behavior (`Ready for System Design`) |
+| System requirements | `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md` | Required system behavior (`Ready for System Design`) |
 | UI requirements | Not applicable — no Work-level UI requirements; parent UREQ5@R2, UREQ6@R1, UREQ1@R2, UREQ7@R2, UREQ11@R1 are bound through REQ1@R1 | — |
 | Research | Not needed — research was skipped; local experiments are recorded in the requirements' Discussion Evidence | — |
-| Discussion context | `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-discuss-context.md` | Roadmap binding, constraints, DI1 surfaces |
+| Discussion context | `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-discuss-context.md` | Roadmap binding, constraints, DI1 surfaces |
 | UI context | Not applicable — no Work-level UI context | — |
 | Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, `ui-mockups/manifest.md` | Validate the accepted binding, assigned scope, and gates |
 | Additional project files | `.s1mple/docs/communication.md`, `.s1mple/docs/languages/typescript.md`, `package.json`, `knip.json`, `.github/workflows/{ci,release}.yml`, `scripts/{bench-gate,record-vim}.ts`, `src/core/kernel/vim/{keys,motions}.ts`, `src/ui/editors/text-view.ts`, `src/core/state/{types,commands}.ts`, `test/` tree | Confirm cited current shapes and resolve gaps |

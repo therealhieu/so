@@ -20,11 +20,11 @@ Run the Part 1 core inside the live editor.
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
-- System design: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
+- Plan index: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
+- System design: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
 - UI design: `Not applicable — no Work UI design; look and feel follows the accepted parent UI design and mockups (M1@R1, M3@R1, M4@R1, AD4) bound in the discussion context`
-- System requirements: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
+- System requirements: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
 - UI requirements: `Not applicable — parent UREQ5@R2, UREQ6@R1, UREQ1@R2, UREQ7@R2 and UREQ11@R1 are bound through W261003FX70-REQ1@R1`
 
 ## Dependencies

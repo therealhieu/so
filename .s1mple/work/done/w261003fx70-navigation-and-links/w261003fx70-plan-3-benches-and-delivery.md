@@ -23,11 +23,11 @@ Close DI2 with evidence and deliver it as one PR.
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
-- System design: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
+- Plan index: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-plan-context.md`
+- System design: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md`
 - UI design: `Not applicable — no Work UI design`
-- System requirements: `.s1mple/work/active/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
+- System requirements: `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-requirements.md`
 - UI requirements: `Not applicable — parent UREQs bound through W261003FX70-REQ1@R1`
 
 ## Dependencies
@@ -89,7 +89,7 @@ Never force-push or merge without the user's approval. Parent roadmap files are 
   - `test/repo.test.ts`
   - `src/app/main.ts` (review only unless the order differs)
   - `.s1mple/docs/project.md`
-  - `.s1mple/work/active/w261003fx70-navigation-and-links/` → `.s1mple/work/done/w261003fx70-navigation-and-links/`
+  - the work folder, moved from `.s1mple/work/active/` to `.s1mple/work/done/w261003fx70-navigation-and-links/`
 
 #### Traceability
 
@@ -347,7 +347,7 @@ Neither gate blocks this Work. The report must not claim either gate satisfied b
 - **System Design:** `REQ1 → DES10 → S5, S20 → V48, V49–V51 (CI evidence)`
 - **UI Design:** `None`
 - **Canonical Shapes:** `.s1mple/S1MPLE.md` Delivery; system design section 7, "Migration and Delivery"; plan index Roadmap Contract
-- **Files:** `.s1mple/work/active/w261003fx70-navigation-and-links/` → `.s1mple/work/done/w261003fx70-navigation-and-links/`; any `.s1mple` file that references the active path
+- **Files:** the work folder, moved from `.s1mple/work/active/` to `.s1mple/work/done/w261003fx70-navigation-and-links/`; any `.s1mple` file that references the active path
 - **Execution Approach:** `Direct verification — delivery steps`
 
 **Steps:**
@@ -370,8 +370,8 @@ Neither gate blocks this Work. The report must not claim either gate satisfied b
    **Preview:**
 
    ```text
-   git mv .s1mple/work/active/w261003fx70-navigation-and-links .s1mple/work/done/w261003fx70-navigation-and-links
-   rg -l "work/active/w261003fx70-navigation-and-links" .s1mple   → update each to work/done/…
+   git mv .s1mple/work/{active,done}/w261003fx70-navigation-and-links
+   rg -l "work/active/w261003fx70" .s1mple   → update each to work/done/…
    ```
 
    - Do not edit the parent roadmap files under `rm261003abzp-so-v1/` unless the user explicitly authorizes the parent sync.

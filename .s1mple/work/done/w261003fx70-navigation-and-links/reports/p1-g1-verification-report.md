@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1` — Markdown model and links core
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`, `P1-G1-T7`, `P1-G1-T8`, `P1-G1-T9`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p1-g1-implementation-report.md`
 
 Verified range `6986404..98ece8d` (task commits `053554d`, `f187c97`, `954d000`, `fd5160e`, `b88247e`, `9030b30`, `8f42a33`, `bcb22e2`, `98ece8d`). Checks ran once at `HEAD` `71ab312` (the implementation report commit; no code change after `98ece8d`).
 

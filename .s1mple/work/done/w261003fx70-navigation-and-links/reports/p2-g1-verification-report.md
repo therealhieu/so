@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1` — Index worker, freshness, and link-safe edits
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`, `P2-G1-T6`, `P2-G1-T7`
-- **Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p2-g1-implementation-report.md` (report commit `038729a`)
+- **Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003fx70-navigation-and-links/reports/p2-g1-implementation-report.md` (report commit `038729a`)
 - **Change range inspected:** `3b70f7f..7a79f41` (`3314e5d`, `b6d889c`, `27b8c68`, `7eac2b1`, `31b12b6`, `f768344`, `808bc7e`, `7a79f41`; 37 files)
 
 ## Status
