@@ -252,6 +252,32 @@ test("flush writes through the same queue as other file operations", async () =>
   expect(r.actions.map((a) => a.type)).toEqual(["saved"]);
 });
 
+test("a flush behind an in-flight autosave of the same file writes the newest text", async () => {
+  const s0 = await atomicWrite(join(root, "typing.md"), "v0\n");
+  const r = runner();
+  r.run({ kind: "write", path: "typing.md", text: "v1\n", expected: s0 });
+  await r.flush([
+    { kind: "write", path: "typing.md", text: "v2\n", expected: s0 },
+  ]);
+  expect(await readFile(join(root, "typing.md"), "utf8")).toBe("v2\n");
+  expect(r.actions.map((a) => a.type)).toEqual(["saved"]);
+});
+
+test("a flush still refuses a file changed on disk after so's own write", async () => {
+  const s0 = await atomicWrite(join(root, "raced.md"), "v0\n");
+  const r = runner();
+  r.run({ kind: "write", path: "raced.md", text: "v1\n", expected: s0 });
+  await waitFor(() => r.actions.length > 0);
+  await writeFile(join(root, "raced.md"), "external edit\n");
+  const flushed = r.flush([
+    { kind: "write", path: "raced.md", text: "v2\n", expected: s0 },
+  ]);
+  await expect(flushed).rejects.toThrow("conflict");
+  expect(await readFile(join(root, "raced.md"), "utf8")).toBe(
+    "external edit\n",
+  );
+});
+
 test("writes queued behind a move, a removal, or a failed rename follow its outcome", async () => {
   await mkdir(join(root, "box"), { recursive: true });
   await writeFile(join(root, "box/m.md"), "m\n");

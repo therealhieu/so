@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { Action, Effect, FsOp, TimerId } from "../core/state/types";
+import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
 import {
   atomicWrite,
   createEntry,
@@ -8,6 +8,7 @@ import {
   moveEntry,
   readTextFile,
   removeEntry,
+  sameStamp,
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { ClipboardProvider } from "../workspace/system";
@@ -74,6 +75,8 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const abs = (p: string) => join(d.root, p);
   let tail: Promise<unknown> = Promise.resolve();
   const unreported = new Set<PathOp>();
+  /** Per path, the stamp this runner's last write replaced and the one it left. */
+  const own = new Map<string, { from: Stamp; to: Stamp }>();
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
     tail = next.catch(() => {});
@@ -98,6 +101,21 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       );
     arm();
   };
+
+  /**
+   * A write whose `expected` is the version this runner itself just replaced
+   * (its `saved` not yet seen by `update`, e.g. a shutdown flush behind an
+   * autosave) expects the version that write left instead. Any other change
+   * on disk still fails with a conflict.
+   */
+  async function write(path: string, text: string, expected?: Stamp) {
+    const last = own.get(path);
+    const seen = last && sameStamp(expected, last.from) ? last.to : expected;
+    const stamp = await atomicWrite(abs(path), text, seen);
+    if (seen === undefined) own.delete(path);
+    else own.set(path, { from: seen, to: stamp });
+    return stamp;
+  }
 
   async function runFsOp(
     op: FsOp,
@@ -154,7 +172,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             return;
           }
           try {
-            const stamp = await atomicWrite(abs(path), e.text, e.expected);
+            const stamp = await write(path, e.text, e.expected);
             d.ownOps.noteWrite(path, stamp);
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
@@ -216,7 +234,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         writes.map((w) =>
           serial(async () => {
             const path = follow(w.path, before);
-            if (path !== null) await atomicWrite(abs(path), w.text, w.expected);
+            if (path !== null) await write(path, w.text, w.expected);
           }),
         ),
       ).then(() => {});
