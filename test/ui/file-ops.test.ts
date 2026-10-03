@@ -24,6 +24,19 @@ function complete(op: FsOp, root: DirEntry[]) {
   m.store.dispatch({ type: "fsResult", op, ok: true });
   m.store.dispatch({ type: "dirListed", dir: "", entries: root });
 }
+/** The explorer's entry rows, from the docked tree's columns. */
+const tree = async () =>
+  (await m.frame())
+    .split("\n")
+    .slice(2, 34)
+    .map((l) => l.slice(1, 30).trimEnd())
+    .filter((l) => l !== "");
+/** The hardware cursor's screen cell. */
+const cursorAt = async () => {
+  await m.frame();
+  const c = m.t.renderer.getCursorState();
+  return c === undefined ? undefined : { x: c.x - 1, y: c.y - 1 };
+};
 const text = () => {
   const s = m.store.get();
   const w = s.windows.byId[s.windows.active];
@@ -32,11 +45,37 @@ const text = () => {
 };
 
 describe("explorer prompts", () => {
-  test("a name ending in / creates a folder, and the tree shows it", async () => {
+  test("a opens a name field in the tree under the target folder", async () => {
     select("config.yaml");
     m.keys("a");
-    expect(await m.frame()).toContain("New file or folder");
-    m.keys("ideas/<CR>");
+    let frame = await m.frame();
+    expect(frame).not.toContain("New file or folder");
+    expect(await tree()).toEqual([
+      "▸ notes",
+      "▸ scripts",
+      "≡ config.yaml",
+      "◇",
+      "◇ todo.md",
+    ]);
+    m.keys("ide");
+    expect(await cursorAt()).toEqual({ x: 6, y: 5 });
+    m.keys("<Esc>kk");
+    expect(m.store.get().panels.explorer.cursor).toBe("notes");
+    m.keys("adraft");
+    frame = await m.frame();
+    expect(frame).not.toContain("❯");
+    expect(await tree()).toEqual([
+      "▸ notes",
+      "  ◇ draft",
+      "▸ scripts",
+      "≡ config.yaml",
+      "◇ todo.md",
+    ]);
+  });
+
+  test("a name ending in / creates a folder, and the tree shows it", async () => {
+    select("config.yaml");
+    m.keys("aideas/<CR>");
     const op = { kind: "create", from: "ideas", dir: true } as const;
     expect(effectsOf("create")).toEqual([{ kind: "create", op }]);
     complete(op, [{ name: "ideas", kind: "dir" }, ...(TREE[""] ?? [])]);
@@ -53,13 +92,21 @@ describe("explorer prompts", () => {
     ]);
   });
 
-  test("rename and move prompts show the current name and path", async () => {
+  test("r edits the name in place; m asks for the new path", async () => {
     select("todo.md");
     m.keys("r");
     let frame = await m.frame();
-    expect(frame).toContain("Rename");
-    expect(frame).toContain("❯ todo.md");
-    m.keys("<BS><BS>txt<CR>");
+    expect(frame).not.toContain("Rename");
+    expect(await tree()).toEqual([
+      "▸ notes",
+      "▸ scripts",
+      "≡ config.yaml",
+      "◇ todo.md",
+    ]);
+    expect(await cursorAt()).toEqual({ x: 10, y: 5 });
+    m.keys("<BS><BS>txt");
+    expect((await tree())[3]).toBe("◇ todo.txt");
+    m.keys("<CR>");
     expect(effectsOf("rename")).toEqual([
       {
         kind: "rename",

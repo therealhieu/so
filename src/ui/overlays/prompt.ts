@@ -6,6 +6,7 @@ import {
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
+import { treeField } from "../views/explorer";
 import { centered, drawFrame } from "./host";
 
 type Line = { text: string; token: string };
@@ -60,15 +61,11 @@ function layout(p: PromptState): {
       footer: "",
     };
   }
-  const hint =
-    p.op.kind === "create"
-      ? `in ${p.op.from === "" ? "the workspace root" : `${p.op.from}/`} · a trailing / makes a folder`
-      : p.op.from;
   return {
     title: p.title,
     border: "floatBorder",
     lines: [
-      { text: ` ${hint}`, token: "floatDim" },
+      { text: ` ${p.op.from}`, token: "floatDim" },
       { text: "", token: "float" },
       field,
     ],
@@ -79,8 +76,9 @@ function layout(p: PromptState): {
 
 /**
  * The explorer's prompts as a centred float: a `[y/N]` confirm for the
- * Trash, a name field for create, rename, and move, and the typed
- * confirmation for a permanent delete. Keys go to the core, which decides.
+ * Trash, a path field for move, and the typed confirmation for a permanent
+ * delete. Create and rename edit in the tree instead (`ExplorerView`). Keys
+ * go to the core, which decides.
  */
 export class PromptView extends Renderable {
   private s: AppState | undefined;
@@ -100,9 +98,9 @@ export class PromptView extends Renderable {
     this.s = s;
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
-    this.visible = s.overlay.kind === "prompt";
+    this.visible = s.overlay.kind === "prompt" && treeField(s) === undefined;
     this.cursorAt = undefined;
-    if (s.overlay.kind !== "prompt") return;
+    if (s.overlay.kind !== "prompt" || !this.visible) return;
     const p = s.overlay.prompt;
     const { field } = layout(p);
     if (field === undefined) return;
@@ -120,7 +118,7 @@ export class PromptView extends Renderable {
 
   protected renderSelf(buf: OptimizedBuffer): void {
     const s = this.s;
-    if (s === undefined || s.overlay.kind !== "prompt") return;
+    if (s === undefined || s.overlay.kind !== "prompt" || !this.visible) return;
     const theme = themeOf(s);
     const p = s.overlay.prompt;
     const { title, border, lines, footer } = layout(p);

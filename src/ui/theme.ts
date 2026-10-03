@@ -142,6 +142,7 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   explorerDirty: ["warn", "bg-dark", 0, 0],
   treeSel: ["fg", "bg-hl", 0, UNDERLINE],
   treeSelFocus: ["fg", "bg-sel", 0, INVERSE],
+  treeField: ["fg", "bg-sel", UNDERLINE, INVERSE | UNDERLINE],
   separator: ["border", "bg", 0, 0],
   winbar: ["fg-dim", "bg-dark", 0, DIM],
   winbarActive: ["fg", "bg-dark", BOLD, BOLD],

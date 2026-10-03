@@ -4,7 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { isNote, visiblePaths } from "../../core/state/explorer";
-import type { AppState } from "../../core/state/types";
+import type { AppState, PromptState } from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -19,12 +19,35 @@ export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const depthOf = (path: string) => path.split("/").length - 1;
 
-type Row = { path: string; depth: number; dir: boolean; open: boolean };
+/** `edit` is the name field's text on the row being created or renamed. */
+type Row = {
+  path: string;
+  depth: number;
+  dir: boolean;
+  open: boolean;
+  edit?: string;
+};
+
+/**
+ * The open create or rename prompt, which the open tree edits in place
+ * (otherwise the prompt shows as a float).
+ */
+export function treeField(s: AppState): PromptState | undefined {
+  if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
+  const p = s.overlay.prompt;
+  return p.kind === "input" &&
+    (p.op.kind === "create" || p.op.kind === "rename")
+    ? p
+    : undefined;
+}
+
+const cells = (text: string) => [...text].length;
 
 /**
  * The file tree: docked left with a `│` separator, or a rounded float over
  * the windows on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
- * files `≡`; `●` marks a file with unsaved changes.
+ * files `≡`; `●` marks a file with unsaved changes. Create and rename edit
+ * the name in the tree: a new row under the target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
@@ -52,19 +75,27 @@ export class ExplorerView extends Renderable {
     this.width = this.w;
     this.height = this.h;
     const rows = this.rows(s);
-    const at = rows.findIndex((r) => r.path === ex.cursor);
+    const at = selectedRow(rows, ex.cursor);
     const room = this.listRows();
     if (at >= 0 && at < this.first) this.first = at;
     if (at >= this.first + room) this.first = at - room + 1;
     this.first = Math.max(0, Math.min(this.first, rows.length - room));
+    const row = rows[at];
+    const box = this.inner();
+    const x = box.x + 1 + 2 * (row?.depth ?? 0);
+    const y = 1 + box.y + 1 + at - this.first;
     this.cursorAt =
-      ex.open && ex.focused && at >= 0
-        ? {
-            x: this.inner().x + 1 + 2 * (rows[at]?.depth ?? 0),
-            y: 1 + this.inner().y + 1 + at - this.first,
-            style: "block",
-          }
-        : undefined;
+      !ex.open || row === undefined
+        ? undefined
+        : row.edit !== undefined
+          ? {
+              x: Math.min(box.x + box.w - 1, x + 2 + cells(row.edit)),
+              y,
+              style: "line",
+            }
+          : ex.focused
+            ? { x, y, style: "block" }
+            : undefined;
   }
 
   cursor(): Cursor | undefined {
@@ -85,12 +116,27 @@ export class ExplorerView extends Renderable {
 
   private rows(s: AppState): Row[] {
     const ex = s.panels.explorer;
-    return visiblePaths(s).map((path) => ({
+    const rows: Row[] = visiblePaths(s).map((path) => ({
       path,
       depth: depthOf(path),
       dir: isDir(s, path),
       open: ex.expanded.includes(path),
     }));
+    const field = treeField(s);
+    if (field?.op.kind === "create") {
+      const folder = field.op.from;
+      rows.splice(rows.findIndex((r) => r.path === ex.cursor) + 1, 0, {
+        path: "",
+        depth: folder === "" ? 0 : depthOf(folder) + 1,
+        dir: false,
+        open: false,
+        edit: field.value,
+      });
+    } else if (field !== undefined) {
+      const row = rows.find((r) => r.path === field.op.from);
+      if (row !== undefined) row.edit = field.value;
+    }
+    return rows;
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
@@ -131,6 +177,7 @@ export class ExplorerView extends Renderable {
         .filter((b) => b.dirty)
         .map((b) => b.path),
     );
+    const sel = selectedRow(rows, ex.cursor);
     for (let i = 0; i < this.listRows(); i++) {
       const y = y0 + 1 + i;
       const row = rows[this.first + i];
@@ -146,7 +193,7 @@ export class ExplorerView extends Renderable {
         );
         continue;
       }
-      const selected = row.path === ex.cursor;
+      const selected = this.first + i === sel;
       const base = selected
         ? ex.focused
           ? "treeSelFocus"
@@ -156,7 +203,7 @@ export class ExplorerView extends Renderable {
         ? row.open
           ? "▾ "
           : "▸ "
-        : isNote(this.deps.fileTypes, row.path)
+        : row.path === "" || isNote(this.deps.fileTypes, row.path) // a new row shows as a note
           ? "◇ "
           : "≡ ";
       const indent = ` ${"  ".repeat(row.depth)}`;
@@ -177,10 +224,29 @@ export class ExplorerView extends Renderable {
       };
       put(indent, "explorer");
       put(icon, row.dir ? "explorerDir" : "explorerDim");
+      if (row.edit !== undefined) {
+        const room = x0 + box.w - x;
+        if (room > 0)
+          drawCells(
+            buf,
+            theme.style("treeField"),
+            x,
+            y,
+            row.edit,
+            Math.min(room, cells(row.edit)),
+          );
+        continue;
+      }
       put(basename(row.path), row.dir ? "explorerDir" : "explorer");
       if (dirty.has(row.path)) put(" ●", "explorerDirty");
     }
   }
+}
+
+/** The highlighted row: the name field while one is open, else the selection. */
+function selectedRow(rows: Row[], cursor: string): number {
+  const field = rows.findIndex((r) => r.edit !== undefined);
+  return field >= 0 ? field : rows.findIndex((r) => r.path === cursor);
 }
 
 function isDir(s: AppState, path: string): boolean {
