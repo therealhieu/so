@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ConfigSchema = z.object({
+const ConfigSchema = z.object({
   escTimeoutMs: z.number().int().min(0).default(50),
   autosave: z
     .object({
