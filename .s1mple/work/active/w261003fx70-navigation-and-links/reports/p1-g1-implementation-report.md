@@ -87,26 +87,112 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** None yet.
-- **Status:** `Not required`
+Two of the three findings are fixed and committed. VER2 is `Blocked`: the in-scope resolution (the palette ranks titles) cannot make `link.backlinks` rank first without changing an approved design decision.
+
+- **Verification reports:** `.s1mple/work/active/w261003fx70-navigation-and-links/reports/p1-g1-verification-report.md` (status `Failed`; findings P1-G1-VER1, P1-G1-VER2, P1-G1-VER3). The report is unchanged.
+- **Status:** `Blocked`
+
+### Baseline and Gate Evidence
+
+- Remediation started at `51218a5` on `feat/rm261003abzp-di2-navigation-and-links`. The group range under review was `6986404..98ece8d`, and the implementation report diff matched it: the nine task commits plus `71ab312` (report) and `51218a5` (verification report).
+- Gate G1 still holds. `c98aa19` is an ancestor of `6986404` and of `HEAD`, as the verification report records. No parent source under `.s1mple/work/active/rm261003abzp-so-v1/` was edited, and the accepted baseline was not changed.
+- The orchestrator's uncommitted edit to `w261003fx70-goal.md` was left untouched and never staged.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G1-VER1` | See "VER1 — linear scan" below. Baseline at `51218a5`: 80 KB of `[` took 5375 ms. After the fix it takes 2.5 ms, and every probed pattern grows about linearly. `bun test src/core/lang/markdown/scan.test.ts` → 8 pass. The new test "scanning a long line takes time linear in its length" fails on the `51218a5` code (timed out after 5000 ms, 20.7 s run). `bun run check` → exit 0, 483 pass, zero knip findings | `c5f9f15` (Tasks `P1-G1-T2`, `P1-G1-T3`) | `Fixed` |
+| `P1-G1-VER2` | No code change. Over the designed command set, ranking "back" on titles gives `search.backlinks "Backlinks" 104 \| link.backlinks "Toggle backlinks panel" 104`. Ranking on ids gives `jump.back 104 \| link.backlinks 104 \| search.backlinks 104`. Both tie at 104, and the fixed "shorter text first" tie-break never puts `link.backlinks` first. See "VER2 — blocker" below | No change — every in-scope option fails; evidence below | `Blocked` |
+| `P1-G1-VER3` | See "VER3 — wrapped spans" below. The verifier's probes now give scan 0 / mdast 0 for both ``a `code\n[[x]] still` b`` and `a $x\n[[m]] y$ b`. `bun test src/core/lang/markdown` passes: the new scan test and the corpus note `wrapped.md`, with `ALLOWED_DIFFERENCES` still empty. On the `51218a5` code, conformance fails with `wrapped.md: links` and `wrapped.md: tags`, and the scan test fails | `b6f7e1e` (Tasks `P1-G1-T3`, `P1-G1-T5`) | `Fixed` |
+
+#### VER1 — linear scan
+
+Each source of quadratic work now uses a forward-only lookup or a precomputed table (`src/core/lang/markdown/syntax.ts`):
+
+| Former cost | Fix |
+|---|---|
+| `parseMarkdownLink` scanned to `]` or the line end at every `[` | `linkIndex` matches brackets with one stack pass. It also builds bare-destination ends (unescaped blank or unbalanced `)`, through a backward pass keyed by paren depth), next-non-blank, and next-character tables. `parseMarkdownLink(text, i, ix = linkIndex(text))` keeps its result shape for `rename.ts` |
+| `WIKILINK_RE` / `EMBED_RE` retried from every `[[` | `wikiMatches` implements the same grammar with forward-only `finder` lookups for `]` and `\|`. The scan and the mdast transform share it through `replaceText(tree, find)`, so the grammar is still defined once |
+| `taken` walked every range on the line for each candidate | `Claims` holds the line's sorted, merged claimed columns. Each scanner queries with non-decreasing starts and one cursor. Claims are rebuilt only after a scanner adds a range |
+| `scanComments` re-ran `indexOf("<!--")` and the close search for every opener | Four monotonic `finder`s keep the original matching rules |
+
+Measured on 160 KB lines in the test, each pattern scans in a few milliseconds. The bound is 400 ms, which leaves at least 25x margin over linear and still catches quadratic growth.
+
+- **Probe** (scratchpad `lin.ts`, 20 KB → 80 KB):
+  - `[` 2.4 → 2.5 ms
+  - `[[` 0.6 → 2.3 ms
+  - `![[a|` 0.3 → 0.9 ms
+  - `[a](` 3.1 → 2.9 ms
+  - `%%` 5.6 → 4.7 ms
+  - `` `a` `` 4.1 → 7.2 ms
+  - `[[a]] ` 1.5 → 3.2 ms
+- **Typical-note cost.** A 0.83 MB mixed note takes a median 26 ms vs 22 ms at `51218a5`, about 1.17x, from the tables and per-line claims. This is measured against the `indexReady` 3000 ms target; benchmarks (V49, V51) belong to `P3-G1`.
+
+#### VER3 — wrapped spans
+
+`inlineSpans(lines)` pairs `` ` `` and `$` runs across a paragraph's lines, and math cannot open inside code. `scanBlock` collects a paragraph's lines and scans them through `scanParagraph`. That function passes each line the spans that touch it, and `scanLine(text, line, out, spans)` records each span once, at its start line, as a multi-line `excluded` range.
+
+A run of inline content ends at:
+
+- a blank line, a fence, an ATX heading, or a setext underline;
+- a quote-only line, a deeper quote, or a new list item;
+- a GFM table header or row.
+
+`excluded` already held multi-line ranges for fenced blocks, and `doc.ts` only shifts them.
+
+- **Tests:**
+  - `scan.test.ts` "code and math that wrap across a paragraph's lines hide syntax" covers a paragraph, a quote, and two list items, with exact multi-line ranges.
+  - `test/fixtures/markdown-corpus/wrapped.md` covers code, math, a double-backtick run, a quote, list items, and a table.
+
+#### VER2 — blocker
+
+The orchestrator's constraint keeps `SCORE`, the tie-break (score desc → shorter text → alphabetical), the ids, and the `back` → `link.backlinks` expectation. The resolution it proposed has the palette rank titles, with `jump.back` and `jump.forward` titled "Jump to older position" and "Jump to newer position".
+
+- **Why it fails.** The jump titles do drop out of `back`. But the design fixes `search.backlinks` with the title "Backlinks" (system design section 7, `features/links/commands.ts`). That title scores the same 104 as "Toggle backlinks panel", because `b` gets the boundary bonus at the string start and after a space, and it wins as the shorter text.
+- **Other texts.** Ranking on `id title` or `title id` puts `search.backlinks` first too. Ranking on ids puts `jump.back` first.
+- **Conclusion.** No ranked text holds under the fixed constants, tie-break, ids, and titles. The V16 test was not changed, because a test asserting the expectation would fail.
+
+Each way out changes an approved decision, so the choice belongs to the orchestrator and the user:
+
+| Option | Example | Effect |
+|---|---|---|
+| Rename the `search.backlinks` title so it is longer than 22 characters, and rank on titles | "Search backlinks of this note" | `link.backlinks` wins the tie on length. Also give the `jump.*` titles that do not match `back`. Changes the designed title |
+| Amend V16 / UV4 `back` → `link.backlinks` | Expect `back` to list `link.backlinks` among the tied top results | Changes the requirement and parent UV4 wording (parent sync) |
+| Add a palette-specific tie-break | Rank on titles, then on a command priority | Changes the documented tie-break for the palette |
+
+If the first option is chosen, P2-G2 must preserve one rule: the palette ranks command titles, and no command title other than "Toggle backlinks panel" may tie it on `back` at equal or shorter length.
+
+### Group Verification After Remediation
+
+- `bun run check` → `Passed` — exit 0 in 2.70 s; Biome, `tsc`, and knip clean (zero findings); 483 pass, 0 fail.
+- `bun test src/core/lang src/core/features src/core/kernel/text src/core/state` → `Passed` — 112 pass, 0 fail across 20 files.
+- `bun test test/boundaries.test.ts test/repo.test.ts` → `Passed` — 5 pass, 0 fail.
+- `bun install --frozen-lockfile` → `Passed` — exit 0, "Checked 110 installs across 186 packages (no changes)".
+- `bun run test:ci` → `Passed` — exit 0; 65 pass, 0 fail across 9 files; 15 snapshots.
+- Group diff self-review (`git diff 6986404..HEAD`) → `Passed`:
+  - no work-process identifiers in added code, tests, or fixtures;
+  - no `@opentui/*` import under `src/core`;
+  - no new dependency;
+  - each remediation commit passed `bun run check` before it was made. The intermediate `c5f9f15` state passed with 482 tests.
 
 ## Final Status
 
-`Completed`
+`Blocked`
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all nine tasks are committed and every group check passed.
+- **Final report status:** `Blocked`. P1-G1-VER1 and P1-G1-VER3 are fixed. P1-G1-VER2 needs a decision that changes an approved design item.
 - **Final report commit:** Returned to the orchestrator.
-- **Final commits:** `053554d`, `f187c97`, `954d000`, `fd5160e`, `b88247e`, `9030b30`, `8f42a33`, `bcb22e2`, `98ece8d`
+- **Final commits:**
+  - Initial: `053554d`, `f187c97`, `954d000`, `fd5160e`, `b88247e`, `9030b30`, `8f42a33`, `bcb22e2`, `98ece8d`.
+  - Remediation: `c5f9f15` (VER1), `b6f7e1e` (VER3).
 - **Final checks:**
-  - `bun run check` exit 0 (481 pass);
-  - unit suites 110 pass;
+  - `bun run check` exit 0 (483 pass, 2.70 s);
+  - unit suites 112 pass;
   - boundaries and pins 5 pass;
   - frozen install no changes;
   - `bun run test:ci` 65 pass.
-- **Remaining issues:** Deviation 10, the palette "back" tie risk for a later group.
+- **Remaining issues:**
+  - P1-G1-VER2. Choose one option from "VER2 — blocker".
+  - Outside the findings: the mdast-only footnote transform (`/\^\[([^\]\n]+)\]/g`) and `pointAt` stay quadratic on pathological text nodes. They run lazily per block, not in `scanBlock` or `scanDoc`, so they were left unchanged.
