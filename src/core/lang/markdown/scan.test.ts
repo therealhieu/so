@@ -142,6 +142,33 @@ test("code, math, comments, and html hide syntax", () => {
   expect(covers(2, 0)).toBe(false);
 });
 
+test("scanning a long line takes time linear in its length", () => {
+  const length = 160_000;
+  const patterns = [
+    "[",
+    "[[",
+    "![[a|",
+    "[a](",
+    "[a](<",
+    "%%",
+    "`a` ",
+    "$a$ ",
+    "` `` ",
+    "[[a]] ",
+    "^[",
+  ];
+  scanDoc("[a](b) [[c]] `d` #e");
+  for (const pattern of patterns) {
+    const line = pattern.repeat(Math.ceil(length / pattern.length));
+    const started = performance.now();
+    scanDoc(line);
+    const elapsed = performance.now() - started;
+    // Linear scans take a few milliseconds; a quadratic one takes seconds.
+    expect({ pattern, slow: elapsed > 400 }).toEqual({ pattern, slow: false });
+  }
+  expect(scanDoc("[[a]] ".repeat(20_000)).links).toHaveLength(20_000);
+});
+
 const FRONTMATTER = [
   "---",
   "tags: [a, b/c]",
