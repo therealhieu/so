@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G2 — verification`
+- **Current Position:** `P1-G2 — remediation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -268,9 +268,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [ ] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
 - [ ] Implementer completed the remediation checklist or no remediation was required.
 - [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
 - [ ] Final implementation report commit SHA recorded.
@@ -282,9 +282,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` — `Completed` (knip: G1 symbols plus plan-listed `defaults.ts`, `ex.ts` whose consumers are in Part 2 — orchestrator treats these as within the interim rule's sequencing intent; zero findings still required at P3-G1-T6)
 - Initial implementation report commit: `074f392`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
+- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Failed`: P1-G2-VER1 (Major, undo/redo cursor after `A`/`a`/`I`), P1-G2-VER2 (Minor, `layoutText` replace above viewport / multi-line inline replace), P1-G2-VER3 (Minor, E486 not produced)
+- Verification report commit: `4f078dd`
+- Remediation: assigned to a fresh `s1mple-implementer` (in progress)
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
