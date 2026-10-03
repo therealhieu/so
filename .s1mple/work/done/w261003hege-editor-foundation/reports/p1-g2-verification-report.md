@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2`
 - **Tasks:** `P1-G2-T1, P1-G2-T2, P1-G2-T3, P1-G2-T4, P1-G2-T5, P1-G2-T6`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` (commit `074f392`)
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` (commit `074f392`)
 
 Verified range: `0285acd..a17718b` on `feat/rm261003abzp-di1-editor-foundation`. The group commits are `cf6bff4`, `2ba5137`, `b1cfdc3`, `36bc56e`, `76f2814`, `ed29491`, and `a17718b`. Commits `074f392` (implementation report) and `78b814f` (orchestrator goal update) touch only `.s1mple/` and are not group work. The working tree was clean at the start of verification, and Bun is `1.4.2`.
 

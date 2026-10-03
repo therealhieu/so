@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
+- **Goal:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
 - **Group:** `P3-G1`: UI Shell, Composition Root, Lifecycle, and Delivery Verification
 - **Tasks:** `P3-G1-T1`, `P3-G1-T2`, `P3-G1-T3`, `P3-G1-T4`, `P3-G1-T5`, `P3-G1-T6`, `P3-G1-T7`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal. They are not written into this file, because that would need a self-referential follow-up commit.
 
@@ -154,7 +154,7 @@ A fresh remediator must keep these decisions:
 
 Every finding in the P3-G1 verification report is fixed in follow-up commits on top of `56b3826`. The original verification report is unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` (commit `2a3fc8d`, `Failed`)
+- **Verification reports:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` (commit `2a3fc8d`, `Failed`)
 - **Status:** `Completed`
 - **Remediation range:** `56b3826..383f232` (6 commits; 13 files, +346 / −55)
 

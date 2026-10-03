@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1, P2-G1-T2, P2-G1-T3, P2-G1-T4, P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` (commit `3525c0a`)
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` (commit `3525c0a`)
 
 Verified range: `4baa076..6d97b00` on `feat/rm261003abzp-di1-editor-foundation`. The group commits are `d4937a7`, `579fb73`, `e47b9de`, `6cc2eb0`, and `6d97b00`. Each commit body names its task and plan title. Commits `3525c0a` (implementation report) and `16935e5` (orchestrator goal update) touch only `.s1mple/` and are not group work. `HEAD` was `16935e5`, the working tree was clean, and Bun is `1.4.2`. Every changed file is inside `src/core/state/`, `src/core/config/schema.ts`, `test/support/state.ts`, or `test/vim/vim.test.ts`.
 

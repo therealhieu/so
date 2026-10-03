@@ -1015,17 +1015,17 @@ isIgnored("pkg/dist", dir=true): root.ignores("pkg/dist/") || pkgScope.ignores("
 
 ## Project Evidence
 
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:189-219` — Supports `RF1`, `RF7` by establishing REQ2's pins, frozen lockfile, and `packageManager` single source
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:221-252` — Supports `RF13` by establishing REQ3's recorder, 0.11.x guard, and offline fixture
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:254-291` — Supports `RF2`, `RF3`, `RF4`, `RF5`, `RF6`, `RF8` by establishing REQ4's test layers, built-in PTY, raw-stream assertions, and V17 criteria
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:293-339` — Supports `RF3` by establishing REQ5's signal and exception flush, restore, and exit codes, with `Ctrl-C` as a key
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:341-372` — Supports `RF8` by establishing REQ6's deleted-on-disk handling
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:374-407` — Supports `RF12` by establishing REQ7's provider order (xclip, then xsel) and OSC 52 copy-only
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:409-440` — Supports `RF11` by establishing REQ8's Linux, macOS, and fallback mechanics
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:442-475` — Supports `RF8`, `RF14` by establishing REQ9's nested `.gitignore` and symlink rules
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:477-514` — Supports `RF8`, `RF11` by establishing REQ10's rename, move, and delete behaviour
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md:516-548` — Supports `RF10` by establishing REQ11's `common` set and static mapping
-- `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-discuss-context.md:20` — Supports `RF1`, `RF13` by establishing local Bun 1.3.10 and Neovim 0.12.4
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:189-219` — Supports `RF1`, `RF7` by establishing REQ2's pins, frozen lockfile, and `packageManager` single source
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:221-252` — Supports `RF13` by establishing REQ3's recorder, 0.11.x guard, and offline fixture
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:254-291` — Supports `RF2`, `RF3`, `RF4`, `RF5`, `RF6`, `RF8` by establishing REQ4's test layers, built-in PTY, raw-stream assertions, and V17 criteria
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:293-339` — Supports `RF3` by establishing REQ5's signal and exception flush, restore, and exit codes, with `Ctrl-C` as a key
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:341-372` — Supports `RF8` by establishing REQ6's deleted-on-disk handling
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:374-407` — Supports `RF12` by establishing REQ7's provider order (xclip, then xsel) and OSC 52 copy-only
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:409-440` — Supports `RF11` by establishing REQ8's Linux, macOS, and fallback mechanics
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:442-475` — Supports `RF8`, `RF14` by establishing REQ9's nested `.gitignore` and symlink rules
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:477-514` — Supports `RF8`, `RF11` by establishing REQ10's rename, move, and delete behaviour
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:516-548` — Supports `RF10` by establishing REQ11's `common` set and static mapping
+- `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md:20` — Supports `RF1`, `RF13` by establishing local Bun 1.3.10 and Neovim 0.12.4
 - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:416-423` — Supports `RF2`, `RF8` by establishing the DI1 confirmation duty and the material-mismatch return rule
 - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:626-635` — Supports `RF2`, `RF8`, `RF10`, `RF11` by listing the four confirmations (fs.watch, OpenTUI APIs, Finder trash, lowlight set)
 - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:778-794` — Supports `RF2`, `RF4` by establishing the illustrative `EditorView`, `normalizeKey`, and `requestRender` shapes

@@ -52,7 +52,7 @@ None
   - `rm261003abzp-roadmap-index.md`, Delivery Items row DI1 (line 131): Work `Pending` → `W261003HEGE`; PR stays `Pending`.
   - `rm261003abzp-roadmap-index.md`, Work Progress row DI1 (line 142): Work stage `Not started` → `Discussing`; Next gate → DI1 requirements and system design; Evidence → this context document's commit.
   - `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Progress row DI1 (line 623): Work `Pending` → `W261003HEGE`; Delivery status `Not started` → `In discussion`.
-  - Evidence: work folder `.s1mple/work/active/w261003hege-editor-foundation/`; no other W bound to DI1 in `.s1mple/work/active/` or `.s1mple/work/done/`. Parent writes are not authorized in this run.
+  - Evidence: work folder `.s1mple/work/done/w261003hege-editor-foundation/`; no other W bound to DI1 in `.s1mple/work/active/` or `.s1mple/work/done/`. Parent writes are not authorized in this run.
 
 The main orchestrator owns this receipt. It does not replace parent W/PR assignments or the index's work-progress view; update the parent only with explicit authorization. Later stages record their synchronization receipts in their own artifacts.
 

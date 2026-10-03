@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
+- **Goal:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
 - **Group:** `P1-G2` — Kernel, File Types, and Recorded Vim Table
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -111,7 +111,7 @@ Interim knip findings (each has a consumer in a later group):
 
 All three findings are fixed in three follow-up commits on top of `a17718b`. The verification report (`Failed`) is unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` (commit `4f078dd`)
+- **Verification reports:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` (commit `4f078dd`)
 - **Status:** `Completed`
 
 ### Finding Closure

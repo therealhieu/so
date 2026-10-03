@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G2` — Workspace Adapters, Effect Runner, and Integration
 - **Tasks:** `P2-G2-T1, P2-G2-T2, P2-G2-T3, P2-G2-T4, P2-G2-T5, P2-G2-T6, P2-G2-T7`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` (report commit `39b1d5b`)
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` (report commit `39b1d5b`)
 - **Change range verified:** `3a87bde..34f4946` (35 files, +2124/−0; task commits `91373ac`, `14c09fe`, `9ed5898`, `2abd7ba`, `5772a45`, `5147858`, `d4de279`, `ef110d6`, `34f4946`). `39b1d5b` and `9aa5776` change only work documents.
 - **Baseline:** branch `feat/rm261003abzp-di1-editor-foundation`, HEAD `9aa5776`, clean tree; Bun 1.4.2; macOS 14.4 (Darwin 23.4.0); Linux spot checks in Docker `oven/bun:1.4.2`.
 

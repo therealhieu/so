@@ -15,13 +15,13 @@ Make `so` a running editor: the OpenTUI shell renders the accepted parent UI for
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-context.md`
-- System design: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-system-design.md`
+- Plan index: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-context.md`
+- System design: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md`
 - UI design: `Not applicable at work level — parent .s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md (Ready for Planning): Composition Model (lines 404–421), Surface: Application shell (line 429), Surface: File operations and disk changes (line 791); accepted mockups M1@R1, M4@R1, AD4 only (draft M1@R2/M3@R2 are not in the binding)`
-- System requirements: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md`
+- System requirements: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md`
 - UI requirements: `Not applicable — parent UREQs bound through W261003HEGE-REQ1@R3`
-- Research: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-research.md`
+- Research: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md`
 - Roadmap binding: `w261003hege-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH1@R2, RM261003ABZP-DI1@R2)
 
 ## Dependencies

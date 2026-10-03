@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
+- **Goal:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
 - **Group:** `P2-G1` — Protocol, Store, and Reducers
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -124,7 +124,7 @@ A fresh remediator must preserve these decisions:
 
 All three findings are fixed in two code commits; the V-case commands are corrected below.
 
-- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` (commit `1959b23`, `Failed`; unchanged)
+- **Verification reports:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` (commit `1959b23`, `Failed`; unchanged)
 - **Status:** `Completed`
 
 ### Finding Closure

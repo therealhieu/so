@@ -10,13 +10,13 @@
 
 - s1mple instructions: `.s1mple/S1MPLE.md`
 - Project document: `.s1mple/docs/project.md`
-- Plan index: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-index.md`
-- System design: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-system-design.md`
+- Plan index: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-index.md`
+- System design: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md`
 - UI design: `Not applicable at work level — parent .s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md (Ready for Planning) supplies visuals consumed through W261003HEGE-DES9 and verified by S14 → V14.1–V14.4`
-- System requirements: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md`
+- System requirements: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md`
 - UI requirements: `Not applicable — parent RM261003ABZP-UREQ1@R2, UREQ2@R1, UREQ3@R2 (non-Markdown), UREQ7@R2, UREQ11@R1 stay bound through W261003HEGE-REQ1@R3`
-- Plan context: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-context.md`
-- Roadmap binding: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-discuss-context.md`, section Roadmap Binding (RM261003ABZP, PH1@R2, DI1@R2)
+- Plan context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-context.md`
+- Roadmap binding: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md`, section Roadmap Binding (RM261003ABZP, PH1@R2, DI1@R2)
 - Current parent sources (read-only):
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (DI1 rows `:131`, `:142`)
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (G1 `:73`, DI1 `:323-424`)
@@ -31,11 +31,11 @@
   - `.s1mple/docs/languages/typescript.md`
   - `AGENTS.md`, `CLAUDE.md` (both `@.s1mple/S1MPLE.md`)
   - User global rules (`~/.agents/AGENTS.md`, `~/.claude/CLAUDE.md`): subagents must not spawn subagents; when spawning named custom subagents (`s1mple-implementer`, `s1mple-verifier`, `s1mple-consultant`) do not set the `model` argument unless the user requests it
-- Research: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-research.md`
+- Research: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md`
 - Plan parts:
-  1. `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
-  2. `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
-  3. `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
+  1. `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
+  2. `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
+  3. `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
 
 ## Execution Contract
 
@@ -65,14 +65,14 @@
   - Only the main orchestrator asks, once, at that boundary, unless the execution command already granted or refused authorization. This is the only permitted question after the execution command, because S1MPLE Delivery is not established and these actions publish outside the repository.
   - Implementers never ask the user. The orchestrator passes the granted scope (push and PR, tag, or neither) into the P3-G1-T7 assignment.
   - Without authorization, V15.2, V15.3, and V16.1 are recorded as `Pending delivery authorization`, not as passed or failed. V11.4 is a local manual check on the developer Mac and does not need GitHub authorization. If it cannot be performed, it is recorded as `Pending manual check`.
-- **Reports Directory:** `.s1mple/work/active/w261003hege-editor-foundation/reports/`
+- **Reports Directory:** `.s1mple/work/done/w261003hege-editor-foundation/reports/`
 - **Implementation Report Naming:** `p<part-number>-g<group-number>-implementation-report.md` — lowercase prefix, e.g. `p1-g1-implementation-report.md`.
 - **Verification Report Naming:** `p<part-number>-g<group-number>-verification-report.md` — lowercase prefix, e.g. `p1-g1-verification-report.md`.
 - **Reports:** Each group has exactly these two reports.
 - **Templates Directory:** `/Users/hieunguyen/.claude/skills/s1mple-plan/templates/`. The group templates are `group-implementation-prompt.md`, `group-implementation-report-template.md`, `group-verification-prompt.md`, `group-verification-report-template.md`, and `group-remediation-prompt.md`.
 - **Overall Verification Prompt:** `templates/overall-verification-prompt.md`
 - **Overall Verification Report Template:** `templates/overall-verification-report-template.md`
-- **Overall Verification Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/overall-verification-report.md`
+- **Overall Verification Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md`
 - **Overall Remediation Prompt:** `templates/overall-remediation-prompt.md`
 - **Remediation:** Append group and overall remediation evidence to the responsible implementation report. Never create a remediation report.
 
@@ -206,7 +206,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 ### Part 1 — Toolchain and Kernel
 
-- **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
+- **Plan:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
 - **Dependencies:** None (execution prerequisites: Bun 1.4.2, Neovim v0.11.7 for recording)
 - **Status:** `Completed`
 
@@ -235,9 +235,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` — `Completed` (`bun run check` stops only at interim-allowed knip unused deps: lowlight, zod, ignore, @opentui/core, @xterm/headless)
+- Implementation: `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` — `Completed` (`bun run check` stops only at interim-allowed knip unused deps: lowlight, zod, ignore, @opentui/core, @xterm/headless)
 - Initial implementation report commit: `51c6474`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-verification-report.md` — `Passed`, no findings
+- Verification: `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g1-verification-report.md` — `Passed`, no findings
 - Verification report commit: `49720d0`
 - Remediation: Not required — verification `Passed` with no outstanding items
 - Final implementation report commit: `51c6474` (initial report remains final)
@@ -280,9 +280,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` — `Completed` (knip: G1 symbols plus plan-listed `defaults.ts`, `ex.ts` whose consumers are in Part 2 — orchestrator treats these as within the interim rule's sequencing intent; zero findings still required at P3-G1-T6)
+- Implementation: `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-implementation-report.md` — `Completed` (knip: G1 symbols plus plan-listed `defaults.ts`, `ex.ts` whose consumers are in Part 2 — orchestrator treats these as within the interim rule's sequencing intent; zero findings still required at P3-G1-T6)
 - Initial implementation report commit: `074f392`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Failed`: P1-G2-VER1 (Major, undo/redo cursor after `A`/`a`/`I`), P1-G2-VER2 (Minor, `layoutText` replace above viewport / multi-line inline replace), P1-G2-VER3 (Minor, E486 not produced)
+- Verification: `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Failed`: P1-G2-VER1 (Major, undo/redo cursor after `A`/`a`/`I`), P1-G2-VER2 (Minor, `layoutText` replace above viewport / multi-line inline replace), P1-G2-VER3 (Minor, E486 not produced)
 - Verification report commit: `4f078dd`
 - Remediation: `Completed` by a fresh `s1mple-implementer`; all three findings `Fixed`
 - Final implementation report commit: `874c7b0`
@@ -302,7 +302,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 ### Part 2 — Core State and Workspace
 
-- **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
+- **Plan:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
 - **Dependencies:** Part 1
 - **Status:** `Completed`
 
@@ -331,9 +331,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` — `Completed`; implementer flagged design-shape deviations (SaveState.writing, `now` args, `BufferState.closing`, registers under `AppState.vim`, open shapes, extra files `result.ts`, `test/support/state.ts`) and `ConfigSchema` knip finding outside interim rule — assessed by verifier
+- Implementation: `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` — `Completed`; implementer flagged design-shape deviations (SaveState.writing, `now` args, `BufferState.closing`, registers under `AppState.vim`, open shapes, extra files `result.ts`, `test/support/state.ts`) and `ConfigSchema` knip finding outside interim rule — assessed by verifier
 - Initial implementation report commit: `3525c0a`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Failed`: P2-G1-VER1 (Major, rename/move during in-flight autosave leaves buffer stuck `writing`), P2-G1-VER2 (Minor, `ConfigSchema` export outside interim knip rule), P2-G1-VER3 (Minor, report `-t` filters with `\|` match 0 tests). Flagged design-shape deviations judged necessary/acceptable, not findings
+- Verification: `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Failed`: P2-G1-VER1 (Major, rename/move during in-flight autosave leaves buffer stuck `writing`), P2-G1-VER2 (Minor, `ConfigSchema` export outside interim knip rule), P2-G1-VER3 (Minor, report `-t` filters with `\|` match 0 tests). Flagged design-shape deviations judged necessary/acceptable, not findings
 - Verification report commit: `1959b23`
 - Remediation: `Completed` by a fresh `s1mple-implementer`; all three findings `Fixed` (residual VER1 timing window recorded as DEV4)
 - Final implementation report commit: `d4abdc3`
@@ -377,9 +377,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` — `Completed`; DEV4 second path reproduced (`:w` between `saved(old)` and rename `fsResult` recreates old file and leaves buffer stuck `writing`); implementer proposed a runner-only fix in `src/app/effects.ts` — assessed by verifier
+- Implementation: `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g2-implementation-report.md` — `Completed`; DEV4 second path reproduced (`:w` between `saved(old)` and rename `fsResult` recreates old file and leaves buffer stuck `writing`); implementer proposed a runner-only fix in `src/app/effects.ts` — assessed by verifier
 - Initial implementation report commit: `39b1d5b`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` — `Failed`: P2-G2-VER1 (Major, DEV4 confirmed for rename/move and trash; runner-side fix judged sound with prefix repath, chained moves, trash), P2-G2-VER2 (Major, `biome check .` fails at `system.ts:48-50`), P2-G2-VER3 (Minor, `atomicWrite` temp not exclusive `0600`)
+- Verification: `.s1mple/work/done/w261003hege-editor-foundation/reports/p2-g2-verification-report.md` — `Failed`: P2-G2-VER1 (Major, DEV4 confirmed for rename/move and trash; runner-side fix judged sound with prefix repath, chained moves, trash), P2-G2-VER2 (Major, `biome check .` fails at `system.ts:48-50`), P2-G2-VER3 (Minor, `atomicWrite` temp not exclusive `0600`)
 - Verification report commit: `8868bff`
 - Remediation: `Completed` by a fresh `s1mple-implementer`; all three findings `Fixed`; DEV4 closed
 - Final implementation report commit: `381f558`
@@ -400,7 +400,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 ### Part 3 — UI Shell, App, and Delivery
 
-- **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
+- **Plan:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
 - **Dependencies:** Parts 1 and 2
 - **Status:** `Completed`
 
@@ -433,9 +433,9 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 **Evidence:**
 
 - Delivery Authorization: Tag refused by the user (2026-10-03: "don't tag anything. Out of scope") — no `v0.1.0-rc.1` or any other tag is created or pushed; V16.1 recorded `Not authorized — tag out of scope (user decision)`. Push + PR: **granted** by the user at the P3-G1-T7 boundary (2026-10-03, answer "Push + open PR"). Granted scope passed to T7: push branch `feat/rm261003abzp-di1-editor-foundation` to `origin`, open PR to `main`, watch CI. No tag, no merge.
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Completed`
+- Implementation: `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` — `Completed`
 - Initial implementation report commit: `d4f19de` (pushed)
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Failed`: P3-G1-VER1 (Major, explorer create/rename prompt is a centred popup, not the inline tree field of M4 S10/S11), VER2 (Minor, shutdown during in-flight autosave → flush `conflict`), VER3 (Minor, statusline order vs M1; split titles truncated at end), VER4 (Minor, UI branches on `.md` for explorer icon), VER5 (Minor, missing tests for paint fallback, narrow diff, 80×24 prompt). V15.2/V15.3 confirmed; all deviations necessary/acceptable
+- Verification: `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Failed`: P3-G1-VER1 (Major, explorer create/rename prompt is a centred popup, not the inline tree field of M4 S10/S11), VER2 (Minor, shutdown during in-flight autosave → flush `conflict`), VER3 (Minor, statusline order vs M1; split titles truncated at end), VER4 (Minor, UI branches on `.md` for explorer icon), VER5 (Minor, missing tests for paint fallback, narrow diff, 80×24 prompt). V15.2/V15.3 confirmed; all deviations necessary/acceptable
 - Verification report commit: `2a3fc8d`
 - Remediation: `Completed` by a fresh `s1mple-implementer`; all five findings `Fixed` — orchestrator chose to build the inline field (no user deviation needed); move keeps a text field (picker outside DI1) recorded as a deviation; remediation pushes to PR #1 under the granted push scope and re-confirms CI
 - Final implementation report commit: `c773c21` (pushed)
@@ -632,7 +632,7 @@ Fresh verifier → Passed → Delivery acceptance → Project documentation
 ### Evidence
 
 - **Status:** `Passed`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/overall-verification-report.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md`
 - **Report commit:** `5e57bae`
 - **Findings and owners:** None (no `OVR-VER` findings)
 - **Remediation status:** Not required
@@ -731,7 +731,7 @@ Replace with `None` or entries containing location, evidence, impact, and requir
 - **Implementation and verification:** `Complete`. All five groups accepted (P1-G1 passed first time; P1-G2, P2-G1, P2-G2, P3-G1 remediated, 14 findings fixed). Overall verification `Passed` with no findings (`reports/overall-verification-report.md`, `5e57bae`). Project documentation finalized (`a211113`). Every S1–S17 and V case has evidence except V16.1 (not authorized, DEV5), V11.4 (`Pending manual check`), V2.5 (`Not applicable — greenfield`).
 - **Delivery:** push + PR authorized at the T7 boundary; tag refused (DEV5). PR https://github.com/therealhieu/so/pull/1 open, CI green on `c773c21` (run 37119729032, 38 s, both OS, Linux bench gated). Orchestrator commits after `c773c21` (`265a9b0`, `5e57bae`, `a211113`, and this goal update) are local only — the push authorization covered the T7 delivery; pushing them is the user's call. DI1 and G1: `Pending — awaiting DI1 PR merge with CI green`.
 - **Parent synchronization:** `Pending parent synchronization` — no authorization. Pending updates: discuss-context registration receipt; system design §1 Parent Synchronization items 1–7 (including RM261003ABZP-REQ10@R2 "every push and pull request" → "every pull request"); Work Progress DI1 stage and PR #1 assignment; refinement candidates DEV3, DEV6, and the runner/`atomicWrite` semantics from P2-G2/P3-G1 remediation.
-- **Baseline and evidence:** accepted baseline `d00d3a3`, DI1@R2; evidence in this goal's Roadmap Evidence and `.s1mple/work/active/w261003hege-editor-foundation/reports/`.
+- **Baseline and evidence:** accepted baseline `d00d3a3`, DI1@R2; evidence in this goal's Roadmap Evidence and `.s1mple/work/done/w261003hege-editor-foundation/reports/`.
 
 Report these as separate statuses, never as one interchangeable status:
 

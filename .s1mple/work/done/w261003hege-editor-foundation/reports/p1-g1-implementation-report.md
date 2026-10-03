@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
+- **Goal:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1, P1-G1-T2, P1-G1-T3, P1-G1-T4, P1-G1-T5`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 

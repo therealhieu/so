@@ -6,13 +6,13 @@
 
 ## Sources
 
-- Plan context: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-context.md`
-- System design: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-system-design.md`
+- Plan context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-context.md`
+- System design: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md`
 - UI design: `Not applicable — no work-level UI design; parent rm261003abzp-ui-design.md (Ready for Planning) supplies visuals through DES9 and is verified by S14 → V14.1–V14.4`
-- System requirements: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md`
+- System requirements: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md`
 - UI requirements: `Not applicable — parent UREQ1/2/3/7/11 stay bound through W261003HEGE-REQ1@R3`
-- Research: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-research.md`
-- Discussion context: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-discuss-context.md`
+- Research: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md`
+- Discussion context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md`
 - UI context: `Not applicable — no work-level UI context artifact`
 
 ## Roadmap Contract

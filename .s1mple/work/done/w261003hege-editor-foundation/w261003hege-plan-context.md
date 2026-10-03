@@ -12,12 +12,12 @@ Planning can start: the system design is `Finalized System Design` with no unres
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline (stale: says branch `master`, no commits; DES1 rewrites it) |
-| System design | `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-system-design.md` | Technical authority (commit `36af047`) |
+| System design | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` | Technical authority (commit `36af047`) |
 | UI design | Not applicable — no work-level UI design; the accepted parent UI design `rm261003abzp-ui-design.md` (Status `Ready for Planning`) is consumed through the system design's Design Boundary and DES9 | Visual authority for S14 / V14.* goldens |
-| System requirements | `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md` | REQ1@R3 … REQ12@R1 |
+| System requirements | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md` | REQ1@R3 … REQ12@R1 |
 | UI requirements | Not applicable — no work-level UI requirements; parent UREQ1@R2, UREQ2@R1, UREQ3@R2 (non-Markdown), UREQ7@R2, UREQ11@R1 stay bound through `W261003HEGE-REQ1@R3` | — |
-| Research | `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-research.md` | RF1–RF14 (commit `4867795`) |
-| Discussion context | `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-discuss-context.md` | Roadmap Binding, scope, constraints |
+| Research | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` | RF1–RF14 (commit `4867795`) |
+| Discussion context | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md` | Roadmap Binding, scope, constraints |
 | UI context | Not applicable — no work-level UI context artifact | — |
 | Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-design.md`, `rm261003abzp-requirements.md`, `rm261003abzp-ui-design.md` | Validate binding, DI1 scope, G1 gate |
 | Additional project files | `git log`, `git remote -v`, `.gitignore`, `bun --version`, `nvim --version`, `../alfred/**` porting references, user memory `ci-pull-request-only` | Toolchain and repository state on 2026-10-03 |

@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1, P1-G1-T2, P1-G1-T3, P1-G1-T4, P1-G1-T5`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` (commit `51c6474`)
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` (commit `51c6474`)
 
 Verified range: `03a05d3..23bc489` on `feat/rm261003abzp-di1-editor-foundation`. The group commits are `39d0bcb`, `1af1c80`, `ef11166`, `643225a`, `6fda519`, and `23bc489`. Orchestrator commits `59dff86`, `8790f75`, and `348cf7b` are in the range but are not group work. The working tree was clean at the start of verification.
 

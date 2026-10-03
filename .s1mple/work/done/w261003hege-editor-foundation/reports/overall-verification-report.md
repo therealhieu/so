@@ -2,10 +2,10 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-goal.md`
-- **Plan Index:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-index.md`
-- **Plan Parts:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md` → `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md` → `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
-- **Report:** `.s1mple/work/active/w261003hege-editor-foundation/reports/overall-verification-report.md`
+- **Goal:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-goal.md`
+- **Plan Index:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-index.md`
+- **Plan Parts:** `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md` → `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md` → `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
+- **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md`
 
 Verified state: branch `feat/rm261003abzp-di1-editor-foundation`, HEAD `265a9b0` (orchestrator goal commit, `.s1mple` only) on top of pushed `c773c21` (`git diff --stat c773c21 HEAD` touches only `w261003hege-goal.md`). Whole work `d00d3a3..HEAD`: 91 commits; outside `.s1mple`, 137 files, +25,473/−0. Working tree clean before and after the checks. Bun `1.4.2`, macOS Darwin 23.4.0. Every check below was run by this verifier unless it says "read-only GitHub".
 

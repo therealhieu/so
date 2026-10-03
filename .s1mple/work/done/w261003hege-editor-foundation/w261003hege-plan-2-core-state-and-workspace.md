@@ -15,13 +15,13 @@ Land the DI1 protocol and the pure reducers that make every data-safety rule a s
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-context.md`
-- System design: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-system-design.md`
+- Plan index: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-context.md`
+- System design: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md`
 - UI design: `Not applicable — no work-level UI design; parent rm261003abzp-ui-design.md is consumed in Part 3`
-- System requirements: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-requirements.md`
+- System requirements: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md`
 - UI requirements: `Not applicable — parent UREQs bound through W261003HEGE-REQ1@R3 and verified in Part 3`
-- Research: `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-research.md`
+- Research: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md`
 - Roadmap binding: `w261003hege-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH1@R2, RM261003ABZP-DI1@R2)
 
 ## Dependencies
