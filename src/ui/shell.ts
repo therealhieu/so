@@ -80,7 +80,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     attach(store) {
       const ctx: ViewDeps = { ...deps, dispatch: store.dispatch };
       const windows = new WindowTree(renderer, ctx);
-      const explorer = new ExplorerView(renderer);
+      const explorer = new ExplorerView(renderer, ctx);
       const cmdline = new CommandLine(renderer, ctx);
       const overlays = new OverlayHost(renderer, [
         new PromptView(renderer),

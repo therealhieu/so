@@ -137,6 +137,21 @@ test("a note shows its word count on wide terminals only", async () => {
   ]);
 });
 
+test("the explorer marks notes by their registered file type, in any case", async () => {
+  m = await mountShell({ cols: 120, rows: 36 });
+  m.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: "NOTE.MD", kind: "file" },
+      { name: "config.yaml", kind: "file" },
+    ],
+  });
+  const tree = (await m.frame()).split("\n").map((l) => l.slice(0, 30));
+  expect(tree).toContain(` ◇ NOTE.MD${" ".repeat(20)}`);
+  expect(tree).toContain(` ≡ config.yaml${" ".repeat(16)}`);
+});
+
 test("an info toast expires after 3 s and an error toast stays", async () => {
   m = await mountShell({ cols: 120, rows: 36 });
   openNote(m, "notes/ideas.md", IDEAS_MD);

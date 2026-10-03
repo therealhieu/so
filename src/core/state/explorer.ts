@@ -1,3 +1,5 @@
+import type { FileTypeRegistry } from "../filetypes/registry";
+import { markdownFileType } from "../lang/markdown/file-type";
 import { buffersUnder, openPath, removeBuffer } from "./buffers";
 import { markDeleted } from "./disk";
 import { chain, message, none, toast } from "./result";
@@ -206,6 +208,10 @@ const kindOf = (s: AppState, path: string) =>
   s.panels.explorer.entries[dirname(path)]?.find(
     (e) => e.name === basename(path),
   )?.kind;
+
+/** Whether the tree shows `path` as a note: its registered file type is Markdown. */
+export const isNote = (fileTypes: FileTypeRegistry, path: string): boolean =>
+  fileTypes.forPath(path).id === markdownFileType.id;
 
 /** Paths shown in the tree, top to bottom. */
 export function visiblePaths(s: AppState, dir = ""): string[] {

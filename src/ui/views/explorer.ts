@@ -3,10 +3,10 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { visiblePaths } from "../../core/state/explorer";
+import { isNote, visiblePaths } from "../../core/state/explorer";
 import type { AppState } from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
-import type { Cursor, LayoutClass } from "../shell";
+import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 /** Columns of the tree, not counting its separator or float border. */
@@ -23,8 +23,8 @@ type Row = { path: string; depth: number; dir: boolean; open: boolean };
 
 /**
  * The file tree: docked left with a `│` separator, or a rounded float over
- * the windows on narrow terminals. Folders show `▸`/`▾`, Markdown notes `◇`,
- * other files `≡`; `●` marks a file with unsaved changes.
+ * the windows on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
+ * files `≡`; `●` marks a file with unsaved changes.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
@@ -34,7 +34,10 @@ export class ExplorerView extends Renderable {
   private h = 0;
   private cursorAt: Cursor | undefined;
 
-  constructor(ctx: RenderContext) {
+  constructor(
+    ctx: RenderContext,
+    private readonly deps: Pick<ViewDeps, "fileTypes">,
+  ) {
     super(ctx, { position: "absolute", left: 0, top: 1, zIndex: 20 });
   }
 
@@ -153,7 +156,7 @@ export class ExplorerView extends Renderable {
         ? row.open
           ? "▾ "
           : "▸ "
-        : row.path.endsWith(".md")
+        : isNote(this.deps.fileTypes, row.path)
           ? "◇ "
           : "≡ ";
       const indent = ` ${"  ".repeat(row.depth)}`;
