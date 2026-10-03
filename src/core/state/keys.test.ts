@@ -256,6 +256,8 @@ test("conflict keys keep, take, or diff", () => {
   }).state;
   expect(s.overlay.kind).toBe("conflict");
   expect(keys(s, "d").state.overlay).toMatchObject({ showDiff: true });
+  expect(keys(s, "dq").state.overlay).toMatchObject({ showDiff: false });
+  expect(keys(s, "q").state.overlay).toMatchObject({ showDiff: false });
   expect(textOf(keys(s, "t").state)).toBe("theirs");
   expect(keys(s, "k").effects).toContainEqual({
     kind: "write",

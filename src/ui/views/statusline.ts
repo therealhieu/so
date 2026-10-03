@@ -15,6 +15,7 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
   visualLine: ["V-LINE", "modeVisual"],
   cmdline: ["COMMAND", "modeCmd"],
   explorer: ["EXPLORER", "modeNormal"],
+  conflict: ["CONFLICT", "modeCmd"],
 };
 
 /** The mode badge text and its theme token. */
@@ -64,7 +65,9 @@ export class Statusline extends Renderable {
     const seg = statusSegments(s);
     const narrow = this.lc === "narrow";
     const cols = s.terminal.cols;
-    const [badge, badgeToken] = badgeOf(seg.mode);
+    const [badge, badgeToken] = badgeOf(
+      s.overlay.kind === "conflict" ? "conflict" : seg.mode,
+    );
     const segs: Seg[] = [];
     if (seg.view !== undefined && !narrow)
       segs.push({ text: seg.view, token: "statusDim" });

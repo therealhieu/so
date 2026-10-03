@@ -50,10 +50,13 @@ export function handleKeyAction(
   return runVim(s, a.key, a.now, reg);
 }
 
+/** `k` keep, `t` take, `d` toggle the diff, `q` back from the diff; other keys wait. */
 function conflictKey(s: AppState, a: { key: Key; now: number }): Result {
-  const choice = ({ k: "keep", t: "take", d: "diff" } as const)[
-    a.key as "k" | "t" | "d"
-  ];
+  const back =
+    a.key === "q" && s.overlay.kind === "conflict" && s.overlay.showDiff;
+  const choice = back
+    ? "diff"
+    : ({ k: "keep", t: "take", d: "diff" } as const)[a.key as "k" | "t" | "d"];
   return choice === undefined ? none(s) : resolveConflict(s, choice, a.now);
 }
 

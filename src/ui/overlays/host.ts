@@ -32,6 +32,23 @@ export function drawFrame(
   edge(r.y + r.h - 1, "╰", "╯", o.footer);
 }
 
+/** A `w`×`h` float centred in the terminal, clipped to it, below the bufferline. */
+export function centered(
+  s: AppState,
+  w: number,
+  h: number,
+): { x: number; y: number; w: number; h: number } {
+  const { cols, rows } = s.terminal;
+  const width = Math.min(w, cols);
+  const height = Math.min(h, rows - 2);
+  return {
+    x: Math.max(0, Math.floor((cols - width) / 2)),
+    y: Math.max(1, Math.floor((rows - height) / 2) - 1),
+    w: width,
+    h: height,
+  };
+}
+
 /** Wrap `text` into lines of at most `width` cells, breaking at spaces when possible. */
 export function wrap(text: string, width: number): string[] {
   const out: string[] = [];

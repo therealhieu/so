@@ -10,8 +10,10 @@ import type { CommandContext, CommandResult } from "../core/state/commands";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import { createKeyNormalizer } from "./input";
+import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
 import { ToastStack } from "./overlays/notify";
+import { PromptView } from "./overlays/prompt";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -80,7 +82,10 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const windows = new WindowTree(renderer, ctx);
       const explorer = new ExplorerView(renderer);
       const cmdline = new CommandLine(renderer, ctx);
-      const overlays = new OverlayHost(renderer);
+      const overlays = new OverlayHost(renderer, [
+        new PromptView(renderer),
+        new ConflictView(renderer),
+      ]);
       const views: View[] = [
         new Bufferline(renderer),
         windows,
