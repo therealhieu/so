@@ -41,6 +41,17 @@ const LAYER_RULES: {
   { from: "src/core/kernel/", allow: ["src/core/kernel/"], packages: "none" },
 ];
 
+// Packages that may be imported only from the listed src prefixes.
+const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
+  "mdast-util-from-markdown": ["src/core/lang/markdown/"],
+  "micromark-extension-gfm": ["src/core/lang/markdown/"],
+  "mdast-util-gfm": ["src/core/lang/markdown/"],
+  "micromark-extension-math": ["src/core/lang/markdown/"],
+  "mdast-util-math": ["src/core/lang/markdown/"],
+  yaml: ["src/core/lang/markdown/"],
+  "toml-eslint-parser": ["src/core/config/"],
+};
+
 const transpiler = new Bun.Transpiler({ loader: "ts" });
 // scanImports drops type-only imports, which still couple layers.
 const TYPE_IMPORT =
@@ -76,7 +87,11 @@ function checkImports(source: string, path: string): string[] {
       if (!rule.allow.some((prefix) => target.startsWith(prefix)))
         reason = `${rule.from} may import only ${rule.allow.join(", ")}`;
     } else {
-      reason = packageViolation(specifier, rule.packages);
+      const homes = PACKAGE_HOMES[specifier];
+      reason =
+        homes !== undefined && !homes.some((home) => path.startsWith(home))
+          ? `${specifier} may be imported only from ${homes.join(", ")}`
+          : packageViolation(specifier, rule.packages);
     }
     if (reason !== undefined)
       violations.push(`${path}: ${specifier} violates ${reason}`);
@@ -96,14 +111,14 @@ test("src respects LAYER_RULES", async () => {
   expect(violations).toEqual([]);
 });
 
+// Each fixture is checked as if it lived at `as` and must report exactly one violation.
+const VIOLATION_FIXTURES = [
+  { file: "core-imports-fs.ts", as: "src/core/state/x.ts" },
+  { file: "kernel-imports-markdown.ts", as: "src/core/kernel/x.ts" },
+  { file: "state-imports-yaml.ts", as: "src/core/state/x.ts" },
+];
+
 test("violation fixtures are reported", async () => {
-  expect(
-    checkImports(await fixture("core-imports-fs.ts"), "src/core/state/x.ts"),
-  ).toHaveLength(1);
-  expect(
-    checkImports(
-      await fixture("kernel-imports-markdown.ts"),
-      "src/core/kernel/x.ts",
-    ),
-  ).toHaveLength(1);
+  for (const { file, as } of VIOLATION_FIXTURES)
+    expect(checkImports(await fixture(file), as)).toHaveLength(1);
 });
