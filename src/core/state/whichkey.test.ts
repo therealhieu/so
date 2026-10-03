@@ -60,6 +60,8 @@ test("which-key opens only after the prefix idles 300 ms", () => {
 test("direct actions list before groups and backspace pops a key", () => {
   let s = update(keys(opened(), " ").state, TIMER).state;
   expect(whichKeyRows(s, reg)).toEqual([
+    { key: ":", label: "Command palette", group: false },
+    { key: "?", label: "Help: keymap", group: false },
     { key: "a", label: "Split window", group: false },
     { key: "e", label: "Toggle explorer", group: false },
     { key: "f", label: "+find", group: true },

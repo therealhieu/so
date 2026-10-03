@@ -93,3 +93,24 @@ test("external edits and own saves reach backlinks", async () => {
   await waitFor(() => sources("a.md").includes("c.md"));
   expect(sources("a.md")).toEqual(["b.md", "c.md"]);
 });
+
+test("grep through the picker reaches the worker and lists its hits", async () => {
+  app = await startApp(
+    await tmpWorkspace({
+      "a.md": "# A\nthe needle here\n",
+      "scripts/sync.ts": "const needle = 1;\n",
+    }),
+    { index: {} },
+  );
+  await waitFor(() => status() === "ready");
+  await app.open("a.md");
+  app.keys(" sgneedle");
+  await waitFor(() => {
+    const o = state().overlay;
+    return o.kind === "picker" && o.picker.search?.pending === false;
+  });
+  const o = state().overlay;
+  expect(o.kind === "picker" ? o.picker.items.map((i) => i.label) : []).toEqual(
+    ["a.md:2  the needle here", "scripts/sync.ts:1  const needle = 1;"],
+  );
+});

@@ -50,7 +50,8 @@ export type TimerId =
   | `retry:${BufferId}`
   | `toast:${number}`
   | "whichKey"
-  | "saveState";
+  | "saveState"
+  | "search";
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -127,7 +128,38 @@ export type Overlay =
   | { kind: "none" }
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean }
-  | { kind: "whichKey"; whichKey: WhichKeyState };
+  | { kind: "whichKey"; whichKey: WhichKeyState }
+  | { kind: "picker" | "palette" | "help"; picker: PickerState };
+
+/** One picker row; `matches` are the label's matched character positions. */
+export type PickerItem = {
+  key: string;
+  label: string;
+  detail?: string;
+  path?: string;
+  line?: number;
+  matches: number[];
+};
+/** An open picker: its source, query, ranked rows, and the search and preview it waits for. */
+export type PickerState = {
+  /** "files" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
+  source: string;
+  /** tagNotes: the tag; backlinks: the target path */
+  arg?: string;
+  query: string;
+  items: PickerItem[];
+  total: number;
+  selected: number;
+  search?: { id: number; pending: boolean; capped: boolean };
+  preview?: {
+    id: number;
+    path: string;
+    line: number;
+    file?: TextFile;
+    refused?: "binary" | "tooLarge" | "io";
+  };
+  error?: string;
+};
 
 /** The which-key popup: the pending prefix and the scope its keys resolve in. */
 export type WhichKeyState = { prefix: Key[]; scope: KeyScope };
@@ -156,6 +188,8 @@ export type IndexState = {
   done: number;
   total: number;
   ix: NoteIndex;
+  /** Next id for `search` effects; results with an older id are dropped. */
+  searchSeq: number;
   /** A rename or link-mention waiting for its file operation or its closed-file writes. */
   rewrite?: LinkRewrite;
 };
@@ -235,6 +269,13 @@ export type Action =
       total: number;
     }
   | { type: "stateLoaded"; state: PersistedState | undefined; restore: boolean }
+  | { type: "searchResults"; id: number; hits: SearchHit[]; capped: boolean }
+  | {
+      type: "previewLoaded";
+      id: number;
+      path: string;
+      result: TextFile | { refused: "binary" | "tooLarge" | "io" };
+    }
   | { type: "indexReady" }
   | { type: "indexFailed"; final: boolean; reason: string }
   | {
@@ -258,6 +299,16 @@ export type Effect =
   | { kind: "clipboardRead" }
   | { kind: "exit"; code: number }
   | { kind: "saveState"; state: PersistedState }
+  | {
+      kind: "search";
+      id: number;
+      query: string;
+      limit: number;
+      mode?: "text" | "mentions";
+      names?: string[];
+      exclude?: string;
+    }
+  | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
   | { kind: "applyEdits"; batch: number; edit: FileEdit };
 

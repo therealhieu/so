@@ -3,8 +3,10 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
+import type { DecorationProvider } from "../../core/kernel/view/decorations";
 import {
   highlightMarks,
   searchMarks,
@@ -85,6 +87,90 @@ export function paintLine(
       "",
       at.width - x,
     );
+}
+
+/**
+ * Paint `text` in `r` in the file type's source view without a gutter: the
+ * target `line` sits a third of the way down, and `mark` on that line is
+ * styled as a search match. Wrap and tab width follow the editor options,
+ * so a preview looks like the window that would open it.
+ */
+export function paintPreview(
+  buf: OptimizedBuffer,
+  theme: Theme,
+  r: Rect,
+  p: {
+    text: TextBuffer;
+    fileType: FileType | undefined;
+    line: number;
+    mark?: { col: number; len: number };
+    analysis?: unknown;
+    tabWidth: number;
+    wrap: boolean;
+  },
+): void {
+  if (r.w <= 0 || r.h <= 0) return;
+  const line = Math.max(0, Math.min(p.line, p.text.lineCount - 1));
+  const top = Math.max(0, line - Math.floor(r.h / 3));
+  const view = {
+    buf: p.text,
+    width: r.w,
+    topRow: top,
+    rows: r.h,
+    cursor: { line, col: 0 },
+    folds: new Set<number>(),
+    visible: { from: top, to: top + r.h },
+  };
+  const mark = p.mark;
+  const marks: DecorationProvider = () =>
+    mark === undefined
+      ? []
+      : [
+          {
+            kind: "mark",
+            range: {
+              start: { line, col: mark.col },
+              end: { line, col: mark.col + mark.len },
+            },
+            style: "searchMatch",
+          },
+        ];
+  let lines: RenderLine[];
+  try {
+    const spec = p.fileType?.views.find((v) => v.id === "source");
+    lines = layoutText(
+      view,
+      [
+        highlightMarks(p.fileType?.highlighter),
+        ...(spec?.decorations ?? []),
+        marks,
+      ],
+      p.analysis,
+    );
+  } catch {
+    lines = [];
+    for (let l = top; l < Math.min(p.text.lineCount, top + r.h); l++)
+      lines.push({
+        sourceLine: l,
+        spans: [{ text: p.text.line(l), style: "text" }],
+      });
+  }
+  let y = 0;
+  for (const row of lines) {
+    const text = row.spans.map((sp) => sp.text).join("");
+    const starts = p.wrap ? wrapLine(text, r.w, p.tabWidth) : [0];
+    for (let k = 0; k < starts.length && y < r.h; k++, y++) {
+      const end = starts[k + 1];
+      paintLine(buf, theme, { x: r.x, y: r.y + y, width: r.w }, row.spans, {
+        leftCol: starts[k] ?? 0,
+        ...(end === undefined ? {} : { endCol: end }),
+        tabWidth: p.tabWidth,
+        cursorline: false,
+      });
+    }
+  }
+  for (; y < r.h; y++)
+    drawCells(buf, theme.style("text"), r.x, r.y + y, "", r.w);
 }
 
 /** The selection a Visual mode shows, end exclusive. */

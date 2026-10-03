@@ -20,6 +20,7 @@ import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
+import type { IndexHost } from "./index-host";
 
 /**
  * What the runner needs. `exit` is read at call time, so `main` can bind it
@@ -40,6 +41,8 @@ export type RunnerDeps = {
   configPath: string;
   /** The session state file; without one, `saveState` does nothing. */
   statePath?: string;
+  /** Answers `search`; without one, every search finds nothing. */
+  index?: Pick<IndexHost, "search">;
 };
 
 export type EffectRunner = {
@@ -292,6 +295,31 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         return;
       case "exit":
         d.exit(e.code);
+        return;
+      case "search":
+        if (d.index === undefined)
+          d.dispatch({
+            type: "searchResults",
+            id: e.id,
+            hits: [],
+            capped: false,
+          });
+        else d.index.search(e);
+        return;
+      case "readPreview":
+        void readTextFile(abs(e.path))
+          .catch((x) => {
+            d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
+            return { refused: "io" as const };
+          })
+          .then((result) =>
+            d.dispatch({
+              type: "previewLoaded",
+              id: e.id,
+              path: e.path,
+              result,
+            }),
+          );
         return;
       case "saveState":
         if (d.statePath !== undefined)

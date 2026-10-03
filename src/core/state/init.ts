@@ -40,7 +40,13 @@ export function initialState(boot: {
     notifications: { toasts: [] },
     config: defaults,
     terminal: { cols: boot.cols, rows: boot.rows, color: boot.color },
-    index: { status: "idle", done: 0, total: 0, ix: emptyIndex() },
+    index: {
+      status: "idle",
+      done: 0,
+      total: 0,
+      ix: emptyIndex(),
+      searchSeq: 0,
+    },
     jumps: { entries: [], at: 0 },
     recent: [],
   };

@@ -92,3 +92,10 @@ test("the loaded leader drives the keymap", () => {
     keymapFor(reg, s.config).lookup({ mode: "normal" }, [",", "w"]),
   ).toEqual({ kind: "command", id: "file.save" });
 });
+
+test("leader comma maps ,ff to find files", () => {
+  const s = load(fresh(), VALID, false).state;
+  expect(
+    keymapFor(reg, s.config).lookup({ mode: "normal" }, [",", "f", "f"]),
+  ).toEqual({ kind: "command", id: "file.find" });
+});

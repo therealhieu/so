@@ -234,6 +234,7 @@ async function main(argv: string[]): Promise<void> {
     logger,
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
+    index: indexHost,
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";

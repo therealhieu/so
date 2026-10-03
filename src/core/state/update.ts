@@ -12,6 +12,7 @@ import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import { onPreviewLoaded, onSearchResults, onSearchTimer } from "./picker";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
@@ -84,6 +85,10 @@ export function createUpdate(reg: Registries): Update {
         return onEditsApplied(state, action);
       case "stateLoaded":
         return onStateLoaded(state, action);
+      case "searchResults":
+        return onSearchResults(state, action);
+      case "previewLoaded":
+        return onPreviewLoaded(state, action);
     }
     const unhandled: never = action;
     return unhandled;
@@ -106,13 +111,14 @@ export function createUpdate(reg: Registries): Update {
   };
 }
 
-/** A timer fired: which-key, the session save, or a buffer or toast timer. */
+/** A timer fired: which-key, grep, the session save, or a buffer or toast timer. */
 function onTimerAction(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
   reg: Registries,
 ): Result {
   if (a.id === "whichKey") return onWhichKeyTimer(s, reg);
+  if (a.id === "search") return onSearchTimer(s);
   if (a.id === "saveState")
     return {
       state: s,

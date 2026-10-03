@@ -11,6 +11,7 @@ import { createKeyNormalizer } from "./input";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
 import { ToastStack } from "./overlays/notify";
+import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
 import { WhichKeyView } from "./overlays/whichkey";
 import { Bufferline } from "./views/bufferline";
@@ -85,6 +86,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new PromptView(renderer),
         new ConflictView(renderer),
         new WhichKeyView(renderer, ctx),
+        new PickerView(renderer, ctx),
       ]);
       const views: View[] = [
         new Bufferline(renderer),

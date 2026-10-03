@@ -26,9 +26,11 @@ test("a configured leader replaces <leader>", () => {
 test("no leader option keeps space as the leader for the default bindings", () => {
   const km = new Keymap();
   for (const b of defaultBindings) km.bind(b.scope, b.seq, b.id);
-  expect(km.lookup(normal, [" "])).toEqual({
-    kind: "prefix",
-    next: [{ key: "e", id: "explorer.toggle" }],
+  const root = km.lookup(normal, [" "]);
+  expect(root.kind).toBe("prefix");
+  expect(root.kind === "prefix" ? root.next : []).toContainEqual({
+    key: "e",
+    id: "explorer.toggle",
   });
   expect(km.lookup(normal, [" ", "e"])).toEqual({
     kind: "command",

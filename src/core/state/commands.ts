@@ -22,6 +22,7 @@ import {
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
+import { openPicker } from "./picker";
 import { chain, message, none } from "./result";
 import {
   autosaveNow,
@@ -68,6 +69,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   "bdelete!": "buffer.deleteForce",
   ConfigReload: "config.reload",
   jumps: "jump.list",
+  help: "help.keymap",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -319,7 +321,28 @@ const builtins: AppCommand[] = [
     title: "Jump to newer position",
     run: (c) => jumpForward(c.state, c.now),
   },
-  { id: "jump.list", title: "Show jump list", run: (c) => showJumps(c.state) },
+  { id: "jump.list", title: "Jump list", run: (c) => showJumps(c.state) },
+  { id: "file.find", title: "Find file", run: (c) => openPicker(c, "files") },
+  {
+    id: "file.recent",
+    title: "Recent files",
+    run: (c) => openPicker(c, "recent"),
+  },
+  {
+    id: "search.grep",
+    title: "Search text in workspace",
+    run: (c) => openPicker(c, "grep"),
+  },
+  {
+    id: "command.palette",
+    title: "Command palette",
+    run: (c) => openPicker(c, "commands"),
+  },
+  {
+    id: "help.keymap",
+    title: "Help: keymap",
+    run: (c) => openPicker(c, "help"),
+  },
   {
     id: "window.split",
     title: "Split window",

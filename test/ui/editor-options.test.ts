@@ -151,3 +151,37 @@ test("a line taller than the window shows the rows holding the cursor", async ()
   const top = await lines();
   expect(top.some((l) => l.startsWith("   1 w0 w1 "))).toBe(true);
 });
+
+test("a picker preview wraps the long paragraph", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["notes/long.md"],
+    done: 1,
+    total: 1,
+  });
+  m.open("notes/long.md", `${PARA}\nnext\n`);
+  m.keys("<leader>ff");
+  const frame = await lines();
+  const head = frame.findIndex((l) => l.includes("│ notes/long.md"));
+  expect(head).toBeGreaterThan(0);
+  const x = (frame[head] ?? "").indexOf("│ notes/long.md") + 2;
+  const pane: string[] = [];
+  for (let y = head + 1; y < frame.length; y++) {
+    const row = (frame[y] ?? "").slice(x, -1);
+    const text = row.slice(0, row.lastIndexOf("│")).trimEnd();
+    if (text === "next") break;
+    pane.push(text);
+  }
+  const width = (frame[head] ?? "").slice(x).indexOf("│");
+  expect(pane.length).toBeGreaterThanOrEqual(5);
+  for (const r of pane) expect(r.length).toBeLessThan(width);
+  expect(pane.join(" ")).toBe(PARA);
+
+  m.t.resize(99, 24);
+  m.store.dispatch({ type: "resize", cols: 99, rows: 24 });
+  // The preview header shares the query row; at 99 columns it is gone.
+  const query = (await lines()).find((l) => l.includes("❯")) ?? "";
+  expect(query).not.toContain("notes/long.md");
+});

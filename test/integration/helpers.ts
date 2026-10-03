@@ -124,6 +124,9 @@ export async function startApp(
     logger,
     configPath: join(root, ".no-config.toml"),
     ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
+    ...(opts.index === undefined
+      ? {}
+      : { index: { search: (e) => index?.search(e) } }),
   });
   const saveSession = () => {
     if (opts.state !== undefined)

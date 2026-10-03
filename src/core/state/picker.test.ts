@@ -1,0 +1,215 @@
+import { expect, test } from "bun:test";
+import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import { splitKeys } from "../kernel/vim/keys";
+import { runCommand } from "./commands";
+import { GREP_LIMIT, PREVIEW_MIN_COLS, SEARCH_DEBOUNCE_MS } from "./picker";
+import type { Action, AppState, Effect, PickerState, SearchHit } from "./types";
+import { createUpdate } from "./update";
+
+const reg = testRegistries();
+const update = createUpdate(reg);
+const FILES = ["notes/plan.md", "notes/ideas.md", "projects/so-roadmap.md"];
+
+function indexed(cols = 120, files = FILES): AppState {
+  let s: AppState = {
+    ...fresh(),
+    terminal: { ...fresh().terminal, cols },
+  };
+  s = update(s, {
+    type: "indexBatch",
+    summaries: [],
+    files,
+    done: files.length,
+    total: files.length,
+  }).state;
+  return update(s, { type: "indexReady" }).state;
+}
+function keys(s: AppState, seq: string) {
+  const effects: Effect[] = [];
+  for (const key of splitKeys(seq)) {
+    const r = update(s, { type: "key", key, now: 0 });
+    s = r.state;
+    effects.push(...r.effects);
+  }
+  return { state: s, effects };
+}
+const run = (s: AppState, id: string) => runCommand(s, id, 0, reg);
+const picker = (s: AppState): PickerState => {
+  if (
+    s.overlay.kind !== "picker" &&
+    s.overlay.kind !== "palette" &&
+    s.overlay.kind !== "help"
+  )
+    throw new Error(`no picker: ${s.overlay.kind}`);
+  return s.overlay.picker;
+};
+const SEARCH_TIMER: Action = { type: "timer", id: "search", now: 100 };
+const searches = (effects: Effect[]) =>
+  effects.filter((e) => e.kind === "search");
+const hit = (path: string, line: number): SearchHit => ({
+  path,
+  line,
+  col: 0,
+  len: 1,
+  text: "a line",
+});
+
+test("files rank by fuzzy score and accept opens the file with a jump", () => {
+  let s = run(indexed(), "file.find").state;
+  expect(s.overlay.kind).toBe("picker");
+  s = keys(s, "srd").state;
+  expect(picker(s).items[0]?.label).toBe("projects/so-roadmap.md");
+  expect(picker(s).total).toBe(3);
+  const r = keys(s, "<CR>");
+  expect(r.state.overlay.kind).toBe("none");
+  expect(r.effects).toContainEqual({
+    kind: "read",
+    path: "projects/so-roadmap.md",
+  });
+});
+
+test("grep searches once per settled query with the newest id", () => {
+  let s = run(indexed(), "search.grep").state;
+  const typed = keys(s, "a");
+  expect(typed.effects).toContainEqual({
+    kind: "startTimer",
+    id: "search",
+    ms: SEARCH_DEBOUNCE_MS,
+  });
+  expect(searches(typed.effects)).toEqual([]);
+  s = keys(typed.state, "b").state;
+  const r = update(s, SEARCH_TIMER);
+  expect(searches(r.effects)).toEqual([
+    {
+      kind: "search",
+      id: s.index.searchSeq + 1,
+      query: "ab",
+      limit: GREP_LIMIT,
+    },
+  ]);
+  expect(picker(r.state).search).toEqual({
+    id: s.index.searchSeq + 1,
+    pending: true,
+    capped: false,
+  });
+});
+
+test("results for an old search are dropped and large results are capped", () => {
+  let s = keys(run(indexed(), "search.grep").state, "a").state;
+  s = update(s, SEARCH_TIMER).state;
+  const first = picker(s).search?.id ?? -1;
+  s = keys(s, "b").state;
+  s = update(s, SEARCH_TIMER).state;
+  const newest = picker(s).search?.id ?? -1;
+  expect(newest).toBeGreaterThan(first);
+
+  const stale = update(s, {
+    type: "searchResults",
+    id: first,
+    hits: [hit("notes/plan.md", 0)],
+    capped: false,
+  }).state;
+  expect(picker(stale).items).toEqual([]);
+
+  const hits = Array.from({ length: GREP_LIMIT }, (_, i) =>
+    hit("notes/plan.md", i),
+  );
+  const done = update(s, {
+    type: "searchResults",
+    id: newest,
+    hits,
+    capped: true,
+  }).state;
+  expect(picker(done).items).toHaveLength(GREP_LIMIT);
+  expect(picker(done).search).toEqual({
+    id: newest,
+    pending: false,
+    capped: true,
+  });
+  expect(picker(done).items[0]).toMatchObject({
+    label: "notes/plan.md:1  a line",
+    matches: [17],
+    path: "notes/plan.md",
+    line: 0,
+  });
+});
+
+test("an empty query searches nothing", () => {
+  let s = keys(run(indexed(), "search.grep").state, "a").state;
+  s = keys(s, "<BS>").state;
+  const r = update(s, SEARCH_TIMER);
+  expect(searches(r.effects)).toEqual([]);
+  expect(picker(r.state).items).toEqual([]);
+});
+
+test("preview loads only at 100 columns or wider", () => {
+  const narrow = run(indexed(PREVIEW_MIN_COLS - 1), "file.find");
+  expect(narrow.effects.some((e) => e.kind === "readPreview")).toBe(false);
+  expect(picker(narrow.state).preview).toBeUndefined();
+
+  const wide = run(indexed(120), "file.find");
+  const read = wide.effects.find((e) => e.kind === "readPreview");
+  expect(read).toEqual({
+    kind: "readPreview",
+    id: picker(wide.state).preview?.id ?? -1,
+    path: "notes/ideas.md",
+  });
+
+  // Moving the selection makes the earlier read stale.
+  const moved = keys(wide.state, "<C-n>").state;
+  const late = update(moved, {
+    type: "previewLoaded",
+    id: picker(wide.state).preview?.id ?? -1,
+    path: "notes/ideas.md",
+    result: textFile("# Ideas\n"),
+  }).state;
+  expect(picker(late).preview?.file).toBeUndefined();
+  const fresh = update(moved, {
+    type: "previewLoaded",
+    id: picker(moved).preview?.id ?? -1,
+    path: picker(moved).preview?.path ?? "",
+    result: { refused: "binary" },
+  }).state;
+  expect(picker(fresh).preview?.refused).toBe("binary");
+});
+
+test("recent hides removed files", () => {
+  let s = indexed(120, ["a.md", "b.md"]);
+  s = { ...s, recent: ["gone.md", "b.md", "a.md"] };
+  s = run(s, "file.recent").state;
+  expect(picker(s).items.map((i) => i.label)).toEqual(["b.md", "a.md"]);
+});
+
+test("the palette ranks commands by title for the active file type", () => {
+  let s = update(indexed(), {
+    type: "fileLoaded",
+    path: "notes/plan.md",
+    file: textFile("# Plan\n"),
+  }).state;
+  s = keys(run(s, "command.palette").state, "jump").state;
+  expect(s.overlay.kind).toBe("palette");
+  expect(
+    picker(s)
+      .items.map((i) => i.label)
+      .slice(0, 3),
+  ).toEqual(["Jump list", "Jump to newer position", "Jump to older position"]);
+  const r = keys(s, "<Esc>");
+  expect(r.state.overlay.kind).toBe("none");
+});
+
+test("help lists bindings with their commands", () => {
+  const s = run(indexed(), "help.keymap").state;
+  expect(s.overlay.kind).toBe("help");
+  expect(picker(s).items.map((i) => i.label)).toContainEqual(
+    "<leader>ff  Find file",
+  );
+});
+
+test("an unavailable index shows the error row", () => {
+  const s = update(indexed(), {
+    type: "indexFailed",
+    final: true,
+    reason: "crash",
+  }).state;
+  expect(picker(run(s, "search.grep").state).error).toBe("index unavailable");
+});

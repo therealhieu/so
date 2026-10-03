@@ -10,6 +10,7 @@ import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
 import { keymapFor, keyScope } from "./keymap";
+import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
@@ -38,6 +39,10 @@ export function handleKeyAction(
       return promptKey(s, a.key, a.now);
     case "whichKey":
       return whichKeyKey(s, a, reg);
+    case "picker":
+    case "palette":
+    case "help":
+      return pickerKey(s, a, reg);
   }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);

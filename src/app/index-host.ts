@@ -1,4 +1,4 @@
-import type { Action, FileEvent } from "../core/state/types";
+import type { Action, Effect, FileEvent } from "../core/state/types";
 import type { FromWorker, ToWorker } from "../workspace/index-worker";
 import type { Logger } from "../workspace/log";
 
@@ -7,6 +7,8 @@ export type IndexHost = {
   start(root: string, ignore: string[]): void;
   /** Forward a watcher event, so other programs' changes reach the index. */
   notify(e: FileEvent): void;
+  /** Search the worker's texts; answers one `searchResults`, empty while the worker is down. */
+  search(e: Extract<Effect, { kind: "search" }>): void;
   stop(): void;
 };
 
@@ -77,7 +79,14 @@ export function createIndexHost(d: {
           ms: Math.round(performance.now() - startedAt),
         });
         d.dispatch({ type: "indexReady" });
-      } else if (m.t === "error") crashed(m.message);
+      } else if (m.t === "results")
+        d.dispatch({
+          type: "searchResults",
+          id: m.id,
+          hits: m.hits,
+          capped: m.capped ?? false,
+        });
+      else if (m.t === "error") crashed(m.message);
     };
     w.addEventListener("error", (e) => crashed(e.message || "worker error"));
     w.addEventListener("close", () => crashed("worker exited"));
@@ -94,6 +103,19 @@ export function createIndexHost(d: {
     notify(e) {
       if (e.kind === "removed") send({ t: "removed", paths: [e.path] });
       else if (!e.isDir) send({ t: "changed", paths: [e.path] });
+    },
+    search(e) {
+      if (worker === undefined) {
+        d.dispatch({
+          type: "searchResults",
+          id: e.id,
+          hits: [],
+          capped: false,
+        });
+        return;
+      }
+      const { kind: _, ...rest } = e;
+      send({ t: "search", ...rest });
     },
     stop() {
       stopped = true;

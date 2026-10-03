@@ -155,6 +155,7 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   floatSel: ["fg", "bg-sel", 0, INVERSE],
   floatKey: ["kw", "bg-float", BOLD, BOLD],
   floatGroup: ["fn", "bg-float", 0, 0],
+  floatMatch: ["fg", "match-bg", UNDERLINE, UNDERLINE],
   floatWarn: ["warn", "bg-float", 0, 0],
   floatError: ["error", "bg-float", BOLD, BOLD],
   toastInfo: ["ok", "bg-float", 0, 0],
