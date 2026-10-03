@@ -31,8 +31,6 @@ export type Motion = (
   ctx: MotionCtx,
 ) => MotionResult | null;
 
-const TABSTOP = 8;
-
 // --- Columns -----------------------------------------------------------------
 
 const isHigh = (s: string, i: number) => {
@@ -53,25 +51,33 @@ export const prevCol = (s: string, col: number) =>
 export const lastCol = (s: string) =>
   s.length === 0 ? 0 : prevCol(s, s.length);
 
-/** Display column where the character at `col` starts (tabs expand to 8). */
-function displayCol(s: string, col: number): number {
+/** Display column where the character at `col` starts (tabs reach the next multiple of `tabWidth`). */
+function displayCol(s: string, col: number, tabWidth: number): number {
   let v = 0;
   for (let i = 0; i < col && i < s.length; i = nextCol(s, i))
-    v = s[i] === "\t" ? v + TABSTOP - (v % TABSTOP) : v + 1;
+    v = s[i] === "\t" ? v + tabWidth - (v % tabWidth) : v + 1;
   return v;
 }
 
 /** Display column of a Normal-mode cursor (the end of a tab, like Vim). */
-export function cursorDisplayCol(s: string, col: number): number {
-  const v = displayCol(s, col);
-  return s[col] === "\t" ? v + TABSTOP - (v % TABSTOP) - 1 : v;
+export function cursorDisplayCol(
+  s: string,
+  col: number,
+  tabWidth: number,
+): number {
+  const v = displayCol(s, col, tabWidth);
+  return s[col] === "\t" ? v + tabWidth - (v % tabWidth) - 1 : v;
 }
 
 /** The character column covering display column `want`, or the last character. */
-export function colForDisplay(s: string, want: number): number {
+export function colForDisplay(
+  s: string,
+  want: number,
+  tabWidth: number,
+): number {
   let v = 0;
   for (let i = 0; i < s.length; i = nextCol(s, i)) {
-    const w = s[i] === "\t" ? TABSTOP - (v % TABSTOP) : 1;
+    const w = s[i] === "\t" ? tabWidth - (v % tabWidth) : 1;
     if (v + w > want) return i;
     v += w;
   }
@@ -252,8 +258,9 @@ const vertical = (
   buf: TextBuffer,
   line: number,
   want: number,
+  tabWidth: number,
 ): MotionResult => ({
-  to: { line, col: colForDisplay(buf.line(line), want) },
+  to: { line, col: colForDisplay(buf.line(line), want, tabWidth) },
   linewise: true,
   inclusive: false,
   want,
@@ -378,7 +385,7 @@ const percent: Motion = (buf, at, count, ctx) => {
       0,
       Math.floor((count * buf.lineCount + 99) / 100) - 1,
     );
-    return vertical(buf, line, ctx.want);
+    return vertical(buf, line, ctx.want, ctx.env.tabWidth);
   }
   const s = buf.line(at.line);
   let col = at.col;
@@ -428,7 +435,7 @@ function window(which: "H" | "M" | "L"): Motion {
         : which === "L"
           ? Math.max(bottom - count + 1, top)
           : top + Math.floor((bottom - top) / 2);
-    return vertical(buf, line, ctx.want);
+    return vertical(buf, line, ctx.want, ctx.env.tabWidth);
   };
 }
 
@@ -442,7 +449,7 @@ function scroll(dir: 1 | -1): Motion {
       buf.lineCount - 1,
       Math.max(0, at.line + dir * amount),
     );
-    return vertical(buf, line, ctx.want);
+    return vertical(buf, line, ctx.want, ctx.env.tabWidth);
   };
 }
 
@@ -488,11 +495,16 @@ export const motions: Record<string, Motion> = {
   j: (buf, at, count, ctx) =>
     at.line >= buf.lineCount - 1
       ? null
-      : vertical(buf, Math.min(buf.lineCount - 1, at.line + count), ctx.want),
+      : vertical(
+          buf,
+          Math.min(buf.lineCount - 1, at.line + count),
+          ctx.want,
+          ctx.env.tabWidth,
+        ),
   k: (buf, at, count, ctx) =>
     at.line === 0
       ? null
-      : vertical(buf, Math.max(0, at.line - count), ctx.want),
+      : vertical(buf, Math.max(0, at.line - count), ctx.want, ctx.env.tabWidth),
   w: wordMotion(false),
   W: wordMotion(true),
   b: backMotion(false),
@@ -524,12 +536,14 @@ export const motions: Record<string, Motion> = {
       buf,
       ctx.hasCount ? Math.min(count, buf.lineCount) - 1 : buf.lineCount - 1,
       ctx.want,
+      ctx.env.tabWidth,
     ),
   gg: (buf, _at, count, ctx) =>
     vertical(
       buf,
       ctx.hasCount ? Math.min(count, buf.lineCount) - 1 : 0,
       ctx.want,
+      ctx.env.tabWidth,
     ),
   f: (buf, at, count, ctx) =>
     ctx.char ? find(buf, at, count, "f", ctx.char, false) : null,

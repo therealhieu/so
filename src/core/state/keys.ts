@@ -4,7 +4,7 @@ import { handleKey } from "../kernel/vim/engine";
 import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
-import type { VimEffect, VimState } from "../kernel/vim/types";
+import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
 import { activeBuffer, activeWindow, setBuffer } from "./buffers";
 import { EX_ALIASES, executeEx, runCommand } from "./commands";
 import { resolveConflict } from "./disk";
@@ -127,10 +127,11 @@ export function cmdlineCompletions(
   return exCompletions(typed, [...FULL_EX_NAMES, ...ids]);
 }
 
-/** The active window's viewport: the statusline and command line take two rows. */
-const envOf = (s: AppState, w: WindowState) => ({
+/** The active window's viewport (the statusline and command line take two rows) and tab width. */
+const envOf = (s: AppState, w: WindowState): VimEnv => ({
   topLine: w.content.scroll,
   rows: Math.max(1, s.terminal.rows - 2),
+  tabWidth: s.config.editor.tabWidth,
 });
 
 /** Feed one key to the engine for the active buffer and apply its effects. */

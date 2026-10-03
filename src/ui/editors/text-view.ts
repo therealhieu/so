@@ -144,10 +144,11 @@ export class EditorView extends Renderable {
     if (line >= this.topLine && line < this.topLine + coreRows)
       this.topLine = Math.max(this.topLine, line - rows + 1);
     const text = b.text.line(Math.min(line, b.text.lineCount - 1));
+    const tabWidth = s.config.editor.tabWidth;
     const dc =
       s.vim.mode === "insert"
-        ? cursorDisplayCol(text.slice(0, col), col)
-        : cursorDisplayCol(text, col);
+        ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
+        : cursorDisplayCol(text, col, tabWidth);
     const textW = Math.max(1, r.w - GUTTER);
     this.leftCol = dc >= textW ? dc - textW + 1 : 0;
     const visible = line >= this.topLine && line < this.topLine + rows;

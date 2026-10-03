@@ -26,7 +26,7 @@ const recording: { nvim: string; cases: Recorded[] } = await Bun.file(
 ).json();
 
 // Headless Neovim: 24 lines minus statusline and command line.
-const ENV: VimEnv = { topLine: 0, rows: 22 };
+const ENV: VimEnv = { topLine: 0, rows: 22, tabWidth: 8 };
 const MODES: Record<string, string> = {
   n: "normal",
   i: "insert",
