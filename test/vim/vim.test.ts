@@ -7,6 +7,9 @@ import { splitKeys } from "../../src/core/kernel/vim/keys";
 import type { VimSession } from "../../src/core/kernel/vim/operators";
 import { searchError } from "../../src/core/kernel/vim/search";
 import type { VimEffect, VimEnv } from "../../src/core/kernel/vim/types";
+import type { AppState } from "../../src/core/state/types";
+import { createUpdate } from "../../src/core/state/update";
+import { fresh, testRegistries, textFile } from "../support/state";
 import { cases, type VimCase } from "./cases";
 
 type Recorded = VimCase & {
@@ -42,17 +45,43 @@ function session(c: VimCase): VimSession {
   };
 }
 
-function replay(c: VimCase) {
-  let s = session(c);
-  for (const key of splitKeys(c.keys)) s = handleKey(s, key, ENV).s;
-  const lines = Array.from({ length: s.text.lineCount }, (_, i) =>
-    s.text.line(i),
-  );
+const update = createUpdate(testRegistries());
+
+/** The case's text open in a 24-row terminal (22 text rows), cursor placed. */
+function caseState(c: VimCase): AppState {
+  const s = update(fresh(), {
+    type: "fileLoaded",
+    path: "case.txt",
+    file: textFile(`${c.before.lines.join("\n")}\n`),
+  }).state;
+  const w = s.windows.byId[s.windows.active];
+  if (w === undefined) throw new Error("no window");
   return {
-    lines,
-    cursor: s.cursor,
+    ...s,
+    windows: {
+      ...s.windows,
+      byId: {
+        ...s.windows.byId,
+        [w.id]: { ...w, content: { ...w.content, cursor: c.before.cursor } },
+      },
+    },
+  };
+}
+
+/** Replay the case's keys through the reducer, as the shell dispatches them. */
+function replay(c: VimCase) {
+  let s = caseState(c);
+  for (const key of splitKeys(c.keys))
+    s = update(s, { type: "key", key, now: 0 }).state;
+  const w = s.windows.byId[s.windows.active];
+  const b = w && s.buffers[w.content.bufferId];
+  if (b === undefined) throw new Error("no buffer");
+  expect(s.notifications.toasts).toEqual([]);
+  return {
+    lines: Array.from({ length: b.text.lineCount }, (_, i) => b.text.line(i)),
+    cursor: w?.content.cursor,
     mode: s.vim.mode,
-    regs: Object.fromEntries(s.registers.entries()),
+    regs: Object.fromEntries(s.vim.registers.entries()),
   };
 }
 
@@ -75,14 +104,10 @@ test("recording metadata matches cases", () => {
   expect(recording.cases.map((c) => c.id)).toEqual(cases.map((c) => c.id));
 });
 
-for (const c of recording.cases) {
-  // Ex commands are executed by core/state, so they replay through the store.
-  if (c.keys.startsWith(":")) test.todo(`matches Neovim: ${c.id}`, () => {});
-  else
-    test(`matches Neovim: ${c.id}`, () => {
-      expect(replay(c)).toEqual(kernelView(c.after));
-    });
-}
+for (const c of recording.cases)
+  test(`matches Neovim: ${c.id}`, () => {
+    expect(replay(c)).toEqual(kernelView(c.after));
+  });
 
 // The engine emits the search; core/state shows `searchError` in the message line.
 test("a failed search reports E486 for its pattern", () => {

@@ -1,4 +1,4 @@
-import { buffersUnder, removeBuffer } from "./buffers";
+import { buffersUnder, openPath, removeBuffer } from "./buffers";
 import { markDeleted } from "./disk";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
@@ -8,6 +8,7 @@ import type {
   Effect,
   ExplorerState,
   FsOp,
+  PromptState,
   Result,
 } from "./types";
 
@@ -195,4 +196,164 @@ export function toggleExplorer(s: AppState): Result {
   return ex.entries[""] === undefined
     ? { state: opened, effects: [{ kind: "listDir", dir: "" }] }
     : none(opened);
+}
+
+const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
+const join = (dir: string, name: string) =>
+  dir === "" ? name : `${dir}/${name}`;
+
+const kindOf = (s: AppState, path: string) =>
+  s.panels.explorer.entries[dirname(path)]?.find(
+    (e) => e.name === basename(path),
+  )?.kind;
+
+/** Paths shown in the tree, top to bottom. */
+function visiblePaths(s: AppState, dir = ""): string[] {
+  const ex = s.panels.explorer;
+  return (ex.entries[dir] ?? []).flatMap((e) => {
+    const path = join(dir, e.name);
+    return e.kind === "dir" && ex.expanded.includes(path)
+      ? [path, ...visiblePaths(s, path)]
+      : [path];
+  });
+}
+
+/** `j` / `k`: move the selection through the visible tree. */
+export function moveCursor(s: AppState, delta: number): Result {
+  const paths = visiblePaths(s);
+  if (paths.length === 0) return none(s);
+  const at = paths.indexOf(s.panels.explorer.cursor);
+  const next = Math.max(0, Math.min(paths.length - 1, at + delta));
+  return none(setExplorer(s, { cursor: paths[next] ?? "" }));
+}
+
+function expand(s: AppState, dir: string): Result {
+  if (s.panels.explorer.expanded.includes(dir)) return none(s);
+  return {
+    state: setExplorer(s, { expanded: [...s.panels.explorer.expanded, dir] }),
+    effects: [{ kind: "listDir", dir }],
+  };
+}
+
+/** `l`: expand the selected folder, or open the selected file. */
+export function expandOrOpen(s: AppState, now: number): Result {
+  const path = s.panels.explorer.cursor;
+  const kind = kindOf(s, path);
+  if (kind === "dir") return expand(s, path);
+  return kind === "file" ? openPath(s, path, now) : none(s);
+}
+
+/** `Enter`: toggle the selected folder, or open the selected file. */
+export function openSelected(s: AppState, now: number): Result {
+  const path = s.panels.explorer.cursor;
+  if (kindOf(s, path) === "dir" && s.panels.explorer.expanded.includes(path))
+    return collapse(s);
+  return expandOrOpen(s, now);
+}
+
+/** `h`: collapse the selected folder, or select its parent. */
+export function collapse(s: AppState): Result {
+  const ex = s.panels.explorer;
+  if (ex.expanded.includes(ex.cursor))
+    return none(
+      setExplorer(s, { expanded: ex.expanded.filter((d) => d !== ex.cursor) }),
+    );
+  const parent = dirname(ex.cursor);
+  return parent === "" ? none(s) : none(setExplorer(s, { cursor: parent }));
+}
+
+const openPrompt = (s: AppState, prompt: PromptState): Result =>
+  none({ ...s, overlay: { kind: "prompt", prompt } });
+
+/** `a r m d`: open the prompt for an operation on the selection. */
+export function startOp(
+  s: AppState,
+  kind: "create" | "rename" | "move" | "delete",
+): Result {
+  const ex = s.panels.explorer;
+  const from = ex.cursor;
+  if (kind === "create") {
+    const folder = kindOf(s, from) === "dir" ? from : dirname(from);
+    const op: FsOp = { kind: "create", from: folder };
+    return openPrompt(s, {
+      kind: "input",
+      title: "New file or folder",
+      value: "",
+      op,
+    });
+  }
+  if (from === "") return none(s);
+  if (kind === "rename")
+    return openPrompt(s, {
+      kind: "input",
+      title: "Rename",
+      value: basename(from),
+      op: { kind: "rename", from },
+    });
+  if (kind === "move")
+    return openPrompt(s, {
+      kind: "input",
+      title: "Move to",
+      value: from,
+      op: { kind: "move", from },
+    });
+  return ex.trash === "available"
+    ? openPrompt(s, {
+        kind: "confirm",
+        title: "Move to Trash? [y/N]",
+        value: "",
+        op: { kind: "trash", from },
+      })
+    : openPrompt(s, {
+        kind: "typed",
+        title: `Delete permanently? Type ${basename(from)} to confirm`,
+        value: "",
+        op: { kind: "trash", from, permanent: true },
+      });
+}
+
+/** A key while a prompt is open: edit the field, submit, or cancel. */
+export function promptKey(s: AppState, key: string, now: number): Result {
+  if (s.overlay.kind !== "prompt") return none(s);
+  const p = s.overlay.prompt;
+  const closed: AppState = { ...s, overlay: { kind: "none" } };
+  if (key === "<Esc>") return none(closed);
+  if (p.kind === "confirm")
+    return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
+  if (key === "<CR>") return submit(closed, p, now);
+  const value =
+    key === "<BS>"
+      ? p.value.slice(0, -1)
+      : [...key].length === 1
+        ? p.value + key
+        : p.value;
+  return none({ ...s, overlay: { kind: "prompt", prompt: { ...p, value } } });
+}
+
+function submit(s: AppState, p: PromptState, now: number): Result {
+  const value = p.value.trim();
+  const { op } = p;
+  if (op.kind === "trash")
+    return value === basename(op.from)
+      ? explorerOp(s, op, now)
+      : none({
+          ...s,
+          overlay: { kind: "prompt", prompt: p },
+        });
+  if (value === "") return none(s);
+  if (op.kind === "create") {
+    const t = createTarget(value);
+    return explorerOp(
+      s,
+      { kind: "create", from: join(op.from, t.path), dir: t.dir },
+      now,
+    );
+  }
+  const to =
+    op.kind === "rename"
+      ? join(dirname(op.from), value)
+      : value.replace(/^\/+|\/+$/g, "");
+  return to === op.from
+    ? none(s)
+    : explorerOp(s, { kind: op.kind, from: op.from, to }, now);
 }

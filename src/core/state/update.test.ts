@@ -35,3 +35,25 @@ test("the store runs effects in order, then notifies subscribers once", () => {
   store.dispatch({ type: "resize", cols: 1, rows: 1 });
   expect(calls).toEqual(["read", "listDir", "notify", "read", "listDir"]);
 });
+
+test("a throwing command keeps the previous state and reports the error", () => {
+  const reg = testRegistries();
+  reg.commands.register({
+    id: "test.throw",
+    title: "Throw",
+    run: () => {
+      throw new Error("boom");
+    },
+  });
+  reg.keymap.bind({ mode: "normal" }, "Q", "test.throw");
+  const s = deepFreeze({
+    ...fresh(),
+    panels: { explorer: { ...fresh().panels.explorer, focused: false } },
+  });
+  const r = createUpdate(reg)(s, { type: "key", key: "Q", now: 0 });
+  expect(r.effects).toEqual([]);
+  expect(r.state).toEqual({
+    ...s,
+    notifications: { toasts: [{ id: 1, level: "error", text: "boom" }] },
+  });
+});

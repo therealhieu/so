@@ -8,6 +8,7 @@ import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onFileChanged } from "./disk";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
+import { handleKeyAction, onClipboardText } from "./keys";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
@@ -29,6 +30,10 @@ export function createUpdate(reg: Registries): Update {
   return (state, action) => {
     try {
       switch (action.type) {
+        case "key":
+          return handleKeyAction(state, action, reg);
+        case "clipboardText":
+          return onClipboardText(state, action, reg);
         case "fileLoaded":
           return onFileLoaded(state, action, reg);
         case "fileRefused":
@@ -51,9 +56,9 @@ export function createUpdate(reg: Registries): Update {
           return onResize(state, action);
         case "mouse":
           return onMouse(state, action.event);
-        default:
-          return none(state);
       }
+      const unhandled: never = action;
+      return unhandled;
     } catch (e) {
       return { state: notifyError(state, e), effects: [] };
     }

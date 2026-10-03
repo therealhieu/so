@@ -17,7 +17,7 @@ import type {
   SaveState,
 } from "./types";
 
-export const isConflicted = (s: AppState, id: BufferId): boolean =>
+const isConflicted = (s: AppState, id: BufferId): boolean =>
   s.overlay.kind === "conflict" && s.overlay.bufferId === id;
 
 /** The single save gate: dirty, present on disk, and not in a conflict. */
@@ -34,7 +34,7 @@ const e37 = (s: AppState, b: BufferState): Result =>
 const setSave = (s: AppState, id: BufferId, save: SaveState): AppState =>
   setBuffer(s, id, { save });
 
-export const retryDelay = (attempt: number): number =>
+const retryDelay = (attempt: number): number =>
   Math.min(1000 * 2 ** (attempt - 1), 30_000);
 
 /** Start (or restart) the autosave delay after an edit at `now`. */

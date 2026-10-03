@@ -10,6 +10,7 @@ import { UndoHistory } from "../../src/core/kernel/editor/undo";
 import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
+import { registerBuiltins } from "../../src/core/state/commands";
 import { initialState } from "../../src/core/state/init";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
@@ -27,6 +28,7 @@ export function testRegistries(): Registries {
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
   const commands: Registries["commands"] = new CommandRegistry();
+  registerBuiltins(commands);
   const keymap = new Keymap();
   for (const b of defaultBindings) keymap.bind(b.scope, b.seq, b.id);
   return {
