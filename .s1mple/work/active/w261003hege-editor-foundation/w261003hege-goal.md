@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G2 — remediation`
+- **Current Position:** `P2-G1 — implementation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -208,7 +208,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-1-toolchain-and-kernel.md`
 - **Dependencies:** None (execution prerequisites: Bun 1.4.2, Neovim v0.11.7 for recording)
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P1-G1 — Toolchain, Repository Policy, CI and Release Definitions
 
@@ -265,18 +265,18 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] `P1-G2-T5` — Add the kernel text view.
 - [x] `P1-G2-T6` — Add file types and windowed highlighting.
 - [x] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
+- [x] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
 - [x] Verification report persisted and separately committed.
 - [x] Verification report commit SHA recorded.
 - [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
@@ -284,10 +284,10 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - Initial implementation report commit: `074f392`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` — `Failed`: P1-G2-VER1 (Major, undo/redo cursor after `A`/`a`/`I`), P1-G2-VER2 (Minor, `layoutText` replace above viewport / multi-line inline replace), P1-G2-VER3 (Minor, E486 not produced)
 - Verification report commit: `4f078dd`
-- Remediation: assigned to a fresh `s1mple-implementer` (in progress)
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Remediation: `Completed` by a fresh `s1mple-implementer`; all three findings `Fixed`
+- Final implementation report commit: `874c7b0`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): P1-G2-VER1 → `bdc03cb` (T4 engine + T3 cases/`expected.json`, 289 cases re-recorded with 0.11.7, previous 279 byte-equal); P1-G2-VER2 → `0723afc` (T5); P1-G2-VER3 → `8ffe88b` (T4 `searchError`; display owned by P2-G1-T5)
+- Closure evidence: orchestrator validated report commits `074f392`, `4f078dd`, `874c7b0` (each report-only); verification report unchanged since `4f078dd`; working tree clean; rerun `bun test src test/vim scripts/record-vim.test.ts test/boundaries.test.ts` → 326 tests, 0 fail, 4 todo (ex cases for P2-G1-T5). Accepted 2026-10-03.
 
 **Task Commit Evidence:**
 
@@ -295,20 +295,20 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 |---|---|
 | `P1-G2-T1` | `cf6bff4` |
 | `P1-G2-T2` | `2ba5137` |
-| `P1-G2-T3` | `b1cfdc3`, follow-up `36bc56e` |
-| `P1-G2-T4` | `76f2814` |
-| `P1-G2-T5` | `ed29491` |
+| `P1-G2-T3` | `b1cfdc3`, follow-ups `36bc56e`, `bdc03cb` |
+| `P1-G2-T4` | `76f2814`, remediation `bdc03cb`, `8ffe88b` |
+| `P1-G2-T5` | `ed29491`, remediation `0723afc` |
 | `P1-G2-T6` | `a17718b` |
 
 ### Part 2 — Core State and Workspace
 
 - **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-2-core-state-and-workspace.md`
 - **Dependencies:** Part 1
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P2-G1 — Protocol, Store, and Reducers
 
-- [ ] Context and dependencies confirmed (Part 1 accepted).
+- [x] Context and dependencies confirmed (Part 1 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P2-G1-T1` — Define the DI1 protocol, store, and reducer shell.
 - [ ] `P2-G1-T2` — Implement autosave, retry, quit, and close reducers.
@@ -475,7 +475,7 @@ Append checks as boundaries are reached. An unresolved relevant change blocks af
 | Gate source and due boundary | Producer output / baseline | Actual evidence | Result |
 |---|---|---|---|
 | G1 — `…phase-1…md:73`; due before RM261003ABZP-DI2@R2 execution (outside this goal); P1-G1 outputs | `bun run check`, `ci.yml` (V1.1, V1.2, V15.1) | `package.json` `check` script, `.github/workflows/ci.yml`; V1.1/V1.2/V15.1 pass (`p1-g1-verification-report.md`, `49720d0`); knip interim findings only | Produced locally; GitHub run pending P3-G1-T7 |
-| G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `Pending implementation` | `Pending implementation` |
+| G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `src/core/kernel/{commands,view}/**`, `src/core/filetypes/registry.ts`, `src/core/lang/code/highlight.ts`; verifier judged no shape change material to G1/parent contracts (`p1-g2-verification-report.md`, `4f078dd`); `layoutText` fixed `0723afc` | Produced locally |
 | G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `Pending implementation` | `Pending implementation` |
 | G1 — P2-G2 outputs | `readTextFile`, `atomicWrite`, watcher, effect runner (V3.1–V3.4, V5.1, V6.4–V6.5) | `Pending implementation` | `Pending implementation` |
 | G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | `Pending implementation` | `Pending implementation` — final gate status is `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
@@ -682,6 +682,8 @@ Work: W261003HEGE — editor-foundation
 - **Manual Evidence:** `Pending implementation` (V1.4, V11.4, V16.2 reviews; V15.2, V15.3, V16.1 GitHub evidence)
 
 ## Blockers and Deviations
+
+- **DEV2 — E486 display handoff to P2-G1-T5.** Location: `src/core/kernel/vim/search.ts` `searchError` (`8ffe88b`). Evidence: P1-G2-VER3 closure; `VimEffect` has no message variant, so the kernel exposes `searchError` and the existing `search` effect. Impact: P2-G1-T5 `applyVimEffects` maps the `search` effect through `searchError` to the message line, proved in `src/core/state/keys.test.ts`. Required resolution: passed to the P2-G1 assignment; verified in P2-G1.
 
 - **DEV1 — No work-process identifiers in code (user-approved, 2026-10-03).**
   - Location: `.s1mple/S1MPLE.md` §3 Implementation (commit `59dff86`); plan previews that name tests `"V<id> …"` (e.g. `w261003hege-plan-1-toolchain-and-kernel.md:177`) and every `-t V<id>` command in plan parts and this goal's Verification Cases.
