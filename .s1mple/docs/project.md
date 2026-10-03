@@ -151,7 +151,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `openFile` | 50 | `open-file.bench.ts` — a 5,000-line note to its first frame |
   | `firstFrame` | 200 | `startup.bench.ts --metric firstFrame` — spawn to the first statusline, 10,000 notes, in a PTY |
   | `indexReady` | 3000 | `startup.bench.ts --metric indexReady` — spawn to `◆ index ready` |
-  | `indexingKeystrokeP95` | 16 | `indexing-keystroke.bench.ts` — 200 keys while the real worker scans 10,000 notes |
+  | `indexingKeystrokeP95` | 16 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 10,000 notes |
 
 - **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `main` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
 - **Release:** `release-please.yml` (push to `main`) opens release PRs and calls `release.yml` when a release is created; `release.yml` also runs on `v*` tags. It builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes only after every smoke job passes. Tags containing `-` publish as prereleases.
