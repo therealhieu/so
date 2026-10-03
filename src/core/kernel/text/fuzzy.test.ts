@@ -29,20 +29,28 @@ test("word starts outrank scattered matches", () => {
   expect(fuzzyScore("fooBar", "fb")?.score).toBe(51);
 });
 
-test("a command query ranks the consecutive word-start match first", () => {
-  expect(
-    ranked(
-      [
-        "buffer.prev",
-        "search.backlinks",
-        "command.palette",
-        "link.backlinks",
-        "file.recent",
-        "link.follow",
-      ],
-      "back",
-    ),
-  ).toEqual(["link.backlinks", "search.backlinks"]);
+test("a command query ranks the backlinks panel title first", () => {
+  const titles = [
+    "Follow link",
+    "Toggle backlinks panel",
+    "Link this mention",
+    "Toggle outline",
+    "Headings in note",
+    "Search backlinks of this note",
+    "Tags",
+    "Rename (update links)",
+    "Move (update links)",
+    "Save file",
+    "Jump to older position",
+    "Jump to newer position",
+    "Jump list",
+    "Previous buffer",
+    "Command palette",
+  ];
+  expect(ranked(titles, "back")).toEqual([
+    "Toggle backlinks panel",
+    "Search backlinks of this note",
+  ]);
 });
 
 test("an uppercase letter makes the query case-sensitive", () => {
