@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G1 — verification`
+- **Current Position:** `P1-G2 — implementation`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -220,29 +220,29 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] `P1-G1-T4` — Enforce layer boundaries.
 - [x] `P1-G1-T5` — Record the toolchain in project docs.
 - [x] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
+- [x] Task-level and group-level checks passed.
 - [x] Initial implementation report persisted and separately committed.
 - [x] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
 - Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` — `Completed` (`bun run check` stops only at interim-allowed knip unused deps: lowlight, zod, ignore, @opentui/core, @xterm/headless)
 - Initial implementation report commit: `51c6474`
-- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-verification-report.md` — `Passed`, no findings
+- Verification report commit: `49720d0`
+- Remediation: Not required — verification `Passed` with no outstanding items
+- Final implementation report commit: `51c6474` (initial report remains final)
+- Remediation commits (finding/task → SHA(s) or justified no-change result): Not required
+- Closure evidence: orchestrator validated `51c6474` (report only) and `49720d0` (report only); task SHAs `39d0bcb`, `1af1c80`, `ef11166`, `643225a`, `6fda519`, `23bc489`; working tree clean. Accepted 2026-10-03.
 
 **Task Commit Evidence:**
 
@@ -256,7 +256,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 #### P1-G2 — Kernel, File Types, and Recorded Vim Table
 
-- [ ] Context and dependencies confirmed (P1-G1 accepted).
+- [x] Context and dependencies confirmed (P1-G1 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P1-G2-T1` — Add text buffer and editor primitives.
 - [ ] `P1-G2-T2` — Add command registry, keymap, and default bindings.
@@ -474,7 +474,7 @@ Append checks as boundaries are reached. An unresolved relevant change blocks af
 
 | Gate source and due boundary | Producer output / baseline | Actual evidence | Result |
 |---|---|---|---|
-| G1 — `…phase-1…md:73`; due before RM261003ABZP-DI2@R2 execution (outside this goal); P1-G1 outputs | `bun run check`, `ci.yml` (V1.1, V1.2, V15.1) | `Pending implementation` | `Pending implementation` |
+| G1 — `…phase-1…md:73`; due before RM261003ABZP-DI2@R2 execution (outside this goal); P1-G1 outputs | `bun run check`, `ci.yml` (V1.1, V1.2, V15.1) | `package.json` `check` script, `.github/workflows/ci.yml`; V1.1/V1.2/V15.1 pass (`p1-g1-verification-report.md`, `49720d0`); knip interim findings only | Produced locally; GitHub run pending P3-G1-T7 |
 | G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `Pending implementation` | `Pending implementation` |
 | G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `Pending implementation` | `Pending implementation` |
 | G1 — P2-G2 outputs | `readTextFile`, `atomicWrite`, watcher, effect runner (V3.1–V3.4, V5.1, V6.4–V6.5) | `Pending implementation` | `Pending implementation` |
