@@ -50,7 +50,7 @@ key → src/ui (normalize) → store.dispatch(action) → core update(state, act
                                               result actions ◄── src/workspace (fs, trash, clipboard)
 ```
 
-`update` is pure and synchronous; adapters only execute effects and report results as actions.
+`update` is pure and synchronous; adapters only execute effects and report results as actions. Saves are atomic (private `0600` temp file, fsync, rename) and keep mode, BOM, line endings, and the trailing newline; the watcher ignores the app's own operations.
 
 ## Boundaries and Dependencies
 
@@ -69,7 +69,13 @@ only src/ui imports @opentui/*
 
 - **Data Ownership and Storage:** Notes are plain files in the user's workspace folder, read and written as-is. No database.
 
-Contracts are defined in the current work's system design until the code lands.
+| Contract | Source of truth |
+|---|---|
+| App state, actions, effects (one-way protocol) | `src/core/state/types.ts` — `AppState`, `Action`, `Effect`, `FsOp`; `createUpdate` in `src/core/state/update.ts`, `createStore` in `src/core/state/store.ts` |
+| Editor kernel | `src/core/kernel/{text,editor,vim,commands,view}` — text buffer, vim engine (`handleKey`), `CommandRegistry`, `Keymap`, `layoutText` and decorations |
+| File types and highlighting | `src/core/filetypes/registry.ts` (`FileTypeRegistry`), `src/core/lang/code` (language table, `lowlightHighlighter`), `src/core/lang/markdown/file-type.ts` |
+| Effect execution | `src/app/effects.ts` — one serial file-system queue; writes queued behind a rename, move, or trash of their path follow it |
+| Vim behaviour | `test/vim/expected.json`, recorded from Neovim 0.11.x over RPC by `bun run record:vim` |
 
 ## Engineering Standards and Patterns
 
@@ -86,7 +92,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
 
 ## Development and Verification
 
-- **Local Setup:** install Bun `1.4.2`, then `bun install --frozen-lockfile`. Run with `bun run dev` (no build step).
+- **Local Setup:** install Bun `1.4.2`, then `bun install --frozen-lockfile`. Run with `bun run dev` (no build step). `NO_COLOR` disables colour. `so --version` prints `package.json` `version`, or `SO_VERSION` when set at build time (release builds). PTY tests set `SO_TEST=1`, which alone enables the test-only hooks `SO_TEST_SLOW_WRITE` and `SO_TEST_THROW` in `src/app/main.ts`.
 - **Scripts:**
 
   | Script | Command | Purpose |
@@ -113,5 +119,5 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
 
 ## Sources and Open Questions
 
-- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`; current work system design (DES1, DES14, DES15).
+- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`, `src/core/state/types.ts`, `src/app/{main,effects}.ts`; initiative design `rm261003abzp-design.md`.
 - **Open Questions:** None.
