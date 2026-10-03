@@ -1,3 +1,7 @@
+import { statSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import xterm from "@xterm/headless";
 import type { Terminal as PtyTerminal, Subprocess } from "bun";
 
@@ -59,6 +63,8 @@ export type PtyOptions = {
 export type PtyProcess = {
   proc: Subprocess;
   probe: TerminalProbe;
+  /** The name of the file the app was started on, if it was started on one. */
+  file: string | undefined;
   /** Write bytes to the terminal as typed input. */
   type(s: string): void;
   /** The emulator's visible screen as text. */
@@ -90,6 +96,19 @@ function screenText(term: xterm.Terminal): string {
   return lines.join("\n");
 }
 
+/**
+ * The file named by the app's last argument, when it is one. `argv` starts
+ * with Bun and the entry script, or with a compiled binary.
+ */
+function startFile(argv: string[]): string | undefined {
+  const args = argv.slice(argv[0] === process.execPath ? 2 : 1);
+  const last = args.at(-1);
+  if (last === undefined) return undefined;
+  return statSync(last, { throwIfNoEntry: false })?.isFile()
+    ? basename(last)
+    : undefined;
+}
+
 /** Run `argv` in a pseudo-terminal rendered by a headless xterm. */
 export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const cols = o.cols ?? 100;
@@ -97,8 +116,15 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const term = new xterm.Terminal({ cols, rows, allowProposedApi: true });
   const probe = new TerminalProbe();
   let done = false;
+  // The session state file goes to a private folder, never the user's.
+  const state = await mkdtemp(join(tmpdir(), "so-pty-state-"));
   const proc = Bun.spawn(argv, {
-    env: { ...process.env, TERM: "xterm-256color", ...o.env },
+    env: {
+      ...process.env,
+      TERM: "xterm-256color",
+      XDG_STATE_HOME: state,
+      ...o.env,
+    },
     terminal: {
       cols,
       rows,
@@ -117,6 +143,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const pty: PtyProcess = {
     proc,
     probe,
+    file: startFile(argv),
     type: (s) => proc.terminal?.write(s),
     screen: () => screenText(term),
     async waitFor(pred, ms = 5000) {
@@ -128,7 +155,13 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
     },
     exited: () => done,
   };
-  await o.script(pty);
+  try {
+    await o.script(pty);
+  } catch (e) {
+    proc.kill("SIGKILL");
+    await rm(state, { recursive: true, force: true });
+    throw e;
+  }
   const exitCode = await proc.exited;
   await Bun.sleep(50);
   // Flush pending writes into the emulator before reading its state.
@@ -137,6 +170,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const buffer = term.buffer.active.type;
   proc.terminal?.close();
   term.dispose();
+  await rm(state, { recursive: true, force: true });
   return {
     exitCode,
     probe,
@@ -148,6 +182,19 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   };
 }
 
-/** The first frame is painted and the kitty keyboard mode is on. */
+/** The statusline: the second-to-last row of the screen. */
+export const statusRow = (p: PtyProcess): string =>
+  p.screen().split("\n").at(-2) ?? "";
+
+/**
+ * The first frame is painted, the kitty keyboard mode is on, and a file the
+ * app was started on is shown. The file is read after the first frame, so
+ * keys typed before it is shown would reach the explorer.
+ */
 export const ready = (p: PtyProcess): Promise<void> =>
-  p.waitFor(() => p.probe.kittyPushed && p.screen().includes("NOTES"));
+  p.waitFor(
+    () =>
+      p.probe.kittyPushed &&
+      p.screen().includes("NOTES") &&
+      (p.file === undefined || statusRow(p).includes(p.file)),
+  );

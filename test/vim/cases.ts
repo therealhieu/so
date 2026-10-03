@@ -402,4 +402,16 @@ export const cases: VimCase[] = [
     before: at(SEARCH, 0, 4),
     keys: ":%s/cat/dog/g<CR>",
   },
+
+  // Jump list (executed by core/state)
+  { id: "jump-G-back", before: at(PROSE, 0, 4), keys: "G<C-o>" },
+  { id: "jump-gg-back-forward", before: at(PROSE, 2, 6), keys: "gg<C-o><C-i>" },
+  { id: "jump-search-back", before: at(PROSE, 0, 4), keys: "/two<CR><C-o>" },
+  {
+    id: "jump-n-N-back-twice",
+    before: at(SEARCH, 0, 0),
+    keys: "/cat<CR>nN<C-o><C-o>",
+  },
+  { id: "jump-paragraph-back", before: at(PARAGRAPHS, 0, 1), keys: "}<C-o>" },
+  { id: "jump-operator-dG-back", before: at(FORTY, 2, 0), keys: "jjdG<C-o>" },
 ];

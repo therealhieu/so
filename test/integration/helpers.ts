@@ -3,13 +3,20 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
+import { createIndexHost, type IndexHost } from "../../src/app/index-host";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
 import { initialState } from "../../src/core/state/init";
+import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
 import type { Action, BufferState, Effect } from "../../src/core/state/types";
 import { createUpdate } from "../../src/core/state/update";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
+import { createLogger } from "../../src/workspace/log";
+import {
+  readStateFile,
+  saveStateFileSync,
+} from "../../src/workspace/state-file";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
@@ -67,6 +74,8 @@ export type App = {
   text(path: string): string | undefined;
   /** Focus the explorer and move its selection to `path`. */
   select(path: string): void;
+  /** The index host, when the app was started with one. */
+  index?: IndexHost;
   stop(): void;
 };
 
@@ -76,7 +85,19 @@ export type App = {
  */
 export async function startApp(
   root: string,
-  opts: { trash?: Trash } = {},
+  opts: {
+    trash?: Trash;
+    /** Run the real index host and worker; `spawn` may wrap the worker. */
+    index?: { spawn?: () => Worker };
+    /** The environment the debug log reads (`SO_LOG`, `XDG_STATE_HOME`). */
+    env?: Record<string, string>;
+    /**
+     * The session state file, loaded before the first listing as `main`
+     * does; `restore` is a start on the folder. The `exit` effect and
+     * `stop` save it, as the lifecycle does on every shutdown path.
+     */
+    state?: { path: string; restore: boolean };
+  } = {},
 ): Promise<App> {
   const actions: Action[] = [];
   const effects: Effect[] = [];
@@ -88,6 +109,7 @@ export async function startApp(
     }
   });
   const ownOps = createOwnOps();
+  const logger = createLogger(opts.env ?? {}, root);
   const runner = createEffectRunner({
     root,
     matcher,
@@ -98,8 +120,23 @@ export async function startApp(
     },
     clipboard: { name: "none", copy: async () => {} },
     dispatch: (a) => store.dispatch(a),
-    exit: () => {},
+    exit: () => saveSession(),
+    logger,
+    configPath: join(root, ".no-config.toml"),
+    ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
+    ...(opts.index === undefined
+      ? {}
+      : {
+          index: {
+            search: (e) => index?.search(e),
+            notify: (e) => index?.notify(e),
+          },
+        }),
   });
+  const saveSession = () => {
+    if (opts.state !== undefined)
+      saveStateFileSync(opts.state.path, snapshotSession(store.get()));
+  };
   const update = createUpdate(testRegistries());
   const store: Store = createStore(
     initialState({ root, cols: 100, rows: 30, color: "nocolor" }),
@@ -112,9 +149,18 @@ export async function startApp(
       runner.run(e);
     },
   );
-  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) =>
-    store.dispatch({ type: "fileChanged", event }),
-  );
+  const index =
+    opts.index === undefined
+      ? undefined
+      : createIndexHost({
+          dispatch: (a) => store.dispatch(a),
+          logger,
+          ...opts.index,
+        });
+  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {
+    store.dispatch({ type: "fileChanged", event });
+    index?.notify(event);
+  });
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);
   const keys = (seq: string) => {
@@ -127,7 +173,16 @@ export async function startApp(
     return w && s.buffers[w.content.bufferId]?.path;
   };
 
+  if (opts.state !== undefined)
+    store.dispatch({
+      type: "stateLoaded",
+      state: parsePersisted(readStateFile(opts.state.path)),
+      restore: opts.state.restore,
+    });
   runner.run({ kind: "listDir", dir: "" });
+  // Without a worker, an empty index is ready, so renames are not refused.
+  if (index === undefined) store.dispatch({ type: "indexReady" });
+  else index.start(root, []);
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
   await settle();
 
@@ -165,6 +220,11 @@ export async function startApp(
       if (store.get().panels.explorer.cursor !== path)
         throw new Error(`cannot select ${path}`);
     },
-    stop: stopWatch,
+    ...(index === undefined ? {} : { index }),
+    stop() {
+      stopWatch();
+      index?.stop();
+      saveSession();
+    },
   };
 }

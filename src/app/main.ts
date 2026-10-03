@@ -1,15 +1,19 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
+import { parseConfig } from "../core/config/toml";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
 } from "../core/filetypes/registry";
-import { defaultBindings } from "../core/kernel/commands/defaults";
-import { Keymap } from "../core/kernel/commands/keymap";
+import {
+  defaultBindings,
+  defaultGroups,
+} from "../core/kernel/commands/defaults";
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
@@ -20,12 +24,26 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
+import {
+  linkBindings,
+  linkCommands,
+  linkGroups,
+} from "../core/state/link-commands";
+import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
+import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
+import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createExclusionMatcher } from "../workspace/ignore";
+import { createLogger, type Logger } from "../workspace/log";
+import {
+  readStateFile,
+  saveStateFileSync,
+  statePath,
+} from "../workspace/state-file";
 import { detectClipboard } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
@@ -34,6 +52,7 @@ import {
   type EffectRunner,
   type RunnerDeps,
 } from "./effects";
+import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
@@ -81,9 +100,56 @@ function registries(): Registries {
   fileTypes.register(markdownFileType);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
-  const keymap = new Keymap();
-  for (const b of defaultBindings) keymap.bind(b.scope, b.seq, b.id);
-  return { fileTypes, editorKinds: new EditorKindRegistry(), commands, keymap };
+  for (const c of linkCommands) commands.register(c);
+  return {
+    fileTypes,
+    editorKinds: new EditorKindRegistry(),
+    commands,
+    bindings: [...defaultBindings, ...linkBindings],
+    groups: { ...defaultGroups, ...linkGroups },
+  };
+}
+
+/**
+ * config.toml as it is at startup: undefined when there is none (defaults
+ * stay), its parse result otherwise. A file that cannot be read is an error
+ * at line 1, so the defaults apply with an error toast.
+ */
+function loadStartupConfig(path: string, logger: Logger): Action | undefined {
+  let text: string | undefined;
+  try {
+    text = readConfigTextSync(path);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    logger.error("config.readFailed", { reason: message });
+    return {
+      type: "configLoaded",
+      result: { ok: false, errors: [{ line: 1, message }] },
+      reload: false,
+    };
+  }
+  if (text === undefined) return undefined;
+  const result = parseConfig(text);
+  if (!result.ok)
+    logger.error("config.invalid", { errors: result.errors.length });
+  return { type: "configLoaded", result, reload: false };
+}
+
+/** Saves the session on shutdown; a failure is logged and never stops the exit. */
+function sessionSaver(
+  path: string | undefined,
+  logger: Logger,
+): ((s: AppState) => void) | undefined {
+  if (path === undefined) return undefined;
+  return (s) => {
+    try {
+      saveStateFileSync(path, snapshotSession(s));
+    } catch (e) {
+      logger.error("state.saveFailed", {
+        reason: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
 }
 
 const readOrNull = (p: string): string | null => {
@@ -143,16 +209,20 @@ async function main(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
+  const logger = createLogger(process.env, homedir());
+  logger.info("app.startup", { root: ws.root });
+  const configFile = configPath(process.env, homedir());
+  const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   const renderer = await createRenderer();
-  const shell = createShell(renderer, {
-    fileTypes: reg.fileTypes,
-    commands: reg.commands,
-    now: clock,
-  });
+  const shell = createShell(renderer, { reg, now: clock });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
+  const indexHost = createIndexHost({
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
   // Trash, clipboard, and exit are bound once detected or constructed; the
   // runner reads them at call time.
   const deps: RunnerDeps = {
@@ -167,6 +237,10 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
     now: clock,
+    logger,
+    configPath: configFile,
+    ...(stateFile === undefined ? {} : { statePath: stateFile }),
+    index: indexHost,
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -180,19 +254,36 @@ async function main(argv: string[]): Promise<void> {
     createUpdate(reg),
     runner.run,
   );
+  const config = loadStartupConfig(configFile, logger);
+  if (config !== undefined) store.dispatch(config);
+  if (stateFile !== undefined)
+    store.dispatch({
+      type: "stateLoaded",
+      state: parsePersisted(readStateFile(stateFile)),
+      restore: ws.file === undefined,
+    });
   shell.attach(store);
   injectThrow(store);
-  const lifecycle = installLifecycle({ store, shell, runner });
+  const saveSession = sessionSaver(stateFile, logger);
+  const lifecycle = installLifecycle({
+    store,
+    shell,
+    runner,
+    ...(saveSession === undefined ? {} : { saveSession }),
+  });
   deps.exit = lifecycle.exitNow;
 
   runner.run({ kind: "listDir", dir: "" });
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });
 
-  // Watching and platform detection start after the first frame.
+  // Watching, indexing, and platform detection start after the first frame.
   setImmediate(() => {
-    watchWorkspace(ws.root, ownOps, matcher, (event) =>
-      store.dispatch({ type: "fileChanged", event }),
-    );
+    watchWorkspace(ws.root, ownOps, matcher, (event) => {
+      store.dispatch({ type: "fileChanged", event });
+      indexHost.notify(event);
+    });
+    indexHost.start(ws.root, []);
+    logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
     void detectTrash({
       platform: process.platform,
       env: process.env,

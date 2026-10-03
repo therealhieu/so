@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type { Action } from "../core/state/types";
 import { atomicWrite } from "../workspace/fs";
 import { createExclusionMatcher } from "../workspace/ignore";
+import { createLogger } from "../workspace/log";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import { createOwnOps } from "../workspace/watcher";
@@ -42,6 +43,8 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     clipboard: memoryClipboard,
     dispatch: (a) => actions.push(a),
     exit: (code) => exits.push(code),
+    logger: createLogger({}, root),
+    configPath: join(root, "no-such-config.toml"),
     ...patch,
   };
   return { ...createEffectRunner(deps), deps, actions, exits };
@@ -312,4 +315,24 @@ test("writes queued behind a move, a removal, or a failed rename follow its outc
   expect(await Bun.file(join(root, "gone.md")).exists()).toBe(false);
   expect(await readFile(join(root, "stay.md"), "utf8")).toBe("s2\n");
   expect(await readFile(join(root, "taken.md"), "utf8")).toBe("t\n");
+});
+
+test("loadConfig answers with one configLoaded for a file, no file, or a read error", async () => {
+  const file = join(root, "config.toml");
+  await writeFile(file, 'theme = "light"\n');
+  const results = [];
+  for (const configPath of [file, join(root, "missing.toml"), root]) {
+    const r = runner({ configPath });
+    r.run({ kind: "loadConfig" });
+    await waitFor(() => r.actions.length > 0);
+    await Bun.sleep(20);
+    expect(r.actions).toHaveLength(1);
+    const [a] = r.actions;
+    if (a?.type !== "configLoaded") throw new Error("expected configLoaded");
+    expect(a.reload).toBe(true);
+    results.push(a.result.ok ? a.result.config.theme : a.result.errors);
+  }
+  expect(results[0]).toBe("light");
+  expect(results[1]).toBe("dark");
+  expect(results[2]).toEqual([{ line: 1, message: expect.any(String) }]);
 });

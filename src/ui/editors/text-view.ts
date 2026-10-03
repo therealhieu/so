@@ -3,8 +3,10 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
+import type { DecorationProvider } from "../../core/kernel/view/decorations";
 import {
   highlightMarks,
   searchMarks,
@@ -12,31 +14,46 @@ import {
 } from "../../core/kernel/view/marks";
 import { layoutText } from "../../core/kernel/view/text-view";
 import type { RenderLine, Span } from "../../core/kernel/view/types";
+import {
+  cellWidth,
+  displayWidth,
+  rowOf,
+  wrapLine,
+} from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
+import { panelFocused } from "../../core/state/side-panel";
 import type { AppState, BufferState, WindowId } from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 
-const TABSTOP = 8;
-/** Line numbers: 4 digits and a space. */
-const GUTTER = 5;
 const SCROLL_LINES = 3;
+
+/** Line numbers: room for the largest one (at least 4 digits) and a space. */
+const gutterWidth = (lineCount: number) =>
+  Math.max(4, String(lineCount).length) + 1;
 
 /** A window's place on screen, in cells. */
 export type Rect = { x: number; y: number; w: number; h: number };
 
 /**
- * Paint one row of spans at (x, y), `width` cells wide: tabs expand to
- * stops of 8, `leftCol` display cells are skipped, and the rest of the row
- * is filled. On the cursor line every token keeps its foreground and takes
- * the cursorline background, except selection and search matches.
+ * Paint one screen row of a line's spans at (x, y), `width` cells wide.
+ * Display columns count from the line start, with tabs reaching the next
+ * multiple of `tabWidth`; the cells from `leftCol` up to `endCol` (or the
+ * row's width) are painted and the rest of the row is filled. On the cursor
+ * line every token keeps its foreground and takes the cursorline
+ * background, except selection and search matches.
  */
 export function paintLine(
   buf: OptimizedBuffer,
   theme: Theme,
   at: { x: number; y: number; width: number },
   spans: readonly Span[],
-  o: { leftCol: number; cursorline: boolean },
+  o: {
+    leftCol: number;
+    endCol?: number;
+    tabWidth: number;
+    cursorline: boolean;
+  },
 ): void {
   const line = theme.style("cursorline");
   const styleOf = (token: string) => {
@@ -45,14 +62,16 @@ export function paintLine(
       ? { ...st, bg: line.bg }
       : st;
   };
+  const end = o.endCol ?? Number.POSITIVE_INFINITY;
   let v = 0;
   let x = 0;
   for (const span of spans) {
+    if (v >= end) break;
     let run = "";
     for (const ch of span.text) {
-      const w = ch === "\t" ? TABSTOP - (v % TABSTOP) : 1;
+      const w = cellWidth(ch, v, o.tabWidth);
       for (let i = 0; i < w; i++, v++)
-        if (v >= o.leftCol) run += ch === "\t" ? " " : ch;
+        if (v >= o.leftCol && v < end) run += ch === "\t" ? " " : ch;
     }
     const room = at.width - x;
     if (run === "" || room <= 0) continue;
@@ -69,6 +88,90 @@ export function paintLine(
       "",
       at.width - x,
     );
+}
+
+/**
+ * Paint `text` in `r` in the file type's source view without a gutter: the
+ * target `line` sits a third of the way down, and `mark` on that line is
+ * styled as a search match. Wrap and tab width follow the editor options,
+ * so a preview looks like the window that would open it.
+ */
+export function paintPreview(
+  buf: OptimizedBuffer,
+  theme: Theme,
+  r: Rect,
+  p: {
+    text: TextBuffer;
+    fileType: FileType | undefined;
+    line: number;
+    mark?: { col: number; len: number };
+    analysis?: unknown;
+    tabWidth: number;
+    wrap: boolean;
+  },
+): void {
+  if (r.w <= 0 || r.h <= 0) return;
+  const line = Math.max(0, Math.min(p.line, p.text.lineCount - 1));
+  const top = Math.max(0, line - Math.floor(r.h / 3));
+  const view = {
+    buf: p.text,
+    width: r.w,
+    topRow: top,
+    rows: r.h,
+    cursor: { line, col: 0 },
+    folds: new Set<number>(),
+    visible: { from: top, to: top + r.h },
+  };
+  const mark = p.mark;
+  const marks: DecorationProvider = () =>
+    mark === undefined
+      ? []
+      : [
+          {
+            kind: "mark",
+            range: {
+              start: { line, col: mark.col },
+              end: { line, col: mark.col + mark.len },
+            },
+            style: "searchMatch",
+          },
+        ];
+  let lines: RenderLine[];
+  try {
+    const spec = p.fileType?.views.find((v) => v.id === "source");
+    lines = layoutText(
+      view,
+      [
+        highlightMarks(p.fileType?.highlighter),
+        ...(spec?.decorations ?? []),
+        marks,
+      ],
+      p.analysis,
+    );
+  } catch {
+    lines = [];
+    for (let l = top; l < Math.min(p.text.lineCount, top + r.h); l++)
+      lines.push({
+        sourceLine: l,
+        spans: [{ text: p.text.line(l), style: "text" }],
+      });
+  }
+  let y = 0;
+  for (const row of lines) {
+    const text = row.spans.map((sp) => sp.text).join("");
+    const starts = p.wrap ? wrapLine(text, r.w, p.tabWidth) : [0];
+    for (let k = 0; k < starts.length && y < r.h; k++, y++) {
+      const end = starts[k + 1];
+      paintLine(buf, theme, { x: r.x, y: r.y + y, width: r.w }, row.spans, {
+        leftCol: starts[k] ?? 0,
+        ...(end === undefined ? {} : { endCol: end }),
+        tabWidth: p.tabWidth,
+        cursorline: false,
+      });
+    }
+  }
+  for (; y < r.h; y++)
+    drawCells(buf, theme.style("text"), r.x, r.y + y, "", r.w);
 }
 
 /** The selection a Visual mode shows, end exclusive. */
@@ -90,9 +193,6 @@ function selectionOf(s: AppState, text: TextBuffer): Range | undefined {
   return { start: a, end: { line: b.line, col: b.col + 1 } };
 }
 
-/** File types' analyses, cached per immutable text version. */
-const analyses = new WeakMap<TextBuffer, unknown>();
-
 /**
  * The text editor of one window: an optional winbar, a gutter of relative
  * line numbers, and the rows `layoutText` lays out with the file type's
@@ -107,6 +207,8 @@ export class EditorView extends Renderable {
   protected rect: Rect = { x: 0, y: 0, w: 0, h: 0 };
   private topLine = 0;
   private leftCol = 0;
+  /** Rows hidden at the top of a cursor line taller than the window. */
+  private skipRows = 0;
   private cursorAt: Cursor | undefined;
 
   constructor(
@@ -134,11 +236,13 @@ export class EditorView extends Renderable {
     this.width = r.w;
     this.height = r.h;
     this.cursorAt = undefined;
+    this.skipRows = 0;
     const w = s.windows.byId[id];
     const b = w && s.buffers[w.content.bufferId];
     if (w === undefined || b === undefined) return;
     const rows = this.textRows();
     const { line, col } = w.content.cursor;
+    const { tabWidth, wrap } = s.config.editor;
     // The core keeps the cursor within `rows − 2` lines from `scroll`; this
     // window may be shorter, so it scrolls further. A mouse scroll that
     // left the cursor off screen is kept.
@@ -149,17 +253,49 @@ export class EditorView extends Renderable {
     const text = b.text.line(Math.min(line, b.text.lineCount - 1));
     const dc =
       s.vim.mode === "insert"
-        ? cursorDisplayCol(text.slice(0, col), col)
-        : cursorDisplayCol(text, col);
-    const textW = Math.max(1, r.w - GUTTER);
-    this.leftCol = dc >= textW ? dc - textW + 1 : 0;
-    const visible = line >= this.topLine && line < this.topLine + rows;
+        ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
+        : cursorDisplayCol(text, col, tabWidth);
+    const gw = gutterWidth(b.text.lineCount);
+    const textW = Math.max(1, r.w - gw);
+    let row = line - this.topLine;
+    let x = dc;
+    if (!wrap) {
+      this.leftCol = dc >= textW ? dc - textW + 1 : 0;
+      x = dc - this.leftCol;
+    } else {
+      this.leftCol = 0;
+      const starts = wrapLine(text, textW, tabWidth);
+      let k = rowOf(starts, dc);
+      x = dc - (starts[k] ?? 0);
+      // An Insert cursor just past a full row sits at the start of the next.
+      if (x >= textW) {
+        k++;
+        x = 0;
+      }
+      if (line >= this.topLine && line < this.topLine + rows) {
+        const height = (l: number) =>
+          wrapLine(b.text.line(l), textW, tabWidth).length;
+        let above = 0;
+        for (let l = this.topLine; l < line; l++) above += height(l);
+        while (above + k >= rows && this.topLine < line) {
+          above -= height(this.topLine);
+          this.topLine++;
+        }
+        // A line taller than the window shows the rows holding the cursor.
+        if (above + k >= rows) this.skipRows = k - rows + 1;
+        row = above + k - this.skipRows;
+      }
+    }
+    const visible = line >= this.topLine && row < rows;
     const focused =
-      id === s.windows.active && !s.panels.explorer.focused && visible;
+      id === s.windows.active &&
+      !s.panels.explorer.focused &&
+      !panelFocused(s) &&
+      visible;
     if (focused)
       this.cursorAt = {
-        x: r.x + GUTTER + dc - this.leftCol,
-        y: r.y + (winbar ? 1 : 0) + line - this.topLine,
+        x: r.x + gw + x,
+        y: r.y + (winbar ? 1 : 0) + row,
         style: s.vim.mode === "insert" ? "line" : "block",
       };
   }
@@ -184,41 +320,70 @@ export class EditorView extends Renderable {
       y++;
     }
     const rows = this.textRows();
+    const gw = gutterWidth(b?.text.lineCount ?? 0);
+    const textW = Math.max(1, this.width - gw);
     let lines: RenderLine[] = [];
     if (w !== undefined && b !== undefined)
-      lines = this.layout(s, b, rows, w.content.cursor);
+      lines = this.layout(s, b, rows, w.content.cursor, textW);
+    const { tabWidth, wrap, relativeNumbers } = s.config.editor;
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
-    for (let i = 0; i < rows; i++) {
-      const row = lines[i];
-      if (row === undefined) {
-        drawCells(buf, theme.style("dim"), this.x, y + i, "    ~", this.width);
-        continue;
-      }
+    let i = 0;
+    for (const row of lines) {
+      if (i >= rows) break;
       const isCursor = row.sourceLine === cursorLine;
-      const num = isCursor
-        ? row.sourceLine + 1
-        : Math.abs(row.sourceLine - cursorLine);
+      const text = row.spans.map((sp) => sp.text).join("");
+      const starts = wrap ? wrapLine(text, textW, tabWidth) : [this.leftCol];
+      const skip = row.sourceLine === this.topLine ? this.skipRows : 0;
+      for (let k = skip; k < starts.length && i < rows; k++, i++) {
+        const start = starts[k] ?? 0;
+        const num =
+          k > 0
+            ? ""
+            : relativeNumbers && !isCursor
+              ? Math.abs(row.sourceLine - cursorLine)
+              : row.sourceLine + 1;
+        drawCells(
+          buf,
+          theme.style(isCursor && k === 0 ? "gutterCursor" : "gutter"),
+          this.x,
+          y + i,
+          `${String(num).padStart(gw - 1)} `,
+          gw,
+        );
+        const end = starts[k + 1];
+        paintLine(
+          buf,
+          theme,
+          { x: this.x + gw, y: y + i, width: Math.max(0, this.width - gw) },
+          row.spans,
+          {
+            leftCol: start,
+            ...(end === undefined ? {} : { endCol: end }),
+            tabWidth,
+            cursorline: isCursor && active,
+          },
+        );
+        if (!wrap && displayWidth(text, tabWidth) > start + textW)
+          drawCells(
+            buf,
+            theme.style("dim"),
+            this.x + gw + textW - 1,
+            y + i,
+            "›",
+            1,
+          );
+      }
+    }
+    for (; i < rows; i++)
       drawCells(
         buf,
-        theme.style(isCursor ? "gutterCursor" : "gutter"),
+        theme.style("dim"),
         this.x,
         y + i,
-        `${String(num).padStart(GUTTER - 1)} `,
-        GUTTER,
+        "~".padStart(gw),
+        this.width,
       );
-      paintLine(
-        buf,
-        theme,
-        {
-          x: this.x + GUTTER,
-          y: y + i,
-          width: Math.max(0, this.width - GUTTER),
-        },
-        row.spans,
-        { leftCol: this.leftCol, cursorline: isCursor && active },
-      );
-    }
   }
 
   private layout(
@@ -226,10 +391,11 @@ export class EditorView extends Renderable {
     b: BufferState,
     rows: number,
     cursor: { line: number; col: number },
+    width: number,
   ): RenderLine[] {
     const view = {
       buf: b.text,
-      width: Math.max(1, this.width - GUTTER),
+      width,
       topRow: this.topLine,
       rows,
       cursor,
@@ -237,13 +403,8 @@ export class EditorView extends Renderable {
       visible: { from: this.topLine, to: this.topLine + rows },
     };
     try {
-      const ft = this.deps.fileTypes.get(b.fileType);
+      const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
-      let analysis = analyses.get(b.text);
-      if (analysis === undefined && ft?.analyze !== undefined) {
-        analysis = ft.analyze(b.text);
-        analyses.set(b.text, analysis);
-      }
       const selection =
         this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
       return layoutText(
@@ -254,7 +415,7 @@ export class EditorView extends Renderable {
           searchMarks(s.vim.search),
           selectionMarks(selection),
         ],
-        analysis,
+        b.analysis,
       );
     } catch {
       const out: RenderLine[] = [];

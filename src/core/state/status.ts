@@ -1,7 +1,9 @@
+import { backlinksOf } from "../features/links/note-index";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { activeBuffer, activeWindow } from "./buffers";
+import { jumpSegment } from "./jumps";
 import type { AppState } from "./types";
 
 export type StatusSegments = {
@@ -12,7 +14,16 @@ export type StatusSegments = {
   /** Markdown buffers only. */
   words?: number;
   saveError?: { reason: string; retryAt: number };
+  /** The file was removed outside so; edits are kept but not autosaved. */
+  deletedOnDisk?: true;
   position?: Pos;
+  /** Notes only, once the index has finished a scan. */
+  backlinks?: number;
+  /** Absent until the first batch. */
+  index?: "indexing" | "ready" | "unavailable";
+  indexProgress?: { done: number; total: number };
+  /** "jump i/n" once a jump is recorded. */
+  jump?: string;
 };
 
 const wordCounts = new WeakMap<TextBuffer, number>();
@@ -33,16 +44,31 @@ export function statusSegments(s: AppState): StatusSegments {
   const mode = s.panels.explorer.focused ? "explorer" : s.vim.mode;
   const b = activeBuffer(s);
   const w = activeWindow(s);
-  if (b === undefined || w === undefined) return { mode, dirty: false };
-  const seg: StatusSegments = {
-    mode,
-    dirty: b.dirty,
-    view: b.view,
-    path: b.path,
-    position: w.content.cursor,
-  };
-  if (b.fileType === markdownFileType.id) seg.words = countWords(b.text);
-  if (b.save.kind === "failed")
-    seg.saveError = { reason: b.save.reason, retryAt: b.save.retryAt };
+  const index = s.index.status;
+  const seg: StatusSegments =
+    b === undefined || w === undefined
+      ? { mode, dirty: false }
+      : {
+          mode,
+          dirty: b.dirty,
+          view: b.view,
+          path: b.path,
+          position: w.content.cursor,
+        };
+  if (b !== undefined && w !== undefined) {
+    if (b.fileType === markdownFileType.id) {
+      seg.words = countWords(b.text);
+      if (index === "ready" || index === "unavailable")
+        seg.backlinks = backlinksOf(s.index.ix, b.path).length;
+    }
+    if (b.save.kind === "failed")
+      seg.saveError = { reason: b.save.reason, retryAt: b.save.retryAt };
+    if (b.disk === "deleted") seg.deletedOnDisk = true;
+  }
+  if (index !== "idle") seg.index = index;
+  if (index === "indexing")
+    seg.indexProgress = { done: s.index.done, total: s.index.total };
+  const jump = jumpSegment(s.jumps);
+  if (jump !== undefined) seg.jump = jump;
   return seg;
 }

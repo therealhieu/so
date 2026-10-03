@@ -6,6 +6,7 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
+import { summarizeSaved } from "./index";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -130,13 +131,16 @@ export function onSaved(
   const version = writing?.version ?? b.savedVersion;
   const dirty = b.text.version !== version;
   const r = none(
-    setBuffer(s, b.id, {
-      stamp: a.stamp,
-      savedVersion: version,
-      dirty,
-      disk: "present",
-      save: { kind: "idle" },
-    }),
+    summarizeSaved(
+      setBuffer(s, b.id, {
+        stamp: a.stamp,
+        savedVersion: version,
+        dirty,
+        disk: "present",
+        save: { kind: "idle" },
+      }),
+      a.path,
+    ),
   );
   // Typed during the write: autosave the newer text after the delay, so a
   // rename or move queued behind this write lands first and the write

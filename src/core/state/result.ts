@@ -20,6 +20,13 @@ export function message(
   });
 }
 
+/** Clear the message line. */
+export function clearMessage(s: AppState): AppState {
+  if (s.notifications.message === undefined) return s;
+  const { message: _, ...notifications } = s.notifications;
+  return { ...s, notifications };
+}
+
 const TOAST_MS = 3000;
 
 /** Add a toast; info toasts expire, error toasts stay until dismissed. */

@@ -19,13 +19,17 @@ export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const depthOf = (path: string) => path.split("/").length - 1;
 
-/** `edit` is the name field's text on the row being created or renamed. */
+/**
+ * `edit` is the name field's text on the row being created or renamed;
+ * `note` is the line under a renamed row that tells its link impact.
+ */
 type Row = {
   path: string;
   depth: number;
   dir: boolean;
   open: boolean;
   edit?: string;
+  note?: { text: string; token: string };
 };
 
 /**
@@ -36,12 +40,28 @@ export function treeField(s: AppState): PromptState | undefined {
   if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
   const p = s.overlay.prompt;
   return p.kind === "input" &&
-    (p.op.kind === "create" || p.op.kind === "rename")
+    (p.op.kind === "create" ||
+      (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
     ? p
     : undefined;
 }
 
 const cells = (text: string) => [...text].length;
+
+/**
+ * A rename or move prompt's consequence line in the given tokens: why Enter
+ * is disabled, or the links the operation updates.
+ */
+export function impactLine(
+  p: PromptState,
+  tokens: { warn: string; error: string },
+): { text: string; token: string } | undefined {
+  if (p.invalid !== undefined)
+    return { text: `✗ ${p.invalid}`, token: tokens.error };
+  return p.impact === undefined
+    ? undefined
+    : { text: p.impact, token: tokens.warn };
+}
 
 /**
  * The file tree: docked left with a `│` separator, or a rounded float over
@@ -59,7 +79,7 @@ export class ExplorerView extends Renderable {
 
   constructor(
     ctx: RenderContext,
-    private readonly deps: Pick<ViewDeps, "fileTypes">,
+    private readonly deps: Pick<ViewDeps, "reg">,
   ) {
     super(ctx, { position: "absolute", left: 0, top: 1, zIndex: 20 });
   }
@@ -133,8 +153,23 @@ export class ExplorerView extends Renderable {
         edit: field.value,
       });
     } else if (field !== undefined) {
-      const row = rows.find((r) => r.path === field.op.from);
-      if (row !== undefined) row.edit = field.value;
+      const at = rows.findIndex((r) => r.path === field.op.from);
+      const row = rows[at];
+      if (row !== undefined) {
+        row.edit = field.value;
+        const note = impactLine(field, {
+          warn: "explorerWarn",
+          error: "explorerError",
+        });
+        if (note !== undefined)
+          rows.splice(at + 1, 0, {
+            path: "",
+            depth: row.depth + 1,
+            dir: false,
+            open: false,
+            note,
+          });
+      }
     }
     return rows;
   }
@@ -193,6 +228,17 @@ export class ExplorerView extends Renderable {
         );
         continue;
       }
+      if (row.note !== undefined) {
+        drawCells(
+          buf,
+          theme.style(row.note.token),
+          x0,
+          y,
+          ` ${"  ".repeat(row.depth)}${row.note.text}`,
+          box.w,
+        );
+        continue;
+      }
       const selected = this.first + i === sel;
       const base = selected
         ? ex.focused
@@ -203,7 +249,7 @@ export class ExplorerView extends Renderable {
         ? row.open
           ? "▾ "
           : "▸ "
-        : row.path === "" || isNote(this.deps.fileTypes, row.path) // a new row shows as a note
+        : row.path === "" || isNote(this.deps.reg.fileTypes, row.path) // a new row shows as a note
           ? "◇ "
           : "≡ ";
       const indent = ` ${"  ".repeat(row.depth)}`;

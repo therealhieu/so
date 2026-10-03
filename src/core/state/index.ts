@@ -1,0 +1,118 @@
+import {
+  addFiles,
+  applySummaries,
+  movePaths,
+  type NoteIndex,
+  removePaths,
+} from "../features/links/note-index";
+import { summarize } from "../features/links/summarize";
+import type { Doc } from "../lang/markdown/doc";
+import { markdownFileType } from "../lang/markdown/file-type";
+import { linesOf, scanDoc } from "../lang/markdown/scan";
+import { bufferForPath } from "./buffers";
+import { none, toast } from "./result";
+import type { Action, AppState, FileEvent, FsOp, Result } from "./types";
+
+const isNote = (path: string) => /\.md$/i.test(path);
+
+const withIx = (s: AppState, ix: NoteIndex): AppState => ({
+  ...s,
+  index: { ...s.index, ix },
+});
+
+/**
+ * A worker batch. Scan batches report progress; an update batch after the
+ * scan (`done = total = 0`) only refreshes summaries.
+ */
+export function onIndexBatch(
+  s: AppState,
+  a: Extract<Action, { type: "indexBatch" }>,
+): Result {
+  const ix = applySummaries(s.index.ix, a.summaries, a.files);
+  if (a.done === 0 && a.total === 0) return none(withIx(s, ix));
+  return none({
+    ...s,
+    index: { ...s.index, status: "indexing", done: a.done, total: a.total, ix },
+  });
+}
+
+export function onIndexReady(s: AppState): Result {
+  const index = { ...s.index, status: "ready" as const, done: s.index.total };
+  return toast({ ...s, index }, "info", "index ready");
+}
+
+/** A worker crash: the first one rescans, the second leaves the last index in place for good. */
+export function onIndexFailed(
+  s: AppState,
+  a: Extract<Action, { type: "indexFailed" }>,
+): Result {
+  const index = a.final
+    ? { ...s.index, status: "unavailable" as const }
+    : { ...s.index, status: "indexing" as const, done: 0 };
+  return toast(
+    { ...s, index },
+    "error",
+    a.final ? "index unavailable" : "index unavailable — restarting",
+  );
+}
+
+/**
+ * A note `so` just wrote, summarized from the buffer's own scan. A buffer
+ * edited during the write is skipped, so a summary always describes the disk.
+ */
+export function summarizeSaved(s: AppState, path: string): AppState {
+  const b = bufferForPath(s, path);
+  if (b === undefined || b.dirty || b.fileType !== markdownFileType.id)
+    return s;
+  const doc = b.analysis as Doc | undefined;
+  if (doc === undefined) return s;
+  return withIx(
+    s,
+    applySummaries(s.index.ix, [
+      summarize(path, b.stamp.mtimeMs, doc.scan, b.text),
+    ]),
+  );
+}
+
+/** A file operation `so` completed; the watcher stays silent about it. */
+export function indexAfterFsOp(s: AppState, op: FsOp): AppState {
+  const ix = s.index.ix;
+  switch (op.kind) {
+    case "create":
+      if (op.dir === true) return s;
+      return withIx(
+        s,
+        isNote(op.from)
+          ? applySummaries(ix, [summarize(op.from, 0, scanDoc(""))])
+          : addFiles(ix, [op.from]),
+      );
+    case "rename":
+    case "move":
+      return op.to === undefined
+        ? s
+        : withIx(s, movePaths(ix, [{ from: op.from, to: op.to }]));
+    case "trash":
+      return withIx(s, removePaths(ix, [op.from]));
+  }
+}
+
+/** Another program's change: removals leave the index; new non-note files join it. Notes go to the worker. */
+export function indexAfterFileEvent(s: AppState, e: FileEvent): AppState {
+  if (e.kind === "removed") return withIx(s, removePaths(s.index.ix, [e.path]));
+  if (e.isDir || isNote(e.path) || s.index.ix.files.has(e.path)) return s;
+  return withIx(s, addFiles(s.index.ix, [e.path]));
+}
+
+/** A note `so` rewrote on disk, summarized from the text it wrote. */
+export const summarizeWritten = (
+  s: AppState,
+  path: string,
+  text: string,
+  mtime: number,
+): AppState =>
+  withIx(
+    s,
+    applySummaries(s.index.ix, [
+      summarize(path, mtime, scanDoc(text), linesOf(text)),
+    ]),
+  );

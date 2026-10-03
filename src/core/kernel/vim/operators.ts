@@ -13,6 +13,8 @@ export type Run = {
   effects: VimEffect[];
   /** Display column the command started from (Vim's curswant). */
   want: number;
+  /** Tab width in cells: tab stops and the shift width. */
+  tab: number;
   /** Cursor before the running command; the undo block restores it. */
   before: Pos;
   block?: { edits: Edit[]; inverses: Edit[]; cursorBefore: Pos };
@@ -124,7 +126,7 @@ function deleteLines(run: Run, first: number, last: number) {
 
 const atWant = (run: Run, line: number): Pos => ({
   line,
-  col: colForDisplay(run.s.text.line(line), run.want),
+  col: colForDisplay(run.s.text.line(line), run.want, run.tab),
 });
 
 const indentOf = (s: string) => s.match(/^[ \t]*/)?.[0] ?? "";
@@ -135,11 +137,12 @@ function shift(dir: 1 | -1): Operator {
       const s = run.s.text.line(l);
       if (s === "") continue;
       const indent = indentOf(s);
+      const t = run.tab;
       let width = 0;
       for (const c of indent)
-        width = c === "\t" ? width + 8 - (width % 8) : width + 1;
-      const next = Math.max(0, width + dir * 8);
-      const text = "\t".repeat(Math.floor(next / 8)) + " ".repeat(next % 8);
+        width = c === "\t" ? width + t - (width % t) : width + 1;
+      const next = Math.max(0, width + dir * t);
+      const text = "\t".repeat(Math.floor(next / t)) + " ".repeat(next % t);
       if (text !== indent)
         applyEdit(run, {
           range: {

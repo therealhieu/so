@@ -10,7 +10,8 @@ import { closeBuffer, requestQuit, scheduleAutosave } from "./save";
 import type { AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
 
 /** Type "x" at the start of the buffer at time `now`, as an Insert key would. */
 function typeX(s: AppState, id: number, now: number): Result {
@@ -20,10 +21,12 @@ function typeX(s: AppState, id: number, now: number): Result {
     range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
     text: "x",
   }).buffer;
-  const edited = setBuffer(s, id, {
-    text,
-    dirty: text.version !== b.savedVersion,
-  });
+  const edited = setBuffer(
+    s,
+    id,
+    { text, dirty: text.version !== b.savedVersion },
+    reg,
+  );
   return scheduleAutosave(edited, id, now);
 }
 

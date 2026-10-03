@@ -52,8 +52,8 @@ export type BufferVim = {
   registers: Registers;
 };
 
-/** The window viewport: first visible line and visible line count. */
-export type VimEnv = { topLine: number; rows: number };
+/** The window viewport (first visible line, visible line count) and the tab width in cells. */
+export type VimEnv = { topLine: number; rows: number; tabWidth: number };
 
 /** The engine's only outputs. `paste` from "+ waits for the clipboard in core/state. */
 export type VimEffect =
@@ -62,4 +62,5 @@ export type VimEffect =
   | { kind: "paste"; register: RegisterName; before: boolean }
   | { kind: "modeChanged"; mode: Mode }
   | { kind: "ex"; line: string }
-  | { kind: "search"; pattern: string; dir: 1 | -1 };
+  | { kind: "search"; pattern: string; dir: 1 | -1 }
+  | { kind: "jumped"; from: Pos };

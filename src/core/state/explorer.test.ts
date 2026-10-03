@@ -12,7 +12,8 @@ import { scheduleAutosave } from "./save";
 import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
 
 const dirtyA = (): AppState => {
   const s = openBuffer(fresh(), "a.md", "hello");
@@ -22,7 +23,7 @@ const dirtyA = (): AppState => {
     range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
     text: "x",
   }).buffer;
-  return setBuffer(s, 1, { text, dirty: true });
+  return setBuffer(s, 1, { text, dirty: true }, reg);
 };
 
 /** Type "x" at the start of buffer 1 at time `now`, as an Insert key would. */
@@ -33,7 +34,7 @@ function typeX(s: AppState, now: number): Result {
     range: { start: { line: 0, col: 0 }, end: { line: 0, col: 0 } },
     text: "x",
   }).buffer;
-  return scheduleAutosave(setBuffer(s, 1, { text, dirty: true }), 1, now);
+  return scheduleAutosave(setBuffer(s, 1, { text, dirty: true }, reg), 1, now);
 }
 
 const ops = (effects: Effect[]) =>
@@ -50,7 +51,10 @@ test("rename flushes a dirty buffer first, then follows it to the new path", () 
   const done = update(r.state, { type: "fsResult", op, ok: true });
   expect(done.state.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
   expect(done.state.buffers[1]?.undo).toBe(undoBefore);
-  expect(done.effects).toEqual([{ kind: "listDir", dir: "" }]);
+  expect(done.effects).toEqual([
+    { kind: "listDir", dir: "" },
+    { kind: "startTimer", id: "saveState", ms: 2000 },
+  ]);
 });
 
 test("a rename during a write, after typing during it, autosaves the newest text to the new path", () => {
@@ -66,6 +70,7 @@ test("a rename during a write, after typing during it, autosaves the newest text
     splitKeys(seq).reduce((st, key) => act(st, { type: "key", key, now }), s);
 
   let s = openBuffer(fresh(), "a.md", "hello");
+  s = { ...s, index: { ...s.index, status: "ready" } };
   s = act(s, {
     type: "dirListed",
     dir: "",
@@ -110,6 +115,7 @@ test("moving a folder re-paths every buffer below it", () => {
   s = {
     ...s,
     panels: {
+      ...s.panels,
       explorer: { ...s.panels.explorer, expanded: ["notes", "archive"] },
     },
   };
@@ -234,7 +240,7 @@ test("toggle opens and focuses the explorer, then closes it", () => {
   expect(closed).toMatchObject({ open: false, focused: false });
   const reopened = toggleExplorer({
     ...fresh(),
-    panels: { explorer: closed },
+    panels: { ...fresh().panels, explorer: closed },
   });
   expect(reopened.state.panels.explorer).toMatchObject({
     open: true,

@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { deepFreeze, fresh, testRegistries } from "../../../test/support/state";
+import {
+  deepFreeze,
+  fresh,
+  openBuffer,
+  testRegistries,
+} from "../../../test/support/state";
 import { createStore } from "./store";
 import type { Action, Effect } from "./types";
 import { createUpdate } from "./update";
@@ -37,7 +42,14 @@ test("the store runs effects in order, then notifies subscribers once", () => {
 });
 
 test("a throwing command keeps the previous state and reports the error", () => {
-  const reg = testRegistries();
+  const base = testRegistries();
+  const reg = {
+    ...base,
+    bindings: [
+      ...base.bindings,
+      { scope: { mode: "normal" }, seq: "Q", id: "test.throw" },
+    ],
+  };
   reg.commands.register({
     id: "test.throw",
     title: "Throw",
@@ -45,15 +57,40 @@ test("a throwing command keeps the previous state and reports the error", () => 
       throw new Error("boom");
     },
   });
-  reg.keymap.bind({ mode: "normal" }, "Q", "test.throw");
   const s = deepFreeze({
     ...fresh(),
-    panels: { explorer: { ...fresh().panels.explorer, focused: false } },
+    panels: {
+      ...fresh().panels,
+      explorer: { ...fresh().panels.explorer, focused: false },
+    },
   });
   const r = createUpdate(reg)(s, { type: "key", key: "Q", now: 0 });
   expect(r.effects).toEqual([]);
   expect(r.state).toEqual({
     ...s,
     notifications: { toasts: [{ id: 1, level: "error", text: "boom" }] },
+  });
+});
+
+test("a message lasts until the next key", () => {
+  const update = createUpdate(testRegistries());
+  const editing = openBuffer(fresh(), "a.md", "one\ntwo");
+  const deleted = update(editing, {
+    type: "fileChanged",
+    event: { kind: "removed", path: "a.md" },
+  }).state;
+  expect(deleted.notifications.message?.text).toBe(
+    "deleted on disk — :w to recreate",
+  );
+
+  const moved = update(deleted, { type: "key", key: "j", now: 0 }).state;
+  expect(moved.notifications.message).toBeUndefined();
+
+  let s = moved;
+  for (const key of [":", "x", "<CR>"])
+    s = update(s, { type: "key", key, now: 0 }).state;
+  expect(s.notifications.message).toEqual({
+    text: "E492: Not an editor command: x",
+    level: "error",
   });
 });

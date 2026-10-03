@@ -10,6 +10,7 @@ import type { EditorView, Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { EXPLORER_WIDTH, explorerDocked } from "./explorer";
+import { SIDE_WIDTH, sideDocked } from "./side-panel";
 
 /**
  * Split `r` among the tree's leaves: `row` children side by side with a
@@ -46,7 +47,7 @@ function place(
 }
 
 /**
- * The body right of a docked explorer: one view per window, made by the
+ * The body between a docked explorer and a docked side panel: one view per window, made by the
  * view registered for its editor kind, with winbars once there are splits.
  */
 export class WindowTree extends Renderable {
@@ -66,10 +67,11 @@ export class WindowTree extends Renderable {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
     const x = explorerDocked(s, lc) ? EXPLORER_WIDTH + 1 : 0;
+    const right = sideDocked(s, lc) ? SIDE_WIDTH + 1 : 0;
     const body = {
       x,
       y: 1,
-      w: Math.max(0, s.terminal.cols - x),
+      w: Math.max(0, s.terminal.cols - x - right),
       h: Math.max(0, s.terminal.rows - 3),
     };
     const rects = new Map<WindowId, Rect>();

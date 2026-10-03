@@ -1,0 +1,124 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`picker selection stays visible without colour: marker and reverse video 1`] = `
+" plan.md                                                                                                        ~/notes 
+   1 # Plan                                                                                                             
+   1                                                                                                                    
+   2 Why this exists.                                                                                                   
+   3        ╭─ Find files ─────────────────────────────────────────────────────────────────────────────────╮            
+   4 ## Goal│ ❯                                                18/18 │ config.yaml                         │            
+   5        │ ────────────────────────────────────────────────────── │                                     │            
+   6 Ship th│   notes/plan.md                                        │ loading…                            │            
+   7        │ ▸ config.yaml                                          │                                     │            
+   8 ## Risk│   log/day-01.md                                        │                                     │            
+   9        │   log/day-02.md                                        │                                     │            
+  10 Scope. │   log/day-03.md                                        │                                     │            
+    ~       │   log/day-04.md                                        │                                     │            
+    ~       │   log/day-05.md                                        │                                     │            
+    ~       │   log/day-06.md                                        │                                     │            
+    ~       │   log/day-07.md                                        │                                     │            
+    ~       │   log/day-08.md                                        │                                     │            
+    ~       │   log/day-09.md                                        │                                     │            
+    ~       │   log/day-10.md                                        │                                     │            
+    ~       │   log/day-11.md                                        │                                     │            
+    ~       │   notes/ideas.md                                       │                                     │            
+    ~       │   projects/so-roadmap.md                               │                                     │            
+    ~       │   projects/so.md                                       │                                     │            
+    ~       │   scripts/sync.ts                                      │                                     │            
+    ~       │   todo.md                                              │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────────────────────────────────────╯            
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+2/18 config.yaml                                                                                                        
+"
+`;
+
+exports[`picker selection matches the light theme golden 1`] = `
+{
+  "row": {
+    "attrs": 0,
+    "bg": "214,216,226,255",
+    "fg": "55,96,191,255",
+  },
+  "selected": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+}
+`;
+
+exports[`picker selection matches the light theme golden 2`] = `
+" plan.md                                                                                                        ~/notes 
+   1 # Plan                                                                                                             
+   1                                                                                                                    
+   2 Why this exists.                                                                                                   
+   3        ╭─ Find files ─────────────────────────────────────────────────────────────────────────────────╮            
+   4 ## Goal│ ❯                                                18/18 │ config.yaml                         │            
+   5        │ ────────────────────────────────────────────────────── │                                     │            
+   6 Ship th│   notes/plan.md                                        │ loading…                            │            
+   7        │ ▸ config.yaml                                          │                                     │            
+   8 ## Risk│   log/day-01.md                                        │                                     │            
+   9        │   log/day-02.md                                        │                                     │            
+  10 Scope. │   log/day-03.md                                        │                                     │            
+    ~       │   log/day-04.md                                        │                                     │            
+    ~       │   log/day-05.md                                        │                                     │            
+    ~       │   log/day-06.md                                        │                                     │            
+    ~       │   log/day-07.md                                        │                                     │            
+    ~       │   log/day-08.md                                        │                                     │            
+    ~       │   log/day-09.md                                        │                                     │            
+    ~       │   log/day-10.md                                        │                                     │            
+    ~       │   log/day-11.md                                        │                                     │            
+    ~       │   notes/ideas.md                                       │                                     │            
+    ~       │   projects/so-roadmap.md                               │                                     │            
+    ~       │   projects/so.md                                       │                                     │            
+    ~       │   scripts/sync.ts                                      │                                     │            
+    ~       │   todo.md                                              │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────────────────────────────────────╯            
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+2/18 config.yaml                                                                                                        
+"
+`;
+
+exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = `
+" plan.md                                                                        
+   1 # Plan                                                                     
+   1                                                                            
+   2 Why╭─ Find files ─────────────────────────────────────────────────╮        
+   3    │ ❯                                                      18/18 │        
+   4 ## │ ──────────────────────────────────────────────────────────── │        
+   5    │   notes/plan.md                                              │        
+   6 Shi│ ▸ config.yaml                                                │        
+   7    │   log/day-01.md                                              │        
+   8 ## │   log/day-02.md                                              │        
+   9    │   log/day-03.md                                              │        
+  10 Sco│   log/day-04.md                                              │        
+    ~   │   log/day-05.md                                              │        
+    ~   │   log/day-06.md                                              │        
+    ~   │   log/day-07.md                                              │        
+    ~   │   log/day-08.md                                              │        
+    ~   │   log/day-09.md                                              │        
+    ~   │   log/day-10.md                                              │        
+    ~   ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────╯        
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/plan.md │ ← 31 backlinks │ ◆ index ready                   1:1 
+2/18 config.yaml                                                                
+"
+`;

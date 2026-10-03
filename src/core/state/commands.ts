@@ -12,6 +12,7 @@ import {
   setWindow,
   showBuffer,
 } from "./buffers";
+import { reloadConfig } from "./config";
 import {
   collapse,
   expandOrOpen,
@@ -20,6 +21,8 @@ import {
   startOp,
   toggleExplorer,
 } from "./explorer";
+import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
+import { openPicker } from "./picker";
 import { chain, message, none } from "./result";
 import {
   autosaveNow,
@@ -28,6 +31,7 @@ import {
   scheduleAutosave,
   writeBuffer,
 } from "./save";
+import { panelDocked, panelFocused } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
 
@@ -43,8 +47,8 @@ type AppCommand = Command<CommandContext, CommandResult>;
 
 /** Ex command names (with `!` where it matters) → command ids. */
 export const EX_ALIASES: Readonly<Record<string, string>> = {
-  w: "buffer.write",
-  write: "buffer.write",
+  w: "file.save",
+  write: "file.save",
   q: "app.quit",
   quit: "app.quit",
   wq: "app.quit",
@@ -64,6 +68,9 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   bdelete: "buffer.delete",
   "bd!": "buffer.deleteForce",
   "bdelete!": "buffer.deleteForce",
+  ConfigReload: "config.reload",
+  jumps: "jump.list",
+  help: "help.keymap",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -88,7 +95,10 @@ export function runCommand(
   );
 }
 
-/** Execute a command line (without ":"): `:s`/`:%s`, or an alias of a command id. */
+/**
+ * Execute a command line (without ":"): a registered command id with an
+ * optional argument, `:s`/`:%s`, or an alias of a command id.
+ */
 export function executeEx(
   s: AppState,
   line: string,
@@ -97,8 +107,17 @@ export function executeEx(
 ): Result {
   const typed = line.trim();
   if (typed === "") return none(s);
+  const word = typed.split(/\s+/, 1)[0] ?? "";
+  if (reg.commands.get(word) !== undefined)
+    return runCommand(
+      s,
+      word,
+      now,
+      reg,
+      typed.slice(word.length).trim() || undefined,
+    );
   const ex = parseEx(typed);
-  if (ex !== undefined && "pattern" in ex) return substitute(s, ex, now);
+  if (ex !== undefined && "pattern" in ex) return substitute(s, ex, now, reg);
   const id = ex && EX_ALIASES[ex.cmd + (ex.bang ? "!" : "")];
   if (ex === undefined || id === undefined)
     return message(s, `E492: Not an editor command: ${typed}`, "error");
@@ -124,6 +143,7 @@ function substitute(
     global: boolean;
   },
   now: number,
+  reg: Registries,
 ): Result {
   const w = activeWindow(s);
   const b = activeBuffer(s);
@@ -162,11 +182,16 @@ function substitute(
   if (lastLine < 0) return notFound;
   const cursor = { line: lastLine, col: firstNonBlank(text.line(lastLine)) };
   const edited = setWindow(
-    setBuffer(s, b.id, {
-      text,
-      undo: b.undo.push({ edits, inverses, cursorBefore: w.content.cursor }),
-      dirty: text.version !== b.savedVersion,
-    }),
+    setBuffer(
+      s,
+      b.id,
+      {
+        text,
+        undo: b.undo.push({ edits, inverses, cursorBefore: w.content.cursor }),
+        dirty: text.version !== b.savedVersion,
+      },
+      reg,
+    ),
     { ...w, content: { ...w.content, cursor } },
   );
   const searched: AppState = {
@@ -200,7 +225,7 @@ function editFile(ctx: CommandContext): Result {
   const path = workspacePath(s.workspace.root, arg);
   if (path === undefined)
     return message(s, `outside the workspace: ${arg}`, "error");
-  return openPath(s, path, ctx.now);
+  return openPath(recordJump(s), path, ctx.now);
 }
 
 function writeActive(ctx: CommandContext): Result {
@@ -248,17 +273,26 @@ function split(s: AppState, dir: "row" | "column"): Result {
   return none(w === undefined ? next : setWindow(next, { ...w, id }));
 }
 
+/**
+ * Move focus between windows; the docked side panel sits right of them:
+ * `l` past the last window enters it, `h` leaves it.
+ */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
+  const side = s.panels.side;
+  const setSide = (focused: boolean): AppState => ({
+    ...s,
+    panels: { ...s.panels, side: { ...side, focused } },
+  });
+  if (panelFocused(s)) return none(dir === "h" ? setSide(false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
-  return none(
-    target === undefined
-      ? s
-      : { ...s, windows: { ...s.windows, active: target } },
-  );
+  if (target === undefined)
+    return none(dir === "l" && panelDocked(s) ? setSide(true) : s);
+  return none({ ...s, windows: { ...s.windows, active: target } });
 }
 
 const builtins: AppCommand[] = [
-  { id: "buffer.write", title: "Write buffer", run: writeActive },
+  { id: "file.save", title: "Save file", run: writeActive },
+  { id: "config.reload", title: "Reload config", run: reloadConfig },
   {
     id: "app.quit",
     title: "Quit",
@@ -286,6 +320,38 @@ const builtins: AppCommand[] = [
     run: (c) => cycleBuffer(c, -1),
   },
   { id: "file.edit", title: "Open file", run: editFile },
+  {
+    id: "jump.back",
+    title: "Jump to older position",
+    run: (c) => jumpBack(c.state, c.now),
+  },
+  {
+    id: "jump.forward",
+    title: "Jump to newer position",
+    run: (c) => jumpForward(c.state, c.now),
+  },
+  { id: "jump.list", title: "Jump list", run: (c) => showJumps(c.state) },
+  { id: "file.find", title: "Find file", run: (c) => openPicker(c, "files") },
+  {
+    id: "file.recent",
+    title: "Recent files",
+    run: (c) => openPicker(c, "recent"),
+  },
+  {
+    id: "search.grep",
+    title: "Search text in workspace",
+    run: (c) => openPicker(c, "grep"),
+  },
+  {
+    id: "command.palette",
+    title: "Command palette",
+    run: (c) => openPicker(c, "commands"),
+  },
+  {
+    id: "help.keymap",
+    title: "Help: keymap",
+    run: (c) => openPicker(c, "help"),
+  },
   {
     id: "window.split",
     title: "Split window",
@@ -336,18 +402,18 @@ const builtins: AppCommand[] = [
   {
     id: "explorer.create",
     title: "New file or folder",
-    run: (c) => startOp(c.state, "create"),
+    run: (c) => startOp(c, "create"),
   },
   {
     id: "explorer.rename",
     title: "Rename",
-    run: (c) => startOp(c.state, "rename"),
+    run: (c) => startOp(c, "rename"),
   },
-  { id: "explorer.move", title: "Move", run: (c) => startOp(c.state, "move") },
+  { id: "explorer.move", title: "Move", run: (c) => startOp(c, "move") },
   {
     id: "explorer.delete",
     title: "Delete",
-    run: (c) => startOp(c.state, "delete"),
+    run: (c) => startOp(c, "delete"),
   },
 ];
 

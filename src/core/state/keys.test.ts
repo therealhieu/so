@@ -5,12 +5,16 @@ import {
   testRegistries,
   textFile,
 } from "../../../test/support/state";
+import { parseConfig } from "../config/toml";
+import { summarize } from "../features/links/summarize";
 import { splitKeys } from "../kernel/vim/keys";
+import { scanDoc } from "../lang/markdown/scan";
 import { fullText } from "./buffers";
 import { runCommand } from "./commands";
 import { cmdlineCompletions } from "./keys";
+import { linkBindings } from "./link-commands";
 import type { Action, AppState, Effect } from "./types";
-import { createUpdate, type Registries } from "./update";
+import { createUpdate } from "./update";
 
 const reg = testRegistries();
 const update = createUpdate(reg);
@@ -86,12 +90,13 @@ test("explorer keys resolve in explorer mode and never edit the buffer", () => {
 });
 
 test("a filetype binding wins over the global binding for the same keys", () => {
-  const r: Registries = testRegistries();
+  const base = testRegistries();
+  const bindings = [...base.bindings];
   for (const [id, scope] of [
     ["test.global", { mode: "normal" }],
     ["test.markdown", { mode: "normal", filetype: "markdown" }],
   ] as const) {
-    r.commands.register({
+    base.commands.register({
       id,
       title: id,
       run: (ctx) => ({
@@ -102,9 +107,9 @@ test("a filetype binding wins over the global binding for the same keys", () => 
         effects: [],
       }),
     });
-    r.keymap.bind(scope, "gx", id);
+    bindings.push({ scope, seq: "gx", id });
   }
-  const u = createUpdate(r);
+  const u = createUpdate({ ...base, bindings });
   const md = keys(open("a.md", "x\n"), "gx", 0, u);
   expect(md.state.notifications.message?.text).toBe("test.markdown");
   const ts = keys(open("a.ts", "x\n"), "gx", 0, u);
@@ -192,10 +197,10 @@ test("typing autosaves after the delay and leaving Insert saves at once", () => 
   });
 });
 
-test("ex commands run through the same command path as their ids", () => {
+test(":w saves through file.save", () => {
   const s = keys(open("a.md", "hello\n"), "x").state;
   const ex = keys(s, ":w<CR>", 5);
-  expect(ex.effects).toEqual(runCommand(s, "buffer.write", 5, reg).effects);
+  expect(ex.effects).toEqual(runCommand(s, "file.save", 5, reg).effects);
   expect(ex.effects).toContainEqual({
     kind: "write",
     path: "a.md",
@@ -204,6 +209,21 @@ test("ex commands run through the same command path as their ids", () => {
   });
   expect(ex.state.vim.mode).toBe("normal");
   expect(ex.state.vim.cmdline).toBe("");
+});
+
+test(":write and a typed command id save the same way", () => {
+  const s = keys(open("a.md", "hello\n"), "x").state;
+  const saved = runCommand(s, "file.save", 5, reg).effects;
+  expect(keys(s, ":write<CR>", 5).effects).toEqual(saved);
+  expect(keys(s, ":file.save<CR>", 5).effects).toEqual(saved);
+});
+
+test(":ConfigReload requests a reload", () => {
+  const r = keys(open("a.md", "x\n"), ":ConfigReload<CR>");
+  expect(r.effects).toEqual([{ kind: "loadConfig" }]);
+  expect(keys(open("a.md", "x\n"), ":config.reload<CR>").effects).toEqual([
+    { kind: "loadConfig" },
+  ]);
 });
 
 test("an unknown ex command shows E492", () => {
@@ -268,14 +288,18 @@ test("conflict keys keep, take, or diff", () => {
 });
 
 test("explorer prompts create, rename, move, and delete", () => {
-  let s: AppState = update(fresh(), {
-    type: "dirListed",
-    dir: "",
-    entries: [
-      { name: "notes", kind: "dir" },
-      { name: "a.md", kind: "file" },
-    ],
-  }).state;
+  const indexed = fresh();
+  let s: AppState = update(
+    { ...indexed, index: { ...indexed.index, status: "ready" } },
+    {
+      type: "dirListed",
+      dir: "",
+      entries: [
+        { name: "notes", kind: "dir" },
+        { name: "a.md", kind: "file" },
+      ],
+    },
+  ).state;
   const created = keys(s, "adraft<CR>");
   expect(created.effects).toEqual([
     {
@@ -321,4 +345,83 @@ test("buffers cycle with :bn and :bp", () => {
   expect(update(keys(s, ":bn<CR>").state, action).state.buffers[1]?.dirty).toBe(
     true,
   );
+});
+
+function withNotes(s: AppState, notes: Record<string, string>): AppState {
+  const files = Object.keys(notes);
+  const indexed = update(s, {
+    type: "indexBatch",
+    summaries: files.map((p) => summarize(p, 1, scanDoc(notes[p] ?? ""))),
+    files,
+    done: files.length,
+    total: files.length,
+  }).state;
+  return update(indexed, { type: "indexReady" }).state;
+}
+const NOTE = "See [[plan]] today\n";
+const CODE = "const plan = 1;\n";
+
+test("note keys work in notes and do nothing in code files", () => {
+  const notes = withNotes(fresh(), { "notes/plan.md": "# Plan\n" });
+  const md = keys(open("notes/a.md", NOTE, notes), "6lgd");
+  expect(md.effects).toContainEqual({ kind: "read", path: "notes/plan.md" });
+
+  const ts = keys(open("scripts/sync.ts", CODE, notes), "6lgd");
+  expect(ts.effects.filter((e) => e.kind === "read")).toEqual([]);
+  expect(ts.state.overlay.kind).toBe("none");
+  expect(textOf(ts.state)).toBe(CODE.trimEnd());
+});
+
+test("note commands show the file-type notice elsewhere", () => {
+  const s = keys(open("scripts/sync.ts", CODE), ":link.follow<CR>").state;
+  expect(s.notifications.message?.text).toBe(
+    "not available for typescript files",
+  );
+});
+
+test("palette and : completion hide note commands outside notes", () => {
+  const ids = (s: AppState) => {
+    const r = runCommand(s, "command.palette", 0, reg).state;
+    return r.overlay.kind === "palette"
+      ? r.overlay.picker.items.map((i) => i.key)
+      : [];
+  };
+  const md = open("notes/a.md", NOTE);
+  const ts = open("scripts/sync.ts", CODE);
+  expect(ids(md)).toContain("link.follow");
+  expect(ids(ts)).not.toContain("link.follow");
+  expect(ids(ts)).not.toContain("search.headings");
+  expect(ids(ts)).toContain("search.tags");
+  expect(cmdlineCompletions(keys(md, ":link.").state, reg)).toContain(
+    "link.follow",
+  );
+  expect(cmdlineCompletions(keys(ts, ":link.").state, reg)).toEqual([]);
+});
+
+test("leader overrides apply per scope", () => {
+  const config = parseConfig(
+    [
+      "[keys.normal]",
+      '"<leader>w" = "file.save"',
+      "[filetypes.markdown.keys.normal]",
+      '"<leader>w" = "link.backlinks"',
+    ].join("\n"),
+  );
+  const s = update(fresh(), {
+    type: "configLoaded",
+    result: config,
+    reload: false,
+  }).state;
+  const md = keys(open("notes/a.md", "# A\n", s), "x<leader>w");
+  expect(md.state.panels.side).toMatchObject({ kind: "backlinks", open: true });
+  const ts = keys(open("scripts/sync.ts", CODE, s), "x<leader>w");
+  expect(ts.state.overlay.kind).toBe("none");
+  expect(ts.effects.some((e) => e.kind === "write")).toBe(true);
+});
+
+test("every note binding is scoped to markdown", () => {
+  expect(linkBindings.length).toBeGreaterThan(0);
+  for (const b of linkBindings) expect(b.scope.filetype).toBe("markdown");
+  for (const id of new Set(linkBindings.map((b) => b.id)))
+    expect(reg.commands.get(id)).toBeDefined();
 });

@@ -12,14 +12,21 @@
     "check": "biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src test/boundaries.test.ts test/repo.test.ts test/vim",
     "test:ci": "bun test test/ui test/integration test/e2e",
     "bench": "bun scripts/bench-gate.ts",
-    "build": "bun build --compile src/app/main.ts --outfile dist/so",
+    "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so",
     "record:vim": "bun scripts/record-vim.ts"
   },
   "dependencies": {
     "@opentui/core": "0.5.14",
+    "ignore": "7.0.12",
     "lowlight": "3.3.0",
-    "zod": "4.6.5",
-    "ignore": "7.0.12"
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-gfm": "3.1.0",
+    "mdast-util-math": "3.0.0",
+    "micromark-extension-gfm": "3.0.0",
+    "micromark-extension-math": "3.1.0",
+    "toml-eslint-parser": "1.0.3",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "typescript": "7.0.2",

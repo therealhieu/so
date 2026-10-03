@@ -1,7 +1,18 @@
 import type { FileTypeRegistry } from "../filetypes/registry";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { buffersUnder, openPath, removeBuffer } from "./buffers";
+import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
+import { indexAfterFsOp } from "./index";
+import {
+  awaitsOp,
+  beginRewrite,
+  dropRewrite,
+  followMove,
+  promptImpact,
+  startRename,
+  submitRename,
+} from "./link-edits";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
@@ -13,6 +24,7 @@ import type {
   PromptState,
   Result,
 } from "./types";
+import type { Registries } from "./update";
 
 export const dirname = (path: string): string => {
   const i = path.lastIndexOf("/");
@@ -96,32 +108,53 @@ const withEffect = (r: Result, e: Effect): Result => ({
   effects: [...r.effects, e],
 });
 
+/**
+ * A file operation reported back. A rename or move with planned link edits
+ * starts them only on success; a failure drops them unapplied.
+ */
 export function onFsResult(
-  s: AppState,
+  prev: AppState,
+  a: Extract<Action, { type: "fsResult" }>,
+  reg: Registries,
+): Result {
+  const { op } = a;
+  const r = fsResultTree(prev, a);
+  if (!awaitsOp(prev, op)) return r;
+  return a.ok
+    ? chain(r, (st) => beginRewrite(st, reg))
+    : none(dropRewrite(r.state));
+}
+
+function fsResultTree(
+  prev: AppState,
   a: Extract<Action, { type: "fsResult" }>,
 ): Result {
   const { op } = a;
   if (!a.ok)
     return op.kind === "trash" && !op.permanent
       ? toast(
-          withTrash(s, false),
+          withTrash(prev, false),
           "error",
           `Move to Trash failed: ${a.reason ?? "unknown error"}`,
         )
-      : message(s, a.reason ?? "operation failed", "error");
+      : message(prev, a.reason ?? "operation failed", "error");
+  const s = indexAfterFsOp(prev, op);
   switch (op.kind) {
     case "rename":
     case "move": {
       const to = op.to ?? op.from;
       const ex = s.panels.explorer;
       const expanded = ex.expanded.map((d) => repath(d, op.from, to));
-      const moved = setExplorer(repathBuffers(s, op.from, to), {
-        entries: Object.fromEntries(
-          Object.entries(ex.entries).filter(([d]) => !under(d, op.from)),
-        ),
-        expanded,
-        cursor: repath(ex.cursor, op.from, to),
-      });
+      const moved = setExplorer(
+        repathBuffers(followMove(s, op.from, to), op.from, to),
+        {
+          entries: Object.fromEntries(
+            Object.entries(ex.entries).filter(([d]) => !under(d, op.from)),
+          ),
+          expanded,
+          cursor: repath(ex.cursor, op.from, to),
+        },
+      );
       return relist(moved, [
         dirname(op.from),
         ...ancestors(to),
@@ -194,7 +227,11 @@ export function toggleExplorer(s: AppState): Result {
   const ex = s.panels.explorer;
   if (ex.open && ex.focused)
     return none(setExplorer(s, { open: false, focused: false }));
-  const opened = setExplorer(s, { open: true, focused: true });
+  const side = { ...s.panels.side, focused: false };
+  const opened = setExplorer(
+    { ...s, panels: { ...s.panels, side } },
+    { open: true, focused: true },
+  );
   return ex.entries[""] === undefined
     ? { state: opened, effects: [{ kind: "listDir", dir: "" }] }
     : none(opened);
@@ -273,9 +310,10 @@ const openPrompt = (s: AppState, prompt: PromptState): Result =>
 
 /** `a r m d`: open the prompt for an operation on the selection. */
 export function startOp(
-  s: AppState,
+  c: CommandContext,
   kind: "create" | "rename" | "move" | "delete",
 ): Result {
+  const s = c.state;
   const ex = s.panels.explorer;
   const from = ex.cursor;
   if (kind === "create") {
@@ -289,20 +327,7 @@ export function startOp(
     });
   }
   if (from === "") return none(s);
-  if (kind === "rename")
-    return openPrompt(s, {
-      kind: "input",
-      title: "Rename",
-      value: basename(from),
-      op: { kind: "rename", from },
-    });
-  if (kind === "move")
-    return openPrompt(s, {
-      kind: "input",
-      title: "Move to",
-      value: from,
-      op: { kind: "move", from },
-    });
+  if (kind === "rename" || kind === "move") return startRename(c, kind, from);
   return ex.trash === "available"
     ? openPrompt(s, {
         kind: "confirm",
@@ -333,7 +358,13 @@ export function promptKey(s: AppState, key: string, now: number): Result {
       : [...key].length === 1
         ? p.value + key
         : p.value;
-  return none({ ...s, overlay: { kind: "prompt", prompt: { ...p, value } } });
+  if (value === p.value) return none(s);
+  const edited = { ...p, value };
+  const prompt =
+    p.op.kind === "rename" || p.op.kind === "move"
+      ? promptImpact(s, edited)
+      : edited;
+  return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
 
 function submit(s: AppState, p: PromptState, now: number): Result {
@@ -346,6 +377,8 @@ function submit(s: AppState, p: PromptState, now: number): Result {
           ...s,
           overlay: { kind: "prompt", prompt: p },
         });
+  if (op.kind === "rename" || op.kind === "move")
+    return submitRename(s, p, now);
   if (value === "") return none(s);
   if (op.kind === "create") {
     const t = createTarget(value);
@@ -355,11 +388,5 @@ function submit(s: AppState, p: PromptState, now: number): Result {
       now,
     );
   }
-  const to =
-    op.kind === "rename"
-      ? join(dirname(op.from), value)
-      : value.replace(/^\/+|\/+$/g, "");
-  return to === op.from
-    ? none(s)
-    : explorerOp(s, { kind: op.kind, from: op.from, to }, now);
+  return none(s);
 }

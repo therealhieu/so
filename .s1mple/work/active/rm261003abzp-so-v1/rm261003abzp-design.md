@@ -9,7 +9,7 @@ Use `None — <reason>` for sections or fields that do not apply. Diagrams and c
 ## Baseline and Goals
 
 - **Context:** `rm261003abzp-roadmap-context.md@R2` - empty repository; Alfred code available to port (Markdown parse, Obsidian syntax, vim core, terminal graphics, Bases); scope change 2026-10-03: Markdown-first on a language-neutral core.
-- **Requirements:** `rm261003abzp-requirements.md` - RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3 … RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3 (approved).
+- **Requirements:** `rm261003abzp-requirements.md` - RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3 … RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3 (approved).
 - **Research:** `rm261003abzp-research.md`
 - **Reconciliation:** `rm261003abzp-requirements.md` Research Reconciliation — Complete.
 - **Goals:**
@@ -20,7 +20,7 @@ Use `None — <reason>` for sections or fields that do not apply. Diagrams and c
 - **Binding constraints:**
   - `.s1mple/S1MPLE.md` Implementation - "Keep it lean and simple": no monorepo, no server between UI and core, no speculative plugin system.
   - RM261003ABZP-REQ11@R3 - only `src/ui/` imports `@opentui/*`; `src/core/` imports no I/O, UI, or runtime APIs; `src/core/kernel/` imports nothing from `filetypes/`, `lang/`, or `features/`.
-  - RM261003ABZP-REQ10@R2 - no tool may depend on the TypeScript compiler API (TypeScript 7 ships none, `RM261003ABZP-RF13`).
+  - RM261003ABZP-REQ10@R3 - no tool may depend on the TypeScript compiler API (TypeScript 7 ships none, `RM261003ABZP-RF13`).
 
 ## System Architecture
 
@@ -127,7 +127,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** file writes (expressed as `write` effects).
 
 - **Workspace adapters**
-  - **Decisions:** RM261003ABZP-DES8@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1
   - **Location:** `src/workspace/`
   - **Responsibilities:** atomic save, text read with binary and size checks, create, rename, move, delete-to-trash; directory watcher with own-write suppression; index worker (scan, summarize, search); config and state files; clipboard; opening URLs/browser.
   - **Collaborators:** app effect runner → `workspace/*` → `dispatch(resultAction)`
@@ -166,8 +166,9 @@ so/
 ├── [A] knip.json                    Purpose: dead-code check                    Decisions: DES15
 ├── [A] release-please-config.json   Purpose: Conventional Commits → SemVer; initial-version 0.1.0  Decisions: DES15
 ├── [A] .release-please-manifest.json Purpose: release-please version manifest ({".": "0.0.0"})  Decisions: DES15
-├── [A] .github/workflows/ci.yml     Purpose: check ∥ test+bench jobs            Decisions: DES15, DES16
-├── [A] .github/workflows/release.yml Purpose: release-please + compile ×4 + smoke  Decisions: DES15
+├── [A] .github/workflows/ci.yml     Purpose: check ∥ test+bench jobs on pull requests  Decisions: DES15, DES16
+├── [A] .github/workflows/release-please.yml Purpose: release PR on main; calls release.yml when a release is created  Decisions: DES15
+├── [A] .github/workflows/release.yml Purpose: compile ×4 + native smoke ×4 + publish (on `v*` tag or workflow_call)  Decisions: DES15
 ├── [A] bin/so                        Purpose: `#!/usr/bin/env bun` entry for source runs  Decisions: DES1
 ├── [A] src/app/
 │   ├── main.ts                      Purpose: CLI, wiring, lifecycle            Symbols: main, parseArgs   Decisions: DES1, DES2
@@ -192,7 +193,7 @@ so/
 │   └── config/                      Purpose: config schema and defaults         Symbols: ConfigSchema, defaults  Decisions: DES14
 ├── [A] src/workspace/
 │   ├── fs.ts                        Purpose: readTextFile (binary/size/BOM/EOL), atomicWrite, create, rename, move  Symbols: readTextFile, atomicWrite  Decisions: DES8, DES17
-│   ├── trash.ts                     Purpose: freedesktop trash, macOS Finder trash  Symbols: moveToTrash  Decisions: DES8
+│   ├── trash.ts                     Purpose: freedesktop trash, macOS trash (`/usr/bin/trash` or NSFileManager)  Symbols: moveToTrash  Decisions: DES8
 │   ├── watcher.ts                   Purpose: directory watching, own-write suppression  Symbols: watchWorkspace  Decisions: DES8
 │   ├── index-worker.ts              Purpose: list files, summarize notes, search text files in a Worker  Symbols: onmessage  Decisions: DES7
 │   ├── config-file.ts               Purpose: XDG config load + validation       Symbols: loadConfig        Decisions: DES14
@@ -282,7 +283,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/workspace/fs.ts` `readTextFile`; `src/core/filetypes/registry.ts` `FileTypeRegistry.forPath`, `EditorKindRegistry.get`
 
 - **Save and external change**
-  - **Decisions:** RM261003ABZP-DES8@R1, RM261003ABZP-DES2@R2
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2
   - **Participants:** `update` (autosave policy) → effect `write` → `workspace/fs.atomicWrite` → `watcher` → `dispatch(fileChanged)` → `update` (conflict rules)
   - **Flow:**
 
@@ -422,7 +423,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Decisions:** RM261003ABZP-DES14@R1, RM261003ABZP-DES5@R2
   - **Purpose:** user options and keymap overrides.
   - **Participants:** `config-file.loadConfig` → `ConfigSchema` (zod) → `AppState.config`
-  - **Meaning:** `leader`, `escTimeoutMs` (50), `autosave` (`{ enabled: true, delayMs: 1000 }`), `editor` (`tabWidth`, `wrap`, `relativeNumbers`), `preview` (`mode: "live"`, `embedMaxRows`, `images: "auto"|"blocks"|"off"`), `daily` (`folder`, `format`, `template`), `templates.folder`, `theme`, `color` (overrides `NO_COLOR`), `keys.<mode>` (`"<key-seq>" = "<command-id>"`, global), `filetypes.<id>.keys.<mode>` (same form, one file type).
+  - **Meaning:** `leader`, `escTimeoutMs` (50; effective `max(escTimeoutMs, 20)` because OpenTUI resolves a legacy lone Esc at 20 ms), `autosave` (`{ enabled: true, delayMs: 1000 }`), `editor` (`tabWidth`, `wrap`, `relativeNumbers`), `preview` (`mode: "live"`, `embedMaxRows`, `images: "auto"|"blocks"|"off"`), `daily` (`folder`, `format`, `template`), `templates.folder`, `theme`, `color` (overrides `NO_COLOR`), `keys.<mode>` (`"<key-seq>" = "<command-id>"`, global), `filetypes.<id>.keys.<mode>` (same form, one file type).
   - **Ownership and lifecycle:** read at startup and on `:ConfigReload`.
   - **Invariants:** unknown keys and invalid values produce errors with file and line; the invalid file is ignored as a whole and defaults apply.
   - **State flow:** `None`
@@ -716,7 +717,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S4@R1, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2
 
 - **`src/workspace/fs.ts` and `src/workspace/watcher.ts`**
-  - **Decisions:** RM261003ABZP-DES8@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES17@R1
   - **Change:** Add
   - **Responsibilities:** text reads with binary and size checks; atomic writes and directory watching with own-write suppression.
   - **Current source:** None — new surface
@@ -785,7 +786,7 @@ Unit tests sit next to code as `*.test.ts`.
     export const editorViews = new Map<EditorKind, (ctx: RenderContext, win: WindowId) => Renderable>();  // registered: text → EditorView, base → BaseView
     export function registerEditorView(kind: EditorKind, view: (ctx: RenderContext, win: WindowId) => Renderable): void;
     export const widgetPainters: Record<string, WidgetPainter>;                                        // image, embed, base, rule
-    export function normalizeKey(e: KeyEvent): Key;       // kitty protocol when available; legacy Esc via escTimeoutMs
+    export function normalizeKey(e: KeyEvent): Key;       // kitty protocol when available; legacy Esc via max(escTimeoutMs, 20)
     ```
 
     Exact OpenTUI buffer and image APIs are confirmed against the pinned version in the first delivery item (the class above is illustrative).
@@ -836,10 +837,10 @@ Unit tests sit next to code as `*.test.ts`.
 | Security and privacy | No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2); config is data (TOML), never executed (RM261003ABZP-DES14@R1); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
 | Configuration and observability | XDG TOML config validated by schema; errors as notifications; `so --version`; `SO_LOG=debug` writes a log to `$XDG_STATE_HOME/so/so.log` without note content (RM261003ABZP-DES14@R1) | RM261003ABZP-V4@R2 |
 | Performance and scalability | Viewport-only layout, block parse cache, worker index and search, frame coalescing, lazy image decode with cache (RM261003ABZP-DES16@R1) | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R1) | RM261003ABZP-V1@R1 |
+| Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R2) | RM261003ABZP-V1@R1 |
 | Migration and backfill | None — greenfield; Obsidian files are read as-is and written in place | None — no prior data format |
 | Mixed-version compatibility | Obsidian file compatibility (Markdown, links, frontmatter, `.base`); Kanban `type` constant isolated in `core/features/bases/types.ts` and verified against an Obsidian-saved file (RM261003ABZP-DES12@R2) | RM261003ABZP-V10@R1 |
-| Rollout and rollback | SemVer releases via release-please; users roll back by installing a previous release binary (RM261003ABZP-DES15@R1) | RM261003ABZP-V14@R1 |
+| Rollout and rollback | SemVer releases via release-please; users roll back by installing a previous release binary (RM261003ABZP-DES15@R2) | RM261003ABZP-V14@R1 |
 | Known extension needs | Registries: commands and file-type-scoped keymaps (DES5), syntax extensions (DES6), block renderers and decoration providers (DES9), editor-kind views and widget painters (DES10), Bases view types (DES12), file types and highlighters (DES17) — RM261003ABZP-REQ11@R3 | RM261003ABZP-V16@R2 |
 | Evolution toward code editing and notebooks | Kernel boundary (DES1) keeps editing language-neutral; future work adds registrations only: an LSP client is a workspace adapter whose results become `mark`/`line` decorations and file-type commands (`gd` → definition); tree-sitter replaces lowlight behind `Highlighter`; a notebook is a new editor kind whose cells each hold a `TextBuffer`. None of these is built in v1 (RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3 deferrals) | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V18@R1 |
 
@@ -858,7 +859,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** across crash, external edit, and save failure scenarios, the file on disk is always a complete old or new version and dirty buffers are never overwritten without a prompt.
   - **Requirements:** RM261003ABZP-REQ1@R3
-  - **Design:** RM261003ABZP-DES8@R1 - atomic write, own-write suppression, conflict rules
+  - **Design:** RM261003ABZP-DES8@R2 - atomic write, own-write suppression, conflict rules
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V1@R1 — Atomic save and external-change handling**
@@ -1046,8 +1047,8 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 - **RM261003ABZP-S10@R1 — Development, CI, and release are fast and automatic**
   - **Definition:** This document
   - **Outcome:** `bun run check` < 30 s; CI < 3 min; release produces four checksummed binaries that start.
-  - **Requirements:** RM261003ABZP-REQ10@R2
-  - **Design:** RM261003ABZP-DES15@R1
+  - **Requirements:** RM261003ABZP-REQ10@R3
+  - **Design:** RM261003ABZP-DES15@R2
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V14@R1 — Check timing, CI timing, and release dry run**
@@ -1115,7 +1116,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 ## Design Decisions and Traceability
 
 - **RM261003ABZP-DES1@R2 — One process, one package, four layers, and a language-neutral kernel, with a tested import boundary**
-  - **Requirements:** RM261003ABZP-REQ11@R3 - pure core, enforced boundaries, language-neutral kernel; RM261003ABZP-REQ10@R2 - fast checks
+  - **Requirements:** RM261003ABZP-REQ11@R3 - pure core, enforced boundaries, language-neutral kernel; RM261003ABZP-REQ10@R3 - fast checks
   - **Decision:** `src/core` (pure), `src/workspace` (I/O), `src/ui` (OpenTUI), `src/preview` (HTTP), wired only in `src/app`. Inside the core, `kernel/` (text, editor, vim, commands, view) imports only `kernel/`; `filetypes/`, `lang/`, and `features/` build on it; `state/` and `config/` compose everything. A `bun test` boundary test using `Bun.Transpiler.scanImports` enforces both the layer rules and the kernel rule.
   - **Explanation:** System Architecture diagram; Project Structure; `test/boundaries.test.ts`. One package keeps install and CI fast; the test needs no TypeScript API (`RM261003ABZP-RF13`). The kernel rule is what keeps `so` able to become a code or notebook editor: Markdown cannot leak into editing, and a new language is a new folder plus registrations.
   - **Evidence:** `rm261003abzp-roadmap-context.md@R1` - Alfred needed six packages because of its kernel; `so` has no server boundary. `rm261003abzp-roadmap-context.md@R2` - scope change: leave room for code editing and notebooks.
@@ -1184,15 +1185,15 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Dependencies:** RM261003ABZP-DES6@R1, RM261003ABZP-DES17@R1
   - **Predecessors:** RM261003ABZP-DES7@R1, RM261003ABZP-DES7@R2
 
-- **RM261003ABZP-DES8@R1 — Atomic saves, directory watching, own-write stamps, and trash adapters**
+- **RM261003ABZP-DES8@R2 — Atomic saves, directory watching, own-write stamps, and trash adapters**
   - **Requirements:** RM261003ABZP-REQ1@R3 - safe file management
-  - **Decision:** `atomicWrite` (realpath → same-dir temp → fsync → chmod → rename); `fs.watch(root, {recursive:true})` with per-path debounce and own-write stamps; trash via freedesktop spec on Linux and Finder automation (`osascript`) on macOS, else typed confirmation; autosave policy and conflict rules live in core.
+  - **Decision:** `atomicWrite` (realpath → same-dir temp → fsync → chmod → rename); `fs.watch(root, {recursive:true})` with per-path debounce and own-write stamps; trash via freedesktop spec on Linux and, on macOS, `/usr/bin/trash` when present, else `NSFileManager` through JXA (`osascript -l JavaScript` with the path as an argument), both without a permission prompt; else typed confirmation; autosave policy and conflict rules live in core.
   - **Explanation:** `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; Save and external change flow.
-  - **Evidence:** `alfred/packages/view-model/src/knowledge/autosave-queue.ts` - autosave queue reference.
+  - **Evidence:** `alfred/packages/view-model/src/knowledge/autosave-queue.ts` - autosave queue reference; `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF11 - Finder automation prompts for Automation permission, while `/usr/bin/trash` (macOS 15+) and `NSFileManager` move to the trash without a prompt; RF8 - recursive `fs.watch` confirmed on macOS and Linux; delivered in `src/workspace/trash.ts` and `watcher.ts` (PR #1).
   - **Research:** `RM261003ABZP-RF11` - fsync, same directory, directory watching, undoable reload; evaluated RM261003ABZP-REQ1@R1 → informed RM261003ABZP-REQ1@R2 (current RM261003ABZP-REQ1@R3)
-  - **Tradeoffs:** rename-based saves replace hard links (acceptable for notes); recursive `fs.watch` relies on platform support in Bun on macOS and Linux — verified in the first delivery item.
+  - **Tradeoffs:** rename-based saves replace hard links (acceptable for notes); recursive `fs.watch` relies on platform support in Bun on macOS and Linux — confirmed by DI1 (RF8 above) and re-proved in CI on both platforms.
   - **Dependencies:** RM261003ABZP-DES2@R2
-  - **Predecessors:** None
+  - **Predecessors:** RM261003ABZP-DES8@R1
 
 - **RM261003ABZP-DES9@R3 — Viewport-only text view with decorations; Markdown live preview as a decoration provider**
   - **Requirements:** RM261003ABZP-REQ5@R2 - live preview; RM261003ABZP-REQ9@R2 - smooth scrolling; RM261003ABZP-REQ11@R3 - language-neutral kernel, registered decoration providers
@@ -1231,7 +1232,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `alfred/packages/vault/src/domain/bases/parser.ts:19`, `evaluator.ts:164` - no file-system or Bun imports (context assumption).
   - **Research:** `RM261003ABZP-RF9` - layouts, Kanban rules; evaluated RM261003ABZP-REQ7@R1 → informed RM261003ABZP-REQ7@R2
   - **Tradeoffs:** follows an early-access Obsidian layout; guarded by the constant, a fixture, and the table fallback. Bases is the first non-text editor kind, so the seam a notebook needs is exercised in v1 rather than designed speculatively.
-  - **Dependencies:** RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
   - **Predecessors:** RM261003ABZP-DES12@R1
 
 - **RM261003ABZP-DES13@R2 — `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering**
@@ -1254,15 +1255,15 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Dependencies:** RM261003ABZP-DES5@R2
   - **Predecessors:** None
 
-- **RM261003ABZP-DES15@R1 — Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile**
-  - **Requirements:** RM261003ABZP-REQ10@R2 - fast checks, CI, release; RM261003ABZP-REQ11@R3 - Conventional Commits, SemVer
-  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache; release-please on `main`; release job on tag: `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, `SHA256SUMS`, smoke `so --version` on `macos-latest` and `ubuntu-latest`.
+- **RM261003ABZP-DES15@R2 — Bun-native toolchain, two-job CI, release-please, and single-runner cross-compile**
+  - **Requirements:** RM261003ABZP-REQ10@R3 - fast checks, CI, release; RM261003ABZP-REQ11@R3 - Conventional Commits, SemVer
+  - **Decision:** Bun (exact version in `packageManager`), TypeScript 7 `tsc --noEmit` strict, Biome, knip, `bun test` (unit colocated; component via OpenTUI test renderer; few PTY e2e); `bun run check` = biome check + tsc + knip + boundary test + unit tests; CI jobs `check` and `test` (component, e2e, bench) in parallel with Bun cache, triggered on pull requests only, a newer push cancelling the superseded run; release-please on `main`, which calls the release workflow through `workflow_call` when it creates a release (a manually pushed `v*` tag also triggers it); release workflow: `bun install --os="*" --cpu="*"`, compile `bun-darwin-arm64`, `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64` with `OPENTUI_LIBC=glibc` defined for Linux, `SHA256SUMS`, smoke `so --version` natively for each target (`macos-15` arm64, `macos-15-intel` x64, `ubuntu-24.04` x64, `ubuntu-24.04-arm` arm64) before publishing.
   - **Explanation:** Project Structure (`package.json`, `.github/workflows/*`).
-  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided.
-  - **Research:** `RM261003ABZP-RF3`, `RM261003ABZP-RF13`, `RM261003ABZP-RF14`; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
-  - **Tradeoffs:** unsigned macOS binaries (signing deferred); release-please adds a bot PR.
+  - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's eight CI groups are the anti-pattern avoided; user decision 2026-10-03 for PR-only CI (private repository, billed macOS minutes); `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` RF7 - one runner cross-compiles all four targets, and only a native runner proves each binary starts; RF9 - a release created by release-please with `GITHUB_TOKEN` does not trigger tag workflows, so the build is wired to its outputs; delivered in `.github/workflows/` (PR #1).
+  - **Research:** `RM261003ABZP-RF3`, `RM261003ABZP-RF13`, `RM261003ABZP-RF14`; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (current RM261003ABZP-REQ10@R3)
+  - **Tradeoffs:** unsigned macOS binaries (signing deferred); release-please adds a bot PR; pushes to `main` run no CI, so `main` relies on the pull-request run of its merge head; four smoke runners add billed macOS minutes per release only.
   - **Dependencies:** RM261003ABZP-DES1@R2
-  - **Predecessors:** None
+  - **Predecessors:** RM261003ABZP-DES15@R1
 
 - **RM261003ABZP-DES16@R1 — Performance by construction plus benchmark gates**
   - **Requirements:** RM261003ABZP-REQ9@R2 - performance targets
@@ -1281,12 +1282,12 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `rm261003abzp-roadmap-context.md@R2` - "Apply all six" decision; `alfred/apps/tui/src/view/markdown/code-highlight.ts` - lowlight precedent. Industry precedent: Neovim `filetype` + ftplugins, VS Code language contributions, Git's NUL-byte binary heuristic.
   - **Research:** None - the decision reuses existing findings (RF6 pure text model, RF7 parse and reveal).
   - **Tradeoffs:** lowlight is regex-based and not incremental, so very long multi-line constructs above the 200-line look-back can highlight wrongly; accepted for v1 and replaceable by tree-sitter behind `Highlighter`. Rejected adding tree-sitter now (WASM grammars, build and size cost without a v1 need) and a generic notebook-ready `Document` abstraction (speculative; editor kinds already cover it). The 16 MiB limit is a fixed constant, not configuration.
-  - **Dependencies:** RM261003ABZP-DES1@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES8@R1
+  - **Dependencies:** RM261003ABZP-DES1@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES8@R2
   - **Predecessors:** None
 
 | Current requirement | Design decision | Canonical design location | Success | Verification |
 |---|---|---|---|---|
-| RM261003ABZP-REQ1@R3 - folder workspace, text files, safe file management | RM261003ABZP-DES8@R1, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R1 | `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; `src/core/filetypes/`; Open a file and Save and external change flows | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
+| RM261003ABZP-REQ1@R3 - folder workspace, text files, safe file management | RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R1 | `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; `src/core/filetypes/`; Open a file and Save and external change flows | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
 | RM261003ABZP-REQ2@R2 - vim editing | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES10@R2 | `src/core/kernel/text/`, `src/core/kernel/editor/`, `src/core/kernel/vim/`, `src/ui/input.ts` | RM261003ABZP-S2@R1 | RM261003ABZP-V2@R1, RM261003ABZP-V3@R1 |
 | RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES17@R1 | `src/core/kernel/commands/`, `src/ui/overlays/`, `src/workspace/config-file.ts`, `state-file.ts` | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
 | RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R3, RM261003ABZP-DES6@R1 | `src/core/features/links/` | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
@@ -1295,16 +1296,16 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
 | RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R1 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R2 - dev, CI, release | RM261003ABZP-DES15@R1, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ10@R3 - dev, CI, release | RM261003ABZP-DES15@R2, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
 | RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
 
 ## Unresolved Items
 
-None — open technical confirmations (OpenTUI paint/image API details at the pinned version, recursive `fs.watch` behavior, Kanban `type` value) are delivery constraints with named verification, not design decisions.
+None — open technical confirmations are delivery constraints with named verification, not design decisions. DI1 confirmed the OpenTUI paint, buffer, and test-renderer APIs at `@opentui/core` 0.5.14 and recursive `fs.watch` on macOS and Linux. The OpenTUI image API at the pinned version (before DI3 relies on it) and the Kanban `type` value (DI4) remain.
 
 ## Approval
 
-- **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3
-- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R1, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3
+- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 - **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R1, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
-- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back.
+- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke).

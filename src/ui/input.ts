@@ -53,11 +53,12 @@ export type KeyNormalizer = { feed(e: KeyInput): void };
  * Turns OpenTUI key events into editor keys. A raw (legacy) Esc is held for
  * `escTimeoutMs − 20` ms more, so the effective timeout is
  * `max(escTimeoutMs, 20)`; a key during the hold releases the Esc first.
+ * A function `escTimeoutMs` is read at each Esc, so a reloaded config applies.
  * Kitty Esc and escape sequences pass at once. Legacy `meta+key` is an Esc
  * typed just before the key, so it is split back into both.
  */
 export function createKeyNormalizer<T>(o: {
-  escTimeoutMs: number;
+  escTimeoutMs: number | (() => number);
   now: () => number;
   setTimer: (fn: () => void, ms: number) => T;
   clear: (timer: T) => void;
@@ -75,7 +76,11 @@ export function createKeyNormalizer<T>(o: {
       const key = toKey(e);
       if (key === "<Esc>" && e.source === "raw") {
         release();
-        const extra = Math.max(0, o.escTimeoutMs - OPENTUI_ESC_MS);
+        const timeout =
+          typeof o.escTimeoutMs === "number"
+            ? o.escTimeoutMs
+            : o.escTimeoutMs();
+        const extra = Math.max(0, timeout - OPENTUI_ESC_MS);
         if (extra === 0) return o.emit(key, o.now());
         held = o.setTimer(() => {
           held = undefined;

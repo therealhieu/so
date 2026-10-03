@@ -1,7 +1,14 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { ready, runInPty } from "./pty";
 
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
@@ -47,4 +54,29 @@ test("a hung write delays exit by the flush bound and reports the unsaved file",
   expect(r.probe.lastCursor).toBe("h");
   expect(r.screen.text).toContain("so: unsaved: note.md");
   expect(await readFile(path, "utf8")).toBe("# Note\n");
+});
+
+test(":q saves the session outside the workspace, private to the user", async () => {
+  const path = await note();
+  const state = await mkdtemp(join(tmpdir(), "so-quit-state-"));
+  try {
+    const r = await runInPty([process.execPath, MAIN, path], {
+      env: { XDG_STATE_HOME: state },
+      async script(p) {
+        await ready(p);
+        p.type(":q\r");
+      },
+    });
+    expect(r.exitCode).toBe(0);
+    const [hash] = await readdir(join(state, "so"));
+    const file = join(state, "so", hash ?? "", "state.json");
+    expect((await stat(file)).mode & 0o777).toBe(0o600);
+    expect(JSON.parse(await readFile(file, "utf8")).recent).toEqual([
+      "note.md",
+    ]);
+    expect(await readdir(dirname(path))).toEqual(["note.md"]);
+  } finally {
+    await rm(state, { recursive: true, force: true });
+    await rm(dirname(path), { recursive: true, force: true });
+  }
 });

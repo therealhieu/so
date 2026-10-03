@@ -140,9 +140,16 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   explorerTitle: ["fg-muted", "bg-dark", BOLD, BOLD],
   explorerDir: ["h1", "bg-dark", 0, 0],
   explorerDirty: ["warn", "bg-dark", 0, 0],
+  explorerWarn: ["warn", "bg-dark", 0, 0],
+  explorerError: ["error", "bg-dark", BOLD, BOLD],
   treeSel: ["fg", "bg-hl", 0, UNDERLINE],
   treeSelFocus: ["fg", "bg-sel", 0, INVERSE],
   treeField: ["fg", "bg-sel", UNDERLINE, INVERSE | UNDERLINE],
+  panelHeading: ["h1", "bg-dark", BOLD, BOLD],
+  panelHeadingAlt: ["h2", "bg-dark", BOLD, BOLD],
+  panelLink: ["link", "bg-dark", 0, 0],
+  panelMuted: ["fg-muted", "bg-dark", 0, 0],
+  panelHit: ["fg", "match-bg", 0, UNDERLINE],
   separator: ["border", "bg", 0, 0],
   winbar: ["fg-dim", "bg-dark", 0, DIM],
   winbarActive: ["fg", "bg-dark", BOLD, BOLD],
@@ -151,6 +158,9 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   floatBorder: ["border-hl", "bg-float", 0, 0],
   floatTitle: ["border-hl", "bg-float", BOLD, BOLD],
   floatSel: ["fg", "bg-sel", 0, INVERSE],
+  floatKey: ["kw", "bg-float", BOLD, BOLD],
+  floatGroup: ["fn", "bg-float", 0, 0],
+  floatMatch: ["fg", "match-bg", UNDERLINE, UNDERLINE],
   floatWarn: ["warn", "bg-float", 0, 0],
   floatError: ["error", "bg-float", BOLD, BOLD],
   toastInfo: ["ok", "bg-float", 0, 0],
@@ -201,9 +211,12 @@ export const resolveTheme = (o: {
   theme: "dark" | "light";
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
 
-/** The theme for the state's colour mode and configured theme. */
+/** The theme for the state's colour mode and configured theme; `color = "never"` turns colour off. */
 export const themeOf = (s: AppState): Theme =>
-  resolveTheme({ color: s.terminal.color, theme: s.config.theme });
+  resolveTheme({
+    color: s.config.color === "never" ? "nocolor" : s.terminal.color,
+    theme: s.config.theme,
+  });
 
 /** Cut the middle of `text` to `width` cells with `…`, keeping both ends. */
 export function middle(text: string, width: number): string {

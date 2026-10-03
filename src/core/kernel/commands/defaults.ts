@@ -1,14 +1,18 @@
 import type { KeyScope } from "./keymap";
 
+/** A key binding; `overridden` marks one that comes from the user's config. */
+export type Binding = {
+  scope: KeyScope;
+  seq: string;
+  id: string;
+  overridden?: true;
+};
+
 /**
  * Built-in bindings. Keymap bindings run before the vim engine, so these
  * sequences never reach it in their mode.
  */
-export const defaultBindings: readonly {
-  scope: KeyScope;
-  seq: string;
-  id: string;
-}[] = [
+export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>e", id: "explorer.toggle" },
   { scope: { mode: "normal" }, seq: "<C-w>h", id: "window.focush" },
   { scope: { mode: "normal" }, seq: "<C-w>j", id: "window.focusj" },
@@ -16,6 +20,16 @@ export const defaultBindings: readonly {
   { scope: { mode: "normal" }, seq: "<C-w>l", id: "window.focusl" },
   { scope: { mode: "normal" }, seq: "<C-w>s", id: "window.split" },
   { scope: { mode: "normal" }, seq: "<C-w>v", id: "window.vsplit" },
+  { scope: { mode: "normal" }, seq: "<leader>ff", id: "file.find" },
+  { scope: { mode: "normal" }, seq: "<leader>fr", id: "file.recent" },
+  { scope: { mode: "normal" }, seq: "<leader>sg", id: "search.grep" },
+  { scope: { mode: "normal" }, seq: "<leader>st", id: "search.tags" },
+  { scope: { mode: "normal" }, seq: "<leader>sc", id: "command.palette" },
+  { scope: { mode: "normal" }, seq: "<leader>:", id: "command.palette" },
+  { scope: { mode: "normal" }, seq: "<leader>?", id: "help.keymap" },
+  { scope: { mode: "normal" }, seq: "<C-o>", id: "jump.back" },
+  { scope: { mode: "normal" }, seq: "<C-i>", id: "jump.forward" },
+  { scope: { mode: "normal" }, seq: "<Tab>", id: "jump.forward" },
   { scope: { mode: "explorer" }, seq: "j", id: "explorer.down" },
   { scope: { mode: "explorer" }, seq: "k", id: "explorer.up" },
   { scope: { mode: "explorer" }, seq: "<CR>", id: "explorer.open" },
@@ -27,3 +41,12 @@ export const defaultBindings: readonly {
   { scope: { mode: "explorer" }, seq: "d", id: "explorer.delete" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
 ];
+
+/** Which-key group labels by prefix sequence. */
+export const defaultGroups: Readonly<Record<string, string>> = {
+  "<leader>f": "find",
+  "<leader>s": "search",
+  "<leader>b": "buffer",
+  "<leader>w": "window",
+  "<leader>u": "ui",
+};

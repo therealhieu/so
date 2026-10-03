@@ -37,7 +37,13 @@ export function handleKey(
   key: Key,
   env: VimEnv,
 ): { s: VimSession; effects: VimEffect[] } {
-  const run: Run = { s, effects: [], want: 0, before: s.cursor };
+  const run: Run = {
+    s,
+    effects: [],
+    want: 0,
+    tab: env.tabWidth,
+    before: s.cursor,
+  };
   dispatch(run, key, env);
   if (run.edited) run.effects.push({ kind: "changed" });
   if (run.block !== undefined) {
@@ -84,7 +90,7 @@ const lineOf = (run: Run, line = run.s.cursor.line) => run.s.text.line(line);
 
 function execute(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const { vim, cursor } = run.s;
-  run.want = vim.wantCol ?? cursorDisplayCol(lineOf(run), cursor.col);
+  run.want = vim.wantCol ?? cursorDisplayCol(lineOf(run), cursor.col, run.tab);
   updateVim(run, { wantCol: undefined });
   if (isVisual(vim.mode)) visualCommand(run, cmd, env);
   else normalCommand(run, cmd, env);
@@ -171,9 +177,24 @@ function normalCommand(run: Run, cmd: ParsedCommand, env: VimEnv): void {
     updateVim(run, { lastChange: change });
 }
 
+/** Motions Neovim records in the jumplist; operator motions (`dG`) do not. */
+const JUMP_MOTIONS: ReadonlySet<string> = new Set([
+  "G",
+  "gg",
+  "n",
+  "N",
+  "*",
+  "#",
+  "%",
+  "{",
+  "}",
+]);
+
 function moveCursor(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const res = runMotion(run, cmd.target ?? "", cmd, env);
   if (res === null) return;
+  if (JUMP_MOTIONS.has(cmd.target ?? ""))
+    run.effects.push({ kind: "jumped", from: run.s.cursor });
   setCursor(run, res.to);
   if (res.want !== undefined) updateVim(run, { wantCol: res.want });
 }
@@ -643,9 +664,11 @@ function cmdlineKey(run: Run, key: Key, env: VimEnv): void {
   updateVim(run, { search });
   run.effects.push({ kind: "search", ...search });
   const cursor = run.s.cursor;
-  run.want = cursorDisplayCol(lineOf(run), cursor.col);
+  run.want = cursorDisplayCol(lineOf(run), cursor.col, run.tab);
   const res = runMotion(run, "n", { keys: [] }, env);
-  if (res !== null) setCursor(run, res.to);
+  if (res === null) return;
+  run.effects.push({ kind: "jumped", from: cursor });
+  setCursor(run, res.to);
 }
 
 // --- Visual mode -------------------------------------------------------------

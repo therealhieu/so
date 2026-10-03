@@ -1,0 +1,101 @@
+import { expect, test } from "bun:test";
+import { deepFreeze, fresh, testRegistries } from "../../../test/support/state";
+import { defaults } from "../config/schema";
+import { parseConfig } from "../config/toml";
+import { validateBindings } from "./config";
+import { keymapFor } from "./keymap";
+import type { AppState } from "./types";
+import { createUpdate } from "./update";
+
+const reg = testRegistries();
+const update = createUpdate(reg);
+const lines = (...ls: string[]) => ls.join("\n");
+
+const BAD_BINDINGS = lines(
+  'theme = "light"',
+  "",
+  "[keys.normal]",
+  '"<leader>x" = "no.such.command"',
+  "",
+  "[filetypes.cobol.keys.normal]",
+  '"<leader>y" = "buffer.next"',
+  "[keys.sideways]",
+  '"z" = "buffer.prev"',
+);
+
+const VALID = lines(
+  'leader = ","',
+  'theme = "light"',
+  "[keys.normal]",
+  '"<leader>w" = "file.save"',
+);
+
+const load = (s: AppState, text: string, reload: boolean) =>
+  update(deepFreeze(s), {
+    type: "configLoaded",
+    result: parseConfig(text),
+    reload,
+  });
+
+test("a valid config replaces the current one", () => {
+  const r = load(fresh(), VALID, false);
+  expect(r.state.config.leader).toBe(",");
+  expect(r.state.config.theme).toBe("light");
+  expect(r.state.notifications.toasts).toEqual([]);
+  expect(r.effects).toEqual([]);
+});
+
+test("invalid bindings toast the first line; startup applies defaults", () => {
+  const custom = {
+    ...fresh(),
+    config: { ...defaults, theme: "light" as const },
+  };
+  const r = load(custom, BAD_BINDINGS, false);
+  expect(r.state.config).toBe(defaults);
+  expect(r.state.notifications.toasts).toEqual([
+    {
+      id: 1,
+      level: "error",
+      text: 'config.toml:4: unknown command id "no.such.command" (+2 more)',
+    },
+  ]);
+});
+
+test("an invalid reload keeps the current config", () => {
+  const loaded = load(fresh(), VALID, false).state;
+  const r = load(loaded, BAD_BINDINGS, true);
+  expect(r.state.config).toBe(loaded.config);
+  expect(r.state.notifications.toasts.map((t) => t.text)).toEqual([
+    'config.toml:4: unknown command id "no.such.command" (+2 more)',
+  ]);
+});
+
+test("each binding problem names its line", () => {
+  const result = parseConfig(BAD_BINDINGS);
+  if (!result.ok) throw new Error("expected a parsed config");
+  expect(validateBindings(reg, result.bindings)).toEqual([
+    { line: 4, message: 'unknown command id "no.such.command"' },
+    { line: 7, message: 'unknown file type "cobol"' },
+    { line: 9, message: 'unknown mode "sideways"' },
+  ]);
+});
+
+test("a syntax error at startup applies defaults and names the line", () => {
+  const r = load(fresh(), lines("a = 1", "", "", "", "", "", "e = = 5"), false);
+  expect(r.state.config).toBe(defaults);
+  expect(r.state.notifications.toasts[0]?.text).toStartWith("config.toml:7: ");
+});
+
+test("the loaded leader drives the keymap", () => {
+  const s = load(fresh(), VALID, false).state;
+  expect(
+    keymapFor(reg, s.config).lookup({ mode: "normal" }, [",", "w"]),
+  ).toEqual({ kind: "command", id: "file.save" });
+});
+
+test("leader comma maps ,ff to find files", () => {
+  const s = load(fresh(), VALID, false).state;
+  expect(
+    keymapFor(reg, s.config).lookup({ mode: "normal" }, [",", "f", "f"]),
+  ).toEqual({ kind: "command", id: "file.find" });
+});

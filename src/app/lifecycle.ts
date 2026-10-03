@@ -1,6 +1,7 @@
 import { writeSync } from "node:fs";
 import { pendingWrites } from "../core/state/save";
 import type { Store } from "../core/state/store";
+import type { AppState } from "../core/state/types";
 import type { Shell } from "../ui/shell";
 import type { EffectRunner } from "./effects";
 
@@ -10,15 +11,18 @@ export const FLUSH_BOUND_MS = 2000;
 /**
  * Install the process handlers that end `so`. Signals exit 0 and uncaught
  * errors exit 1; both first write every writable buffer (bounded by
- * `FLUSH_BOUND_MS`), then restore the terminal once, then name any file
- * left unsaved on stderr. `exitNow` is the `exit` effect after `:q`, which
- * has already saved or was told to discard.
+ * `FLUSH_BOUND_MS`), then save the session, then restore the terminal once,
+ * then name any file left unsaved on stderr. `exitNow` is the `exit`
+ * effect after `:q`, which has already saved or was told to discard; it
+ * still saves the session.
  */
 export function installLifecycle(d: {
   store: Store;
   shell: Shell;
   runner: EffectRunner;
   exit?: (code: number) => void;
+  /** Saves the session synchronously; a failure must not stop the shutdown. */
+  saveSession?: (s: AppState) => void;
 }): { exitNow(code: number): void } {
   let done = false;
   const shutdown = async (code: number, flush: boolean, error?: unknown) => {
@@ -35,6 +39,9 @@ export function installLifecycle(d: {
       ),
     );
     await Promise.race([all, Bun.sleep(FLUSH_BOUND_MS)]);
+    try {
+      d.saveSession?.(d.store.get());
+    } catch {}
     d.shell.destroy();
     // Written after the restore, so the lines land on the main screen, and
     // synchronously, so they are not lost to the exit that follows.

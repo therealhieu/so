@@ -1,5 +1,9 @@
 import { join } from "node:path";
+import { parseConfig } from "../core/config/toml";
+import { applySpanEdits } from "../core/features/links/rename";
+import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
+import { readConfigText } from "../workspace/config-file";
 import {
   atomicWrite,
   createEntry,
@@ -11,9 +15,12 @@ import {
   sameStamp,
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
+import type { Logger } from "../workspace/log";
+import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
+import type { IndexHost } from "./index-host";
 
 /**
  * What the runner needs. `exit` is read at call time, so `main` can bind it
@@ -28,6 +35,17 @@ export type RunnerDeps = {
   dispatch: (a: Action) => void;
   exit: (code: number) => void;
   now?: () => number;
+  /** The debug log; effect failures are recorded with paths and reasons only. */
+  logger: Logger;
+  /** config.toml, read again for each `loadConfig`. */
+  configPath: string;
+  /** The session state file; without one, `saveState` does nothing. */
+  statePath?: string;
+  /**
+   * Answers `search`; without one, every search finds nothing. Own writes
+   * are reported to it, since the watcher keeps them silent.
+   */
+  index?: Pick<IndexHost, "search" | "notify">;
 };
 
 export type EffectRunner = {
@@ -132,9 +150,20 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         await moveEntry(d.root, op.from, op.to);
         d.ownOps.noteMove(op.from, op.to);
       }
+      d.logger.info("fs.op", {
+        op: op.kind,
+        path: op.from,
+        ...(op.to === undefined ? {} : { to: op.to }),
+      });
       return { type: "fsResult", op, ok: true };
     } catch (x) {
-      return { type: "fsResult", op, ok: false, reason: msg(x) };
+      const reason = msg(x);
+      d.logger.error("fs.opFailed", {
+        op: op.kind,
+        path: op.from,
+        reason,
+      });
+      return { type: "fsResult", op, ok: false, reason };
     }
   }
 
@@ -142,7 +171,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     switch (e.kind) {
       case "read":
         void readTextFile(abs(e.path))
-          .catch(() => ({ refused: "io" as const }))
+          .catch((x) => {
+            d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
+            return { refused: "io" as const };
+          })
           .then((r) =>
             d.dispatch(
               "refused" in r
@@ -154,13 +186,15 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "listDir":
         void listDir(d.root, e.dir, d.matcher).then(
           (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
-          (x) =>
+          (x) => {
+            d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
             d.dispatch({
               type: "dirListed",
               dir: e.dir,
               entries: null,
               reason: msg(x),
-            }),
+            });
+          },
         );
         return;
       case "write": {
@@ -174,9 +208,53 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           try {
             const stamp = await write(path, e.text, e.expected);
             d.ownOps.noteWrite(path, stamp);
+            d.index?.notify({ kind: "changed", path, isDir: false });
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
+            d.logger.error("fs.writeFailed", { path, reason: msg(x) });
             d.dispatch({ type: "saveFailed", path, reason: msg(x) });
+          }
+        });
+        return;
+      }
+      case "applyEdits": {
+        const before = [...unreported];
+        void serial(async () => {
+          const { batch, edit } = e;
+          const followed = follow(edit.path, before);
+          const path = followed ?? edit.path;
+          const fail = (reason: string) => {
+            d.logger.error("links.skipped", { path, reason });
+            d.dispatch({
+              type: "editsApplied",
+              batch,
+              path,
+              ok: false,
+              reason,
+            });
+          };
+          if (followed === null) return fail("removed");
+          const cur = await readTextFile(abs(path)).catch(() => ({
+            refused: "io" as const,
+          }));
+          if ("refused" in cur) return fail(`not readable (${cur.refused})`);
+          const text = applySpanEdits(cur.text, edit.edits);
+          if (text === null) return fail("changed on disk");
+          try {
+            const stamp = await write(path, restoreFile(cur, text), cur.stamp);
+            d.ownOps.noteWrite(path, stamp);
+            d.index?.notify({ kind: "changed", path, isDir: false });
+            d.logger.info("links.edited", { path, links: edit.edits.length });
+            d.dispatch({
+              type: "editsApplied",
+              batch,
+              path,
+              ok: true,
+              text,
+              stamp,
+            });
+          } catch (x) {
+            fail(msg(x));
           }
         });
         return;
@@ -222,6 +300,52 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         return;
       case "exit":
         d.exit(e.code);
+        return;
+      case "search":
+        if (d.index === undefined)
+          d.dispatch({
+            type: "searchResults",
+            id: e.id,
+            hits: [],
+            capped: false,
+          });
+        else d.index.search(e);
+        return;
+      case "readPreview":
+        void readTextFile(abs(e.path))
+          .catch((x) => {
+            d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
+            return { refused: "io" as const };
+          })
+          .then((result) =>
+            d.dispatch({
+              type: "previewLoaded",
+              id: e.id,
+              path: e.path,
+              result,
+            }),
+          );
+        return;
+      case "saveState":
+        if (d.statePath !== undefined)
+          void saveStateFile(d.statePath, e.state).catch((x) =>
+            d.logger.error("state.saveFailed", { reason: msg(x) }),
+          );
+        return;
+      case "loadConfig":
+        void readConfigText(d.configPath)
+          .then((text) => parseConfig(text ?? ""))
+          .catch((x): ReturnType<typeof parseConfig> => {
+            d.logger.error("config.readFailed", { reason: msg(x) });
+            return { ok: false, errors: [{ line: 1, message: msg(x) }] };
+          })
+          .then((result) => {
+            if (!result.ok)
+              d.logger.error("config.invalid", {
+                errors: result.errors.length,
+              });
+            d.dispatch({ type: "configLoaded", result, reload: true });
+          });
         return;
     }
   };

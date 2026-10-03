@@ -1,18 +1,23 @@
-import type { KeyScope } from "../kernel/commands/keymap";
 import type { Register } from "../kernel/editor/registers";
 import { handleKey } from "../kernel/vim/engine";
 import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
-import type { VimEffect, VimState } from "../kernel/vim/types";
+import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
 import { activeBuffer, activeWindow, setBuffer } from "./buffers";
 import { EX_ALIASES, executeEx, runCommand } from "./commands";
+import { completionKey, maybeOpenCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
+import { pushJump } from "./jumps";
+import { keymapFor, keyScope } from "./keymap";
+import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
+import { panelFocused, sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
+import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
 
 const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
   ...s,
@@ -29,35 +34,91 @@ export function handleKeyAction(
   a: { key: Key; now: number },
   reg: Registries,
 ): Result {
-  if (s.overlay.kind === "conflict") return conflictKey(s, a);
-  if (s.overlay.kind === "prompt") return promptKey(s, a.key, a.now);
+  if (s.overlay.kind === "completion") {
+    const r = completionKey(s, a, reg);
+    if (r !== undefined) return r;
+  }
+  const r = routeKey(s, a, reg);
+  return r.state.overlay.kind === "completion" || r.state.vim.mode === "insert"
+    ? { ...r, state: maybeOpenCompletion(r.state) }
+    : r;
+}
+
+function routeKey(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
+  switch (s.overlay.kind) {
+    case "conflict":
+      return conflictKey(s, a, reg);
+    case "prompt":
+      return promptKey(s, a.key, a.now);
+    case "whichKey":
+      return (
+        whichKeyKey(s, a, reg) ??
+        bindingOrVim({ ...s, overlay: { kind: "none" } }, a, reg)
+      );
+    case "picker":
+    case "palette":
+    case "help":
+      return pickerKey(s, a, reg);
+  }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
+  return bindingOrVim(s, a, reg);
+}
+
+/** No overlay and no ":" line: the side panel, then keymap bindings, then the engine. */
+function bindingOrVim(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
+  const inPanel = panelFocused(s);
+  if (inPanel && s.vim.pending.length === 0) {
+    const r = sidePanelKey(s, a, reg);
+    if (r !== undefined) return r;
+  }
   const b = activeBuffer(s);
   const inExplorer = s.panels.explorer.focused;
-  const mode = inExplorer ? "explorer" : s.vim.mode;
-  const scope: KeyScope =
-    b === undefined || inExplorer ? { mode } : { mode, filetype: b.fileType };
+  const scope = keyScope(s);
+  const { mode } = scope;
+  const keymap = keymapFor(reg, s.config);
   const seq = [...s.vim.pending, a.key];
-  const hit = reg.keymap.lookup(scope, seq);
+  const hit = keymap.lookup(scope, seq);
   if (hit.kind === "command")
     return runCommand(setVim(s, { pending: [] }), hit.id, a.now, reg);
-  if (hit.kind === "prefix") return none(setVim(s, { pending: seq }));
+  if (hit.kind === "prefix")
+    return armWhichKey(setVim(s, { pending: seq }), scope);
+  // A leader prefix has no vim meaning, so its unbound continuation stops here.
+  if (
+    s.vim.pending[0] === s.config.leader &&
+    keymap.lookup(scope, s.vim.pending).kind === "prefix"
+  )
+    return noMapping(s, seq);
   const idle = s.vim.pending.length === 0 && mode !== "insert";
   if (a.key === ":" && idle && (inExplorer || mode === "normal"))
     return none(setVim(s, { mode: "cmdline", cmdline: ":", pending: [] }));
-  if (inExplorer || b === undefined) return none(setVim(s, { pending: [] }));
+  if (inExplorer || inPanel || b === undefined)
+    return none(setVim(s, { pending: [] }));
   return runVim(s, a.key, a.now, reg);
 }
 
 /** `k` keep, `t` take, `d` toggle the diff, `q` back from the diff; other keys wait. */
-function conflictKey(s: AppState, a: { key: Key; now: number }): Result {
+function conflictKey(
+  s: AppState,
+  a: { key: Key; now: number },
+  reg: Registries,
+): Result {
   const back =
     a.key === "q" && s.overlay.kind === "conflict" && s.overlay.showDiff;
   const choice = back
     ? "diff"
     : ({ k: "keep", t: "take", d: "diff" } as const)[a.key as "k" | "t" | "d"];
-  return choice === undefined ? none(s) : resolveConflict(s, choice, a.now);
+  return choice === undefined
+    ? none(s)
+    : resolveConflict(s, choice, a.now, reg);
 }
 
 /** Edit the ":" command line; Tab completes ex names, then command ids. */
@@ -120,11 +181,25 @@ export function cmdlineCompletions(
   return exCompletions(typed, [...FULL_EX_NAMES, ...ids]);
 }
 
-/** The active window's viewport: the statusline and command line take two rows. */
-const envOf = (s: AppState, w: WindowState) => ({
+/** The active window's viewport (the statusline and command line take two rows) and tab width. */
+const envOf = (s: AppState, w: WindowState): VimEnv => ({
   topLine: w.content.scroll,
   rows: Math.max(1, s.terminal.rows - 2),
+  tabWidth: s.config.editor.tabWidth,
 });
+
+/** Feed keys to the engine one by one, as if typed. */
+export function typeKeys(
+  s: AppState,
+  keys: readonly Key[],
+  now: number,
+  reg: Registries,
+): Result {
+  return keys.reduce<Result>(
+    (r, key) => chain(r, (st) => runVim(st, key, now, reg)),
+    none(s),
+  );
+}
 
 /** Feed one key to the engine for the active buffer and apply its effects. */
 function runVim(
@@ -148,9 +223,9 @@ function runVim(
   const top = w.content.scroll;
   const scroll =
     line < top ? line : line >= top + env.rows ? line - env.rows + 1 : top;
+  const edited = setBuffer(s, b.id, { text: r.s.text, undo: r.s.undo }, reg);
   const next: AppState = {
-    ...s,
-    buffers: { ...s.buffers, [b.id]: { ...b, text: r.s.text, undo: r.s.undo } },
+    ...edited,
     windows: {
       ...s.windows,
       byId: {
@@ -180,7 +255,8 @@ const withVim = (
 /**
  * Turn engine effects into state and effects: edits mark the buffer dirty
  * and schedule autosave; leaving Insert saves; "+ yanks copy to the
- * clipboard; "+ puts wait for it; ex lines run; failed searches show E486.
+ * clipboard; "+ puts wait for it; ex lines run; failed searches show E486;
+ * jump motions record where they left.
  */
 function applyVimEffects(
   s: AppState,
@@ -226,6 +302,11 @@ function applyVimEffects(
             const error = searchError(b.text, e.pattern);
             return error === undefined ? none(st) : message(st, error, "error");
           }
+          case "jumped":
+            return none({
+              ...st,
+              jumps: pushJump(st.jumps, { path: b.path, ...e.from }),
+            });
         }
       }),
     none(s),

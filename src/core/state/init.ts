@@ -1,4 +1,5 @@
 import { defaults } from "../config/schema";
+import { emptyIndex } from "../features/links/note-index";
 import { Registers } from "../kernel/editor/registers";
 import type { AppState, TerminalState } from "./types";
 
@@ -34,10 +35,20 @@ export function initialState(boot: {
         cursor: "",
         trash: "unknown",
       },
+      side: { kind: "backlinks", open: false, focused: false, cursor: 0 },
     },
     overlay: { kind: "none" },
     notifications: { toasts: [] },
     config: defaults,
     terminal: { cols: boot.cols, rows: boot.rows, color: boot.color },
+    index: {
+      status: "idle",
+      done: 0,
+      total: 0,
+      ix: emptyIndex(),
+      searchSeq: 0,
+    },
+    jumps: { entries: [], at: 0 },
+    recent: [],
   };
 }

@@ -6,10 +6,15 @@ import {
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
-import { treeField } from "../views/explorer";
+import { impactLine, treeField } from "../views/explorer";
 import { centered, drawFrame } from "./host";
 
 type Line = { text: string; token: string };
+
+function impactLines(p: PromptState): Line[] {
+  const l = impactLine(p, { warn: "floatWarn", error: "floatError" });
+  return l === undefined ? [] : [{ text: ` ${l.text}`, token: l.token }];
+}
 
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const cells = (text: string) => [...text].length;
@@ -23,6 +28,17 @@ function layout(p: PromptState): {
   footer: string;
 } {
   const field = { text: ` ❯ ${p.value}`, token: "float" };
+  if (p.kind === "confirm" && p.op.kind === "create")
+    return {
+      title: "New note",
+      border: "floatBorder",
+      lines: [
+        { text: ` ${p.title}`, token: "float" },
+        { text: "", token: "float" },
+        { text: " y create   N cancel", token: "floatDim" },
+      ],
+      footer: "",
+    };
   if (p.kind === "confirm")
     return {
       title: "Delete",
@@ -68,6 +84,7 @@ function layout(p: PromptState): {
       { text: ` ${p.op.from}`, token: "floatDim" },
       { text: "", token: "float" },
       field,
+      ...impactLines(p),
     ],
     field: 2,
     footer: "⏎ confirm · esc cancel",
@@ -75,9 +92,10 @@ function layout(p: PromptState): {
 }
 
 /**
- * The explorer's prompts as a centred float: a `[y/N]` confirm for the
- * Trash, a path field for move, and the typed confirmation for a permanent
- * delete. Create and rename edit in the tree instead (`ExplorerView`). Keys
+ * File prompts as a centred float: a `[y/N]` confirm for the Trash or for
+ * creating a missing link target, a path field for move, and the typed
+ * confirmation for a permanent delete. Create and rename of the explorer
+ * selection edit in the tree instead (`ExplorerView`). Keys
  * go to the core, which decides.
  */
 export class PromptView extends Renderable {

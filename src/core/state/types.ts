@@ -1,4 +1,9 @@
 import type { AppConfig } from "../config/schema";
+import type { ConfigResult } from "../config/toml";
+import type { NoteIndex } from "../features/links/note-index";
+import type { FileEdit } from "../features/links/rename";
+import type { NoteSummary } from "../features/links/summarize";
+import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
@@ -32,10 +37,21 @@ export type FsOp = {
 export type FileEvent =
   | { kind: "changed"; path: string; isDir: boolean }
   | { kind: "removed"; path: string };
+/** One search match: a line of `path` with the match at `col`, `len` code units long. */
+export type SearchHit = {
+  path: string;
+  line: number;
+  col: number;
+  len: number;
+  text: string;
+};
 export type TimerId =
   | `autosave:${BufferId}`
   | `retry:${BufferId}`
-  | `toast:${number}`;
+  | `toast:${number}`
+  | "whichKey"
+  | "saveState"
+  | "search";
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -65,6 +81,8 @@ export type BufferState = {
   save: SaveState;
   /** `:bd` is waiting for this buffer's write before closing it. */
   closing?: true;
+  /** The file type's analysis of `text` at its current version (`Doc` for Markdown). */
+  analysis?: unknown;
 };
 
 export type WindowState = {
@@ -100,12 +118,113 @@ export type PromptState = {
   title: string;
   value: string;
   op: FsOp;
+  /** Rename and move: the links the operation will update, or why it will not. */
+  impact?: string;
+  /** Why `value` cannot be submitted; Enter does nothing while it is set. */
+  invalid?: string;
+};
+
+/** The docked backlinks or outline panel of the active note. */
+export type SidePanelState = {
+  kind: "backlinks" | "outline";
+  open: boolean;
+  focused: boolean;
+  /** Selected row. */
+  cursor: number;
+  /** The unlinked-mentions search for the shown note; results with another id are dropped. */
+  mentions?: { id: number; pending: boolean; hits: SearchHit[] };
+};
+
+export type CompletionState = {
+  /** The position just after "[[". */
+  anchor: Pos;
+  mode: "notes" | "headings" | "blocks";
+  /** The resolved note whose headings or blocks are listed. */
+  target?: string;
+  query: string;
+  items: { insert: string; label: string; detail?: string }[];
+  selected: number;
 };
 
 export type Overlay =
   | { kind: "none" }
   | { kind: "prompt"; prompt: PromptState }
-  | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean };
+  | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean }
+  | { kind: "whichKey"; whichKey: WhichKeyState }
+  | { kind: "picker" | "palette" | "help"; picker: PickerState }
+  | { kind: "completion"; completion: CompletionState };
+
+/** One picker row; `matches` are the label's matched character positions. */
+export type PickerItem = {
+  key: string;
+  label: string;
+  detail?: string;
+  path?: string;
+  line?: number;
+  matches: number[];
+};
+/** An open picker: its source, query, ranked rows, and the search and preview it waits for. */
+export type PickerState = {
+  /** "files" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
+  source: string;
+  /** tagNotes: the tag; backlinks: the target path */
+  arg?: string;
+  query: string;
+  items: PickerItem[];
+  total: number;
+  selected: number;
+  search?: { id: number; pending: boolean; capped: boolean };
+  preview?: {
+    id: number;
+    path: string;
+    line: number;
+    file?: TextFile;
+    refused?: "binary" | "tooLarge" | "io";
+  };
+  error?: string;
+};
+
+/** The which-key popup: the pending prefix and the scope its keys resolve in. */
+export type WhichKeyState = { prefix: Key[]; scope: KeyScope };
+
+/** The per-workspace state file: positions and layout, never note text. */
+export type PersistedState = {
+  version: 1;
+  recent: string[];
+  jumps: JumpList;
+  buffers: { path: string; view: string }[];
+  layout: {
+    tree: WindowTree;
+    active: WindowId;
+    windows: { id: WindowId; path: string; cursor: Pos; scroll: number }[];
+  };
+};
+
+/** A position the cursor jumped from; Neovim's jumplist entry. */
+export type JumpEntry = { path: string; line: number; col: number };
+/** `at` is the entry the next <C-o> returns to plus one; `entries.length` when not travelling. */
+export type JumpList = { entries: JumpEntry[]; at: number };
+
+/** The workspace index: its build status and the one NoteIndex in the process. Never persisted. */
+export type IndexState = {
+  status: "idle" | "indexing" | "ready" | "unavailable";
+  done: number;
+  total: number;
+  ix: NoteIndex;
+  /** Next id for `search` effects; results with an older id are dropped. */
+  searchSeq: number;
+  /** A rename or link-mention waiting for its file operation or its closed-file writes. */
+  rewrite?: LinkRewrite;
+};
+export type LinkRewrite = {
+  batch: number;
+  /** Rename and move: the file operation the edits wait for. */
+  op?: FsOp;
+  edits: FileEdit[];
+  pending: string[];
+  updated: string[];
+  skipped: { path: string; reason: string }[];
+};
 
 export type Toast = { id: number; level: "info" | "error"; text: string };
 
@@ -121,12 +240,24 @@ export type AppState = {
     byId: Record<WindowId, WindowState>;
     active: WindowId;
     nextWindowId: WindowId;
+    /**
+     * Windows waiting for their file, and how many files of the last session
+     * were not found. `navigated` marks a wait from a jump or link follow,
+     * which reports its own refusal instead of counting as missing.
+     */
+    restore?: {
+      pending: Record<
+        WindowId,
+        { path: string; cursor: Pos; scroll: number; navigated?: true }
+      >;
+      missing: number;
+    };
   };
   vim: VimState & {
     registers: Registers;
     pendingPaste?: { bufferId: BufferId; before: boolean };
   };
-  panels: { explorer: ExplorerState };
+  panels: { explorer: ExplorerState; side: SidePanelState };
   overlay: Overlay;
   notifications: {
     toasts: Toast[];
@@ -134,6 +265,10 @@ export type AppState = {
   };
   config: AppConfig;
   terminal: TerminalState;
+  index: IndexState;
+  jumps: JumpList;
+  /** Workspace paths, most recently opened first. */
+  recent: string[];
 };
 
 export type Action =
@@ -154,7 +289,34 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
-  | { type: "mouse"; event: MouseEvent };
+  | { type: "mouse"; event: MouseEvent }
+  | { type: "configLoaded"; result: ConfigResult; reload: boolean }
+  | {
+      type: "indexBatch";
+      summaries: NoteSummary[];
+      files: string[];
+      done: number;
+      total: number;
+    }
+  | { type: "stateLoaded"; state: PersistedState | undefined; restore: boolean }
+  | { type: "searchResults"; id: number; hits: SearchHit[]; capped: boolean }
+  | {
+      type: "previewLoaded";
+      id: number;
+      path: string;
+      result: TextFile | { refused: "binary" | "tooLarge" | "io" };
+    }
+  | { type: "indexReady" }
+  | { type: "indexFailed"; final: boolean; reason: string }
+  | {
+      type: "editsApplied";
+      batch: number;
+      path: string;
+      ok: boolean;
+      text?: string;
+      stamp?: Stamp;
+      reason?: string;
+    };
 
 export type Effect =
   | { kind: "read"; path: string }
@@ -165,7 +327,20 @@ export type Effect =
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
-  | { kind: "exit"; code: number };
+  | { kind: "exit"; code: number }
+  | { kind: "saveState"; state: PersistedState }
+  | {
+      kind: "search";
+      id: number;
+      query: string;
+      limit: number;
+      mode?: "text" | "mentions";
+      names?: string[];
+      exclude?: string;
+    }
+  | { kind: "readPreview"; id: number; path: string }
+  | { kind: "loadConfig" }
+  | { kind: "applyEdits"; batch: number; edit: FileEdit };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

@@ -51,7 +51,7 @@ Use `None` for empty sections and fields.
 | RM261003ABZP-REQ7@R2 | Obsidian Bases table and Kanban views | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4 |
 | RM261003ABZP-REQ8@R2 | Read-only local browser preview | RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 |
 | RM261003ABZP-REQ9@R2 | Fast and smooth performance targets | RM261003ABZP-REQ2@R2, RM261003ABZP-REQ5@R2 |
-| RM261003ABZP-REQ10@R2 | Fast development, CI, and release | None |
+| RM261003ABZP-REQ10@R3 | Fast development, CI, and release | None |
 | RM261003ABZP-REQ11@R3 | Maintainable, standards-based, language-neutral foundations | None |
 
 ## Requirement Details
@@ -245,26 +245,27 @@ Use `None` for empty sections and fields.
     - `RM261003ABZP-RF7` - block-level reparse; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
   - **Example:** holding `j` in a 5,000-line note scrolls without visible lag.
 
-- **RM261003ABZP-REQ10@R2 — Fast development, CI, and release**
+- **RM261003ABZP-REQ10@R3 — Fast development, CI, and release**
   - **Question:** What does fast development, CI, and CD mean measurably?
-  - **Requirement:** A developer runs all checks locally in under 30 s; CI finishes in under 3 min per push; releases publish installable, checksummed binaries automatically.
+  - **Requirement:** A developer runs all checks locally in under 30 s; CI finishes in under 3 min per pull request; releases publish installable, checksummed binaries automatically.
   - **Rationale:** The user requires fast development and CI/CD.
   - **Acceptance criteria:**
     - `bun run check` runs Biome format and lint, TypeScript `tsc --noEmit`, dead-code detection, boundary checks, and unit tests in < 30 s on the reference machine; no check depends on the TypeScript compiler's JavaScript API.
-    - CI on every push and pull request completes in < 3 min wall clock.
+    - CI runs on every pull request, never on push, and completes in < 3 min wall clock; a newer push to the same pull request cancels the superseded run. Release workflows keep their own triggers.
     - A release tag (created by release-please from Conventional Commits, or pushed manually as `v*`) cross-compiles macOS (arm64, x64) and Linux glibc (x64, arm64) binaries with `bun build --compile` after installing all OpenTUI native packages, publishes them with a SHA-256 checksum file to the GitHub Release, and a smoke test runs `so --version` on macOS and Linux runners.
     - `@opentui/core` is pinned to an exact version and upgraded deliberately.
     - No build step is needed to run from source (`bun run dev`).
   - **Dependencies:** None
-  - **Predecessors:** RM261003ABZP-REQ10@R1
+  - **Predecessors:** RM261003ABZP-REQ10@R1, RM261003ABZP-REQ10@R2
   - **Evidence:**
     - `rm261003abzp-roadmap-context.md@R1` Stated Boundaries - local check < 30 s, CI < 3 min.
+    - User decision in the DI1 discussion (2026-10-03): CI runs on pull requests only, because `therealhieu/so` is private and macOS runner minutes are billed at a multiple of Linux minutes; refined in `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md` W261003HEGE-REQ4@R3 and delivered in PR #1.
   - **Research links:**
-    - `RM261003ABZP-RF1` - pin OpenTUI exactly; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
-    - `RM261003ABZP-RF2` - test renderer enables headless UI tests; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
-    - `RM261003ABZP-RF3` - compile embeds the native library; cross-compile recipe; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
-    - `RM261003ABZP-RF13` - TS 7 native tsc, no TS API dependency; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
-    - `RM261003ABZP-RF14` - release-please; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2
+    - `RM261003ABZP-RF1` - pin OpenTUI exactly; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF2` - test renderer enables headless UI tests; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF3` - compile embeds the native library; cross-compile recipe; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF13` - TS 7 native tsc, no TS API dependency; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF14` - release-please; evaluated RM261003ABZP-REQ10@R1 → informed RM261003ABZP-REQ10@R2 (carried into R3 unchanged)
   - **Example:** merging the release-please PR tags `v0.2.0` and produces a release with four binaries and `SHA256SUMS`.
 
 - **RM261003ABZP-REQ11@R3 — Maintainable, standards-based, language-neutral foundations**
@@ -301,11 +302,11 @@ Dispositions per finding–evaluated-requirement relationship. All decisions wer
 | Finding | Evaluated requirement | Impact | Disposition | Resulting requirements |
 |---|---|---|---|---|
 | RM261003ABZP-RF1 — pin OpenTUI, contain to UI | RM261003ABZP-REQ9@R1 | Adds consideration | Revised | RM261003ABZP-REQ9@R2 |
-| RM261003ABZP-RF1 | RM261003ABZP-REQ10@R1 | Adds consideration | Revised | RM261003ABZP-REQ10@R2 |
+| RM261003ABZP-RF1 | RM261003ABZP-REQ10@R1 | Adds consideration | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R3) |
 | RM261003ABZP-RF1 | RM261003ABZP-REQ11@R1 | Supports | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
 | RM261003ABZP-RF2 — in-process frame metrics | RM261003ABZP-REQ9@R1 | Supports | Revised | RM261003ABZP-REQ9@R2 |
-| RM261003ABZP-RF2 | RM261003ABZP-REQ10@R1 | Supports | Retained (no criterion change beyond REQ10@R2 revision) | RM261003ABZP-REQ10@R2 |
-| RM261003ABZP-RF3 — compile embeds native lib | RM261003ABZP-REQ10@R1 | Supports | Revised | RM261003ABZP-REQ10@R2 |
+| RM261003ABZP-RF2 | RM261003ABZP-REQ10@R1 | Supports | Retained (no criterion change beyond REQ10@R2 revision) | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R3) |
+| RM261003ABZP-RF3 — compile embeds native lib | RM261003ABZP-REQ10@R1 | Supports | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R3) |
 | RM261003ABZP-RF3 | None — macOS signing | Adds consideration | Deferred | None — see "macOS signing and notarization" |
 | RM261003ABZP-RF4 — kitty/sixel/blocks | RM261003ABZP-REQ5@R1 | Challenges | Revised | RM261003ABZP-REQ5@R2 |
 | RM261003ABZP-RF4 | RM261003ABZP-REQ11@R1 | Challenges | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
@@ -322,9 +323,9 @@ Dispositions per finding–evaluated-requirement relationship. All decisions wer
 | RM261003ABZP-RF10 — template tokens | RM261003ABZP-REQ6@R1 | Challenges | Revised | RM261003ABZP-REQ6@R2 |
 | RM261003ABZP-RF11 — atomic save, watching | RM261003ABZP-REQ1@R1 | Challenges | Revised | RM261003ABZP-REQ1@R2 (current: RM261003ABZP-REQ1@R3) |
 | RM261003ABZP-RF12 — preview server safety | RM261003ABZP-REQ8@R1 | Challenges | Revised | RM261003ABZP-REQ8@R2 |
-| RM261003ABZP-RF13 — TS 7, no TS API | RM261003ABZP-REQ10@R1 | Supports | Revised | RM261003ABZP-REQ10@R2 |
+| RM261003ABZP-RF13 — TS 7, no TS API | RM261003ABZP-REQ10@R1 | Supports | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R3) |
 | RM261003ABZP-RF13 | RM261003ABZP-REQ11@R1 | Adds consideration | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
-| RM261003ABZP-RF14 — release-please | RM261003ABZP-REQ10@R1 | Adds consideration | Revised | RM261003ABZP-REQ10@R2 |
+| RM261003ABZP-RF14 — release-please | RM261003ABZP-REQ10@R1 | Adds consideration | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R3) |
 | RM261003ABZP-RF14 | RM261003ABZP-REQ11@R1 | Supports | Retained | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
 | RM261003ABZP-RF15 — TOML, XDG, state | RM261003ABZP-REQ3@R1 | Supports | Revised | RM261003ABZP-REQ3@R2 (current: RM261003ABZP-REQ3@R4) |
 | RM261003ABZP-RF15 | RM261003ABZP-REQ11@R1 | Adds consideration | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
@@ -352,7 +353,7 @@ Dispositions per finding–evaluated-requirement relationship. All decisions wer
 - **macOS signing and notarization**
   - **Reason:** Needs a paid Apple Developer identity, CI secrets, and notarization latency, contrary to lean and fast CD.
   - **Resolution trigger:** Distribution beyond the author.
-  - **Related references:** `RM261003ABZP-RF3`; RM261003ABZP-REQ10@R2
+  - **Related references:** `RM261003ABZP-RF3`; RM261003ABZP-REQ10@R3
 
 - **Cards, List, and Map Bases layouts**
   - **Reason:** Low terminal value (image gallery, map) or not requested; they open as a table with a notice.
@@ -380,6 +381,6 @@ None
 
 ## Approval
 
-- **Approved baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3
+- **Approved baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R3, RM261003ABZP-REQ11@R3
 - **Research dispositions:** Approved
-- **Approval evidence:** User delegated all decisions on 2026-10-03: "you self-drive and decide all based on the proposal and these criteria: stable, simple, easy to maintain and extend; meet industry standards … don't raise any question to me". The agent approved R1, the R2 reconciliation, and the REQ3@R3 help-key and REQ4@R3 unlinked-mention revisions under that delegation. On 2026-10-03 the user approved the scope change to a Markdown-first, language-neutral core by selecting "Apply all six (Recommended)"; this produced RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ11@R3 and the code-intelligence and notebook deferrals. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back.
+- **Approval evidence:** User delegated all decisions on 2026-10-03: "you self-drive and decide all based on the proposal and these criteria: stable, simple, easy to maintain and extend; meet industry standards … don't raise any question to me". The agent approved R1, the R2 reconciliation, and the REQ3@R3 help-key and REQ4@R3 unlinked-mention revisions under that delegation. On 2026-10-03 the user approved the scope change to a Markdown-first, language-neutral core by selecting "Apply all six (Recommended)"; this produced RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ11@R3 and the code-intelligence and notebook deferrals. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. RM261003ABZP-REQ10@R3 (CI on pull requests only): user decision in the DI1 discussion; post-DI1 synchronization approved by the user on 2026-10-03.

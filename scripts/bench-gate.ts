@@ -5,23 +5,34 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /** Targets in milliseconds; the gate fails above twice these. */
-export const TARGETS = { sourceKeystrokeP95: 16, openFile: 50 } as const;
+export const TARGETS = {
+  sourceKeystrokeP95: 16,
+  openFile: 50,
+  firstFrame: 200,
+  indexReady: 3000,
+  indexingKeystrokeP95: 16,
+} as const;
 
+/** The bench file for each target, followed by its arguments. */
 const BENCHES: Record<keyof typeof TARGETS, string> = {
   sourceKeystrokeP95: "test/bench/source-keystroke.bench.ts",
   openFile: "test/bench/open-file.bench.ts",
+  firstFrame: "test/bench/startup.bench.ts --metric firstFrame",
+  indexReady: "test/bench/startup.bench.ts --metric indexReady",
+  indexingKeystrokeP95: "test/bench/indexing-keystroke.bench.ts",
 };
 const RUNS = 5;
 const root = join(import.meta.dir, "..");
 
-async function runOnce(file: string): Promise<number> {
-  const p = Bun.spawn([process.execPath, file], {
+async function runOnce(entry: string): Promise<number> {
+  const [file, ...args] = entry.split(" ");
+  const p = Bun.spawn([process.execPath, file as string, ...args], {
     cwd: root,
     stdout: "pipe",
     stderr: "inherit",
   });
   const out = await new Response(p.stdout).text();
-  if ((await p.exited) !== 0) throw new Error(`${file} failed`);
+  if ((await p.exited) !== 0) throw new Error(`${entry} failed`);
   const last = out.trim().split("\n").at(-1) ?? "";
   const { ms } = JSON.parse(last) as { ms: number };
   return ms;
@@ -33,12 +44,12 @@ const median = (xs: number[]) =>
 export async function main(): Promise<number> {
   const results: Record<string, number[]> = {};
   let failed = false;
-  for (const [name, file] of Object.entries(BENCHES) as [
+  for (const [name, entry] of Object.entries(BENCHES) as [
     keyof typeof TARGETS,
     string,
   ][]) {
     const runs: number[] = [];
-    for (let i = 0; i < RUNS; i++) runs.push(await runOnce(file));
+    for (let i = 0; i < RUNS; i++) runs.push(await runOnce(entry));
     results[name] = runs;
     const med = median(runs);
     const limit = 2 * TARGETS[name];

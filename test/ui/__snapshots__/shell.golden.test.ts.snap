@@ -512,3 +512,243 @@ exports[`themes nocolor: badges, selection, cursorline, dirty marker, error toas
   },
 }
 `;
+
+exports[`index and panels at 120×36 indexing progress shows in the statusline 1`] = `
+" ideas.md                                                                                                       ~/notes 
+   1 # Ideas                                                                                                            
+   1                                                                                                                    
+   2 A terminal editor for notes.                                                                                       
+   3 - keep files plain                                                                                                 
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/ideas.md │ 11 words │ ◌ indexing 4,210/10,000                                             1:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 the index-ready toast and the statusline segments 1`] = `
+" plan.md                                                                                                        ~/notes 
+   1 # Plan                                                                    ╭──────────────────────────────────────╮ 
+   1                                                                           │ ✓ index ready                        │ 
+   2 Why this exists.                                                          ╰──────────────────────────────────────╯ 
+   3                                                                                                                    
+   4 ## Goals                                                                                                           
+   5                                                                                                                    
+   6 Ship the editor. ^ship                                                                                             
+   7                                                                                                                    
+   8 ## Risks                                                                                                           
+   9                                                                                                                    
+  10 Scope.                                                                                                             
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 the outline panel marks the current heading 1`] = `
+" plan.md                                                                                                        ~/notes 
+   4 # Plan                                                                        │ OUTLINE                            
+   3                                                                               │   Plan                             
+   2 Why this exists.                                                              │   ▸ Goals                          
+   1                                                                               │     Risks                          
+   5 ## Goals                                                                      │                                    
+   1                                                                               │                                    
+   2 Ship the editor. ^ship                                                        │                                    
+   3                                                                               │                                    
+   4 ## Risks                                                                      │                                    
+   5                                                                               │                                    
+   6 Scope.                                                                        │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │ ⏎ jump · q close                   
+ NORMAL  │ source │ notes/plan.md │ jump 2/2 │ ← 31 backlinks │ 14 words │ ◆ index ready                            5:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlinked mentions 1`] = `
+" ideas.md  so-roadmap.md                                                                                        ~/notes 
+   1 # So roadmap                                                                  │ BACKLINKS · so-roadmap             
+    ~                                                                              │▾ Linked mentions (0)               
+    ~                                                                              │ No backlinks                       
+    ~                                                                              │                                    
+    ~                                                                              │▾ Unlinked mentions (1)             
+    ~                                                                              │ ◇ notes/ideas:3                    
+    ~                                                                              │   …The so roadmap is next.         
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │                                    
+    ~                                                                              │ j/k move · ⏎ open · l link it      
+    ~                                                                              │ C-w h back to the editor           
+ NORMAL  │ source │ projects/so-roadmap.md │ jump 2/2 │ ← 0 backlinks │ 3 words │ ◆ index ready                     1:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlinked mentions 2`] = `
+" ideas.md  so-roadmap.md  plan.md                                                                               ~/notes 
+   1 # Plan                                                                        │ BACKLINKS · plan                   
+   1                                                                               │▾ Linked mentions (31)              
+   2 Why this exists.                                                              │ ◇ log/day-01:3                     
+   3                                                                               │   - [[plan]] today                 
+   4 ## Goals                                                                      │ ◇ log/day-01:4                     
+   5                                                                               │   - [[plan#Goals]] today           
+   6 Ship the editor. ^ship                                                        │ ◇ log/day-01:5                     
+   7                                                                               │   - [[plan|the plan]] today        
+   8 ## Risks                                                                      │ ◇ log/day-02:3                     
+   9                                                                               │   - [[plan]] today                 
+  10 Scope.                                                                        │ ◇ log/day-02:4                     
+    ~                                                                              │   - [[plan#Goals]] today           
+    ~                                                                              │ ◇ log/day-02:5                     
+    ~                                                                              │   - [[plan|the plan]] today        
+    ~                                                                              │ ◇ log/day-03:3                     
+    ~                                                                              │   - [[plan]] today                 
+    ~                                                                              │ ◇ log/day-03:4                     
+    ~                                                                              │   - [[plan#Goals]] today           
+    ~                                                                              │ ◇ log/day-03:5                     
+    ~                                                                              │   - [[plan|the plan]] today        
+    ~                                                                              │ ◇ log/day-04:3                     
+    ~                                                                              │   - [[plan]] today                 
+    ~                                                                              │ ◇ log/day-04:4                     
+    ~                                                                              │   - [[plan#Goals]] today           
+    ~                                                                              │ ◇ log/day-04:5                     
+    ~                                                                              │   - [[plan|the plan]] today        
+    ~                                                                              │ ◇ log/day-05:3                     
+    ~                                                                              │   - [[plan]] today                 
+    ~                                                                              │ ◇ log/day-05:4                     
+    ~                                                                              │   - [[plan#Goals]] today           
+    ~                                                                              │ ◇ log/day-05:5                     
+    ~                                                                              │ j/k move · ⏎ open · l link it      
+    ~                                                                              │ C-w h back to the editor           
+ NORMAL  │ source │ notes/plan.md │ jump 3/3 │ ← 31 backlinks │ 14 words │ ◆ index ready                            1:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 a code file shows source, path, index, and position only 1`] = `
+" sync.ts                                                                                                        ~/notes 
+   1 import { readFile } from "node:fs/promises";                                                                       
+   1                                                                                                                    
+   2 export async function sync(dir: string): Promise<number> {                                                         
+   3         const text = await readFile(dir, "utf8"); // whole file                                                    
+   4         return text.length;                                                                                        
+   5 }                                                                                                                  
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ source │ scripts/sync.ts │ ◆ index ready                                                                 1:1 
+                                                                                                                        
+"
+`;

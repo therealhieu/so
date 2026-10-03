@@ -4,19 +4,21 @@ import {
   createCliRenderer,
   type Renderable,
 } from "@opentui/core";
-import type { FileTypeRegistry } from "../core/filetypes/registry";
-import type { CommandRegistry } from "../core/kernel/commands/registry";
-import type { CommandContext, CommandResult } from "../core/state/commands";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
+import type { Registries } from "../core/state/update";
 import { createKeyNormalizer } from "./input";
+import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
 import { ToastStack } from "./overlays/notify";
+import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
+import { WhichKeyView } from "./overlays/whichkey";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
+import { SidePanelView } from "./views/side-panel";
 import { Statusline } from "./views/statusline";
 import { WindowTree } from "./views/window-tree";
 
@@ -45,8 +47,8 @@ export const layoutClass = (cols: number): LayoutClass =>
 
 /** What the views read besides the state. `now` is the effect runner's clock. */
 export type ShellDeps = {
-  fileTypes: FileTypeRegistry;
-  commands: CommandRegistry<CommandContext, CommandResult>;
+  /** The registries `update` reads; views use them for titles, file types, and keys. */
+  reg: Registries;
   now: () => number;
 };
 
@@ -82,21 +84,26 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const windows = new WindowTree(renderer, ctx);
       const explorer = new ExplorerView(renderer, ctx);
       const cmdline = new CommandLine(renderer, ctx);
+      const side = new SidePanelView(renderer);
       const overlays = new OverlayHost(renderer, [
         new PromptView(renderer),
         new ConflictView(renderer),
+        new WhichKeyView(renderer, ctx),
+        new PickerView(renderer, ctx),
+        new CompletionView(renderer, () => windows.cursor()),
       ]);
       const views: View[] = [
         new Bufferline(renderer),
         windows,
         explorer,
+        side,
         new Statusline(renderer, ctx),
         cmdline,
         new ToastStack(renderer),
         overlays,
       ];
-      // Focus order: an overlay, then the command line, the explorer, the active window.
-      const focus: View[] = [overlays, cmdline, explorer, windows];
+      // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
+      const focus: View[] = [overlays, cmdline, explorer, side, windows];
       for (const v of views) renderer.root.add(v);
       const paint = (s: AppState) => {
         const lc = layoutClass(s.terminal.cols);
@@ -111,7 +118,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       };
       store.subscribe(paint);
       const normalizer = createKeyNormalizer({
-        escTimeoutMs: store.get().config.escTimeoutMs,
+        escTimeoutMs: () => store.get().config.escTimeoutMs,
         now: deps.now,
         setTimer: (fn, ms) => setTimeout(fn, ms),
         clear: (t) => clearTimeout(t),

@@ -1,4 +1,6 @@
+import type { CapturedSpan } from "@opentui/core";
 import { createTestRenderer } from "@opentui/core/testing";
+import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { initialState } from "../../src/core/state/init";
 import { createStore } from "../../src/core/state/store";
@@ -20,6 +22,8 @@ export type MountOptions = {
   color?: AppState["terminal"]["color"];
   theme?: AppState["config"]["theme"];
   kittyKeyboard?: boolean;
+  /** config.toml text, loaded as at startup before the shell attaches. */
+  config?: string;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -68,11 +72,13 @@ export async function mountShell(o: MountOptions) {
     if (e.kind === "startTimer") timers.set(e.id, now + e.ms);
     if (e.kind === "cancelTimer") timers.delete(e.id);
   });
-  const shell = createShell(t.renderer, {
-    fileTypes: reg.fileTypes,
-    commands: reg.commands,
-    now: () => now,
-  });
+  if (o.config !== undefined)
+    store.dispatch({
+      type: "configLoaded",
+      result: parseConfig(o.config),
+      reload: false,
+    });
+  const shell = createShell(t.renderer, { reg, now: () => now });
   shell.attach(store);
   for (const [dir, entries] of Object.entries(TREE))
     store.dispatch({ type: "dirListed", dir, entries });
@@ -125,3 +131,21 @@ export async function mountShell(o: MountOptions) {
 }
 
 export type Mounted = Awaited<ReturnType<typeof mountShell>>;
+
+/** The colours and attributes of the cell at (`x`, `y`) in captured spans. */
+export function cellStyle(
+  lines: { spans: CapturedSpan[] }[],
+  x: number,
+  y: number,
+) {
+  let col = 0;
+  for (const sp of lines[y]?.spans ?? []) {
+    if (x < col + sp.width) {
+      const color = (c: CapturedSpan["fg"]) =>
+        c.intent === "default" ? "default" : c.toInts().join(",");
+      return { fg: color(sp.fg), bg: color(sp.bg), attrs: sp.attributes };
+    }
+    col += sp.width;
+  }
+  return undefined;
+}

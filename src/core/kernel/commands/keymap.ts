@@ -18,16 +18,21 @@ type Lookup =
 
 const scopeKey = (s: KeyScope) => `${s.mode}\u0000${s.filetype ?? ""}`;
 
-/** Key-sequence trie per scope. */
+/** Key-sequence trie per scope; `<leader>` in bound sequences is `leader` (Space by default). */
 export class Keymap {
   private readonly roots = new Map<string, Node>();
+  private readonly leader: Key;
+
+  constructor({ leader = " " }: { leader?: Key } = {}) {
+    this.leader = leader;
+  }
 
   /** Bind `seq` ("<leader>e", "<C-w>h") in `scope`; rebinding replaces. */
   bind(scope: KeyScope, seq: string, commandId: string): void {
     const key = scopeKey(scope);
     let node: Node = this.roots.get(key) ?? { next: new Map() };
     this.roots.set(key, node);
-    for (const k of splitKeys(seq)) {
+    for (const k of splitKeys(seq, this.leader)) {
       let child: Node | undefined = node.next.get(k);
       if (child === undefined) {
         child = { next: new Map() };
