@@ -21,6 +21,7 @@ import {
   startOp,
   toggleExplorer,
 } from "./explorer";
+import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
 import { chain, message, none } from "./result";
 import {
   autosaveNow,
@@ -66,6 +67,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   "bd!": "buffer.deleteForce",
   "bdelete!": "buffer.deleteForce",
   ConfigReload: "config.reload",
+  jumps: "jump.list",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -220,7 +222,7 @@ function editFile(ctx: CommandContext): Result {
   const path = workspacePath(s.workspace.root, arg);
   if (path === undefined)
     return message(s, `outside the workspace: ${arg}`, "error");
-  return openPath(s, path, ctx.now);
+  return openPath(recordJump(s), path, ctx.now);
 }
 
 function writeActive(ctx: CommandContext): Result {
@@ -307,6 +309,17 @@ const builtins: AppCommand[] = [
     run: (c) => cycleBuffer(c, -1),
   },
   { id: "file.edit", title: "Open file", run: editFile },
+  {
+    id: "jump.back",
+    title: "Jump to older position",
+    run: (c) => jumpBack(c.state, c.now),
+  },
+  {
+    id: "jump.forward",
+    title: "Jump to newer position",
+    run: (c) => jumpForward(c.state, c.now),
+  },
+  { id: "jump.list", title: "Show jump list", run: (c) => showJumps(c.state) },
   {
     id: "window.split",
     title: "Split window",

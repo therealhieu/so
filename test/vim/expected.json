@@ -1,6 +1,6 @@
 {
   "nvim": "0.11.7",
-  "recordedAt": "2026-10-03T08:41:44.693Z",
+  "recordedAt": "2026-10-03T16:30:59.563Z",
   "cases": [
     {
       "id": "h",
@@ -10103,6 +10103,231 @@
         ],
         "mode": "n",
         "regs": {}
+      }
+    },
+    {
+      "id": "jump-G-back",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "G<C-o>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "jump-gg-back-forward",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 6
+        }
+      },
+      "keys": "gg<C-o><C-i>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          7
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "jump-search-back",
+      "before": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 4
+        }
+      },
+      "keys": "/two<CR><C-o>",
+      "after": {
+        "lines": [
+          "foo bar baz",
+          "one two three",
+          "alpha beta gamma"
+        ],
+        "cursor": [
+          1,
+          5
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "jump-n-N-back-twice",
+      "before": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 0
+        }
+      },
+      "keys": "/cat<CR>nN<C-o><C-o>",
+      "after": {
+        "lines": [
+          "the cat sat",
+          "a cat and catalog",
+          "concat cat"
+        ],
+        "cursor": [
+          2,
+          3
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "jump-paragraph-back",
+      "before": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": {
+          "line": 0,
+          "col": 1
+        }
+      },
+      "keys": "}<C-o>",
+      "after": {
+        "lines": [
+          "a1",
+          "a2",
+          "",
+          "b1",
+          "b2",
+          "",
+          "",
+          "c1"
+        ],
+        "cursor": [
+          1,
+          2
+        ],
+        "mode": "n",
+        "regs": {}
+      }
+    },
+    {
+      "id": "jump-operator-dG-back",
+      "before": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4",
+          "line 5",
+          "line 6",
+          "line 7",
+          "line 8",
+          "line 9",
+          "line 10",
+          "line 11",
+          "line 12",
+          "line 13",
+          "line 14",
+          "line 15",
+          "line 16",
+          "line 17",
+          "line 18",
+          "line 19",
+          "line 20",
+          "line 21",
+          "line 22",
+          "line 23",
+          "line 24",
+          "line 25",
+          "line 26",
+          "line 27",
+          "line 28",
+          "line 29",
+          "line 30",
+          "line 31",
+          "line 32",
+          "line 33",
+          "line 34",
+          "line 35",
+          "line 36",
+          "line 37",
+          "line 38",
+          "line 39",
+          "line 40"
+        ],
+        "cursor": {
+          "line": 2,
+          "col": 0
+        }
+      },
+      "keys": "jjdG<C-o>",
+      "after": {
+        "lines": [
+          "line 1",
+          "line 2",
+          "line 3",
+          "line 4"
+        ],
+        "cursor": [
+          4,
+          1
+        ],
+        "mode": "n",
+        "regs": {
+          "1": {
+            "text": "line 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\nline 21\nline 22\nline 23\nline 24\nline 25\nline 26\nline 27\nline 28\nline 29\nline 30\nline 31\nline 32\nline 33\nline 34\nline 35\nline 36\nline 37\nline 38\nline 39\nline 40\n",
+            "type": "V"
+          },
+          "\"": {
+            "text": "line 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\nline 21\nline 22\nline 23\nline 24\nline 25\nline 26\nline 27\nline 28\nline 29\nline 30\nline 31\nline 32\nline 33\nline 34\nline 35\nline 36\nline 37\nline 38\nline 39\nline 40\n",
+            "type": "V"
+          }
+        }
       }
     }
   ]

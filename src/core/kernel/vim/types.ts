@@ -62,4 +62,5 @@ export type VimEffect =
   | { kind: "paste"; register: RegisterName; before: boolean }
   | { kind: "modeChanged"; mode: Mode }
   | { kind: "ex"; line: string }
-  | { kind: "search"; pattern: string; dir: 1 | -1 };
+  | { kind: "search"; pattern: string; dir: 1 | -1 }
+  | { kind: "jumped"; from: Pos };

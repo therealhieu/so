@@ -125,6 +125,11 @@ export type Overlay =
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean };
 
+/** A position the cursor jumped from; Neovim's jumplist entry. */
+export type JumpEntry = { path: string; line: number; col: number };
+/** `at` is the entry the next <C-o> returns to plus one; `entries.length` when not travelling. */
+export type JumpList = { entries: JumpEntry[]; at: number };
+
 /** The workspace index: its build status and the one NoteIndex in the process. Never persisted. */
 export type IndexState = {
   status: "idle" | "indexing" | "ready" | "unavailable";
@@ -172,6 +177,9 @@ export type AppState = {
   config: AppConfig;
   terminal: TerminalState;
   index: IndexState;
+  jumps: JumpList;
+  /** Workspace paths, most recently opened first. */
+  recent: string[];
 };
 
 export type Action =

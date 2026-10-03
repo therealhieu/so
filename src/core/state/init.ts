@@ -41,5 +41,7 @@ export function initialState(boot: {
     config: defaults,
     terminal: { cols: boot.cols, rows: boot.rows, color: boot.color },
     index: { status: "idle", done: 0, total: 0, ix: emptyIndex() },
+    jumps: { entries: [], at: 0 },
+    recent: [],
   };
 }

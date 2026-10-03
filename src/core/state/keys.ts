@@ -9,6 +9,7 @@ import { activeBuffer, activeWindow, setBuffer } from "./buffers";
 import { EX_ALIASES, executeEx, runCommand } from "./commands";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
+import { pushJump } from "./jumps";
 import { keymapFor } from "./keymap";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -188,7 +189,8 @@ const withVim = (
 /**
  * Turn engine effects into state and effects: edits mark the buffer dirty
  * and schedule autosave; leaving Insert saves; "+ yanks copy to the
- * clipboard; "+ puts wait for it; ex lines run; failed searches show E486.
+ * clipboard; "+ puts wait for it; ex lines run; failed searches show E486;
+ * jump motions record where they left.
  */
 function applyVimEffects(
   s: AppState,
@@ -234,6 +236,11 @@ function applyVimEffects(
             const error = searchError(b.text, e.pattern);
             return error === undefined ? none(st) : message(st, error, "error");
           }
+          case "jumped":
+            return none({
+              ...st,
+              jumps: pushJump(st.jumps, { path: b.path, ...e.from }),
+            });
         }
       }),
     none(s),

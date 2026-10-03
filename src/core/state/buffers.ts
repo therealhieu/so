@@ -3,9 +3,10 @@ import type { FileType } from "../filetypes/registry";
 import { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import { closeWindow } from "../kernel/editor/windows";
-import type { Edit } from "../kernel/text/pos";
+import type { Edit, Pos } from "../kernel/text/pos";
 import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
 import { onDiskLoaded } from "./disk";
+import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import type {
@@ -92,6 +93,25 @@ export function setWindow(s: AppState, w: WindowState): AppState {
     ...s,
     windows: { ...s.windows, byId: { ...s.windows.byId, [w.id]: w } },
   };
+}
+
+/**
+ * Put the active window's cursor at `pos`, clamped to its buffer, and scroll
+ * just enough to show it.
+ */
+export function placeCursor(s: AppState, pos: Pos): AppState {
+  const w = activeWindow(s);
+  const b = w && s.buffers[w.content.bufferId];
+  if (w === undefined || b === undefined) return s;
+  const line = Math.max(0, Math.min(pos.line, b.text.lineCount - 1));
+  const col = Math.max(0, Math.min(pos.col, b.text.line(line).length - 1));
+  const rows = Math.max(1, s.terminal.rows - 2);
+  const top = w.content.scroll;
+  const scroll = line < top ? line : line >= top + rows ? line - rows + 1 : top;
+  return setWindow(s, {
+    ...w,
+    content: { ...w.content, cursor: { line, col }, scroll },
+  });
 }
 
 /** The whole buffer text with "\n" line separators. */
@@ -281,7 +301,10 @@ export function openPath(s: AppState, path: string, now: number): Result {
     const open = bufferForPath(st, path);
     return open === undefined
       ? { state: st, effects: [{ kind: "read", path }] }
-      : none(showBuffer(st, open.id));
+      : none({
+          ...showBuffer(st, open.id),
+          recent: touchRecent(st.recent, path),
+        });
   });
 }
 
@@ -324,6 +347,7 @@ export function onFileLoaded(
         buffers: { ...s.buffers, [id]: b },
         nextBufferId: id + 1,
         panels: { ...s.panels, explorer },
+        recent: touchRecent(s.recent, a.path),
       },
       id,
     ),

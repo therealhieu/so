@@ -177,9 +177,24 @@ function normalCommand(run: Run, cmd: ParsedCommand, env: VimEnv): void {
     updateVim(run, { lastChange: change });
 }
 
+/** Motions Neovim records in the jumplist; operator motions (`dG`) do not. */
+const JUMP_MOTIONS: ReadonlySet<string> = new Set([
+  "G",
+  "gg",
+  "n",
+  "N",
+  "*",
+  "#",
+  "%",
+  "{",
+  "}",
+]);
+
 function moveCursor(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const res = runMotion(run, cmd.target ?? "", cmd, env);
   if (res === null) return;
+  if (JUMP_MOTIONS.has(cmd.target ?? ""))
+    run.effects.push({ kind: "jumped", from: run.s.cursor });
   setCursor(run, res.to);
   if (res.want !== undefined) updateVim(run, { wantCol: res.want });
 }
@@ -651,7 +666,9 @@ function cmdlineKey(run: Run, key: Key, env: VimEnv): void {
   const cursor = run.s.cursor;
   run.want = cursorDisplayCol(lineOf(run), cursor.col, run.tab);
   const res = runMotion(run, "n", { keys: [] }, env);
-  if (res !== null) setCursor(run, res.to);
+  if (res === null) return;
+  run.effects.push({ kind: "jumped", from: cursor });
+  setCursor(run, res.to);
 }
 
 // --- Visual mode -------------------------------------------------------------
