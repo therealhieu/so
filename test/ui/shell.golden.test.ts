@@ -165,6 +165,24 @@ test("a split window's long title is cut in the middle and keeps the file name",
   }
 });
 
+test("a window whose layout throws still shows the file's raw lines", async () => {
+  m = await mountShell({ cols: 120, rows: 36 });
+  m.reg.fileTypes.register({
+    id: "broken",
+    match: { extensions: [".broken"] },
+    editor: "text",
+    views: [{ id: "source", decorations: [] }],
+    analyze: () => {
+      throw new Error("analysis failed");
+    },
+  });
+  openNote(m, "notes/data.broken", "first line\n\tsecond line\n");
+  const body = (await m.frame()).split("\n").slice(1, 4);
+  expect(body[0]).toStartWith("   1 first line");
+  expect(body[1]).toContain("second line");
+  expect(body[2]).toStartWith("    ~");
+});
+
 test("an info toast expires after 3 s and an error toast stays", async () => {
   m = await mountShell({ cols: 120, rows: 36 });
   openNote(m, "notes/ideas.md", IDEAS_MD);

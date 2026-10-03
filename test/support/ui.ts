@@ -81,6 +81,8 @@ export async function mountShell(o: MountOptions) {
     t,
     store,
     shell,
+    /** The registries `update` and the views read; register test file types here. */
+    reg,
     effects,
     now: () => now,
     /** Move the clock, firing every timer that falls due on the way. */
