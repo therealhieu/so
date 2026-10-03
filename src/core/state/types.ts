@@ -33,6 +33,14 @@ export type FsOp = {
 export type FileEvent =
   | { kind: "changed"; path: string; isDir: boolean }
   | { kind: "removed"; path: string };
+/** One search match: a line of `path` with the match at `col`, `len` code units long. */
+export type SearchHit = {
+  path: string;
+  line: number;
+  col: number;
+  len: number;
+  text: string;
+};
 export type TimerId =
   | `autosave:${BufferId}`
   | `retry:${BufferId}`
