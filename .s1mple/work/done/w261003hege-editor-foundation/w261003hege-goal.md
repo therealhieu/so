@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `Complete`
-- **Current Position:** `Complete — awaiting user merge of PR #1 (outside goal)`
+- **Current Position:** `Complete — moved to work/done; PR #1 green and mergeable, awaiting user merge`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -682,6 +682,8 @@ Work: W261003HEGE — editor-foundation
 - **Manual Evidence:** V1.4 and V16.2 reviews passed; V15.2, V15.3 GitHub evidence passed; V11.4 `Pending manual check`; V16.1 not authorized (DEV5)
 
 ## Blockers and Deviations
+
+- **DEV7 — Watcher late-echo fix after completion.** Location: `src/workspace/watcher.ts` `createOwnOps.noteMove` (`3e79c1b`). Evidence: PR #1 CI run 37120577313 failed on `ubuntu-24.04`. A renamed file's event was classified after the 1 s move window and reported as an external change, which opened a conflict dialog on the dirty buffer and made two later tests time out. Fix: a move carries the app's own write stamps to the new paths. A clock-driven unit test failed before the fix. Locally, `bun run check` (433 pass) and `bun run test:ci` (65 pass) pass, and the integration suites passed 3 runs. CI run 37120781101 on `3e79c1b` is green on both OS. Impact: no protocol or design change. The orchestrator made the fix directly during delivery; no group verifier re-ran it.
 
 - **DEV6 — Explorer move uses a text field (P3-G1).** Location: `src/ui/overlays/prompt.ts` move prompt. Evidence: P3-G1-VER1 remediation `def2c80`; parent UI design `rm261003abzp-ui-design.md:808, :839` and M4 S12 specify a folder picker, which is outside DI1 scope. Impact: move works through a path text field; create and rename use the inline tree field as specified. Required resolution: parent-synchronization candidate; picker arrives with later DI work.
 
