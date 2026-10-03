@@ -622,13 +622,27 @@ Completed child works do not establish phase completion without the required int
 
 ## Progress
 
-- **Phase delivery status:** In progress
-- **Phase evidence:** DI1 merged to `main` (`c98aa19`, PR #1) and DI2 merged (`9adb285`, PR #2), both with CI green. The PH1 exit record and the `v0.1.0` release are pending (Release and Exit Criteria).
+- **Phase delivery status:** Completed
+- **Phase evidence:** DI1 merged to `main` (`c98aa19`, PR #1) and DI2 merged (`9adb285`, PR #2), both with CI green. The exit record below covers each item under Completion evidence required. `v0.1.0` is released only when the user asks.
+
+**PH1 exit record** (2026-10-04, `main` at `1dcea9a`)
+
+| Required evidence | Result |
+|---|---|
+| V and UV records pass in CI on the merged DI1 and DI2 PRs | PR #1 and PR #2 merged with `check` and `test` (ubuntu-24.04, macos-15) green; both overall verification reports accepted every group with no findings |
+| RM261003ABZP-V14@R2 timings | `bun run check` 3.96 s on the reference machine (< 30 s); CI runs 1m07s–1m34s (< 3 min) |
+| Manual release dry run on `main` | Run 37158303081: `build` and the four smoke jobs succeeded, each binary printed `so 0.0.0-dev+1dcea9a`; `publish` skipped. The `dist` artifact holds four binaries and `SHA256SUMS`, and every checksum verifies. No tag and no GitHub Release exist |
+| RM261003ABZP-V13@R1 on the reference machine (Apple M1 Max, macOS), as RM261003ABZP-REQ9@R2 requires | firstFrame 121.3 ms (< 200), indexReady 1286.4 ms (< 3000), indexingKeystrokeP95 3.6 ms (< 16); V12 readings: openFile 25.9 ms (< 50), sourceKeystrokeP95 4.1 ms (< 16) |
+| Manual run on a real notes folder, macOS and Linux | The dry-run binaries ran on a copy of `.s1mple/` (65 notes) in a 120×32 terminal: `so-darwin-arm64` on macOS 14 and `so-linux-arm64` in `ubuntu:24.04`. In both, the index became ready, `:e` opened a note, an appended `[[communication]]` line saved to disk, `gd` opened `docs/communication.md`, `:q` exited, and the shell came back in canonical mode with echo on. A diff against the source folder showed only the saved edit |
+
+The Linux CI bench is a regression gate, not target evidence. Private-repository `ubuntu-24.04` runners have 2 vCPU and 8 GB, and the merged DI2 head read firstFrame 236.6 ms, indexReady 3747.6 ms, openFile 81.2 ms, and indexingKeystrokeP95 21.7 ms there, all within the 2× gate.
+
+Open, not blocking: the manual macOS Finder check that a trashed file appears in `~/.Trash` and Put Back works (W261003HEGE V11.4), and `:qa`/`:wqa`, which are not registered ex commands (`:q`, `:wq`, and `:q!` are).
 
 | DI | Delivery status | Work | PR | Evidence / blocker |
 |---|---|---|---|---|
 | RM261003ABZP-DI1@R2 | Completed | W261003HEGE | PR #1 | Merged 2026-10-03T11:00:09Z as `c98aa19` with CI green; `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md` (all groups accepted, no findings). G1 closed. Open, not blocking DI2: the manual macOS Trash check (W261003HEGE V11.4) and the `v0.1.0-rc.1` release dry run (RM261003ABZP-V14@R1, W261003HEGE V16.1), now superseded by the PH1 exit's non-publishing dry run (RM261003ABZP-V14@R2); the release-please workflow DI1 delivered is removed by the manual-release change |
-| RM261003ABZP-DI2@R2 | Completed | W261003FX70 | PR #2 | Merged 2026-10-03T21:50:57Z as `9adb285` with CI green (`check`, `test` on ubuntu-24.04 and macos-15); `.s1mple/work/done/w261003fx70-navigation-and-links/reports/overall-verification-report.md` (Passed; all five groups accepted, no findings). G2 and G3 outputs merged; PH2 still waits for the PH1 exit. Open, not blocking: one Linux CI bench run below every target is the only RM261003ABZP-V13@R1 evidence, after earlier runs swung about 1.7× (PH1 exit decision); max keystroke latency while indexing (20–45 ms) is reported but not gated |
+| RM261003ABZP-DI2@R2 | Completed | W261003FX70 | PR #2 | Merged 2026-10-03T21:50:57Z as `9adb285` with CI green (`check`, `test` on ubuntu-24.04 and macos-15); `.s1mple/work/done/w261003fx70-navigation-and-links/reports/overall-verification-report.md` (Passed; all five groups accepted, no findings). G2 and G3 outputs merged. RM261003ABZP-V13@R1 is read on the reference machine (PH1 exit record). Open, not blocking: max keystroke latency while indexing (20–45 ms) is reported but not gated |
 
 ## Unresolved Items
 

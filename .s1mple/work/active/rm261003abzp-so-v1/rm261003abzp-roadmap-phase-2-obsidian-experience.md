@@ -573,12 +573,12 @@ Completed child works do not establish phase completion without the required int
 ## Progress
 
 - **Phase delivery status:** Not started
-- **Phase evidence:** None. DI2 merged the G2 and G3 outputs (`9adb285`, PR #2); the G2 and G3 evidence also requires the PH1 exit record, which is pending.
+- **Phase evidence:** None. DI2 merged the G2 and G3 outputs (`9adb285`, PR #2); with the PH1 exit recorded (phase 1 file, Progress), G2 and G3 are met.
 
 | DI | Delivery status | Work | PR | Evidence / blocker |
 |---|---|---|---|---|
-| RM261003ABZP-DI3@R2 | Not started | Pending | Pending | G2 outputs merged with DI2 (`9adb285`); G2 waits for the PH1 exit record. The DI3 discussion may start; it confirms the OpenTUI image API |
-| RM261003ABZP-DI4@R2 | Not started | Pending | Pending | G3 outputs merged with DI2 (`9adb285`); G3 waits for the PH1 exit record; G4 (DI3) gates only the embed renderer. The DI4 discussion may start; it confirms the Kanban `type` value |
+| RM261003ABZP-DI3@R2 | Not started | Pending | Pending | G2 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded. Next: the DI3 discussion, which confirms the OpenTUI image API |
+| RM261003ABZP-DI4@R2 | Not started | Pending | Pending | G3 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded; G4 (DI3) gates only the embed renderer. Next: the DI4 discussion, which confirms the Kanban `type` value |
 
 ## Unresolved Items
 

@@ -4,7 +4,7 @@
 - **Outcome:** `so` ships as a fast, vim-modal, Markdown-first terminal editor for a plain notes folder. It has Obsidian-compatible links, live preview, daily notes, templates, Bases, and a read-only browser preview, and can be released as checksummed binaries for macOS and Linux whenever the user asks. Its language-neutral editor core opens any text file in source view and leaves room for code editing and notebooks later.
 - **History:** `rm261003abzp-roadmap-index-revisions.md`
 
-Phase files hold the complete PH and DI definitions. This index holds their current references and the delivery order. `Approved` describes the roadmap baseline, not delivered work. DI1 is delivered by W261003HEGE in PR #1 and DI2 by W261003FX70 in PR #2; see Work Progress.
+Phase files hold the complete PH and DI definitions. This index holds their current references and the delivery order. `Approved` describes the roadmap baseline, not delivered work. DI1 is delivered by W261003HEGE in PR #1 and DI2 by W261003FX70 in PR #2, and PH1 is complete; see Work Progress.
 
 ## Baseline
 
@@ -98,8 +98,8 @@ executing its `![[file.base]]` embed renderer (PH2 Cross-Work Dependency Gates).
      - RM261003ABZP-US4@R1 - Link interactions show impact first; verified by RM261003ABZP-UV5@R1
      - RM261003ABZP-US5@R2 - File operations, refused files, and disk changes never surprise the user; verified by RM261003ABZP-UV6@R2
      - RM261003ABZP-US9@R1 (PH1 surfaces) - NO_COLOR, light theme, and 80×24 hold for the shell, explorer, prompts, overlays, and side panel; verified by RM261003ABZP-UV10@R1 (PH1 states)
-   - **Delivery status:** In progress
-   - **Progress evidence:** RM261003ABZP-DI1@R2 merged to `main` as `c98aa19` (PR #1) and RM261003ABZP-DI2@R2 as `9adb285` (PR #2), both with CI green. The PH1 exit record, including the release dry run, is pending; `v0.1.0` is released only when the user asks.
+   - **Delivery status:** Completed
+   - **Progress evidence:** RM261003ABZP-DI1@R2 merged to `main` as `c98aa19` (PR #1) and RM261003ABZP-DI2@R2 as `9adb285` (PR #2), both with CI green. The PH1 exit record (phase file, Progress) holds the release dry run, the V13 and V14 readings, and the manual runs on macOS and Linux. `v0.1.0` is released only when the user asks.
    - **Details:** `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`
 
 2. **RM261003ABZP-PH2@R3 — Obsidian experience**
@@ -140,9 +140,9 @@ Each DI maps to exactly one Work and one PR. RM261003ABZP-DI1@R2 is assigned W26
 | DI | Work stage | Contract health | Next gate / blocker | Evidence | Checked at |
 |---|---|---|---|---|---|
 | RM261003ABZP-DI1@R2 | Deliver (merged) | Aligned | None — G1 closed; open, not blocking: manual macOS Trash check (W261003HEGE V11.4); the `v0.1.0-rc.1` release dry run (RM261003ABZP-V14@R1) is superseded by the PH1 exit's non-publishing dry run (RM261003ABZP-V14@R2), and the release-please workflow DI1 delivered is removed | `.s1mple/work/done/w261003hege-editor-foundation/reports/overall-verification-report.md` (all groups accepted, no findings); PR #1 merged 2026-10-03T11:00:09Z; checked against REQ10@R3, DES8@R2, DES15@R2 | 2026-10-03T11:56:27Z |
-| RM261003ABZP-DI2@R2 | Deliver (merged) | Aligned | None — G2 and G3 outputs merged; open, not blocking: whether one Linux CI bench run below every target is enough RM261003ABZP-V13@R1 evidence for the PH1 exit (earlier runs swung about 1.7×), and the ungated max keystroke latency while indexing (20–45 ms) | `.s1mple/work/done/w261003fx70-navigation-and-links/reports/overall-verification-report.md` (Passed; all five groups accepted, no findings); PR #2 merged 2026-10-03T21:50:57Z as `9adb285`; checked against DES6@R2, DES7@R4, DES14@R2, DES15@R3 | 2026-10-03T21:59:02Z |
-| RM261003ABZP-DI3@R2 | Not started | Aligned | PH1 exit record (PH2 gate G2; DI2 merged); the DI3 discussion may start and confirms the OpenTUI image API | G2 outputs on `main` at `9adb285` (W261003FX70 overall verification, G2 table); PH2 baseline cites DES6@R2 | 2026-10-03T21:59:02Z |
-| RM261003ABZP-DI4@R2 | Not started | Aligned | PH1 exit record (PH2 gate G3; DI2 merged); DI3 embed gate G4 before embed execution; the DI4 discussion may start and confirms the Kanban `type` value | G3 outputs on `main` at `9adb285` (W261003FX70 overall verification, G3 table) | 2026-10-03T21:59:02Z |
+| RM261003ABZP-DI2@R2 | Deliver (merged) | Aligned | None — G2 and G3 outputs merged; RM261003ABZP-V13@R1 is read on the reference machine, as RM261003ABZP-REQ9@R2 requires (PH1 exit record); open, not blocking: the ungated max keystroke latency while indexing (20–45 ms) | `.s1mple/work/done/w261003fx70-navigation-and-links/reports/overall-verification-report.md` (Passed; all five groups accepted, no findings); PR #2 merged 2026-10-03T21:50:57Z as `9adb285`; checked against DES6@R2, DES7@R4, DES14@R2, DES15@R3 | 2026-10-03T21:59:02Z |
+| RM261003ABZP-DI3@R2 | Not started | Aligned | None — PH1 exit recorded and G2 outputs merged; next: the DI3 discussion, which confirms the OpenTUI image API | G2 outputs on `main` at `9adb285` (W261003FX70 overall verification, G2 table); PH1 exit record; PH2 baseline cites DES6@R2 | 2026-10-04T05:40:00Z |
+| RM261003ABZP-DI4@R2 | Not started | Aligned | None — PH1 exit recorded and G3 outputs merged; DI3 embed gate G4 before embed execution; next: the DI4 discussion, which confirms the Kanban `type` value | G3 outputs on `main` at `9adb285` (W261003FX70 overall verification, G3 table); PH1 exit record | 2026-10-04T05:40:00Z |
 
 These rows are evidence-backed snapshots, not live telemetry. Delivery status stays in Phase Sequence and in each phase's Progress. Resolve W and PR identities through the Delivery Items ledger. A row stays `Not assessed` until its relevant baseline and coverage have been checked.
 
