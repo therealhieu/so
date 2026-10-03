@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — remediation`
+- **Current Position:** `Overall verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -402,7 +402,7 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003hege-editor-foundation/w261003hege-plan-3-ui-shell-app-and-delivery.md`
 - **Dependencies:** Parts 1 and 2
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P3-G1 — UI Shell, Composition Root, Lifecycle, and Delivery Verification
 
@@ -423,12 +423,12 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - [x] Verification report persisted and separately committed.
 - [x] Verification report commit SHA recorded.
 - [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
@@ -437,20 +437,20 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 - Initial implementation report commit: `d4f19de` (pushed)
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p3-g1-verification-report.md` — `Failed`: P3-G1-VER1 (Major, explorer create/rename prompt is a centred popup, not the inline tree field of M4 S10/S11), VER2 (Minor, shutdown during in-flight autosave → flush `conflict`), VER3 (Minor, statusline order vs M1; split titles truncated at end), VER4 (Minor, UI branches on `.md` for explorer icon), VER5 (Minor, missing tests for paint fallback, narrow diff, 80×24 prompt). V15.2/V15.3 confirmed; all deviations necessary/acceptable
 - Verification report commit: `2a3fc8d`
-- Remediation: assigned to a fresh `s1mple-implementer` (in progress) — orchestrator chose to build the inline field (no user deviation needed); move keeps a text field (picker outside DI1) recorded as a deviation; remediation pushes to PR #1 under the granted push scope and re-confirms CI
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
-- PR, CI run, and release links: PR https://github.com/therealhieu/so/pull/1 (open, not merged); CI run https://github.com/therealhieu/so/actions/runs/37118234988 green in 40 s (check 15 s, test macos-15 25 s, test ubuntu-24.04 37 s); run 37118408437 green after the report push; release: none (V16.1 not authorized — tag out of scope)
+- Remediation: `Completed` by a fresh `s1mple-implementer`; all five findings `Fixed` — orchestrator chose to build the inline field (no user deviation needed); move keeps a text field (picker outside DI1) recorded as a deviation; remediation pushes to PR #1 under the granted push scope and re-confirms CI
+- Final implementation report commit: `c773c21` (pushed)
+- Remediation commits (finding/task → SHA(s) or justified no-change result): P3-G1-VER1 → `def2c80` (inline `◇` field for create/rename; move keeps text field — deviation recorded); VER2 → `236362d` (runner treats its own last write's stamp as seen; external change still `conflict`); VER3 → `b8401db` (one golden line changed deliberately); VER4 → `5124916` (`isNote` via registry); VER5 → `13fa5e1`, `383f232` (tests only)
+- Closure evidence: orchestrator validated report commits `d4f19de`, `2a3fc8d`, `c773c21`; verification report unchanged since `2a3fc8d`; working tree clean; local HEAD = origin = `c773c21`; no tags; `time bun run check` → exit 0 in 2.5 s (432 pass, zero knip); CI run https://github.com/therealhieu/so/actions/runs/37119729032 on `c773c21` → success (38 s; Linux bench 11.12 ms / 16.06 ms). Accepted 2026-10-03.
+- PR, CI run, and release links: final head `c773c21` CI https://github.com/therealhieu/so/actions/runs/37119729032 success (38 s: check 11 s, ubuntu-24.04 34 s, macos-15 25 s); earlier: PR https://github.com/therealhieu/so/pull/1 (open, not merged); CI run https://github.com/therealhieu/so/actions/runs/37118234988 green in 40 s (check 15 s, test macos-15 25 s, test ubuntu-24.04 37 s); run 37118408437 green after the report push; release: none (V16.1 not authorized — tag out of scope)
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
 | `P3-G1-T1` | `8898bd9` |
-| `P3-G1-T2` | `eb4253a`, follow-up `1ba0f67` |
-| `P3-G1-T3` | `55d12a7` |
-| `P3-G1-T4` | `16d7a7a`, follow-up `989b725` |
+| `P3-G1-T2` | `eb4253a`, follow-up `1ba0f67`, remediation `b8401db`, `5124916`, `13fa5e1` |
+| `P3-G1-T3` | `55d12a7`, remediation `def2c80`, `383f232` |
+| `P3-G1-T4` | `16d7a7a`, follow-up `989b725`, remediation `236362d` |
 | `P3-G1-T5` | `a0b1a58` |
 | `P3-G1-T6` | `37b9e73` |
 | `P3-G1-T7` | No change — delivery only: push of `feat/rm261003abzp-di1-editor-foundation`, PR #1, CI watched |
@@ -478,7 +478,7 @@ Append checks as boundaries are reached. An unresolved relevant change blocks af
 | G1 — P1-G2 outputs | `CommandRegistry`, `Keymap` + `KeyScope`, `layoutText`, `Decoration`, `FileTypeRegistry`, `lowlightHighlighter` (V7.4, V6.1–V6.3) | `src/core/kernel/{commands,view}/**`, `src/core/filetypes/registry.ts`, `src/core/lang/code/highlight.ts`; verifier judged no shape change material to G1/parent contracts (`p1-g2-verification-report.md`, `4f078dd`); `layoutText` fixed `0723afc` | Produced locally |
 | G1 — P2-G1 outputs | `createUpdate`, `createStore`, `Action`/`Effect` (V7.3, V2.1, V7.5) | `src/core/state/{update,store,types}.ts`; protocol additions exactly the five allowed; V7.3, V2.1 (289 cases via `createUpdate`), V7.5 pass (`p2-g1-verification-report.md` `1959b23`; remediation `d4abdc3`) | Produced locally |
 | G1 — P2-G2 outputs | `readTextFile`, `atomicWrite`, watcher, effect runner (V3.1–V3.4, V5.1, V6.4–V6.5) | `src/workspace/{fs,watcher}.ts`, `src/app/effects.ts`; cases pass (`p2-g2-verification-report.md` `8868bff`; remediation `381f558`) | Produced locally |
-| G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | `Pending implementation` | `Pending implementation` — final gate status is `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
+| G1 — P3-G1 outputs and evidence list (T6), PR CI evidence (T7) | Shell with `editorViews`, `OverlayHost`, `Prompt`; bench harness; parent V1@R1↔V3.1–V3.4, V2@R1↔V2.1, V15@R2↔V7.1–V7.2, V17@R1↔V8.1–V8.2, V18@R1↔V6.1–V6.5 | `Pending implementation` | T6 evidence list in `p3-g1-implementation-report.md` (`c773c21`); shell `src/ui/shell.ts`, `editorViews` `src/ui/editors/registry.ts`, `OverlayHost`/`PromptView` `src/ui/overlays/{host,prompt}.ts`, bench `scripts/bench-gate.ts`; PR #1 CI green on `c773c21` (run 37119729032) | `Pending — awaiting DI1 PR merge with CI green` (owner RM261003ABZP-DI2@R2) |
 
 Never treat an approved producer design as delivered implementation. Check gates before their due boundary, not only before marking a group complete.
 
