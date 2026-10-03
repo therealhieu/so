@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G1 — implementation`
+- **Current Position:** `P2-G1 — verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -309,16 +309,16 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 #### P2-G1 — Protocol, Store, and Reducers
 
 - [x] Context and dependencies confirmed (Part 1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P2-G1-T1` — Define the DI1 protocol, store, and reducer shell.
-- [ ] `P2-G1-T2` — Implement autosave, retry, quit, and close reducers.
-- [ ] `P2-G1-T3` — Implement disk events and conflict resolution.
-- [ ] `P2-G1-T4` — Implement explorer operations reducer.
-- [ ] `P2-G1-T5` — Route keys, ex commands, clipboard paste, and status.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Implementation turn completed.
+- [x] `P2-G1-T1` — Define the DI1 protocol, store, and reducer shell.
+- [x] `P2-G1-T2` — Implement autosave, retry, quit, and close reducers.
+- [x] `P2-G1-T3` — Implement disk events and conflict resolution.
+- [x] `P2-G1-T4` — Implement explorer operations reducer.
+- [x] `P2-G1-T5` — Route keys, ex commands, clipboard paste, and status.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
 - [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
 - [ ] Verification report persisted and separately committed.
 - [ ] Verification report commit SHA recorded.
 - [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
@@ -331,8 +331,8 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-implementation-report.md` — `Completed`; implementer flagged design-shape deviations (SaveState.writing, `now` args, `BufferState.closing`, registers under `AppState.vim`, open shapes, extra files `result.ts`, `test/support/state.ts`) and `ConfigSchema` knip finding outside interim rule — assessed by verifier
+- Initial implementation report commit: `3525c0a`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p2-g1-verification-report.md` — `Pending implementation`
 - Verification report commit: `Pending implementation`
 - Remediation: `Pending implementation`
@@ -344,11 +344,11 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P2-G1-T1` | `Pending implementation` |
-| `P2-G1-T2` | `Pending implementation` |
-| `P2-G1-T3` | `Pending implementation` |
-| `P2-G1-T4` | `Pending implementation` |
-| `P2-G1-T5` | `Pending implementation` |
+| `P2-G1-T1` | `d4937a7` |
+| `P2-G1-T2` | `579fb73` |
+| `P2-G1-T3` | `e47b9de` |
+| `P2-G1-T4` | `6cc2eb0` |
+| `P2-G1-T5` | `6d97b00` |
 
 #### P2-G2 — Workspace Adapters, Effect Runner, and Integration
 
