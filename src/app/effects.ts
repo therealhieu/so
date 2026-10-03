@@ -40,15 +40,40 @@ const wallClock = () => performance.timeOrigin + performance.now();
 /** A failure's user-facing reason. */
 const msg = (x: unknown): string => FsError.from(x).message;
 
+const under = (path: string, dir: string) =>
+  path === dir || path.startsWith(`${dir}/`);
+
+/** A rename, move, or trash whose result `update` has not seen yet. */
+type PathOp = { op: FsOp; ok: boolean };
+
+/**
+ * Where a write lands after the path operations queued before it: each
+ * successful move of the path or a folder above it re-paths the write, and a
+ * successful trash or removal cancels it (`null`). Failed operations change nothing.
+ */
+function follow(path: string, before: PathOp[]): string | null {
+  let p: string | null = path;
+  for (const { op, ok } of before) {
+    if (p === null || !ok || !under(p, op.from)) continue;
+    p = op.kind === "trash" ? null : `${op.to}${p.slice(op.from.length)}`;
+  }
+  return p;
+}
+
+const REMOVED = "deleted on disk — :w to recreate";
+
 /**
  * Runs effects and answers each fallible one with exactly one action. Every
  * mutating file-system effect shares one promise chain, so the disk sees
  * them in the order `update` emitted them; reads and listings run freely.
+ * A write emitted before an earlier rename, move, or trash reported back
+ * still names the old path, so it follows that operation's outcome.
  */
 export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const now = d.now ?? wallClock;
   const abs = (p: string) => join(d.root, p);
   let tail: Promise<unknown> = Promise.resolve();
+  const unreported = new Set<PathOp>();
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
     tail = next.catch(() => {});
@@ -74,7 +99,9 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     arm();
   };
 
-  async function runFsOp(op: FsOp): Promise<void> {
+  async function runFsOp(
+    op: FsOp,
+  ): Promise<Extract<Action, { type: "fsResult" }>> {
     try {
       if (op.kind === "create")
         await createEntry(d.root, op.from, op.dir === true);
@@ -87,9 +114,9 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         await moveEntry(d.root, op.from, op.to);
         d.ownOps.noteMove(op.from, op.to);
       }
-      d.dispatch({ type: "fsResult", op, ok: true });
+      return { type: "fsResult", op, ok: true };
     } catch (x) {
-      d.dispatch({ type: "fsResult", op, ok: false, reason: msg(x) });
+      return { type: "fsResult", op, ok: false, reason: msg(x) };
     }
   }
 
@@ -118,23 +145,40 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             }),
         );
         return;
-      case "write":
+      case "write": {
+        const before = [...unreported];
         void serial(async () => {
+          const path = follow(e.path, before);
+          if (path === null) {
+            d.dispatch({ type: "saveFailed", path: e.path, reason: REMOVED });
+            return;
+          }
           try {
-            const stamp = await atomicWrite(abs(e.path), e.text, e.expected);
-            d.ownOps.noteWrite(e.path, stamp);
-            d.dispatch({ type: "saved", path: e.path, stamp });
+            const stamp = await atomicWrite(abs(path), e.text, e.expected);
+            d.ownOps.noteWrite(path, stamp);
+            d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
-            d.dispatch({ type: "saveFailed", path: e.path, reason: msg(x) });
+            d.dispatch({ type: "saveFailed", path, reason: msg(x) });
           }
         });
         return;
+      }
       case "create":
+        void serial(async () => d.dispatch(await runFsOp(e.op)));
+        return;
       case "rename":
       case "move":
-      case "trash":
-        void serial(() => runFsOp(e.op));
+      case "trash": {
+        const pathOp: PathOp = { op: e.op, ok: false };
+        unreported.add(pathOp);
+        void serial(async () => {
+          const result = await runFsOp(e.op);
+          pathOp.ok = result.ok;
+          unreported.delete(pathOp);
+          d.dispatch(result);
+        });
         return;
+      }
       case "startTimer":
         startTimer(e.id, now() + e.ms);
         return;
@@ -166,11 +210,16 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
 
   return {
     run,
-    flush: (writes) =>
-      Promise.all(
+    flush: (writes) => {
+      const before = [...unreported];
+      return Promise.all(
         writes.map((w) =>
-          serial(() => atomicWrite(abs(w.path), w.text, w.expected)),
+          serial(async () => {
+            const path = follow(w.path, before);
+            if (path !== null) await atomicWrite(abs(path), w.text, w.expected);
+          }),
         ),
-      ).then(() => {}),
+      ).then(() => {});
+    },
   };
 }

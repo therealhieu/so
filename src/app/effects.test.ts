@@ -251,3 +251,39 @@ test("flush writes through the same queue as other file operations", async () =>
   expect(await readFile(join(root, "f.md"), "utf8")).toBe("flushed\n");
   expect(r.actions.map((a) => a.type)).toEqual(["saved"]);
 });
+
+test("writes queued behind a move, a removal, or a failed rename follow its outcome", async () => {
+  await mkdir(join(root, "box"), { recursive: true });
+  await writeFile(join(root, "box/m.md"), "m\n");
+  await writeFile(join(root, "gone.md"), "g\n");
+  await writeFile(join(root, "stay.md"), "s\n");
+  await writeFile(join(root, "taken.md"), "t\n");
+  const r = runner();
+  r.run({ kind: "move", op: { kind: "move", from: "box", to: "moved/box" } });
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "gone.md", permanent: true },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "stay.md", to: "taken.md" },
+  });
+  r.run({ kind: "write", path: "gone.md", text: "g1\n" });
+  await r.flush([
+    { kind: "write", path: "box/m.md", text: "m2\n" },
+    { kind: "write", path: "gone.md", text: "g2\n" },
+    { kind: "write", path: "stay.md", text: "s2\n" },
+  ]);
+  expect(r.actions.filter((a) => a.type !== "fsResult")).toEqual([
+    {
+      type: "saveFailed",
+      path: "gone.md",
+      reason: "deleted on disk — :w to recreate",
+    },
+  ]);
+  expect(await readFile(join(root, "moved/box/m.md"), "utf8")).toBe("m2\n");
+  expect(await Bun.file(join(root, "box/m.md")).exists()).toBe(false);
+  expect(await Bun.file(join(root, "gone.md")).exists()).toBe(false);
+  expect(await readFile(join(root, "stay.md"), "utf8")).toBe("s2\n");
+  expect(await readFile(join(root, "taken.md"), "utf8")).toBe("t\n");
+});
