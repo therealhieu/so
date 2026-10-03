@@ -1,6 +1,6 @@
 # RM261003ABZP: Obsidian experience — Roadmap Phase
 
-- **Phase:** RM261003ABZP-PH2@R2
+- **Phase:** RM261003ABZP-PH2@R3
 - **Approval status:** Approved
 - **Index:** `rm261003abzp-roadmap-index.md`
 - **History:** `rm261003abzp-roadmap-phase-2-obsidian-experience-revisions.md`
@@ -9,7 +9,7 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
 
 ## Phase Definition
 
-- **Outcome:** On top of the PH1 editor, the user gets four capabilities. Together they complete the v1 scope, released as `v1.0.0`:
+- **Outcome:** On top of the PH1 editor, the user gets four capabilities. Together they complete the v1 scope, release-ready as `v1.0.0` (published only when the user asks):
   - Notes render in Obsidian-style live preview (reveal at the cursor, rich blocks, folds, embeds, and inline images), with source and reading modes.
   - `:Preview` mirrors the note read-only in the browser.
   - `:Today` and template insertion work in one or two keystrokes.
@@ -28,14 +28,14 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - RM261003ABZP-REQ7@R2 - Bases table and Kanban, with embeds.
   - RM261003ABZP-REQ9@R2 - keystroke and open targets in live preview and in a large code file (RM261003ABZP-V12@R2).
   - RM261003ABZP-REQ11@R3 - registration-only extension proof, including a test-only `csv` file type (RM261003ABZP-V16@R2).
-  - The `v1.0.0` release.
+  - The non-publishing release dry run at phase exit; the `v1.0.0` release only when the user asks.
 - **Out of scope:**
   - Bases layouts beyond table and Kanban (they open as a table with a notice).
   - Configurable calendar week start (Monday is fixed, per RM261003ABZP-UDES8@R1).
   - Bundling KaTeX or Mermaid into the binary (RM261003ABZP-DES13@R2 tradeoff).
   - Everything in the index's Deferred Scope.
 - **Delivery items:** RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2
-- **Predecessors:** RM261003ABZP-PH2@R1
+- **Predecessors:** RM261003ABZP-PH2@R1, RM261003ABZP-PH2@R2
 
 ## Baseline and Dependencies
 
@@ -44,7 +44,7 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2.
   - RM261003ABZP-REQ9@R2 (keystroke, open, scrolling).
   - RM261003ABZP-REQ11@R3 (registries for block renderers, decoration providers, file types and editor kinds, and Bases view types).
-  - RM261003ABZP-REQ10@R3 (release re-check).
+  - RM261003ABZP-REQ10@R4 (release re-check).
 - **Design:** `rm261003abzp-design.md` - RM261003ABZP-DES5@R2 (Markdown-scoped view, task, and fold commands), RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (Markdown views and the `base` file type)
 - **Research:** `rm261003abzp-research.md`
 - **UI baseline:**
@@ -58,9 +58,9 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - RM261003ABZP-RF10: evaluated RM261003ABZP-REQ6@R1 → informed RM261003ABZP-REQ6@R2.
   - RM261003ABZP-RF12: evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2.
   - RM261003ABZP-RF2: evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2.
-- **Prerequisite phases:** RM261003ABZP-PH1@R2 - the merged editor, store, registry and keymap with `KeyScope`, the kernel `layoutText`, `FileTypeRegistry` with `markdownFileType` and the highlighter, `parseDoc` with `syntaxExtensions`, NoteIndex and the worker, the Picker and Prompt components, the `atomicWrite` path, and the bench harness.
+- **Prerequisite phases:** RM261003ABZP-PH1@R3 - the merged editor, store, registry and keymap with `KeyScope`, the kernel `layoutText`, `FileTypeRegistry` with `markdownFileType` and the highlighter, `parseDoc` with `syntaxExtensions`, NoteIndex and the worker, the Picker and Prompt components, the `atomicWrite` path, and the bench harness.
 - **Entry conditions:**
-  - PH1 exit evidence is recorded and `v0.1.0` is released. DI3 and DI4 discussion and planning may start earlier against the PH1 plans.
+  - PH1 exit evidence, including the release dry run, is recorded. A `v0.1.0` release is not required. DI3 and DI4 discussion and planning may start earlier against the PH1 plans.
   - The user's pending mockup review has either produced no change to the PH2 mockups (M2, M5, M6, M7) or has been reconciled through mockup edit cycles and the UREQ/UDES and PH/DI revision rules.
 
 ### Cross-Work Dependency Gates
@@ -76,7 +76,7 @@ G1 is defined in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Cross-Wo
 ## Delivery Flow
 
 ```text
-RM261003ABZP-PH2@R2 — Obsidian experience            (requires RM261003ABZP-PH1@R2, v0.1.0)
+RM261003ABZP-PH2@R3 — Obsidian experience            (requires the RM261003ABZP-PH1@R3 exit)
 ├── RM261003ABZP-DI3@R2 — Live preview + browser preview      ◄─ G2 (DI2)
 │     Doc → livePreview provider (reveal, folds, widgets) → layoutText → EditorView + widgetPainters
 │     Doc → renderHtml → Bun.serve /render + SSE doc/stopped → read-only page
@@ -90,7 +90,7 @@ RM261003ABZP-PH2@R2 — Obsidian experience            (requires RM261003ABZP-PH
       [after G4] base block renderer + base widget painter → ![[file.base]] inline
                          │
                          ▼
-          PH2 exit evidence → merge release-please PR (release-as 1.0.0) → v1.0.0
+          PH2 exit evidence (incl. release dry run, no publish) → v1.0.0 tag only when the user asks
 ```
 
 - **Parallel opportunities:** DI3 and DI4 run in parallel from PH1 exit. Only DI4's embed renderer waits for G4. Inside DI4, the daily-notes and templates work and the Bases engine port are independent until the shared `formatDate`.
@@ -282,13 +282,13 @@ RM261003ABZP-PH2@R2 — Obsidian experience            (requires RM261003ABZP-PH
     - **Verification:** RM261003ABZP-V10@R1 - `cards` opens as a table with a notice; RM261003ABZP-UV8@R1 - a fallback view produces no write.
 
 - **Migration and compatibility**
-  - **Design:** RM261003ABZP-DES12@R2, RM261003ABZP-DES15@R3; Design, Cross-cutting and Evolution (Obsidian file compatibility, rollout).
+  - **Design:** RM261003ABZP-DES12@R2, RM261003ABZP-DES15@R4; Design, Cross-cutting and Evolution (Obsidian file compatibility, rollout).
   - **Phase refinement:**
     - There is no data migration. The PH1 state file (`"version": 1`) is unchanged, and fold state is not persisted (RM261003ABZP-UDES4@R1).
     - Bases writes patch only the edited frontmatter keys and preserve comments and key order. `.base` files themselves are never written in v1.
     - Kanban ships only after `KANBAN_TYPE` matches an Obsidian 1.14+ saved file.
-  - **Transition:** `v0.1.0` → DI3 merged → DI4 merged (after G4) → PH2 exit → `v1.0.0`. Rollback: revert the PR before release. After release, reinstall `v0.1.0` or a later binary. Notes stay valid Obsidian files throughout.
-  - **Verification:** RM261003ABZP-V10@R1 - YAML preservation and the Obsidian Kanban fixture. RM261003ABZP-V14@R1 - re-run for `v1.0.0`.
+  - **Transition:** PH1 exit → DI3 merged → DI4 merged (after G4) → PH2 exit with the release dry run → `v1.0.0` when the user asks. Rollback: revert the PR before release. After release, reinstall `v0.1.0` or a later binary. Notes stay valid Obsidian files throughout.
+  - **Verification:** RM261003ABZP-V10@R1 - YAML preservation and the Obsidian Kanban fixture. RM261003ABZP-V14@R2 - dry run re-run at the PH2 exit.
 
 - **UI realization:**
   - **DI3:**
@@ -499,10 +499,10 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - **Verification:**
     - **RM261003ABZP-V12@R2 — Keystroke and open-file benchmarks** — **Definition:** `rm261003abzp-design.md`
     - **RM261003ABZP-V13@R1 — Startup and index benchmarks** (re-run) — **Definition:** `rm261003abzp-design.md`
-- **RM261003ABZP-S10@R1 — Development, CI, and release are fast and automatic** (re-check)
+- **RM261003ABZP-S10@R2 — Development and CI are fast; releases are manual and proven by a dry run** (re-check)
   - **Definition:** `rm261003abzp-design.md`, Success and Verification
   - **Verification:**
-    - **RM261003ABZP-V14@R1 — Check timing, CI timing, and release dry run** — **Definition:** `rm261003abzp-design.md`
+    - **RM261003ABZP-V14@R2 — Check timing, CI timing, and non-publishing release dry run** — **Definition:** `rm261003abzp-design.md`
 - **RM261003ABZP-S11@R1 — Foundations stay clean and the terminal is always restored** (completed in PH2)
   - **Definition:** `rm261003abzp-design.md`, Success and Verification
   - **Verification:**
@@ -520,18 +520,19 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
 
 ## Release and Exit Criteria
 
-- **Release approach:** RM261003ABZP-DES15@R3:
-  - After the PH2 exit evidence passes, the release-please PR is merged with `release-as: 1.0.0`, tagging `v1.0.0`.
-  - The release workflow publishes four binaries with `SHA256SUMS` and runs the macOS and Linux smoke jobs.
-- **Compatibility:** Notes and frontmatter stay valid for Obsidian. `.base` files are read-only in v1. The state file format is unchanged from `v0.1.0`.
-- **Rollback:** Before release, revert the offending PR. After release, reinstall `v0.1.0` (RM261003ABZP-DES15@R3). No data rollback is needed.
+- **Release approach:** RM261003ABZP-DES15@R4:
+  - Nothing is released automatically, and the PH2 exit does not publish a release.
+  - The PH2 exit re-runs the release workflow manually as a dry run: four binaries with `SHA256SUMS`, smoke jobs on four native runners, nothing published.
+  - `v1.0.0` is released only when the user asks: the pushed `v1.0.0` tag runs the same workflow and publishes the GitHub Release.
+- **Compatibility:** Notes and frontmatter stay valid for Obsidian. `.base` files are read-only in v1. The state file format is unchanged from PH1.
+- **Rollback:** Before release, revert the offending PR. After release, reinstall a previous release binary, if one was published (RM261003ABZP-DES15@R4). No data rollback is needed.
 - **Exit criteria:**
   - RM261003ABZP-S5@R1 - every RM261003ABZP-REQ5@R2 element renders, and reveal follows the cursor; verified by RM261003ABZP-V7@R2, RM261003ABZP-V8@R1
   - RM261003ABZP-S6@R1 - Moment-equal dates, correct expansion, no overwritten daily note; verified by RM261003ABZP-V9@R1
   - RM261003ABZP-S7@R1 - correct rows, comment-preserving writes, safe fallbacks, verified Kanban type; verified by RM261003ABZP-V10@R1
   - RM261003ABZP-S8@R1 - < 300 ms updates, 403/404 safety, `stopped` before close; verified by RM261003ABZP-V11@R3
   - RM261003ABZP-S9@R1 - all REQ9 targets, for notes in live preview and code in source view, gated at 2× in CI; verified by RM261003ABZP-V12@R2, RM261003ABZP-V13@R1
-  - RM261003ABZP-S10@R1 - check < 30 s and CI < 3 min at full scope; `v1.0.0` binaries start; verified by RM261003ABZP-V14@R1
+  - RM261003ABZP-S10@R2 - check < 30 s and CI < 3 min at full scope; the release dry-run binaries start; verified by RM261003ABZP-V14@R2
   - RM261003ABZP-S11@R1 - boundary including the kernel rule, registration-only extension including a file type, restore; verified by RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1
   - RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1, RM261003ABZP-US7@R1, RM261003ABZP-US8@R1, RM261003ABZP-US9@R1 - as in M1, M2, M5@R2, M6, M7; verified by RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R1, RM261003ABZP-UV10@R1
 - **Completion evidence required:**
@@ -539,7 +540,7 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - RM261003ABZP-V12@R2 and RM261003ABZP-V13@R1 readings on the reference machine.
   - The RM261003ABZP-UV9@R1 manual checklist.
   - The Obsidian 1.14+ Kanban fixture provenance.
-  - The `v1.0.0` GitHub Release with four binaries, `SHA256SUMS`, and green smoke jobs.
+  - A manual release dry run on `main` with the `dist` artifact (four binaries, `SHA256SUMS`), green smoke jobs, a skipped publish job, and no tag or GitHub Release.
 - **Cross-work integration verification:** RM261003ABZP-DI4@R2 owns integration because it merges last. Its CI on top of merged DI3 must re-pass RM261003ABZP-V7@R2, RM261003ABZP-V12@R2, and RM261003ABZP-V16@R2 with the `base` renderer registered, and RM261003ABZP-UV3@R2 with a Base embed in `tour.md`.
 
 Completed child works do not establish phase completion without the required integration, release, and exit evidence. The checks listed here are obligations, not passing results.
@@ -553,7 +554,7 @@ Completed child works do not establish phase completion without the required int
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | RM261003ABZP-DI4@R2 | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
 | RM261003ABZP-REQ8@R2 - browser preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R2 | RM261003ABZP-DI3@R2 | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R2 - performance (keystroke, open, scroll) | RM261003ABZP-DES16@R1 | RM261003ABZP-DI3@R2 | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
-| RM261003ABZP-REQ10@R3 - release re-check | RM261003ABZP-DES15@R3 | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 (keep budgets) | RM261003ABZP-S10@R1 | RM261003ABZP-V14@R1 |
+| RM261003ABZP-REQ10@R4 - release re-check | RM261003ABZP-DES15@R4 | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 (keep budgets) | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
 | RM261003ABZP-REQ11@R3 - registries, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2 (`base` file type and editor kind, Bases view registry) | RM261003ABZP-S11@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1 |
 
 ### UI Coverage
@@ -585,16 +586,17 @@ None. The OpenTUI image API and the Kanban `type` value are DI3 and DI4 discussi
 
 ## Approval
 
-- **Approved phase:** RM261003ABZP-PH2@R2
+- **Approved phase:** RM261003ABZP-PH2@R3
 - **Approved delivery items:** RM261003ABZP-DI3@R2, RM261003ABZP-DI4@R2
 - **Approved phase design:** This document's Phase Design, from Architecture and boundaries through UI realization. Pinned upstream:
-  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
+  - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1;
   - RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1.
 - **Success and verification baseline:**
-  - Design-owned: RM261003ABZP-S5@R1 … RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R1, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1.
+  - Design-owned: RM261003ABZP-S5@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1.
   - UI-design-owned: RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1 … RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1 … RM261003ABZP-UV10@R1.
 - **Approval evidence:**
   - R1: the user delegated all decisions on 2026-10-03 ("you self-drive and decide all … don't raise any question to me"; "prevent many DIs and phases split"). Under that delegation the agent approved this phase and its two parallel DIs with gates G2–G4, the widened layout context, unlisted embed buffers and per-buffer Base state, the preview stop order, `createExclusive`, the Bases view-type registry, and the `v1.0.0` release at phase exit.
   - R2: on 2026-10-03 the user asked to leave room for a code editor and notebooks and selected "Apply all six (Recommended)" (`rm261003abzp-roadmap-context.md@R2`). Under the standing delegation the agent approved the PH2@R2 refinements: live preview as a decoration provider with `MarkdownViewInput`/`PreviewCtx`, Markdown-scoped view commands, widget painters, Bases as a registered file type and editor kind with view state in the base window content, the TypeScript bench and `csv` registration proof, and the unchanged phase split and `v1.0.0` release.
   - Post-DI1 synchronization (revisions retained): approved by the user on 2026-10-03. Upstream moved to RM261003ABZP-REQ10@R3, RM261003ABZP-DES8@R2, and RM261003ABZP-DES15@R2. PH2, DI3, and DI4 use `atomicWrite`, exclusive create, and the release workflow unchanged in contract, so no PH or DI outcome, scope, gate, or verification changed.
   - Post-DI2 synchronization (revisions retained): approved by the user on 2026-10-04. Upstream moved to RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, and RM261003ABZP-DES15@R3. DI3 reads mdast per block through `blockNode` instead of a precomputed `Block.node`; the G2 output and every PH2 outcome, scope, gate, and verification are otherwise unchanged.
+  - R3: on 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing release dry run. PH2@R3 changes the outcome (release-ready instead of shipping `v1.0.0`), the PH1 entry condition (no `v0.1.0` release required), the release approach, the S10 exit criterion (RM261003ABZP-S10@R2, RM261003ABZP-V14@R2), and the completion evidence. DI3@R2 and DI4@R2 are retained.

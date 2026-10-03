@@ -43,7 +43,7 @@ Default branch: `main`. One package, no monorepo.
 | `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (links), `state`, `config` |
 | `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`) |
 | `test` | Policy, boundary, vim, component, integration, e2e, and benchmark suites |
-| `.github/workflows` | `ci.yml`, `release-please.yml`, `release.yml` |
+| `.github/workflows` | `ci.yml`, `release.yml` |
 
 ## Architecture and Key Flows
 
@@ -154,7 +154,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `indexingKeystrokeP95` | 16 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 10,000 notes |
 
 - **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `main` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
-- **Release:** `release-please.yml` (push to `main`) opens release PRs and calls `release.yml` when a release is created; `release.yml` also runs on `v*` tags. It builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes only after every smoke job passes. Tags containing `-` publish as prereleases.
+- **Release:** Nothing is released automatically; a release happens only when the user asks. A pushed `v*` tag runs `release.yml`, which builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes a GitHub Release with generated notes only after every smoke job passes. Tags containing `-` publish as prereleases. A manual run (`gh workflow run release.yml`) is a dry run: the same build and smoke tests with version `0.0.0-dev+<short sha>`, publish skipped. Phase exits use the dry run.
 
 ## Sources and Open Questions
 
