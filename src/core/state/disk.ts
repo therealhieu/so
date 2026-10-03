@@ -47,7 +47,8 @@ export function onFileChanged(s: AppState, e: FileEvent): Result {
     : { state: s, effects: [{ kind: "read", path: e.path }] };
 }
 
-function markDeleted(s: AppState, id: BufferId): Result {
+/** Mark a buffer deleted on disk: no autosave until `:w` recreates it. */
+export function markDeleted(s: AppState, id: BufferId): Result {
   const marked = setBuffer(s, id, { disk: "deleted", save: { kind: "idle" } });
   return {
     ...message(marked, "deleted on disk — :w to recreate"),

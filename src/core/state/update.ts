@@ -7,6 +7,7 @@ import type { CommandRegistry } from "../kernel/commands/registry";
 import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onFileChanged } from "./disk";
+import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
@@ -34,6 +35,12 @@ export function createUpdate(reg: Registries): Update {
           return onFileRefused(state, action);
         case "fileChanged":
           return onFileChanged(state, action.event);
+        case "dirListed":
+          return onDirListed(state, action);
+        case "fsResult":
+          return onFsResult(state, action);
+        case "trashAvailable":
+          return none(withTrash(state, action.available));
         case "timer":
           return onTimer(state, action);
         case "saved":
