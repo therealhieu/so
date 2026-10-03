@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G1 — implementation`
+- **Current Position:** `P1-G1 — verification`
 - **Last Updated:** `2026-10-03`
 
 ## Sources
@@ -213,16 +213,16 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 #### P1-G1 — Toolchain, Repository Policy, CI and Release Definitions
 
 - [x] Context and dependencies confirmed.
-- [ ] Implementation turn completed.
-- [ ] `P1-G1-T1` — Install Bun 1.4.2 and add toolchain files.
-- [ ] `P1-G1-T2` — Lock repository policy and PR-only CI.
-- [ ] `P1-G1-T3` — Add release workflows and release-please config.
-- [ ] `P1-G1-T4` — Enforce layer boundaries.
-- [ ] `P1-G1-T5` — Record the toolchain in project docs.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Implementation turn completed.
+- [x] `P1-G1-T1` — Install Bun 1.4.2 and add toolchain files.
+- [x] `P1-G1-T2` — Lock repository policy and PR-only CI.
+- [x] `P1-G1-T3` — Add release workflows and release-please config.
+- [x] `P1-G1-T4` — Enforce layer boundaries.
+- [x] `P1-G1-T5` — Record the toolchain in project docs.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
 - [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
 - [ ] Verification report persisted and separately committed.
 - [ ] Verification report commit SHA recorded.
 - [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
@@ -235,8 +235,8 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-implementation-report.md` — `Completed` (`bun run check` stops only at interim-allowed knip unused deps: lowlight, zod, ignore, @opentui/core, @xterm/headless)
+- Initial implementation report commit: `51c6474`
 - Verification: `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g1-verification-report.md` — `Pending implementation`
 - Verification report commit: `Pending implementation`
 - Remediation: `Pending implementation`
@@ -248,11 +248,11 @@ these do not imply authorization to push, merge, deploy, or edit parent files.
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G1-T1` | `Pending implementation` |
-| `P1-G1-T2` | `Pending implementation` |
-| `P1-G1-T3` | `Pending implementation` |
-| `P1-G1-T4` | `Pending implementation` |
-| `P1-G1-T5` | `Pending implementation` |
+| `P1-G1-T1` | `39d0bcb` |
+| `P1-G1-T2` | `1af1c80`, follow-up `6fda519` |
+| `P1-G1-T3` | `ef11166` |
+| `P1-G1-T4` | `643225a`, follow-up `6fda519` |
+| `P1-G1-T5` | `23bc489` |
 
 #### P1-G2 — Kernel, File Types, and Recorded Vim Table
 
