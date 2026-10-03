@@ -142,6 +142,29 @@ test("code, math, comments, and html hide syntax", () => {
   expect(covers(2, 0)).toBe(false);
 });
 
+const WRAPPED = [
+  "Inline `code that", // 0
+  "wraps [[a]] #a` and $math", // 1
+  "that [[b]] #b wraps$ then [[shown]] #shown.", // 2
+  "", // 3
+  "> Quoted `code", // 4
+  "> [[c]] #c` then [[quoted]].", // 5
+  "", // 6
+  "- Item `opens", // 7
+  "- [[item]] in the next` item", // 8
+].join("\n");
+
+test("code and math that wrap across a paragraph's lines hide syntax", () => {
+  const scan = scanDoc(WRAPPED);
+  expect(scan.links.map((l) => l.target)).toEqual(["shown", "quoted", "item"]);
+  expect(scan.tags.map((t) => t.tag)).toEqual(["shown"]);
+  expect(scan.excluded).toEqual([
+    { start: { line: 0, col: 7 }, end: { line: 1, col: 15 } },
+    { start: { line: 1, col: 20 }, end: { line: 2, col: 20 } },
+    { start: { line: 4, col: 9 }, end: { line: 5, col: 11 } },
+  ]);
+});
+
 test("scanning a long line takes time linear in its length", () => {
   const length = 160_000;
   const patterns = [
