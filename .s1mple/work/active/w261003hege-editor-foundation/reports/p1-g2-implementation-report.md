@@ -109,12 +109,41 @@ Interim knip findings (each has a consumer in a later group):
 
 ## Remediation
 
-- **Verification reports:** Not yet produced.
-- **Status:** `Not required`
+All three findings are fixed in three follow-up commits on top of `a17718b`. The verification report (`Failed`) is unchanged.
+
+- **Verification reports:** `.s1mple/work/active/w261003hege-editor-foundation/reports/p1-g2-verification-report.md` (commit `4f078dd`)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G2-VER1` | **Root cause:** `beginInsert` stored `cursorBefore: run.before`, the cursor before `A`/`a`/`I` moved it. **Change:** `src/core/kernel/vim/engine.ts` `beginInsert` now uses `run.s.cursor`, the insertion point, when the session has no edit yet. Sessions that already edited (`o`, `O`, `c…`) keep `run.before`, so their recorded cases still pass. **Cases:** `test/vim/cases.ts` adds 10 cases: `undo-append-end` (`A!<Esc>u`), `redo-append-end` (`A!<Esc>u<C-r>`), `redo-append-end-after-move` (`A!<Esc>u0<C-r>`), `redo-append-end-two-chars` (`A!!<Esc>u0<C-r>` at (1,2)), `undo-append` (`aZ<Esc>u`), `redo-append` (`aZ<Esc>u0<C-r>`), `undo-insert-at-indent` (`IZ<Esc>u`), `redo-insert-at-indent` (`IZ<Esc>u$<C-r>` on `"   foo bar"`), `redo-append-end-after-dot` (`A!<Esc>j.uu<C-r>`), and `undo-dot-append-end` (`A!<Esc>j0.u`). These cover all 7 probe sequences in the verification report. **Proof:** `NVIM=<scratchpad>/nvim-macos-arm64/bin/nvim bun run record:vim` (`NVIM v0.11.7`, the official macOS arm64 release; the system 0.12.4 binary was not used, and no binary was committed) → "recorded 289 cases with Neovim 0.11.7". In the `expected.json` diff, the only removed line is the old `recordedAt`, and the only added `id`s are the 10 new cases. A script compared all 279 previous cases with their re-recorded entries and found them byte-equal (`old cases unchanged: true 279 289 0.11.7`). Before the fix, `bun test test/vim` gave 276 pass, 10 fail (all new cases); after it, 286 pass, 4 todo, 0 fail. | `bdc03cb` | `Fixed` |
+| `P1-G2-VER2` | **Change:** `src/core/kernel/view/text-view.ts` `layoutText` matches a block `replace` on every line it covers (`range.start.line <= line <= range.end.line`), not only on its start line. A block that starts above `visible.from` therefore hides its covered visible lines and emits its row or widget once, at the first visible covered line (`sourceLine` stays inside the viewport). Widget rows still count against `v.rows`. `layoutLine` hides an inline `replace` on every line it covers and inserts its spans or widget once, on the range's start line. **Tests:** `src/core/kernel/view/text-view.test.ts` adds `block replace that starts above the viewport hides its visible lines` (the verifier's probe buffer, `visible {2,5}` → widget row at line 2, then `b`; no raw `\| - \|` or `\| r \|`) and `inline replace across a line break hides both parts`. Before the fix: 11 pass, 2 fail. After: `bun test src/core/kernel/view` → 13 pass, 0 fail. **Contract note:** the widget is emitted whole. Neither the parent design nor DES7 defines what `TextView.topRow` means, so `layoutText` does not clip a widget's rows that scroll above the window. That clipping belongs to whoever defines `topRow`'s scroll semantics (`EditorView` scroll math, DI3). | `0723afc` | `Fixed` |
+| `P1-G2-VER3` | **Carrier:** the fixed `VimEffect` contract has no message variant. Its existing `search{pattern, dir}` effect, which the engine emits on success and on failure, carries the pattern to `core/state`. **Change:** `src/core/kernel/vim/search.ts` adds `searchError(buf, pattern)`, the kernel-side producer of the planned `search.ts` E486 text. It returns `E486: Pattern not found: <pattern>` for an invalid pattern or a pattern with no match in the buffer, and `undefined` otherwise. It reuses `searchPattern` and `findMatch` and adds no `VimEffect` variant. **Test:** `test/vim/vim.test.ts` → `a failed search reports E486 for its pattern` drives `handleKey` through `/dog<CR>`, `/\(<CR>`, and `/cat<CR>`, takes the emitted `search` effect, and asserts `E486: Pattern not found: dog`, `E486: Pattern not found: \(` (cursor unchanged in both), and `undefined` with the cursor at (0,4). It failed before the export existed (1 error) and now passes. **Handoff (written down):** displaying the message is `P2-G1-T5 — Route keys, ex commands, clipboard paste, and status`, whose `applyVimEffects` consumes `VimEffect`s. It must map `search` → `searchError(text, pattern)` → message line (`level: "error"`), proved in `src/core/state/keys.test.ts`. The Part 2 plan does not yet name this, so the orchestrator must add it to that task. | `8ffe88b` | `Fixed` |
+
+**Completion checklists:**
+
+- `P1-G2-VER1`:
+  - [x] Required resolution is implemented.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+- `P1-G2-VER2`:
+  - [x] Required resolution is implemented. Widget clipping by `topRow` is recorded above as a contract note.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+- `P1-G2-VER3`:
+  - [x] Required resolution is implemented: a kernel producer and a written handoff to `P2-G1-T5`.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+
+**Remediation notes:**
+
+- Commit `bdc03cb` also changes `test/vim/cases.ts` and `test/vim/expected.json`, which are `P1-G2-T3` files. Its body names only `Task: P1-G2-T4`. History was not amended, as the rules require.
+- Self-review covered the full group diff `0285acd..HEAD`, with close attention to the three remediation diffs. One `undoRedo` path serves both undo and redo, so the `cursorBefore` change covers both. The `layoutText` loop still skips to `range.end.line` after a block, so no block is emitted twice. No issue needed a further commit.
 
 ## Final Status
 
@@ -122,12 +151,17 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`: all six tasks are committed and the group checks pass, except knip findings that have later-group consumers (see deviation 1).
+- **Final report status:** `Completed`. All three verification findings are fixed and committed, and every group check passes. As before, knip still fails under the interim rule (see deviation 1).
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `cf6bff4`, `2ba5137`, `b1cfdc3`, `36bc56e`, `76f2814`, `ed29491`, `a17718b`
-- **Final checks:**
-  - `bun test src test/vim scripts/record-vim.test.ts` → 311 pass, 4 todo, 0 fail.
-  - `bun test test/boundaries.test.ts` → 2 pass.
-  - Biome and tsc pass.
-  - `bun run check` fails only at knip, with the findings listed above.
-- **Remaining issues:** knip findings for `defaults.ts` and `ex.ts` (deviation 1).
+- **Final commits:** `cf6bff4`, `2ba5137`, `b1cfdc3`, `36bc56e`, `76f2814`, `ed29491`, `a17718b`; remediation `bdc03cb`, `0723afc`, `8ffe88b`
+- **Final checks** (Bun `1.4.2`):
+  - `bun test src test/vim scripts/record-vim.test.ts test/boundaries.test.ts` → 322 pass, 4 todo, 0 fail (326 tests, 9 files).
+  - `bun test test/vim` → 287 pass, 4 todo, 0 fail (289 recorded cases plus metadata and E486).
+  - `bunx biome check .` → 43 files, no fixes applied.
+  - `bun --bun run tsc --noEmit -p .` → exit 0.
+  - `bun run check` → biome and tsc pass. knip exits 1 with exactly the earlier interim findings: unused files `defaults.ts`, `registry.ts`, `ex.ts`; exports `Keymap`, `ViewSpec`, `KeyScope`, `WhichKeyItem`; the accepted dependencies. `searchError` is not reported. The unit stage, run directly as `bun test src test/boundaries.test.ts test/repo.test.ts test/vim`, gives 0 fail and 4 todo (328 tests).
+  - The process-ID scan over `src test scripts` (`*.ts`), using the verifier's patterns plus `VER[0-9]` and `task|goal|roadmap`, finds no match.
+- **Remaining issues:**
+  - The knip findings for `defaults.ts` and `ex.ts` (deviation 1) remain.
+  - The orchestrator must add the E486 message display to `P2-G1-T5`.
+  - Widget clipping by `topRow` waits for `topRow` scroll semantics.
