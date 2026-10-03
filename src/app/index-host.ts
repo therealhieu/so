@@ -10,8 +10,19 @@ export type IndexHost = {
   stop(): void;
 };
 
-const spawnWorker = () =>
-  new Worker(new URL("../workspace/index-worker.ts", import.meta.url));
+/**
+ * The worker entry next to this module. A compiled binary keeps every entry
+ * point under one root with the main entry at its top, so `app/` is gone there.
+ */
+export const workerUrl = (here: string): URL =>
+  new URL(
+    here.includes("/$bunfs/")
+      ? "./workspace/index-worker.ts"
+      : "../workspace/index-worker.ts",
+    here,
+  );
+
+const spawnWorker = () => new Worker(workerUrl(import.meta.url));
 
 /**
  * Spawn the index worker and turn its messages into actions. An `error`
