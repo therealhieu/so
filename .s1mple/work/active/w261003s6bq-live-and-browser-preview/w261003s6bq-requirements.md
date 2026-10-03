@@ -22,6 +22,8 @@
 
 **Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-04, with the criteria "stable, simple, easy to maintain and extend" and "follow industry standards and comply project standards". Under that delegation the agent aligned the overview (topics T1–T4), decided each requirement below by choosing the option that best meets those criteria, and skipped external research because the open questions are local behaviour that installed packages and a planning spike settle (Discussion Evidence below).
 
+Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R2) was decided by the user on 2026-10-04; the mechanism (embedded files, same-origin Content Security Policy) was chosen under the same self-drive delegation.
+
 # Table of Contents
 
 1. [Problem and Desired Outcome](#1-problem-and-desired-outcome)
@@ -35,7 +37,7 @@
    - [W261003S6BQ-REQ4@R1: Note embeds through unlisted buffers](#w261003s6bq-req4r1-note-embeds-through-unlisted-buffers)
    - [W261003S6BQ-REQ5@R1: Folds, widget rows, and scrolling](#w261003s6bq-req5r1-folds-widget-rows-and-scrolling)
    - [W261003S6BQ-REQ6@R1: View input wiring and restored views](#w261003s6bq-req6r1-view-input-wiring-and-restored-views)
-   - [W261003S6BQ-REQ7@R1: Preview page delivery and browser assets](#w261003s6bq-req7r1-preview-page-delivery-and-browser-assets)
+   - [W261003S6BQ-REQ7@R2: Preview page delivery and locally served browser libraries](#w261003s6bq-req7r2-preview-page-delivery-and-locally-served-browser-libraries)
    - [W261003S6BQ-REQ8@R1: Preview follow protocol and browser launch](#w261003s6bq-req8r1-preview-follow-protocol-and-browser-launch)
 6. [Research Impact Review](#6-research-impact-review)
 7. [Historical Requirement Revisions](#7-historical-requirement-revisions)
@@ -83,12 +85,12 @@ key → update → markdown analyze → Doc
 
 - Everything in RM261003ABZP-DI3@R2 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:332-349`), as refined by W261003S6BQ-REQ2@R1 … W261003S6BQ-REQ8@R1.
 - The G4 outputs DI4 consumes, with the signatures in the phase design (`…phase-2…md:205-216`, `:72`).
-- The `beautiful-mermaid` dependency (exact pin) for Mermaid text art.
+- The `beautiful-mermaid` dependency (exact pin) for Mermaid text art, and the `katex` and `mermaid` dependencies (exact pins) served to the browser page.
 
 ## Out of Scope
 
 - The `base` block renderer and `base` widget painter (DI4 through G4).
-- Persisted fold state; bundled KaTeX or Mermaid; any mutating preview route; live views, folding, or outline for code files (`…phase-2…md:350-355`).
+- Persisted fold state; any mutating preview route; live views, folding, or outline for code files (`…phase-2…md:350-355`).
 - Nested embed expansion: an embed inside an embedded note renders as a link (W261003S6BQ-REQ4@R1).
 - SVG images in the terminal: they show the text placeholder; the browser preview shows them (W261003S6BQ-REQ2@R1).
 - Restoring a buffer's persisted `view` from the session file (W261003S6BQ-REQ6@R1). Future trigger: a user request to remember the view per note.
@@ -102,12 +104,14 @@ key → update → markdown analyze → Doc
   | Parent requirement | Current W requirements |
   |---|---|
   | RM261003ABZP-REQ5@R2 - live preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ2@R1, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1, W261003S6BQ-REQ5@R1, W261003S6BQ-REQ6@R1 |
-  | RM261003ABZP-REQ8@R2 - browser preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R1, W261003S6BQ-REQ8@R1 |
+  | RM261003ABZP-REQ8@R2 - browser preview | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R2, W261003S6BQ-REQ8@R1 |
   | RM261003ABZP-REQ9@R2 - keystroke, open, scrolling | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ3@R1 (first frame), W261003S6BQ-REQ5@R1 (viewport-only scrolling) |
   | RM261003ABZP-REQ11@R3 - registration-only extension, language-neutral kernel | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ6@R1 |
   | RM261003ABZP-REQ10@R4 - budgets kept | W261003S6BQ-REQ1@R1 |
 
 - **Baseline and due-gate assessment:** The parent references in the context binding were re-read on 2026-10-04 and match the phase file and index at `main` `6a04729`. Gate G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (`…phase-2…md:576`, `:580`). No gate is due before requirements approval. G4 is produced by this Work.
+
+  One parent impact is pending reconciliation. On 2026-10-04 the user decided that KaTeX and Mermaid are managed in this repository instead of loaded from jsDelivr (W261003S6BQ-REQ7@R2). That reverses the RM261003ABZP-DES13@R2 tradeoff "rejected bundling KaTeX/Mermaid into the binary", removes the PH2 out-of-scope line and the DI3 exclusion "Bundled KaTeX and Mermaid" (`…phase-2…md:35`, `:353`), changes DI3 scope "from jsDelivr" (`…phase-2…md:344`), and changes the offline expectation of RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1. The exact parent changes are recorded as `Pending parent synchronization` in the system design; parent files are not edited without explicit authorization.
 
 ## Affected Interfaces and Actors
 
@@ -131,7 +135,7 @@ key → update → markdown analyze → Doc
 - `.s1mple/docs/languages/typescript.md` — strict TS 7, `import type`, colocated `bun:test` units named by behaviour; adapters report failures as result actions.
 - `rm261003abzp-requirements.md:273` RM261003ABZP-REQ11@R3 — CommonMark 0.31.2 + GFM, Obsidian Flavored Markdown, `NO_COLOR`, registration over edits, a kernel free of Markdown.
 - `rm261003abzp-design.md:409-417` — preview routes: `127.0.0.1`, Host allowlist (403), realpath and hidden-folder containment (404), no mutating route.
-- W3C Subresource Integrity and the WHATWG HTML server-sent events model — CDN scripts carry `integrity` and `crossorigin`; the page uses `EventSource`.
+- W3C Content Security Policy Level 3 and the WHATWG HTML server-sent events model — the page runs only same-origin scripts and styles and uses `EventSource`.
 - `.s1mple/S1MPLE.md` Implementation — no work-process identifiers in code.
 
 ## Constraints
@@ -139,7 +143,7 @@ key → update → markdown analyze → Doc
 - The downstream work boundary (`…phase-2…md:390-395`) forbids Markdown parsing in `src/ui`, layout outside the viewport, mutating preview routes, changes to `RenderLine`, the `layoutText` signature, or the G4 registry signatures, and Markdown knowledge in `core/kernel`.
 - No new top-level `AppState` field beyond `preview` (`…phase-2…md:182-190`).
 - State file stays `"version": 1`; fold state is not persisted.
-- The single compiled binary (`bun build --compile`) must still contain everything the app needs except the browser's CDN scripts.
+- The single compiled binary (`bun build --compile`) must contain everything the app and the browser page need, including KaTeX and Mermaid.
 - RM261003ABZP-REQ9@R2 targets hold: keystroke p95 < 16 ms, open < 50 ms, first frame < 200 ms, 60 fps scrolling.
 
 ## Accepted Assumptions
@@ -156,14 +160,15 @@ key → update → markdown analyze → Doc
 - `NoteIndex` / `resolveLink` — resolved-link style and wikilink `href`s.
 - `@opentui/core` 0.5.14 image API — terminal images.
 - `beautiful-mermaid` 1.1.3 (new, exact pin) — Mermaid text art.
-- jsDelivr KaTeX and Mermaid builds (browser only) — math and diagrams in the page.
+- `katex` and `mermaid` (new, exact pins, imported only from `src/preview/`) — math and diagrams in the page, served from the binary.
 
 ## Risks and Compatibility
 
 - **Keystroke budget** — live preview runs on every keystroke. Protection: viewport-only providers, block-hash caches for renderer output, and the V12 live-preview bench gated in CI.
 - **First frame** — evaluating `beautiful-mermaid` and `elkjs` at startup could push the first frame past 200 ms. Protection: the V13 first-frame bench re-runs on the DI3 PR; W261003S6BQ-REQ3@R1 requires the target to hold.
 - **Stale terminal images** — kitty and sixel placements outlive the cells that drew them. Protection: W261003S6BQ-REQ2@R1 requires clearing on scroll, view change, and buffer switch, verified by the planning spike and V8.
-- **Binary size** — `elkjs` adds megabytes to the binary. Accepted: the release smoke test and V14 dry run still pass; no size budget exists.
+- **Binary size** — `elkjs` (terminal Mermaid) and the embedded `mermaid` and `katex` browser builds add several megabytes to the binary. Accepted: the release smoke test and V14 dry run still pass; no size budget exists.
+- **Private notes in the browser** — the page shows note text, so any script it runs can read it. Protection: W261003S6BQ-REQ7@R2 serves only same-origin, exact-pinned code under a `'self'`-only Content Security Policy.
 - **Obsidian compatibility** — notes are never rewritten by rendering; only `task.toggle` edits text, as a normal undoable edit.
 - **DI4 contract** — G4 signatures are fixed by the phase design and must not change.
 
@@ -362,31 +367,38 @@ widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier →
 
 **Depends On:** W261003S6BQ-REQ1@R1
 
-## W261003S6BQ-REQ7@R1: Preview page delivery and browser assets
+## W261003S6BQ-REQ7@R2: Preview page delivery and locally served browser libraries
 
 **Requirement ID:** `W261003S6BQ-REQ7`
 
-**Revision:** `R1`
+**Revision:** `R2`
 
-**Previous Revision:** None — initial revision
+**Previous Revision:** `W261003S6BQ-REQ7@R1`
 
 **Replaces:** None
 
 **Research Relationship:** None — not research-informed
 
-**Revision Summary:** None — initial revision
+**Revision Summary:** The page no longer loads KaTeX and Mermaid from jsDelivr. Both become exact-pinned npm dependencies whose browser builds are embedded in the binary and served by the preview server from its own origin, under a Content Security Policy that allows only that origin. Math and diagrams now work offline. The user decided this on 2026-10-04 so that third-party code never runs in a page that shows private notes.
 
-**Question:** How is the page delivered from a single binary, and how are KaTeX and Mermaid loaded?
+**Question:** How is the page delivered from a single binary, and where do KaTeX and Mermaid come from?
 
-**Answer:** `src/preview/page.html` is one file with inline CSS and script, imported `with { type: "text" }` so `bun build --compile` embeds it, and served at `/`. It loads KaTeX and Mermaid from jsDelivr at exact versions with Subresource Integrity hashes and `crossorigin="anonymous"`. When they fail to load, math and diagrams show their source. The CSS follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout. The page has no forms and no editing controls.
+**Answer:** `katex` and `mermaid` are exact-pinned npm dependencies, imported only from `src/preview/`. Their browser builds (KaTeX script, stylesheet, and the woff2 fonts it references; Mermaid's minified bundle), together with the page's own `page.html`, `page.js`, and `page.css`, are imported as embedded files so `bun build --compile` includes them. The server serves the page at `/` and the files at `/assets/<name>` with exact content types. Every response that serves the page or an asset carries `Content-Security-Policy` restricted to `'self'` (no inline script, no third-party origin, no form action, no framing), `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`. A KaTeX or Mermaid render error shows that block's source. The page follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout, with no forms and no editing controls.
 
-**Rationale:** A single embedded file keeps the binary self-contained without a front-end build step. Exact CDN versions with SRI follow the W3C standard for third-party scripts and keep the page reproducible.
+**Rationale:** Notes are private, and a script from a third-party origin runs with full access to the page. Serving pinned packages from the app's own origin removes that trust in jsDelivr, makes the page work offline, and lets a same-origin Content Security Policy prove that nothing leaves the machine. Exact npm pins and the lockfile give the same tamper protection SRI gave, through the project's existing dependency rules. The cost is a larger binary (Mermaid's bundle is several megabytes), which the project accepts: it has no size budget.
+
+```text
+browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; …)
+        → GET /assets/page.js, /assets/katex.min.js, /assets/mermaid.min.js, /assets/katex.min.css, /assets/fonts/*.woff2   (embedded in the binary)
+        → EventSource /events, fetch /render?path=…                                                               (same origin only)
+```
 
 **Acceptance Criteria:**
 
-- [ ] A compiled binary serves the page with no file on disk besides the workspace.
-- [ ] Every CDN `<script>` and `<link>` has an exact version, an `integrity` hash, and `crossorigin`.
-- [ ] Offline, the page renders math and Mermaid as source and still follows edits (UV9@R1 manual checklist).
+- [ ] `package.json` pins `katex` and `mermaid` exactly, and `test/boundaries.test.ts` `PACKAGE_HOMES` allows them only in `src/preview/`.
+- [ ] A compiled binary serves `/` and every `/assets/*` file with no `node_modules` and no other file on disk besides the workspace; an unknown asset returns 404.
+- [ ] The page and every served file reference no origin other than the server's own; `/` responds with the Content Security Policy, `nosniff`, and `no-referrer` headers.
+- [ ] Offline, math and Mermaid render in the page; a malformed formula or diagram shows its source (UV9@R1 manual checklist).
 - [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
 
 **Depends On:** W261003S6BQ-REQ1@R1
@@ -419,7 +431,7 @@ widget{type:"image", data:{ref}} → painter(caps, images cfg) → imageTier →
 - [ ] With the launcher missing, `:Preview` shows a toast containing `http://127.0.0.1:<port>/` and the server keeps serving.
 - [ ] `:PreviewStop` and a clean exit deliver `stopped` before the stream closes (V11@R3), and the statusline `preview` segment disappears.
 
-**Depends On:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R1
+**Depends On:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R2
 
 # 6. Research Impact Review
 
@@ -437,4 +449,33 @@ Placement and clearing of kitty and sixel images in a partly scrolled view remai
 
 # 7. Historical Requirement Revisions
 
-None — no requirement has been revised or replaced.
+## W261003S6BQ-REQ7@R1: Preview page delivery and browser assets
+
+**Requirement ID:** `W261003S6BQ-REQ7`
+
+**Revision:** `R1`
+
+**Previous Revision:** None — initial revision
+
+**Replaces:** None
+
+**Status:** Revised by `W261003S6BQ-REQ7@R2`
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** None — initial revision
+
+**Question:** How is the page delivered from a single binary, and how are KaTeX and Mermaid loaded?
+
+**Answer:** `src/preview/page.html` is one file with inline CSS and script, imported `with { type: "text" }` so `bun build --compile` embeds it, and served at `/`. It loads KaTeX and Mermaid from jsDelivr at exact versions with Subresource Integrity hashes and `crossorigin="anonymous"`. When they fail to load, math and diagrams show their source. The CSS follows M7@R1: light and dark themes with a toggle, the four badges, the paused-follow banner, and a 375 px layout. The page has no forms and no editing controls.
+
+**Rationale:** A single embedded file keeps the binary self-contained without a front-end build step. Exact CDN versions with SRI follow the W3C standard for third-party scripts and keep the page reproducible.
+
+**Acceptance Criteria:**
+
+- [ ] A compiled binary serves the page with no file on disk besides the workspace.
+- [ ] Every CDN `<script>` and `<link>` has an exact version, an `integrity` hash, and `crossorigin`.
+- [ ] Offline, the page renders math and Mermaid as source and still follows edits (UV9@R1 manual checklist).
+- [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
+
+**Depends On:** W261003S6BQ-REQ1@R1
