@@ -41,9 +41,10 @@ function indexSegment(seg: StatusSegments): Seg {
 const cells = (text: string) => [...text].length;
 
 /**
- * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ index`
- * on the left and `Ln:Col` on the right. Narrow terminals drop the view and word segments;
- * the path is cut in the middle when the row is still too long.
+ * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index`
+ * on the left and `Ln:Col` on the right. Narrow terminals drop the view, word, and preview
+ * segments; a row too long for the full path drops preview, then words, then view, and the
+ * path is cut in the middle when the row is still too long.
  */
 export class Statusline extends Renderable {
   private s: AppState | undefined;
@@ -73,9 +74,17 @@ export class Statusline extends Renderable {
     const [badge, badgeToken] = badgeOf(
       s.overlay.kind === "conflict" ? "conflict" : seg.mode,
     );
-    const segs: Seg[] = [];
-    if (seg.view !== undefined && !narrow)
-      segs.push({ text: seg.view, token: "statusDim" });
+    let segs: Seg[] = [];
+    const view: Seg | undefined =
+      seg.view === undefined
+        ? undefined
+        : { text: seg.view, token: "statusDim" };
+    const words: Seg | undefined =
+      seg.words === undefined
+        ? undefined
+        : { text: `${seg.words} words`, token: "statusDim" };
+    const preview: Seg = { text: seg.preview, token: "statusDim" };
+    if (view !== undefined) segs.push(view);
     const path: Seg = { text: seg.path ?? "[No Name]", token: "statusline" };
     segs.push(path);
     if (seg.saveError !== undefined) {
@@ -97,21 +106,26 @@ export class Statusline extends Renderable {
       segs.push({ text: seg.jump, token: "statusDim" });
     if (seg.backlinks !== undefined)
       segs.push({ text: `← ${seg.backlinks} backlinks`, token: "statusDim" });
-    if (seg.words !== undefined && !narrow)
-      segs.push({ text: `${seg.words} words`, token: "statusDim" });
+    if (words !== undefined) segs.push(words);
+    segs.push(preview);
     if (seg.index !== undefined) segs.push(indexSegment(seg));
     const right =
       seg.position === undefined
         ? ""
         : ` ${seg.position.line + 1}:${seg.position.col + 1} `;
     const dirty = seg.dirty ? " ●" : "";
-    const fixed =
+    const fixedWidth = () =>
       cells(badge) +
       2 +
       cells(right) +
       cells(dirty) +
       segs.reduce((n, x) => n + 3 + (x === path ? 0 : cells(x.text)), 0);
-    path.text = middle(path.text, Math.max(1, cols - fixed));
+    for (const optional of [preview, words, view]) {
+      if (optional === undefined) continue;
+      if (narrow || fixedWidth() + cells(path.text) > cols)
+        segs = segs.filter((x) => x !== optional);
+    }
+    path.text = middle(path.text, Math.max(1, cols - fixedWidth()));
     drawCells(buf, theme.style("statusline"), 0, this.y, "", cols);
     let x = 0;
     const put = (text: string, token: string) => {

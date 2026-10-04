@@ -128,6 +128,24 @@ test("incremental parse equals a fresh parse", () => {
   }
 });
 
+test("incremental parse of a long note equals a fresh parse", () => {
+  const long = [...NOTES, ...NOTES, ...NOTES, ...NOTES].join("\n\n");
+  for (const seed of [11, 12, 13, 14, 15, 16]) {
+    withSeed(seed, (next) => {
+      let buf = createTextBuffer(long);
+      const docs = [parseDoc(buf)];
+      for (let step = 0; step < 120; step++) {
+        buf = randomEdit(buf, next);
+        const prev =
+          docs[Math.max(0, docs.length - 1 - Math.floor(next() * 3))];
+        const incremental = parseDoc(buf, prev);
+        expect(incremental).toEqual(parseDoc(buf));
+        docs.push(incremental);
+      }
+    });
+  }
+});
+
 const paragraphs = (n: number) =>
   Array.from(
     { length: n },

@@ -17,6 +17,7 @@ import {
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
+import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
@@ -24,27 +25,39 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
+import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
   linkBindings,
   linkCommands,
   linkGroups,
 } from "../core/state/link-commands";
+import {
+  markdownBindings,
+  markdownCommands,
+} from "../core/state/markdown-commands";
+import { markdownViewContext } from "../core/state/markdown-view";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
+import { ViewContextRegistry } from "../core/state/view-context";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
+import { paintEmbed } from "../ui/widgets/embed";
+import { paintImage } from "../ui/widgets/image";
+import { registerWidgetPainter } from "../ui/widgets/registry";
+import { paintRule } from "../ui/widgets/rule";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createExclusionMatcher } from "../workspace/ignore";
+import { createImageLoader } from "../workspace/images";
 import { createLogger, type Logger } from "../workspace/log";
 import {
   readStateFile,
   saveStateFileSync,
   statePath,
 } from "../workspace/state-file";
-import { detectClipboard } from "../workspace/system";
+import { detectClipboard, openUrl } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
 import {
@@ -54,6 +67,7 @@ import {
 } from "./effects";
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
+import { createPreviewHost } from "./preview-host";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -101,12 +115,23 @@ function registries(): Registries {
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
+  for (const c of markdownCommands) commands.register(c);
+  commands.register(nextLineCommand);
+  const viewContexts = new ViewContextRegistry();
+  viewContexts.register("markdown", markdownViewContext);
+  builtinRenderers();
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    bindings: [...defaultBindings, ...linkBindings],
+    bindings: [
+      ...defaultBindings,
+      ...editorBindings,
+      ...linkBindings,
+      ...markdownBindings,
+    ],
     groups: { ...defaultGroups, ...linkGroups },
+    viewContexts,
   };
 }
 
@@ -215,11 +240,26 @@ async function main(argv: string[]): Promise<void> {
   const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerWidgetPainter("embed", paintEmbed);
+  registerWidgetPainter("text", paintEmbed);
+  registerWidgetPainter("rule", paintRule);
+  registerWidgetPainter("image", paintImage);
   const renderer = await createRenderer();
-  const shell = createShell(renderer, { reg, now: clock });
+  const shell = createShell(renderer, {
+    reg,
+    now: clock,
+    loadImage: createImageLoader(ws.root),
+  });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
   const indexHost = createIndexHost({
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
+  const previewHost = createPreviewHost({
+    root: ws.root,
+    store: () => store,
+    isExcluded: matcher.isExcludedPath,
     dispatch: (a) => store.dispatch(a),
     logger,
   });
@@ -241,6 +281,8 @@ async function main(argv: string[]): Promise<void> {
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
     index: indexHost,
+    preview: previewHost,
+    openUrl: (url) => openUrl(url, process.platform),
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -270,6 +312,7 @@ async function main(argv: string[]): Promise<void> {
     shell,
     runner,
     ...(saveSession === undefined ? {} : { saveSession }),
+    stopPreview: previewHost.stop,
   });
   deps.exit = lifecycle.exitNow;
 

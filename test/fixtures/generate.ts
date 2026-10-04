@@ -21,6 +21,20 @@ export async function make5000LineNote(dir: string): Promise<string> {
   return path;
 }
 
+/** A 5,000-line TypeScript module of small functions. */
+export function make5000LineTs(): string {
+  const lines: string[] = [];
+  for (let i = 0; lines.length < 5000; i++)
+    lines.push(
+      `export function step${i}(input: number[], limit = ${i}): number {`,
+      `  // Sum the values below the limit, as a typed reducer.`,
+      `  return input.filter((n) => n < limit).reduce((a, b) => a + b, 0);`,
+      "}",
+      "",
+    );
+  return `${lines.slice(0, 5000).join("\n")}\n`;
+}
+
 /** A seeded generator (mulberry32), so every run writes the same notes. */
 function seeded(seed: number): () => number {
   let a = seed >>> 0;

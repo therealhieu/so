@@ -99,3 +99,33 @@ test("leader comma maps ,ff to find files", () => {
     keymapFor(reg, s.config).lookup({ mode: "normal" }, [",", "f", "f"]),
   ).toEqual({ kind: "command", id: "file.find" });
 });
+
+test("preview options default to live view, ten embed rows, and automatic images", () => {
+  const result = parseConfig("");
+  if (!result.ok) throw new Error("expected a parsed config");
+  expect(result.config.preview).toEqual({
+    mode: "live",
+    embedMaxRows: 10,
+    images: "auto",
+  });
+  expect(defaults.preview).toEqual(result.config.preview);
+});
+
+test("an out-of-range embed row limit names its line", () => {
+  const r = load(
+    fresh(),
+    lines("[editor]", "[preview]", "embedMaxRows = 0"),
+    false,
+  );
+  expect(r.state.config).toBe(defaults);
+  expect(r.state.notifications.toasts[0]?.text).toStartWith("config.toml:3: ");
+});
+
+test("an unknown preview key is rejected", () => {
+  const result = parseConfig(lines("[preview]", "zoom = 1"));
+  expect(result.ok).toBe(false);
+  if (result.ok) return;
+  expect(result.errors).toEqual([
+    { line: 2, message: 'unknown key "preview.zoom"' },
+  ]);
+});

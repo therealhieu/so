@@ -123,6 +123,8 @@ export async function startApp(
     exit: () => saveSession(),
     logger,
     configPath: join(root, ".no-config.toml"),
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: async () => {},
     ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
     ...(opts.index === undefined
       ? {}

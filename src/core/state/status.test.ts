@@ -19,12 +19,39 @@ test("status shows a word count only for Markdown buffers", () => {
   expect(statusSegments(open("a.md", "one two\n three\n"))).toEqual({
     mode: "normal",
     dirty: false,
-    view: "source",
+    view: "live",
     path: "a.md",
     position: { line: 0, col: 0 },
     words: 3,
+    preview: "preview off",
   });
   expect(statusSegments(open("a.ts", "one two\n")).words).toBeUndefined();
+});
+
+test("the word count covers every block and follows edits", () => {
+  const note = [
+    "---",
+    "tags: [a, b]",
+    "---",
+    "# Title here",
+    "",
+    "One two three",
+    "four five",
+    "",
+    "```ts",
+    "const x = 1;",
+    "```",
+    "",
+    "- item one",
+    "- item two",
+    "",
+  ].join("\n");
+  const naive = (text: string) => text.match(/\S+/g)?.length ?? 0;
+  let s = open("a.md", note);
+  expect(statusSegments(s).words).toBe(naive(note));
+  for (const key of ["G", "o", "s", "i", "x", " ", "w", "<Esc>"])
+    s = update(s, { type: "key", key, now: 0 }).state;
+  expect(statusSegments(s).words).toBe(naive(note) + 2);
 });
 
 test("status shows a failed save and its retry time", () => {
@@ -52,8 +79,23 @@ test("status shows a deleted file until it is saved again", () => {
   expect(statusSegments(s).deletedOnDisk).toBeUndefined();
 });
 
-test("status with nothing open shows only the mode", () => {
-  expect(statusSegments(fresh())).toEqual({ mode: "explorer", dirty: false });
+test("status with nothing open shows only the mode and the preview", () => {
+  expect(statusSegments(fresh())).toEqual({
+    mode: "explorer",
+    dirty: false,
+    preview: "preview off",
+  });
+});
+
+test("status shows the preview while it starts and its port once it runs", () => {
+  let s = open("a.md", "x\n");
+  s = update(s, { type: "key", key: ":", now: 0 }).state;
+  for (const key of "Preview")
+    s = update(s, { type: "key", key, now: 0 }).state;
+  s = update(s, { type: "key", key: "<CR>", now: 0 }).state;
+  expect(statusSegments(s).preview).toBe("preview …");
+  s = update(s, { type: "previewStarted", port: 8731 }).state;
+  expect(statusSegments(s).preview).toBe("preview :8731");
 });
 
 const withIndex = (s: AppState, ...actions: Action[]) =>

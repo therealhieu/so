@@ -45,6 +45,8 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     exit: (code) => exits.push(code),
     logger: createLogger({}, root),
     configPath: join(root, "no-such-config.toml"),
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: async () => {},
     ...patch,
   };
   return { ...createEffectRunner(deps), deps, actions, exits };
@@ -335,4 +337,25 @@ test("loadConfig answers with one configLoaded for a file, no file, or a read er
   expect(results[0]).toBe("light");
   expect(results[1]).toBe("dark");
   expect(results[2]).toEqual([{ line: 1, message: expect.any(String) }]);
+});
+
+test("an embed read's answer says it was for an embed", async () => {
+  await writeFile(join(root, "target.md"), "body\n");
+  const r = runner();
+  r.run({ kind: "read", path: "target.md", embed: true });
+  r.run({ kind: "read", path: "gone.md", embed: true });
+  await waitFor(() => r.actions.length === 2);
+  expect(r.actions).toContainEqual(
+    expect.objectContaining({
+      type: "fileLoaded",
+      path: "target.md",
+      embed: true,
+    }),
+  );
+  expect(r.actions).toContainEqual({
+    type: "fileRefused",
+    path: "gone.md",
+    reason: "io",
+    embed: true,
+  });
 });

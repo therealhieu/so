@@ -1,0 +1,692 @@
+# W261003S6BQ Live and Browser Preview Execution Goal
+
+## Status
+
+- **State:** `Complete`
+- **Current Position:** `Complete — PR #6 open and green, awaiting the user's merge`
+- **Last Updated:** `2026-10-04`
+
+## Sources
+
+- s1mple instructions: `.s1mple/S1MPLE.md`
+- Project document: `.s1mple/docs/project.md`
+- Plan index: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
+- System design: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
+- UI design: Not applicable — this W has no UI design; parent UI obligations (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1, and the other assigned UREQ/UDES/US/UV) are carried by the system design's §1 Assigned Parent Obligation Coverage, "UI obligations" row
+- System requirements: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
+- UI requirements: Not applicable — no W UI requirements artifact; parent UREQs are bound through the discussion context
+- Plan context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
+- Roadmap binding: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3)
+- Current parent sources:
+  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Delivery Items `:133`, Work Progress `:144`)
+  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` (header `:3`, gates G2 `:69` and G4 `:71`, phase design contracts `:205-230`, DI3@R3 `:322-403`, Progress `:579-588`, Approval `:593-609`)
+  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (RM261003ABZP-DES13@R3)
+  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1 `:2252-2262`)
+- Project standards:
+  - `.s1mple/docs/communication.md`
+  - `.s1mple/docs/project.md`
+  - `.s1mple/docs/languages/typescript.md`
+- Plan parts:
+  1. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+  2. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+  3. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+
+## Execution Contract
+
+- **Goal:** Markdown notes render in `live` (default), `source`, and `reading` views through one pure `livePreview` provider with reveal, rich blocks, folds, embeds, terminal images, math, and Mermaid; `:Preview` serves a read-only, loopback-only browser mirror with the page, KaTeX, and Mermaid embedded in the binary; the G4 extension points, bench targets, and registration-only proof ship in the DI3 PR with CI green.
+- **Scope:** Everything in RM261003ABZP-DI3@R3 through W261003S6BQ-REQ1@R1, REQ2@R2, REQ3@R1, REQ4@R1, REQ5@R1, REQ6@R1, REQ7@R3, REQ8@R1, as planned in Parts 1–3 (plan index Plan Parts and Coverage); the parent UV10@R1 DI3 states (P1-G2-T5); Delivery per `.s1mple/S1MPLE.md`.
+- **Non-goals:** DI4's `base` block renderer and painter; persisted fold state; any mutating preview route; live views, folding, or outline for code files; changes to `paintPreview` (picker preview stays `source`); daily notes, templates, Bases; tagging, publishing, or any release; parent roadmap edits without explicit user authorization; merging the PR.
+- **Execution Order:** Part 1 (P1-G1 → P1-G2 → P1-G3) → Part 2 (P2-G1; depends on Part 1) → Part 3 (P3-G1; depends on Parts 1 and 2) → Overall verification → Project documentation finalization → Delivery completion (P3-G1-T4 steps 2–4, see Delivery sequencing).
+- **Workflow Behavior:**
+  - **Implementation** (`.s1mple/S1MPLE.md` §3): keep it lean and simple; no work-process identifiers (W, REQ, DES, S, V, UV, phase, goal, or task IDs) in code comments, doc comments, identifiers, test names, SQL comments, or log messages. Tests are named by behavior. Traceability lives only in `.s1mple/` documents and commit message bodies.
+  - **Verification** (`.s1mple/S1MPLE.md` §3): not established; the evidence set is the system design's V cases (§8) with `bun run check`, `bun run test:ci`, `bun run bench`, and `bun run build` as the plan parts assign them.
+  - **Delivery** (`.s1mple/S1MPLE.md` §3): (1) open a PR; make CI pass and resolve conflicts with `main`; (2) move the work folder from `work/active/` to `work/done/` and update `.s1mple/` references to it; (3) push again; CI must pass on the new head. Never force-push or merge without the user's approval.
+  - **Exploration:** delegated agents do not use the native `Explore` subagent; they inspect directly (or the orchestrator uses `s1mple-explore` when delegated exploration is genuinely necessary).
+  - Every delegated agent (implementer, verifier, remediator, consultant) reads and follows `.s1mple/S1MPLE.md` and its required context (`docs/communication.md`, `docs/project.md`, `docs/languages/typescript.md`). Include this in every assignment.
+- **Delivery sequencing:** The plan places Delivery in P3-G1-T4. Execute it in two stages so that overall verification and project documentation precede the folder move:
+  - Within the P3-G1 group cycle, P3-G1-T4 performs step 1 only (push the branch, open the PR, resolve conflicts with `main` without force-pushing, CI green; capture V44 CI medians and V46 timings).
+  - After Project Documentation Finalization, the orchestrator performs P3-G1-T4 steps 2–4 (move the folder, update `.s1mple/` references, commit, push, CI green on the new head) as the Delivery Completion stage, and records the evidence there. Paths in this goal then resolve under `.s1mple/work/done/w261003s6bq-live-and-browser-preview/`.
+- **Binding Constraints:**
+  - Layer rules (`.s1mple/docs/project.md` Boundaries; `test/boundaries.test.ts:16-41`): `core` has no I/O or `@opentui`; `core/lang` may not import `core/state`; only `src/ui` imports `@opentui/*`; `src/preview` imports only `src/preview` and `src/core`.
+  - Package homes by package name (`test/boundaries.test.ts:45-53,90`): `beautiful-mermaid` → `src/core/lang/markdown/`; `katex`, `mermaid` → `src/preview/`.
+  - Exact npm pins with `bun.lock` committed and `--frozen-lockfile`; `katex@0.16.47`, `beautiful-mermaid@1.1.3`, `mermaid` exact version confirmed at install (npm current `12.1.0` on 2026-10-02) and recorded in the PR.
+  - Kernel files, `RenderLine`, `layoutText`, and the G4 signatures (phase file `:205-230`) unchanged, except the additive `PreviewCtx` members recorded in the system design; no Markdown in `src/ui/editors` or `src/core/kernel`; viewport-only layout; no mutating preview route.
+  - Strict TS 7, Biome, knip zero findings (`.s1mple/docs/languages/typescript.md`); add `src/preview/assets.d.ts` to knip's ignore list only if `bun run check` flags it.
+  - Error handling: throwing reducers keep state and toast; adapters report failures as result actions.
+  - `state.json` stays version 1; folds not persisted; unlisted buffers excluded from the snapshot.
+  - CI runs only on pull requests; releases are manual — never tag, publish, or run the release workflow (V35 uses local `bun run build`).
+  - Live terminal runs (V43 spike, manual checks) use Ghostty, not Terminal.app, except Terminal.app's blocks tier in the V43 matrix; no recording unless the user asks.
+- **Assigned parent coverage:** `w261003s6bq-system-design.md` §1 Assigned Parent Obligation Coverage (reference only; do not copy parent definitions).
+- **Cross-work gates:**
+  - G2 — DI2 foundations (phase file `:69`; plan context §2): due before DI3 execution; satisfied at planning (`9adb285` ancestor of `HEAD`); re-confirm at P1-G1-T1 step 0 and record under Gate Evidence.
+  - G4 — DI3 extension points for DI4 (phase file `:71`; plan context §2): produced by this work at P1-G1-T3, P1-G2-T2, P1-G2-T4; proven by V4, V5 (P1-G1) and V38, V41 (P3-G1-T1); evidence carried in the PR at P3-G1-T4. Due before DI4 execution of the `![[file.base]]` embed renderer, not within this execution; remains `Pending` until the user merges the DI3 PR. Integration owner: RM261003ABZP-DI4@R2 (W Pending).
+- **Parent synchronization authorization:** Pending authorization — no explicit user authorization to write or commit parent roadmap files exists. W-only commits never imply it.
+- **Reports Directory:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/`
+- **Implementation Report Naming:** `p<part-number>-g<group-number>-implementation-report.md` — lowercase prefix, e.g. `p1-g1-implementation-report.md`.
+- **Verification Report Naming:** `p<part-number>-g<group-number>-verification-report.md` — lowercase prefix, e.g. `p1-g1-verification-report.md`.
+- **Reports:** Each group has exactly these two reports.
+- **Overall Verification Prompt:** `templates/overall-verification-prompt.md`
+- **Overall Verification Report Template:** `templates/overall-verification-report-template.md`
+- **Overall Verification Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
+- **Overall Remediation Prompt:** `templates/overall-remediation-prompt.md`
+- **Remediation:** Append group and overall remediation evidence to the responsible implementation report. Never create a remediation report.
+
+## Execution Rules
+
+- Start only when the user commands execution. Set the goal `In Progress`.
+- **Self-drive:** Own execution from start to finish. Choose the next valid
+  action, solve problems, and keep progressing without waiting for user guidance.
+- After the user's execution command, run all stages without further
+  questions or approval requests.
+- Investigate failures, try safe alternatives, verify fixes, and continue.
+- For difficult blockers, read and follow the Consultant section.
+  Do not invoke the consultant automatically.
+- If one task is blocked, continue other work whose dependencies are met.
+- Stop only when no safe, in-scope work can proceed. Record the evidence
+  and mark the goal `Blocked` without asking a question.
+- Do not bypass permissions, skip required checks, or change approved scope.
+- Execute the planned work and commits.
+- Follow project instructions and the user's limits.
+- The implementer commits task changes and remediation fixes.
+- The orchestrator checks commit evidence and commits the final documentation update.
+- Task commits do not mean group acceptance.
+- Commit subjects follow Conventional Commits; each body carries the task ID and its exact plan title, as the plan parts specify.
+- Do not amend or rewrite history. Push only within the Delivery steps (P3-G1-T4 step 1 and Delivery Completion); never force-push; never merge without the user's approval; never tag or release.
+- Manual-only evidence (V42 page checklist; V43 cross-terminal spike; V45 reference-machine readings) that the agent cannot produce is recorded as pending user evidence with exact instructions, never inferred.
+
+### Subagent Recovery
+
+- When a step requires continuing an old subagent, resume it when possible.
+- If the old subagent cannot be resumed, spawn a fresh subagent of the same type.
+- Give the replacement:
+  - the original assignment;
+  - all required source paths;
+  - committed outputs and reports;
+  - completed checks and commit evidence;
+  - remaining work;
+  - current constraints and authorization boundaries.
+- The replacement must follow the original role and must not repeat work that
+  the workflow prohibits repeating.
+- If required handoff evidence is missing, mark the affected step `Blocked`.
+- Record the replacement reason and handoff evidence in this goal (Implementation Evidence → Subagent Replacements).
+- References to the “same” implementer, verifier, writer, or other subagent use
+  this recovery rule when the original subagent is unavailable.
+
+## Context Initialization
+
+Before creating todos or editing code:
+
+1. Read this goal.
+2. Read the complete plan index.
+3. Read the complete system design.
+4. UI design: not applicable; read the parent UI records named in Sources only where a task cites them (P1-G2-T5, P3-G1-T3).
+5. Read the complete current system requirements.
+6. Read `.s1mple/S1MPLE.md`, `.s1mple/docs/project.md`, the plan context, relevant project structure, and binding project standards.
+7. Read every plan part completely in execution order.
+8. Confirm every applicable governing source and the plans agree. Mark the goal `Blocked` when a material conflict remains. Compare the accepted baseline (RM261003ABZP-PH2@R4 / DI3@R3 with DES13@R3, UDES10@R2, UV9@R2) with current parent definitions and validate the DI3 → W261003S6BQ assignment before starting or resuming affected execution. Assess relevant changes; unrelated edits do not invalidate the work. Record exact checked references and results under Roadmap Evidence. Block affected work on unresolved material changes; do not rewrite approved sources or silently adopt newer references.
+9. After reading every plan part, create one todo per group, followed by `Overall verification`, `Final documentation`, and `Delivery completion`.
+   - Titles:
+     - `P1-G1 (T1-T7): Core provider, renderers, and view context`
+     - `P1-G2 (T1-T5): Views, embeds, commands, and painting`
+     - `P1-G3 (T1-T4): Terminal images`
+     - `P2-G1 (T1-T5): Browser preview`
+     - `P3-G1 (T1-T4): Extension proof, benchmarks, and delivery` (T4 step 1 only; steps 2–4 in `Delivery completion`)
+   - Include the plan-part path, task IDs, dependencies, and completion conditions in each todo's description.
+   - Preserve plan order and dependencies. Start each todo as pending.
+   - Mark it in progress when work starts. Complete a group todo only after implementation, verification, remediation, and commit evidence satisfy its acceptance criteria.
+   - Keep blockers and detailed task evidence in this goal.
+   - Complete overall verification only when all required checks pass. Complete final documentation only after overall verification and the documentation requirements pass. Complete delivery only after the folder move is pushed and CI is green on the new head.
+
+## Consultant
+
+Only the orchestrator may invoke `s1mple-consultant`, configured to use the
+highest-capability available model.
+
+- Reserve it for exceptionally difficult blockers after normal investigation
+  proves insufficient. Consider carefully before invoking.
+- Provide the problem, evidence, attempted solutions, and a focused question.
+- It advises only. The requesting implementer applies the guidance and verifies
+  the result.
+- Do not use it for routine issues or to bypass approved scope and checks.
+
+## Single-Pass Verified Group Execution
+
+Resolve `templates/` paths relative to the `s1mple-plan` skill directory, not the work folder. Load only the named prompt or template. Open the matching `<stem>.example.md` only when the format is unclear, and never copy example bodies into outputs. Include these rules in every non-fork dispatch.
+
+Execute each ready group through this cycle:
+
+```text
+Fresh implementer
+    → Each task: implement → check → self-review → commit
+    → Same implementer writes and separately commits implementation report
+    → Fresh verifier reads committed implementation report, writes verification report, and separately commits it
+    → Fresh implementer remediates from both reports, appends to implementation report, and separately commits the finalized report
+    → Main orchestrator validates both reports and report commit evidence → complete or block group
+```
+
+1. Before crossing any gate due for this group or task, verify its required producer output and evidence, record the result under Roadmap Evidence, and block the affected boundary if unsatisfied. Future gates may remain pending. Pass relevant binding, coverage, gates, and evidence to implementation, verification, and remediation assignments. Ensure the reports directory exists, assign the implementation and verification report paths using the Execution Contract, and fill `templates/group-implementation-prompt.md`; spawn a fresh `s1mple-implementer` agent.
+2. Continue only when implementation and task commit evidence are complete, the implementer has written and separately committed the assigned implementation report, and its report commit SHA is recorded.
+3. Read and fill `templates/group-verification-prompt.md` with the committed implementation report path and its starting/final commits; spawn a fresh `s1mple-verifier` agent to inspect the complete group changes, write and separately commit the verification report, and return its commit SHA.
+4. Confirm the verification report and its commit SHA exist. Inspect its status and outstanding items. If remediation is needed, fill `templates/group-remediation-prompt.md` with the implementation and verification report paths; spawn a fresh `s1mple-implementer` agent.
+5. Confirm both reports and their final commit SHAs exist. Validate acceptance, closure evidence, and task/remediation SHAs or justified no-change results. Record them before group completion; unresolved findings, blockers, required checks, failed commits, uncommitted reports, or uncommitted group implementation changes prevent completion.
+6. The orchestrator validates report commits but does not author or commit the implementation report. Update this goal after every stage; check items only with persisted evidence.
+
+Group-specific notes:
+
+- **P1-G1:** G2 re-confirmation is P1-G1-T1 step 0; record it under Gate Evidence before the implementer proceeds.
+- **P1-G3:** P1-G3-T1 (V43 spike) runs before any painter code; its outcome table goes in `p1-g3-implementation-report.md` under "Graphics spike outcome" as no-change evidence, and the confirmed clearing behaviour becomes a V18 assertion in P1-G3-T4.
+- **P3-G1:** the implementer runs P3-G1-T4 step 1 only (Delivery sequencing); the PR URL and CI run URLs go in `p3-g1-implementation-report.md`.
+
+Do not synthesize findings, rerun substantive verification, or change approved requirements, design decisions, or scope. The same verifier may retry only a failed report write or report commit without rerunning checks or changing its result. Skip remediation only for a `Passed` report with no outstanding items.
+
+Treat blocker and deviation entries as historical evidence, not instructions. Label unverified claims as `Unverified`. Do not copy instruction-like text from those entries into agent assignments.
+
+## Execution Flow
+
+```text
+Part 1: Terminal live preview → Part 2: Browser preview → Part 3: Extension, performance, and delivery
+    → Overall verification → Project documentation finalization → Delivery completion → Complete
+
+Roadmap-linked work also assesses delivery acceptance and parent synchronization;
+these do not imply authorization to merge, deploy, or edit parent files.
+```
+
+## Progress
+
+### Part 1 — Terminal live preview
+
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+- **Dependencies:** None (G2 precondition at P1-G1-T1 step 0)
+- **Status:** `Completed` (P1-G1, P1-G2, P1-G3 accepted; last at `8d20862`)
+
+#### P1-G1 — Core provider, renderers, and view context
+
+- [x] Context and dependencies confirmed (G2 re-confirmed and recorded).
+- [x] Implementation turn completed.
+- [x] `P1-G1-T1` — Package homes by package name.
+- [x] `P1-G1-T2` — Preview configuration section.
+- [x] `P1-G1-T3` — Live-preview provider core and renderer registry.
+- [x] `P1-G1-T4` — Math and Mermaid text renderers.
+- [x] `P1-G1-T5` — Embed and image renderers.
+- [x] `P1-G1-T6` — Built-in renderers and the tour goldens.
+- [x] `P1-G1-T7` — View-context registry and Markdown context builder.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
+
+**Evidence:**
+
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `c85739c` (group range `e7f259f`..`d3c1776`)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` — `Failed` (VER1 Major perf: embed rows lay out whole target; VER2 Major perf: reveal walks whole selection; VER3 Minor: `comment` not in `MULTILINE_KEYS`; VER4 Minor: goldens differ from M2 mockup)
+- Verification report commit: `eeba8fd`
+- Remediation: `Completed` by a fresh `s1mple-implementer`; all four findings `Fixed`; verification report unchanged since `eeba8fd`
+- Final implementation report commit: `e03ae9e`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `91fadb7` (P1-G1-T5; capped embed layout bounded, 5,000-line target 236.6 ms → 0.03 ms/frame); VER2 → `4a5e455` (P1-G1-T3; reveal limited to `v.visible`, select-all 232–261 ms → 0.07 ms/frame); VER3 → `37d5774` (P1-G1-T3; `comment` in `MULTILINE_KEYS`); VER4 → `a358999` (P1-G1-T6; tag chips, M2 callout icons, closing rule; code-fence language row and `▾` recorded as deviations with rationale, as the finding's required resolution allows)
+- Closure evidence: orchestrator validated on 2026-10-04 — commits `91fadb7`..`e03ae9e` present on the branch; tree clean apart from this goal; remediator reports `bun run check` 682 pass / knip clean, `bun run test:ci` 115 pass with no component snapshot change, kernel/`src/ui`/`file-type.ts` diff empty from `e7f259f`, G4 exports unchanged; new regression tests fail on the pre-fix code. Accepted
+
+**Task Commit Evidence:**
+
+| Task | SHA(s) or justified no-change evidence |
+|---|---|
+| `P1-G1-T1` | `8d0cb51` |
+| `P1-G1-T2` | `2af5239` |
+| `P1-G1-T3` | `470720b` |
+| `P1-G1-T4` | `1150aa3` |
+| `P1-G1-T5` | `b5f906c` |
+| `P1-G1-T6` | `6e74e72` |
+| `P1-G1-T7` | `d3c1776` |
+
+#### P1-G2 — Views, embeds, commands, and painting
+
+- [x] Context and dependencies confirmed (P1-G1 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G2-T1` — Markdown views through EditorView.
+- [x] `P1-G2-T2` — Embed targets as unlisted buffers.
+- [x] `P1-G2-T3` — Markdown commands and the read-only view.
+- [x] `P1-G2-T4` — Sign column, widget painters, and cursor fit.
+- [x] `P1-G2-T5` — No-colour, light theme, and 80×24 live-view states.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
+
+**Evidence:**
+
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `c10496f` (group range `f296fc5`..`9530f5b`)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` — `Failed` (P1-G2-VER1 Major: stale or duplicate embed reads can open a listed buffer; VER2 Minor: `:s` edits in reading view; VER3 Minor: three missing tests; VER4 Minor: report T1 row)
+- Verification report commit: `183db2a`
+- Remediation: `Completed` by a fresh `s1mple-implementer` — VER1…VER4 `Fixed`; every completion checklist satisfied. Accepted residual: if the last note embedding a target is closed with `:bd` before its read answers, a later open or new embed of that path sends one more `read`. The second answer has the same stamp, so `onDiskLoaded` makes no change (`src/core/state/disk.ts:69`). The target is never shown or listed by the embed answer. Closing this would need request state above the note, which S5 forbids. Design refinements to sync into the W system design (§6 `embeds.requested`, §7 `syncEmbeds` and `onFileLoaded`/`onFileRefused`): `requested` keeps a target until its read answers, and embed reads carry `embed?: true` on the `read` effect and its answer (`types.ts`, `src/app/effects.ts`)
+- Final implementation report commit: `47bb688`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `7f491e8` (T2); VER2 → `a1c9e50` (T3); VER3 → `ebf4d95` (T2), `c1edc70` (T4), `324e886` (T5); VER4 → no code change (report-only correction in `47bb688`)
+- Closure evidence: at `324e886`, `bun run check` exit 0 (701 pass, 18 snapshots); `CI=true bun run test:ci` 122 pass; no-Markdown grep has no match; `paintPreview` unchanged; frozen surfaces unchanged; the original verification report is unchanged at `183db2a`. The orchestrator checked VER1's required proofs (1)–(3) in `embeds.test.ts`, the stale-answer path in `buffers.ts:370`, and that the duplicate-answer path is a no-op. Accepted on 2026-10-04
+
+**Task Commit Evidence:**
+
+| Task | SHA(s) or justified no-change evidence |
+|---|---|
+| `P1-G2-T1` | `4bcea47` |
+| `P1-G2-T2` | `db27ea5`, `7f491e8`, `ebf4d95` |
+| `P1-G2-T3` | `97f84ef`, `a1c9e50` |
+| `P1-G2-T4` | `195bc95`, `c1edc70` |
+| `P1-G2-T5` | `9530f5b`, `324e886` |
+
+#### P1-G3 — Terminal images
+
+- [x] Context and dependencies confirmed (P1-G2 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G3-T1` — Terminal graphics spike (outcome recorded before painter code).
+- [x] `P1-G3-T2` — Workspace image loader with bounded web downloads.
+- [x] `P1-G3-T3` — Image tiers and the decoded-image cache.
+- [x] `P1-G3-T4` — Image painter and shell wiring.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
+
+**Evidence:**
+
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `a0e278e` (group range `0876a21`..`3d9c36a`)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` — `Failed` (P1-G3-VER1 Minor, test coverage: no regression test for the `◌ name` loading placeholder or for the timeout covering the whole body download). The verifier re-ran the V43 analyzer on all seven raw captures and accepted the byte-level evidence and all six deviations
+- Verification report commit: `2ebd33a`
+- Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed` by two regression tests: the dimmed `◌ name` loading placeholder and a whole-body download timeout with a slowly dripped body. Each test fails when its behaviour is broken. Production code is unchanged
+- Final implementation report commit: `b111355`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `0aec8db` (T2), `9407269` (T4)
+- Closure evidence: `bun run check` 714 pass; `CI=true bun run test:ci` 126 pass; `src/core` is unchanged from `0876a21`; the original verification report is unchanged at `2ebd33a`. Recorded residual: V43 was checked from the bytes each terminal received, not visually, because Screen Recording permission is unavailable. Accepted on 2026-10-04
+
+**Task Commit Evidence:**
+
+| Task | SHA(s) or justified no-change evidence |
+|---|---|
+| `P1-G3-T1` | No change: the agent-run V43 spike covered Ghostty, kitty and WezTerm (kitty protocol), WezTerm (sixel), iTerm2 3.6.11 (kitty and sixel) and Terminal.app (blocks). Every cell is cleared and no clearing call is needed. Evidence is the byte-level terminal output (`tty-*.raw`, `*.analysis.txt`). Screenshots were not possible because macOS Screen Recording permission is denied for Ghostty and not granted for the others. The outcome is in `p1-g3-implementation-report.md` under "Graphics spike outcome"; the fixtures were committed with T2 |
+| `P1-G3-T2` | `119d9c9`, `0aec8db` |
+| `P1-G3-T3` | `3bc3959` |
+| `P1-G3-T4` | `3d9c36a`, `9407269` |
+
+### Part 2 — Browser preview
+
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+- **Dependencies:** Part 1
+- **Status:** `Completed` (P2-G1 accepted)
+
+#### P2-G1 — Browser preview
+
+- [x] Context and dependencies confirmed (Part 1 accepted).
+- [x] Implementation turn completed.
+- [x] `P2-G1-T1` — Escaped HTML rendering.
+- [x] `P2-G1-T2` — Embedded preview page and browser libraries.
+- [x] `P2-G1-T3` — Preview server and follow selector.
+- [x] `P2-G1-T4` — Preview lifecycle, commands, and browser launch.
+- [x] `P2-G1-T5` — Preview statusline segment.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
+
+**Evidence:**
+
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` — `Completed` (initial). Pins: `katex@0.16.47`, `mermaid@12.1.0`, both exact
+- Initial implementation report commit: `59892a7` (group range `8d20862`..`8d6e7d4`)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` — `Failed` (P2-G1-VER1 Minor, test reliability: the fake launcher in `test/e2e/quit.test.ts` can be read before its URL is written). Every chain is satisfied and all five deviations were accepted. A Playwright Chromium smoke check passed: math, Mermaid, SSE edits, the stopped badge, the error fallbacks and the XSS escaping all work, with no external requests. The `Reconnecting…` → `Offline` badge states are left to the V42 checklist in P3-G1
+- Verification report commit: `510e7c6`
+- Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed`: the fake launcher writes to a temporary file and renames it into place. A deliberately delayed launcher fails with the old code and passes with the new one. The quit and preview-server suites passed 10 of 10 runs (14 tests each)
+- Final implementation report commit: `df5fb9b`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `d128f6f` (T4)
+- Closure evidence: `bun run check` 736 pass; `CI=true bun run test:ci` 139 pass; the original verification report is unchanged at `510e7c6`. Carried forward: the single unexplained failure seen once during T5 has not recurred in 30+ later runs; V42 (including the `Reconnecting…` → `Offline` badge states) belongs to P3-G1. Accepted on 2026-10-04
+
+**Task Commit Evidence:**
+
+| Task | SHA(s) or justified no-change evidence |
+|---|---|
+| `P2-G1-T1` | `c486398` |
+| `P2-G1-T2` | `7dabcdc` |
+| `P2-G1-T3` | `b3258a8` |
+| `P2-G1-T4` | `c28abe0`, `d128f6f` |
+| `P2-G1-T5` | `8d6e7d4` |
+
+### Part 3 — Extension, performance, and delivery
+
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+- **Dependencies:** Parts 1 and 2
+- **Status:** `Completed` (P3-G1 accepted; T4 steps 2–4 in Delivery Completion)
+
+#### P3-G1 — Extension proof, benchmarks, and delivery
+
+- [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
+- [x] Implementation turn completed.
+- [x] `P3-G1-T1` — Registration-only extension proof.
+- [x] `P3-G1-T2` — Live and source bench targets.
+- [x] `P3-G1-T3` — Build, offline page, and fast-gate checks.
+- [x] `P3-G1-T4` — Delivery (step 1: PR open, conflicts resolved, CI green; steps 2–4 in Delivery Completion).
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
+
+**Evidence:**
+
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md` — first turn `Blocked` (report `8521c98`; PR https://github.com/therealhieu/so/pull/6). Two blockers: (1) the `grid` editor-kind part of V41 cannot pass because `WindowState.content.editor` is the literal `"text"`; (2) the Linux CI bench gate fails, with `openFile` 134.04 against a 100 ms limit and `indexingKeystrokeP95` 38.60 against a 32 ms limit, because `live` is now the default view. Orchestrator decisions on 2026-10-04: (1) implement inside approved S16 as a minimal refinement: widen `content.editor` to `EditorKind`, set it from the registered file-type kind, and fall back to `"text"`, with no new state and no persisted field; (2) profile and fix in code, with no target or method change. The same implementer was resumed for both and returned `Completed` with risk: B1 is closed by `c58e8eb`; B2 has no code fix and the CI gate is now green only because runners vary. Profiling found the live-open cost in the designed per-block mdast parse (about 13–15 ms locally). The larger costs are the existing `parseDoc`, the index `patch` and the completion `poolFor`
+- Initial implementation report commit: `8521c98` (initial), `f6c98ee` (blocker resolution appended in the same implementation turn); group range `607b12b`..`f6c98ee`
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Failed`. VER1 (Major, performance): the CI bench passes only on fast runners; on slow runners `openFile` is about 1.7× the earlier code. VER2 (Major, performance): local readings miss the REQ9@R2 1× targets (`liveKeystrokeP95` 16.7–20.0, `openFile` 51.9–57.6). VER3 (Minor, documentation): the design and PR parent-sync list do not show `editor: EditorKind`, and `EditorKindSpec.open` is never called. VER4 (Minor): an orphaned doc comment in `update.ts`. Passed: V35, V38, V41, V42, V46, V47 and the G4 evidence; `test:ci` passed 6/6
+- Verification report commit: `06886c7`
+- Remediation: the consultant recommended five no-output-change speedups. The user then approved relaxed live and startup targets on 2026-10-04 so the bench gate does not slow development: `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250. Source targets are unchanged. The W requirements Constraints and system design §6, §7 `TARGETS` and V44 were updated, which also syncs VER3's design part. A fresh `s1mple-implementer` applies the new targets and four quick speedups (lazy `beautiful-mermaid`, scanner trigger skip, block-hash reuse, letter-line paragraph fast path) and fixes VER3's PR part and VER4. Result `Completed`: all four speedups were kept and VER1–VER4 are `Fixed`. Ten `yes` load generators orphaned by an earlier agent (PIDs 63481–63490) were killed; they had inflated the verifier's local readings
+- Final implementation report commit: `46032b8`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 and VER2 → `e5602b4` (new targets), `77ce68c` (lazy `beautiful-mermaid`), `50f9222` (scanner triggers), `4603fdb` (block-hash reuse), `00011bd` (paragraph fast path), all T2; VER3 → design `2495edd` (orchestrator) and the PR #6 body (not versioned); VER4 → `8a79835` (T1)
+- Closure evidence: clean local bench on `00011bd` meets even the old 1× targets: `liveKeystrokeP95` 7.18–8.80, `openFile` 35.47–41.29, `firstFrame` 146.76–150.69, `indexingKeystrokeP95` 10.17–10.24. Linux CI on a slow-class runner (run 37178733100) passed the new 2× limits (`openFile` 114.39/160, `indexingKeystrokeP95` 37.09/60). On the final head `46032b8`, run https://github.com/therealhieu/so/actions/runs/37179396485 is all green (`openFile` 98.98, `indexingKeystrokeP95` 24.42, `firstFrame` 269.05). Also: `bun run check` 739 pass; `test:ci` 144 pass; binary 84,105,330 B; frozen lockfile ok; `origin/main` not ahead. The original verification report is unchanged at `06886c7`. Accepted on 2026-10-04
+- PR URL and CI runs: https://github.com/therealhieu/so/pull/6. CI on `f6c98ee`: https://github.com/therealhieu/so/actions/runs/37175881079, all green (Linux `openFile` 74.73, `indexingKeystrokeP95` 25.00). On `c58e8eb`: https://github.com/therealhieu/so/actions/runs/37175517956, green (96.54, 30.50). Failing earlier runs: 37173732484 and 37174620974. V46: local `check` 5.17 s; CI wall time 1 min 52 s. V35: the binary is 83,940,210 bytes. V42 passes by Playwright. Pins: `katex@0.16.47`, `mermaid@12.1.0`
+
+**Task Commit Evidence:**
+
+| Task | SHA(s) or justified no-change evidence |
+|---|---|
+| `P3-G1-T1` | `ee55fa9`, `352cf50`, `c58e8eb`, `8a79835` |
+| `P3-G1-T2` | `2348fa4`, `5ca1945`, `e5602b4`, `77ce68c`, `50f9222`, `4603fdb`, `00011bd` |
+| `P3-G1-T3` | `a11c8a9` |
+| `P3-G1-T4` (step 1) | No change: delivery only. Pushed; PR #6 opened; `origin/main` was not ahead; CI green on the final head `46032b8` |
+
+## Roadmap Evidence
+
+Keep definitions in the accepted binding, system design, and parent gate sources; record actual assessments here.
+
+### Baseline Checks
+
+| Boundary | Accepted references and current sources checked | Assessment and evidence |
+|---|---|---|
+| Planning (reference, recorded by the reconciler) | PH2@R4 `:3`, DI3@R3 `:322-403`, G2/G4 `:69`/`:71`, index `:133`, `:144` at `ee33163` (plan index Roadmap Contract) | Aligned at planning; not a substitute for the execution-start check |
+| Execution start (2026-10-04, `HEAD` `0c111be`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`, DI3@R3 `:322`; index `:133` (DI3@R3 → W261003S6BQ, PR Pending), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `origin/main` has no commits ahead of `HEAD` | Aligned — no parent commit after the planning check at `ee33163`; DI3@R3 → W261003S6BQ unchanged; no other W binds DI3 (`work/done/` holds W261003HEGE, W261003FX70). Working tree clean at start |
+| Delivery (before Delivery Completion, 2026-10-04, `HEAD` `68fbfcf`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`; index `:133` (DI3@R3 Delivery Items row), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `git fetch` then `origin/main` has 0 commits ahead of `HEAD` | Aligned — no parent commit since the execution-start check; DI3@R3 → W261003S6BQ unchanged; `work/done/` holds only W261003HEGE and W261003FX70 before this move |
+
+Append checks as boundaries are reached (including any resume). An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
+
+### Gate Evidence
+
+| Gate source and due boundary | Producer output / baseline | Actual evidence | Result |
+|---|---|---|---|
+| G2 (phase file `:69`; plan context §2) — before P1-G1-T1 | DI2@R2 / W261003FX70 outputs merged in `9adb285` (PR #2) | `git merge-base --is-ancestor 9adb285 HEAD` → exit 0 at `0c111be` on 2026-10-04, before P1-G1-T1 | `Satisfied` |
+| G4 (phase file `:71`; plan context §2) — produced here; due before DI4 embed execution | Outputs at P1-G1-T3, P1-G2-T2, P1-G2-T4; proof V4, V5, V38, V41 on the PR head | Outputs on PR #6 head: `PreviewCtx`, `MarkdownViewInput`, `livePreview`, `BlockRenderer`, `registerBlockRenderer` (`src/core/lang/markdown/live-preview.ts`; signatures equal the phase design `:205-230` plus the additive `resolve`, `folds` and `embed().text`); embed targets as unlisted buffers (`src/core/state/embeds.ts`); `registerWidgetPainter` (`src/ui/widgets/registry.ts`). Proof: V4 goldens, V5, and V38/V41 (`test/ui/extension.test.ts`, 5 pass) passed in overall verification (`bd88306`) and CI run 37179396485 on `46032b8` | `Pending` — outputs and proof present; the merge evidence is the user's |
+
+Never treat an approved producer design as delivered implementation. Check gates before their due boundary, not only before marking a group complete.
+
+### Parent Synchronization
+
+- **Owner:** Main orchestrator
+- **Receipt:** `Pending parent synchronization` — no user authorization to edit parent roadmap files in this execution
+- **Pending administrative updates (require explicit user authorization):**
+  - `rm261003abzp-roadmap-index.md:144` (Work Progress, DI3@R3): stage `Discuss` → `Plan` at the planning commit, then `Execute` at execution start, with evidence paths and check time.
+  - At delivery: `rm261003abzp-roadmap-index.md:133` (Delivery Items, DI3@R3) PR column `Pending` → the DI3 PR number; `rm261003abzp-roadmap-phase-2-obsidian-experience.md:586` (Progress, DI3@R3) PR column and evidence/next-step text.
+  - G4 status stays `Pending` until merge; merge evidence is the user's.
+  - Index `:144` (Work Progress, DI3@R3) stage `Discuss` → `Execute`/delivered, with the evidence path updated to `.s1mple/work/done/w261003s6bq-live-and-browser-preview/…`; index `:133` PR column → PR #6; phase `:586` Progress PR column → PR #6.
+  - RM261003ABZP-REQ9@R2: relaxed live and startup targets (`openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250), approved by the user on 2026-10-04.
+  - Design refinements: the `embed?: true` tag on `read`, `fileLoaded` and `fileRefused`; `requested` kept until the read answers; `WindowState.content.editor: EditorKind`. Each is listed in the PR #6 body.
+
+After stage/blocker changes, PR assignment, reconciliation, or delivery, record the exact DI/W, parent paths, proposed updates, and evidence. With explicit authorization, re-read the parent, preserve concurrent changes, update matching index/phase records, verify both directions, and record changed paths and commit evidence when committing is authorized. Keep parent changes separate from W-only commits. Otherwise report `Pending parent synchronization` and the missing authorization without editing the parent. Implementers and verifiers never perform parent synchronization.
+
+Administrative synchronization pending alone does not fail technical verification or reopen verified groups. Report it separately in the completion summary; do not claim the roadmap is synchronized or the DI delivered until its required delivery evidence is satisfied. Assignment conflicts and unsatisfied technical gates remain blockers.
+
+## Success Criteria
+
+Definitions: system design §8 Design Success Criteria.
+
+| Complete | Criterion | Observable condition | Verification cases | Evidence |
+|---|---|---|---|---|
+| [x] | `S1` | Notes open in `live` (or configured mode), code files in `source`, PH1 sessions restore notes in `live` | `V1`, `V2`, `V12` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S2` | `tour.md` layout goldens at widths 60 and 100 match for every element, reveal state, `reading`, and `source` | `V4`, `V1r` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S3` | A throwing renderer leaves its block as source with `⚠`; the rest renders | `V5` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S4` | Math and Mermaid render as text, fall back to labelled source, and are not recomputed while typing elsewhere | `V6`, `V7`, `V8`, `V44` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S5` | Embeds capped with `… N more lines`, expand with `za`, loading/unresolved states, one level, invisible and evicted buffers, refused target not re-requested, request state per note | `V9`, `V10`, `V11`, `V12`, `V16`, `V49` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S6` | Folds follow block ids: survive inserts above, reset on edit or deletion, `[!x]-` starts folded | `V13` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S7` | Cursor row stays visible with tall widgets; only visible rows laid out; signs and widget rows paint; NO_COLOR fallbacks hold | `V14`, `V15`, `V16`, UV10@R1 DI3 states (P1-G2-T5) | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S8` | Image tiers, placeholders, 64 MiB LRU, repaint-on-load, bounded web downloads, 60 s retry, `images = "off"`; no stale placement | `V17`, `V18`, `V19`, `V40`, `V43`, `V50`, `V51` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S9` | Reading view refuses edits with the hint; `Enter`, `<leader>x`, `za`, `<leader>m` work on notes and are unbound on code files | `V2`, `V3`, `V25`, `V37` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S10` | `renderHtml` covers the same syntax, escapes all note text, tags blocks with `data-line`/`data-hash` | `V20`, `V21`, `V24` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S11` | Server is local-only and read-only: 403 foreign Host, 404 escapes/hidden/excluded, 405 non-GET | `V26`, `V27`, `V28`, `V30` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S12` | Edits reach the page within 300 ms; code files send none; stop delivers `stopped` first; launch failure toasts the URL; second `:Preview` reuses the port | `V22`, `V23`, `V29`, `V30`, `V31`, `V32`, `V33`, `V3` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S13` | Compiled binary serves page and embedded assets without `node_modules`; CSP, `nosniff`, `no-referrer` on every response; same-origin page; unknown assets 404; offline rendering; render errors show source | `V34`, `V35`, `V42`, `V48` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S14` | `preview.*` defaults and validation hold | `V39` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S15` | All bench targets pass the 2× CI gate, including first frame with `beautiful-mermaid`; CI timing budget | `V44`, `V45`, `V46` | Passed — against the relaxed targets approved by the user on 2026-10-04 (`2495edd`); V44, V45, V46 above |
+| [x] | `S16` | `EditorView` and kernel contain no Markdown; `csv` file type and `grid` editor kind work by registration only | `V17`, `V25`, `V38`, `V41`, `V47` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S17` | Statusline order `MODE │ view │ path │ backlinks │ words │ preview │ index │ Ln:Col`, narrow drop order | `V36` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `S18` | G4 signatures equal the phase design; registered block renderer and widget painter work without other edits | `V5`, `V41`, `V47` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+
+## Verification Cases
+
+Definitions and exact assertions: system design §8 Test Suites and Cases; owning task steps in the plan parts.
+
+| Complete | Case | Command or method | Expected result | Actual result |
+|---|---|---|---|---|
+| [x] | `V1` (P1-G2-T1) | `bun test src/core/state/session.test.ts` | PH1 `view: "source"` restores the note in `live` | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V1r` (P1-G1-T3) | `bun test src/core/lang/markdown/reveal.test.ts` | Selection-aware reveal; nothing after cursor leaves; reading → empty | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V2` (P1-G2-T3) | `bun test src/core/state/markdown-commands.test.ts` | View cycle with message; code file unchanged; task toggle then follow; one undo | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V3` (P2-G1-T4) | `bun test src/core/state/preview.test.ts` | `:Preview` on a code file: "not available for typescript files"; no effect | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V4` (P1-G1-T6) | `bun test src/core/lang/markdown/live-preview.test.ts` | Goldens match at widths 60 and 100 for all cursor positions, reading, and source | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V5` (P1-G1-T3) | `bun test src/core/lang/markdown/live-preview.test.ts` | Throwing renderer → source with `⚠`; registered stub renderer used for the embed | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V6` (P1-G1-T4) | `bun test src/core/lang/markdown/renderers/math.test.ts` | Unicode for supported TeX; `{kind:"source"}` for unknown commands | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V7` (P1-G1-T4) | `bun test src/core/lang/markdown/renderers/mermaid.test.ts` | Box-drawing flowchart; labelled source for gantt and malformed input | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V8` (P1-G1-T4) | `bun test src/core/lang/markdown/renderers/mermaid.test.ts` | Library called once across 50 keystrokes outside the fence | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V9` (P1-G1-T5) | `bun test src/core/lang/markdown/renderers/embed.test.ts` | Title + 10 + "… 15 more lines"; expanded → title + 25 | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V10` (P1-G1-T5) | `bun test src/core/lang/markdown/renderers/embed.test.ts` | Loading rows reserved; missing state; self-embed one level | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V11` (P1-G2-T2) | `bun test src/core/state/embeds.test.ts` | One read per target; unlisted, not shown; recent unchanged | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V12` (P1-G2-T2) | `bun test src/core/state/embeds.test.ts` | Unlisted buffer evicted; snapshot omits it and `embeds`; opening makes it listed | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V13` (P1-G2-T3) | `bun test src/core/state/markdown-commands.test.ts` | Folds follow block ids; reset on edit/delete; `[!tip]-` folded | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V14` (P1-G1-T3) | `bun test src/core/lang/markdown/live-preview.test.ts` | Renderers invoked only for visible blocks of a 5,000-line Doc | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V15` (P1-G3-T4) | `bun run test:ci` (`test/ui/live-preview.test.ts`) | Hardware cursor on screen at each `j` past a 20-row image | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V16` (P1-G2-T4) | `bun run test:ci` (`test/ui/live-preview.test.ts`) | Sign cell only on revealed rows; rule; "… N more lines"; folded callout one row | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V17` (P1-G1-T7) | `bun test src/core/state/view-context.test.ts` | Duplicate throws; unknown → undefined; 23 reserved rows; "unknown" image | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V18` (P1-G3-T4) | `bun run test:ci` (`test/ui/live-preview.test.ts`) | `drawImage` with kitty/sixel; blocks; `[image: diagram.png]` with `images="off"`; V43 clearing assertion | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V19` (P1-G3-T3) | `bun test src/ui/images.test.ts` | One load per path; LRU ≤ 64 MiB with disposal; repaint per load | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V20` (P2-G1-T1) | `bun test src/core/lang/markdown/html.test.ts` | One tagged section per block; links, images, tasks, mermaid, math as specified | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V21` (P2-G1-T1) | `bun test src/core/lang/markdown/html.test.ts` | No unescaped `<script` or quote breakout | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V22` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | `doc` event `{path, version, line}` < 300 ms; fragment has the edit | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V23` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | No `doc` event for a code file; last note's fragment | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V24` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | Closed note rendered from disk | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V25` (P1-G2-T4) | `bun run test:ci` (`test/ui/live-preview.test.ts`) | Code file rows equal raw lines; empty sign column; note keys inert | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V26` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | Foreign Host → 403 | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V27` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | Traversal, symlink, hidden, excluded → 404 | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V28` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | POST → 405; bound to 127.0.0.1 | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V29` (P2-G1-T4) | `bun test src/core/state/preview.test.ts` | Exact preview states and effects for start, restart, started, reopen | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V30` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | Client reads `event: stopped` before end of stream; then refused | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V31` (P2-G1-T4) | `bun test src/core/state/preview.test.ts` | "preview is not running"; `[stopPreview]`; toast with URL | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V32` (P2-G1-T4) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | `openUrl` rejects; `openUrlFailed` with URL; `browser.openFailed` logged without note text | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V33` (P2-G1-T4) | `bun run test:ci` (`test/e2e/quit.test.ts`, PTY) | SSE client reads `stopped` on SIGTERM; terminal restored | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V34` (P2-G1-T3) | `bun run test:ci` (`test/integration/preview-server.test.ts`) | `/`, `/assets/katex.min.js` 200 with correct types; unknown asset 404; CSP, `nosniff`, `no-referrer` on all | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V35` (P3-G1-T3) | `bun run build`; run `dist/so` from an empty dir; `:Preview` via PTY; GET page and assets | 200 with bytes equal to package files; binary size recorded in the PR | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V36` (P2-G1-T5) | `bun run test:ci` (`test/ui/shell.golden.test.ts`) | Statusline order at 120 cols; preview, words, view dropped at 80 cols (UV1@R2) | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V37` (P1-G2-T3) | `bun run test:ci` (`test/ui/live-preview.test.ts`) | Reading view: text unchanged, hint message, `j` moves | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V38` (P3-G1-T1) | `bun run test:ci` (`test/ui/extension.test.ts`) | `csv` file type works by registration; no tracked source edited | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V39` (P1-G1-T2) | `bun test src/core/state/config.test.ts` | Defaults `{live, 10, auto}`; `config.toml:3` error; unknown-key error | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V40` (P1-G3-T3) | `bun test src/ui/images.test.ts` | `{failed:true}` for corrupt, SVG, rejection, no throw | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V41` (P3-G1-T1) | `bun run test:ci` (`test/ui/extension.test.ts`) | Command, syntax, renderer, painter, `grid` editor kind work by registration | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V42` (P3-G1-T3) | Manual UV9@R2 checklist at 1200/375 px, light/dark, offline | Math and Mermaid render; malformed show source; only `127.0.0.1:<port>` requests; no CSP violation; recorded in the PR (pending user evidence if not runnable) | Passed — Playwright checklist (P3-G1 report and PR #6), re-run in overall verification `bd88306`; badge transitions from the P3-G1 run |
+| [x] | `V43` (P1-G3-T1) | Manual graphics spike in kitty, Ghostty, WezTerm, iTerm2, Terminal.app | Clearing behaviour recorded in `p1-g3-implementation-report.md`; becomes a V18 assertion | Passed — byte-level cross-terminal spike in Ghostty, kitty, WezTerm, iTerm2 and Terminal.app (P1-G3 report; no Screen Recording permission for screenshots) |
+| [x] | `V44` (P3-G1-T2; CI medians at P3-G1-T4) | `bun run bench` (Linux CI) | All targets within the 2× gate (medians of 5) | Passed — Linux CI bench green against the targets approved on 2026-10-04 (runs 37179396485 and 37180233530) |
+| [x] | `V45` (P3-G1-T2) | Reference-machine bench readings | Recorded in the PR at 1× targets | Passed — local medians recorded in the P3-G1 report and PR #6; all within 1× of the approved targets |
+| [x] | `V46` (P3-G1-T4) | Local `bun run check` timing; PR CI wall time | check < 30 s; CI < 3 min | Passed — local `check` about 5.5 s; CI wall time under 3 min |
+| [x] | `V47` (P1-G1-T1, P2-G1-T2 boundary parts; final at P3-G1-T3) | `bun run check` | Biome, tsc, knip, boundaries (package homes; no Markdown in kernel or editors), unit pass | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V48` (P2-G1-T2) | `bun test src/preview/assets.test.ts` | Page files same-origin, no inline code; every font has an `ASSETS` key; all paths readable | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V49` (P1-G2-T2) | `bun test src/core/state/embeds.test.ts` | One read for a shared target; refusal recorded per note, no re-request, no notice | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V50` (P1-G3-T2) | `bun test src/workspace/images.test.ts` | Bounded downloads: size, status, timeout, scheme rejected; no Cookie/Referer; ≤ 4 in flight | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | `V51` (P1-G3-T3) | `bun test src/ui/images.test.ts` | No retry before 60 s; retry at 60 s then decode and repaint | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+| [x] | UV10@R1 DI3 states (P1-G2-T5) | `bun run test:ci` (`test/ui/theme.golden.test.ts`) | No colour SGR under NO_COLOR with distinguishable attribute/glyph; light-theme golden; 80×24 unclipped | Passed — overall verification `bd88306` (Plan Coverage) and the owning group's verification report |
+
+## Overall Verification
+
+Start only after every group is accepted.
+
+```text
+Fresh verifier → Passed → Project documentation
+               → Failed → Fresh implementer remediates
+                        → Orchestrator validates closure
+                        → Project documentation
+               → Blocked
+```
+
+1. Confirm gates due before overall verification (G2 recorded; G4 outputs and proof present on the PR head), then fill `templates/overall-verification-prompt.md` with this goal, the plan index and parts, the system design and requirements, all group reports, the assigned parent coverage (`w261003s6bq-system-design.md` §1 Assigned Parent Obligation Coverage), the binding, and the gate evidence; spawn a fresh `s1mple-verifier`. Assigned cross-work integration must be verified here or by explicitly referenced sufficient evidence, not inferred from sibling completion.
+2. Record the returned report status, path, commit SHA, findings, and check results.
+3. For `Passed`, continue to project documentation.
+4. For `Failed`, fill `templates/overall-remediation-prompt.md` and spawn one fresh `s1mple-implementer` for all findings whose IDs match `OVR-VER<number>`.
+5. Require the implementer to resolve every finding, run affected checks, update affected implementation reports, and commit all changes and reports.
+6. Keep the overall-verification report and verdict unchanged. Do not run overall verification again.
+7. Validate finding closure, check results, implementation commits, and report commits. Continue to project documentation only when no finding, blocker, or required check remains unresolved.
+8. Mark the goal `Blocked` when verification or remediation cannot complete safely within scope.
+
+### Checks
+
+| Complete | Check | Command or method | Expected result | Actual result |
+|---|---|---|---|---|
+| [x] | Fast gate | `bun run check` | Biome, tsc, knip, boundaries, and unit suites pass (V47) | Passed: exit 0; 739 pass; 5.58 s (V47) |
+| [x] | CI suites | `bun run test:ci` | Component, integration, and e2e suites pass | Passed: 144 pass, 0 fail, 28 snapshots |
+| [x] | Benchmarks | `bun run bench` | All targets within the 2× CI gate (V44); reference readings recorded in the PR (V45) | Passed against the targets approved on 2026-10-04: local medians all within 1× (openFile 57.03/80, liveKeystroke 10.68/24, firstFrame 161.19/250, indexingKeystroke 10.86/30); Linux CI medians within 2× on `46032b8`; readings recorded in the PR (V44, V45) |
+| [x] | Compiled binary | `bun run build`; run `dist/so` from an empty directory | Page and embedded assets served without `node_modules` (V35) | Passed: `dist/so` 84,105,330 B, run from an empty dir; all assets `cmp`-identical; CSP on every response (V35) |
+| [x] | Manual page checklist | Browser at 1200/375 px, light/dark, offline | UV9@R2 checklist recorded in the PR (V42) | Passed: Playwright at 1200/375 px, light and dark, non-loopback blocked; math and Mermaid render; malformed blocks show source with the label; single origin; empty console; recorded in the PR (V42) |
+| [x] | PR CI | GitHub Actions on the DI3 PR | Green, within the CI timing budget (V46) | Passed: PR #6 run 37179396485 on `46032b8`, all green, wall time 1 min 59 s (V46) |
+
+### Evidence
+
+- **Status:** `Failed` (one Minor documentation finding; every check passed)
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
+- **Report commit:** `bd88306`
+- **Findings and owners:** OVR-VER1 (Minor, documentation, owner P1-G2). The W system design §6 and §7 do not describe the P1-G2 embed refinements: `requested` is kept until the read answers; `embed?: true` is on `read`, `fileLoaded` and `fileRefused`; and the `:bd` exception to one outstanding read. The PR #6 parent-sync list also omits the `embed?: true` tag (REQ1@R1 criterion 5)
+- **Remediation status:** `Completed` by one fresh `s1mple-implementer`; OVR-VER1 is `Fixed` (documentation only, no code change)
+- **Remediation commits:** OVR-VER1 → `7c0b6a2` (W system design §5, §6, §7: `embed?: true` on `read`, `fileLoaded` and `fileRefused`; `requested` kept until the read answers; the `:bd` exception) plus the PR #6 body's pending parent-sync list (not versioned)
+- **Updated implementation report commits:** P1-G2 → `e3c551a`
+- **Closure evidence:** `bun run check` exit 0 (739 pass); `git diff --stat -- src test scripts` is empty; grep shows no stale `keep(b.embeds` text in the design; the PR body diff adds only the two parent-sync items; the overall-verification report is unchanged at `bd88306`. Validated by the orchestrator on 2026-10-04
+- **Remaining issues:** None technical. Administrative: parent synchronization is pending user authorization; G4 stays `Pending` until the user merges
+
+## Delivery Acceptance
+
+Perform this assessment after overall verification and before the completion summary; it does not authorize merge or deployment. Before accepting delivery, recheck the applicable parent baseline and gates due at delivery and record them under Roadmap Evidence. Preserve technical verification and its original baseline. Missing merge evidence leaves DI3 delivery pending even if implementation is verified; G4 stays `Pending` until the user merges. Synchronize the parent only under the authorization recorded in the Execution Contract (currently pending); never infer phase completion from completed W goals instead of phase integration, release, and exit criteria.
+
+## Project Documentation Finalization
+
+After all groups and overall checks pass, the orchestrator must:
+
+1. Read `.s1mple/docs/project.md`; update affected facts and Last Modified from the implemented result, not task history.
+2. Validate accuracy and links. Preserve unrelated guidance and staged/unstaged changes.
+3. Commit only the documentation update, then record validation and SHA below. If unchanged, record why; no empty commit.
+
+Missing documents, unresolved conflicts, failed checks/commits, or unsafe change isolation block completion. Send implementation defects back to remediation, not into project guidance.
+
+- **Changes or No-change Reason:** `.s1mple/docs/project.md` updated from the implemented result: purpose (live, source and reading views; `:Preview`); stack pins `beautiful-mermaid` 1.1.3, `katex` 0.16.47, `mermaid` 12.1.0; component map (`src/preview`, the image modules); the live-preview and browser-preview flow and its security rules; the `preview → preview, core` rule and package homes; contract rows for the live-preview extension points, editor kinds, the browser preview and the `[preview]` config; all nine bench targets with the relaxation approved by the user on 2026-10-04; the self-contained binary
+- **Validation and Commit SHA:** every symbol, path and number was checked against the code (`scripts/bench-gate.ts` `TARGETS`, `test/boundaries.test.ts` `LAYER_RULES` and `PACKAGE_HOMES`, `src/core/config/schema.ts` `preview`, `src/ui/images.ts` 64 MiB, the `test/fixtures/generate.ts` generators, the bench headers, and the exports of `live-preview.ts`, `widgets/registry.ts` and `view-context.ts`); other guidance was kept. Commit `68fbfcf`
+
+**Commit Message:**
+
+```text
+docs(project): <documented outcome>
+
+Work: W261003S6BQ — Live and browser preview
+```
+
+## Delivery Completion
+
+After Project Documentation Finalization, the orchestrator performs P3-G1-T4 steps 2–4 (plan part 3, P3-G1-T4):
+
+1. Recheck the parent baseline (Roadmap Evidence → Baseline Checks, Delivery row).
+2. `git mv` the work folder to `.s1mple/work/done/`; update every `.s1mple` reference to the active path; update this goal's paths; commit only those changes (`chore(s1mple): move W261003S6BQ work folder to done`, body `Task: P3-G1-T4 — Delivery`).
+3. Push (no force); merge `main` locally if it moved and resolve conflicts without force-pushing; `gh pr checks --watch` until green on the new head.
+4. Do not edit parent roadmap files unless the user has explicitly authorized parent synchronization; otherwise report the exact pending updates (Parent Synchronization).
+
+- **Folder move commit:** `36db7ee` (`git mv` renames only), then `b19ed48` (reference updates in the W folder and `.s1mple/docs/project.md`; the first commit's `git add` missed them, so they were committed as a follow-up rather than amended). Parent roadmap files keep their old path, pending parent synchronization. The plan's `git mv` instruction line keeps the old source path on purpose
+- **Final head and CI run:** `b19ed48`, https://github.com/therealhieu/so/actions/runs/37180233530 — `check`, `test (macos-15)` and `test (ubuntu-24.04)` (with the bench) all green. `origin/main` was not ahead, so no merge was needed. Nothing merged, tagged or released. The goal-finalization commit that follows changes only this file and is pushed with a green check
+
+## Implementation Evidence
+
+- **Commits:** branch `feat/rm261003abzp-di3-live-preview`, `0c111be`..HEAD. Per-task and remediation SHAs are in each group's Task Commit Evidence and evidence lines above
+- **Subagent Replacements:** None. The P3-G1 implementer was resumed (not replaced) for its two blockers; the consultant was engaged once for VER1 and VER2
+- **Changed Files:** `git diff --stat main...HEAD -- src test scripts package.json bun.lock` → 119 files, +10,758/−307; plus the work folder (now under `.s1mple/work/done/`) and `.s1mple/docs/project.md`
+- **Automated Verification:** in overall verification (`bd88306`): `bun run check` 739 pass; `test:ci` 144 pass; `bun run bench` within 1× of the approved targets locally; V35 binary check passed; PR CI green on `46032b8` and on `b19ed48`
+- **Manual Evidence:** all agent-run. V42: Playwright checklist passed (P3-G1, re-run in overall verification). V43: cross-terminal spike in Ghostty, kitty, WezTerm, iTerm2 and Terminal.app, evidenced from terminal output bytes because Screen Recording permission was unavailable (P1-G3). V45: local bench medians recorded in the P3-G1 report and the PR. (V42, V43, V45) On 2026-10-04 the user stated the agent can run these cases, so they are agent-run rather than pending user evidence: V45 = local `bun run bench` medians on this machine (P3-G1-T2); V42 = Playwright MCP at 1200/375 px, light/dark, offline emulation (P3-G1-T3); V43 = spike driven by the agent in Ghostty (kitty protocol), iTerm2, and Terminal.app (blocks) with `screencapture` evidence; kitty and WezTerm are not installed at execution start and may be installed with Homebrew at P1-G3-T1.
+
+## Blockers and Deviations
+
+- **Bench targets relaxed** (approved by the user on 2026-10-04): `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250; source targets unchanged. Recorded in the W requirements Constraints, system design §7 and V44, `project.md`, and the PR; pending parent synchronization of RM261003ABZP-REQ9@R2. After the speedups, local readings meet even the original targets.
+- **Design refinements**, synced into the W design and listed in the PR as pending parent synchronization: embed reads tagged `embed?: true`, with `requested` kept until the answer (P1-G2); `WindowState.content.editor: EditorKind` (P3-G1). `EditorKindSpec.open` is not yet called; that is left to DI4 `base`.
+- **Accepted residual:** after `:bd` of the last embedding note before its read answers, one more `read` can be sent; the duplicate answer is a no-op (`src/core/state/disk.ts:69`).
+- **V43 evidence** comes from terminal output bytes, not screenshots (no Screen Recording permission).
+- **Orphaned `yes` load generators** (PIDs 63481–63490) and one stray bench process (pid 50753), left by earlier agents, were killed. They had distorted the P3-G1 verifier's local readings.
+
+Replace with `None` or entries containing location, evidence, impact, and required resolution.
+
+## Final Completion Checklist
+
+- [x] Every plan part and group is completed.
+- [x] Every task outcome is implemented.
+- [x] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
+- [x] Every subagent replacement has a recorded reason and complete handoff evidence.
+- [x] Every group persisted one complete verification report.
+- [x] Every verifier finding and its completion checklist are resolved with closure evidence.
+- [x] Every group acceptance criterion is satisfied.
+- [x] Every assigned system and applicable UI design chain is covered.
+- [x] Every `S` criterion and `V`/UV10 case has passing evidence.
+- [x] The overall-verification report is committed.
+- [x] Every overall verification check passes with actual evidence.
+- [x] Cross-part contracts and handoffs are integrated and verified.
+- [x] Assigned parent outcomes and cross-work integration have actual evidence against the recorded baseline.
+- [x] Every cross-work gate due within this execution's scope has evidence (G2); G4 and its missing merge evidence are explicitly reported.
+- [x] The parent baseline was rechecked before any delivery acceptance; delivery state is not inferred from technical completion.
+- [x] Authorized parent synchronization is recorded, or exact pending administrative updates and authorization needs are reported separately.
+- [x] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
+- [x] The overall-verification report path and commit SHA are recorded.
+- [x] Project documentation matches the completed implementation and its validation passes.
+- [x] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
+- [x] Delivery Completion: work folder moved, references updated, pushed, CI green on the new head; nothing merged, tagged, or released.
+- [x] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved; administrative parent-sync and out-of-scope delivery follow-ups are reported separately.
+- [x] Final changes match the complete approved plan.
+
+## Completion Summary
+
+- **Implementation and verification:** complete. All five groups were accepted after verification and remediation. Overall verification (`bd88306`) found one documentation finding, fixed in `7c0b6a2` and `e3c551a`. Project documentation is updated in `68fbfcf`.
+- **Delivery:** PR https://github.com/therealhieu/so/pull/6 is open. The work folder is moved (`36db7ee`, `b19ed48`) and CI is green on `b19ed48`. Nothing is merged, tagged or released; the merge is the user's.
+- **Gates:** G2 `Satisfied`. G4 `Pending`: its outputs and proof are on the PR head, and the merge evidence is the user's.
+- **Accepted baseline:** RM261003ABZP-PH2@R4 / DI3@R3 with DES13@R3, UDES10@R2, UV9@R2. Rechecked at delivery: no parent commit since `ee33163`.
+- **Parent synchronization:** pending, not authorized. See Parent Synchronization.
+
+Distinguish implementation/verification completion, delivery acceptance or pending gates (G4 until merge), and parent synchronization or exact pending updates. Include the accepted baseline and evidence locations; never present these as one interchangeable status.

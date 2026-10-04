@@ -13,7 +13,12 @@ import {
   selectionMarks,
 } from "../../core/kernel/view/marks";
 import { layoutText } from "../../core/kernel/view/text-view";
-import type { RenderLine, Span } from "../../core/kernel/view/types";
+import type {
+  RenderLine,
+  Sign,
+  Span,
+  TextView,
+} from "../../core/kernel/view/types";
 import {
   cellWidth,
   displayWidth,
@@ -23,14 +28,73 @@ import {
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { panelFocused } from "../../core/state/side-panel";
 import type { AppState, BufferState, WindowId } from "../../core/state/types";
+import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
+import { type WidgetPainter, widgetPainters } from "../widgets/registry";
 
 const SCROLL_LINES = 3;
+const NO_FOLDS: ReadonlySet<number> = new Set();
 
-/** Line numbers: room for the largest one (at least 4 digits) and a space. */
+/** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
 const gutterWidth = (lineCount: number) =>
-  Math.max(4, String(lineCount).length) + 1;
+  Math.max(4, String(lineCount).length) + 2;
+
+/**
+ * The screen row where `line` starts in `lines`: its own text row, else the
+ * row of the block or widget that covers it; past the bottom when it is not
+ * laid out within `rows` rows of lines before `laidTo`.
+ */
+function rowOfLine(
+  lines: readonly RenderLine[],
+  line: number,
+  laidTo: number,
+  rows: number,
+  height: (text: string) => number,
+): number {
+  const missing = Number.POSITIVE_INFINITY;
+  if (line >= laidTo) return missing;
+  let y = 0;
+  let covering: number | undefined;
+  for (const row of lines) {
+    if (row.sourceLine > line) return covering ?? missing;
+    const widget = row.widget !== undefined && row.spans.length === 0;
+    if (row.sourceLine === line && !widget) return y;
+    covering = y;
+    y += widget
+      ? Math.max(1, row.widget?.rows ?? 1)
+      : height(row.spans.map((sp) => sp.text).join(""));
+  }
+  // Every row came before `line`: it is hidden at the end, or ran out of room.
+  return y < rows ? (covering ?? missing) : missing;
+}
+
+/** How often a frame with hidden lines lays out more lines to fill its rows. */
+const FILL_PASSES = 3;
+
+/** Rows `layoutText` counted for `lines`: one per text row, a widget's own rows. */
+const usedRows = (lines: readonly RenderLine[]) =>
+  lines.reduce(
+    (n, r) =>
+      n +
+      (r.widget !== undefined && r.spans.length === 0
+        ? Math.max(1, r.widget.rows)
+        : 1),
+    0,
+  );
+
+/** A widget type nobody registered paints as a dim `[type]` row. */
+const paintMissing: WidgetPainter = (t, w) => {
+  for (let i = 0; i < t.rows; i++)
+    drawCells(
+      t.buf,
+      t.theme.style(i === 0 ? "dim" : "text"),
+      t.x,
+      t.y + i,
+      i === 0 ? `[${w.type}]` : "",
+      t.width,
+    );
+};
 
 /** A window's place on screen, in cells. */
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -210,6 +274,9 @@ export class EditorView extends Renderable {
   /** Rows hidden at the top of a cursor line taller than the window. */
   private skipRows = 0;
   private cursorAt: Cursor | undefined;
+  /** The rows `show` laid out for this frame, and the line after the last one laid out. */
+  private lines: RenderLine[] = [];
+  private laidTo = 0;
 
   constructor(
     ctx: RenderContext,
@@ -225,7 +292,11 @@ export class EditorView extends Renderable {
     };
   }
 
-  /** Place the view and follow window `id`; `winbar` when there are splits. */
+  /**
+   * Place the view and follow window `id`; `winbar` when there are splits.
+   * The frame is laid out here, once, with the top line advanced until the
+   * cursor's row fits; `renderSelf` paints the cached rows.
+   */
   show(s: AppState, id: WindowId, r: Rect, winbar: boolean): void {
     this.s = s;
     this.windowId = id;
@@ -237,6 +308,7 @@ export class EditorView extends Renderable {
     this.height = r.h;
     this.cursorAt = undefined;
     this.skipRows = 0;
+    this.lines = [];
     const w = s.windows.byId[id];
     const b = w && s.buffers[w.content.bufferId];
     if (w === undefined || b === undefined) return;
@@ -248,8 +320,9 @@ export class EditorView extends Renderable {
     // left the cursor off screen is kept.
     const coreRows = Math.max(1, s.terminal.rows - 2);
     this.topLine = w.content.scroll;
-    if (line >= this.topLine && line < this.topLine + coreRows)
-      this.topLine = Math.max(this.topLine, line - rows + 1);
+    const followsCursor =
+      line >= this.topLine && line < this.topLine + coreRows;
+    if (followsCursor) this.topLine = Math.max(this.topLine, line - rows + 1);
     const text = b.text.line(Math.min(line, b.text.lineCount - 1));
     const dc =
       s.vim.mode === "insert"
@@ -257,7 +330,7 @@ export class EditorView extends Renderable {
         : cursorDisplayCol(text, col, tabWidth);
     const gw = gutterWidth(b.text.lineCount);
     const textW = Math.max(1, r.w - gw);
-    let row = line - this.topLine;
+    let k = 0;
     let x = dc;
     if (!wrap) {
       this.leftCol = dc >= textW ? dc - textW + 1 : 0;
@@ -265,27 +338,25 @@ export class EditorView extends Renderable {
     } else {
       this.leftCol = 0;
       const starts = wrapLine(text, textW, tabWidth);
-      let k = rowOf(starts, dc);
+      k = rowOf(starts, dc);
       x = dc - (starts[k] ?? 0);
       // An Insert cursor just past a full row sits at the start of the next.
       if (x >= textW) {
         k++;
         x = 0;
       }
-      if (line >= this.topLine && line < this.topLine + rows) {
-        const height = (l: number) =>
-          wrapLine(b.text.line(l), textW, tabWidth).length;
-        let above = 0;
-        for (let l = this.topLine; l < line; l++) above += height(l);
-        while (above + k >= rows && this.topLine < line) {
-          above -= height(this.topLine);
-          this.topLine++;
-        }
-        // A line taller than the window shows the rows holding the cursor.
-        if (above + k >= rows) this.skipRows = k - rows + 1;
-        row = above + k - this.skipRows;
-      }
     }
+    const at = (lines: RenderLine[]) =>
+      rowOfLine(lines, line, this.laidTo, rows, (t) =>
+        wrap ? wrapLine(t, textW, tabWidth).length : 1,
+      );
+    this.lines = followsCursor
+      ? this.fitCursor(s, b, rows, textW, (lines) => at(lines) + k < rows)
+      : this.layoutFrame(s, b, this.topLine, rows, w.content.cursor, textW);
+    let row = at(this.lines);
+    // A line taller than the window shows the rows holding the cursor.
+    if (row === 0 && k >= rows) this.skipRows = k - rows + 1;
+    row += k - this.skipRows;
     const visible = line >= this.topLine && row < rows;
     const focused =
       id === s.windows.active &&
@@ -298,6 +369,29 @@ export class EditorView extends Renderable {
         y: r.y + (winbar ? 1 : 0) + row,
         style: s.vim.mode === "insert" ? "line" : "block",
       };
+  }
+
+  /**
+   * Lay out from the current top line and advance it one line at a time
+   * until `fits` holds; bounded by the window height, and usually one pass.
+   */
+  private fitCursor(
+    s: AppState,
+    b: BufferState,
+    rows: number,
+    width: number,
+    fits: (lines: RenderLine[]) => boolean,
+  ): RenderLine[] {
+    const cursor = s.windows.byId[this.windowId]?.content.cursor ?? {
+      line: 0,
+      col: 0,
+    };
+    for (let tries = 0; ; tries++) {
+      const lines = this.layoutFrame(s, b, this.topLine, rows, cursor, width);
+      if (fits(lines) || this.topLine >= cursor.line || tries > rows)
+        return lines;
+      this.topLine++;
+    }
   }
 
   cursor(): Cursor | undefined {
@@ -322,40 +416,75 @@ export class EditorView extends Renderable {
     const rows = this.textRows();
     const gw = gutterWidth(b?.text.lineCount ?? 0);
     const textW = Math.max(1, this.width - gw);
-    let lines: RenderLine[] = [];
-    if (w !== undefined && b !== undefined)
-      lines = this.layout(s, b, rows, w.content.cursor, textW);
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
+    let numbered = -1;
     let i = 0;
-    for (const row of lines) {
+    for (const row of this.lines) {
       if (i >= rows) break;
       const isCursor = row.sourceLine === cursorLine;
+      // A line's number goes on its first screen row only.
+      const number = () => {
+        if (numbered === row.sourceLine) return "";
+        numbered = row.sourceLine;
+        return String(
+          relativeNumbers && !isCursor
+            ? Math.abs(row.sourceLine - cursorLine)
+            : row.sourceLine + 1,
+        );
+      };
+      const gutter = (text: string, at: number, sign?: Sign) => {
+        drawCells(
+          buf,
+          theme.style(isCursor && text !== "" ? "gutterCursor" : "gutter"),
+          this.x,
+          y + at,
+          `${text.padStart(gw - 2)} `,
+          gw - 1,
+        );
+        drawCells(
+          buf,
+          theme.style(sign?.style ?? "gutter"),
+          this.x + gw - 1,
+          y + at,
+          sign?.text ?? "",
+          1,
+        );
+      };
+      if (row.widget !== undefined && row.spans.length === 0) {
+        const height = Math.min(Math.max(1, row.widget.rows), rows - i);
+        gutter(number(), i, row.sign);
+        for (let r = 1; r < height; r++) gutter("", i + r);
+        const paint = widgetPainters.get(row.widget.type) ?? paintMissing;
+        paint(
+          {
+            buf,
+            theme,
+            x: this.x + gw,
+            y: y + i,
+            width: textW,
+            rows: height,
+            deps: this.deps,
+            state: s,
+          },
+          row.widget,
+        );
+        i += height;
+        continue;
+      }
       const text = row.spans.map((sp) => sp.text).join("");
       const starts = wrap ? wrapLine(text, textW, tabWidth) : [this.leftCol];
       const skip = row.sourceLine === this.topLine ? this.skipRows : 0;
       for (let k = skip; k < starts.length && i < rows; k++, i++) {
         const start = starts[k] ?? 0;
-        const num =
-          k > 0
-            ? ""
-            : relativeNumbers && !isCursor
-              ? Math.abs(row.sourceLine - cursorLine)
-              : row.sourceLine + 1;
-        drawCells(
-          buf,
-          theme.style(isCursor && k === 0 ? "gutterCursor" : "gutter"),
-          this.x,
-          y + i,
-          `${String(num).padStart(gw - 1)} `,
-          gw,
-        );
+        if (k === 0) gutter(number(), i, row.sign);
+        else gutter("", i);
         const end = starts[k + 1];
         paintLine(
           buf,
           theme,
-          { x: this.x + gw, y: y + i, width: Math.max(0, this.width - gw) },
+          { x: this.x + gw, y: y + i, width: textW },
           row.spans,
           {
             leftCol: start,
@@ -381,46 +510,79 @@ export class EditorView extends Renderable {
         theme.style("dim"),
         this.x,
         y + i,
-        "~".padStart(gw),
+        "~".padStart(gw - 1),
         this.width,
       );
   }
 
-  private layout(
+  /**
+   * Lay out `rows` rows from `top` with the view's providers. A view with an
+   * `input` hook gets the input it builds from the analysis and the file
+   * type's window context; a failing layout gives the raw lines.
+   */
+  private layoutFrame(
     s: AppState,
     b: BufferState,
+    top: number,
     rows: number,
     cursor: { line: number; col: number },
     width: number,
   ): RenderLine[] {
-    const view = {
+    const selection =
+      this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
+    const view: TextView = {
       buf: b.text,
       width,
-      topRow: this.topLine,
+      topRow: top,
       rows,
       cursor,
-      folds: new Set<number>(),
-      visible: { from: this.topLine, to: this.topLine + rows },
+      folds: NO_FOLDS,
+      visible: { from: top, to: top + rows },
+      ...(selection === undefined ? {} : { selection }),
     };
     try {
       const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
-      const selection =
-        this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
-      return layoutText(
-        view,
-        [
-          highlightMarks(ft?.highlighter),
-          ...(spec?.decorations ?? []),
-          searchMarks(s.vim.search),
-          selectionMarks(selection),
-        ],
-        b.analysis,
-      );
+      const host: ViewHost = {
+        width,
+        rows,
+        imageSize: (path) => this.deps.images.size(path),
+        cellAspect: this.deps.images.cellAspect(),
+      };
+      const input =
+        spec?.input === undefined
+          ? b.analysis
+          : spec.input(
+              b.analysis,
+              this.deps.reg.viewContexts.build(
+                b.fileType,
+                s,
+                this.windowId,
+                host,
+              ),
+            );
+      const providers = [
+        highlightMarks(ft?.highlighter),
+        ...(spec?.decorations ?? []),
+        searchMarks(s.vim.search),
+        selectionMarks(selection),
+      ];
+      // Lines a view hides take no rows, so the visible lines grow by the
+      // rows still empty, a few times at most: never more lines than rows.
+      let lines = layoutText(view, providers, input);
+      for (let more = 0; more < FILL_PASSES; more++) {
+        const short = rows - usedRows(lines);
+        if (short <= 0 || view.visible.to >= b.text.lineCount) break;
+        view.visible = { from: top, to: view.visible.to + short };
+        lines = layoutText(view, providers, input);
+      }
+      this.laidTo = view.visible.to;
+      return lines;
     } catch {
       const out: RenderLine[] = [];
-      const last = Math.min(b.text.lineCount, this.topLine + rows);
-      for (let l = this.topLine; l < last; l++)
+      const last = Math.min(b.text.lineCount, top + rows);
+      this.laidTo = last;
+      for (let l = top; l < last; l++)
         out.push({
           sourceLine: l,
           spans: [{ text: b.text.line(l), style: "text" }],

@@ -105,7 +105,7 @@ for (const [cols, rows] of [
       const status = segments(await m.row(-2));
       expect(status).toEqual(
         cols >= 100
-          ? ["NORMAL", "source", "scripts/sync.ts", "1:1"]
+          ? ["NORMAL", "source", "scripts/sync.ts", "preview off", "1:1"]
           : ["NORMAL", "scripts/sync.ts", "1:1"],
       );
       expect(await m.frame()).toMatchSnapshot();
@@ -118,9 +118,10 @@ test("a note shows its word count on wide terminals only", async () => {
   openNote(m, "notes/ideas.md", IDEAS_MD);
   expect(segments(await m.row(-2))).toEqual([
     "NORMAL",
-    "source",
+    "live",
     "notes/ideas.md",
     "11 words",
+    "preview off",
     "1:1",
   ]);
   m.t.resize(80, 24);
@@ -129,6 +130,71 @@ test("a note shows its word count on wide terminals only", async () => {
     "notes/ideas.md",
     "1:1",
   ]);
+});
+
+test("the statusline shows the preview port after the word count", async () => {
+  m = await mountShell({ cols: 120, rows: 36 });
+  openNote(m, "notes/plan.md", NOTES["notes/plan.md"] ?? "");
+  indexFixture(m);
+  m.keys(":Preview<CR>");
+  expect(segments(await m.row(-2))).toContain("preview …");
+  m.store.dispatch({ type: "previewStarted", port: 8731 });
+  expect(segments(await m.row(-2))).toEqual([
+    "NORMAL",
+    "live",
+    "notes/plan.md",
+    "← 31 backlinks",
+    "14 words",
+    "preview :8731",
+    "◆ index ready",
+    "1:1",
+  ]);
+  m.open("scripts/sync.ts", SYNC_TS);
+  expect(segments(await m.row(-2))).toEqual([
+    "NORMAL",
+    "source",
+    "scripts/sync.ts",
+    "jump 2/2",
+    "preview :8731",
+    "◆ index ready",
+    "1:1",
+  ]);
+  m.t.resize(80, 24);
+  expect(segments(await m.row(-2))).toEqual([
+    "NORMAL",
+    "scripts/sync.ts",
+    "jump 2/2",
+    "◆ index ready",
+    "1:1",
+  ]);
+});
+
+test("narrow statuslines drop preview, words, then view", async () => {
+  const longNote = (n: number) => `notes/${"a".repeat(n - 9)}.md`;
+  const shown = async (n: number, cols = 120) => {
+    m?.destroy();
+    m = await mountShell({ cols, rows: 36 });
+    openNote(m, longNote(n), "# Long\n");
+    return segments(await m.row(-2));
+  };
+  expect(await shown(70)).toEqual([
+    "NORMAL",
+    "live",
+    longNote(70),
+    "2 words",
+    "preview off",
+    "1:1",
+  ]);
+  expect(await shown(80)).toEqual([
+    "NORMAL",
+    "live",
+    longNote(80),
+    "2 words",
+    "1:1",
+  ]);
+  expect(await shown(90)).toEqual(["NORMAL", "live", longNote(90), "1:1"]);
+  expect(await shown(100)).toEqual(["NORMAL", longNote(100), "1:1"]);
+  expect(await shown(20, 80)).toEqual(["NORMAL", longNote(20), "1:1"]);
 });
 
 test("the explorer marks notes by their registered file type, in any case", async () => {
@@ -172,7 +238,7 @@ test("a window whose layout throws still shows the file's raw lines", async () =
   });
   openNote(m, "notes/data.broken", "first line\n\tsecond line\n");
   const body = (await m.frame()).split("\n").slice(1, 4);
-  expect(body[0]).toStartWith("   1 first line");
+  expect(body[0]).toStartWith("   1  first line");
   expect(body[1]).toContain("second line");
   expect(body[2]).toStartWith("    ~");
 });
@@ -273,10 +339,11 @@ describe("index and panels at 120×36", () => {
     expect(frame).toContain("✓ index ready");
     expect(segments(await m.row(-2))).toEqual([
       "NORMAL",
-      "source",
+      "live",
       "notes/plan.md",
       "← 31 backlinks",
       "14 words",
+      "preview off",
       "◆ index ready",
       "1:1",
     ]);
@@ -313,7 +380,7 @@ describe("index and panels at 120×36", () => {
     expect(frame).toMatchSnapshot();
   });
 
-  test("a code file shows source, path, index, and position only", async () => {
+  test("a code file shows source, path, preview, index, and position only", async () => {
     m = await mountShell({ cols: 120, rows: 36 });
     indexFixture(m);
     m.advance(3000);
@@ -322,6 +389,7 @@ describe("index and panels at 120×36", () => {
       "NORMAL",
       "source",
       "scripts/sync.ts",
+      "preview off",
       "◆ index ready",
       "1:1",
     ]);

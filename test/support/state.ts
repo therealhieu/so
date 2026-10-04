@@ -12,15 +12,23 @@ import { UndoHistory } from "../../src/core/kernel/editor/undo";
 import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
+import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { initialState } from "../../src/core/state/init";
+import { editorBindings, nextLineCommand } from "../../src/core/state/keys";
 import {
   linkBindings,
   linkCommands,
   linkGroups,
 } from "../../src/core/state/link-commands";
+import {
+  markdownBindings,
+  markdownCommands,
+} from "../../src/core/state/markdown-commands";
+import { markdownViewContext } from "../../src/core/state/markdown-view";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
+import { ViewContextRegistry } from "../../src/core/state/view-context";
 
 export const boot = {
   root: "/ws",
@@ -37,12 +45,23 @@ export function testRegistries(): Registries {
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
+  for (const c of markdownCommands) commands.register(c);
+  commands.register(nextLineCommand);
+  const viewContexts = new ViewContextRegistry();
+  viewContexts.register("markdown", markdownViewContext);
+  builtinRenderers();
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    bindings: [...defaultBindings, ...linkBindings],
+    bindings: [
+      ...defaultBindings,
+      ...editorBindings,
+      ...linkBindings,
+      ...markdownBindings,
+    ],
     groups: { ...defaultGroups, ...linkGroups },
+    viewContexts,
   };
 }
 

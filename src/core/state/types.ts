@@ -3,6 +3,7 @@ import type { ConfigResult } from "../config/toml";
 import type { NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
+import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
@@ -83,11 +84,23 @@ export type BufferState = {
   closing?: true;
   /** The file type's analysis of `text` at its current version (`Doc` for Markdown). */
   analysis?: unknown;
+  /** Absent means listed; an unlisted buffer is an embed target, never shown or persisted. */
+  listed?: false;
+  /** On a listed note: embed targets whose read is outstanding, and those refused. Never persisted. */
+  embeds?: { requested: string[]; refused: string[] };
 };
 
 export type WindowState = {
   id: WindowId;
-  content: { editor: "text"; bufferId: BufferId; cursor: Pos; scroll: number };
+  content: {
+    /** The editor kind showing the buffer: its file type's kind when registered, else "text". */
+    editor: EditorKind;
+    bufferId: BufferId;
+    cursor: Pos;
+    scroll: number;
+    /** Block ids toggled from their default fold in this window. Never persisted. */
+    folds?: number[];
+  };
 };
 
 export type TerminalState = {
@@ -228,6 +241,12 @@ export type LinkRewrite = {
 
 export type Toast = { id: number; level: "info" | "error"; text: string };
 
+/** The browser preview server: off, starting, or listening on a loopback port. Never persisted. */
+export type PreviewState =
+  | { status: "off" }
+  | { status: "starting" }
+  | { status: "on"; port: number };
+
 export type MouseEvent = { kind: "scroll"; delta: number };
 
 export type AppState = {
@@ -269,13 +288,20 @@ export type AppState = {
   jumps: JumpList;
   /** Workspace paths, most recently opened first. */
   recent: string[];
+  preview: PreviewState;
 };
 
 export type Action =
   | { type: "key"; key: Key; now: number }
   | { type: "resize"; cols: number; rows: number }
-  | { type: "fileLoaded"; path: string; file: TextFile }
-  | { type: "fileRefused"; path: string; reason: "binary" | "tooLarge" | "io" }
+  /** `embed` answers a read a note's embed sent (see the `read` effect). */
+  | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
+  | {
+      type: "fileRefused";
+      path: string;
+      reason: "binary" | "tooLarge" | "io";
+      embed?: true;
+    }
   | { type: "saved"; path: string; stamp: Stamp }
   | { type: "saveFailed"; path: string; reason: string }
   | { type: "fileChanged"; event: FileEvent }
@@ -316,10 +342,15 @@ export type Action =
       text?: string;
       stamp?: Stamp;
       reason?: string;
-    };
+    }
+  | { type: "previewStarted"; port: number }
+  | { type: "previewStopped" }
+  | { type: "previewFailed"; reason: string }
+  | { type: "openUrlFailed"; url: string; reason: string };
 
 export type Effect =
-  | { kind: "read"; path: string }
+  /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
+  | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
   | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
   | { kind: "listDir"; dir: string }
@@ -340,7 +371,10 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
-  | { kind: "applyEdits"; batch: number; edit: FileEdit };
+  | { kind: "applyEdits"; batch: number; edit: FileEdit }
+  | { kind: "startPreview" }
+  | { kind: "stopPreview" }
+  | { kind: "openUrl"; url: string };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

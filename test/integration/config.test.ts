@@ -18,6 +18,7 @@ import {
   readConfigTextSync,
 } from "../../src/workspace/config-file";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
+import { createImageLoader } from "../../src/workspace/images";
 import { createLogger } from "../../src/workspace/log";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
@@ -65,6 +66,8 @@ async function start(config?: string) {
     exit: () => {},
     logger: createLogger({}, base),
     configPath: path,
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: async () => {},
   });
   const store: Store = createStore(
     initialState({ root, cols: 80, rows: 24, color: "color" }),
@@ -78,7 +81,11 @@ async function start(config?: string) {
       result: parseConfig(text),
       reload: false,
     });
-  const shell = createShell(t.renderer, { reg, now: clock });
+  const shell = createShell(t.renderer, {
+    reg,
+    now: clock,
+    loadImage: createImageLoader(root),
+  });
   shell.attach(store);
 
   const keys = (seq: string) => {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { WindowTree } from "../kernel/editor/windows";
-import { leaves } from "./buffers";
+import { leaves, listedBuffers } from "./buffers";
 import { JUMP_LIMIT } from "./jumps";
 import { RECENT_LIMIT } from "./recent";
 import { none, toast } from "./result";
@@ -87,7 +87,7 @@ export function snapshotSession(s: AppState): PersistedState {
     version: 1,
     recent: s.recent,
     jumps: s.jumps,
-    buffers: Object.values(s.buffers)
+    buffers: listedBuffers(s)
       .sort((a, b) => a.id - b.id)
       .map((b) => ({ path: b.path, view: b.view })),
     layout: { tree: s.windows.tree, active: s.windows.active, windows },

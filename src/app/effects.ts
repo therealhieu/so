@@ -21,6 +21,7 @@ import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
+import type { PreviewHost } from "./preview-host";
 
 /**
  * What the runner needs. `exit` is read at call time, so `main` can bind it
@@ -46,6 +47,10 @@ export type RunnerDeps = {
    * are reported to it, since the watcher keeps them silent.
    */
   index?: Pick<IndexHost, "search" | "notify">;
+  /** The one preview server's owner. */
+  preview: Pick<PreviewHost, "start" | "stop">;
+  /** Opens an address in the user's browser; rejects when no browser could be launched. */
+  openUrl: (url: string) => Promise<void>;
 };
 
 export type EffectRunner = {
@@ -175,13 +180,19 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
             return { refused: "io" as const };
           })
-          .then((r) =>
+          .then((r) => {
+            const embed = e.embed === true ? { embed: true as const } : {};
             d.dispatch(
               "refused" in r
-                ? { type: "fileRefused", path: e.path, reason: r.refused }
-                : { type: "fileLoaded", path: e.path, file: r },
-            ),
-          );
+                ? {
+                    type: "fileRefused",
+                    path: e.path,
+                    reason: r.refused,
+                    ...embed,
+                  }
+                : { type: "fileLoaded", path: e.path, file: r, ...embed },
+            );
+          });
         return;
       case "listDir":
         void listDir(d.root, e.dir, d.matcher).then(
@@ -347,7 +358,22 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             d.dispatch({ type: "configLoaded", result, reload: true });
           });
         return;
+      case "startPreview":
+        d.preview.start();
+        return;
+      case "stopPreview":
+        void d.preview.stop();
+        d.dispatch({ type: "previewStopped" });
+        return;
+      case "openUrl":
+        void d.openUrl(e.url).catch((x) => {
+          d.logger.error("browser.openFailed", { reason: msg(x) });
+          d.dispatch({ type: "openUrlFailed", url: e.url, reason: msg(x) });
+        });
+        return;
     }
+    const unhandled: never = e;
+    throw new Error(`unknown effect: ${JSON.stringify(unhandled)}`);
   };
 
   return {

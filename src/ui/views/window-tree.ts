@@ -53,6 +53,8 @@ function place(
 export class WindowTree extends Renderable {
   private s: AppState | undefined;
   private readonly views = new Map<WindowId, EditorView>();
+  /** The editor kind each window's view was created for. */
+  private readonly kinds = new Map<WindowId, string>();
   private seps: Rect[] = [];
 
   constructor(
@@ -77,20 +79,25 @@ export class WindowTree extends Renderable {
     const rects = new Map<WindowId, Rect>();
     this.seps = [];
     place(s.windows.tree, body, rects, this.seps);
+    const kindOf = (id: WindowId) =>
+      s.windows.byId[id]?.content.editor ?? "text";
+    // A window whose editor kind changed gets a new view.
     for (const [id, view] of this.views)
-      if (!rects.has(id)) {
+      if (!rects.has(id) || this.kinds.get(id) !== kindOf(id)) {
         this.remove(view);
         view.destroy();
         this.views.delete(id);
+        this.kinds.delete(id);
       }
     for (const [id, r] of rects) {
       let view = this.views.get(id);
       if (view === undefined) {
-        const kind = s.windows.byId[id]?.content.editor ?? "text";
+        const kind = kindOf(id);
         const create = editorViews.get(kind) ?? editorViews.get("text");
         if (create === undefined) continue;
         view = create(this.ctx, this.deps);
         this.views.set(id, view);
+        this.kinds.set(id, kind);
         this.add(view);
       }
       view.show(s, id, r, rects.size > 1);

@@ -80,3 +80,20 @@ export async function detectClipboard(
     );
   return osc52Provider(osc52);
 }
+
+/** What `openUrl` needs from a process launcher; `Bun.spawn` by default. */
+type Launch = (
+  argv: string[],
+  o: { stdout: "ignore"; stderr: "ignore" },
+) => { exited: Promise<number> };
+
+/** Open `url` in the default browser: `open` on macOS, `xdg-open` elsewhere. Rejects when the launcher fails or is missing. */
+export async function openUrl(
+  url: string,
+  platform: string,
+  spawn: Launch = Bun.spawn,
+): Promise<void> {
+  const argv = [platform === "darwin" ? "open" : "xdg-open", url];
+  const p = spawn(argv, { stdout: "ignore", stderr: "ignore" });
+  if ((await p.exited) !== 0) throw new Error(`${argv[0]} failed`);
+}

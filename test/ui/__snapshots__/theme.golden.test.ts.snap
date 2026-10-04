@@ -2,17 +2,17 @@
 
 exports[`picker selection stays visible without colour: marker and reverse video 1`] = `
 " plan.md                                                                                                        ~/notes 
-   1 # Plan                                                                                                             
+   1 ▕# Plan                                                                                                            
    1                                                                                                                    
-   2 Why this exists.                                                                                                   
+   2  Why this exists.                                                                                                  
    3        ╭─ Find files ─────────────────────────────────────────────────────────────────────────────────╮            
-   4 ## Goal│ ❯                                                18/18 │ config.yaml                         │            
+   4  ▊ Goal│ ❯                                                18/18 │ config.yaml                         │            
    5        │ ────────────────────────────────────────────────────── │                                     │            
-   6 Ship th│   notes/plan.md                                        │ loading…                            │            
+   6  Ship t│   notes/plan.md                                        │ loading…                            │            
    7        │ ▸ config.yaml                                          │                                     │            
-   8 ## Risk│   log/day-01.md                                        │                                     │            
+   8  ▊ Risk│   log/day-01.md                                        │                                     │            
    9        │   log/day-02.md                                        │                                     │            
-  10 Scope. │   log/day-03.md                                        │                                     │            
+  10  Scope.│   log/day-03.md                                        │                                     │            
     ~       │   log/day-04.md                                        │                                     │            
     ~       │   log/day-05.md                                        │                                     │            
     ~       │   log/day-06.md                                        │                                     │            
@@ -35,7 +35,7 @@ exports[`picker selection stays visible without colour: marker and reverse video
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+ NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
 2/18 config.yaml                                                                                                        
 "
 `;
@@ -57,17 +57,17 @@ exports[`picker selection matches the light theme golden 1`] = `
 
 exports[`picker selection matches the light theme golden 2`] = `
 " plan.md                                                                                                        ~/notes 
-   1 # Plan                                                                                                             
+   1 ▕# Plan                                                                                                            
    1                                                                                                                    
-   2 Why this exists.                                                                                                   
+   2  Why this exists.                                                                                                  
    3        ╭─ Find files ─────────────────────────────────────────────────────────────────────────────────╮            
-   4 ## Goal│ ❯                                                18/18 │ config.yaml                         │            
+   4  ▊ Goal│ ❯                                                18/18 │ config.yaml                         │            
    5        │ ────────────────────────────────────────────────────── │                                     │            
-   6 Ship th│   notes/plan.md                                        │ loading…                            │            
+   6  Ship t│   notes/plan.md                                        │ loading…                            │            
    7        │ ▸ config.yaml                                          │                                     │            
-   8 ## Risk│   log/day-01.md                                        │                                     │            
+   8  ▊ Risk│   log/day-01.md                                        │                                     │            
    9        │   log/day-02.md                                        │                                     │            
-  10 Scope. │   log/day-03.md                                        │                                     │            
+  10  Scope.│   log/day-03.md                                        │                                     │            
     ~       │   log/day-04.md                                        │                                     │            
     ~       │   log/day-05.md                                        │                                     │            
     ~       │   log/day-06.md                                        │                                     │            
@@ -90,24 +90,24 @@ exports[`picker selection matches the light theme golden 2`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+ NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
 2/18 config.yaml                                                                                                        
 "
 `;
 
 exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = `
 " plan.md                                                                        
-   1 # Plan                                                                     
+   1 ▕# Plan                                                                    
    1                                                                            
-   2 Why╭─ Find files ─────────────────────────────────────────────────╮        
+   2  Wh╭─ Find files ─────────────────────────────────────────────────╮        
    3    │ ❯                                                      18/18 │        
-   4 ## │ ──────────────────────────────────────────────────────────── │        
+   4  ▊ │ ──────────────────────────────────────────────────────────── │        
    5    │   notes/plan.md                                              │        
-   6 Shi│ ▸ config.yaml                                                │        
+   6  Sh│ ▸ config.yaml                                                │        
    7    │   log/day-01.md                                              │        
-   8 ## │   log/day-02.md                                              │        
+   8  ▊ │   log/day-02.md                                              │        
    9    │   log/day-03.md                                              │        
-  10 Sco│   log/day-04.md                                              │        
+  10  Sc│   log/day-04.md                                              │        
     ~   │   log/day-05.md                                              │        
     ~   │   log/day-06.md                                              │        
     ~   │   log/day-07.md                                              │        
@@ -120,5 +120,86 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
     ~                                                                           
  NORMAL  │ notes/plan.md │ ← 31 backlinks │ ◆ index ready                   1:1 
 2/18 config.yaml                                                                
+"
+`;
+
+exports[`live view states stay distinguishable without colour at 80×24 1`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/states.md                                                  1:1 
+                                                                                
+"
+`;
+
+exports[`live view states matches the light theme golden 1`] = `
+{
+  "error": {
+    "attrs": 1,
+    "bg": "225,226,231,255",
+    "fg": "198,67,67,255",
+  },
+  "resolved": {
+    "attrs": 8,
+    "bg": "225,226,231,255",
+    "fg": "0,113,151,255",
+  },
+  "reveal": {
+    "attrs": 0,
+    "bg": "225,226,231,255",
+    "fg": "140,108,62,255",
+  },
+  "unresolved": {
+    "attrs": 8,
+    "bg": "225,226,231,255",
+    "fg": "198,67,67,255",
+  },
+}
+`;
+
+exports[`live view states matches the light theme golden 2`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/states.md                                                  1:1 
+                                                                                
 "
 `;

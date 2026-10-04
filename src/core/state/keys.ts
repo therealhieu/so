@@ -1,11 +1,25 @@
+import type { Binding } from "../kernel/commands/defaults";
+import type { Command } from "../kernel/commands/registry";
 import type { Register } from "../kernel/editor/registers";
 import { handleKey } from "../kernel/vim/engine";
 import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
-import { activeBuffer, activeWindow, setBuffer } from "./buffers";
-import { EX_ALIASES, executeEx, runCommand } from "./commands";
+import {
+  activeBuffer,
+  activeWindow,
+  READ_ONLY_HINT,
+  readOnlyView,
+  setBuffer,
+} from "./buffers";
+import {
+  type CommandContext,
+  type CommandResult,
+  EX_ALIASES,
+  executeEx,
+  runCommand,
+} from "./commands";
 import { completionKey, maybeOpenCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
@@ -201,7 +215,30 @@ export function typeKeys(
   );
 }
 
-/** Feed one key to the engine for the active buffer and apply its effects. */
+/** Normal `Enter` where no file type binds it: the next line's first non-blank, as in Vim. */
+export const nextLineCommand: Command<CommandContext, CommandResult> = {
+  id: "cursor.nextLine",
+  title: "Next line",
+  run: (c) => typeKeys(c.state, ["j", "^"], c.now, c.reg),
+};
+
+export const editorBindings: readonly Binding[] = [
+  { scope: { mode: "normal" }, seq: "<CR>", id: "cursor.nextLine" },
+];
+
+/** A refused edit leaves no pending operator and ends Visual mode. */
+function refusedKey(s: AppState): AppState {
+  const { visualAnchor: _, ...vim } = s.vim;
+  return s.vim.mode === "visual" || s.vim.mode === "visualLine"
+    ? { ...s, vim: { ...vim, mode: "normal", pending: [] } }
+    : setVim(s, { pending: [] });
+}
+
+/**
+ * Feed one key to the engine for the active buffer and apply its effects. In
+ * a read-only view a key that would edit the text or enter Insert is dropped
+ * whole, with a hint; motions still move.
+ */
 function runVim(
   s: AppState,
   key: Key,
@@ -219,6 +256,11 @@ function runVim(
     key,
     env,
   );
+  if (
+    (r.s.text !== b.text || r.s.vim.mode === "insert") &&
+    readOnlyView(reg, b)
+  )
+    return message(refusedKey(s), READ_ONLY_HINT);
   const { line } = r.s.cursor;
   const top = w.content.scroll;
   const scroll =

@@ -6,7 +6,7 @@
 
 **History:** `rm261003abzp-ui-requirements-revisions.md`
 
-**Approved Requirements and System Design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+**Approved Requirements and System Design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 
 **Mockup Manifest:** `ui-mockups/manifest.md`
 
@@ -176,7 +176,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
   - Clicking a wikilink navigates the preview only and shows a banner offering to follow the terminal again; unresolved links are styled as unresolved and explain how to create them in `so` (M7 S3).
   - The page follows the OS colour scheme with a toggle override; system fonts and GitHub-like Markdown styling (M7 S4, S5).
   - At 375 px the header wraps, margins shrink, and wide tables and code scroll inside their box without page-level horizontal scroll (M7 S10).
-- **Source Evidence:** RM261003ABZP-REQ8@R2, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES13@R2
+- **Source Evidence:** RM261003ABZP-REQ8@R2, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES13@R3
 - **Accepted Mockups:** RM261003ABZP-M7@R1
 - **Feedback or Decision Evidence:** Acceptance; AD3 with A:Browser preview page
 - **Dependencies:** None
@@ -199,7 +199,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
 
 - **Assumption:** Mockup content (sample `~/notes`, clock Saturday 2026-10-03 08:12, 10,000-note counts, `view.zen` override example) is illustrative data, not product behavior (A:Mockup clock and data).
 - **Assumption:** Colours, glyphs, and spacing approximate an OpenTUI render; exact cell metrics and image placement come from the real renderer (manifest Open Items "Visual fidelity").
-- **Exclusion:** The browser mockup's MathML and inline SVG are offline stand-ins; the product uses KaTeX and Mermaid per RM261003ABZP-REQ8@R2 and RM261003ABZP-DES13@R2 (A:Browser preview page).
+- **Exclusion:** The browser mockup's MathML and inline SVG are offline stand-ins; the product uses KaTeX and Mermaid per RM261003ABZP-REQ8@R2 and RM261003ABZP-DES13@R3 (A:Browser preview page).
 - **Exclusion:** Code-intelligence UI (diagnostics, hovers, go-to-definition) and notebook UI — deferred by RM261003ABZP-REQ1@R3 and RM261003ABZP-REQ11@R3; v1 binds no keys for them.
 - **Exclusion:** Mockup-only review chrome (state sidebar, viewport and theme toggles, captions, the `index.html` hub) is not product UI.
 - **Deferral:** Kanban `type` string confirmation — owned by RM261003ABZP-REQ7@R2 and RM261003ABZP-DES12@R2; the UI does not depend on it (manifest Open Items). Trigger: before Kanban ships.
@@ -217,7 +217,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
 | RM261003ABZP-REQ1@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES17@R1 | RM261003ABZP-M4@R1 (S10–S17); RM261003ABZP-M1@R1 (S6, S9) | Acceptance; AD3; AD4; Feedback Ledger cycle 2 | RM261003ABZP-UREQ7@R2 |
 | RM261003ABZP-REQ6@R2, RM261003ABZP-DES11@R1 | RM261003ABZP-M5@R2 (S1–S14) | Acceptance; feedback cycle 1; AD2; AD3 | RM261003ABZP-UREQ8@R2 |
 | RM261003ABZP-REQ7@R2, RM261003ABZP-DES12@R2 | RM261003ABZP-M6@R1 (S1–S16) | Acceptance; AD3 | RM261003ABZP-UREQ9@R1 |
-| RM261003ABZP-REQ8@R2, RM261003ABZP-DES13@R2 | RM261003ABZP-M7@R1 (S1–S10) | Acceptance; AD3 | RM261003ABZP-UREQ10@R1 |
+| RM261003ABZP-REQ8@R2, RM261003ABZP-DES13@R3 | RM261003ABZP-M7@R1 (S1–S10) | Acceptance; AD3 | RM261003ABZP-UREQ10@R1 |
 | RM261003ABZP-REQ11@R3, RM261003ABZP-DES10@R2 | RM261003ABZP-M1@R1 … RM261003ABZP-M7@R1 (theme/viewport variants) | Acceptance; AD3 | RM261003ABZP-UREQ11@R1 |
 
 ## Readiness

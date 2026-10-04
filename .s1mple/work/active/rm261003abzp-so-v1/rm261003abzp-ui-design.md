@@ -11,7 +11,7 @@
 - **UI context:** `rm261003abzp-ui-context.md@R2`
 - **UI requirements:** `rm261003abzp-ui-requirements.md`; history: `rm261003abzp-ui-requirements-revisions.md`
 - **Current UI requirement revisions:** RM261003ABZP-UREQ1@R2, RM261003ABZP-UREQ2@R1, RM261003ABZP-UREQ3@R2, RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ5@R2, RM261003ABZP-UREQ6@R1, RM261003ABZP-UREQ7@R2, RM261003ABZP-UREQ8@R2, RM261003ABZP-UREQ9@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ11@R1
-- **Requirements and system design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Requirements and system design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 - **Mockup manifest:** `ui-mockups/manifest.md`
 - **Accepted mockups:** RM261003ABZP-M1@R1, RM261003ABZP-M2@R1, RM261003ABZP-M3@R1, RM261003ABZP-M4@R1, RM261003ABZP-M5@R2, RM261003ABZP-M6@R1, RM261003ABZP-M7@R1 (shared R1) — delegated acceptance; the user's explicit review is pending (manifest Acceptance)
 - **Accepted feedback and decisions:** manifest Accepted Decisions (AD1 help key, AD2 config key `[daily] format`, AD3 Assumptions accepted as v1 baseline, AD4 non-Markdown file states reuse accepted visuals), Feedback Ledger cycles 1 and 2, Assumptions
@@ -59,7 +59,7 @@ Notation: "A:<topic>" is a manifest Assumptions entry accepted by the Assumption
 
 - **Goal:** Realize the accepted mockups as one LazyVim-style terminal shell whose every surface is keyboard-first, theme- and NO_COLOR-safe, and works at 80×24, plus a read-only browser page — using only the system contracts in `rm261003abzp-design.md`.
 - **In scope:** application shell and status feedback; vim mode presentation and command line; live-preview presentation; source view for non-Markdown text files and refused-file messages; interactive blocks and image tiers; which-key, pickers, palette, completion, help; link interactions; explorer file operations and disk-change resolution; daily-note calendar and template flows; Bases table and Kanban views; browser preview page; themes, NO_COLOR, narrow layout, input, accessibility.
-- **Out of scope:** mockup review chrome (state sidebar, toggles, captions, `index.html`); offline MathML/SVG stand-ins in M7 (the product uses KaTeX and Mermaid, RM261003ABZP-DES13@R2); AI, vault, and Git surfaces (RM261003ABZP-REQ1@R3 scope); code-intelligence UI (diagnostics, hovers, go-to-definition) and notebook UI (RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3 deferrals); Cards/List/Map Bases layouts beyond the table fallback (RM261003ABZP-REQ7@R2 deferral).
+- **Out of scope:** mockup review chrome (state sidebar, toggles, captions, `index.html`); offline MathML/SVG stand-ins in M7 (the product uses KaTeX and Mermaid, RM261003ABZP-DES13@R3); AI, vault, and Git surfaces (RM261003ABZP-REQ1@R3 scope); code-intelligence UI (diagnostics, hovers, go-to-definition) and notebook UI (RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3 deferrals); Cards/List/Map Bases layouts beyond the table fallback (RM261003ABZP-REQ7@R2 deferral).
 - **Unresolved items:** None — every Required System Support row has current REQ/DES coverage.
 
 ## Users and Tasks
@@ -81,8 +81,8 @@ Notation: "A:<topic>" is a manifest Assumptions entry accepted by the Assumption
 | RM261003ABZP-REQ1@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES17@R1 | RM261003ABZP-M4@R1, RM261003ABZP-M1@R1 | Acceptance; AD3 (A:Extra keys, A:Behaviour details); AD4 | RM261003ABZP-UREQ7@R2 | RM261003ABZP-UDES7@R2 | Surface: File operations and disk changes; Component: Prompt; Component: Conflict dialog and diff | RM261003ABZP-US5@R2 | RM261003ABZP-UV6@R2 | Covered |
 | RM261003ABZP-REQ6@R2, RM261003ABZP-DES11@R1 | RM261003ABZP-M5@R2 | Acceptance; feedback cycle 1; AD2; AD3 (A:Extra keys, A:Behaviour details) | RM261003ABZP-UREQ8@R2 | RM261003ABZP-UDES8@R1 | Surface: Daily notes and templates; Component: Calendar; Component: Picker | RM261003ABZP-US6@R1 | RM261003ABZP-UV7@R1 | Covered |
 | RM261003ABZP-REQ7@R2, RM261003ABZP-DES12@R2 | RM261003ABZP-M6@R1 | Acceptance; AD3 (A:Extra keys, A:Behaviour details) | RM261003ABZP-UREQ9@R1 | RM261003ABZP-UDES9@R1 | Surface: Bases views; Component: Base table; Component: Kanban board | RM261003ABZP-US7@R1 | RM261003ABZP-UV8@R1 | Covered |
-| RM261003ABZP-REQ8@R2, RM261003ABZP-DES13@R2 | RM261003ABZP-M7@R1 | Acceptance; AD3 (A:Browser preview page) | RM261003ABZP-UREQ10@R1 | RM261003ABZP-UDES10@R1 | Surface: Browser preview page | RM261003ABZP-US8@R1 | RM261003ABZP-UV9@R1 | Covered |
-| RM261003ABZP-REQ11@R3, RM261003ABZP-DES10@R2 | RM261003ABZP-M1@R1 … RM261003ABZP-M7@R1 (M5@R2) | Acceptance; AD3 (A:Visual language, A:Accessibility) | RM261003ABZP-UREQ11@R1 | RM261003ABZP-UDES11@R1 | Section 5 policies; Component: Theme | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1 | Covered |
+| RM261003ABZP-REQ8@R2, RM261003ABZP-DES13@R3 | RM261003ABZP-M7@R1 | Acceptance; AD3 (A:Browser preview page) | RM261003ABZP-UREQ10@R1 | RM261003ABZP-UDES10@R2 | Surface: Browser preview page | RM261003ABZP-US8@R1 | RM261003ABZP-UV9@R2 | Covered |
+| RM261003ABZP-REQ11@R3, RM261003ABZP-DES10@R2 | RM261003ABZP-M1@R1 … RM261003ABZP-M7@R1 (M5@R2) | Acceptance; AD3 (A:Visual language, A:Accessibility) | RM261003ABZP-UREQ11@R1 | RM261003ABZP-UDES11@R1 | Section 5 policies; Component: Theme | RM261003ABZP-US9@R1 | RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R2 | Covered |
 
 ## Constraints and Dependencies
 
@@ -96,7 +96,7 @@ Notation: "A:<topic>" is a manifest Assumptions entry accepted by the Assumption
 
 | UI Design | Required System Support | Current Coverage |
 |---|---|---|
-| RM261003ABZP-UDES1@R2 | `AppState` windows (split tree, active, content by editor kind), panels (explorer, side-panel kind), notifications, index status, preview status; active buffer's `fileType` and `view` (statusline segments); outline from `Doc` headings; backlinks count from `NoteIndex`; save failure and retry state | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES2@R2 (AppState), RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1 (save failure flow), RM261003ABZP-DES10@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1 |
+| RM261003ABZP-UDES1@R2 | `AppState` windows (split tree, active, content by editor kind), panels (explorer, side-panel kind), notifications, index status, preview status; active buffer's `fileType` and `view` (statusline segments); outline from `Doc` headings; backlinks count from `NoteIndex`; save failure and retry state | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES2@R2 (AppState), RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1 (save failure flow), RM261003ABZP-DES10@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R1 |
 | RM261003ABZP-UDES2@R1 | Mode in `AppState.vim`; keymap modes incl. `explorer`, `picker`, `base`; ex-command errors; cursor shape | RM261003ABZP-REQ2@R2; RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2 (`Mode` union), RM261003ABZP-DES10@R2 |
 | RM261003ABZP-UDES3@R2 | `layoutText` over the view's decoration providers (Markdown `livePreview` with reveal rules and block renderers; highlighter `mark` decorations), `line` decorations carrying the `▕` sign, `StyleToken`s, selection-aware reveal; the buffer's file type and highlighter; note-only commands limited by `filetypes` | RM261003ABZP-REQ5@R2, RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4; RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES17@R1 |
 | RM261003ABZP-UDES4@R1 | Task toggle command; callout fold and embed expand state per window passed into layout; image tier selection; `preview.embedMaxRows`, `preview.images` config | RM261003ABZP-REQ5@R2; RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1; `windows[].content.folds` and `TextView.folds` (RM261003ABZP-DES2@R2, RM261003ABZP-DES9@R3) |
@@ -105,7 +105,7 @@ Notation: "A:<topic>" is a manifest Assumptions entry accepted by the Assumption
 | RM261003ABZP-UDES7@R2 | Explorer create/rename/move/delete effects; trash availability result; `planRename` for move preview; conflict state with keep/take/diff; line diff of buffer vs disk; autosave paused while a conflict is open; undoable reload; `readTextFile` refusal (`fileRefused` with `binary` or `tooLarge`) and its notification | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ4@R3; RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1 (conflict rules, trash, view diff), RM261003ABZP-DES17@R1 (open policy) |
 | RM261003ABZP-UDES8@R1 | `note.today/yesterday/tomorrow/pickDate`, `template.insert`, `note.new`; existing daily notes for calendar marks from `NoteIndex` paths; template preview via `expandTemplate`; `[daily] format` | RM261003ABZP-REQ6@R2; RM261003ABZP-DES11@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES14@R1; overlay variants `calendar` and `completion` (RM261003ABZP-DES2@R2) |
 | RM261003ABZP-UDES9@R1 | `TableModel`/`KanbanModel`, sort/group/filter toggles, cell write-back with frontmatter patch (diff for toast), move restrictions, layout fallback notice, base embed renderer | RM261003ABZP-REQ7@R2, RM261003ABZP-REQ5@R2; RM261003ABZP-DES12@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES8@R1 |
-| RM261003ABZP-UDES10@R1 | Routes `/`, `/events`, `/render`, `/file/*`; `doc` SSE events; Host check; KaTeX/Mermaid with source fallback; a server-sent signal distinguishing an intentional `:PreviewStop` from a lost connection (`Stopped` badge) | RM261003ABZP-REQ8@R2; RM261003ABZP-DES13@R2; `stopped` SSE event (RM261003ABZP-DES13@R2) |
+| RM261003ABZP-UDES10@R2 | Routes `/`, `/events`, `/render`, `/file/*`, `/assets/*`; `doc` SSE events with the cursor `line`; Host check; KaTeX/Mermaid served locally under a Content Security Policy that allows code, styles, fonts and connections only from the server's own origin, and images also from the web, with a render error showing that block's source; a server-sent signal distinguishing an intentional `:PreviewStop` from a lost connection (`Stopped` badge) | RM261003ABZP-REQ8@R2; RM261003ABZP-DES13@R3; `stopped` SSE event (RM261003ABZP-DES13@R3) |
 | RM261003ABZP-UDES11@R1 | Theme tokens and `NO_COLOR` handling, `theme`/`color` config, narrow-layout decisions from terminal size, mouse events normalized to actions | RM261003ABZP-REQ11@R3, RM261003ABZP-REQ3@R4; RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1, RM261003ABZP-DES2@R2 (`resize`, `mouse` actions) |
 
 # 2. Experience Architecture
@@ -289,7 +289,7 @@ v / Tab / 1–4 → Kanban → H/L moves card → property written → toast dif
     → edit in so → changed blocks highlighted briefly (< 300 ms)
     → click wikilink → page shows target + banner "Following so paused — Follow so"
     ├→ SSE drops → "Reconnecting…" (last version kept) → reconnect → "Live"
-    ├→ :PreviewStop → "Stopped" + message (`stopped` SSE event, RM261003ABZP-DES13@R2)
+    ├→ :PreviewStop → "Stopped" + message (`stopped` SSE event, RM261003ABZP-DES13@R3)
     └→ so not running → "Offline" + last copy, navigation disabled
 ```
 
@@ -1027,11 +1027,11 @@ None — view selection is a switch over `BaseViewModel` kinds produced by RM261
 - **Purpose:** read the current note at full fidelity in a browser.
 - **Users and tasks:** reading, presenting, checking images/math/diagrams.
 - **Requirements:** RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ11@R1
-- **UI decisions:** RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1
+- **UI decisions:** RM261003ABZP-UDES10@R2, RM261003ABZP-UDES11@R1
 - **Accepted mockups:** RM261003ABZP-M7@R1 (S1–S10)
-- **System dependencies:** RM261003ABZP-DES13@R2 (routes, SSE, Host check, `renderHtml`)
+- **System dependencies:** RM261003ABZP-DES13@R3 (routes, SSE, Host check, `renderHtml`)
 - **Success criteria:** RM261003ABZP-US8@R1, RM261003ABZP-US9@R1
-- **Verification:** RM261003ABZP-UV9@R1
+- **Verification:** RM261003ABZP-UV9@R2
 - **Entry:** `:Preview` opens `http://127.0.0.1:<port>/<path>`.
 - **Exit:** close tab; `:PreviewStop`.
 
@@ -1057,7 +1057,7 @@ None — view selection is a switch over `BaseViewModel` kinds produced by RM261
 | Default (Live) | current note; badge `Live` | read, click wikilinks, toggle theme | changed blocks fade-highlight | badge announced politely on change |
 | Loading | first load: article skeleton text `Loading <path>…` | — | — | — |
 | Empty | empty note: `This note is empty.` | — | — | — |
-| Error | KaTeX/Mermaid unavailable (offline CDN): source shown in a code block with note `Math rendering unavailable offline` | — | inline note | — |
+| Error | KaTeX/Mermaid render error: that block's source shown in a code block with a render-error label | — | inline label | — |
 | Success | note switch swaps article ≤ 300 ms; URL path follows | — | — | focus stays at top of article |
 | Disabled | `Offline`: navigation disabled, last copy shown with notice; `Stopped`: updates stop with message | theme toggle | badge text | announced |
 | Overflow | wide tables/code scroll inside their box | — | — | — |
@@ -1066,11 +1066,11 @@ None — view selection is a switch over `BaseViewModel` kinds produced by RM261
 
 | Trigger | Preconditions | Interface Response | Resulting State | Focus or Scroll | Failure Recovery |
 |---|---|---|---|---|---|
-| SSE `doc` event | following | fetch `/render`, swap, highlight changed blocks | — | scroll near anchor heading | fetch fails → keep last version, badge `Reconnecting…` |
+| SSE `doc` event | following | fetch `/render`, swap, highlight changed blocks | — | scroll to the block containing the cursor line | fetch fails → keep last version, badge `Reconnecting…` |
 | click wikilink | Live | navigate preview only; banner `Following so paused — Follow so` | paused-follow | top of target | unresolved → explain `create it in so with gd` |
-| click `Follow so` | paused | resume following active buffer | Live | to anchor | — |
+| click `Follow so` | paused | resume following active buffer | Live | to the block containing the cursor line | — |
 | SSE closes | — | `Reconnecting…` (EventSource retries) | — | — | server gone → `Offline` |
-| `stopped` signal | — | badge `Stopped`, message | — | — | RM261003ABZP-DES13@R2 `stopped` event |
+| `stopped` signal | — | badge `Stopped`, message | — | — | RM261003ABZP-DES13@R3 `stopped` event |
 | theme toggle | — | override `prefers-color-scheme`, stored in `localStorage` (try/catch) | — | — | storage blocked → session only |
 
 ### Responsive Specification
@@ -1096,20 +1096,20 @@ None — view selection is a switch over `BaseViewModel` kinds produced by RM261
 ### Applicable Code Shape
 
 - **Target:** `src/preview/page.html` — inline module script `follow()`
-- **Language and framework:** HTML + browser TypeScript-compatible JavaScript (served as a static page; no framework, RM261003ABZP-DES13@R2)
-- **System-design authority:** RM261003ABZP-DES13@R2 (Preview HTTP routes)
+- **Language and framework:** HTML + browser TypeScript-compatible JavaScript (served as a static page; no framework, RM261003ABZP-DES13@R3)
+- **System-design authority:** RM261003ABZP-DES13@R3 (Preview HTTP routes)
 
 ```js
 const badge = document.querySelector("[data-badge]");
 let following = true;
 const es = new EventSource("/events");
 es.addEventListener("doc", async (e) => {
-  const { path, anchor } = JSON.parse(e.data);
+  const { path, line } = JSON.parse(e.data);
   if (!following) return;
   const html = await fetch(`/render?path=${encodeURIComponent(path)}`).then((r) => r.text());
-  swapArticle(html, anchor); history.replaceState(null, "", `/${path}`); setBadge("Live");
+  swapArticle(html, line); history.replaceState(null, "", `/${path}`); setBadge("Live");
 });
-es.addEventListener("stopped", () => { es.close(); setBadge("Stopped"); }); // server event per RM261003ABZP-DES13@R2
+es.addEventListener("stopped", () => { es.close(); setBadge("Stopped"); }); // server event per RM261003ABZP-DES13@R3
 es.onerror = () => setBadge(es.readyState === EventSource.CLOSED ? "Offline" : "Reconnecting…");
 ```
 
@@ -2124,11 +2124,11 @@ The single resolution point implements the NO_COLOR rule from RM261003ABZP-REQ11
 ### RM261003ABZP-US8@R1: The browser page is a faithful, read-only, connection-aware mirror
 
 - **Requirements:** RM261003ABZP-UREQ10@R1
-- **UI Design:** RM261003ABZP-UDES10@R1
+- **UI Design:** RM261003ABZP-UDES10@R2
 - **Observable Success:** page states (Live, Reconnecting, Stopped, Offline, paused-follow), read-only controls, and 375 px layout behave as in M7.
 - **Detailed Design:** Surface: Browser preview page
 - **Mockups:** RM261003ABZP-M7@R1
-- **Supported By:** RM261003ABZP-UV9@R1
+- **Supported By:** RM261003ABZP-UV9@R2
 
 ### RM261003ABZP-US9@R1: Every surface works under NO_COLOR, in light theme, and at 80×24
 
@@ -2137,7 +2137,7 @@ The single resolution point implements the NO_COLOR rule from RM261003ABZP-REQ11
 - **Observable Success:** each terminal surface's key states remain distinguishable with NO_COLOR and render without clipping at 80×24; the browser page has semantic structure and contrast in both themes.
 - **Detailed Design:** Section 5 policies; Component: Theme
 - **Mockups:** RM261003ABZP-M1@R1 … RM261003ABZP-M7@R1 (M5@R2)
-- **Supported By:** RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R1
+- **Supported By:** RM261003ABZP-UV10@R1, RM261003ABZP-UV9@R2
 
 ## Implementation Verifications
 
@@ -2237,14 +2237,14 @@ The single resolution point implements the NO_COLOR rule from RM261003ABZP-REQ11
 - **Expected Evidence:** passing component tests.
 - **Status:** Proposed
 
-### RM261003ABZP-UV9@R1: Browser page structure, states, and read-only guarantee
+### RM261003ABZP-UV9@R2: Browser page structure, states, and read-only guarantee
 
 - **Supports:** RM261003ABZP-US8@R1, RM261003ABZP-US9@R1
 - **Level or Method:** integration (HTML assertions on `page.html` + `renderHtml` output in `bun test`) and manual visual check
 - **Target:** Browser preview page
 - **Setup:** preview server on a fixture workspace (as in system RM261003ABZP-V11@R3); tour note.
 - **Action:** fetch `/` and `/render?path=tour.md`; inspect page script state handling with a stubbed `EventSource`; manual: open in a browser at 1200 px and 375 px, light and dark, and toggle offline.
-- **Assertions:** page contains `<header>`, `<main>`, `<article>`; badge element has `aria-live="polite"`; no `<form>`, `<textarea>`, or enabled `<input>`; task checkboxes are `disabled`; tables and `pre` are wrapped with `overflow-x: auto`; stubbed events drive badge text `Live` → `Reconnecting…` → `Offline`, and `Stopped` on a `stopped` event; manual check confirms no page-level horizontal scroll at 375 px and readable contrast in both themes.
+- **Assertions:** page contains `<header>`, `<main>`, `<article>`; badge element has `aria-live="polite"`; no `<form>`, `<textarea>`, or enabled `<input>`; task checkboxes are `disabled`; tables and `pre` are wrapped with `overflow-x: auto`; stubbed events drive badge text `Live` → `Reconnecting…` → `Offline`, and `Stopped` on a `stopped` event; manual check confirms no page-level horizontal scroll at 375 px, readable contrast in both themes, and, offline, that math and diagrams still render and scripts, styles, fonts, and connections come only from the page's own origin.
 - **Unique Risk:** an editing control or broken connection state shipping in the page.
 - **Expected Evidence:** passing test plus a recorded manual checklist in the delivery PR.
 - **Status:** Proposed
@@ -2358,15 +2358,15 @@ The single resolution point implements the NO_COLOR rule from RM261003ABZP-REQ11
 - **Success Criteria:** RM261003ABZP-US7@R1
 - **Tradeoffs:** no drag-and-drop; mouse limited to view tabs.
 
-### RM261003ABZP-UDES10@R1: Passive, connection-aware browser page with paused-follow navigation
+### RM261003ABZP-UDES10@R2: Passive, connection-aware browser page with paused-follow navigation
 
 - **Requirements:** RM261003ABZP-UREQ10@R1
-- **Decision:** static page with header badge (`Live`, `Reconnecting…`, `Stopped`, `Offline`), article swaps from `/render`, changed-block highlight, wikilink navigation that pauses following with a banner, OS-scheme theme with toggle, overflow scrolling inside wide blocks, no editing controls.
+- **Decision:** static page with header badge (`Live`, `Reconnecting…`, `Stopped`, `Offline`), article swaps from `/render`, changed-block highlight, wikilink navigation that pauses following with a banner, OS-scheme theme with toggle, overflow scrolling inside wide blocks, no editing controls; KaTeX and Mermaid come from the page's own origin, so math and diagrams render offline, and a render error shows that block's source with a label.
 - **Rationale:** M7; the page never fails silently and never offers edits.
 - **Mockups:** RM261003ABZP-M7@R1
 - **Surfaces or Components:** Surface: Browser preview page
 - **Success Criteria:** RM261003ABZP-US8@R1
-- **Tradeoffs:** `Stopped` relies on the `stopped` SSE event (RM261003ABZP-DES13@R2); a crash without the event shows `Reconnecting…` then `Offline`.
+- **Tradeoffs:** `Stopped` relies on the `stopped` SSE event (RM261003ABZP-DES13@R3); a crash without the event shows `Reconnecting…` then `Offline`.
 
 ### RM261003ABZP-UDES11@R1: Token-based themes with an attribute-only NO_COLOR mapping and keyboard-first input
 
@@ -2387,4 +2387,4 @@ The single resolution point implements the NO_COLOR rule from RM261003ABZP-REQ11
 
 ## Open Questions and Blockers
 
-- None — the four system-support gaps were resolved by RM261003ABZP-REQ4@R3, RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R2 (current RM261003ABZP-DES7@R3), RM261003ABZP-DES9@R2 (current RM261003ABZP-DES9@R3), and RM261003ABZP-DES13@R2.
+- None — the four system-support gaps were resolved by RM261003ABZP-REQ4@R3, RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R2 (current RM261003ABZP-DES7@R3), RM261003ABZP-DES9@R2 (current RM261003ABZP-DES9@R3), and RM261003ABZP-DES13@R2 (current RM261003ABZP-DES13@R3).

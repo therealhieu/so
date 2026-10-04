@@ -1,0 +1,296 @@
+import { afterEach, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import {
+  layoutNote,
+  noteView,
+  rowText,
+  stubCtx,
+} from "../../../../test/support/markdown";
+import { createTextBuffer } from "../../kernel/text/text-buffer";
+import { layoutText } from "../../kernel/view/text-view";
+import type { RenderLine, Span, Widget } from "../../kernel/view/types";
+import { type Block, parseDoc } from "./doc";
+import {
+  type BlockRenderer,
+  blocksIn,
+  registerBlockRenderer,
+} from "./live-preview";
+import type { EmbedData } from "./renderers/embed";
+import { builtinRenderers } from "./renderers/index";
+
+const none: BlockRenderer = () => [];
+
+afterEach(() => {
+  registerBlockRenderer("callout", none);
+  registerBlockRenderer("paragraph", none);
+});
+
+const CALLOUT_NOTE = [
+  "Before **bold** text",
+  "",
+  "> [!note] Title",
+  "> Body line",
+  "",
+  "After *italic* text",
+  "",
+].join("\n");
+
+test("a throwing renderer leaves its block as source with a warning sign", () => {
+  const view = noteView(CALLOUT_NOTE, { cursor: { line: 6, col: 0 } });
+  registerBlockRenderer("callout", none);
+  const healthy = layoutNote(view);
+  registerBlockRenderer("callout", () => {
+    throw new Error("boom");
+  });
+  const rows = layoutNote(view);
+  const callout = rows.filter((r) => r.sourceLine >= 2 && r.sourceLine <= 3);
+  expect(callout.map(rowText)).toEqual(["> [!note] Title", "> Body line"]);
+  expect(callout[0]?.sign).toEqual({ text: "⚠", style: "signError" });
+  expect(callout[1]?.sign).toBeUndefined();
+  const others = (rs: typeof rows) =>
+    rs.filter((r) => r.sourceLine < 2 || r.sourceLine > 3);
+  expect(others(rows)).toEqual(others(healthy));
+});
+
+test("a renderer registered for a new embed extension is used without provider changes", () => {
+  registerBlockRenderer("xbase", (block) => [
+    {
+      kind: "replace",
+      range: {
+        start: { line: block.startLine, col: 0 },
+        end: { line: block.startLine, col: 12 },
+      },
+      block: true,
+      spans: [{ text: "table view", style: "text" }],
+    },
+  ]);
+  const rows = layoutNote(
+    noteView("Intro\n\n![[t.xbase]]\n", { cursor: { line: 3, col: 0 } }),
+  );
+  expect(rows.map(rowText)).toContain("table view");
+  expect(rows.map(rowText)).not.toContain("![[t.xbase]]");
+});
+
+test("only blocks in the visible range are rendered", () => {
+  const lines: string[] = [];
+  for (let i = 0; i < 2500; i++) lines.push(`Paragraph ${i}`, "");
+  const visible = { from: 1000, to: 1030 };
+  const view = noteView(lines.join("\n"), {
+    visible,
+    cursor: { line: 1001, col: 0 },
+  });
+  const seen: Block[] = [];
+  registerBlockRenderer("paragraph", (block) => {
+    seen.push(block);
+    return [];
+  });
+  layoutNote(view);
+  expect(seen.length).toBe(15);
+  for (const b of seen) {
+    expect(b.endLine).toBeGreaterThanOrEqual(visible.from);
+    expect(b.startLine).toBeLessThan(visible.to);
+  }
+});
+
+test("a selection over a long note reads only the visible blocks", () => {
+  const lines: string[] = [];
+  for (let i = 0; i < 2500; i++) lines.push(`Selected paragraph ${i}`, "");
+  const visible = { from: 1000, to: 1030 };
+  const { v, doc } = noteView(lines.join("\n"), {
+    visible,
+    cursor: { line: 4999, col: 0 },
+    selection: { start: { line: 0, col: 0 }, end: { line: 4999, col: 0 } },
+  });
+  const read = new Set<number>();
+  const buf = {
+    ...v.buf,
+    line(i: number) {
+      read.add(i);
+      return v.buf.line(i);
+    },
+  };
+  const rows = layoutNote({ v: { ...v, buf }, doc });
+  const near = blocksIn(doc, visible);
+  const first = near[0]?.startLine ?? visible.from;
+  const last = near.at(-1)?.endLine ?? visible.to;
+  for (const l of read) {
+    expect(l).toBeGreaterThanOrEqual(first);
+    expect(l).toBeLessThanOrEqual(last);
+  }
+  expect(
+    rows.filter((r) => r.sign?.text === "▕").map((r) => r.sourceLine),
+  ).toEqual(Array.from({ length: 15 }, (_, i) => visible.from + 2 * i));
+});
+
+test("a multi-line comment shows its whole source while the cursor is inside", () => {
+  builtinRenderers();
+  const note = "Intro\n\n%%\nhidden one\nhidden two\n%%\n\nAfter";
+  const at = (line: number) =>
+    layoutNote(noteView(note, { cursor: { line, col: 0 } }));
+  const inside = at(3);
+  expect(
+    inside.filter((r) => r.sourceLine >= 2 && r.sourceLine <= 5).map(rowText),
+  ).toEqual(["%%", "hidden one", "hidden two", "%%"]);
+  expect(
+    inside.filter((r) => r.sign?.text === "▕").map((r) => r.sourceLine),
+  ).toEqual([2, 3, 4, 5]);
+  const outside = at(7);
+  expect(outside.some((r) => r.sourceLine >= 2 && r.sourceLine <= 5)).toBe(
+    false,
+  );
+});
+
+const TOUR = readFileSync("test/fixtures/tour.md", "utf8");
+
+const ROADMAP = (() => {
+  const text = createTextBuffer(
+    [
+      "# so roadmap",
+      "",
+      "## Goals",
+      ...Array.from({ length: 12 }, (_, i) => `- Goal ${i + 1}`),
+      "",
+      "## Later",
+      "Not shown",
+    ].join("\n"),
+  );
+  return { doc: parseDoc(text), text };
+})();
+
+const PATHS: Readonly<Record<string, string>> = {
+  "so-roadmap": "so-roadmap.md",
+  "diagram.png": "diagram.png",
+};
+
+const tourCtx = stubCtx({
+  resolve: (t) => PATHS[t],
+  isResolved: (t) => PATHS[t] !== undefined,
+  embed: (p) => (p === "so-roadmap.md" ? ROADMAP : "missing"),
+  image: (p) => (p === "diagram.png" ? { rows: 6 } : "unknown"),
+});
+
+const spansText = (spans: Span[]) => spans.map((s) => s.text).join("");
+
+function widgetText(w: Widget): string[] {
+  switch (w.type) {
+    case "text":
+      return (w.data as Span[][]).map(spansText);
+    case "embed": {
+      const d = w.data as EmbedData;
+      return [
+        `${d.title} (${d.state}, ${d.more} more)`,
+        ...d.rows.map(spansText),
+      ];
+    }
+    default:
+      return [JSON.stringify(w.data)];
+  }
+}
+
+/** Rows as `line sign │ text  ⟦style@col+len …⟧`, with widget content indented below. */
+function serialize(rows: RenderLine[]): string {
+  const out: string[] = [];
+  for (const r of rows) {
+    const styles: string[] = [];
+    let col = 0;
+    for (const s of r.spans) {
+      if (s.style !== "text") styles.push(`${s.style}@${col}+${s.text.length}`);
+      col += s.text.length;
+    }
+    const line = `${String(r.sourceLine + 1).padStart(3)} ${r.sign?.text ?? " "} │${spansText(r.spans)}`;
+    out.push(styles.length === 0 ? line : `${line}  ⟦${styles.join(" ")}⟧`);
+    if (r.widget !== undefined) {
+      out.push(`      ↳ ${r.widget.type} ×${r.widget.rows}`);
+      for (const t of widgetText(r.widget)) out.push(`      │${t}`);
+    }
+  }
+  return out.join("\n");
+}
+
+/** Cursor positions in `tour.md` (0-based lines). */
+const CURSORS = [
+  { name: "on a blank line", line: 7 },
+  { name: "on a bold line", line: 8 },
+  { name: "inside the table", line: 41 },
+  { name: "inside a callout", line: 28 },
+  { name: "inside a code fence", line: 48 },
+  { name: "inside the frontmatter", line: 2 },
+  { name: "inside the mermaid diagram", line: 70 },
+];
+
+const tour = (width: number, line: number) =>
+  noteView(TOUR, { width, cursor: { line, col: 2 } });
+
+for (const width of [60, 100]) {
+  for (const cursor of CURSORS)
+    test(`tour note at width ${width} with the cursor ${cursor.name}`, () => {
+      builtinRenderers();
+      const rows = layoutNote(tour(width, cursor.line), "live", tourCtx);
+      expect(serialize(rows)).toMatchSnapshot();
+    });
+
+  test(`tour note at width ${width} in reading view`, () => {
+    builtinRenderers();
+    const rows = layoutNote(tour(width, 8), "reading", tourCtx);
+    expect(serialize(rows)).toMatchSnapshot();
+  });
+
+  test(`tour note at width ${width} in source view`, () => {
+    const { v } = tour(width, 8);
+    expect(serialize(layoutText(v, [], undefined))).toMatchSnapshot();
+  });
+}
+
+test("headings start with their level glyph and comments are hidden", () => {
+  builtinRenderers();
+  const rows = layoutNote(tour(100, 7), "live", tourCtx);
+  const textOf = (line: number) =>
+    rowText(rows.find((r) => r.sourceLine === line));
+  expect(textOf(6)).toBe("█ Markdown tour");
+  expect(textOf(14)).toBe("▊ Lists and tasks");
+  expect(textOf(36)).toBe("▌ Table");
+  expect(textOf(44)).toBe("▏ Code");
+  expect(rows.some((r) => r.sourceLine === 12)).toBe(false);
+  expect(rows.map(rowText).join("\n")).not.toContain("%%");
+});
+
+test("frontmatter tags render as tag chips", () => {
+  builtinRenderers();
+  const rows = layoutNote(tour(100, 7), "live", tourCtx);
+  const tags = rows.find((r) => r.sourceLine === 2)?.spans ?? [];
+  expect(tags.filter((s) => s.style === "mdTag").map((s) => s.text)).toEqual([
+    "#reference",
+    "#so",
+  ]);
+  const block = layoutNote(
+    noteView("---\ntags:\n  - daily\n---\n", { cursor: { line: 5, col: 0 } }),
+  );
+  expect(block.find((r) => r.sourceLine === 2)?.spans).toContainEqual({
+    text: "#daily",
+    style: "mdTag",
+  });
+});
+
+test("a warning callout icon differs from the render-error sign", () => {
+  builtinRenderers();
+  const rows = layoutNote(
+    noteView("> [!warning] Careful\n> Body\n\nAfter", {
+      cursor: { line: 3, col: 0 },
+    }),
+  );
+  expect(rowText(rows[0])).toBe("▲ Careful");
+});
+
+test("the reveal sign marks exactly the revealed rows", () => {
+  builtinRenderers();
+  const signed = (line: number) =>
+    layoutNote(tour(100, line), "live", tourCtx)
+      .filter((r) => r.sign?.text === "▕")
+      .map((r) => r.sourceLine);
+  expect(signed(7)).toEqual([]);
+  expect(signed(8)).toEqual([8]);
+  expect(signed(41)).toEqual([38, 39, 40, 41, 42]);
+  expect(
+    layoutNote(tour(100, 41), "reading", tourCtx).some((r) => r.sign),
+  ).toBe(false);
+});

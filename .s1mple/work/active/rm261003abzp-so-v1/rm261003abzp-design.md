@@ -100,7 +100,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** language parsing (lives in `lang/`), file reading (workspace).
 
 - **Core — languages (Markdown and code highlighting)**
-  - **Decisions:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R2, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R1
   - **Location:** `src/core/lang/markdown/`, `src/core/lang/code/`
   - **Responsibilities:** Markdown block splitting, per-block parse cache, Obsidian syntax extensions, `Doc` model; the live-preview decoration provider with reveal rules and block renderers; pure HTML rendering for the preview; the `markdown` file type. `lang/code` wraps lowlight as `Highlighter`s and registers code file types (TypeScript, JavaScript, JSON, YAML, TOML, shell, Python, CSS, HTML, …) used for code files and fenced code blocks.
   - **Collaborators:** `update` → `markdown.analyze(buf, prevDoc)` → `Doc`; UI → `layoutText(view, [highlight, livePreview(doc)])` → paint; preview → `renderHtml(doc, ctx)`
@@ -145,7 +145,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** editing logic, Markdown parsing, file-type decisions, file I/O.
 
 - **Preview server**
-  - **Decisions:** RM261003ABZP-DES13@R2
+  - **Decisions:** RM261003ABZP-DES13@R3
   - **Location:** `src/preview/`
   - **Responsibilities:** `Bun.serve` on `127.0.0.1:0`, Host allowlist, SSE updates, read-only page, contained asset serving.
   - **Collaborators:** app → `startPreview(store)` → browser; store subscription → SSE push
@@ -314,14 +314,15 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/core/features/links/resolve.ts` `resolveLink`; `src/core/features/links/rename.ts` `planRename`
 
 - **Preview**
-  - **Decisions:** RM261003ABZP-DES13@R2
+  - **Decisions:** RM261003ABZP-DES13@R3
   - **Participants:** `:Preview` (a Markdown-scoped command) → effect `startPreview` → `preview/server` → browser; store change (active Markdown doc or version) → SSE event → page fetches `/render`. Switching to a non-Markdown buffer sends nothing, so the page keeps the last note (RM261003ABZP-DES17@R1 note-only scope)
   - **Flow:**
 
     ```text
     :Preview → Bun.serve({hostname:"127.0.0.1", port:0}) → open http://127.0.0.1:<port>/
-    page → GET /events (SSE) ; edit → debounce 100 ms → event "doc" {path, version, anchor} ; :PreviewStop/exit → event "stopped" → close
-    page → GET /render?path=… → renderHtml(doc) → swap <main>, scroll to anchor
+    page → GET /events (SSE) ; edit → debounce 100 ms → event "doc" {path, version, line} ; :PreviewStop/exit → event "stopped" → close
+    page → GET /render?path=… → renderHtml(doc) → swap <main>, scroll to the block containing line
+    page → GET /assets/<name> → KaTeX and Mermaid builds embedded in the binary
     any request with bad Host → 403 ; /file/<p> → realpath ⊂ workspace & not hidden? → bytes : 404
     ```
 
@@ -350,7 +351,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Decisions:** RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1
   - **Purpose:** single source of truth for everything visible.
   - **Participants:** `update` (owner) → ui/preview (readers)
-  - **Meaning:** `workspace` (root, tree), `buffers` (by id: path, `fileType` id, TextBuffer, `analysis` (the file type's analysis state; Markdown: `Doc`), stamp, `bom`, `eol`, dirty, `view` — one of the file type's view ids, e.g. live|source|reading for Markdown, source for code), `windows` (split tree, active, and per-window `content` by editor kind: `{editor:"text", bufferId, cursor, scroll, folds}` where `folds` is the set of folded callout and expanded embed block ids, or `{editor: <registered kind>, state}` whose `state` comes from that kind's `EditorKindSpec.open` — in v1 only `base`, with state `{path, view, cursor}`), `vim` (mode, pending keys, registers, last change, search), `panels` (explorer, side panel kind), `overlay` (none | picker | whichKey | palette | prompt | help | conflict | calendar | completion), `index` (NoteIndex + status), `notifications`, `config`, `jumps`, `preview` (off | on(port)).
+  - **Meaning:** `workspace` (root, tree), `buffers` (by id: path, `fileType` id, TextBuffer, `analysis` (the file type's analysis state; Markdown: `Doc`), stamp, `bom`, `eol`, dirty, `view` — one of the file type's view ids, e.g. live|source|reading for Markdown, source for code), `windows` (split tree, active, and per-window `content` by editor kind: `{editor:"text", bufferId, cursor, scroll, folds}` where `folds` is the set of folded callout and expanded embed block ids, or `{editor: <registered kind>, state}` whose `state` comes from that kind's `EditorKindSpec.open` — in v1 only `base`, with state `{path, view, cursor}`), `vim` (mode, pending keys, registers, last change, search), `panels` (explorer, side panel kind), `overlay` (none | picker | whichKey | palette | prompt | help | conflict | calendar | completion), `index` (NoteIndex + status), `notifications`, `config`, `jumps`, `preview` (off | starting | on(port)).
   - **Ownership and lifecycle:** created at startup from config + state file; `jumps` and recent notes persisted through `saveState` effects (debounced 2 s and on exit).
   - **Invariants:** one active window; each `text` window references an open buffer; a buffer's `view` is one of its file type's views; a buffer with `dirty=false` matches its last saved stamp. Adding an editor kind (a notebook later) registers an `EditorKindSpec` in core and an editor view in the UI; neither the `AppState` type nor the kernel changes.
   - **State flow:** `None — plain value replaced by update`
@@ -407,13 +408,13 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/core/features/links/note-index.ts`
 
 - **Preview HTTP routes — API**
-  - **Decisions:** RM261003ABZP-DES13@R2
+  - **Decisions:** RM261003ABZP-DES13@R3
   - **Purpose:** read-only browser preview.
   - **Participants:** browser → `preview/server` → core `renderHtml`
-  - **Meaning:** `GET /` page shell; `GET /events` SSE (`doc` events with `{path, version, anchor}`; a `stopped` event sent before `:PreviewStop` or exit closes the server); `GET /render?path=` HTML fragment; `GET /file/<path>` workspace asset bytes.
+  - **Meaning:** `GET /` page shell; `GET /events` SSE (`doc` events with `{path, version, line}`, where `line` is the cursor line; a `stopped` event sent before `:PreviewStop` or exit closes the server); `GET /render?path=` HTML fragment; `GET /file/<path>` workspace asset bytes; `GET /assets/<name>` the page script and stylesheet and the KaTeX and Mermaid builds embedded in the binary.
   - **Ownership and lifecycle:** exists only between `:Preview` and `:PreviewStop` or exit.
-  - **Invariants:** hostname `127.0.0.1`; Host header ∈ {`127.0.0.1:<port>`, `localhost:<port>`} else 403; realpath containment else 404; no mutating routes.
-  - **State flow:** `off → on(port) → off`
+  - **Invariants:** hostname `127.0.0.1`; Host header ∈ {`127.0.0.1:<port>`, `localhost:<port>`} else 403; realpath containment else 404; no mutating routes; every response carries a Content Security Policy that allows code, styles, fonts and connections only from the server's own origin, and images also from the web, plus `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+  - **State flow:** `off → starting → on(port) → off`
   - **Shape:** `src/preview/server.ts`
 
 - **AppConfig — Data model**
@@ -799,7 +800,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S9@R1, RM261003ABZP-V12@R2; RM261003ABZP-S11@R1, RM261003ABZP-V17@R1
 
 - **`src/preview/server.ts`**
-  - **Decisions:** RM261003ABZP-DES13@R2
+  - **Decisions:** RM261003ABZP-DES13@R3
   - **Change:** Add
   - **Responsibilities:** read-only preview server.
   - **Current source:** None — new surface
@@ -820,7 +821,7 @@ Unit tests sit next to code as `*.test.ts`.
         fetch(req) {
           const host = req.headers.get("host");
           if (host !== `127.0.0.1:${server.port}` && host !== `localhost:${server.port}`) return new Response(null, { status: 403 });
-          return route(req, store, root);              // "/", "/events", "/render", "/file/*"
+          return route(req, store, root);              // "/", "/events", "/render", "/file/*", "/assets/*"
         },
       });
       return { port: server.port, stop: () => server.stop(true) };
@@ -836,7 +837,7 @@ Unit tests sit next to code as `*.test.ts`.
 
 | Concern | Mechanism and canonical design location | Verification or reason not applicable |
 |---|---|---|
-| Security and privacy | No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2); config is data (TOML), never executed (RM261003ABZP-DES14@R2); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
+| Security and privacy | The only outbound network use is fetching web (`http:`/`https:`) images referenced by notes the user views, in the terminal (`src/workspace/images.ts`: 10 s timeout, 16 MiB cap, no cookies, no Referer, disabled by `preview.images = "off"`, kept only in the in-memory image cache) and in the browser preview, whose Content Security Policy allows `http:` and `https:` images; everything else is loopback-only: the preview binds 127.0.0.1 with a Host allowlist, realpath containment, and a same-origin Content Security Policy for code, styles, fonts and connections (RM261003ABZP-DES13@R3); config is data (TOML), never executed (RM261003ABZP-DES14@R2); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
 | Configuration and observability | XDG TOML config validated by schema; errors as notifications; `so --version`; `SO_LOG=debug` writes a log to `$XDG_STATE_HOME/so/so.log` without note content (RM261003ABZP-DES14@R2) | RM261003ABZP-V4@R2 |
 | Performance and scalability | Viewport-only layout, block parse cache, worker index and search, frame coalescing, lazy image decode with cache (RM261003ABZP-DES16@R1) | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
 | Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R2) | RM261003ABZP-V1@R1 |
@@ -1007,7 +1008,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** the browser follows edits within 300 ms and the server rejects foreign hosts and out-of-workspace paths.
   - **Requirements:** RM261003ABZP-REQ8@R2
-  - **Design:** RM261003ABZP-DES13@R2
+  - **Design:** RM261003ABZP-DES13@R3
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V11@R3 — Preview server behavior and safety**
@@ -1237,15 +1238,15 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Dependencies:** RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
   - **Predecessors:** RM261003ABZP-DES12@R1
 
-- **RM261003ABZP-DES13@R2 — `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering**
+- **RM261003ABZP-DES13@R3 — `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering**
   - **Requirements:** RM261003ABZP-REQ8@R2 - read-only preview
-  - **Decision:** `preview/server.ts` binds `127.0.0.1:0`, checks Host, serves a page shell, SSE `/events` (`doc` and `stopped` events), `/render` fragments from core `renderHtml(doc)`, and contained `/file/*`; the page loads KaTeX and Mermaid from jsDelivr and falls back to showing source when offline. `:Preview` is a Markdown-only command and the page follows Markdown notes only; switching to another file type sends no `doc` event (flow-level refinement, revision retained).
+  - **Decision:** `preview/server.ts` binds `127.0.0.1:0`, checks Host, serves a page shell, SSE `/events` (`doc` events with `{path, version, line}` and `stopped` events), `/render` fragments from core `renderHtml(doc)`, contained `/file/*`, and `/assets/*`; the page loads KaTeX and Mermaid from the server's own `/assets/*`, embedded in the binary from exact-pinned npm packages, under a Content Security Policy that allows code, styles, fonts and connections only from the server's own origin, and images also from the web, with `nosniff` and `no-referrer`; a render error shows that block's source. `:Preview` is a Markdown-only command and the page follows Markdown notes only; switching to another file type sends no `doc` event.
   - **Explanation:** Preview HTTP routes; `src/preview/server.ts`; `src/core/lang/markdown/html.ts`.
   - **Evidence:** user decision "no Next.js".
   - **Research:** `RM261003ABZP-RF12` - binding, Host check, containment, SSE; evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2
-  - **Tradeoffs:** math and diagrams need network in the browser (fallback to source); rejected bundling KaTeX/Mermaid into the binary (multi-MB size) and WebSocket (bidirectional not needed).
+  - **Tradeoffs:** binary grows by several MB for the embedded KaTeX and Mermaid builds (no size budget); loading a web image reveals the viewer's IP address to that image's host (no Referer is sent); rejected loading KaTeX and Mermaid from a CDN (third-party code in a page showing private notes; no offline rendering) and WebSocket (bidirectional not needed).
   - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4
-  - **Predecessors:** RM261003ABZP-DES13@R1
+  - **Predecessors:** RM261003ABZP-DES13@R1, RM261003ABZP-DES13@R2
 
 - **RM261003ABZP-DES14@R2 — TOML config at XDG path validated by schema; per-workspace state at XDG state path**
   - **Requirements:** RM261003ABZP-REQ3@R4 - configuration and state
@@ -1296,7 +1297,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 | RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | `src/core/lang/markdown/`, `src/core/kernel/view/`, `src/ui/editors/`, `src/ui/widgets/` | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
 | RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-DES11@R1 | `src/core/time/`, `src/core/features/notes/` | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
 | RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
-| RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R2, RM261003ABZP-DES6@R2 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
+| RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R3, RM261003ABZP-DES6@R2 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
 | RM261003ABZP-REQ10@R4 - dev, CI, release | RM261003ABZP-DES15@R4, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
 | RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
@@ -1308,6 +1309,6 @@ None — open technical confirmations are delivery constraints with named verifi
 ## Approval
 
 - **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3
-- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 - **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1, RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
-- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint). On 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing dry run: DES15@R4, S10@R2, V14@R2.
+- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint). On 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing dry run: DES15@R4, S10@R2, V14@R2. DI3 design synchronization (W261003S6BQ) approved by the user on 2026-10-04: DES13@R3 (KaTeX and Mermaid served from the binary, same-origin Content Security Policy with web images, `line` in the `doc` payload) and the outbound-network rule for web images.

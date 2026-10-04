@@ -70,11 +70,11 @@ function newNotePath(from: string, target: string): string {
 }
 
 /**
- * `gd` / Enter on a link: open its target at the heading or block with the
+ * `gd` on a link: open its target at the heading or block with the
  * source recorded as a jump (as Vim does, so the statusline reads "jump 2/2"
  * after one follow), offer to create a missing note, and do nothing off a link.
  */
-function followLink(c: CommandContext): Result {
+export function followLink(c: CommandContext): Result {
   const s = c.state;
   const b = activeBuffer(s);
   const w = activeWindow(s);
@@ -162,7 +162,6 @@ const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
 
 export const linkBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "gd", id: "link.follow" },
-  { scope: md("normal"), seq: "<CR>", id: "link.follow" },
   { scope: md("normal"), seq: "<leader>lb", id: "link.backlinks" },
   { scope: md("normal"), seq: "<leader>lr", id: "file.rename" },
   { scope: md("normal"), seq: "<leader>o", id: "view.outline" },

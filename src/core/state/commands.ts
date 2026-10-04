@@ -7,7 +7,10 @@ import { searchPattern } from "../kernel/vim/search";
 import {
   activeBuffer,
   activeWindow,
+  listedBuffers,
   openPath,
+  READ_ONLY_HINT,
+  readOnlyView,
   setBuffer,
   setWindow,
   showBuffer,
@@ -71,6 +74,8 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
+  Preview: "preview.start",
+  PreviewStop: "preview.stop",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -133,7 +138,7 @@ const replacement = (rep: string) =>
     return /[1-9]/.test(esc) ? `$${esc}` : esc;
   });
 
-/** `:s/pat/rep/[g]` on the cursor line, `:%s` on every line; one undo step. */
+/** `:s/pat/rep/[g]` on the cursor line, `:%s` on every line; one undo step. Refused in a read-only view. */
 function substitute(
   s: AppState,
   ex: {
@@ -149,6 +154,7 @@ function substitute(
   const b = activeBuffer(s);
   const re = searchPattern(ex.pattern);
   if (w === undefined || b === undefined) return none(s);
+  if (readOnlyView(reg, b)) return message(s, READ_ONLY_HINT);
   const notFound = message(
     s,
     `E486: Pattern not found: ${ex.pattern}`,
@@ -246,7 +252,7 @@ function closeActive(ctx: CommandContext, force: boolean): Result {
 /** `:bn` / `:bp`: show the next or previous open buffer, saving the one left. */
 function cycleBuffer(ctx: CommandContext, delta: 1 | -1): Result {
   const s = ctx.state;
-  const ids = Object.values(s.buffers)
+  const ids = listedBuffers(s)
     .map((b) => b.id)
     .sort((a, b) => a - b);
   const current = activeBuffer(s);

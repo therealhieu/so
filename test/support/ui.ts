@@ -10,10 +10,14 @@ import type {
   Effect,
   TimerId,
 } from "../../src/core/state/types";
-import { createUpdate } from "../../src/core/state/update";
+import { createUpdate, type Registries } from "../../src/core/state/update";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
-import { createShell } from "../../src/ui/shell";
+import { createShell, type GraphicsSupport } from "../../src/ui/shell";
+import { paintEmbed } from "../../src/ui/widgets/embed";
+import { paintImage } from "../../src/ui/widgets/image";
+import { registerWidgetPainter } from "../../src/ui/widgets/registry";
+import { paintRule } from "../../src/ui/widgets/rule";
 import { testRegistries, textFile } from "./state";
 
 export type MountOptions = {
@@ -24,6 +28,14 @@ export type MountOptions = {
   kittyKeyboard?: boolean;
   /** config.toml text, loaded as at startup before the shell attaches. */
   config?: string;
+  /** Terminal graphics support; the test renderer's own otherwise. */
+  capabilities?: GraphicsSupport;
+  /** Image bytes by workspace path or URL; any other image fails to load. */
+  files?: Record<string, Uint8Array>;
+  /** Loads images in place of `files`, so a test controls when each settles. */
+  loadImage?: (ref: string) => Promise<Uint8Array>;
+  /** The registries to run on; `testRegistries()` otherwise. */
+  reg?: Registries;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -48,6 +60,10 @@ export const TREE: Record<string, DirEntry[]> = {
  */
 export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerWidgetPainter("embed", paintEmbed);
+  registerWidgetPainter("text", paintEmbed);
+  registerWidgetPainter("rule", paintRule);
+  registerWidgetPainter("image", paintImage);
   const t = await createTestRenderer({
     width: o.cols,
     height: o.rows,
@@ -56,7 +72,7 @@ export async function mountShell(o: MountOptions) {
   let now = 1_000_000;
   const timers = new Map<TimerId, number>();
   const effects: Effect[] = [];
-  const reg = testRegistries();
+  const reg = o.reg ?? testRegistries();
   const base = initialState({
     root: "~/notes",
     cols: o.cols,
@@ -78,7 +94,22 @@ export async function mountShell(o: MountOptions) {
       result: parseConfig(o.config),
       reload: false,
     });
-  const shell = createShell(t.renderer, { reg, now: () => now });
+  const loads: string[] = [];
+  const loadImage = (ref: string) => {
+    loads.push(ref);
+    if (o.loadImage !== undefined) return o.loadImage(ref);
+    const bytes = o.files?.[ref];
+    return bytes === undefined
+      ? Promise.reject(new Error(`${ref}: no such file`))
+      : Promise.resolve(bytes);
+  };
+  const capabilities = o.capabilities;
+  const shell = createShell(t.renderer, {
+    reg,
+    now: () => now,
+    loadImage,
+    ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
+  });
   shell.attach(store);
   for (const [dir, entries] of Object.entries(TREE))
     store.dispatch({ type: "dirListed", dir, entries });
@@ -90,6 +121,8 @@ export async function mountShell(o: MountOptions) {
     /** The registries `update` and the views read; register test file types here. */
     reg,
     effects,
+    /** Every image reference the shell asked to load, in order. */
+    loads,
     now: () => now,
     /** Move the clock, firing every timer that falls due on the way. */
     advance(ms: number) {
