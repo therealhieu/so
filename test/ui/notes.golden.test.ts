@@ -134,6 +134,47 @@ describe("template picker", () => {
   });
 });
 
+describe("calendar styles", () => {
+  for (const v of variants)
+    test(`paints the selected, today, and marked days in the ${v.name} theme`, async () => {
+      m = await notesShell(v.o);
+      press(m, " nphh");
+      const selected = await find(m, "[ 1•]");
+      const today = await find(m, " 3 ");
+      const marked = await find(m, " 2•");
+      const plain = await find(m, " 5 ");
+      const spans = m.t.captureSpans().lines;
+      const at = (p: { x: number; y: number }, dx: number) =>
+        cellStyle(spans, p.x + dx, p.y);
+      expect({
+        selected: at(selected, 2),
+        selectedMark: at(selected, 3),
+        today: at(today, 1),
+        marked: at(marked, 1),
+        mark: at(marked, 2),
+        plain: at(plain, 1),
+      }).toMatchSnapshot();
+    });
+
+  test("dark and light paint the calendar differently", async () => {
+    const styles = [];
+    for (const theme of ["dark", "light"] as const) {
+      const x = await notesShell({ cols: 80, rows: 24, theme });
+      press(x, " nphh");
+      const selected = await find(x, "[ 1•]");
+      const marked = await find(x, " 2•");
+      const spans = x.t.captureSpans().lines;
+      styles.push({
+        selected: cellStyle(spans, selected.x + 2, selected.y),
+        mark: cellStyle(spans, marked.x + 2, marked.y),
+      });
+      x.destroy();
+    }
+    expect(styles[0]?.selected).not.toEqual(styles[1]?.selected);
+    expect(styles[0]?.mark).not.toEqual(styles[1]?.mark);
+  });
+});
+
 describe("empty template picker", () => {
   test("names the folder and says how to add a template", async () => {
     m = await mountShell({ cols: 80, rows: 24 });
