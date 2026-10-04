@@ -187,8 +187,16 @@ export class PickerView extends Renderable {
           : p.search?.pending
             ? "searching…"
             : "No matches");
-      if (room > 0)
-        drawCells(buf, theme.style("floatDim"), r.x, y, `   ${empty}`, r.w);
+      const lines = empty.split("\n");
+      for (let i = 0; i < Math.min(lines.length, room); i++)
+        drawCells(
+          buf,
+          theme.style("floatDim"),
+          r.x,
+          y + i,
+          `   ${lines[i]}`,
+          r.w,
+        );
       return;
     }
     const first = Math.max(

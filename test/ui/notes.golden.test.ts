@@ -133,3 +133,18 @@ describe("template picker", () => {
     expect(after).toMatchSnapshot();
   });
 });
+
+describe("empty template picker", () => {
+  test("names the folder and says how to add a template", async () => {
+    m = await mountShell({ cols: 80, rows: 24 });
+    m.store.dispatch({ type: "indexReady" });
+    m.open("notes/standup.md", "# Standup\n");
+    press(m, " nt");
+    const frame = await m.frame();
+    const rows = frame.split("\n");
+    const y = rows.findIndex((l) => l.includes("No templates in templates/"));
+    expect(y).toBeGreaterThan(0);
+    expect(rows[y + 1]).toContain("Create a .md file there to add one");
+  });
+});
+

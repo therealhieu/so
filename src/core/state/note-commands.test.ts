@@ -290,6 +290,21 @@ test("accepting before the template loads keeps the picker open", () => {
   expect(noteText(s)).toBe("hello");
 });
 
+test("the template picker without templates says how to add one", () => {
+  const s = run(
+    indexed(fresh(), ["x.md"]),
+    loaded("note.md", "hello"),
+    ...keys(" nt"),
+  ).state;
+  expect(s.overlay).toMatchObject({
+    kind: "picker",
+    picker: { source: "templates", items: [] },
+  });
+  expect(pickerSources.templates?.empty?.(s)).toBe(
+    "No templates in templates/\nCreate a .md file there to add one",
+  );
+});
+
 test("the template preview shows the source, a marker, then the expansion", () => {
   const r = templatePicker("hello");
   const s = run(r.state, previewOf(r, "# {{title}}\n")).state;

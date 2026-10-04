@@ -78,7 +78,7 @@ export type PickerSource = {
    * the file; there `Tab` shows it in place of the list.
    */
   previewAlways?: true;
-  /** What an empty list says when nothing is typed. */
+  /** What an empty list says when nothing is typed, one row per line. */
   empty?(s: AppState): string;
 };
 
@@ -375,7 +375,8 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     previewAlways: true,
     items: (s, _r, q) => ranked(templatePaths(s).map(templateItem(s)), q),
     total: (s) => templatePaths(s).length,
-    empty: (s) => `No templates in ${s.config.templates.folder}/`,
+    empty: (s) =>
+      `No templates in ${s.config.templates.folder}/\nCreate a .md file there to add one`,
     preview: previewFile,
     render: (s, _item, file) =>
       templatePreview(file.text, noteTitle(activeBuffer(s)?.path), timeOf(s)),
