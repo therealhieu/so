@@ -39,7 +39,7 @@ export type TableModel = {
   rows: TableRow[];
   groups: TableGroup[];
   summaries: (TableSummary | undefined)[];
-  /** Distinct rows the view selected. */
+  /** Distinct rows the table shows; summaries cover the same rows. */
   total: number;
   diagnostics: BaseDiagnostic[];
 };
@@ -151,8 +151,13 @@ export function tableModel(
 
   const rows: TableRow[] = [];
   const groups: TableGroup[] = [];
+  /** The evaluation rows the table shows, each once; hidden groups' rows are left out. */
+  const shown = new Set<number>();
   if (e.groups === undefined) {
-    for (let i = 0; i < e.rows.length; i++) rows.push(toRow(i));
+    for (let i = 0; i < e.rows.length; i++) {
+      rows.push(toRow(i));
+      shown.add(i);
+    }
   } else {
     for (const g of orderedGroups(e, false)) {
       groups.push({
@@ -161,7 +166,10 @@ export function tableModel(
         start: rows.length,
         count: g.rowIndexes.length,
       });
-      for (const i of g.rowIndexes) rows.push(toRow(i));
+      for (const i of g.rowIndexes) {
+        rows.push(toRow(i));
+        shown.add(i);
+      }
     }
   }
 
@@ -175,7 +183,9 @@ export function tableModel(
     if (name === undefined) return undefined;
     const r = summarize(
       name,
-      e.rows.map((row) => row.cells[c.id] ?? { type: "null", value: null }),
+      [...shown].map(
+        (i) => e.rows[i]?.cells[c.id] ?? { type: "null", value: null },
+      ),
     );
     if ("diagnostic" in r) {
       diagnostics.push(r.diagnostic);
@@ -189,7 +199,7 @@ export function tableModel(
     rows,
     groups,
     summaries,
-    total: e.rows.length,
+    total: shown.size,
     diagnostics,
   };
 }

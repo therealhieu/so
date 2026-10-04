@@ -179,6 +179,26 @@ test("numeric groups sort by number, not by text", () => {
   expect(m.groups.map((g) => g.key)).toEqual([100, 10, 9, 2]);
 });
 
+test("total and summaries count only the rows the groups show", () => {
+  const r = parseBase(
+    "views:\n  - type: table\n    name: T\n    order: [file.name, n]\n    groupBy:\n      property: status\n      direction: ASC\n    groupOrder: [todo]\n    summaries:\n      n: Sum\n",
+  );
+  if (!r.ok) throw new Error();
+  const candidates = [
+    ["todo", 1],
+    ["done", 100],
+  ].map(([status, n], i) => ({
+    ...(tasks()[0] as BaseCandidate),
+    path: `s/${i}.md`,
+    name: `${i}.md`,
+    properties: { status, n },
+  }));
+  const m = tableModel(evaluateBase({ base: r.base, candidates }), {}, {});
+  expect(m.rows.map((row) => row.path)).toEqual(["s/0.md"]);
+  expect(m.total).toBe(1);
+  expect(m.summaries[1]?.text).toBe("1");
+});
+
 test("an empty listed group is kept", () => {
   const r = parseBase(
     "views:\n  - type: table\n    name: T\n    groupBy:\n      property: status\n      direction: ASC\n    groupOrder: [waiting, todo]\n",
