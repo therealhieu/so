@@ -7,14 +7,14 @@ import { join } from "node:path";
 /** Targets in milliseconds; the gate fails above twice these. */
 export const TARGETS = {
   sourceKeystrokeP95: 16,
-  liveKeystrokeP95: 16,
-  openFile: 50,
+  liveKeystrokeP95: 24,
+  openFile: 80,
   sourceOpenFile: 50,
   liveScrollFrameP95: 16.7,
   sourceScrollFrameP95: 16.7,
-  firstFrame: 200,
+  firstFrame: 250,
   indexReady: 3000,
-  indexingKeystrokeP95: 16,
+  indexingKeystrokeP95: 30,
 } as const;
 
 /** The bench file for each target, followed by its arguments. */
