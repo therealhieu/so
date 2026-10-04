@@ -6,6 +6,7 @@ import type { WindowTree } from "../kernel/editor/windows";
 import { closeWindow } from "../kernel/editor/windows";
 import type { Edit, Pos } from "../kernel/text/pos";
 import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
+import { handleKey } from "../kernel/vim/engine";
 import { onDiskLoaded } from "./disk";
 import { embedRequested, settleEmbedRead } from "./embeds";
 import { touchRecent } from "./recent";
@@ -19,6 +20,7 @@ import {
 } from "./session";
 import type {
   Action,
+  AfterOpen,
   AppState,
   BufferId,
   BufferState,
@@ -307,8 +309,11 @@ export function showBuffer(s: AppState, id: BufferId): AppState {
   });
 }
 
-/** The active window waits for `path`, so its read shows it even when a note also embeds it. */
-function awaitOpen(s: AppState, path: string): AppState {
+/**
+ * The active window waits for `path`, so its read shows it even when a note
+ * also embeds it; `after` places the cursor once it is shown.
+ */
+function awaitOpen(s: AppState, path: string, after?: AfterOpen): AppState {
   const restore = s.windows.restore ?? { pending: {}, missing: 0 };
   const pending = {
     ...restore.pending,
@@ -317,6 +322,7 @@ function awaitOpen(s: AppState, path: string): AppState {
       cursor: { line: 0, col: 0 },
       scroll: 0,
       navigated: true as const,
+      ...(after === undefined ? {} : { after }),
     },
   };
   return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
@@ -324,9 +330,15 @@ function awaitOpen(s: AppState, path: string): AppState {
 
 /**
  * Open `path` in the active window: an open buffer is shown at once, any
- * other path is read first. The buffer being left is saved now.
+ * other path is read first. The buffer being left is saved now. With `after`,
+ * the cursor is placed by `placeAfterOpen` once the buffer is shown.
  */
-export function openPath(s: AppState, path: string, now: number): Result {
+export function openPath(
+  s: AppState,
+  path: string,
+  now: number,
+  opts?: { after: AfterOpen; reg: Registries },
+): Result {
   const current = activeBuffer(s);
   const left =
     current !== undefined && current.path !== path
@@ -335,15 +347,73 @@ export function openPath(s: AppState, path: string, now: number): Result {
   return chain(left, (st) => {
     const open = bufferForPath(st, path);
     // An embed target already being read is shown when that read answers.
-    if (open === undefined)
-      return embedRequested(st, path)
-        ? none(awaitOpen(st, path))
-        : { state: st, effects: [{ kind: "read", path }] };
-    return none({
+    if (open === undefined) {
+      if (embedRequested(st, path))
+        return none(awaitOpen(st, path, opts?.after));
+      return opts === undefined
+        ? { state: st, effects: [{ kind: "read", path }] }
+        : {
+            state: awaitOpen(st, path, opts.after),
+            effects: [{ kind: "read", path }],
+          };
+    }
+    const shown: AppState = {
       ...showBuffer(st, open.id),
       recent: touchRecent(st.recent, path),
-    });
+    };
+    return none(
+      opts === undefined ? shown : placeAfterOpen(shown, opts.after, opts.reg),
+    );
   });
+}
+
+/** A Markdown task that is not done; the cursor goes just after its box. */
+const OPEN_TASK = /^\s*[-*+] \[ \](?: |$)/;
+
+/**
+ * Place the active window's cursor for `after`: on the first unchecked task
+ * (else at the end of the file), or at the end in Insert mode, entered as
+ * `A` would. A read-only view stays in Normal mode.
+ */
+export function placeAfterOpen(
+  s: AppState,
+  after: AfterOpen,
+  reg: Registries,
+): AppState {
+  const b = activeBuffer(s);
+  if (b === undefined) return s;
+  const last = b.text.lineCount - 1;
+  if (after === "firstTask") {
+    for (let line = 0; line <= last; line++) {
+      const task = OPEN_TASK.exec(b.text.line(line));
+      if (task !== null) return placeCursor(s, { line, col: task[0].length });
+    }
+    return placeCursor(s, { line: last, col: b.text.line(last).length });
+  }
+  const atEnd = placeCursor(s, { line: last, col: 0 });
+  const w = activeWindow(atEnd);
+  if (w === undefined || readOnlyView(reg, b)) return atEnd;
+  const { registers, pendingPaste, ...vim } = atEnd.vim;
+  const r = handleKey(
+    { text: b.text, cursor: w.content.cursor, undo: b.undo, registers, vim },
+    "A",
+    {
+      topLine: w.content.scroll,
+      rows: Math.max(1, s.terminal.rows - 2),
+      tabWidth: s.config.editor.tabWidth,
+    },
+  );
+  return setWindow(
+    {
+      ...atEnd,
+      vim: {
+        ...r.s.vim,
+        registers: r.s.registers,
+        ...(pendingPaste === undefined ? {} : { pendingPaste }),
+      },
+    },
+    { ...w, content: { ...w.content, cursor: r.s.cursor } },
+  );
 }
 
 /** The configured preview mode when the file type has that view, else its first view. */
@@ -362,7 +432,7 @@ export function onFileLoaded(
   if (open !== undefined)
     return chain(onDiskLoaded(s, open, a.file, reg), (st) =>
       awaitsRestore(st, a.path)
-        ? fillRestored(listBuffer(st, open.id), a.path, open.id)
+        ? fillRestored(listBuffer(st, open.id), a.path, open.id, reg)
         : none(st),
     );
   // A read only a note's embed asked for opens the target unlisted and unshown,
@@ -414,6 +484,7 @@ export function onFileLoaded(
     awaitsNavigation(s, a.path) ? { ...added, recent } : added,
     a.path,
     id,
+    reg,
   );
 }
 

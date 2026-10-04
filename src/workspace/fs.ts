@@ -133,7 +133,8 @@ export async function atomicWrite(
   }
 }
 
-const exists = (p: string) =>
+/** Whether anything, even a dangling link, is at `p`. */
+export const exists = (p: string) =>
   lstat(p).then(
     () => true,
     () => false,

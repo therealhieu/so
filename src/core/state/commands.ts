@@ -76,6 +76,9 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   help: "help.keymap",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
+  Today: "note.today",
+  Yesterday: "note.yesterday",
+  Tomorrow: "note.tomorrow",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */

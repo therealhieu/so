@@ -13,6 +13,7 @@ import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import { onNoteCreated } from "./note-commands";
 import {
   onPickerResize,
   onPreviewLoaded,
@@ -147,6 +148,9 @@ export function createUpdate(reg: Registries): Update {
         return onPreviewFailed(state, action);
       case "openUrlFailed":
         return onOpenUrlFailed(state, action);
+      case "noteCreated":
+        // The runner's answer has no time, so a save of the note left is due now (0).
+        return onNoteCreated(state, action, 0, reg);
     }
     const unhandled: never = action;
     return unhandled;

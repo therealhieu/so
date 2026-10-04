@@ -3,6 +3,7 @@ import type { ConfigResult } from "../config/toml";
 import type { NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
+import type { TemplateVars } from "../features/notes/template";
 import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
@@ -102,6 +103,12 @@ export type WindowState = {
     folds?: number[];
   };
 };
+
+/**
+ * Where the cursor goes once a note a notes command opened is shown: the
+ * first unchecked task (else the end), or the end in Insert mode.
+ */
+export type AfterOpen = "firstTask" | "insert";
 
 export type TerminalState = {
   cols: number;
@@ -267,7 +274,14 @@ export type AppState = {
     restore?: {
       pending: Record<
         WindowId,
-        { path: string; cursor: Pos; scroll: number; navigated?: true }
+        {
+          path: string;
+          cursor: Pos;
+          scroll: number;
+          navigated?: true;
+          /** Placement once the read answers; never persisted. */
+          after?: AfterOpen;
+        }
       >;
       missing: number;
     };
@@ -346,7 +360,18 @@ export type Action =
   | { type: "previewStarted"; port: number }
   | { type: "previewStopped" }
   | { type: "previewFailed"; reason: string }
-  | { type: "openUrlFailed"; url: string; reason: string };
+  | { type: "openUrlFailed"; url: string; reason: string }
+  /** A `createNote` finished; `templatePath` echoes the effect's template. */
+  | {
+      type: "noteCreated";
+      path: string;
+      outcome: "created" | "exists" | "failed";
+      template: "used" | "missing" | "unreadable" | "none";
+      templatePath?: string;
+      after: AfterOpen;
+      reason: "daily" | "new";
+      failure?: string;
+    };
 
 export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
@@ -374,7 +399,21 @@ export type Effect =
   | { kind: "applyEdits"; batch: number; edit: FileEdit }
   | { kind: "startPreview" }
   | { kind: "stopPreview" }
-  | { kind: "openUrl"; url: string };
+  | { kind: "openUrl"; url: string }
+  /**
+   * Create `path` from `template` (workspace-relative) expanded with `vars`,
+   * never replacing an entry; `fallback` is the template text when the
+   * template file does not exist.
+   */
+  | {
+      kind: "createNote";
+      path: string;
+      template?: string;
+      fallback?: string;
+      vars: TemplateVars;
+      after: AfterOpen;
+      reason: "daily" | "new";
+    };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

@@ -1,12 +1,15 @@
 import { join } from "node:path";
 import { parseConfig } from "../core/config/toml";
 import { applySpanEdits } from "../core/features/links/rename";
+import { expandTemplate } from "../core/features/notes/template";
 import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
 import { readConfigText } from "../workspace/config-file";
 import {
   atomicWrite,
   createEntry,
+  createExclusive,
+  exists,
   FsError,
   listDir,
   moveEntry,
@@ -138,6 +141,23 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     if (seen === undefined) own.delete(path);
     else own.set(path, { from: seen, to: stamp });
     return stamp;
+  }
+
+  /** The template text to expand, and what became of the template file. */
+  async function templateText(
+    e: Extract<Effect, { kind: "createNote" }>,
+  ): Promise<{
+    text: string;
+    template: Extract<Action, { type: "noteCreated" }>["template"];
+  }> {
+    if (e.template === undefined) return { text: "", template: "none" };
+    const file = await readTextFile(abs(e.template)).catch(() => ({
+      refused: "io" as const,
+    }));
+    if (!("refused" in file)) return { text: file.text, template: "used" };
+    if (await exists(abs(e.template)))
+      return { text: "", template: "unreadable" };
+    return { text: e.fallback ?? "", template: "missing" };
   }
 
   async function runFsOp(
@@ -272,6 +292,51 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       }
       case "create":
         void serial(async () => d.dispatch(await runFsOp(e.op)));
+        return;
+      case "createNote":
+        void serial(async () => {
+          const answer = {
+            type: "noteCreated" as const,
+            path: e.path,
+            after: e.after,
+            reason: e.reason,
+            ...(e.template === undefined ? {} : { templatePath: e.template }),
+          };
+          const { text, template } = await templateText(e);
+          try {
+            const r = await createExclusive(
+              d.root,
+              e.path,
+              expandTemplate(text, e.vars),
+            );
+            if (r.created) {
+              d.ownOps.noteWrite(e.path, r.stamp);
+              d.index?.notify({ kind: "changed", path: e.path, isDir: false });
+              if (r.fallback)
+                d.logger.info("notes.createFallback", { path: e.path });
+            }
+            d.logger.info("notes.created", {
+              path: e.path,
+              created: r.created,
+            });
+            d.dispatch({
+              ...answer,
+              outcome: r.created ? "created" : "exists",
+              template,
+            });
+          } catch (x) {
+            d.logger.error("notes.createFailed", {
+              path: e.path,
+              reason: msg(x),
+            });
+            d.dispatch({
+              ...answer,
+              outcome: "failed",
+              template,
+              failure: msg(x),
+            });
+          }
+        });
         return;
       case "rename":
       case "move":

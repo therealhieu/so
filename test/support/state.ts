@@ -26,6 +26,11 @@ import {
   markdownCommands,
 } from "../../src/core/state/markdown-commands";
 import { markdownViewContext } from "../../src/core/state/markdown-view";
+import {
+  noteBindings,
+  noteCommands,
+  noteGroups,
+} from "../../src/core/state/note-commands";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
 import { ViewContextRegistry } from "../../src/core/state/view-context";
@@ -46,6 +51,7 @@ export function testRegistries(): Registries {
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
+  for (const c of noteCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
@@ -59,8 +65,9 @@ export function testRegistries(): Registries {
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,
+      ...noteBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
   };
 }

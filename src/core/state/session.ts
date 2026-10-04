@@ -1,9 +1,9 @@
 import { z } from "zod";
 import type { WindowTree } from "../kernel/editor/windows";
-import { leaves, listedBuffers } from "./buffers";
+import { leaves, listedBuffers, placeAfterOpen } from "./buffers";
 import { JUMP_LIMIT } from "./jumps";
 import { RECENT_LIMIT } from "./recent";
-import { none, toast } from "./result";
+import { chain, none, toast } from "./result";
 import type {
   Action,
   AppState,
@@ -13,6 +13,7 @@ import type {
   WindowId,
   WindowState,
 } from "./types";
+import type { Registries } from "./update";
 
 /** The debounce between a session change and its save. */
 export const SAVE_STATE_MS = 2000;
@@ -180,11 +181,16 @@ export function onStateLoaded(
 export const awaitsRestore = (s: AppState, path: string): boolean =>
   Object.values(s.windows.restore?.pending ?? {}).some((p) => p.path === path);
 
-/** `path` loaded as `bufferId`: every window waiting for it shows it at its saved position. */
+/**
+ * `path` loaded as `bufferId`: every window waiting for it shows it at its
+ * saved position. The active window's `after`, when it waited with one, then
+ * places its cursor.
+ */
 export function fillRestored(
   s: AppState,
   path: string,
   bufferId: BufferId,
+  reg: Registries,
 ): Result {
   const restore = s.windows.restore;
   const b = s.buffers[bufferId];
@@ -210,11 +216,16 @@ export function fillRestored(
     };
     delete pending[id];
   }
-  return finish(
+  const active = restore.pending[s.windows.active];
+  const after = active?.path === path ? active.after : undefined;
+  const filled = finish(
     { ...s, windows: { ...s.windows, byId } },
     pending,
     restore.missing,
   );
+  return after === undefined
+    ? filled
+    : chain(filled, (st) => none(placeAfterOpen(st, after, reg)));
 }
 
 /** Whether a jump or link follow is waiting for `path` to load. */
