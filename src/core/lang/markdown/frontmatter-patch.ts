@@ -164,6 +164,17 @@ const linesOf = (text: string, from: number, to: number) =>
 const propertyLine = (patch: Extract<FrontmatterPatch, { set: string }>) =>
   `${yamlScalar(patch.set, "")}:${afterColon(yamlScalar(patch.value, "  ", patch.date))}`;
 
+/** The spaces before the map's first key, so a new key lines up with the others. */
+function mapIndent(
+  src: string,
+  map: YAMLMap<unknown, unknown> | undefined,
+): string {
+  const start = map?.range?.[0];
+  if (start === undefined) return "";
+  const indent = src.slice(lineStart(src, start), start);
+  return /^ *$/.test(indent) ? indent : "";
+}
+
 /** Applies one patch to text with "\n" separators. */
 function patchLf(text: string, patch: FrontmatterPatch): Change | Failure {
   const block = findBlock(text);
@@ -184,11 +195,14 @@ function patchLf(text: string, patch: FrontmatterPatch): Change | Failure {
 
   if (pair === undefined) {
     if ("remove" in patch) return { text, removed: [], added: [] };
-    const line = propertyLine(patch);
+    const indent = mapIndent(src, parsed.map);
+    const lines = propertyLine(patch)
+      .split("\n")
+      .map((line) => indent + line);
     return {
-      text: splice(text, block.close, block.close, `${line}\n`),
+      text: splice(text, block.close, block.close, `${lines.join("\n")}\n`),
       removed: [],
-      added: line.split("\n"),
+      added: lines,
     };
   }
 

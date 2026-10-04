@@ -140,6 +140,14 @@ test("a new key is appended before the closing line", () => {
   );
 });
 
+test("a new key in an indented block keeps the block's indent", () => {
+  const next = patched("---\n  a: 1\n---\n", { set: "b", value: 2 });
+  expect(next).toBe("---\n  a: 1\n  b: 2\n---\n");
+  expect(properties(next)).toEqual({ a: 1, b: 2 });
+  const list = patched("---\n  a: 1\n---\n", { set: "tags", value: ["x"] });
+  expect(properties(list)).toEqual({ a: 1, tags: ["x"] });
+});
+
 test("removing a key deletes only its lines", () => {
   const r = ok(patchFrontmatter(CRLF, { remove: "due date" }));
   expect(r.text).toBe(edited(3, 1));
