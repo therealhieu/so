@@ -209,7 +209,7 @@ export function evaluateBase(input: EvaluateBaseInput): BaseEvaluation {
         diagnostics,
         hiding,
       );
-      if (!(globalMatches && viewMatches)) {
+      if (globalMatches !== true || viewMatches !== true) {
         return [];
       }
 
@@ -435,39 +435,43 @@ function normalizeGroupBy(value: unknown): BaseView["groupBy"] {
 }
 
 /**
- * Whether a candidate passes `filter`. A filter expression that cannot be
- * evaluated excludes the row and is added to `hiding`.
+ * Whether a candidate passes `filter`: `true`, `false`, or `undefined` when the
+ * answer depends on an expression that cannot be evaluated. That expression is
+ * added to `hiding`; only `true` keeps the row, so negation cannot show rows a
+ * failing expression guards, while a decided `and`/`or` branch still wins.
  */
 function matchesFilter(
   filter: BaseFilter | undefined,
   context: ExpressionContext,
   diagnostics: BaseDiagnostic[],
   hiding: Set<string>,
-): boolean {
+): boolean | undefined {
   if (filter === undefined) return true;
   if (typeof filter === "string") {
     const result = evaluateExpression(filter, context);
     diagnostics.push(...result.diagnostics);
-    if (result.diagnostics.length > 0) hiding.add(filter);
-    return result.diagnostics.length === 0 && Boolean(result.value);
+    if (result.diagnostics.length > 0) {
+      hiding.add(filter);
+      return undefined;
+    }
+    return Boolean(result.value);
   }
+  const children = (list: readonly BaseFilter[]) =>
+    list.map((child) => matchesFilter(child, context, diagnostics, hiding));
   if ("and" in filter) {
-    const matches = filter.and.map((child) =>
-      matchesFilter(child, context, diagnostics, hiding),
-    );
-    return matches.every(Boolean);
+    const matches = children(filter.and);
+    if (matches.includes(false)) return false;
+    return matches.includes(undefined) ? undefined : true;
   }
   if ("or" in filter) {
-    const matches = filter.or.map((child) =>
-      matchesFilter(child, context, diagnostics, hiding),
-    );
-    return matches.some(Boolean);
+    const matches = children(filter.or);
+    if (matches.includes(true)) return true;
+    return matches.includes(undefined) ? undefined : false;
   }
   if ("not" in filter) {
-    const matches = filter.not.map((child) =>
-      matchesFilter(child, context, diagnostics, hiding),
-    );
-    return !matches.some(Boolean);
+    const matches = children(filter.not);
+    if (matches.includes(true)) return false;
+    return matches.includes(undefined) ? undefined : true;
   }
   return false;
 }

@@ -1683,6 +1683,22 @@ describe("Obsidian semantics", () => {
     expect(hiding[0]?.message).toContain("status.contains('x')");
   });
 
+  test("an unsupported filter under not hides its rows as its diagnostic says", () => {
+    const result = evaluateBase({
+      base: parsed(
+        "filters:\n  not:\n    - \"status.contains('x')\"\nviews:\n  - type: table\n    name: T\n",
+      ),
+      candidates: notes,
+    });
+    expect(result.rows).toEqual([]);
+    const hiding = result.diagnostics.filter(
+      (d) => d.code === "filter_hides_rows",
+    );
+    expect(hiding.map((d) => d.message)).toEqual([
+      "filter \"status.contains('x')\" is not supported; rows it guards are hidden",
+    ]);
+  });
+
   test("views Obsidian rejects still render with warnings", () => {
     const result = evaluateBase({
       base: parsed(
