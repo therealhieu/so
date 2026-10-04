@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `Overall verification`
+- **Current Position:** `Delivery completion`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -442,7 +442,7 @@ Keep definitions in the accepted binding, system design, and parent gate sources
 |---|---|---|
 | Planning (reference, recorded by the reconciler) | PH2@R4 `:3`, DI3@R3 `:322-403`, G2/G4 `:69`/`:71`, index `:133`, `:144` at `ee33163` (plan index Roadmap Contract) | Aligned at planning; not a substitute for the execution-start check |
 | Execution start (2026-10-04, `HEAD` `0c111be`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`, DI3@R3 `:322`; index `:133` (DI3@R3 → W261003S6BQ, PR Pending), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `origin/main` has no commits ahead of `HEAD` | Aligned — no parent commit after the planning check at `ee33163`; DI3@R3 → W261003S6BQ unchanged; no other W binds DI3 (`work/done/` holds W261003HEGE, W261003FX70). Working tree clean at start |
-| Delivery (before Delivery Completion) | `Pending implementation` | `Pending implementation` |
+| Delivery (before Delivery Completion, 2026-10-04, `HEAD` `68fbfcf`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`; index `:133` (DI3@R3 Delivery Items row), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `git fetch` then `origin/main` has 0 commits ahead of `HEAD` | Aligned — no parent commit since the execution-start check; DI3@R3 → W261003S6BQ unchanged; `work/done/` holds only W261003HEGE and W261003FX70 before this move |
 
 Append checks as boundaries are reached (including any resume). An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
 
@@ -451,7 +451,7 @@ Append checks as boundaries are reached (including any resume). An unresolved re
 | Gate source and due boundary | Producer output / baseline | Actual evidence | Result |
 |---|---|---|---|
 | G2 (phase file `:69`; plan context §2) — before P1-G1-T1 | DI2@R2 / W261003FX70 outputs merged in `9adb285` (PR #2) | `git merge-base --is-ancestor 9adb285 HEAD` → exit 0 at `0c111be` on 2026-10-04, before P1-G1-T1 | `Satisfied` |
-| G4 (phase file `:71`; plan context §2) — produced here; due before DI4 embed execution | Outputs at P1-G1-T3, P1-G2-T2, P1-G2-T4; proof V4, V5, V38, V41 on the PR head | `Pending implementation` | `Pending implementation` (stays `Pending` until the user merges the DI3 PR) |
+| G4 (phase file `:71`; plan context §2) — produced here; due before DI4 embed execution | Outputs at P1-G1-T3, P1-G2-T2, P1-G2-T4; proof V4, V5, V38, V41 on the PR head | Outputs on PR #6 head: `PreviewCtx`, `MarkdownViewInput`, `livePreview`, `BlockRenderer`, `registerBlockRenderer` (`src/core/lang/markdown/live-preview.ts`; signatures equal the phase design `:205-230` plus the additive `resolve`, `folds` and `embed().text`); embed targets as unlisted buffers (`src/core/state/embeds.ts`); `registerWidgetPainter` (`src/ui/widgets/registry.ts`). Proof: V4 goldens, V5, and V38/V41 (`test/ui/extension.test.ts`, 5 pass) passed in overall verification (`bd88306`) and CI run 37179396485 on `46032b8` | `Pending` — outputs and proof present; the merge evidence is the user's |
 
 Never treat an approved producer design as delivered implementation. Check gates before their due boundary, not only before marking a group complete.
 
@@ -578,24 +578,24 @@ Fresh verifier → Passed → Project documentation
 
 | Complete | Check | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | Fast gate | `bun run check` | Biome, tsc, knip, boundaries, and unit suites pass (V47) | `Pending implementation` |
-| [ ] | CI suites | `bun run test:ci` | Component, integration, and e2e suites pass | `Pending implementation` |
-| [ ] | Benchmarks | `bun run bench` | All targets within the 2× CI gate (V44); reference readings recorded in the PR (V45) | `Pending implementation` |
-| [ ] | Compiled binary | `bun run build`; run `dist/so` from an empty directory | Page and embedded assets served without `node_modules` (V35) | `Pending implementation` |
-| [ ] | Manual page checklist | Browser at 1200/375 px, light/dark, offline | UV9@R2 checklist recorded in the PR (V42) | `Pending implementation` |
-| [ ] | PR CI | GitHub Actions on the DI3 PR | Green, within the CI timing budget (V46) | `Pending implementation` |
+| [x] | Fast gate | `bun run check` | Biome, tsc, knip, boundaries, and unit suites pass (V47) | Passed: exit 0; 739 pass; 5.58 s (V47) |
+| [x] | CI suites | `bun run test:ci` | Component, integration, and e2e suites pass | Passed: 144 pass, 0 fail, 28 snapshots |
+| [x] | Benchmarks | `bun run bench` | All targets within the 2× CI gate (V44); reference readings recorded in the PR (V45) | Passed against the targets approved on 2026-10-04: local medians all within 1× (openFile 57.03/80, liveKeystroke 10.68/24, firstFrame 161.19/250, indexingKeystroke 10.86/30); Linux CI medians within 2× on `46032b8`; readings recorded in the PR (V44, V45) |
+| [x] | Compiled binary | `bun run build`; run `dist/so` from an empty directory | Page and embedded assets served without `node_modules` (V35) | Passed: `dist/so` 84,105,330 B, run from an empty dir; all assets `cmp`-identical; CSP on every response (V35) |
+| [x] | Manual page checklist | Browser at 1200/375 px, light/dark, offline | UV9@R2 checklist recorded in the PR (V42) | Passed: Playwright at 1200/375 px, light and dark, non-loopback blocked; math and Mermaid render; malformed blocks show source with the label; single origin; empty console; recorded in the PR (V42) |
+| [x] | PR CI | GitHub Actions on the DI3 PR | Green, within the CI timing budget (V46) | Passed: PR #6 run 37179396485 on `46032b8`, all green, wall time 1 min 59 s (V46) |
 
 ### Evidence
 
-- **Status:** `Pending implementation`
+- **Status:** `Failed` (one Minor documentation finding; every check passed)
 - **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
-- **Report commit:** `Pending implementation`
-- **Findings and owners:** `Pending implementation`
-- **Remediation status:** `Pending implementation`
-- **Remediation commits:** `Pending implementation`
-- **Updated implementation report commits:** `Pending implementation`
-- **Closure evidence:** `Pending implementation`
-- **Remaining issues:** `Pending implementation`
+- **Report commit:** `bd88306`
+- **Findings and owners:** OVR-VER1 (Minor, documentation, owner P1-G2). The W system design §6 and §7 do not describe the P1-G2 embed refinements: `requested` is kept until the read answers; `embed?: true` is on `read`, `fileLoaded` and `fileRefused`; and the `:bd` exception to one outstanding read. The PR #6 parent-sync list also omits the `embed?: true` tag (REQ1@R1 criterion 5)
+- **Remediation status:** `Completed` by one fresh `s1mple-implementer`; OVR-VER1 is `Fixed` (documentation only, no code change)
+- **Remediation commits:** OVR-VER1 → `7c0b6a2` (W system design §5, §6, §7: `embed?: true` on `read`, `fileLoaded` and `fileRefused`; `requested` kept until the read answers; the `:bd` exception) plus the PR #6 body's pending parent-sync list (not versioned)
+- **Updated implementation report commits:** P1-G2 → `e3c551a`
+- **Closure evidence:** `bun run check` exit 0 (739 pass); `git diff --stat -- src test scripts` is empty; grep shows no stale `keep(b.embeds` text in the design; the PR body diff adds only the two parent-sync items; the overall-verification report is unchanged at `bd88306`. Validated by the orchestrator on 2026-10-04
+- **Remaining issues:** None technical. Administrative: parent synchronization is pending user authorization; G4 stays `Pending` until the user merges
 
 ## Delivery Acceptance
 
@@ -611,8 +611,8 @@ After all groups and overall checks pass, the orchestrator must:
 
 Missing documents, unresolved conflicts, failed checks/commits, or unsafe change isolation block completion. Send implementation defects back to remediation, not into project guidance.
 
-- **Changes or No-change Reason:** `Pending implementation`
-- **Validation and Commit SHA:** `Pending implementation`
+- **Changes or No-change Reason:** `.s1mple/docs/project.md` updated from the implemented result: purpose (live, source and reading views; `:Preview`); stack pins `beautiful-mermaid` 1.1.3, `katex` 0.16.47, `mermaid` 12.1.0; component map (`src/preview`, the image modules); the live-preview and browser-preview flow and its security rules; the `preview → preview, core` rule and package homes; contract rows for the live-preview extension points, editor kinds, the browser preview and the `[preview]` config; all nine bench targets with the relaxation approved by the user on 2026-10-04; the self-contained binary
+- **Validation and Commit SHA:** every symbol, path and number was checked against the code (`scripts/bench-gate.ts` `TARGETS`, `test/boundaries.test.ts` `LAYER_RULES` and `PACKAGE_HOMES`, `src/core/config/schema.ts` `preview`, `src/ui/images.ts` 64 MiB, the `test/fixtures/generate.ts` generators, the bench headers, and the exports of `live-preview.ts`, `widgets/registry.ts` and `view-context.ts`); other guidance was kept. Commit `68fbfcf`
 
 **Commit Message:**
 
