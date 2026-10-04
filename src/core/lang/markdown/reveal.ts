@@ -1,5 +1,6 @@
 import type { Pos, Range } from "../../kernel/text/pos";
 import type { TextBuffer } from "../../kernel/text/text-buffer";
+import type { LineRange } from "../../kernel/view/types";
 import type { Doc } from "./doc";
 import { blocksIn } from "./live-preview";
 import { renderKey } from "./render-key";
@@ -26,7 +27,9 @@ const NOTHING: RevealSet = { lines: new Set(), blocks: new Set() };
 /**
  * The cursor line, or every selected line, shows its inline source; a
  * multi-line block touching those lines shows its whole source. Reading view
- * reveals nothing.
+ * reveals nothing. Only lines and blocks that can reach the `visible` rows
+ * are considered (the visible lines plus the blocks intersecting them), so a
+ * long selection costs no more than a short one.
  */
 export function reveal(
   doc: Doc,
@@ -34,19 +37,26 @@ export function reveal(
   cursor: Pos,
   selection: Range | undefined,
   text: TextBuffer,
+  visible: LineRange,
 ): RevealSet {
   if (view === "reading") return NOTHING;
   const ends =
     selection === undefined ? [cursor] : [selection.start, selection.end];
   const from = Math.min(...ends.map((p) => p.line));
   const to = Math.max(...ends.map((p) => p.line));
+  const near = blocksIn(doc, visible);
+  const first = Math.min(visible.from, near[0]?.startLine ?? visible.from);
+  const last = Math.max(visible.to - 1, near.at(-1)?.endLine ?? 0);
   const lines = new Set<number>();
-  for (let l = from; l <= to; l++) lines.add(l);
+  for (let l = Math.max(from, first); l <= Math.min(to, last); l++)
+    lines.add(l);
   const blocks = new Set<number>();
-  for (const block of blocksIn(doc, { from, to: to + 1 }))
+  for (const block of near)
     if (
-      MULTILINE_KEYS.has(block.kind) ||
-      MULTILINE_KEYS.has(renderKey(block, doc, text))
+      block.endLine >= from &&
+      block.startLine <= to &&
+      (MULTILINE_KEYS.has(block.kind) ||
+        MULTILINE_KEYS.has(renderKey(block, doc, text)))
     )
       blocks.add(block.id);
   return { lines, blocks };

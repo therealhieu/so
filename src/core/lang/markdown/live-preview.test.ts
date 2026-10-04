@@ -10,7 +10,11 @@ import { createTextBuffer } from "../../kernel/text/text-buffer";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
 import { type Block, parseDoc } from "./doc";
-import { type BlockRenderer, registerBlockRenderer } from "./live-preview";
+import {
+  type BlockRenderer,
+  blocksIn,
+  registerBlockRenderer,
+} from "./live-preview";
 import type { EmbedData } from "./renderers/embed";
 import { builtinRenderers } from "./renderers/index";
 
@@ -86,6 +90,36 @@ test("only blocks in the visible range are rendered", () => {
     expect(b.endLine).toBeGreaterThanOrEqual(visible.from);
     expect(b.startLine).toBeLessThan(visible.to);
   }
+});
+
+test("a selection over a long note reads only the visible blocks", () => {
+  const lines: string[] = [];
+  for (let i = 0; i < 2500; i++) lines.push(`Selected paragraph ${i}`, "");
+  const visible = { from: 1000, to: 1030 };
+  const { v, doc } = noteView(lines.join("\n"), {
+    visible,
+    cursor: { line: 4999, col: 0 },
+    selection: { start: { line: 0, col: 0 }, end: { line: 4999, col: 0 } },
+  });
+  const read = new Set<number>();
+  const buf = {
+    ...v.buf,
+    line(i: number) {
+      read.add(i);
+      return v.buf.line(i);
+    },
+  };
+  const rows = layoutNote({ v: { ...v, buf }, doc });
+  const near = blocksIn(doc, visible);
+  const first = near[0]?.startLine ?? visible.from;
+  const last = near.at(-1)?.endLine ?? visible.to;
+  for (const l of read) {
+    expect(l).toBeGreaterThanOrEqual(first);
+    expect(l).toBeLessThanOrEqual(last);
+  }
+  expect(
+    rows.filter((r) => r.sign?.text === "▕").map((r) => r.sourceLine),
+  ).toEqual(Array.from({ length: 15 }, (_, i) => visible.from + 2 * i));
 });
 
 const TOUR = readFileSync("test/fixtures/tour.md", "utf8");

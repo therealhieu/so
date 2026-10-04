@@ -95,7 +95,14 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
   v,
   input,
 ) => {
-  const shown = reveal(input.doc, input.view, v.cursor, v.selection, v.buf);
+  const shown = reveal(
+    input.doc,
+    input.view,
+    v.cursor,
+    v.selection,
+    v.buf,
+    v.visible,
+  );
   const lines = [...shown.lines];
   const lo = Math.min(...lines);
   const hi = Math.max(...lines);

@@ -23,6 +23,7 @@ test("a selection reveals every selected line and the table it touches", () => {
     { line: 4, col: 0 },
     { start: { line: 3, col: 0 }, end: { line: 4, col: 3 } },
     v.buf,
+    v.visible,
   );
   expect([...shown.lines]).toEqual([3, 4]);
   expect([...shown.blocks]).toEqual([tableId(doc) as number]);
@@ -30,7 +31,14 @@ test("a selection reveals every selected line and the table it touches", () => {
 
 test("moving the cursor out of a table stops revealing it", () => {
   const { v, doc } = noteView(NOTE);
-  const shown = reveal(doc, "live", { line: 6, col: 0 }, undefined, v.buf);
+  const shown = reveal(
+    doc,
+    "live",
+    { line: 6, col: 0 },
+    undefined,
+    v.buf,
+    v.visible,
+  );
   expect([...shown.lines]).toEqual([6]);
   expect(shown.blocks.size).toBe(0);
 });
@@ -43,6 +51,7 @@ test("reading view reveals nothing", () => {
     { line: 4, col: 0 },
     { start: { line: 3, col: 0 }, end: { line: 4, col: 3 } },
     v.buf,
+    v.visible,
   );
   expect(shown.lines.size).toBe(0);
   expect(shown.blocks.size).toBe(0);
