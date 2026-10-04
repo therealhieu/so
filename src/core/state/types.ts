@@ -93,6 +93,8 @@ export type BufferState = {
   listed?: false;
   /** On a listed note: embed targets whose read is outstanding, and those refused. Never persisted. */
   embeds?: { requested: string[]; refused: string[] };
+  /** Its file type is never written: no save, autosave, or recreate. */
+  readOnly?: true;
 };
 
 export type WindowState = {
@@ -105,6 +107,10 @@ export type WindowState = {
     scroll: number;
     /** Block ids toggled from their default fold in this window. Never persisted. */
     folds?: number[];
+    /** The editor kind's own window state, created by its `open`; absent for "text". Never persisted. */
+    kindState?: unknown;
+    /** The "#…" part the window was opened at, consumed by the editor kind's `open`. */
+    subpath?: string;
   };
 };
 
@@ -302,6 +308,8 @@ export type AppState = {
           navigated?: true;
           /** Placement once the read answers; never persisted. */
           after?: AfterOpen;
+          /** The "#…" part to open at; never persisted. */
+          subpath?: string;
         }
       >;
       missing: number;

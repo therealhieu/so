@@ -15,7 +15,8 @@ export type ViewSpec<S, I = S, C = unknown> = {
 
 export type EditorKindSpec<St = unknown> = {
   id: EditorKind;
-  open(path: string, text: string): St;
+  /** The kind's window state for `path`; `subpath` is the "#…" the window was opened at. */
+  open(path: string, text: string, subpath?: string): St;
 };
 
 export class EditorKindRegistry {
@@ -40,6 +41,8 @@ export type FileType<S = unknown> = {
   views: readonly ViewSpec<S>[];
   highlighter?: Highlighter;
   analyze?: (buf: TextBuffer, prev?: S) => S;
+  /** Files of this type are never written. */
+  readOnly?: true;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: file types differ in their analysis type.

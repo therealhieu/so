@@ -1,4 +1,8 @@
 import {
+  baseEditorKind,
+  baseFileType,
+} from "../../src/core/features/bases/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -47,6 +51,9 @@ export function testRegistries(): Registries {
   const fileTypes = new FileTypeRegistry(textFileType);
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
+  fileTypes.register(baseFileType);
+  const editorKinds = new EditorKindRegistry();
+  editorKinds.register(baseEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -58,7 +65,7 @@ export function testRegistries(): Registries {
   builtinRenderers();
   return {
     fileTypes,
-    editorKinds: new EditorKindRegistry(),
+    editorKinds,
     commands,
     bindings: [
       ...defaultBindings,

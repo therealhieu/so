@@ -311,9 +311,14 @@ export function showBuffer(s: AppState, id: BufferId): AppState {
 
 /**
  * The active window waits for `path`, so its read shows it even when a note
- * also embeds it; `after` places the cursor once it is shown.
+ * also embeds it; `after` places the cursor and `subpath` is the "#…" it
+ * opens at once it is shown.
  */
-function awaitOpen(s: AppState, path: string, after?: AfterOpen): AppState {
+function awaitOpen(
+  s: AppState,
+  path: string,
+  opts: { after?: AfterOpen; subpath?: string },
+): AppState {
   const restore = s.windows.restore ?? { pending: {}, missing: 0 };
   const pending = {
     ...restore.pending,
@@ -322,49 +327,70 @@ function awaitOpen(s: AppState, path: string, after?: AfterOpen): AppState {
       cursor: { line: 0, col: 0 },
       scroll: 0,
       navigated: true as const,
-      ...(after === undefined ? {} : { after }),
+      ...(opts.after === undefined ? {} : { after: opts.after }),
+      ...(opts.subpath === undefined ? {} : { subpath: opts.subpath }),
     },
   };
   return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }
 
+/** Options for `openPath`; `reg` is needed to place the cursor `after`. */
+export type OpenOptions = {
+  after?: AfterOpen;
+  /** The "#…" part the window opens at, for its editor kind. */
+  subpath?: string;
+  reg?: Registries;
+};
+
 /**
  * Open `path` in the active window: an open buffer is shown at once, any
  * other path is read first. The buffer being left is saved now. With `after`,
- * the cursor is placed by `placeAfterOpen` once the buffer is shown.
+ * the cursor is placed by `placeAfterOpen` once the buffer is shown; with
+ * `subpath`, the window's editor kind opens there.
  */
 export function openPath(
   s: AppState,
   path: string,
   now: number,
-  opts?: { after: AfterOpen; reg: Registries },
+  opts: OpenOptions = {},
 ): Result {
   const current = activeBuffer(s);
   const left =
     current !== undefined && current.path !== path
       ? autosaveNow(s, current.id, now)
       : none(s);
+  const waits = opts.after !== undefined || opts.subpath !== undefined;
   return chain(left, (st) => {
     const open = bufferForPath(st, path);
     // An embed target already being read is shown when that read answers.
     if (open === undefined) {
-      if (embedRequested(st, path))
-        return none(awaitOpen(st, path, opts?.after));
-      return opts === undefined
-        ? { state: st, effects: [{ kind: "read", path }] }
-        : {
-            state: awaitOpen(st, path, opts.after),
+      if (embedRequested(st, path)) return none(awaitOpen(st, path, opts));
+      return waits
+        ? {
+            state: awaitOpen(st, path, opts),
             effects: [{ kind: "read", path }],
-          };
+          }
+        : { state: st, effects: [{ kind: "read", path }] };
     }
     const shown: AppState = {
       ...showBuffer(st, open.id),
       recent: touchRecent(st.recent, path),
     };
+    const at = withSubpath(shown, opts.subpath);
     return none(
-      opts === undefined ? shown : placeAfterOpen(shown, opts.after, opts.reg),
+      opts.after === undefined || opts.reg === undefined
+        ? at
+        : placeAfterOpen(at, opts.after, opts.reg),
     );
   });
+}
+
+/** The active window opens at `subpath`; its editor kind consumes it. */
+function withSubpath(s: AppState, subpath: string | undefined): AppState {
+  const w = activeWindow(s);
+  return subpath === undefined || w === undefined
+    ? s
+    : setWindow(s, { ...w, content: { ...w.content, subpath } });
 }
 
 /** A Markdown task that is not done; the cursor goes just after its box. */
@@ -461,6 +487,7 @@ export function onFileLoaded(
       disk: "present",
       save: { kind: "idle" },
       ...(embedOnlyRead ? { listed: false as const } : {}),
+      ...(ft.readOnly === true ? { readOnly: true as const } : {}),
     },
     ft,
   );

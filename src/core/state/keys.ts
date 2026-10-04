@@ -117,7 +117,13 @@ function bindingOrVim(
   const idle = s.vim.pending.length === 0 && mode !== "insert";
   if (a.key === ":" && idle && (inExplorer || mode === "normal"))
     return none(setVim(s, { mode: "cmdline", cmdline: ":", pending: [] }));
-  if (inExplorer || inPanel || b === undefined)
+  // A non-text editor kind handles keys only through its bindings.
+  if (
+    inExplorer ||
+    inPanel ||
+    b === undefined ||
+    activeWindow(s)?.content.editor !== "text"
+  )
     return none(setVim(s, { pending: [] }));
   return runVim(s, a.key, a.now, reg);
 }

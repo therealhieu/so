@@ -212,6 +212,7 @@ export function fillRestored(
         bufferId,
         cursor: { line, col },
         scroll: Math.min(p.scroll, line),
+        ...(p.subpath === undefined ? {} : { subpath: p.subpath }),
       },
     };
     delete pending[id];

@@ -240,6 +240,7 @@ function editFile(ctx: CommandContext): Result {
 function writeActive(ctx: CommandContext): Result {
   const b = activeBuffer(ctx.state);
   if (b === undefined) return message(ctx.state, "E32: No file name", "error");
+  if (b.readOnly === true) return message(ctx.state, "read-only file", "error");
   return writeBuffer(ctx.state, b.id, ctx.now, {
     recreate: b.disk === "deleted",
   });

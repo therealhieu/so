@@ -5,6 +5,7 @@ import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
 import { parseConfig } from "../core/config/toml";
+import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -117,6 +118,9 @@ function registries(): Registries {
   const fileTypes = new FileTypeRegistry(textFileType);
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
+  fileTypes.register(baseFileType);
+  const editorKinds = new EditorKindRegistry();
+  editorKinds.register(baseEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -128,7 +132,7 @@ function registries(): Registries {
   builtinRenderers();
   return {
     fileTypes,
-    editorKinds: new EditorKindRegistry(),
+    editorKinds,
     commands,
     bindings: [
       ...defaultBindings,
