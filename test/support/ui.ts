@@ -14,6 +14,9 @@ import { createUpdate } from "../../src/core/state/update";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
 import { createShell } from "../../src/ui/shell";
+import { paintEmbed } from "../../src/ui/widgets/embed";
+import { registerWidgetPainter } from "../../src/ui/widgets/registry";
+import { paintRule } from "../../src/ui/widgets/rule";
 import { testRegistries, textFile } from "./state";
 
 export type MountOptions = {
@@ -48,6 +51,9 @@ export const TREE: Record<string, DirEntry[]> = {
  */
 export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerWidgetPainter("embed", paintEmbed);
+  registerWidgetPainter("text", paintEmbed);
+  registerWidgetPainter("rule", paintRule);
   const t = await createTestRenderer({
     width: o.cols,
     height: o.rows,

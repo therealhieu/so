@@ -53,7 +53,7 @@ test("completion never covers the cursor row and inserts the heading link", asyn
   m = await opened("projects/so.md");
   m.keys("Go[[pl");
   let frame = await lines(m);
-  const cursorRow = frame.findIndex((l) => /^ +\d+ \[\[pl\s*$/.test(l));
+  const cursorRow = frame.findIndex((l) => /^ +\d+ ▕\[\[pl\s*$/.test(l));
   const top = frame.findIndex((l) => l.includes("╭─ notes & aliases"));
   const bottom = frame.findIndex((l, i) => i > top && l.includes("╰──"));
   expect(cursorRow).toBeGreaterThan(0);

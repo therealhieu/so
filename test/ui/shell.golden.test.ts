@@ -172,7 +172,7 @@ test("a window whose layout throws still shows the file's raw lines", async () =
   });
   openNote(m, "notes/data.broken", "first line\n\tsecond line\n");
   const body = (await m.frame()).split("\n").slice(1, 4);
-  expect(body[0]).toStartWith("   1 first line");
+  expect(body[0]).toStartWith("   1  first line");
   expect(body[1]).toContain("second line");
   expect(body[2]).toStartWith("    ~");
 });

@@ -1,5 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
+import { SYNC_TS } from "../support/notes";
+import { textFile } from "../support/state";
 import { type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
@@ -37,4 +40,97 @@ test("reading view refuses edits with a hint and still moves", async () => {
   }
   m.keys("j");
   expect(activeWindow(m.store.get())?.content.cursor.line).toBe(1);
+});
+
+const TOUR_MD = readFileSync(
+  new URL("../fixtures/tour.md", import.meta.url),
+  "utf8",
+);
+const ROADMAP_MD = `# So roadmap\n\n## Goals\n\n${Array.from(
+  { length: 16 },
+  (_, i) => `- Goal ${i + 1}`,
+).join("\n")}\n\n## Later\n\nNothing yet.\n`;
+
+/** The sign cell sits right of the line numbers: four digits and a space. */
+const SIGN_X = 5;
+const signOf = (row: string) => [...row][SIGN_X] ?? " ";
+
+/** Rows of the editor window: below the bufferline, above the statusline and command line. */
+async function windowRows(x: Mounted): Promise<string[]> {
+  const rows = (await x.frame()).split("\n");
+  return rows.slice(1, x.store.get().terminal.rows - 2);
+}
+
+/** Open the tour with its embedded roadmap loaded. */
+function openTour(x: Mounted) {
+  x.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["tour.md", "so-roadmap.md", "diagram.png"],
+    done: 0,
+    total: 0,
+  });
+  openNote(x, "tour.md", TOUR_MD);
+  x.store.dispatch({
+    type: "fileLoaded",
+    path: "so-roadmap.md",
+    file: textFile(ROADMAP_MD),
+  });
+}
+
+test("a note frame paints signs, rules, embed rows, and folded callouts", async () => {
+  m = await mountShell({ cols: 100, rows: 80 });
+  openTour(m);
+  expect(m.effects).toContainEqual({ kind: "read", path: "so-roadmap.md" });
+
+  m.keys("24G");
+  let rows = await windowRows(m);
+  const revealed = rows.filter((r) => signOf(r) === "▕");
+  expect(revealed).toHaveLength(1);
+  expect(revealed[0]).toContain("## Quotes and callouts");
+
+  const tip = rows.findIndex((r) => r.includes("Folded tip"));
+  expect(rows[tip]).toContain("★ Folded tip (za to open) ▸");
+  expect(rows[tip + 1]?.trim()).toMatch(/^\d*$/);
+  expect(rows.join("\n")).not.toContain("start folded");
+
+  const title = rows.findIndex((r) => r.includes("↳ so-roadmap#Goals"));
+  expect(title).toBeGreaterThan(-1);
+  const embed = rows.slice(title, title + 12);
+
+  expect(embed.some((r) => r.includes("│ • Goal 1"))).toBe(true);
+  expect(embed.at(-1)).toMatch(/╰ … \d+ more lines/);
+  expect(rows.some((r) => r.includes("[image]"))).toBe(true);
+
+  m.keys("G");
+  rows = await windowRows(m);
+  const rule = rows.find((r) => r.includes("─".repeat(20)));
+  expect(rule?.slice(SIGN_X + 1).trimEnd()).toBe("─".repeat(100 - SIGN_X - 1));
+});
+
+test("code files paint raw lines and ignore note keys", async () => {
+  m = await mountShell({ cols: 100, rows: 30 });
+  openNote(m, "scripts/sync.ts", SYNC_TS);
+  const raw = SYNC_TS.replace(/\n$/, "").split("\n");
+  const rows = await windowRows(m);
+  raw.forEach((line, i) => {
+    expect((rows[i] ?? "").slice(SIGN_X + 1).trimEnd()).toBe(
+      line.replace(/\t/g, " ".repeat(8)).trimEnd(),
+    );
+  });
+  expect(rows.every((r) => signOf(r) === " ")).toBe(true);
+
+  const before = m.store.get();
+  m.keys("<leader>m");
+  m.keys("2Gwgd");
+  const after = m.store.get();
+  expect(activeBuffer(after)?.view).toBe("source");
+  expect(activeBuffer(after)?.text).toBe(activeBuffer(before)?.text);
+  expect(activeBuffer(after)?.path).toBe("scripts/sync.ts");
+  const at = activeWindow(after)?.content.cursor;
+  m.keys("<CR>");
+  expect(activeWindow(m.store.get())?.content.cursor.line).toBe(
+    (at?.line ?? 0) + 1,
+  );
+  expect(activeBuffer(m.store.get())?.text).toBe(activeBuffer(before)?.text);
 });
