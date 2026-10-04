@@ -117,12 +117,23 @@ Each terminal ran the script under `/usr/bin/script -q`, so the exact bytes Open
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` (`Failed`, one finding; left unchanged)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G3-VER1` | **Unit:** `src/workspace/images.test.ts` "the download timeout covers a body that arrives too slowly". A `/drip.png` handler sends headers at once, then 10 bytes every 50 ms for 2 s. `fetchImage(…, { timeoutMs: 300 })` must reject within 1 s. **Component:** `test/ui/live-preview.test.ts` "an image shows a dimmed loading placeholder until its bytes arrive". The image load stays pending, and the image row must show `◌ diagram.png` with the cell style of `themes.dark.style("imagePlaceholder")`. After the bytes resolve, `◌` must be gone. To keep the load pending, `test/support/ui.ts` `MountOptions` gains `loadImage`. **Required proof:** `bun test test/ui/live-preview.test.ts src/workspace/images.test.ts` → 14 pass, 0 fail. **Break checks** (each change reverted with `git checkout`): (1) loading paint `paintText(t, "")` → the component test fails, `Expected: > 0, Received: -1`; (2) loading text drawn in the `text` style → it fails with `attrs` 4 vs 0 and `fg` `86,95,137` vs `192,202,245`; (3) timeout armed only until the headers arrive (`AbortController` plus `clearTimeout` after `fetch` resolves) → the unit test fails, "Received promise that resolved" after 2122 ms, while the existing `/hang.png` case still passes (5 pass, 1 fail). **Gates:** `bun run check` → 714 pass, 0 fail, 18 snapshots; `CI=true bun run test:ci` → 126 pass, 0 fail, 28 snapshots | `0aec8db` (unit, `P1-G3-T2`), `9407269` (component, `P1-G3-T4`) | `Fixed` |
+
+**P1-G3-VER1 completion checklist:**
+
+- [x] Required resolution is implemented. Both the component assertion and the unit assertion are in place.
+- [x] Required proof passes. The targeted suites, `bun run check`, and `CI=true bun run test:ci` all pass, and each new assertion fails when its behaviour is removed.
+- [x] Change evidence is recorded (table above).
+- [x] Verification evidence is recorded (table above).
+
+The fix changes only tests. Production code in `src` is unchanged, and `git diff --stat 0876a21..HEAD -- src/core` is still empty. No added line matches the work-process identifier grep.
 
 ## Final Status
 
@@ -130,8 +141,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — every task is implemented and committed, and every group check passes.
+- **Final report status:** `Completed`. Every task is implemented and committed, `P1-G3-VER1` is fixed, and every group check passes.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `119d9c9`, `3bc3959`, `3d9c36a`
-- **Final checks:** `bun run check` → 713 pass; `CI=true bun run test:ci` → 125 pass.
-- **Remaining issues:** None. The spike was verified at the protocol level, not visually, as described above.
+- **Final commits:** `119d9c9`, `3bc3959`, `3d9c36a`; remediation `0aec8db`, `9407269`
+- **Final checks:** `bun run check` → 714 pass; `CI=true bun run test:ci` → 126 pass (at `9407269`).
+- **Remaining issues:** None. The spike was verified at the protocol level, not visually, as the Initial Implementation section describes. The verification report's untested non-findings remain as recorded there.
