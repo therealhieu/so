@@ -159,6 +159,21 @@ test("opening an embed target while it loads shows it when the read answers", ()
   expect(buffer(shown, "a.md")?.embeds?.requested).toEqual(["c.md"]);
 });
 
+const viewHost = {
+  width: 80,
+  rows: 20,
+  imageSize: () => undefined,
+  cellAspect: 0.5,
+};
+
+test("an embed target reads as loading until its read answers", () => {
+  const s = run(indexed(), load("a.md", A)).state;
+  const ctx = markdownViewContext(s, s.windows.active, viewHost) as {
+    embed(p: string): unknown;
+  };
+  expect(ctx.embed("b.md")).toBe("loading");
+});
+
 test("a read that answers after its embed was deleted opens nothing", () => {
   const opened = run(indexed(), load("a.md", "# A\n\n![[b]]\n"));
   const removed = run(opened.state, ...keys("Gdd"));
