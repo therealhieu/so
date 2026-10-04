@@ -4,8 +4,8 @@
 
 - **Group:** `P3-G1`
 - **Tasks:** `P3-G1-T1`, `P3-G1-T2`, `P3-G1-T3`, `P3-G1-T4` (step 1 only, per the goal's Delivery sequencing)
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md`
 
 Baseline: group range `607b12b`..`f6c98ee` on `feat/rm261003abzp-di3-live-preview`, verified at `HEAD` `f6c98ee`. Task commits: T1 `ee55fa9`, `352cf50`, `c58e8eb`; T2 `2348fa4`, `5ca1945`; T3 `a11c8a9`; T4 step 1 no change (PR #6). The working tree held only the orchestrator's uncommitted edit to `w261003s6bq-goal.md`, which this verification did not touch. Local machine: Apple M1 Max, 64 GB, macOS, which meets the parent reference-machine definition (RM261003ABZP-REQ9@R2: Apple M1 or newer, 8 GB, macOS).
 
@@ -118,7 +118,7 @@ The extension proof, the compiled binary, the fast gate, the CI suites, and the 
 - **Evidence:** `c58e8eb` changes `WindowState.content.editor` from `"text"` to `EditorKind` (`src/core/state/types.ts:96-97`) and derives it in `src/core/state/update.ts:73-91`. The authoritative W system design still shows `content: { editor: "text"; … }` at `w261003s6bq-system-design.md:2018`, `:2028`, and `:2039`. The parent design describes non-text editors as `editorKinds.get(fileType.editor).open(path, text) → content {editor, state}` (`rm261003abzp-design-revisions.md:4947`). The refinement deliberately never calls `EditorKindSpec.open` and adds no editor state, so a non-text kind such as DI4's `base` still shows a text buffer and receives vim keys. REQ1@R1 requires "every `AppState` field … DI3 adds is reported for parent synchronization". The PR's "Pending parent synchronization" list names only the three progress rows. The implementation report says the refinement should be synced into the W design, but no W design update exists.
 - **Impact:** DI4 planning would read a design that says `editor: "text"` and a parent design that promises `open` and editor state, while the code provides neither. That raises the risk of a wrong assumption at the G4 hand-off.
 - **Required resolution:** Record the refinement in the W system design §6 window-state shape: `editor: EditorKind`, derived after each reducer step, `"text"` as fallback, not persisted, and `EditorKindSpec.open` and non-text content state left to DI4. Add the `WindowState.content.editor` type change and the unused `open` path to the PR's pending parent-synchronization list. Planning artifacts are orchestrator-owned, so the orchestrator decides which stage does this; Project Documentation Finalization is the natural place.
-- **Required proof:** `rg -n 'editor: "text"' .s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` shows no stale `WindowState` shape (or each hit is annotated with the refinement), and `gh pr view 6 --json body` lists the `content.editor` change under pending parent synchronization.
+- **Required proof:** `rg -n 'editor: "text"' .s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` shows no stale `WindowState` shape (or each hit is annotated with the refinement), and `gh pr view 6 --json body` lists the `content.editor` change under pending parent synchronization.
 
 **Completion Checklist:**
 

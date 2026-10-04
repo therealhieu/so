@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`, `P1-G1-T7`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` (report commit `c85739c`; group change range `e7f259f..d3c1776`; task commits `8d0cb51`, `2af5239`, `470720b`, `1150aa3`, `b5f906c`, `6e74e72`, `d3c1776`)
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` (report commit `c85739c`; group change range `e7f259f..d3c1776`; task commits `8d0cb51`, `2af5239`, `470720b`, `1150aa3`, `b5f906c`, `6e74e72`, `d3c1776`)
 
 ## Status
 

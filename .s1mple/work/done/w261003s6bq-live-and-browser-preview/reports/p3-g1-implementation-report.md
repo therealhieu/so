@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+- **Goal:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
 - **Group:** `P3-G1`
 - **Tasks:** `P3-G1-T1`, `P3-G1-T2`, `P3-G1-T3`, `P3-G1-T4` (step 1 only)
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -267,7 +267,7 @@ Bold local values exceed 1×. Every value passes the 2× gate. No target or benc
 
 Written by a fresh implementer after the verification report (`06886c7`, `Failed`, findings P3-G1-VER1 to VER4) and the orchestrator decisions in `2495edd`. The sections above are unchanged; this section supersedes the placeholder under "Remediation".
 
-- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md`
+- **Verification reports:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md`
 - **Status:** `Completed`
 - **Remediation range:** `2495edd`..`00011bd`
 

@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+- **Goal:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
 - **Group:** `P1-G3`
 - **Tasks:** `P1-G3-T1`, `P1-G3-T2`, `P1-G3-T3`, `P1-G3-T4`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -117,7 +117,7 @@ Each terminal ran the script under `/usr/bin/script -q`, so the exact bytes Open
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` (`Failed`, one finding; left unchanged)
+- **Verification reports:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` (`Failed`, one finding; left unchanged)
 - **Status:** `Completed`
 
 ### Finding Closure

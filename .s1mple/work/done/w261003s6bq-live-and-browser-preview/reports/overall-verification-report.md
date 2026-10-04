@@ -2,13 +2,13 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
-- **Plan Index:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
+- **Goal:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
+- **Plan Index:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
 - **Plan Parts:**
-  1. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
-  2. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
-  3. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
+  1. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+  2. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+  3. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
 
 Verified on 2026-10-04 at local `HEAD` `e16d640` on `feat/rm261003abzp-di3-live-preview`. The pushed PR head is `46032b8`; `e16d640` adds only the goal file (`git diff --stat 46032b8 HEAD` → 1 file, `w261003s6bq-goal.md`). `origin/main` has no commits ahead of `HEAD`. The tree was clean at start. Machine: Apple M1 Max, 10 cores, macOS.
 
@@ -123,7 +123,7 @@ Parent synchronization (index `:133`, `:144`, phase `:586`, the REQ9@R2 relaxati
   The W system design still states the opposite rule. `w261003s6bq-system-design.md:1182` says "a buffer's `requested` and `refused` hold only targets that buffer currently embeds", and `:1983` shows `const requested = keep(b.embeds?.requested)`. `grep -n 'embed?: true\|until its read answers'` finds nothing in the design, and its only commits since planning are `4308ab6` and `2495edd`, which recorded the P3-G1 editor-kind change but not these. The goal itself lists them as "Design refinements to sync into the W system design (§6 `embeds.requested`, §7 `syncEmbeds` and `onFileLoaded`/`onFileRefused`)". The design's invariant "at most one `read` is outstanding per path across all buffers" (`:1182`) also needs the accepted `:bd` residual exception. PR #6's "Pending parent synchronization" section lists `content.editor` and the REQ9@R2 relaxation, but it does not list the `embed?: true` field added to the PH1 `read` effect and to the `fileLoaded`/`fileRefused` actions. REQ1@R1 criterion 5 requires every `Action` or `Effect` change DI3 makes to be reported.
 - **Impact:** The behaviour is correct and tested (`embeds.test.ts`, 9 cases). The risk is in the documents. The authoritative W design, and the parent phase design that DI4 plans against, describe a `requested` rule and a `read` effect shape that the code no longer has. A DI4 change to embeds or to the `read` effect (`![[file.base]]` uses the same unlisted-buffer path, G4) could reintroduce P1-G2-VER1 by following the design.
 - **Required resolution:** Update W system design §6 `BufferState.embeds` (invariants) and §7 `src/core/state/embeds.ts`, `buffers.ts`, and `types.ts`. They must say that `requested` holds a target until its read answers, that only `refused` is trimmed to current embeds, that embed reads and their answers carry `embed?: true` and a tagged answer is shown only when a window waits, and that the `:bd` residual allows one extra no-op read. Add the `embed?: true` field on `read`, `fileLoaded`, and `fileRefused` to PR #6's pending parent-synchronization list.
-- **Required proof:** `grep -n 'embed?: true' .s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` returns §6/§7 hits. The `:1182` invariant no longer says `requested` holds only currently embedded targets. `gh pr view 6 --json body` lists the `embed?: true` change under "Pending parent synchronization".
+- **Required proof:** `grep -n 'embed?: true' .s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` returns §6/§7 hits. The `:1182` invariant no longer says `requested` holds only currently embedded targets. `gh pr view 6 --json body` lists the `embed?: true` change under "Pending parent synchronization".
 
 **Completion Checklist:**
 

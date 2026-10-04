@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+- **Goal:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
 - **Group:** `P1-G2`
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -67,7 +67,7 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` (commit `183db2a`, status `Failed`; left unchanged)
+- **Verification reports:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` (commit `183db2a`, status `Failed`; left unchanged)
 - **Status:** `Completed`
 
 All four findings are fixed in follow-up commits `7f491e8`..`324e886` on top of `183db2a`. Baseline recheck before the fixes: the tree was clean apart from the orchestrator's uncommitted edit to `w261003s6bq-goal.md`, which was never staged; `git merge-base --is-ancestor 9adb285 HEAD` → exit 0 (G2 gate baseline still holds); no parent sources were edited.

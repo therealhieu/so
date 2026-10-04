@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G3`
 - **Tasks:** `P1-G3-T1`, `P1-G3-T2`, `P1-G3-T3`, `P1-G3-T4`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md`
 
 Verified at `HEAD` `a0e278e` (group change range `0876a21`..`3d9c36a`; task commits T2 `119d9c9`, T3 `3bc3959`, T4 `3d9c36a`; T1 is no-change). Governing sources: system design (authoritative), requirements, plan context, plan part 1 §P1-G3, plan index, goal.
 

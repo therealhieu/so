@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2`
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md`
 
 Verified range `f296fc5..9530f5b` (task commits `4bcea47`, `db27ea5`, `97f84ef`, `195bc95`, `9530f5b`); checks ran at `c10496f`, whose only change after `9530f5b` is the implementation report. Probe tests ran from the session scratchpad and were not committed.
 

@@ -6,13 +6,13 @@
 
 ## Sources
 
-- Plan context: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
-- System design: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
+- Plan context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
+- System design: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
 - UI design: Not applicable — this W has no UI design; parent UI obligations (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, and the other assigned UREQ/UDES/US/UV) are carried through the system design's Assigned Parent Obligation Coverage
-- System requirements: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
+- System requirements: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
 - UI requirements: Not applicable — no W UI requirements artifact; parent UREQs are bound through the discussion context
 - Research: Not needed — the design records `Research Source: None`
-- Discussion context: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`
+- Discussion context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`
 - UI context: Not applicable — no W UI context artifact; current UI code evidence is in the discussion context sections 2–5
 
 ## Roadmap Contract

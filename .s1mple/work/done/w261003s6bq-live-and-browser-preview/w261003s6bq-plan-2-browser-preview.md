@@ -21,11 +21,11 @@
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
-- Plan context: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
-- System design: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
+- Plan index: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
+- Plan context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
+- System design: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
 - UI design: Not applicable — no W UI design. The parent UI/UX authority for the page is `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (M7@R1, UDES10@R2, UV9@R2) and for segments M1@R1 and UV1@R2, which the system design references.
-- System requirements: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
+- System requirements: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
 - UI requirements: Not applicable — no W UI requirements. The parent UREQs are bound through the discussion context.
 
 ## Dependencies

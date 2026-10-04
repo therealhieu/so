@@ -10,13 +10,13 @@
 
 - s1mple instructions: `.s1mple/S1MPLE.md`
 - Project document: `.s1mple/docs/project.md`
-- Plan index: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
-- System design: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
+- Plan index: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-index.md`
+- System design: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md`
 - UI design: Not applicable — this W has no UI design; parent UI obligations (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1, and the other assigned UREQ/UDES/US/UV) are carried by the system design's §1 Assigned Parent Obligation Coverage, "UI obligations" row
-- System requirements: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
+- System requirements: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md`
 - UI requirements: Not applicable — no W UI requirements artifact; parent UREQs are bound through the discussion context
-- Plan context: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
-- Roadmap binding: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3)
+- Plan context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
+- Roadmap binding: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3)
 - Current parent sources:
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Delivery Items `:133`, Work Progress `:144`)
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` (header `:3`, gates G2 `:69` and G4 `:71`, phase design contracts `:205-230`, DI3@R3 `:322-403`, Progress `:579-588`, Approval `:593-609`)
@@ -27,9 +27,9 @@
   - `.s1mple/docs/project.md`
   - `.s1mple/docs/languages/typescript.md`
 - Plan parts:
-  1. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
-  2. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
-  3. `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+  1. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+  2. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+  3. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
 
 ## Execution Contract
 
@@ -61,13 +61,13 @@
   - G2 — DI2 foundations (phase file `:69`; plan context §2): due before DI3 execution; satisfied at planning (`9adb285` ancestor of `HEAD`); re-confirm at P1-G1-T1 step 0 and record under Gate Evidence.
   - G4 — DI3 extension points for DI4 (phase file `:71`; plan context §2): produced by this work at P1-G1-T3, P1-G2-T2, P1-G2-T4; proven by V4, V5 (P1-G1) and V38, V41 (P3-G1-T1); evidence carried in the PR at P3-G1-T4. Due before DI4 execution of the `![[file.base]]` embed renderer, not within this execution; remains `Pending` until the user merges the DI3 PR. Integration owner: RM261003ABZP-DI4@R2 (W Pending).
 - **Parent synchronization authorization:** Pending authorization — no explicit user authorization to write or commit parent roadmap files exists. W-only commits never imply it.
-- **Reports Directory:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/`
+- **Reports Directory:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/`
 - **Implementation Report Naming:** `p<part-number>-g<group-number>-implementation-report.md` — lowercase prefix, e.g. `p1-g1-implementation-report.md`.
 - **Verification Report Naming:** `p<part-number>-g<group-number>-verification-report.md` — lowercase prefix, e.g. `p1-g1-verification-report.md`.
 - **Reports:** Each group has exactly these two reports.
 - **Overall Verification Prompt:** `templates/overall-verification-prompt.md`
 - **Overall Verification Report Template:** `templates/overall-verification-report-template.md`
-- **Overall Verification Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
+- **Overall Verification Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
 - **Overall Remediation Prompt:** `templates/overall-remediation-prompt.md`
 - **Remediation:** Append group and overall remediation evidence to the responsible implementation report. Never create a remediation report.
 
@@ -195,7 +195,7 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 ### Part 1 — Terminal live preview
 
-- **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
 - **Dependencies:** None (G2 precondition at P1-G1-T1 step 0)
 - **Status:** `Completed` (P1-G1, P1-G2, P1-G3 accepted; last at `8d20862`)
 
@@ -226,9 +226,9 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` — `Completed` (initial)
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` — `Completed` (initial)
 - Initial implementation report commit: `c85739c` (group range `e7f259f`..`d3c1776`)
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` — `Failed` (VER1 Major perf: embed rows lay out whole target; VER2 Major perf: reveal walks whole selection; VER3 Minor: `comment` not in `MULTILINE_KEYS`; VER4 Minor: goldens differ from M2 mockup)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` — `Failed` (VER1 Major perf: embed rows lay out whole target; VER2 Major perf: reveal walks whole selection; VER3 Minor: `comment` not in `MULTILINE_KEYS`; VER4 Minor: goldens differ from M2 mockup)
 - Verification report commit: `eeba8fd`
 - Remediation: `Completed` by a fresh `s1mple-implementer`; all four findings `Fixed`; verification report unchanged since `eeba8fd`
 - Final implementation report commit: `e03ae9e`
@@ -272,9 +272,9 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md` — `Completed` (initial)
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md` — `Completed` (initial)
 - Initial implementation report commit: `c10496f` (group range `f296fc5`..`9530f5b`)
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` — `Failed` (P1-G2-VER1 Major: stale or duplicate embed reads can open a listed buffer; VER2 Minor: `:s` edits in reading view; VER3 Minor: three missing tests; VER4 Minor: report T1 row)
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` — `Failed` (P1-G2-VER1 Major: stale or duplicate embed reads can open a listed buffer; VER2 Minor: `:s` edits in reading view; VER3 Minor: three missing tests; VER4 Minor: report T1 row)
 - Verification report commit: `183db2a`
 - Remediation: `Completed` by a fresh `s1mple-implementer` — VER1…VER4 `Fixed`; every completion checklist satisfied. Accepted residual: if the last note embedding a target is closed with `:bd` before its read answers, a later open or new embed of that path sends one more `read`. The second answer has the same stamp, so `onDiskLoaded` makes no change (`src/core/state/disk.ts:69`). The target is never shown or listed by the embed answer. Closing this would need request state above the note, which S5 forbids. Design refinements to sync into the W system design (§6 `embeds.requested`, §7 `syncEmbeds` and `onFileLoaded`/`onFileRefused`): `requested` keeps a target until its read answers, and embed reads carry `embed?: true` on the `read` effect and its answer (`types.ts`, `src/app/effects.ts`)
 - Final implementation report commit: `47bb688`
@@ -315,9 +315,9 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md` — `Completed` (initial)
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md` — `Completed` (initial)
 - Initial implementation report commit: `a0e278e` (group range `0876a21`..`3d9c36a`)
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` — `Failed` (P1-G3-VER1 Minor, test coverage: no regression test for the `◌ name` loading placeholder or for the timeout covering the whole body download). The verifier re-ran the V43 analyzer on all seven raw captures and accepted the byte-level evidence and all six deviations
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` — `Failed` (P1-G3-VER1 Minor, test coverage: no regression test for the `◌ name` loading placeholder or for the timeout covering the whole body download). The verifier re-ran the V43 analyzer on all seven raw captures and accepted the byte-level evidence and all six deviations
 - Verification report commit: `2ebd33a`
 - Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed` by two regression tests: the dimmed `◌ name` loading placeholder and a whole-body download timeout with a slowly dripped body. Each test fails when its behaviour is broken. Production code is unchanged
 - Final implementation report commit: `b111355`
@@ -335,7 +335,7 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 ### Part 2 — Browser preview
 
-- **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
 - **Dependencies:** Part 1
 - **Status:** `Completed` (P2-G1 accepted)
 
@@ -364,9 +364,9 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` — `Completed` (initial). Pins: `katex@0.16.47`, `mermaid@12.1.0`, both exact
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` — `Completed` (initial). Pins: `katex@0.16.47`, `mermaid@12.1.0`, both exact
 - Initial implementation report commit: `59892a7` (group range `8d20862`..`8d6e7d4`)
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` — `Failed` (P2-G1-VER1 Minor, test reliability: the fake launcher in `test/e2e/quit.test.ts` can be read before its URL is written). Every chain is satisfied and all five deviations were accepted. A Playwright Chromium smoke check passed: math, Mermaid, SSE edits, the stopped badge, the error fallbacks and the XSS escaping all work, with no external requests. The `Reconnecting…` → `Offline` badge states are left to the V42 checklist in P3-G1
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` — `Failed` (P2-G1-VER1 Minor, test reliability: the fake launcher in `test/e2e/quit.test.ts` can be read before its URL is written). Every chain is satisfied and all five deviations were accepted. A Playwright Chromium smoke check passed: math, Mermaid, SSE edits, the stopped badge, the error fallbacks and the XSS escaping all work, with no external requests. The `Reconnecting…` → `Offline` badge states are left to the V42 checklist in P3-G1
 - Verification report commit: `510e7c6`
 - Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed`: the fake launcher writes to a temporary file and renames it into place. A deliberately delayed launcher fails with the old code and passes with the new one. The quit and preview-server suites passed 10 of 10 runs (14 tests each)
 - Final implementation report commit: `df5fb9b`
@@ -385,7 +385,7 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 ### Part 3 — Extension, performance, and delivery
 
-- **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
+- **Plan:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
 - **Dependencies:** Parts 1 and 2
 - **Status:** `Completed` (P3-G1 accepted; T4 steps 2–4 in Delivery Completion)
 
@@ -413,9 +413,9 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md` — first turn `Blocked` (report `8521c98`; PR https://github.com/therealhieu/so/pull/6). Two blockers: (1) the `grid` editor-kind part of V41 cannot pass because `WindowState.content.editor` is the literal `"text"`; (2) the Linux CI bench gate fails, with `openFile` 134.04 against a 100 ms limit and `indexingKeystrokeP95` 38.60 against a 32 ms limit, because `live` is now the default view. Orchestrator decisions on 2026-10-04: (1) implement inside approved S16 as a minimal refinement: widen `content.editor` to `EditorKind`, set it from the registered file-type kind, and fall back to `"text"`, with no new state and no persisted field; (2) profile and fix in code, with no target or method change. The same implementer was resumed for both and returned `Completed` with risk: B1 is closed by `c58e8eb`; B2 has no code fix and the CI gate is now green only because runners vary. Profiling found the live-open cost in the designed per-block mdast parse (about 13–15 ms locally). The larger costs are the existing `parseDoc`, the index `patch` and the completion `poolFor`
+- Implementation: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md` — first turn `Blocked` (report `8521c98`; PR https://github.com/therealhieu/so/pull/6). Two blockers: (1) the `grid` editor-kind part of V41 cannot pass because `WindowState.content.editor` is the literal `"text"`; (2) the Linux CI bench gate fails, with `openFile` 134.04 against a 100 ms limit and `indexingKeystrokeP95` 38.60 against a 32 ms limit, because `live` is now the default view. Orchestrator decisions on 2026-10-04: (1) implement inside approved S16 as a minimal refinement: widen `content.editor` to `EditorKind`, set it from the registered file-type kind, and fall back to `"text"`, with no new state and no persisted field; (2) profile and fix in code, with no target or method change. The same implementer was resumed for both and returned `Completed` with risk: B1 is closed by `c58e8eb`; B2 has no code fix and the CI gate is now green only because runners vary. Profiling found the live-open cost in the designed per-block mdast parse (about 13–15 ms locally). The larger costs are the existing `parseDoc`, the index `patch` and the completion `poolFor`
 - Initial implementation report commit: `8521c98` (initial), `f6c98ee` (blocker resolution appended in the same implementation turn); group range `607b12b`..`f6c98ee`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Failed`. VER1 (Major, performance): the CI bench passes only on fast runners; on slow runners `openFile` is about 1.7× the earlier code. VER2 (Major, performance): local readings miss the REQ9@R2 1× targets (`liveKeystrokeP95` 16.7–20.0, `openFile` 51.9–57.6). VER3 (Minor, documentation): the design and PR parent-sync list do not show `editor: EditorKind`, and `EditorKindSpec.open` is never called. VER4 (Minor): an orphaned doc comment in `update.ts`. Passed: V35, V38, V41, V42, V46, V47 and the G4 evidence; `test:ci` passed 6/6
+- Verification: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Failed`. VER1 (Major, performance): the CI bench passes only on fast runners; on slow runners `openFile` is about 1.7× the earlier code. VER2 (Major, performance): local readings miss the REQ9@R2 1× targets (`liveKeystrokeP95` 16.7–20.0, `openFile` 51.9–57.6). VER3 (Minor, documentation): the design and PR parent-sync list do not show `editor: EditorKind`, and `EditorKindSpec.open` is never called. VER4 (Minor): an orphaned doc comment in `update.ts`. Passed: V35, V38, V41, V42, V46, V47 and the G4 evidence; `test:ci` passed 6/6
 - Verification report commit: `06886c7`
 - Remediation: the consultant recommended five no-output-change speedups. The user then approved relaxed live and startup targets on 2026-10-04 so the bench gate does not slow development: `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250. Source targets are unchanged. The W requirements Constraints and system design §6, §7 `TARGETS` and V44 were updated, which also syncs VER3's design part. A fresh `s1mple-implementer` applies the new targets and four quick speedups (lazy `beautiful-mermaid`, scanner trigger skip, block-hash reuse, letter-line paragraph fast path) and fixes VER3's PR part and VER4. Result `Completed`: all four speedups were kept and VER1–VER4 are `Fixed`. Ten `yes` load generators orphaned by an earlier agent (PIDs 63481–63490) were killed; they had inflated the verifier's local readings
 - Final implementation report commit: `46032b8`
@@ -588,7 +588,7 @@ Fresh verifier → Passed → Project documentation
 ### Evidence
 
 - **Status:** `Failed` (one Minor documentation finding; every check passed)
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md`
 - **Report commit:** `bd88306`
 - **Findings and owners:** OVR-VER1 (Minor, documentation, owner P1-G2). The W system design §6 and §7 do not describe the P1-G2 embed refinements: `requested` is kept until the read answers; `embed?: true` is on `read`, `fileLoaded` and `fileRefused`; and the `:bd` exception to one outstanding read. The PR #6 parent-sync list also omits the `embed?: true` tag (REQ1@R1 criterion 5)
 - **Remediation status:** `Completed` by one fresh `s1mple-implementer`; OVR-VER1 is `Fixed` (documentation only, no code change)

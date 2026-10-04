@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
+- **Goal:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
 - **Group:** `P2-G1` — Browser preview
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -82,7 +82,7 @@ A fresh remediator must preserve these decisions:
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` (commit `510e7c6`, status `Failed`, finding `P2-G1-VER1`; left unchanged)
+- **Verification reports:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` (commit `510e7c6`, status `Failed`, finding `P2-G1-VER1`; left unchanged)
 - **Status:** `Completed`
 
 The one finding is fixed. The fake browser launcher in the exit test now writes the address to a temporary name and renames it into place. As a result, the test can no longer read an empty file. A delayed launcher reproduces the old failure and passes with the fix, and both gates pass.

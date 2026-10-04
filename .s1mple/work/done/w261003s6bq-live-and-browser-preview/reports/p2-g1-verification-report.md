@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1` — Browser preview
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` (commit `59892a7`)
+- **Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` (commit `59892a7`)
 
 Verified range: `8d20862`..`8d6e7d4` (task commits T1 `c486398`, T2 `7dabcdc`, T3 `b3258a8`, T4 `c28abe0`, T5 `8d6e7d4`) on branch `feat/rm261003abzp-di3-live-preview`, with `HEAD` at `59892a7`. The orchestrator's uncommitted edit to `w261003s6bq-goal.md` was left untouched.
 
