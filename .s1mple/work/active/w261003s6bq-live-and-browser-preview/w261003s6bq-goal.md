@@ -2,9 +2,9 @@
 
 ## Status
 
-- **State:** `Ready`
-- **Current Position:** `Not started`
-- **Last Updated:** `Not started`
+- **State:** `In Progress`
+- **Current Position:** `P1-G1 — implementation dispatched`
+- **Last Updated:** `2026-10-04`
 
 ## Sources
 
@@ -441,7 +441,7 @@ Keep definitions in the accepted binding, system design, and parent gate sources
 | Boundary | Accepted references and current sources checked | Assessment and evidence |
 |---|---|---|
 | Planning (reference, recorded by the reconciler) | PH2@R4 `:3`, DI3@R3 `:322-403`, G2/G4 `:69`/`:71`, index `:133`, `:144` at `ee33163` (plan index Roadmap Contract) | Aligned at planning; not a substitute for the execution-start check |
-| Execution start | `Pending implementation` | `Pending implementation` |
+| Execution start (2026-10-04, `HEAD` `0c111be`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`, DI3@R3 `:322`; index `:133` (DI3@R3 → W261003S6BQ, PR Pending), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `origin/main` has no commits ahead of `HEAD` | Aligned — no parent commit after the planning check at `ee33163`; DI3@R3 → W261003S6BQ unchanged; no other W binds DI3 (`work/done/` holds W261003HEGE, W261003FX70). Working tree clean at start |
 | Delivery (before Delivery Completion) | `Pending implementation` | `Pending implementation` |
 
 Append checks as boundaries are reached (including any resume). An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
@@ -450,7 +450,7 @@ Append checks as boundaries are reached (including any resume). An unresolved re
 
 | Gate source and due boundary | Producer output / baseline | Actual evidence | Result |
 |---|---|---|---|
-| G2 (phase file `:69`; plan context §2) — before P1-G1-T1 | DI2@R2 / W261003FX70 outputs merged in `9adb285` (PR #2) | `Pending implementation` (`git merge-base --is-ancestor 9adb285 HEAD`) | `Pending implementation` |
+| G2 (phase file `:69`; plan context §2) — before P1-G1-T1 | DI2@R2 / W261003FX70 outputs merged in `9adb285` (PR #2) | `git merge-base --is-ancestor 9adb285 HEAD` → exit 0 at `0c111be` on 2026-10-04, before P1-G1-T1 | `Satisfied` |
 | G4 (phase file `:71`; plan context §2) — produced here; due before DI4 embed execution | Outputs at P1-G1-T3, P1-G2-T2, P1-G2-T4; proof V4, V5, V38, V41 on the PR head | `Pending implementation` | `Pending implementation` (stays `Pending` until the user merges the DI3 PR) |
 
 Never treat an approved producer design as delivered implementation. Check gates before their due boundary, not only before marking a group complete.
@@ -640,7 +640,7 @@ After Project Documentation Finalization, the orchestrator performs P3-G1-T4 ste
 - **Subagent Replacements:** `Pending implementation`
 - **Changed Files:** `Pending implementation`
 - **Automated Verification:** `Pending implementation`
-- **Manual Evidence:** `Pending implementation` (V42, V43, V45)
+- **Manual Evidence:** `Pending implementation` (V42, V43, V45). On 2026-10-04 the user stated the agent can run these cases, so they are agent-run rather than pending user evidence: V45 = local `bun run bench` medians on this machine (P3-G1-T2); V42 = Playwright MCP at 1200/375 px, light/dark, offline emulation (P3-G1-T3); V43 = spike driven by the agent in Ghostty (kitty protocol), iTerm2, and Terminal.app (blocks) with `screencapture` evidence; kitty and WezTerm are not installed at execution start and may be installed with Homebrew at P1-G3-T1.
 
 ## Blockers and Deviations
 
