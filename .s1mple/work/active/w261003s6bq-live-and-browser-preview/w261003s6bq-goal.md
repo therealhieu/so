@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G1 — implementation`
+- **Current Position:** `P3-G1 — implementation`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -197,7 +197,7 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-1-terminal-live-preview.md`
 - **Dependencies:** None (G2 precondition at P1-G1-T1 step 0)
-- **Status:** `Pending`
+- **Status:** `Completed` (P1-G1, P1-G2, P1-G3 accepted; last at `8d20862`)
 
 #### P1-G1 — Core provider, renderers, and view context
 
@@ -337,61 +337,61 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-2-browser-preview.md`
 - **Dependencies:** Part 1
-- **Status:** `Pending`
+- **Status:** `Completed` (P2-G1 accepted)
 
 #### P2-G1 — Browser preview
 
-- [ ] Context and dependencies confirmed (Part 1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P2-G1-T1` — Escaped HTML rendering.
-- [ ] `P2-G1-T2` — Embedded preview page and browser libraries.
-- [ ] `P2-G1-T3` — Preview server and follow selector.
-- [ ] `P2-G1-T4` — Preview lifecycle, commands, and browser launch.
-- [ ] `P2-G1-T5` — Preview statusline segment.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (Part 1 accepted).
+- [x] Implementation turn completed.
+- [x] `P2-G1-T1` — Escaped HTML rendering.
+- [x] `P2-G1-T2` — Embedded preview page and browser libraries.
+- [x] `P2-G1-T3` — Preview server and follow selector.
+- [x] `P2-G1-T4` — Preview lifecycle, commands, and browser launch.
+- [x] `P2-G1-T5` — Preview statusline segment.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-implementation-report.md` — `Completed` (initial). Pins: `katex@0.16.47`, `mermaid@12.1.0`, both exact
+- Initial implementation report commit: `59892a7` (group range `8d20862`..`8d6e7d4`)
+- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` — `Failed` (P2-G1-VER1 Minor, test reliability: the fake launcher in `test/e2e/quit.test.ts` can be read before its URL is written). Every chain is satisfied and all five deviations were accepted. A Playwright Chromium smoke check passed: math, Mermaid, SSE edits, the stopped badge, the error fallbacks and the XSS escaping all work, with no external requests. The `Reconnecting…` → `Offline` badge states are left to the V42 checklist in P3-G1
+- Verification report commit: `510e7c6`
+- Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed`: the fake launcher writes to a temporary file and renames it into place. A deliberately delayed launcher fails with the old code and passes with the new one. The quit and preview-server suites passed 10 of 10 runs (14 tests each)
+- Final implementation report commit: `df5fb9b`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `d128f6f` (T4)
+- Closure evidence: `bun run check` 736 pass; `CI=true bun run test:ci` 139 pass; the original verification report is unchanged at `510e7c6`. Carried forward: the single unexplained failure seen once during T5 has not recurred in 30+ later runs; V42 (including the `Reconnecting…` → `Offline` badge states) belongs to P3-G1. Accepted on 2026-10-04
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P2-G1-T1` | `Pending implementation` |
-| `P2-G1-T2` | `Pending implementation` |
-| `P2-G1-T3` | `Pending implementation` |
-| `P2-G1-T4` | `Pending implementation` |
-| `P2-G1-T5` | `Pending implementation` |
+| `P2-G1-T1` | `c486398` |
+| `P2-G1-T2` | `7dabcdc` |
+| `P2-G1-T3` | `b3258a8` |
+| `P2-G1-T4` | `c28abe0`, `d128f6f` |
+| `P2-G1-T5` | `8d6e7d4` |
 
 ### Part 3 — Extension, performance, and delivery
 
 - **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
 - **Dependencies:** Parts 1 and 2
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P3-G1 — Extension proof, benchmarks, and delivery
 
-- [ ] Context and dependencies confirmed (Parts 1 and 2 accepted).
+- [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P3-G1-T1` — Registration-only extension proof.
 - [ ] `P3-G1-T2` — Live and source bench targets.
