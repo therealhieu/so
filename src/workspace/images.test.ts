@@ -40,6 +40,19 @@ const server = Bun.serve({
         }),
       );
     if (path === "/hang.png") return new Promise<Response>(() => {});
+    if (path === "/drip.png") {
+      // Headers at once, then 10 bytes every 50 ms for 2 s.
+      let sent = 0;
+      return new Response(
+        new ReadableStream({
+          async pull(c) {
+            await Bun.sleep(50);
+            if (++sent > 40) c.close();
+            else c.enqueue(new Uint8Array(10));
+          },
+        }),
+      );
+    }
     if (path.startsWith("/slow/")) {
       inFlight++;
       maxInFlight = Math.max(maxInFlight, inFlight);
@@ -87,6 +100,14 @@ test("web image downloads are capped, time out, and reject errors and other sche
     fetchImage(url("/hang.png"), { timeoutMs: 200 }),
   ).rejects.toThrow();
   await expect(fetchImage("ftp://x/a.png")).rejects.toThrow("not a web image");
+});
+
+test("the download timeout covers a body that arrives too slowly", async () => {
+  const start = performance.now();
+  await expect(
+    fetchImage(url("/drip.png"), { timeoutMs: 300 }),
+  ).rejects.toThrow();
+  expect(performance.now() - start).toBeLessThan(1_000);
 });
 
 test("at most four web images download at once", async () => {
