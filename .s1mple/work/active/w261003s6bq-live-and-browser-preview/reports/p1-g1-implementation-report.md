@@ -97,12 +97,40 @@ Remaining issues: None.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** Pending — `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md`
-- **Status:** `Not required` (no verifier findings yet)
+- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` (commit `eeba8fd`, status `Failed`, findings P1-G1-VER1 to P1-G1-VER4)
+- **Status:** `Completed`
+
+### Baseline and Gate Recheck
+
+Rechecked before the first remediation commit, at `eeba8fd`:
+
+- Gate G2: `git merge-base --is-ancestor 9adb285 HEAD && echo G2-ok` → `G2-ok`.
+- Source drift since the group's final commit: `git diff --stat d3c1776..eeba8fd -- src test package.json` → empty. The only working-tree change was the orchestrator's `w261003s6bq-goal.md` edit, which stayed unstaged throughout.
+- G4 shapes: `rm261003abzp-roadmap-phase-2-obsidian-experience.md:205-230` unchanged. Remediation touches no exported G4 symbol; `live-preview.ts` changes only the internal `reveal(...)` call.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G1-VER1` | `renderers/embed.ts:embedRows` lays out a window that starts at `embedMaxRows` lines and doubles until it fills `max` rows (counted by `rowCount`, the `layoutText` row rule) or reaches the section end. An expanded embed (`max` infinite) still lays out the whole section. Test `embed.test.ts` "a capped embed of a long note renders only the blocks it shows": 5,000-line target, cap 10 → 10 rows, `more` 4989, at most 20 paragraph-renderer calls, all in the first 20 lines. RED on the old code: 2,500 calls. GREEN: `bun test src/core/lang/markdown/renderers/embed.test.ts` → 7 pass. Equivalence probe (scratch, deleted with the session): new `embedRows` vs the old full-section layout on `tour.md`, a 12-line `%%` comment, and a 30-line code fence, at caps 1, 2, 3, 5, 10, 17, 40, and infinite → 0 mismatches. Tour goldens unchanged. Timings (probe, Bun 1.4.2, this machine): 5,000-line target 236.6 ms → 0.03 ms per frame (paragraph calls 2,501 → 6); 2,000-line target 0.92 ms → 0.06 ms (1,001 → 6) | `91fadb7` (`P1-G1-T5`) | `Fixed` |
+| `P1-G1-VER2` | `reveal.ts:reveal` takes a sixth `visible: LineRange` argument and considers only the visible lines plus the blocks intersecting them (`blocksIn(doc, visible)`). Revealed lines are the selection clipped to that hull; revealed blocks are those hull blocks that intersect the selection. Output for visible rows is unchanged: every decoration lies inside its block, and every visible block lies inside the hull. `live-preview.ts:livePreview` passes `v.visible`. Test `live-preview.test.ts` "a selection over a long note reads only the visible blocks": select-all over 5,000 lines, 30 visible; every `TextBuffer.line` read falls inside the visible blocks, and `▕` marks exactly the 15 visible non-blank rows. RED on the old code: first read was line 0. Equivalence probe: new provider vs the pre-fix provider (copied from `91fadb7`) over 1,638 selection × viewport cases on `tour.md` → 0 mismatches. V1r (`reveal.test.ts`, which now passes `v.visible`) and all 18 goldens pass. Timings: select-all 232–261 ms → 0.07 ms per frame (cursor only: 0.03 ms) | `4a5e455` (`P1-G1-T3`) | `Fixed` |
+| `P1-G1-VER3` | `reveal.ts:MULTILINE_KEYS` adds `"comment"`, so a `%%` comment block is revealed whole while the cursor or selection is inside it. A one-line comment shows the same output as before, because its line is already revealed. Test `live-preview.test.ts` "a multi-line comment shows its whole source while the cursor is inside": rows 2–5 show `%%`, `hidden one`, `hidden two`, `%%`, each with `▕`; with the cursor on line 7 the comment is hidden. RED on the old code: `▕` only on `[3]`. The heading-glyph/comment-hidden and reveal-sign assertions and all goldens pass | `37d5774` (`P1-G1-T3`) | `Fixed` |
+| `P1-G1-VER4` | (1) Frontmatter (`renderers/frontmatter.ts`): `tags` values render as `#tag` chips in `mdTag` style, for flow lists and for block lists (`- x` lines under `tags:`). Flow-list items are two spaces apart, as M2 S6 shows (aliases `tour  syntax`). The closing fence is a `dim` `─` rule of `min(48, width − 2)`, as M2 `fm-close` draws. The header stays `Properties` without `▾`, because DES5 folds only callouts and embeds; a `▾` would advertise a toggle that does nothing (recorded deviation). (2) Callout icons (`renderers/callout.ts:GROUPS`, `NOTE`): note `●`, tip `★`, warning `▲`, danger `✗`, matching M2 `callout-open`. The warning icon no longer reuses the `⚠` render-error sign. `todo ☐`, `quote ❝`, and `question ?` are unchanged. (3) Fenced code language row: no change, recorded deviation. Design §7 is authoritative and specifies `registerBlockRenderer("code", codeRenderer); // fences hidden, lowlight marks kept`; M2's `  ts` row would contradict that line. Tests in `live-preview.test.ts`: "frontmatter tags render as tag chips" (`#reference`, `#so` in `mdTag` on line 2; `#daily` from a block list) and "a warning callout icon differs from the render-error sign" (`▲ Careful`). Goldens regenerated with `--update-snapshots` (18 entries) and reviewed by eye. The diff touches only these rows: 16 goldens change the tip (`★`) and danger (`✗`) titles; 14 change the note title (`●`), `tags     #reference  #so ⟦mdTag@9+10 mdTag@21+3⟧`, `aliases  tour  syntax`, and line 6 `─`×48 `⟦dim@0+48⟧`. The frontmatter-cursor goldens still show raw YAML with `▕` on rows 1–6, and the source goldens are unchanged. `bun test src/core/lang/markdown/live-preview.test.ts` → 27 pass, 18 snapshots | `a358999` (`P1-G1-T6`) | `Fixed` |
+
+### Remediation Verification
+
+- `bun run check` → `Passed` — Biome clean, tsc clean, knip zero findings, 682 pass, 0 fail, 18 snapshots.
+- `bun run test:ci` → `Passed` — 115 pass, 0 fail, 25 snapshots; `git status --short` afterwards shows only the orchestrator's goal edit.
+- `git diff --stat e7f259f..HEAD -- src/core/kernel src/core/filetypes/registry.ts src/ui src/core/lang/markdown/file-type.ts` → `Passed` — empty.
+- G4 signatures → `Passed` — `PreviewCtx`, `MarkdownViewInput`, `livePreview`, `BlockRenderer`, and `registerBlockRenderer` are untouched by `d3c1776..a358999`.
+- Work-process identifier scan over every file changed in `e7f259f..HEAD` under `src` and `test` → `Passed` — the only hit is the pre-existing `USAGE` constant in `src/app/main.ts`, a false positive.
+- Purity scan under `src/core/lang/markdown` (non-test) for `core/state`, `ui`, `@opentui`, `node:fs`, `Bun.`, `fetch(` → `Passed` — no match.
+- Self-review of the complete group diff `e7f259f..a358999` (initial and remediation commits) → no further issue found.
+
+Shape refinements added by remediation (not G4 signatures):
+
+- `reveal(doc, view, cursor, selection, text, visible)` takes a sixth `visible: LineRange`; design §7 shows four arguments, and the fifth was already accepted.
+- `MULTILINE_KEYS` includes `"comment"` in addition to the design's seven keys.
 
 ## Final Status
 
@@ -110,8 +138,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all seven tasks are committed, and every task and group check passed.
+- **Final report status:** `Completed` — all seven tasks are committed, and all four verifier findings are fixed with regression tests and passing group checks.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `8d0cb51`, `2af5239`, `470720b`, `1150aa3`, `b5f906c`, `6e74e72`, `d3c1776`
-- **Final checks:** `bun run check` → 677 pass, 0 fail, knip clean; `bun run test:ci` → 115 pass, 0 fail, no snapshot change; kernel and `src/ui` diffs empty; G4 signatures equal.
+- **Final commits:** `8d0cb51`, `2af5239`, `470720b`, `1150aa3`, `b5f906c`, `6e74e72`, `d3c1776`; remediation `91fadb7`, `4a5e455`, `37d5774`, `a358999`
+- **Final checks:** `bun run check` → 682 pass, 0 fail, knip clean; `bun run test:ci` → 115 pass, 0 fail, no snapshot change; kernel and `src/ui` diffs empty; G4 signatures equal.
 - **Remaining issues:** None
