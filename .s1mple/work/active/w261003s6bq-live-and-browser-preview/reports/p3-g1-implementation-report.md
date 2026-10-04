@@ -262,3 +262,96 @@ Bold local values exceed 1×. Every value passes the 2× gate. No target or benc
 - **Final commits:** `ee55fa9`, `352cf50`, `2348fa4`, `5ca1945`, `a11c8a9`, `c58e8eb`.
 - **Final checks:** `bun run check` pass (5.17 s); `CI=true bun run test:ci` 144 pass (one unexplained failure in 1 of 5 local runs); local `bun run bench` pass; PR #6 CI run 37175517956 all green.
 - **Remaining issues:** the bench gate risk in B2, which supersedes Deviation 2, and Deviations 3–7 above. Deviation 1 (the `grid` editor kind) is closed.
+
+## Remediation After Verification
+
+Written by a fresh implementer after the verification report (`06886c7`, `Failed`, findings P3-G1-VER1 to VER4) and the orchestrator decisions in `2495edd`. The sections above are unchanged; this section supersedes the placeholder under "Remediation".
+
+- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md`
+- **Status:** `Completed`
+- **Remediation range:** `2495edd`..`00011bd`
+
+### Binding decisions applied
+
+The user approved relaxed live and startup targets on 2026-10-04. `scripts/bench-gate.ts` `TARGETS` now matches the W requirements Constraints and system design §7: `liveKeystrokeP95` 16 → 24, `openFile` 50 → 80, `firstFrame` 200 → 250, `indexingKeystrokeP95` 16 → 30. The source targets, the gate rule (median of 5 above 2× fails), and every bench method are unchanged. The orchestrator also asked for four output-preserving speedups, applied in order and each kept only when measured to help. Per-block GFM extension selection and an incremental completion pool were not attempted, as instructed.
+
+### Load on the machine during this remediation
+
+Ten orphaned `yes` processes (one per core), started at 09:53:42 from the `so` repository by an earlier agent of this session, held the load average at 35–40. On the coordinator's instruction they were killed at about 12:09, and the load fell below 8 within two minutes. Consequences:
+
+- The first "before" bench and every A/B measurement ran under that load. A/B runs alternated the two trees, so both sides shared it, and only the A/B differences are used as evidence for each speedup.
+- The clean "before" and both clean "after" runs below were taken after the cleanup.
+- The verifier's local readings (taken after 09:53) were most likely inflated by the same load. The clean "before" on `e5602b4` already reads `liveKeystrokeP95` 9.28 and `openFile` 40.42, against the verifier's 20.02 and 52.08.
+
+### Speedups
+
+Effects are medians of alternating A/B runs: A is the commit before the speedup and B the working tree with it.
+
+| Speedup | Change | Output equality evidence | Measured effect | Commit | Kept |
+|---|---|---|---|---|---|
+| Lazy `beautiful-mermaid` | `src/core/lang/markdown/renderers/mermaid.ts`: `import type`, memoized `require` on the first diagram | `bun test src/core/lang/markdown` and `test/boundaries.test.ts` pass; `bun run build` bundles it, and the compiled binary copied alone into a temp dir draws a `graph TD` diagram as box-drawing lines in a PTY | `firstFrame` 474.5 → 289.9 ms (7 rounds) | `77ce68c` | Yes |
+| Scanner trigger skip | `src/core/lang/markdown/syntax.ts`: optional `SyntaxExtension.triggers`; `scanLine` skips the scanner and its claims build on a line containing none. Built-ins: comment `%%`/`<!--`, embed `![[`, wikiLink `[[`, markdownLink `](`, tag `#`, blockId `^`. Extensions without `triggers` run on every line | Per-scanner reading: `scanComments` returns early without `%%`/`<!--`; `wikiMatches` returns when `indexOf(open)` is -1; `scanMarkdownLinks` returns early without `](`; `TAG_RE` needs `#`; `BLOCK_ID_RE` needs `^`. New test "skipping scanners by trigger leaves every scan unchanged" compares `scanDoc` with and without the skip over `tour.md`, the markdown corpus, and 200 seeded random documents; it fails under three mutated triggers | cold `parseDoc` 25.5 → 14.6 ms (11 rounds); `openFile` 136.9 → 101.5 ms (9 rounds) | `50f9222` | Yes |
+| Block-hash reuse | `src/core/lang/markdown/doc.ts`: `WeakMap<Doc, TextBuffer>`; `unchangedHashes` finds the equal head and tail lines and reuses a previous block's hash at the matching start line with the same kind and line count; ids computed as before | Existing "incremental parse equals a fresh parse" plus new "incremental parse of a long note equals a fresh parse" (6 seeds × 120 random edits on a 4× note, with a `prev` up to 3 edits old); fails under three mutated reuse conditions | `parseDoc` per edit 1.52 → 0.38 ms (9 rounds); `liveKeystrokeP95` 92.1 → 61.6 ms; `indexingKeystrokeP95` 42.5 → 40.6 ms (loaded) | `4603fdb` | Yes |
+| Paragraph fast path | `src/core/lang/markdown/blocks.ts`: `LETTER_LINE = /^ {0,3}[A-Za-z]/` continues the paragraph before the blank, `SETEXT`, `interrupts`, and `LIST_INTERRUPT` checks | By reading: `SETEXT` needs `=`/`-`; `ATX` `#`; `openFence` a backtick, `~`, or `$`; `THEMATIC` `-`/`*`/`_`; `opensComment` `%%`; `HTML_COMMENT`, `HTML_RAW`, `HTML_BLOCK` `<`; `LIST_INTERRUPT` `-`/`+`/`*`/`1`; a letter line is not blank. All Markdown suites, goldens, and the conformance test pass unchanged | `splitBlocks` 2.06 → 1.17 ms cold (15 rounds), 0.22 → 0.09 ms warm; whole cold `parseDoc` and `openFile` showed no difference above the noise | `00011bd` | Yes |
+
+### Bench medians
+
+`bun run bench`, median of 5 fresh-process runs, ms.
+
+| Target | 1× (new) | Loaded before (`8a79835`, old targets) | Loaded after (`00011bd`) | Clean before (`e5602b4`) | Clean after, run 1 (`00011bd`) | Clean after, run 2 (`00011bd`) | Linux CI (`00011bd`, run 37178733100) | 2× limit |
+|---|---|---|---|---|---|---|---|---|
+| `sourceKeystrokeP95` | 16 | 43.34 | 16.91 | 3.99 | 4.41 | 4.11 | 12.87 | 32 |
+| `liveKeystrokeP95` | 24 | 30.76 | 28.19 | 9.28 | 8.80 | 7.18 | 19.57 | 48 |
+| `openFile` | 80 | 91.42 | 52.17 | 40.42 | 41.29 | 35.47 | 114.39 | 160 |
+| `sourceOpenFile` | 50 | 22.56 | 24.97 | 14.80 | 17.91 | 13.52 | 39.35 | 100 |
+| `liveScrollFrameP95` | 16.7 | 37.38 | 28.47 | 5.36 | 5.59 | 5.17 | 17.30 | 33.4 |
+| `sourceScrollFrameP95` | 16.7 | 33.99 | 11.86 | 4.11 | 4.03 | 4.08 | 10.04 | 33.4 |
+| `firstFrame` | 250 | 400.84 | 210.38 | 184.12 | 146.76 | 150.69 | 288.68 | 500 |
+| `indexReady` | 3000 | 4176.47 | 2085.96 | 999.41 | 987.00 | 1090.76 | 3803.09 | 6000 |
+| `indexingKeystrokeP95` | 30 | 50.02 | 17.88 | 9.55 | 10.17 | 10.24 | 37.09 | 60 |
+
+The loaded "before" ran with the old targets (exit 1 on four metrics under load average about 36). The loaded "after" passed (exit 0, load about 30). Load varied between the two loaded runs, so only the clean runs and the A/B differences compare like with like. On the clean runs the speedups move `firstFrame` most (184 → 147–151); the other metrics were already well inside their targets on an idle machine.
+
+### Finding Closure
+
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P3-G1-VER1` — Linux CI bench gate passes only on fast runners | New targets in `scripts/bench-gate.ts` plus the four speedups above. Run 37178733100 on `00011bd` landed on a slow-class runner (`sourceKeystrokeP95` 12.87 ≥ 10, `indexReady` 3803 ≥ 3000) and passed every median: `openFile` 114.39/160, `indexingKeystrokeP95` 37.09/60. `bun test src/core/lang/markdown` and `CI=true bun run test:ci` pass with unchanged snapshots. Local `openFile` and `liveKeystrokeP95` medians are lower than the verifier's readings (clean 35.47–41.29 vs 52.08; 7.18–8.80 vs 20.02) | `e5602b4`, `77ce68c`, `50f9222`, `4603fdb`, `00011bd` | `Fixed` |
+| `P3-G1-VER2` — Reference-machine readings miss the inherited 1× targets | Same changes. Two consecutive clean local runs on `00011bd` (Apple M1 Max) are within 1× of every new target, and also of the old ones: `liveKeystrokeP95` 8.80, 7.18; `openFile` 41.29, 35.47; `firstFrame` 146.76, 150.69; `indexingKeystrokeP95` 10.17, 10.24. Recorded in the PR body's Performance table | `e5602b4`, `77ce68c`, `50f9222`, `4603fdb`, `00011bd` | `Fixed` |
+| `P3-G1-VER3` — The editor-kind refinement is not recorded in the design or the parent-sync list | Design part: done by the orchestrator in `2495edd` (§6 `WindowState` shows `editor: EditorKind`, derived, `"text"` fallback, not persisted, `EditorKindSpec.open` left to DI4 `base`). `rg -n 'editor: "text"'` in the W system design now hits only `markdownFileType.editor` (`:1763`, `:1777`) and the "Existing Shape"/"Current" cells (`:2018`, `:2028`). PR part: `gh pr edit 6 --body-file` added three pending parent-sync rows (the `content.editor: EditorKind` refinement, `EditorKindSpec.open` not yet called and left to DI4 `base`, the RM261003ABZP-REQ9@R2 live and startup relaxation approved on 2026-10-04) and replaced the bench section with the new targets and readings; `gh pr view 6 --json body` shows them | No repository change by this remediation: the design commit is the orchestrator's `2495edd`; the PR body is not versioned | `Fixed` |
+| `P3-G1-VER4` — `createUpdate` lost its doc comment | `src/core/state/update.ts`: `syncEditorKinds` and its comment moved above the reducer comment, which now sits directly on `export function createUpdate` and adds "each window's editor kind follows its file type". Exactly one doc block precedes each function. `bun run check` passes | `8a79835` | `Fixed` |
+
+### Checklist mapping to the approved targets
+
+Two required proofs were written against the old targets. They map as follows; nothing was dropped.
+
+| Finding | Original proof item | Mapped to | Result |
+|---|---|---|---|
+| VER1 | slow-class CI run with `openFile` ≤ 85 ms and `indexingKeystrokeP95` ≤ 28 ms | gate passes on a slow-class run under the new 2× limits (`openFile` ≤ 160, `indexingKeystrokeP95` ≤ 60) | 114.39 and 37.09: pass |
+| VER1 | across DI3 runs after the fix, `openFile / sourceKeystrokeP95` ≤ 7.0 and `indexingKeystrokeP95 / sourceKeystrokeP95` ≤ 2.2 | superseded: these ratios encoded "fit under the old 2× limits on a slow runner", which the new targets replace. Recorded value: 8.9 and 2.9 on run 37178733100 (before the speedups the `openFile` ratio was 10.1–11.0) | not a gate under the new targets |
+| VER2 | two consecutive local runs: live ≤ 16, open ≤ 50, first frame ≤ 200, indexing ≤ 16 | the same with the new 1× targets: ≤ 24, ≤ 80, ≤ 250, ≤ 30 | pass; the clean runs also meet the old values |
+
+### Checks
+
+- `bun run check` → `Passed` — 739 pass, 0 fail, 18 snapshots (after each commit; 4.4–6.7 s).
+- `CI=true bun run test:ci` → `Passed` — 144 pass, 0 fail, 28 snapshots (30.1 s).
+- `bun run build` → `Passed` — `dist/so` 84,105,330 bytes; Mermaid renders from the binary copied alone.
+- `bun run bench` (local) → `Passed` — exit 0 on `00011bd`, loaded and twice clean (table above).
+- `bun install --frozen-lockfile` → `Passed` — "no changes".
+- PR #6 CI run [37178733100](https://github.com/therealhieu/so/actions/runs/37178733100) on `00011bd` → `Passed` — `check` 20 s, `test (macos-15)` 38 s, `test (ubuntu-24.04)` 2 min 8 s; wall time 2 min 11 s (V46 < 3 min).
+- Self-review of `2495edd..00011bd` (8 files): only the targets, the four speedups with their tests, and the VER4 comment move. No work-process identifiers in code, tests, or comments (the only `REQ` match is `require(`). Kernel, `RenderLine`, `layoutText`, `live-preview.ts`, `widgets/registry.ts`, goldens, and snapshots are unchanged.
+
+### Remaining issues
+
+- A load failure of `beautiful-mermaid` inside `draw` would show the diagram as "invalid diagram shown as source", as any render exception already does. The package is a pinned dependency bundled into the binary.
+- `.s1mple/docs/project.md`'s Benchmarks table still lists the old `openFile`, `firstFrame`, and `indexingKeystrokeP95` targets. Project documentation is not in this remediation's scope; Project Documentation Finalization should update it.
+- An orphaned `bun test/bench/indexing-keystroke.bench.ts` (pid 50753, started 02:41, before this session, 0% CPU) was left running because this session did not clearly start it.
+
+## Final Status After Remediation
+
+`Completed`
+
+- **Final report status:** `Completed` — all four findings are `Fixed`; all checks pass; CI is green on the code head `00011bd`.
+- **Final report commit:** returned to the orchestrator.
+- **Final commits:** `8a79835`, `e5602b4`, `77ce68c`, `50f9222`, `4603fdb`, `00011bd`, plus the earlier group commits `ee55fa9`, `352cf50`, `2348fa4`, `5ca1945`, `a11c8a9`, `c58e8eb`.
+- **Remaining issues:** the three items above, none blocking.
