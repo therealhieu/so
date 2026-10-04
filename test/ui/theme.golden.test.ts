@@ -141,6 +141,16 @@ describe("live view states", () => {
     expect(await m.frame()).toMatchSnapshot();
   });
 
+  test("keep the command line and its message unclipped at 80×24", async () => {
+    m = await liveStates({ cols: 80, rows: 24, color: "nocolor" });
+    const typed = `:s/${"p".repeat(70)}/r/`;
+    expect(typed).toHaveLength(76);
+    m.keys(typed);
+    expect((await m.row(-1)).trimEnd()).toBe(typed);
+    m.keys("<Esc><leader>m<leader>m:s/x/y/<CR>");
+    expect((await m.row(-1)).trim()).toBe("reading mode — <leader>m to edit");
+  });
+
   test("matches the light theme golden", async () => {
     m = await liveStates({ cols: 80, rows: 24, theme: "light" });
     const styles = await stateStyles(m);
