@@ -9,6 +9,8 @@ import {
   activeWindow,
   listedBuffers,
   openPath,
+  READ_ONLY_HINT,
+  readOnlyView,
   setBuffer,
   setWindow,
   showBuffer,
@@ -134,7 +136,7 @@ const replacement = (rep: string) =>
     return /[1-9]/.test(esc) ? `$${esc}` : esc;
   });
 
-/** `:s/pat/rep/[g]` on the cursor line, `:%s` on every line; one undo step. */
+/** `:s/pat/rep/[g]` on the cursor line, `:%s` on every line; one undo step. Refused in a read-only view. */
 function substitute(
   s: AppState,
   ex: {
@@ -150,6 +152,7 @@ function substitute(
   const b = activeBuffer(s);
   const re = searchPattern(ex.pattern);
   if (w === undefined || b === undefined) return none(s);
+  if (readOnlyView(reg, b)) return message(s, READ_ONLY_HINT);
   const notFound = message(
     s,
     `E486: Pattern not found: ${ex.pattern}`,

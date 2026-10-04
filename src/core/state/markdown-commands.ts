@@ -8,11 +8,12 @@ import {
   activeBuffer,
   activeWindow,
   applyBufferEdits,
+  READ_ONLY_HINT,
+  readOnlyView,
   setBuffer,
   setWindow,
 } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
-import { READ_ONLY_HINT, readOnlyView } from "./keys";
 import { followLink } from "./link-commands";
 import { message, none } from "./result";
 import type { Result } from "./types";

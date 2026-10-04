@@ -158,3 +158,16 @@ test("enter on a link follows it", () => {
   const r = update(s, { type: "key", key: "<CR>", now: 0 });
   expect(r.effects).toContainEqual({ kind: "read", path: "other.md" });
 });
+
+test("substitution is refused in reading view and works in live view", () => {
+  const live = open(fresh(), "n.md", "foo\n");
+  const reading = keys(live, "<leader>m<leader>m");
+  expect(activeBuffer(reading)?.view).toBe("reading");
+  const refused = keys(reading, ":s/foo/bar/<CR>");
+  expect(text(refused)).toBe("foo");
+  expect(activeBuffer(refused)?.dirty).toBe(false);
+  expect(message(refused)).toBe("reading mode — <leader>m to edit");
+  const replaced = keys(live, ":s/foo/bar/<CR>");
+  expect(text(replaced)).toBe("bar");
+  expect(activeBuffer(replaced)?.dirty).toBe(true);
+});

@@ -6,7 +6,13 @@ import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
-import { activeBuffer, activeWindow, setBuffer } from "./buffers";
+import {
+  activeBuffer,
+  activeWindow,
+  READ_ONLY_HINT,
+  readOnlyView,
+  setBuffer,
+} from "./buffers";
 import {
   type CommandContext,
   type CommandResult,
@@ -23,14 +29,7 @@ import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import { panelFocused, sidePanelKey } from "./side-panel";
-import type {
-  Action,
-  AppState,
-  BufferId,
-  BufferState,
-  Result,
-  WindowState,
-} from "./types";
+import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
 
@@ -234,13 +233,6 @@ function refusedKey(s: AppState): AppState {
     ? { ...s, vim: { ...vim, mode: "normal", pending: [] } }
     : setVim(s, { pending: [] });
 }
-
-export const READ_ONLY_HINT = "reading mode — <leader>m to edit";
-
-/** Whether `b` is shown in a view its file type marks read-only. */
-export const readOnlyView = (reg: Registries, b: BufferState): boolean =>
-  reg.fileTypes.get(b.fileType)?.views.find((v) => v.id === b.view)
-    ?.readOnly === true;
 
 /**
  * Feed one key to the engine for the active buffer and apply its effects. In

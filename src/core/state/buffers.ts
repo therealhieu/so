@@ -43,6 +43,13 @@ export const bufferForPath = (
 ): BufferState | undefined =>
   Object.values(s.buffers).find((b) => b.path === path);
 
+export const READ_ONLY_HINT = "reading mode — <leader>m to edit";
+
+/** Whether `b` is shown in a view its file type marks read-only. */
+export const readOnlyView = (reg: Registries, b: BufferState): boolean =>
+  reg.fileTypes.get(b.fileType)?.views.find((v) => v.id === b.view)
+    ?.readOnly === true;
+
 /** Buffers the user opened; embed targets loaded for display are left out. */
 export const listedBuffers = (s: AppState): BufferState[] =>
   Object.values(s.buffers).filter((b) => b.listed !== false);
