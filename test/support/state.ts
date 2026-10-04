@@ -2,6 +2,12 @@ import {
   baseEditorKind,
   baseFileType,
 } from "../../src/core/features/bases/file-type";
+import { KANBAN_TYPE } from "../../src/core/features/bases/types";
+import {
+  BaseLayoutRegistry,
+  boardLayout,
+  tableLayout,
+} from "../../src/core/features/bases/views";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -17,6 +23,7 @@ import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
+import { baseViewModel } from "../../src/core/state/base-model";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { initialState } from "../../src/core/state/init";
 import { editorBindings, nextLineCommand } from "../../src/core/state/keys";
@@ -63,7 +70,10 @@ export function testRegistries(): Registries {
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
   builtinRenderers();
-  return {
+  const layouts = new BaseLayoutRegistry(tableLayout);
+  if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
+  layouts.register("kanban-test", boardLayout);
+  const reg: Registries = {
     fileTypes,
     editorKinds,
     commands,
@@ -76,7 +86,10 @@ export function testRegistries(): Registries {
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    layouts,
   };
+  viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  return reg;
 }
 
 export function deepFreeze<T>(value: T): T {

@@ -1,3 +1,4 @@
+import type { BaseLayoutRegistry } from "../features/bases/views";
 import type {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -63,6 +64,8 @@ export type Registries = {
   groups: Readonly<Record<string, string>>;
   /** Per-file-type builders of a view's input context. */
   viewContexts: ViewContextRegistry;
+  /** Base view types to the layouts that show them. */
+  layouts: BaseLayoutRegistry;
 };
 
 /**

@@ -6,6 +6,12 @@ import { parseArgs } from "node:util";
 import pkg from "../../package.json";
 import { parseConfig } from "../core/config/toml";
 import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
+import { KANBAN_TYPE } from "../core/features/bases/types";
+import {
+  BaseLayoutRegistry,
+  boardLayout,
+  tableLayout,
+} from "../core/features/bases/views";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -19,6 +25,7 @@ import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
+import { baseViewModel } from "../core/state/base-model";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
@@ -130,7 +137,9 @@ function registries(): Registries {
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
   builtinRenderers();
-  return {
+  const layouts = new BaseLayoutRegistry(tableLayout);
+  if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
+  const reg: Registries = {
     fileTypes,
     editorKinds,
     commands,
@@ -143,7 +152,10 @@ function registries(): Registries {
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    layouts,
   };
+  viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  return reg;
 }
 
 /**
