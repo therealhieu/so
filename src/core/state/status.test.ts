@@ -23,6 +23,7 @@ test("status shows a word count only for Markdown buffers", () => {
     path: "a.md",
     position: { line: 0, col: 0 },
     words: 3,
+    preview: "preview off",
   });
   expect(statusSegments(open("a.ts", "one two\n")).words).toBeUndefined();
 });
@@ -52,8 +53,23 @@ test("status shows a deleted file until it is saved again", () => {
   expect(statusSegments(s).deletedOnDisk).toBeUndefined();
 });
 
-test("status with nothing open shows only the mode", () => {
-  expect(statusSegments(fresh())).toEqual({ mode: "explorer", dirty: false });
+test("status with nothing open shows only the mode and the preview", () => {
+  expect(statusSegments(fresh())).toEqual({
+    mode: "explorer",
+    dirty: false,
+    preview: "preview off",
+  });
+});
+
+test("status shows the preview while it starts and its port once it runs", () => {
+  let s = open("a.md", "x\n");
+  s = update(s, { type: "key", key: ":", now: 0 }).state;
+  for (const key of "Preview")
+    s = update(s, { type: "key", key, now: 0 }).state;
+  s = update(s, { type: "key", key: "<CR>", now: 0 }).state;
+  expect(statusSegments(s).preview).toBe("preview …");
+  s = update(s, { type: "previewStarted", port: 8731 }).state;
+  expect(statusSegments(s).preview).toBe("preview :8731");
 });
 
 const withIndex = (s: AppState, ...actions: Action[]) =>

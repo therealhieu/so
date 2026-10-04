@@ -24,7 +24,15 @@ export type StatusSegments = {
   indexProgress?: { done: number; total: number };
   /** "jump i/n" once a jump is recorded. */
   jump?: string;
+  /** The browser preview: "preview :<port>", "preview …" while it starts, or "preview off". */
+  preview: string;
 };
+
+function previewSegment(s: AppState): string {
+  const p = s.preview;
+  if (p.status === "on") return `preview :${p.port}`;
+  return p.status === "starting" ? "preview …" : "preview off";
+}
 
 const wordCounts = new WeakMap<TextBuffer, number>();
 
@@ -47,13 +55,14 @@ export function statusSegments(s: AppState): StatusSegments {
   const index = s.index.status;
   const seg: StatusSegments =
     b === undefined || w === undefined
-      ? { mode, dirty: false }
+      ? { mode, dirty: false, preview: previewSegment(s) }
       : {
           mode,
           dirty: b.dirty,
           view: b.view,
           path: b.path,
           position: w.content.cursor,
+          preview: previewSegment(s),
         };
   if (b !== undefined && w !== undefined) {
     if (b.fileType === markdownFileType.id) {
