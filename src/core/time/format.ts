@@ -92,6 +92,8 @@ export const MOMENT_TOKENS: readonly string[] = [
   "l",
 ].sort((x, y) => y.length - x.length);
 
+const TOKENS = new Set(MOMENT_TOKENS);
+
 const MONTHS = [
   "January",
   "February",
@@ -170,30 +172,44 @@ function bracketAt(format: string, i: number): number {
   return close > i ? close - i + 1 : 0;
 }
 
+/** A run of literal text, or one Moment token to render. */
+export type FormatPart = { literal: string } | { token: string };
+
 /**
- * Formats like Moment 2.29.4 with the `en` locale for the supported tokens.
- * `[...]` is literal text; a backslash makes the next token literal; any other
- * Moment token is emitted unchanged; other characters pass through.
+ * Splits a format as Moment 2.29.4 does: `[...]` is literal text, a backslash
+ * makes the next token literal, and otherwise the longest Moment token is taken.
  */
-export function formatDate(at: LocalDateTime, format: string): string {
-  let out = "";
+export function formatParts(format: string): FormatPart[] {
+  const parts: FormatPart[] = [];
   let i = 0;
   while (i < format.length) {
     const bracket = bracketAt(format, i);
     if (bracket > 0) {
-      out += format.slice(i + 1, i + bracket - 1);
+      parts.push({ literal: format.slice(i + 1, i + bracket - 1) });
       i += bracket;
       continue;
     }
     if (format[i] === "\\") {
       const token = tokenAt(format, i + 1);
-      out += token;
+      parts.push({ literal: token });
       i += 1 + token.length;
       continue;
     }
     const token = tokenAt(format, i);
-    out += SUPPORTED[token]?.(at) ?? token;
+    parts.push(TOKENS.has(token) ? { token } : { literal: token });
     i += token.length;
   }
-  return out;
+  return parts;
+}
+
+/**
+ * Formats like Moment 2.29.4 with the `en` locale for the supported tokens;
+ * any other Moment token is emitted unchanged.
+ */
+export function formatDate(at: LocalDateTime, format: string): string {
+  return formatParts(format)
+    .map((p) =>
+      "literal" in p ? p.literal : (SUPPORTED[p.token]?.(at) ?? p.token),
+    )
+    .join("");
 }
