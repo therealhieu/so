@@ -292,7 +292,12 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         return;
       }
       case "create":
-        void serial(async () => d.dispatch(await runFsOp(e.op)));
+        void serial(async () => {
+          const result = await runFsOp(e.op);
+          d.dispatch(result);
+          if (result.ok && e.op.dir !== true)
+            d.index?.notify({ kind: "changed", path: e.op.from, isDir: false });
+        });
         return;
       case "readPropertyTypes":
         void readPropertyTypes(d.root, (reason) =>

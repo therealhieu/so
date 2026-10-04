@@ -187,6 +187,23 @@ test("each file operation answers once with its result", async () => {
   expect(r.deps.ownOps.isOwn("old")).toBe(true);
 });
 
+test("a created file is sent to the index; a failed create or a folder is not", async () => {
+  const events: unknown[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => events.push(e) },
+  });
+  r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
+  r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
+  r.run({ kind: "create", op: { kind: "create", from: "made", dir: true } });
+  await waitFor(() => r.actions.length === 3);
+  expect(r.actions.map((a) => a.type === "fsResult" && a.ok)).toEqual([
+    true,
+    false,
+    true,
+  ]);
+  expect(events).toEqual([{ kind: "changed", path: "made.csv", isDir: false }]);
+});
+
 test("reads and listings answer with their result or refusal", async () => {
   await writeFile(join(root, "read.md"), "hello\n");
   const r = runner();

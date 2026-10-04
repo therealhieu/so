@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { appendFile, readFile, rm } from "node:fs/promises";
+import { appendFile, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { backlinksOf } from "../../src/core/features/links/note-index";
 import { statusSegments } from "../../src/core/state/status";
@@ -160,4 +160,27 @@ test("a search in flight when the worker crashes is answered once", async () => 
   ]);
   const after = state().overlay;
   expect(after.kind === "picker" && after.picker.search?.pending).toBe(false);
+});
+
+test("a file created in the explorer gets its size and times in the index", async () => {
+  app = await startApp(await tmpWorkspace({ "a.md": "# A\n" }), {
+    index: {},
+  });
+  await waitFor(() => status() === "ready");
+  app.runner.run({ kind: "create", op: { kind: "create", from: "data.csv" } });
+  await waitFor(() => (state().index.ix.facts.get("data.csv")?.mtime ?? 0) > 0);
+  const st = await stat(join(app.root, "data.csv"));
+  expect(state().index.ix.facts.get("data.csv")).toEqual({
+    path: "data.csv",
+    size: st.size,
+    mtime: st.mtimeMs,
+    ctime: st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
+  });
+  expect(
+    app.actions.some(
+      (a) =>
+        a.type === "indexBatch" &&
+        a.facts?.some((f) => f.path === "data.csv") === true,
+    ),
+  ).toBe(true);
 });
