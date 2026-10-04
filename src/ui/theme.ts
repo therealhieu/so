@@ -224,6 +224,22 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   signReveal: ["h2", "bg", 0, BOLD],
   signError: ["error", "bg", BOLD, BOLD],
   imagePlaceholder: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
+  // Bases views: the focused cell or card is reversed and marked with ▌;
+  // lane dots carry their names, never colour alone.
+  baseTitle: ["fg", "bg", BOLD, BOLD],
+  baseTab: ["fg-muted", "bg", 0, 0],
+  baseTabActive: ["fg", "bg-sel", BOLD, BOLD | INVERSE],
+  baseHeader: ["fn", "bg", BOLD, BOLD | UNDERLINE],
+  baseGroup: ["h2", "bg-dark", BOLD, BOLD],
+  baseFocus: ["fg", "bg-sel", 0, INVERSE],
+  baseMarker: ["border-hl", "bg", BOLD, BOLD],
+  baseEdit: ["fg", "bg-hl", UNDERLINE, UNDERLINE],
+  baseInfo: ["info", "bg", 0, 0],
+  baseWarn: ["warn", "bg", 0, BOLD],
+  baseLane0: ["info", "bg", BOLD, BOLD],
+  baseLane1: ["warn", "bg", BOLD, BOLD],
+  baseLane2: ["ok", "bg", BOLD, BOLD],
+  baseLane3: ["fg-dim", "bg", BOLD, BOLD],
 };
 
 function colorTheme(name: "dark" | "light", p: Palette): Theme {

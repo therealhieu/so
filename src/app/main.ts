@@ -55,6 +55,7 @@ import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { ViewContextRegistry } from "../core/state/view-context";
+import { BaseView } from "../ui/editors/base-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
@@ -266,6 +267,7 @@ async function main(argv: string[]): Promise<void> {
   const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);

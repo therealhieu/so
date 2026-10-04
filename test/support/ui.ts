@@ -11,6 +11,7 @@ import type {
   TimerId,
 } from "../../src/core/state/types";
 import { createUpdate, type Registries } from "../../src/core/state/update";
+import { BaseView } from "../../src/ui/editors/base-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
 import { createShell, type GraphicsSupport } from "../../src/ui/shell";
@@ -60,6 +61,7 @@ export const TREE: Record<string, DirEntry[]> = {
  */
 export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);

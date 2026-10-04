@@ -5,8 +5,8 @@ import {
 } from "@opentui/core";
 import type { WindowTree as Tree } from "../../core/kernel/editor/windows";
 import type { AppState, WindowId } from "../../core/state/types";
-import { editorViews } from "../editors/registry";
-import type { EditorView, Rect } from "../editors/text-view";
+import { editorViews, type WindowView } from "../editors/registry";
+import type { Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { EXPLORER_WIDTH, explorerDocked } from "./explorer";
@@ -52,7 +52,7 @@ function place(
  */
 export class WindowTree extends Renderable {
   private s: AppState | undefined;
-  private readonly views = new Map<WindowId, EditorView>();
+  private readonly views = new Map<WindowId, WindowView>();
   /** The editor kind each window's view was created for. */
   private readonly kinds = new Map<WindowId, string>();
   private seps: Rect[] = [];

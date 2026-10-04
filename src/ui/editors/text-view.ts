@@ -32,6 +32,7 @@ import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
+import type { WindowView } from "./registry";
 
 const SCROLL_LINES = 3;
 const NO_FOLDS: ReadonlySet<number> = new Set();
@@ -263,7 +264,7 @@ function selectionOf(s: AppState, text: TextBuffer): Range | undefined {
  * highlighter and view decorations plus search and selection marks. A
  * failing layout paints the raw lines instead. Editor kinds extend this.
  */
-export class EditorView extends Renderable {
+export class EditorView extends Renderable implements WindowView {
   protected s: AppState | undefined;
   protected windowId: WindowId = 0;
   protected winbar = false;
