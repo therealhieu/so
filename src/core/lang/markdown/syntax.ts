@@ -47,6 +47,12 @@ export type SyntaxExtension = {
     | (string & {});
   /** Record matches in `text` (one line of a non-code block) starting at source column `col0` of `line`. */
   scan?(text: string, line: number, col0: number, out: ScanOut): void;
+  /**
+   * Substrings at least one of which every match of `scan` contains. A line
+   * holding none of them skips `scan`; without `triggers`, `scan` runs on
+   * every line.
+   */
+  triggers?: readonly string[];
   /** Rewrite mdast text nodes into Obsidian nodes for this syntax. */
   transform?(tree: MdNode): void;
 };
@@ -730,6 +736,7 @@ export const syntaxExtensions: SyntaxExtension[] = [
   {
     name: "comment",
     scan: scanComments,
+    triggers: ["%%", "<!--"],
     transform: (tree) =>
       replaceText(
         tree,
@@ -753,17 +760,20 @@ export const syntaxExtensions: SyntaxExtension[] = [
   {
     name: "embed",
     scan: (t, l, c, o) => scanWiki("embed", t, l, c, o),
+    triggers: ["![["],
     transform: (tree) => replaceText(tree, wikiNodes("embed")),
   },
   {
     name: "wikiLink",
     scan: (t, l, c, o) => scanWiki("wiki", t, l, c, o),
+    triggers: ["[["],
     transform: (tree) => replaceText(tree, wikiNodes("wikiLink")),
   },
-  { name: "markdownLink", scan: scanMarkdownLinks },
+  { name: "markdownLink", scan: scanMarkdownLinks, triggers: ["]("] },
   {
     name: "tag",
     scan: scanTags,
+    triggers: ["#"],
     transform: (tree) =>
       replaceText(
         tree,
@@ -775,7 +785,12 @@ export const syntaxExtensions: SyntaxExtension[] = [
         LINKS,
       ),
   },
-  { name: "blockId", scan: scanBlockId, transform: blockIdTransform },
+  {
+    name: "blockId",
+    scan: scanBlockId,
+    triggers: ["^"],
+    transform: blockIdTransform,
+  },
   {
     name: "footnote",
     transform: (tree) =>
@@ -821,6 +836,7 @@ export function scanLine(
   try {
     for (const ext of syntaxExtensions) {
       if (ext.scan === undefined) continue;
+      if (ext.triggers?.some((t) => text.includes(t)) === false) continue;
       const count = out.excluded.length - excluded + out.links.length - links;
       if (count === 0 && spans.length === 0) claims = undefined;
       else if (claims === undefined || count !== seen) {
