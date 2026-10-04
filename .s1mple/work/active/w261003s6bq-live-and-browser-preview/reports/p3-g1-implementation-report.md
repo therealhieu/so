@@ -175,14 +175,90 @@ Append remediation evidence here after verifier findings. This is not a separate
 
 None yet.
 
+## Blocker Resolution
+
+Written by the same implementer after the orchestrator decisions of 2026-10-04 on the two blockers. The sections above are unchanged.
+
+### B1 — `grid` editor kind (V41)
+
+**Closed** by `c58e8eb` `feat(state): open files in their file type's registered editor kind` (`Task: P3-G1-T1 — Registration-only extension proof`).
+
+| File | Change |
+|---|---|
+| `src/core/state/types.ts` | `WindowState.content.editor` widened from the literal `"text"` to `EditorKind` |
+| `src/core/state/update.ts` | `syncEditorKinds`, one post-step pass in `createUpdate`: each window takes the `editor` its buffer's file type names when that kind is registered in `EditorKindRegistry`, and `"text"` otherwise. Unchanged windows keep their identity |
+| `src/ui/views/window-tree.ts` | `WindowTree` records the kind each view was made for and makes a new view when a window's kind changes |
+| `test/ui/extension.test.ts` | Two cases: a `.grid` file opens with `content.editor === "grid"` and paints through the registered `grid` view; an unregistered kind falls back to `"text"` |
+
+**Design refinement to sync into the W system design (§6 window state, within approved S16):** `content.editor` is `EditorKind`, derived after every reducer step from the registered file-type kind, with `"text"` as the fallback. No new state and no persisted field: the session snapshot is unchanged, and writers such as `showBuffer` still write `"text"` and the pass corrects it. The pass was chosen over threading the registries through `showBuffer`, `removeBuffer`, and `fillRestored`, because the `save.ts` callers have no registry.
+
+Evidence on `c58e8eb`: `bun test test/ui/extension.test.ts` 5 pass (V38 and every V41 part, including `grid`); `bun run check` 737 pass.
+
+### B2 — Linux CI bench gate (V44)
+
+**Gate green on `c58e8eb`; no code fix found or committed.** The two failing medians are now under their limits, but by small margins, and the earlier failures came from the same code. Treat the gate as at risk of failing again on a slower runner.
+
+| Target (Linux CI) | Limit | Run 37173732484 (`a11c8a9`) | Run 37174620974 (`8521c98`) | Run [37175517956](https://github.com/therealhieu/so/actions/runs/37175517956) (`c58e8eb`) |
+|---|---|---|---|---|
+| `openFile` | 100 | 127.08 ✗ | 134.04 ✗ | **96.54** ✓ |
+| `indexingKeystrokeP95` | 32 | 38.43 ✗ | 38.60 ✗ | **30.50** ✓ |
+
+`c58e8eb` changes only window-kind state and does not touch the open or keystroke paths, so the drop comes from runner variance, not from a fix.
+
+**Profile evidence** (local, Apple Silicon; scratch scripts and `.cpuprofile` files kept in the session scratchpad):
+
+- **`openFile`, live vs source**, 3 fresh processes each, timing wrappers around each phase:
+
+  | Mode | dispatch | `show` | `livePreview` (1 call) | `parseDoc` |
+  |---|---|---|---|---|
+  | source | 28–44 ms | 5–9 ms | — | 14–25 ms |
+  | live | 43–59 ms | 22–30 ms | 16–24 ms | 17–29 ms |
+
+  Timing `blockNode` directly puts the live extra on two mdast parses of the first screen: the `## Section 1` heading (3.1–4.9 ms, the first parse of the process) and the 49-line paragraph below it (9.4–11.4 ms, against 3.2 ms when the parser is warm). The rest of `livePreview` (reveal, inline decorations) is about 3 ms. `parseDoc` (existing DI2 code) is the largest single cost in both modes and the main source of run-to-run noise.
+- **`indexingKeystrokeP95`, live vs source**, 5 runs each: p95 3.3–6.3 ms (source) vs 9.9–16.0 ms (live). The p95 is the 10th-slowest of 200 keys. In live view the typing loop takes about 0.9 ms more per key, of which the edited block's mdast re-parse is about 0.47 ms (204 parses, 95 ms per run). That lengthens the typing window from about 0.95 s to 1.25 s, so 6–8 index batches land inside it instead of 2–4. The slowest keys are those batch applications (`patch`, existing DI2 code, cost grows with index size) and link-completion pool rebuilds over the larger index (`poolFor` → `linkText` → `bestCandidate`, existing DI2 code). So the p95 is set by batch and completion keys, and live view moves it mainly by giving the index time to grow.
+
+**Fixes attempted and measured (none kept):**
+
+| Attempt | Effect | Kept |
+|---|---|---|
+| Build the micromark and mdast extensions once in `mdast.ts` | Fixed per-parse overhead is about 0.06 ms; no measurable change in either median | No |
+| Treat a block as revealed when all its lines are revealed, skipping `renderKey` | No gain: the indexing bench's edited block spans 2 lines; it also changes the `reveal.test.ts` expectation | No |
+| Force GC per key (`Bun.gc`) | Distorts the bench (indexing finished before the keys did) | No |
+| Upper bound: parse with no GFM or math extensions (measurement only) | `livePreview` on open drops to about 10–14 ms; open stays about 40–50 ms because of `parseDoc` | Not a candidate: it changes rendering |
+
+**Why no in-scope fix reaches the targets the orchestrator set** (local `openFile` ≲ 35 ms, `indexingKeystrokeP95` ≲ 8.5 ms): a live open must parse the visible blocks, and the edited block must be re-parsed on every key. Both are the per-block parse that the live-preview design requires, and both are already cached by block content. Parsing only the visible lines of a block would change how inline syntax that spans lines is read. Deferring the parse would show source first, which is new product behaviour. Warming the parser at startup moves cost into `firstFrame` (local 225 ms, target 200). An idle warm-up does not reach the bench, which opens the note on the first frame. The remaining large costs (`parseDoc`, index `patch`, completion `poolFor`) are DI2 code outside this group's scope. Options that would give a real margin, each needing a decision outside this group: an incremental `parseDoc`, a completion pool that is not rebuilt in full on every index batch, or a GFM extension set picked per block from cheap textual preconditions (for example, no `|` means no table attempt). Measured on the paragraph used here, GFM is about 45% of parse time.
+
+### New readings
+
+| Target | 1× target | Local `bun run bench` on `c58e8eb` | Linux CI run 37175517956 | 2× limit |
+|---|---|---|---|---|
+| `sourceKeystrokeP95` | 16 | 9.63 | 8.75 | 32 |
+| `liveKeystrokeP95` | 16 | **18.19** | 15.93 | 32 |
+| `openFile` | 50 | **54.51** | 96.54 | 100 |
+| `sourceOpenFile` | 50 | 23.19 | 29.43 | 100 |
+| `liveScrollFrameP95` | 16.7 | 11.26 | 12.18 | 33.4 |
+| `sourceScrollFrameP95` | 16.7 | 9.20 | 7.14 | 33.4 |
+| `firstFrame` | 200 | **225.35** | 249.19 | 400 |
+| `indexReady` | 3000 | 1679.83 | 2725.51 | 6000 |
+| `indexingKeystrokeP95` | 16 | 13.54 | 30.50 | 32 |
+
+Bold local values exceed 1×. Every value passes the 2× gate. No target or bench method changed.
+
+### Checks on `c58e8eb`
+
+- `bun run check`: pass, 737 tests, 5.17 s wall (V46 < 30 s).
+- `CI=true bun run test:ci`: 144 pass in 4 of 5 local runs. The first run, made right after `bun run bench`, had 1 failure whose name was not captured; the 4 runs after it passed, and CI passed.
+- `bun run bench`: pass (table above).
+- PR #6 CI run [37175517956](https://github.com/therealhieu/so/actions/runs/37175517956): `check` ✓ (20 s), `test (macos-15)` ✓ (37 s), `test (ubuntu-24.04)` ✓ (1 min 49 s). Wall time 1 min 52 s (V46 < 3 min).
+
 ## Final Status
 
-`Blocked`
+`Implemented with risk`
 
 ### Final Evidence
 
-- **Final report status:** `Blocked` — Linux CI bench gate fails (`openFile`, `indexingKeystrokeP95`), and the `grid` editor-kind part of V41 needs a design decision.
+- **Final report status:** `Implemented with risk`. B1 is closed by `c58e8eb`. For B2, the Linux CI bench gate is green on `c58e8eb` without a code fix, with thin margins (`openFile` 96.54/100, `indexingKeystrokeP95` 30.50/32), and two earlier runs on equivalent code failed. See Blocker Resolution, B2.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `ee55fa9`, `352cf50`, `2348fa4`, `5ca1945`, `a11c8a9`.
-- **Final checks:** `bun run check` pass (5.43 s); `CI=true bun run test:ci` 142 pass; `bun run build` pass (83,940,210 B); local `bun run bench` pass; `bun install --frozen-lockfile` pass; PR #6 CI run 37173732484: `check` ✓, `test (macos-15)` ✓, `test (ubuntu-24.04)` ✗ (bench).
-- **Remaining issues:** Deviations 1–3.
+- **Final commits:** `ee55fa9`, `352cf50`, `2348fa4`, `5ca1945`, `a11c8a9`, `c58e8eb`.
+- **Final checks:** `bun run check` pass (5.17 s); `CI=true bun run test:ci` 144 pass (one unexplained failure in 1 of 5 local runs); local `bun run bench` pass; PR #6 CI run 37175517956 all green.
+- **Remaining issues:** the bench gate risk in B2, which supersedes Deviation 2, and Deviations 3–7 above. Deviation 1 (the `grid` editor kind) is closed.
