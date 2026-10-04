@@ -27,6 +27,8 @@ const LIST_MARKER = /^(?:[-+*]|\d{1,9}[.)])[ \t]+/;
 const THEMATIC = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/;
 const SETEXT = /^ {0,3}(?:=+|-+)[ \t]*$/;
 const INDENTED = /^(?: {4}|\t)/;
+/** A line starting with a letter: no setext underline or interrupting block can start there. */
+const LETTER_LINE = /^ {0,3}[A-Za-z]/;
 const COMMENT_OPEN = /^ {0,3}%%/;
 const HTML_COMMENT = /^ {0,3}<!--/;
 const HTML_RAW = /^ {0,3}<(?:script|pre|style|textarea)(?:[\s>]|$)/i;
@@ -124,6 +126,10 @@ export function splitBlocks(src: LineSource): BlockSpan[] {
     let j = start;
     while (j + 1 < n) {
       const next = line(j + 1);
+      if (LETTER_LINE.test(next)) {
+        j++;
+        continue;
+      }
       if (isBlank(next)) break;
       if (!SETEXT.test(next) && (interrupts(next) || LIST_INTERRUPT.test(next)))
         break;
