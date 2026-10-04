@@ -101,6 +101,9 @@
           throwOnError: false,
           displayMode: el.tagName === "DIV",
         });
+        // KaTeX shows a formula it cannot parse as red source; label it like a diagram.
+        if (el.querySelector(".katex-error") !== null)
+          throw new Error("formula did not parse");
       } catch {
         el.textContent = el.dataset.tex;
         el.classList.add("render-error");

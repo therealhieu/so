@@ -309,7 +309,16 @@ figure.mermaid {
   border: 1px solid var(--error);
 }
 
-pre.render-error::before {
+div.math.render-error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+pre.render-error::before,
+div.math.render-error::before {
   content: "render error";
   display: block;
   margin-bottom: 6px;
