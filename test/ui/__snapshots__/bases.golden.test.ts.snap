@@ -23,7 +23,7 @@ exports[`base table matches the colour golden with a focused cell 1`] = `
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- NORMAL  │ tasks.base                                                       1:1 
+ BASE  │ tasks.base                                                         1:1 
 Status: doing                                                                   
 "
 `;
@@ -51,7 +51,7 @@ exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- NORMAL  │ tasks.base                                                       1:1 
+ BASE  │ tasks.base                                                         1:1 
 Status: doing                                                                   
 "
 `;
@@ -79,7 +79,7 @@ exports[`base table matches the light golden with a focused cell 1`] = `
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- NORMAL  │ tasks.base                                                       1:1 
+ BASE  │ tasks.base                                                         1:1 
 Status: doing                                                                   
 "
 `;
@@ -107,7 +107,7 @@ exports[`base table an edited cell shows its text, caret, and inline error 1`] =
    ────────────────┴────────┴──────────────┴─────                               
  Σ                            2026-10-01     1                                  
  editing — ⏎ write to frontmatter · esc cancel                                  
- NORMAL  │ tasks.base                                                       1:1 
+ INSERT  │ tasks.base                                                       1:1 
                                                                                 
 "
 `;
@@ -135,7 +135,7 @@ exports[`base board matches the colour golden with a focused card 1`] = `
                                                                                 
                                                                                 
  h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
- NORMAL  │ board.base                                                       1:1 
+ BASE  │ board.base                                                         1:1 
 todo · write-report                                                             
 "
 `;
@@ -163,7 +163,7 @@ exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
                                                                                 
                                                                                 
  h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
- NORMAL  │ board.base                                                       1:1 
+ BASE  │ board.base                                                         1:1 
 todo · write-report                                                             
 "
 `;
@@ -191,7 +191,7 @@ exports[`base board matches the light golden with a focused card 1`] = `
                                                                                 
                                                                                 
  h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
- NORMAL  │ board.base                                                       1:1 
+ BASE  │ board.base                                                         1:1 
 todo · write-report                                                             
 "
 `;
@@ -219,7 +219,7 @@ exports[`base states waiting and empty states match their goldens 1`] = `
                                                                                 
                                                                                 
  Tab next view · 1-4 switch view                                                
- NORMAL  │ tasks.base                                                       1:1 
+ BASE  │ tasks.base                                                         1:1 
                                                                                 
 "
 `;
@@ -247,7 +247,7 @@ exports[`base states waiting and empty states match their goldens 2`] = `
                                                                                 
                                                                                 
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- NORMAL  │ empty.base                                                       1:1 
+ BASE  │ empty.base                                                         1:1 
                                                                                 
 "
 `;
@@ -275,7 +275,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
  h/l j/k focus · H/L off · ⏎ open note · v views · Tab next                     
- NORMAL  │ board.base                                                       1:1 
+ BASE  │ board.base                                                         1:1 
                                                                                 
 "
 `;
@@ -303,7 +303,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- NORMAL  │ tasks.base                                                       1:1 
+ BASE  │ tasks.base                                                         1:1 
                                                                                 
 "
 `;
@@ -337,7 +337,7 @@ exports[`base states a wide window shows every view tab 1`] = `
    ────────────────┴────────┴────────────┴─────                                                                         
  Σ                            2026-10-01   1                                                                            
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open                                                
- NORMAL  │ base │ tasks.base │ preview off                                                                          1:1 
+ BASE  │ base │ tasks.base │ preview off                                                                            1:1 
                                                                                                                         
 "
 `;

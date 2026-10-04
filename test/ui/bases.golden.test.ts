@@ -79,6 +79,7 @@ describe("base table", () => {
       expect(frame).toContain("1/4 All tasks");
       expect(frame).toContain("due ↑");
       expect(frame).toContain("4 rows");
+      expect(frame.split("\n").at(-3)).toMatch(/^ BASE /);
       const cell = await find(m, "doing");
       expect(cursorAt(m)).toEqual({ x: cell.x, y: cell.y, visible: true });
       expect(frame).toMatchSnapshot();
@@ -108,6 +109,7 @@ describe("base table", () => {
     m.keys("llix");
     const frame = await m.frame();
     expect(frame).toContain("2026-10-01x");
+    expect(frame.split("\n").at(-3)).toMatch(/^ INSERT /);
     m.keys("<CR>");
     const after = await m.frame();
     expect(after).toContain("✗ use YYYY-MM-DD");
@@ -126,6 +128,7 @@ describe("base board", () => {
       expect(frame).toContain("● doing 1");
       expect(frame).toContain("● todo 1");
       expect(frame).toContain("● None 1");
+      expect(frame.split("\n").at(-3)).toMatch(/^ BASE /);
       const card = await find(m, "write-report", 3);
       expect(cursorAt(m)).toEqual({ x: card.x, y: card.y, visible: true });
       expect(frame).toMatchSnapshot();

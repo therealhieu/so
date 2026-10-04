@@ -15,6 +15,7 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
   visualLine: ["V-LINE", "modeVisual"],
   cmdline: ["COMMAND", "modeCmd"],
   explorer: ["EXPLORER", "modeNormal"],
+  base: ["BASE", "modeNormal"],
   conflict: ["CONFLICT", "modeCmd"],
 };
 
