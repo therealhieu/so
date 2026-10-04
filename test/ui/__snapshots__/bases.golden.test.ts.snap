@@ -500,3 +500,31 @@ exports[`base embed a note paints an embedded base read-only, capped with a more
                                                                                 
 "
 `;
+
+exports[`base embed a note paints an embedded board read-only, with one-line cards capped per lane 1`] = `
+" today.md                                                                       
+   1 ▕# Today                                                                   
+   1                                                                            
+   2  ╭ ↳ board.base#By late                                                    
+      │ ● false 1 ───────────── ● true 3 ────────────── ● None 0 ────────────── 
+      │  ship-release            inbox                    (empty)               
+      │                           ↓ 2 more                                      
+   3                                                                            
+   4  After                                                                     
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ today.md                                                         1:1 
+                                                                                
+"
+`;

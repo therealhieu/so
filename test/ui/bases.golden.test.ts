@@ -331,4 +331,40 @@ describe("base embed", () => {
     expect(frame).not.toContain("▌");
     expect(frame).toMatchSnapshot();
   });
+
+  test("a note paints an embedded board read-only, with one-line cards capped per lane", async () => {
+    m = await mountShell({
+      cols: 80,
+      rows: 24,
+      color: "nocolor",
+      config: "[preview]\nembedMaxRows = 1\n",
+    });
+    m.store.dispatch(indexed(TASK_NOTES, ["today.md", "board.base"]));
+    m.keys("<leader>e");
+    m.open("today.md", "# Today\n\n![[board.base#By late]]\n\nAfter\n");
+    m.store.dispatch({
+      type: "fileLoaded",
+      path: "board.base",
+      file: textFile(BOARD),
+      embed: true,
+    });
+    const frame = await m.frame();
+    const rows = frame.split("\n");
+    const title = rows.findIndex((r) => r.includes("╭ ↳ board.base#By late"));
+    // Lane headers, one card line per lane, then the overflowing lane's marker.
+    expect(rows[title + 1]).toMatch(/│ ● false 1 ─+ ● true 3 ─+ ● None 0/);
+    expect(rows[title + 2]).toMatch(/│ +ship-release +inbox +\(empty\)/);
+    expect(rows[title + 3]).toMatch(/│ +↓ 2 more/);
+    expect(rows[title + 4]).not.toContain("│");
+    expect(frame).not.toContain("review-pr");
+    expect(frame).not.toContain("write-report");
+    expect(frame).toContain("After");
+    const spans = m.t.captureSpans().lines;
+    for (let y = title; y <= title + 3; y++)
+      for (let x = 0; x < 80; x++)
+        expect(
+          (cellStyle(spans, x, y)?.attrs ?? 0) & TextAttributes.INVERSE,
+        ).toBe(0);
+    expect(frame).toMatchSnapshot();
+  });
 });
