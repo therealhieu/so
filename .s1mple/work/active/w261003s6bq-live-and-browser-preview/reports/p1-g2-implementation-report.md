@@ -111,3 +111,25 @@ The design's §6 and §7 embed rules had the gap the verifier found. The fix add
   - Added lines in `src` and `test` contain no work-process identifiers.
   - `bun test test/boundaries.test.ts` → pass.
 - **Remaining issues:** The duplicate-read edge after `:bd` of the last requesting note, described above. It needs a design decision; behaviour stays correct.
+
+## Overall Remediation
+
+### Status
+
+`Completed` — OVR-VER1 is closed by documentation only. The W system design and PR #6's pending parent-synchronization list now record the two P1-G2 refinements above, which the orchestrator accepted on 2026-10-04. No code changed.
+
+### Finding Closure
+
+| Finding | Change evidence | Verification evidence | Commit evidence | Result |
+|---|---|---|---|---|
+| `OVR-VER1` — The P1-G2 embed refinements are not in the W design or the PR's parent-sync list | `w261003s6bq-system-design.md`: §5 Embed load flow tags reads `read{embed:true}` and lets an embed-tagged answer open unlisted. §6 `BufferState.listed` and `BufferState.embeds` gains an `embed?: true` entry for `read`/`fileLoaded`/`fileRefused` (runner echoes it; a tagged answer opens unlisted and unshown unless `awaitsRestore`; a tagged refusal has no notice). The invariant now says `requested` keeps a target until its read answers and only `refused` is trimmed, and it names the `:bd` exception to one outstanding read (duplicate answer is a no-op through `onDiskLoaded`'s stamp check, `src/core/state/disk.ts:69`). §7 `embeds.ts`: the `syncEmbeds` sketch drops `keep(b.embeds?.requested)` for `b.embeds?.requested ?? []`, emits `{ kind: "read", path, embed: true }`, lists `embedRequested`, and its prose and invariants match `src/core/state/embeds.ts:27-96`. §7 `types.ts`: `Action` and `Effect` rows and the proposed shape add the tag. §7 `buffers.ts`: `onFileLoaded`/`onFileRefused` predicates read `a.embed === true \|\| embedRequested(s, a.path)`, as in `src/core/state/buffers.ts:370-372`, `:442`. §7 `effects.ts`: `case "read"` copies the tag (`src/app/effects.ts:184-193`). PR #6 body: two new items under "Pending parent synchronization", for the `embed?: true` tag and the `requested` refinement; every other line is unchanged (`diff` of the fetched and edited bodies shows only the two added lines). | `grep -n 'embed?: true' w261003s6bq-system-design.md` → hits at §6 `:1170` and §7 `:2025`, `:2026`, `:2052`, `:2054`. `grep -n 'keep(b.embeds\|hold only targets that buffer currently embeds\|Requests and refusals for targets'` → no match. `gh pr view 6 --json body -q .body \| grep -n 'embed?: true'` → line 122 under "Pending parent synchronization". `bun run check` → exit 0, 739 pass, 0 fail. `git diff --stat -- src test scripts` → empty. | `7c0b6a2` (design); PR #6 body edited with `gh pr edit 6 --body-file` | `Fixed` |
+
+### Checks
+
+- `bun run check` → exit 0; Biome 249 files clean; tsc and knip pass; 739 pass, 0 fail, 18 snapshots.
+- No code change: `git diff --stat -- src test scripts` → empty; `7c0b6a2` touches only `w261003s6bq-system-design.md`.
+- §1 item 6 and the `da4739d` applied-sync table are unchanged, because they record what the parent already has; the pending parent change is listed in the PR body instead.
+
+### Remaining Issues
+
+None in scope. Parent synchronization of the tag and the `requested` rule stays pending until the user authorizes it.
