@@ -39,9 +39,8 @@ function tableLines(t: TableModel): ("group" | "row")[] {
 /**
  * `view` shown as `shown` with at most `max` body lines: a table keeps its
  * header and separator, leaves its summaries out, and counts the rows past
- * the cap; a board keeps its
- * lane headers and `max` one-line cards per lane, plus a row for `↓ N more`
- * when a lane has more.
+ * the cap; a board keeps its lane headers and `max` one-line cards per
+ * lane, plus a row for `↓ N more` when a lane has more.
  */
 export function baseEmbedOf(
   view: string,
