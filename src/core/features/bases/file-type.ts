@@ -31,9 +31,14 @@ export type BaseWindowState = {
   grouped?: false;
   /** `false` ignores the view's own filters. */
   filtered?: false;
-  /** The focused note, and the focused column (table) or lane (board). */
-  focus: { path?: string; column: number };
-  scroll: { row: number; col: number };
+  /**
+   * The focused note, the focused column (table) or lane (board), and the
+   * row (table) or card in its lane (board) last focused, where focus stays
+   * when the note leaves the view.
+   */
+  focus: { path?: string; column: number; index?: number };
+  /** The first table column shown. */
+  scroll: { col: number };
   edit?: CellEdit;
 };
 
@@ -43,7 +48,7 @@ export function isBaseWindowState(v: unknown): v is BaseWindowState {
   return (
     typeof w.view === "string" &&
     typeof w.focus?.column === "number" &&
-    typeof w.scroll?.row === "number"
+    typeof w.scroll?.col === "number"
   );
 }
 
@@ -67,7 +72,7 @@ export const baseEditorKind: EditorKindSpec<BaseWindowState> = {
     return {
       view: view?.name ?? "",
       focus: { column: 0 },
-      scroll: { row: 0, col: 0 },
+      scroll: { col: 0 },
     };
   },
 };

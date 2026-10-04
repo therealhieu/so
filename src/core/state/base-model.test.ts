@@ -167,3 +167,26 @@ test("a newly opened base window starts at the first row whatever another window
     column: 0,
   });
 });
+
+test("focus near a note that left the view does not depend on earlier frames", () => {
+  const OPEN = `views:
+  - type: table
+    name: Open
+    filters: 'done == false'
+    order: [file.name, done]
+`;
+  const ready = run(fresh(), loaded("open.base", OPEN), indexed());
+  // Rows: inbox, review-pr, write-report; focus review-pr.
+  const focused = run(ready, key("j"));
+  expect(model(focused)?.focus.row).toBe(1);
+  const gone = run(
+    focused,
+    indexed({ "tasks/review-pr.md": "---\ndone: true\n---\n# Review PR\n" }),
+  );
+  const after = model(gone)?.focus;
+  // Another state of the same window, focused elsewhere, evaluated in between.
+  expect(model(run(focused, key("k")))?.focus.row).toBe(0);
+  expect(model(gone)?.focus).toEqual(after as never);
+  expect(after).toMatchObject({ row: 1 });
+  expect(model(gone)?.table?.rows[1]?.path).toBe("tasks/write-report.md");
+});

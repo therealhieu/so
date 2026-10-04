@@ -120,7 +120,7 @@ export function selectBaseView(
     : setBaseWindow(s, id, {
         view: name,
         focus: { column: 0 },
-        scroll: { row: 0, col: 0 },
+        scroll: { col: 0 },
       });
 }
 
@@ -137,7 +137,8 @@ const uiOf = (ws: BaseWindowState): BaseUi => ({
  * The model of base window `windowId`, derived from the base text, the
  * index, property types, unsaved notes, and the window state. Frames whose
  * inputs are the same objects get the same model. Focus follows the focused
- * note's path; when it is gone, it stays near the row or card it was on.
+ * note's path; when it is gone, it stays at the row or card index the window
+ * last focused.
  */
 export function baseViewModel(
   s: AppState,
@@ -160,7 +161,7 @@ export function baseViewModel(
   const slot = `window:${windowId}`;
   const prev = memo.get(slot);
   if (prev !== undefined && sameKey(prev.key, key)) return prev.model;
-  const model = derive(s, b.path, fullText(b.text), ws, reg, prev?.model);
+  const model = derive(s, b.path, fullText(b.text), ws, reg);
   memo.set(slot, { key, model });
   return model;
 }
@@ -171,7 +172,6 @@ function derive(
   text: string,
   ws: BaseWindowState,
   reg: Pick<Registries, "layouts">,
-  prev: BaseViewModel | undefined,
 ): BaseViewModel {
   const title = path.slice(path.lastIndexOf("/") + 1);
   const empty = {
@@ -206,12 +206,9 @@ function derive(
   const { layout, notice } = reg.layouts.resolve(e.selectedView.type);
   const built = layout.model(e, ui, s.index.types);
   const sort = e.selectedView.sort?.[0];
-  // A view switch, or a window that has not focused a note yet, starts at
-  // the first row or card.
-  const near =
-    ws.focus.path !== undefined && prev?.selected === e.selectedView.name
-      ? prev.focus
-      : undefined;
+  // A window that has not focused a note in this view starts at the first
+  // row or card.
+  const near = ws.view === e.selectedView.name ? (ws.focus.index ?? 0) : 0;
   const common = {
     ...withViews,
     status: "ok" as const,
@@ -235,7 +232,7 @@ function derive(
       found >= 0 ? found : clamp(ws.focus.column, board.lanes.length - 1);
     const cards = board.lanes[lane]?.cards ?? [];
     const at = cards.findIndex((c) => c.path === ws.focus.path);
-    const card = at >= 0 ? at : clamp(near?.card ?? 0, cards.length - 1);
+    const card = at >= 0 ? at : clamp(near, cards.length - 1);
     return {
       ...common,
       board,
@@ -245,7 +242,7 @@ function derive(
   }
   const table = built;
   const at = table.rows.findIndex((r) => r.path === ws.focus.path);
-  const row = at >= 0 ? at : clamp(near?.row ?? 0, table.rows.length - 1);
+  const row = at >= 0 ? at : clamp(near, table.rows.length - 1);
   return {
     ...common,
     table,

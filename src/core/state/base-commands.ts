@@ -77,6 +77,7 @@ function focusCell(a: Active, row: number, column: number): Result {
     focus: {
       ...(r === undefined ? {} : { path: r.path }),
       column,
+      index: row,
     },
   };
   const text = r?.cells[column]?.text ?? "";
@@ -92,7 +93,11 @@ function focusCard(a: Active, lane: number, card: number): Result {
   const c = l.cards[card];
   const ws: BaseWindowState = {
     ...a.ws,
-    focus: { ...(c === undefined ? {} : { path: c.path }), column: lane },
+    focus: {
+      ...(c === undefined ? {} : { path: c.path }),
+      column: lane,
+      index: card,
+    },
   };
   return message(
     setWs(a, ws),
@@ -266,7 +271,7 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
     return none(
       setWs(a, {
         ...a.ws,
-        scroll: { ...a.ws.scroll, col },
+        scroll: { col },
         focus: { ...a.ws.focus, column: Math.max(a.m.focus.column, col) },
       }),
     );
@@ -284,7 +289,7 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
     propertyType(property, target.key, a.s.index.types) === "date";
   const focused = setWs(a, {
     ...a.ws,
-    focus: { path: moved.path, column: lane + step },
+    focus: { path: moved.path, column: lane + step, index: card },
   });
   return writeProperty(
     focused,
