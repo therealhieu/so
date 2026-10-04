@@ -27,6 +27,7 @@ const WRAPPED: Readonly<
 
 const PROSE = new Set(["paragraph", "heading", "list"]);
 const SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const FOOTNOTE_REF = /\[\^([^\]\s]+)\]/g;
 
 const at = (p: Pos, by: number): Pos => ({ line: p.line, col: p.col + by });
 const hide = (range: Range): Decoration => ({
@@ -154,6 +155,25 @@ export function inlineDecorations(
             break;
           case "blockId":
             out.push(mark(range, "mdMarker"));
+            break;
+          case "text":
+            // A reference whose definition is in another block stays text in mdast.
+            for (const m of String(node.value ?? "").matchAll(FOOTNOTE_REF)) {
+              const start = at(range.start, m.index);
+              const raw = m[0];
+              if (
+                range.start.line !== range.end.line ||
+                v.buf
+                  .line(start.line)
+                  .slice(start.col, start.col + raw.length) !== raw
+              )
+                continue;
+              out.push(
+                show({ start, end: at(start, raw.length) }, [
+                  { text: footnoteLabel(m[1] ?? ""), style: "mdFootnote" },
+                ]),
+              );
+            }
             break;
         }
     }

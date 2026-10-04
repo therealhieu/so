@@ -1,11 +1,18 @@
 import { afterEach, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   layoutNote,
   noteView,
   rowText,
+  stubCtx,
 } from "../../../../test/support/markdown";
-import type { Block } from "./doc";
+import { createTextBuffer } from "../../kernel/text/text-buffer";
+import { layoutText } from "../../kernel/view/text-view";
+import type { RenderLine, Span, Widget } from "../../kernel/view/types";
+import { type Block, parseDoc } from "./doc";
 import { type BlockRenderer, registerBlockRenderer } from "./live-preview";
+import type { EmbedData } from "./renderers/embed";
+import { builtinRenderers } from "./renderers/index";
 
 const none: BlockRenderer = () => [];
 
@@ -79,4 +86,132 @@ test("only blocks in the visible range are rendered", () => {
     expect(b.endLine).toBeGreaterThanOrEqual(visible.from);
     expect(b.startLine).toBeLessThan(visible.to);
   }
+});
+
+const TOUR = readFileSync("test/fixtures/tour.md", "utf8");
+
+const ROADMAP = (() => {
+  const text = createTextBuffer(
+    [
+      "# so roadmap",
+      "",
+      "## Goals",
+      ...Array.from({ length: 12 }, (_, i) => `- Goal ${i + 1}`),
+      "",
+      "## Later",
+      "Not shown",
+    ].join("\n"),
+  );
+  return { doc: parseDoc(text), text };
+})();
+
+const PATHS: Readonly<Record<string, string>> = {
+  "so-roadmap": "so-roadmap.md",
+  "diagram.png": "diagram.png",
+};
+
+const tourCtx = stubCtx({
+  resolve: (t) => PATHS[t],
+  isResolved: (t) => PATHS[t] !== undefined,
+  embed: (p) => (p === "so-roadmap.md" ? ROADMAP : "missing"),
+  image: (p) => (p === "diagram.png" ? { rows: 6 } : "unknown"),
+});
+
+const spansText = (spans: Span[]) => spans.map((s) => s.text).join("");
+
+function widgetText(w: Widget): string[] {
+  switch (w.type) {
+    case "text":
+      return (w.data as Span[][]).map(spansText);
+    case "embed": {
+      const d = w.data as EmbedData;
+      return [
+        `${d.title} (${d.state}, ${d.more} more)`,
+        ...d.rows.map(spansText),
+      ];
+    }
+    default:
+      return [JSON.stringify(w.data)];
+  }
+}
+
+/** Rows as `line sign │ text  ⟦style@col+len …⟧`, with widget content indented below. */
+function serialize(rows: RenderLine[]): string {
+  const out: string[] = [];
+  for (const r of rows) {
+    const styles: string[] = [];
+    let col = 0;
+    for (const s of r.spans) {
+      if (s.style !== "text") styles.push(`${s.style}@${col}+${s.text.length}`);
+      col += s.text.length;
+    }
+    const line = `${String(r.sourceLine + 1).padStart(3)} ${r.sign?.text ?? " "} │${spansText(r.spans)}`;
+    out.push(styles.length === 0 ? line : `${line}  ⟦${styles.join(" ")}⟧`);
+    if (r.widget !== undefined) {
+      out.push(`      ↳ ${r.widget.type} ×${r.widget.rows}`);
+      for (const t of widgetText(r.widget)) out.push(`      │${t}`);
+    }
+  }
+  return out.join("\n");
+}
+
+/** Cursor positions in `tour.md` (0-based lines). */
+const CURSORS = [
+  { name: "on a blank line", line: 7 },
+  { name: "on a bold line", line: 8 },
+  { name: "inside the table", line: 41 },
+  { name: "inside a callout", line: 28 },
+  { name: "inside a code fence", line: 48 },
+  { name: "inside the frontmatter", line: 2 },
+  { name: "inside the mermaid diagram", line: 70 },
+];
+
+const tour = (width: number, line: number) =>
+  noteView(TOUR, { width, cursor: { line, col: 2 } });
+
+for (const width of [60, 100]) {
+  for (const cursor of CURSORS)
+    test(`tour note at width ${width} with the cursor ${cursor.name}`, () => {
+      builtinRenderers();
+      const rows = layoutNote(tour(width, cursor.line), "live", tourCtx);
+      expect(serialize(rows)).toMatchSnapshot();
+    });
+
+  test(`tour note at width ${width} in reading view`, () => {
+    builtinRenderers();
+    const rows = layoutNote(tour(width, 8), "reading", tourCtx);
+    expect(serialize(rows)).toMatchSnapshot();
+  });
+
+  test(`tour note at width ${width} in source view`, () => {
+    const { v } = tour(width, 8);
+    expect(serialize(layoutText(v, [], undefined))).toMatchSnapshot();
+  });
+}
+
+test("headings start with their level glyph and comments are hidden", () => {
+  builtinRenderers();
+  const rows = layoutNote(tour(100, 7), "live", tourCtx);
+  const textOf = (line: number) =>
+    rowText(rows.find((r) => r.sourceLine === line));
+  expect(textOf(6)).toBe("█ Markdown tour");
+  expect(textOf(14)).toBe("▊ Lists and tasks");
+  expect(textOf(36)).toBe("▌ Table");
+  expect(textOf(44)).toBe("▏ Code");
+  expect(rows.some((r) => r.sourceLine === 12)).toBe(false);
+  expect(rows.map(rowText).join("\n")).not.toContain("%%");
+});
+
+test("the reveal sign marks exactly the revealed rows", () => {
+  builtinRenderers();
+  const signed = (line: number) =>
+    layoutNote(tour(100, line), "live", tourCtx)
+      .filter((r) => r.sign?.text === "▕")
+      .map((r) => r.sourceLine);
+  expect(signed(7)).toEqual([]);
+  expect(signed(8)).toEqual([8]);
+  expect(signed(41)).toEqual([38, 39, 40, 41, 42]);
+  expect(
+    layoutNote(tour(100, 41), "reading", tourCtx).some((r) => r.sign),
+  ).toBe(false);
 });

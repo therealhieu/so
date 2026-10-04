@@ -1,7 +1,7 @@
 import { fenceBody, wholeBlock } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
-import { labelAbove } from "./label";
+import { labelAbove } from "./rows";
 
 /** Math as terminal text: Unicode when every TeX token maps, otherwise the TeX source unchanged. */
 export type MathResult =

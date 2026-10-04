@@ -1,0 +1,1721 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`tour note at width 60 with the cursor on a blank line 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor on a bold line 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9 ▕ │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor inside the table 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39 ▕ │| Key | Action | Mode |
+ 40 ▕ │|:---|:---|:---:|
+ 41 ▕ │| \`gd\` | Follow link | normal |
+ 42 ▕ │| \`Space f f\` | Find file | normal |
+ 43 ▕ │| \`Ctrl-o\` | Jump back | normal |
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor inside a callout 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28 ▕ │> [!note] Reveal rule
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 47 ▕ │\`\`\`ts
+ 48 ▕ │// one-way data flow
+ 49 ▕ │export function update(state: AppState, action: Action) {
+ 50 ▕ │  const next = reduce(state, action);
+ 51 ▕ │  return { state: next, effects: [] };
+ 52 ▕ │}
+ 53 ▕ │\`\`\`
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
+"  1 ▕ │---
+  2 ▕ │title: Markdown tour
+  3 ▕ │tags: [reference, so]
+  4 ▕ │created: 2026-10-01
+  5 ▕ │aliases: [tour, syntax]
+  6 ▕ │---
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69 ▕ │\`\`\`mermaid
+ 70 ▕ │flowchart LR
+ 71 ▕ │  Capture --> Triage --> Plan --> Ship
+ 72 ▕ │  Triage -->|someday| Archive
+ 73 ▕ │\`\`\`
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 in reading view 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×7
+      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
+      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
+      │└───────┘ └───┬──┘         └───────┘ └────┘
+      │              │
+      │              │            ┌───────┐
+      │              └──someday──►│Archive│
+      │                           └───────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 60 in source view 1`] = `
+"  1   │---
+  2   │title: Markdown tour
+  3   │tags: [reference, so]
+  4   │created: 2026-10-01
+  5   │aliases: [tour, syntax]
+  6   │---
+  7   │# Markdown tour
+  8   │
+  9   │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
+ 10   │Links show their text: [OpenTUI docs](https://opentui.com), [[so-roadmap|the roadmap]], and [[missing-note]].
+ 11   │Tags like #reference and #so/ui are coloured. A footnote[^1] stays small.
+ 12   │
+ 13   │%%This comment is hidden in live preview.%%
+ 14   │
+ 15   │## Lists and tasks
+ 16   │
+ 17   │- Plain bullet
+ 18   │  - Nested bullet
+ 19   │1. First step
+ 20   │2. Second step
+ 21   │- [ ] Toggle me with Enter
+ 22   │- [x] Already done
+ 23   │
+ 24   │## Quotes and callouts
+ 25   │
+ 26   │> Simplicity is prerequisite for reliability. — Dijkstra
+ 27   │
+ 28   │> [!note] Reveal rule
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 30   │
+ 31   │> [!tip]- Folded tip (za to open)
+ 32   │> Callouts with a minus sign start folded.
+ 33   │
+ 34   │> [!danger] Data safety
+ 35   │> Saves are atomic: temp file, fsync, rename.
+ 36   │
+ 37   │### Table
+ 38   │
+ 39   │| Key | Action | Mode |
+ 40   │|:---|:---|:---:|
+ 41   │| \`gd\` | Follow link | normal |
+ 42   │| \`Space f f\` | Find file | normal |
+ 43   │| \`Ctrl-o\` | Jump back | normal |
+ 44   │
+ 45   │#### Code
+ 46   │
+ 47   │\`\`\`ts
+ 48   │// one-way data flow
+ 49   │export function update(state: AppState, action: Action) {
+ 50   │  const next = reduce(state, action);
+ 51   │  return { state: next, effects: [] };
+ 52   │}
+ 53   │\`\`\`
+ 54   │
+ 55   │## Embeds and images
+ 56   │
+ 57   │![[so-roadmap#Goals]]
+ 58   │
+ 59   │![[diagram.png]]
+ 60   │
+ 61   │## Math and diagrams
+ 62   │
+ 63   │Inline math $E = mc^2$ renders as text.
+ 64   │
+ 65   │$$
+ 66   │\\sum_{i=1}^{n} x_i \\le \\frac{a}{b}
+ 67   │$$
+ 68   │
+ 69   │\`\`\`mermaid
+ 70   │flowchart LR
+ 71   │  Capture --> Triage --> Plan --> Ship
+ 72   │  Triage -->|someday| Archive
+ 73   │\`\`\`
+ 74   │
+ 75   │---
+ 76   │
+ 77   │[^1]: Footnotes render at the bottom, dimmed.
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor on a blank line 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor on a bold line 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9 ▕ │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor inside the table 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39 ▕ │| Key | Action | Mode |
+ 40 ▕ │|:---|:---|:---:|
+ 41 ▕ │| \`gd\` | Follow link | normal |
+ 42 ▕ │| \`Space f f\` | Find file | normal |
+ 43 ▕ │| \`Ctrl-o\` | Jump back | normal |
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor inside a callout 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28 ▕ │> [!note] Reveal rule
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 47 ▕ │\`\`\`ts
+ 48 ▕ │// one-way data flow
+ 49 ▕ │export function update(state: AppState, action: Action) {
+ 50 ▕ │  const next = reduce(state, action);
+ 51 ▕ │  return { state: next, effects: [] };
+ 52 ▕ │}
+ 53 ▕ │\`\`\`
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
+"  1 ▕ │---
+  2 ▕ │title: Markdown tour
+  3 ▕ │tags: [reference, so]
+  4 ▕ │created: 2026-10-01
+  5 ▕ │aliases: [tour, syntax]
+  6 ▕ │---
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69 ▕ │\`\`\`mermaid
+ 70 ▕ │flowchart LR
+ 71 ▕ │  Capture --> Triage --> Plan --> Ship
+ 72 ▕ │  Triage -->|someday| Archive
+ 73 ▕ │\`\`\`
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 in reading view 1`] = `
+"  1   │Properties  ⟦mdProperty@0+10⟧
+  2   │title    Markdown tour  ⟦mdProperty@0+7⟧
+  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  4   │created  2026-10-01  ⟦mdProperty@0+7⟧
+  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
+  8   │
+  9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
+ 10   │Links show their text: OpenTUI docs, the roadmap, and missing-note.  ⟦mdLink@23+12 mdLink@37+11 linkUnresolved@54+12⟧
+ 11   │Tags like #reference and #so/ui are coloured. A footnote¹ stays small.  ⟦mdTag@10+10 mdTag@25+6 mdFootnote@56+1⟧
+ 12   │
+ 14   │
+ 15   │▊ Lists and tasks  ⟦mdHeading2@0+2 mdHeading2@2+15⟧
+ 16   │
+ 17   │• Plain bullet  ⟦mdMarker@0+2⟧
+ 18   │  ◦ Nested bullet  ⟦mdMarker@2+2⟧
+ 19   │1. First step  ⟦mdMarker@0+2⟧
+ 20   │2. Second step  ⟦mdMarker@0+2⟧
+ 21   │☐ Toggle me with Enter  ⟦mdMarker@0+2⟧
+ 22   │☑ Already done  ⟦mdMarker@0+2 dim@2+12⟧
+ 23   │
+ 24   │▊ Quotes and callouts  ⟦mdHeading2@0+2 mdHeading2@2+19⟧
+ 25   │
+ 26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
+ 27   │
+ 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 30   │
+ 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 33   │
+ 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
+ 36   │
+ 37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
+ 38   │
+ 39   ││ Key       │ Action      │  Mode  │  ⟦mdMarker@0+1 mdBold@1+11 mdMarker@12+1 mdBold@13+13 mdMarker@26+1 mdBold@27+8 mdMarker@35+1⟧
+ 40   │├───────────┼─────────────┼────────┤  ⟦mdMarker@0+36⟧
+ 41   ││ gd        │ Follow link │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 42   ││ Space f f │ Find file   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 43   ││ Ctrl-o    │ Jump back   │ normal │  ⟦mdMarker@0+1 mdMarker@12+1 mdMarker@26+1 mdMarker@35+1⟧
+ 44   │
+ 45   │▏ Code  ⟦mdHeading4@0+2 mdHeading4@2+4⟧
+ 46   │
+ 48   │// one-way data flow  ⟦codeComment@0+20⟧
+ 49   │export function update(state: AppState, action: Action) {  ⟦codeKeyword@0+6 mdCode@6+1 codeKeyword@7+8 mdCode@15+1 codeTitle@16+6 mdCode@22+1 codeAttribute@23+5 codeParams@28+2 codeTitle@30+8 codeParams@38+2 codeAttribute@40+6 codeParams@46+2 codeTitle@48+6 mdCode@54+3⟧
+ 50   │  const next = reduce(state, action);  ⟦mdCode@0+2 codeKeyword@2+5 mdCode@7+8 codeTitle@15+6 mdCode@21+16⟧
+ 51   │  return { state: next, effects: [] };  ⟦mdCode@0+2 codeKeyword@2+6 mdCode@8+3 codeAttribute@11+5 mdCode@16+8 codeAttribute@24+7 mdCode@31+7⟧
+ 52   │}  ⟦mdCode@0+1⟧
+ 54   │
+ 55   │▊ Embeds and images  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 56   │
+ 57   │
+      ↳ embed ×12
+      │so-roadmap#Goals (ok, 2 more)
+      │• Goal 1
+      │• Goal 2
+      │• Goal 3
+      │• Goal 4
+      │• Goal 5
+      │• Goal 6
+      │• Goal 7
+      │• Goal 8
+      │• Goal 9
+      │• Goal 10
+ 58   │
+ 59   │
+      ↳ image ×6
+      │{"path":"diagram.png","name":"diagram.png"}
+ 60   │
+ 61   │▊ Math and diagrams  ⟦mdHeading2@0+2 mdHeading2@2+17⟧
+ 62   │
+ 63   │Inline math E = mc² renders as text.  ⟦mdCode@12+7⟧
+ 64   │
+ 65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
+ 68   │
+ 69   │
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
+      ││         │     │        │             │         │     │      │
+      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │             │         │     │      │
+      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │
+      │                     │                 ┌─────────┐
+      │                     │                 │         │
+      │                     └─────someday────►│ Archive │
+      │                                       │         │
+      │                                       └─────────┘
+ 74   │
+ 75   │
+      ↳ rule ×1
+      │null
+ 76   │
+ 77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
+ 78   │"
+`;
+
+exports[`tour note at width 100 in source view 1`] = `
+"  1   │---
+  2   │title: Markdown tour
+  3   │tags: [reference, so]
+  4   │created: 2026-10-01
+  5   │aliases: [tour, syntax]
+  6   │---
+  7   │# Markdown tour
+  8   │
+  9   │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
+ 10   │Links show their text: [OpenTUI docs](https://opentui.com), [[so-roadmap|the roadmap]], and [[missing-note]].
+ 11   │Tags like #reference and #so/ui are coloured. A footnote[^1] stays small.
+ 12   │
+ 13   │%%This comment is hidden in live preview.%%
+ 14   │
+ 15   │## Lists and tasks
+ 16   │
+ 17   │- Plain bullet
+ 18   │  - Nested bullet
+ 19   │1. First step
+ 20   │2. Second step
+ 21   │- [ ] Toggle me with Enter
+ 22   │- [x] Already done
+ 23   │
+ 24   │## Quotes and callouts
+ 25   │
+ 26   │> Simplicity is prerequisite for reliability. — Dijkstra
+ 27   │
+ 28   │> [!note] Reveal rule
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 30   │
+ 31   │> [!tip]- Folded tip (za to open)
+ 32   │> Callouts with a minus sign start folded.
+ 33   │
+ 34   │> [!danger] Data safety
+ 35   │> Saves are atomic: temp file, fsync, rename.
+ 36   │
+ 37   │### Table
+ 38   │
+ 39   │| Key | Action | Mode |
+ 40   │|:---|:---|:---:|
+ 41   │| \`gd\` | Follow link | normal |
+ 42   │| \`Space f f\` | Find file | normal |
+ 43   │| \`Ctrl-o\` | Jump back | normal |
+ 44   │
+ 45   │#### Code
+ 46   │
+ 47   │\`\`\`ts
+ 48   │// one-way data flow
+ 49   │export function update(state: AppState, action: Action) {
+ 50   │  const next = reduce(state, action);
+ 51   │  return { state: next, effects: [] };
+ 52   │}
+ 53   │\`\`\`
+ 54   │
+ 55   │## Embeds and images
+ 56   │
+ 57   │![[so-roadmap#Goals]]
+ 58   │
+ 59   │![[diagram.png]]
+ 60   │
+ 61   │## Math and diagrams
+ 62   │
+ 63   │Inline math $E = mc^2$ renders as text.
+ 64   │
+ 65   │$$
+ 66   │\\sum_{i=1}^{n} x_i \\le \\frac{a}{b}
+ 67   │$$
+ 68   │
+ 69   │\`\`\`mermaid
+ 70   │flowchart LR
+ 71   │  Capture --> Triage --> Plan --> Ship
+ 72   │  Triage -->|someday| Archive
+ 73   │\`\`\`
+ 74   │
+ 75   │---
+ 76   │
+ 77   │[^1]: Footnotes render at the bottom, dimmed.
+ 78   │"
+`;

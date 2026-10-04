@@ -2,7 +2,7 @@ import { parseMermaid, renderMermaidASCII } from "beautiful-mermaid";
 import { fenceBody, wholeBlock } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
-import { labelAbove, textWidget } from "./label";
+import { labelAbove, textWidget } from "./rows";
 
 /** A Mermaid fence as box-drawing lines, or why it shows as source. */
 export type MermaidResult =
