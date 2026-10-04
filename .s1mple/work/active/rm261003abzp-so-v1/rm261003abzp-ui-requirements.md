@@ -6,7 +6,7 @@
 
 **History:** `rm261003abzp-ui-requirements-revisions.md`
 
-**Approved Requirements and System Design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+**Approved Requirements and System Design:** `rm261003abzp-requirements.md` — RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R3, RM261003ABZP-REQ10@R2, RM261003ABZP-REQ11@R3; `rm261003abzp-design.md` — RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R1, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R1 … RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
 
 **Mockup Manifest:** `ui-mockups/manifest.md`
 
@@ -34,7 +34,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
   - `:vs`/`:sp` split the editor; each window has a winbar with the active title bold; `Ctrl-w h/j/k/l` move focus; `:q` closes the active window (M1 S7).
   - Toasts stack top-right; info and warning toasts expire, error toasts stay until dismissed; toast text contains paths but never note content (M1 S13).
   - A failed save keeps the buffer dirty, shows the reason in the statusline (e.g. `save failed: disk full`), and states the retry backoff; `:w` retries immediately (M1 S14).
-- **Source Evidence:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES10@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; `rm261003abzp-ui-context.md@R2` Affected UI "Application shell"
+- **Source Evidence:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R3; RM261003ABZP-DES2@R2, RM261003ABZP-DES7@R3, RM261003ABZP-DES8@R1, RM261003ABZP-DES10@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1; `rm261003abzp-ui-context.md@R2` Affected UI "Application shell"
 - **Accepted Mockups:** RM261003ABZP-M1@R1
 - **Feedback or Decision Evidence:** Acceptance; AD3 with A:Leader map (`<leader>lb` backlinks, `b` = buffer group), A:Behaviour details; AD4 and Feedback Ledger cycle 2 (non-Markdown statusline)
 - **Dependencies:** RM261003ABZP-UREQ11@R1
@@ -176,7 +176,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
   - Clicking a wikilink navigates the preview only and shows a banner offering to follow the terminal again; unresolved links are styled as unresolved and explain how to create them in `so` (M7 S3).
   - The page follows the OS colour scheme with a toggle override; system fonts and GitHub-like Markdown styling (M7 S4, S5).
   - At 375 px the header wraps, margins shrink, and wide tables and code scroll inside their box without page-level horizontal scroll (M7 S10).
-- **Source Evidence:** RM261003ABZP-REQ8@R2, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2; RM261003ABZP-DES13@R3
+- **Source Evidence:** RM261003ABZP-REQ8@R2, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R3; RM261003ABZP-DES13@R3
 - **Accepted Mockups:** RM261003ABZP-M7@R1
 - **Feedback or Decision Evidence:** Acceptance; AD3 with A:Browser preview page
 - **Dependencies:** None
@@ -208,7 +208,7 @@ Below, "Acceptance" means the manifest Acceptance section (delegated acceptance,
 
 | Source Evidence | Accepted Mockup | Feedback or Decision | UI Requirement |
 |---|---|---|---|
-| RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R2, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-M1@R1 (S1, S2, S7–S14) | Acceptance; AD3; AD4; Feedback Ledger cycle 2 | RM261003ABZP-UREQ1@R2 |
+| RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | RM261003ABZP-M1@R1 (S1, S2, S7–S14) | Acceptance; AD3; AD4; Feedback Ledger cycle 2 | RM261003ABZP-UREQ1@R2 |
 | RM261003ABZP-REQ2@R2, RM261003ABZP-REQ1@R3, RM261003ABZP-DES4@R1 | RM261003ABZP-M1@R1 (S2–S6) | Acceptance; AD3 | RM261003ABZP-UREQ2@R1 |
 | RM261003ABZP-REQ5@R2, RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-DES9@R3, RM261003ABZP-DES17@R1 | RM261003ABZP-M2@R1 (S1–S8, S15, S16); RM261003ABZP-M1@R1 (S2) | Acceptance; AD3; AD4; Feedback Ledger cycle 2 | RM261003ABZP-UREQ3@R2 |
 | RM261003ABZP-REQ5@R2, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R1 | RM261003ABZP-M2@R1 (S9–S14) | Acceptance; AD3 | RM261003ABZP-UREQ4@R1 |

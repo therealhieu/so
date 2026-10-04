@@ -50,7 +50,7 @@ Use `None` for empty sections and fields.
 | RM261003ABZP-REQ6@R2 | Daily notes and templates | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4 |
 | RM261003ABZP-REQ7@R2 | Obsidian Bases table and Kanban views | RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4 |
 | RM261003ABZP-REQ8@R2 | Read-only local browser preview | RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 |
-| RM261003ABZP-REQ9@R2 | Fast and smooth performance targets | RM261003ABZP-REQ2@R2, RM261003ABZP-REQ5@R2 |
+| RM261003ABZP-REQ9@R3 | Fast and smooth performance targets | RM261003ABZP-REQ2@R2, RM261003ABZP-REQ5@R2 |
 | RM261003ABZP-REQ10@R4 | Fast development, CI, and release | None |
 | RM261003ABZP-REQ11@R3 | Maintainable, standards-based, language-neutral foundations | None |
 
@@ -223,26 +223,27 @@ Use `None` for empty sections and fields.
     - `RM261003ABZP-RF12` - explicit binding, Host check, realpath containment, SSE or WebSocket; evaluated RM261003ABZP-REQ8@R1 → informed RM261003ABZP-REQ8@R2
   - **Example:** editing a heading in the terminal updates the open browser tab without a manual reload.
 
-- **RM261003ABZP-REQ9@R2 — Fast and smooth performance targets**
+- **RM261003ABZP-REQ9@R3 — Fast and smooth performance targets**
   - **Question:** What does "fast and smooth" mean measurably?
   - **Requirement:** `so` meets the performance targets below on the reference machine (Apple M1 or newer, 8 GB RAM, macOS), measured in-process from input event to composed frame.
-  - **Rationale:** The user requires fast and smooth UI/UX; targets make it testable; terminal-emulator display latency cannot be observed from inside `so`.
+  - **Rationale:** The user requires fast and smooth UI/UX; targets make it testable; terminal-emulator display latency cannot be observed from inside `so`. The live view and startup targets are relaxed so the bench gate does not slow development; the source view keeps the original budget.
   - **Acceptance criteria:**
-    - Keypress to composed frame (input event received → OpenTUI frame complete): p95 < 16 ms over 200 keystrokes while editing a 5,000-line fixture note in live preview.
-    - Cold start to first interactive frame: < 200 ms for a 10,000-note folder (indexing continues in the background).
-    - Opening a note: < 50 ms for a 5,000-line note.
-    - Workspace index of 10,000 notes completes in < 3 s without blocking input.
-    - Scrolling holds 60 frames per second without dropped input.
+    - Keypress to composed frame (input event received → OpenTUI frame complete), p95 over 200 keystrokes: < 24 ms while editing a 5,000-line fixture note in live preview; < 16 ms while editing a 5,000-line file in source view.
+    - Cold start to first interactive frame: < 250 ms for a 10,000-note folder (indexing continues in the background).
+    - Opening a 5,000-line file: < 80 ms for a note in live preview; < 50 ms in source view.
+    - Workspace index of 10,000 notes completes in < 3 s without blocking input; keystroke p95 while indexing stays < 30 ms.
+    - Scrolling holds 60 frames per second without dropped input, in live preview and in source view.
     - Benchmarks for these targets run in CI on a fixed runner type through the OpenTUI test renderer; the median of 5 runs fails the build when it exceeds 2× the target.
   - **Dependencies:** RM261003ABZP-REQ2@R2, RM261003ABZP-REQ5@R2
-  - **Predecessors:** RM261003ABZP-REQ9@R1
+  - **Predecessors:** RM261003ABZP-REQ9@R1, RM261003ABZP-REQ9@R2
   - **Evidence:**
     - `rm261003abzp-roadmap-context.md@R1` Stated Boundaries - user-approved proposal targets.
+    - `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-requirements.md` Constraints - relaxed live and startup targets, approved by the user on 2026-10-04; `scripts/bench-gate.ts` `TARGETS` at `e228bb5` (PR #6).
   - **Research links:**
-    - `RM261003ABZP-RF1` - pin OpenTUI to keep baselines stable; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
-    - `RM261003ABZP-RF2` - in-process frame stats and test renderer; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
-    - `RM261003ABZP-RF6` - line array sufficient at 5,000 lines; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
-    - `RM261003ABZP-RF7` - block-level reparse; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+    - `RM261003ABZP-RF1` - pin OpenTUI to keep baselines stable; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF2` - in-process frame stats and test renderer; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF6` - line array sufficient at 5,000 lines; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2 (carried into R3 unchanged)
+    - `RM261003ABZP-RF7` - block-level reparse; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2 (carried into R3 unchanged)
   - **Example:** holding `j` in a 5,000-line note scrolls without visible lag.
 
 - **RM261003ABZP-REQ10@R4 — Fast development, CI, and release**
@@ -303,10 +304,10 @@ Dispositions per finding–evaluated-requirement relationship. All decisions wer
 
 | Finding | Evaluated requirement | Impact | Disposition | Resulting requirements |
 |---|---|---|---|---|
-| RM261003ABZP-RF1 — pin OpenTUI, contain to UI | RM261003ABZP-REQ9@R1 | Adds consideration | Revised | RM261003ABZP-REQ9@R2 |
+| RM261003ABZP-RF1 — pin OpenTUI, contain to UI | RM261003ABZP-REQ9@R1 | Adds consideration | Revised | RM261003ABZP-REQ9@R2 (current: RM261003ABZP-REQ9@R3) |
 | RM261003ABZP-RF1 | RM261003ABZP-REQ10@R1 | Adds consideration | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R4) |
 | RM261003ABZP-RF1 | RM261003ABZP-REQ11@R1 | Supports | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
-| RM261003ABZP-RF2 — in-process frame metrics | RM261003ABZP-REQ9@R1 | Supports | Revised | RM261003ABZP-REQ9@R2 |
+| RM261003ABZP-RF2 — in-process frame metrics | RM261003ABZP-REQ9@R1 | Supports | Revised | RM261003ABZP-REQ9@R2 (current: RM261003ABZP-REQ9@R3) |
 | RM261003ABZP-RF2 | RM261003ABZP-REQ10@R1 | Supports | Retained (no criterion change beyond REQ10@R2 revision) | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R4) |
 | RM261003ABZP-RF3 — compile embeds native lib | RM261003ABZP-REQ10@R1 | Supports | Revised | RM261003ABZP-REQ10@R2 (current: RM261003ABZP-REQ10@R4) |
 | RM261003ABZP-RF3 | None — macOS signing | Adds consideration | Deferred | None — see "macOS signing and notarization" |
@@ -315,11 +316,11 @@ Dispositions per finding–evaluated-requirement relationship. All decisions wer
 | RM261003ABZP-RF5 — Esc and kitty keyboard | RM261003ABZP-REQ2@R1 | Adds consideration | Revised | RM261003ABZP-REQ2@R2 |
 | RM261003ABZP-RF5 | RM261003ABZP-REQ11@R1 | Adds consideration | Revised | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
 | RM261003ABZP-RF6 — line array, undo block | RM261003ABZP-REQ2@R1 | Supports | Revised | RM261003ABZP-REQ2@R2 |
-| RM261003ABZP-RF6 | RM261003ABZP-REQ9@R1 | Supports | Retained | RM261003ABZP-REQ9@R2 |
+| RM261003ABZP-RF6 | RM261003ABZP-REQ9@R1 | Supports | Retained | RM261003ABZP-REQ9@R2 (current: RM261003ABZP-REQ9@R3) |
 | RM261003ABZP-RF6 | RM261003ABZP-REQ11@R1 | Supports | Retained | RM261003ABZP-REQ11@R2 (current: RM261003ABZP-REQ11@R3) |
 | RM261003ABZP-RF7 — parsers, block reparse, reveal | RM261003ABZP-REQ5@R1 | Adds consideration | Revised | RM261003ABZP-REQ5@R2 |
 | RM261003ABZP-RF7 | RM261003ABZP-REQ8@R1 | Supports | Retained | RM261003ABZP-REQ8@R2 |
-| RM261003ABZP-RF7 | RM261003ABZP-REQ9@R1 | Supports | Retained | RM261003ABZP-REQ9@R2 |
+| RM261003ABZP-RF7 | RM261003ABZP-REQ9@R1 | Supports | Retained | RM261003ABZP-REQ9@R2 (current: RM261003ABZP-REQ9@R3) |
 | RM261003ABZP-RF8 — link resolution | RM261003ABZP-REQ4@R1 | Challenges | Revised | RM261003ABZP-REQ4@R2 (current: RM261003ABZP-REQ4@R3) |
 | RM261003ABZP-RF9 — Bases layouts, Kanban | RM261003ABZP-REQ7@R1 | Challenges | Revised | RM261003ABZP-REQ7@R2 |
 | RM261003ABZP-RF10 — template tokens | RM261003ABZP-REQ6@R1 | Challenges | Revised | RM261003ABZP-REQ6@R2 |
@@ -383,6 +384,6 @@ None
 
 ## Approval
 
-- **Approved baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3
+- **Approved baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ6@R2, RM261003ABZP-REQ7@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R3, RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3
 - **Research dispositions:** Approved
-- **Approval evidence:** User delegated all decisions on 2026-10-03: "you self-drive and decide all based on the proposal and these criteria: stable, simple, easy to maintain and extend; meet industry standards … don't raise any question to me". The agent approved R1, the R2 reconciliation, and the REQ3@R3 help-key and REQ4@R3 unlinked-mention revisions under that delegation. On 2026-10-03 the user approved the scope change to a Markdown-first, language-neutral core by selecting "Apply all six (Recommended)"; this produced RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ11@R3 and the code-intelligence and notebook deferrals. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. RM261003ABZP-REQ10@R3 (CI on pull requests only): user decision in the DI1 discussion; post-DI1 synchronization approved by the user on 2026-10-03. On 2026-10-04 the user decided that releases are manual, only on request, through a pushed `v*` tag, with a non-publishing dry run at phase exits; this produced RM261003ABZP-REQ10@R4.
+- **Approval evidence:** User delegated all decisions on 2026-10-03: "you self-drive and decide all based on the proposal and these criteria: stable, simple, easy to maintain and extend; meet industry standards … don't raise any question to me". The agent approved R1, the R2 reconciliation, and the REQ3@R3 help-key and REQ4@R3 unlinked-mention revisions under that delegation. On 2026-10-03 the user approved the scope change to a Markdown-first, language-neutral core by selecting "Apply all six (Recommended)"; this produced RM261003ABZP-REQ1@R3, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ11@R3 and the code-intelligence and notebook deferrals. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. RM261003ABZP-REQ10@R3 (CI on pull requests only): user decision in the DI1 discussion; post-DI1 synchronization approved by the user on 2026-10-03. On 2026-10-04 the user decided that releases are manual, only on request, through a pushed `v*` tag, with a non-publishing dry run at phase exits; this produced RM261003ABZP-REQ10@R4. On 2026-10-04 the user approved relaxed live-view and startup performance targets (live keystroke p95 < 24 ms, live note open < 80 ms, keystroke p95 while indexing < 30 ms, first frame < 250 ms; source-view targets unchanged) so the bench gate does not slow development; this produced RM261003ABZP-REQ9@R3.
