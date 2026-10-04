@@ -266,6 +266,9 @@ export function evaluateBase(input: EvaluateBaseInput): BaseEvaluation {
       ...(selectedView.groupOrder === undefined
         ? {}
         : { groupOrder: selectedView.groupOrder }),
+      ...(selectedView.sort === undefined || selectedView.sort.length === 0
+        ? {}
+        : { sort: selectedView.sort }),
       ...(selectedView.summaries === undefined
         ? {}
         : { summaries: selectedView.summaries }),
@@ -371,7 +374,8 @@ function groupValue(value: unknown): FrontmatterValue {
   return stringifyGroupKey(value);
 }
 
-function stringifyGroupKey(value: unknown): string {
+/** A value as its group key: the text it groups under, "" for no value. */
+export function stringifyGroupKey(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number")

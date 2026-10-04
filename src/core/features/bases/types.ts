@@ -186,6 +186,8 @@ export type BaseEvaluation = {
     readonly type: string;
     readonly groupBy?: BaseGroupBy;
     readonly groupOrder?: readonly FrontmatterValue[];
+    /** The sort in effect, the window's override included. */
+    readonly sort?: readonly BaseSort[];
     readonly summaries?: Readonly<Record<string, string>>;
   };
   readonly availableViews: readonly {
