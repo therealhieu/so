@@ -348,7 +348,9 @@ function buildGroups(
   return [...groups.entries()]
     .map(([key, { value, rowIndexes }]) => ({ key, value, rowIndexes }))
     .sort((left, right) => {
-      const comparison = compareValues(left.key, right.key);
+      const comparison =
+        compareValues(left.value, right.value) ||
+        compareValues(left.key, right.key);
       return groupBy.direction === "DESC" ? -comparison : comparison;
     });
 }

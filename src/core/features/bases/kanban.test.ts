@@ -81,6 +81,19 @@ test("numeric lanes keep typed keys so moves write numbers", () => {
   ).toEqual([3, 1]);
 });
 
+test("numeric lanes sort by number, not by text", () => {
+  const priorities = [10, 9, 2].map((priority, i) =>
+    card(`${i}.md`, { priority }),
+  );
+  const lanes = (direction: string) =>
+    board(
+      `views:\n  - type: kanban-test\n    name: B\n    groupBy:\n      property: priority\n      direction: ${direction}\n`,
+      priorities,
+    ).lanes.map((l) => l.key);
+  expect(lanes("ASC")).toEqual([2, 9, 10, null]);
+  expect(lanes("DESC")).toEqual([10, 9, 2, null]);
+});
+
 test("boards grouped by a formula or file field cannot move cards", () => {
   const formula = board(
     "formulas:\n  late: 'status == \"todo\"'\nviews:\n  - type: kanban-test\n    name: B\n    groupBy:\n      property: formula.late\n      direction: ASC\n",

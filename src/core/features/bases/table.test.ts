@@ -164,6 +164,21 @@ test("groups follow groupOrder exactly with None last and hidden values absent",
   expect(m.rows).toHaveLength(5);
 });
 
+test("numeric groups sort by number, not by text", () => {
+  const r = parseBase(
+    "views:\n  - type: table\n    name: T\n    groupBy:\n      property: estimate\n      direction: DESC\n",
+  );
+  if (!r.ok) throw new Error();
+  const candidates = [10, 9, 2, 100].map((estimate, i) => ({
+    ...(tasks()[0] as BaseCandidate),
+    path: `n/${i}.md`,
+    name: `${i}.md`,
+    properties: { estimate },
+  }));
+  const m = tableModel(evaluateBase({ base: r.base, candidates }), {}, {});
+  expect(m.groups.map((g) => g.key)).toEqual([100, 10, 9, 2]);
+});
+
 test("an empty listed group is kept", () => {
   const r = parseBase(
     "views:\n  - type: table\n    name: T\n    groupBy:\n      property: status\n      direction: ASC\n    groupOrder: [waiting, todo]\n",
