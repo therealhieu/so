@@ -65,6 +65,22 @@ test("parsing a daily path returns the date it was made from", () => {
       }
 });
 
+test("whitespace the title trims is not required in the path", () => {
+  const days: LocalDate[] = [
+    oct3,
+    { year: 2025, month: 12, day: 25 },
+    { year: 2028, month: 2, day: 29 },
+  ];
+  for (const format of ["  YYYY-MM-DD", "[ ] YYYY-MM-DD", "YYYY-MM-DD  "])
+    for (const d of days) {
+      const c = cfg(format);
+      expect([format, parseDailyDate(dailyPath(c, d).path, c)]).toEqual([
+        format,
+        d,
+      ]);
+    }
+});
+
 test("parsing ignores letter case like Obsidian's lookup", () => {
   const c = cfg("YYYY/MMMM/YYYY-MMM-DD");
   expect(parseDailyDate("Daily/2026/october/2026-OCT-03.MD", c)).toEqual(oct3);

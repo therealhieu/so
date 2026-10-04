@@ -1,4 +1,4 @@
-import { formatDate, formatParts } from "../../time/format";
+import { type FormatPart, formatDate, formatParts } from "../../time/format";
 import {
   daysInMonth,
   type LocalDate,
@@ -64,11 +64,11 @@ export function parseDailyDate(
   cfg: DailyConfig,
 ): LocalDate | undefined {
   const fields: Field[] = [];
-  const parts = formatParts(cfg.format);
+  const parts = literalRuns(formatParts(cfg.format));
   let pattern = "";
   parts.forEach((part, i) => {
     if ("literal" in part) {
-      // The title is trimmed, so outer spaces of the format are not in the path.
+      // The title is trimmed, so outer whitespace of the format is not in the path.
       let text = part.literal;
       if (i === 0) text = text.trimStart();
       if (i === parts.length - 1) text = text.trimEnd();
@@ -114,6 +114,18 @@ export function parseDailyDate(
   return dailyPath(cfg, d).path.toLowerCase() === path.toLowerCase()
     ? d
     : undefined;
+}
+
+/** `parts` with adjacent literals joined, so trimming the ends trims every outer space. */
+function literalRuns(parts: FormatPart[]): FormatPart[] {
+  const runs: FormatPart[] = [];
+  for (const part of parts) {
+    const last = runs.at(-1);
+    if ("literal" in part && last !== undefined && "literal" in last)
+      runs[runs.length - 1] = { literal: last.literal + part.literal };
+    else runs.push(part);
+  }
+  return runs;
 }
 
 function monthIndex(name: string): number | undefined {
