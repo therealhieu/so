@@ -193,6 +193,7 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   floatMatch: ["fg", "match-bg", UNDERLINE, UNDERLINE],
   floatWarn: ["warn", "bg-float", 0, 0],
   floatError: ["error", "bg-float", BOLD, BOLD],
+  calendarMark: ["tag", "bg-float", 0, 0],
   toastInfo: ["ok", "bg-float", 0, 0],
   toastError: ["error", "bg-float", BOLD, BOLD],
   diffAdd: ["add-fg", "add-bg", 0, 0],
