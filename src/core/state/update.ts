@@ -60,12 +60,6 @@ export type Registries = {
 };
 
 /**
- * A pure reducer over the given registries; a thrown error keeps the
- * previous state. A change to the persisted session (re)starts the save
- * debounce, the backlinks panel follows the active note, and notes' embed
- * targets stay loaded while they are embedded.
- */
-/**
  * Each window shows its buffer in the editor kind the buffer's file type
  * names when that kind is registered, and in "text" otherwise. Unchanged
  * windows keep their identity.
@@ -90,6 +84,13 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
     : { ...r, state: { ...s, windows: { ...s.windows, byId } } };
 }
 
+/**
+ * A pure reducer over the given registries; a thrown error keeps the
+ * previous state. A change to the persisted session (re)starts the save
+ * debounce, the backlinks panel follows the active note, notes' embed
+ * targets stay loaded while they are embedded, and each window's editor
+ * kind follows its file type.
+ */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
     switch (action.type) {
