@@ -13,7 +13,7 @@ import {
   selectionMarks,
 } from "../../core/kernel/view/marks";
 import { layoutText } from "../../core/kernel/view/text-view";
-import type { RenderLine, Span } from "../../core/kernel/view/types";
+import type { RenderLine, Span, TextView } from "../../core/kernel/view/types";
 import {
   cellWidth,
   displayWidth,
@@ -23,10 +23,12 @@ import {
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { panelFocused } from "../../core/state/side-panel";
 import type { AppState, BufferState, WindowId } from "../../core/state/types";
+import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 
 const SCROLL_LINES = 3;
+const NO_FOLDS: ReadonlySet<number> = new Set();
 
 /** Line numbers: room for the largest one (at least 4 digits) and a space. */
 const gutterWidth = (lineCount: number) =>
@@ -324,7 +326,14 @@ export class EditorView extends Renderable {
     const textW = Math.max(1, this.width - gw);
     let lines: RenderLine[] = [];
     if (w !== undefined && b !== undefined)
-      lines = this.layout(s, b, rows, w.content.cursor, textW);
+      lines = this.layoutFrame(
+        s,
+        b,
+        this.topLine,
+        rows,
+        w.content.cursor,
+        textW,
+      );
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
@@ -386,27 +395,52 @@ export class EditorView extends Renderable {
       );
   }
 
-  private layout(
+  /**
+   * Lay out `rows` rows from `top` with the view's providers. A view with an
+   * `input` hook gets the input it builds from the analysis and the file
+   * type's window context; a failing layout gives the raw lines.
+   */
+  private layoutFrame(
     s: AppState,
     b: BufferState,
+    top: number,
     rows: number,
     cursor: { line: number; col: number },
     width: number,
   ): RenderLine[] {
-    const view = {
+    const selection =
+      this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
+    const view: TextView = {
       buf: b.text,
       width,
-      topRow: this.topLine,
+      topRow: top,
       rows,
       cursor,
-      folds: new Set<number>(),
-      visible: { from: this.topLine, to: this.topLine + rows },
+      folds: NO_FOLDS,
+      visible: { from: top, to: top + rows },
+      ...(selection === undefined ? {} : { selection }),
     };
     try {
       const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
-      const selection =
-        this.windowId === s.windows.active ? selectionOf(s, b.text) : undefined;
+      const host: ViewHost = {
+        width,
+        rows,
+        imageSize: () => undefined,
+        cellAspect: 0.5,
+      };
+      const input =
+        spec?.input === undefined
+          ? b.analysis
+          : spec.input(
+              b.analysis,
+              this.deps.reg.viewContexts.build(
+                b.fileType,
+                s,
+                this.windowId,
+                host,
+              ),
+            );
       return layoutText(
         view,
         [
@@ -415,12 +449,12 @@ export class EditorView extends Renderable {
           searchMarks(s.vim.search),
           selectionMarks(selection),
         ],
-        b.analysis,
+        input,
       );
     } catch {
       const out: RenderLine[] = [];
-      const last = Math.min(b.text.lineCount, this.topLine + rows);
-      for (let l = this.topLine; l < last; l++)
+      const last = Math.min(b.text.lineCount, top + rows);
+      for (let l = top; l < last; l++)
         out.push({
           sourceLine: l,
           spans: [{ text: b.text.line(l), style: "text" }],

@@ -1,3 +1,4 @@
+import type { AppConfig } from "../config/schema";
 import type { FileEdit } from "../features/links/rename";
 import type { FileType } from "../filetypes/registry";
 import { UndoHistory } from "../kernel/editor/undo";
@@ -314,6 +315,12 @@ export function openPath(s: AppState, path: string, now: number): Result {
   });
 }
 
+/** The configured preview mode when the file type has that view, else its first view. */
+export const defaultView = (ft: FileType, cfg: AppConfig): string =>
+  ft.views.some((v) => v.id === cfg.preview.mode)
+    ? cfg.preview.mode
+    : (ft.views[0]?.id ?? "source");
+
 /** A read finished: reload an open buffer, or open a new one of the path's file type. */
 export function onFileLoaded(
   s: AppState,
@@ -334,7 +341,7 @@ export function onFileLoaded(
       id,
       path: a.path,
       fileType: ft.id,
-      view: ft.views[0]?.id ?? "source",
+      view: defaultView(ft, s.config),
       text,
       undo: new UndoHistory(),
       bom: a.file.bom,

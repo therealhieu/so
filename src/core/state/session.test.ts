@@ -59,6 +59,10 @@ test("the snapshot holds layout and positions but no text", () => {
   const snap = snapshotSession(twoSplits());
   expect(snap).toEqual({
     ...saved,
+    buffers: [
+      { path: "a.md", view: "live" },
+      { path: "b.md", view: "live" },
+    ],
     jumps: { entries: [], at: 0 },
     layout: {
       ...saved.layout,
@@ -168,4 +172,39 @@ test("a window waiting for a jump target saves without the wait marker", () => {
   expect(snapshotSession(waiting).layout.windows).toEqual([
     { id: 1, path: "a.md", cursor: { line: 1, col: 0 }, scroll: 0 },
   ]);
+});
+
+const viewOf = (s: AppState, path: string) =>
+  Object.values(s.buffers).find((b) => b.path === path)?.view;
+
+test("a restored note opens in live view", () => {
+  const s = update(fresh(), {
+    type: "stateLoaded",
+    state: { ...saved, buffers: [{ path: "notes/plan.md", view: "source" }] },
+    restore: true,
+  }).state;
+  expect(
+    viewOf(load(s, "notes/plan.md", "# Plan\n").state, "notes/plan.md"),
+  ).toBe("live");
+  expect(viewOf(load(s, "a.md", "a1\n").state, "a.md")).toBe("live");
+});
+
+test("the configured mode applies only to file types that have that view", () => {
+  const base = fresh();
+  const reading: AppState = {
+    ...base,
+    config: {
+      ...base.config,
+      preview: { ...base.config.preview, mode: "reading" },
+    },
+  };
+  expect(
+    viewOf(load(fresh(), "scripts/sync.ts", "x\n").state, "scripts/sync.ts"),
+  ).toBe("source");
+  expect(
+    viewOf(load(reading, "notes/plan.md", "# Plan\n").state, "notes/plan.md"),
+  ).toBe("reading");
+  expect(
+    viewOf(load(reading, "scripts/sync.ts", "x\n").state, "scripts/sync.ts"),
+  ).toBe("source");
 });

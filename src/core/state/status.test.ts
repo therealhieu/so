@@ -19,7 +19,7 @@ test("status shows a word count only for Markdown buffers", () => {
   expect(statusSegments(open("a.md", "one two\n three\n"))).toEqual({
     mode: "normal",
     dirty: false,
-    view: "source",
+    view: "live",
     path: "a.md",
     position: { line: 0, col: 0 },
     words: 3,

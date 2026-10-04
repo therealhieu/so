@@ -118,7 +118,7 @@ test("a note shows its word count on wide terminals only", async () => {
   openNote(m, "notes/ideas.md", IDEAS_MD);
   expect(segments(await m.row(-2))).toEqual([
     "NORMAL",
-    "source",
+    "live",
     "notes/ideas.md",
     "11 words",
     "1:1",
@@ -273,7 +273,7 @@ describe("index and panels at 120×36", () => {
     expect(frame).toContain("✓ index ready");
     expect(segments(await m.row(-2))).toEqual([
       "NORMAL",
-      "source",
+      "live",
       "notes/plan.md",
       "← 31 backlinks",
       "14 words",

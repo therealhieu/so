@@ -45,7 +45,7 @@ exports[`shell at 120×36 explorer hidden with a note open 1`] = `
    1 # Ideas                                                                                                            
    1                                                                                                                    
    2 A terminal editor for notes.                                                                                       
-   3 - keep files plain                                                                                                 
+   3 • keep files plain                                                                                                 
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -75,7 +75,7 @@ exports[`shell at 120×36 explorer hidden with a note open 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/ideas.md │ 11 words                                                                       1:1 
+ NORMAL  │ live │ notes/ideas.md │ 11 words                                                                         1:1 
                                                                                                                         
 "
 `;
@@ -86,7 +86,7 @@ exports[`shell at 120×36 a vertical split shows winbars and a separator 1`] = `
    1 # Ideas                                               │   1 # Ideas                                                
    1                                                       │   1                                                        
    2 A terminal editor for notes.                          │   2 A terminal editor for notes.                           
-   3 - keep files plain                                    │   3 - keep files plain                                     
+   3 • keep files plain                                    │   3 • keep files plain                                     
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
@@ -115,7 +115,7 @@ exports[`shell at 120×36 a vertical split shows winbars and a separator 1`] = `
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
- NORMAL  │ source │ notes/ideas.md │ 11 words                                                                       1:1 
+ NORMAL  │ live │ notes/ideas.md │ 11 words                                                                         1:1 
                                                                                                                         
 "
 `;
@@ -125,7 +125,7 @@ exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
    1 # Ideasx                                                                                                           
    1                                                                                                                    
    2 A terminal editor for notes.                                                                                       
-   3 - keep files plain                                                                                                 
+   3 • keep files plain                                                                                                 
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -155,7 +155,7 @@ exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s │ 11 words                               1:8 
+ NORMAL  │ live │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s │ 11 words                                 1:8 
 save failed: EACCES                                                                                                     
 "
 `;
@@ -165,7 +165,7 @@ exports[`shell at 120×36 info and error toasts stack at the top right 1`] = `
    1 # Ideasy                                                                  ╭──────────────────────────────────────╮ 
    1                                                                           │ ✗ Move to Trash failed: permission   │ 
    2 A terminal editor for notes.                                              │ denied                               │ 
-   3 - keep files plain                                                        ╰──────────────────────────────────────╯ 
+   3 • keep files plain                                                        ╰──────────────────────────────────────╯ 
     ~                                                                          ╭──────────────────────────────────────╮ 
     ~                                                                          │ ✓ Kept your version — saved          │ 
     ~                                                                          ╰──────────────────────────────────────╯ 
@@ -195,7 +195,7 @@ exports[`shell at 120×36 info and error toasts stack at the top right 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/ideas.md ● │ 11 words                                                                     1:8 
+ NORMAL  │ live │ notes/ideas.md ● │ 11 words                                                                       1:8 
                                                                                                                         
 "
 `;
@@ -273,7 +273,7 @@ exports[`shell at 80×24 explorer hidden with a note open 1`] = `
    1 # Ideas                                                                    
    1                                                                            
    2 A terminal editor for notes.                                               
-   3 - keep files plain                                                         
+   3 • keep files plain                                                         
     ~                                                                           
     ~                                                                           
     ~                                                                           
@@ -302,7 +302,7 @@ exports[`shell at 80×24 a vertical split shows winbars and a separator 1`] = `
    1 # Ideas                           │   1 # Ideas                            
    1                                   │   1                                    
    2 A terminal editor for notes.      │   2 A terminal editor for notes.       
-   3 - keep files plain                │   3 - keep files plain                 
+   3 • keep files plain                │   3 • keep files plain                 
     ~                                  │    ~                                   
     ~                                  │    ~                                   
     ~                                  │    ~                                   
@@ -329,7 +329,7 @@ exports[`shell at 80×24 a failed save shows its reason and retry time 1`] = `
    1 # Ideasx                                                                   
    1                                                                            
    2 A terminal editor for notes.                                               
-   3 - keep files plain                                                         
+   3 • keep files plain                                                         
     ~                                                                           
     ~                                                                           
     ~                                                                           
@@ -357,7 +357,7 @@ exports[`shell at 80×24 info and error toasts stack at the top right 1`] = `
    1 # Ideasy                          ╭──────────────────────────────────────╮ 
    1                                   │ ✗ Move to Trash failed: permission   │ 
    2 A terminal editor for notes.      │ denied                               │ 
-   3 - keep files plain                ╰──────────────────────────────────────╯ 
+   3 • keep files plain                ╰──────────────────────────────────────╯ 
     ~                                  ╭──────────────────────────────────────╮ 
     ~                                  │ ✓ Kept your version — saved          │ 
     ~                                  ╰──────────────────────────────────────╯ 
@@ -518,7 +518,7 @@ exports[`index and panels at 120×36 indexing progress shows in the statusline 1
    1 # Ideas                                                                                                            
    1                                                                                                                    
    2 A terminal editor for notes.                                                                                       
-   3 - keep files plain                                                                                                 
+   3 • keep files plain                                                                                                 
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -548,7 +548,7 @@ exports[`index and panels at 120×36 indexing progress shows in the statusline 1
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/ideas.md │ 11 words │ ◌ indexing 4,210/10,000                                             1:1 
+ NORMAL  │ live │ notes/ideas.md │ 11 words │ ◌ indexing 4,210/10,000                                               1:1 
                                                                                                                         
 "
 `;
@@ -559,11 +559,11 @@ exports[`index and panels at 120×36 the index-ready toast and the statusline se
    1                                                                           │ ✓ index ready                        │ 
    2 Why this exists.                                                          ╰──────────────────────────────────────╯ 
    3                                                                                                                    
-   4 ## Goals                                                                                                           
+   4 ▊ Goals                                                                                                            
    5                                                                                                                    
    6 Ship the editor. ^ship                                                                                             
    7                                                                                                                    
-   8 ## Risks                                                                                                           
+   8 ▊ Risks                                                                                                            
    9                                                                                                                    
   10 Scope.                                                                                                             
     ~                                                                                                                   
@@ -588,14 +588,14 @@ exports[`index and panels at 120×36 the index-ready toast and the statusline se
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ source │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                       1:1 
+ NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ ◆ index ready                                         1:1 
                                                                                                                         
 "
 `;
 
 exports[`index and panels at 120×36 the outline panel marks the current heading 1`] = `
 " plan.md                                                                                                        ~/notes 
-   4 # Plan                                                                        │ OUTLINE                            
+   4 █ Plan                                                                        │ OUTLINE                            
    3                                                                               │   Plan                             
    2 Why this exists.                                                              │   ▸ Goals                          
    1                                                                               │     Risks                          
@@ -603,7 +603,7 @@ exports[`index and panels at 120×36 the outline panel marks the current heading
    1                                                                               │                                    
    2 Ship the editor. ^ship                                                        │                                    
    3                                                                               │                                    
-   4 ## Risks                                                                      │                                    
+   4 ▊ Risks                                                                       │                                    
    5                                                                               │                                    
    6 Scope.                                                                        │                                    
     ~                                                                              │                                    
@@ -628,7 +628,7 @@ exports[`index and panels at 120×36 the outline panel marks the current heading
     ~                                                                              │                                    
     ~                                                                              │                                    
     ~                                                                              │ ⏎ jump · q close                   
- NORMAL  │ source │ notes/plan.md │ jump 2/2 │ ← 31 backlinks │ 14 words │ ◆ index ready                            5:1 
+ NORMAL  │ live │ notes/plan.md │ jump 2/2 │ ← 31 backlinks │ 14 words │ ◆ index ready                              5:1 
                                                                                                                         
 "
 `;
@@ -668,7 +668,7 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
     ~                                                                              │                                    
     ~                                                                              │ j/k move · ⏎ open · l link it      
     ~                                                                              │ C-w h back to the editor           
- NORMAL  │ source │ projects/so-roadmap.md │ jump 2/2 │ ← 0 backlinks │ 3 words │ ◆ index ready                     1:1 
+ NORMAL  │ live │ projects/so-roadmap.md │ jump 2/2 │ ← 0 backlinks │ 3 words │ ◆ index ready                       1:1 
                                                                                                                         
 "
 `;
@@ -679,11 +679,11 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
    1                                                                               │▾ Linked mentions (31)              
    2 Why this exists.                                                              │ ◇ log/day-01:3                     
    3                                                                               │   - [[plan]] today                 
-   4 ## Goals                                                                      │ ◇ log/day-01:4                     
+   4 ▊ Goals                                                                       │ ◇ log/day-01:4                     
    5                                                                               │   - [[plan#Goals]] today           
    6 Ship the editor. ^ship                                                        │ ◇ log/day-01:5                     
    7                                                                               │   - [[plan|the plan]] today        
-   8 ## Risks                                                                      │ ◇ log/day-02:3                     
+   8 ▊ Risks                                                                       │ ◇ log/day-02:3                     
    9                                                                               │   - [[plan]] today                 
   10 Scope.                                                                        │ ◇ log/day-02:4                     
     ~                                                                              │   - [[plan#Goals]] today           
@@ -708,7 +708,7 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
     ~                                                                              │ ◇ log/day-05:5                     
     ~                                                                              │ j/k move · ⏎ open · l link it      
     ~                                                                              │ C-w h back to the editor           
- NORMAL  │ source │ notes/plan.md │ jump 3/3 │ ← 31 backlinks │ 14 words │ ◆ index ready                            1:1 
+ NORMAL  │ live │ notes/plan.md │ jump 3/3 │ ← 31 backlinks │ 14 words │ ◆ index ready                              1:1 
                                                                                                                         
 "
 `;
