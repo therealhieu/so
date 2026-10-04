@@ -290,6 +290,23 @@ test("accepting before the template loads keeps the picker open", () => {
   expect(noteText(s)).toBe("hello");
 });
 
+test("a template is not inserted into a note in reading view", () => {
+  const r = templatePicker("hello", " m m");
+  expect(activeBuffer(r.state)?.view).toBe("reading");
+  const picked = run(r.state, ...keys("<C-n>"));
+  const s = run(
+    picked.state,
+    previewOf(picked, TEMPLATE),
+    ...keys("<CR>"),
+  ).state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.notifications.message?.text).toBe(
+    "reading mode — <leader>m to edit",
+  );
+  expect(noteText(s)).toBe("hello");
+  expect(activeBuffer(s)?.dirty).toBe(false);
+});
+
 test("the template picker without templates says how to add one", () => {
   const s = run(
     indexed(fresh(), ["x.md"]),

@@ -148,3 +148,29 @@ describe("empty template picker", () => {
   });
 });
 
+describe("new note prompt", () => {
+  test("previews the note's path for a valid title", async () => {
+    m = await notesShell({ cols: 80, rows: 24 });
+    press(m, " nna/b");
+    const frame = await m.frame();
+    expect(frame).toContain("New note");
+    expect(frame).toContain("❯ a/b");
+    expect(frame).toContain("→ a/b.md");
+    expect(frame).toContain("⏎ choose a template · esc cancel");
+  });
+
+  test("shows why an invalid title is refused instead of a path", async () => {
+    m = await notesShell({ cols: 80, rows: 24 });
+    press(m, " nn../x");
+    const frame = await m.frame();
+    expect(frame).toContain("✗ outside the workspace");
+    expect(frame).not.toContain("→");
+    const lines = frame.split("\n");
+    const y = lines.findIndex((l) => l.includes("✗ outside the workspace"));
+    const x = [...(lines[y] ?? "")].indexOf("✗");
+    const reason = cellStyle(m.t.captureSpans().lines, x, y);
+    const p = await find(m, "❯ ../x");
+    const field = cellStyle(m.t.captureSpans().lines, p.x, p.y);
+    expect(reason?.fg).not.toEqual(field?.fg);
+  });
+});
