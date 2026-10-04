@@ -83,14 +83,17 @@ test(":q saves the session outside the workspace, private to the user", async ()
   }
 });
 
-/** A folder with `open` and `xdg-open` stand-ins that record the address instead of opening a browser. */
+/**
+ * A folder with `open` and `xdg-open` stand-ins that record the address instead of opening a browser.
+ * The address is written to a temporary name and renamed into place, so `opened` never exists half-written.
+ */
 async function fakeLaunchers(): Promise<{ bin: string; opened: string }> {
   const bin = await mkdtemp(join(tmpdir(), "so-quit-bin-"));
   const opened = join(bin, "opened.txt");
   for (const name of ["open", "xdg-open"]) {
     await writeFile(
       join(bin, name),
-      `#!/bin/sh\nprintf '%s' "$1" > '${opened}'\n`,
+      `#!/bin/sh\nprintf '%s' "$1" > '${opened}.tmp'\nmv '${opened}.tmp' '${opened}'\n`,
     );
     await chmod(join(bin, name), 0o755);
   }
