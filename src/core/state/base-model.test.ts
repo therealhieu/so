@@ -157,3 +157,13 @@ test("an unsaved edit to a listed note shows in the base at once", () => {
   const row = model(back)?.table?.rows.find((r) => r.path === path);
   expect(row?.cells[2]?.text).toBe("9026-10-08");
 });
+
+test("a newly opened base window starts at the first row whatever another window showed", () => {
+  const other = focusOn(run(opened(), indexed()), "tasks/inbox.md");
+  expect(model(other)?.focus.row).toBe(3);
+  // A second app state reuses the same window id with no focused note yet.
+  expect(model(run(opened(), indexed()))?.focus).toMatchObject({
+    row: 0,
+    column: 0,
+  });
+});

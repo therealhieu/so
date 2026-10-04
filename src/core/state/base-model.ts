@@ -206,8 +206,12 @@ function derive(
   const { layout, notice } = reg.layouts.resolve(e.selectedView.type);
   const built = layout.model(e, ui, s.index.types);
   const sort = e.selectedView.sort?.[0];
-  // A view switch starts at the first row or card.
-  const near = prev?.selected === e.selectedView.name ? prev.focus : undefined;
+  // A view switch, or a window that has not focused a note yet, starts at
+  // the first row or card.
+  const near =
+    ws.focus.path !== undefined && prev?.selected === e.selectedView.name
+      ? prev.focus
+      : undefined;
   const common = {
     ...withViews,
     status: "ok" as const,
