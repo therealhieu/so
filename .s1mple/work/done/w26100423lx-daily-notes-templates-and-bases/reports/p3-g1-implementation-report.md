@@ -81,12 +81,63 @@ Base embeds render read-only in notes and open the base at the embedded view. Th
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Not yet produced`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p3-g1-verification-report.md` (`Failed`; `P3-G1-VER1`, `P3-G1-VER2`, both Minor)
+- **Status:** `Completed`
+
+Both findings are fixed. VER2 adds a committed board-embed golden. VER1 corrects the delivery evidence below and prepares the corrected PR body; the orchestrator applies it, because Delivery Finalization step 4 assigns `gh pr edit` to the orchestrator.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P3-G1-VER2` | `test/ui/bases.golden.test.ts` "base embed" → "a note paints an embedded board read-only, with one-line cards capped per lane", plus its snapshot. A note embeds `board.base#By late` (the existing `BOARD` fixture, `kanban-test` view, lanes `false` 1, `true` 3, `None` 0) with `embedMaxRows = 1`, under `NO_COLOR`. Row checks: title `╭ ↳ board.base#By late`; lane headers `│ ● false 1 ─… ● true 3 ─… ● None 0`; one-line cards `ship-release`, `inbox`, `(empty)`; `│ … ↓ 2 more` for the overflowing lane; frame ends after that row; `review-pr` and `write-report` hidden; no `INVERSE` cell in the embed rows (no focus marker). `bun test test/ui/bases.golden.test.ts` → 21 pass, 1 snapshot added; stable over 3 runs | `f545ea0` | `Fixed` |
+| `P3-G1-VER1` | Delivery evidence corrected in "Corrected Delivery Evidence" below. Corrected PR body written to `/private/tmp/claude-501/-Users-hieunguyen-git-hieu-projects-so/5db7240e-67fb-4438-976f-b23ffe9f70b8/scratchpad/pr-8-body.md`. It starts from the current body and keeps its structure. It adds CI evidence from the PR head `06e27cf` (run 37199361200) for V43, V44, and V46, local results, the `d820be7` highlighter change and its `sourceOpenFile` cost, a CI history that shows the `d0d65d6` bench failure and the macOS `esc.test.ts` re-run, the G4 re-checks, V30 `Pending — user fixture`, and pending parent synchronization (not applied). `gh pr edit` was not run | No code change; report commit only | `Fixed` (PR-body item prepared; applied by orchestrator) |
+
+**Completion checklists:**
+
+| Finding | Required resolution implemented | Required proof passes | Change evidence recorded | Verification evidence recorded |
+|---|---|---|---|---|
+| `P3-G1-VER2` | Yes — board-embed component golden with row checks | Yes — `bun test test/ui/bases.golden.test.ts` 21 pass | Yes — table above | Yes — Remediation Checks |
+| `P3-G1-VER1` | Prepared; applied by orchestrator — PR body file written; report evidence corrected | Pending the orchestrator's `gh pr edit 8 --body-file …`, then `gh pr view 8 --json body` showing PR-head CI evidence, `d820be7`, and the re-run | Yes — body file and corrected evidence below | Yes — CI logs quoted below |
+
+### Board Embed Observation
+
+A lane holding exactly `embedMaxRows + 1` cards shows all of them and no `↓ 1 more`. The embed reserves the marker row (`baseEmbedOf` adds a row when a lane exceeds the cap), and `layoutBaseBoard` (`src/ui/widgets/base.ts:427-430`) keeps a marker row only for a lane that does not fit its height:
+
+```ts
+const all = Math.floor(body / cardRows);
+// A lane that does not fit keeps one row for `↓ N more`.
+const fits =
+  total > all ? Math.floor(Math.max(0, body - 1) / cardRows) : all;
+```
+
+So the last card takes the reserved row. No card is hidden, the widget height is unchanged, and the board view behaves the same way. This is not a defect, so the production code is unchanged. The new golden uses a lane with `cap + 2` cards so that it exercises the marker.
+
+### Corrected Delivery Evidence
+
+This corrects the CI table under "Gate and Delivery Evidence" and Deviations item 8. The PR head is `06e27cf`. `b4b8c3c` (verification report), `f545ea0`, and the report commit of this remediation are local and have not been pushed.
+
+| Head | Run | Result |
+|---|---|---|
+| `d0d65d6` (first push) | https://github.com/therealhieu/so/actions/runs/37198561239 | `Failed` — `test (ubuntu-24.04)` bench `liveKeystrokeP95 median=48.79ms limit=48ms FAIL`; the local median had been 20.92 ms. `check` (1001 tests) and `test (macos-15)` (190) passed. CI `sourceOpenFile` 35.72 ms |
+| `d820be7` (highlighter fix) | https://github.com/therealhieu/so/actions/runs/37198934170 | Passed — `liveKeystrokeP95` 33.22, `sourceOpenFile` 42.36 ms |
+| `fde80b6` (move to `done/`) | https://github.com/therealhieu/so/actions/runs/37199133718 | Passed — `liveKeystrokeP95` 31.38, `sourceOpenFile` 42.87 ms |
+| `06e27cf` (implementation report) | https://github.com/therealhieu/so/actions/runs/37199361200 | Attempt 1: `test (macos-15)` (job 111427671669) failed `test/ui/esc.test.ts:46` "a legacy Esc byte leaves Insert after the 50 ms timeout", `expect(median(times)).toBeLessThanOrEqual(60)`, received 60.633 ms; 189 pass, 1 fail. `check` and `test (ubuntu-24.04)` passed. Re-run with `gh run rerun --failed`; attempt 2 `test (macos-15)` passed 190 tests. `test/ui/esc.test.ts` is unchanged since `c98aa19` (DI1), so this is a pre-existing wall-clock flake |
+
+CI bench medians on `06e27cf`, all `ok` (limit in brackets): `sourceKeystrokeP95` 11.52 (32), `liveKeystrokeP95` 30.79 (48), `openFile` 106.41 (160), `sourceOpenFile` 39.04 (100), `liveScrollFrameP95` 16.73 (33.4), `sourceScrollFrameP95` 10.99 (33.4), `firstFrame` 264.96 (500), `indexReady` 3350.09 (6000), `indexingKeystrokeP95` 31.48 (60) ms. CI `check` 1002 tests; `test:ci` 190 on both runners.
+
+The cost of the highlighter change is visible in `sourceOpenFile`: 35.72 ms on `d0d65d6`, then 39.04–42.87 ms on later heads. That stays within the 100 ms limit, so the perf-gate policy requires no action.
+
+### Remediation Checks
+
+- Orphan check before `test:ci` (`pgrep -fl "src/app/main.ts|dist/so|bun test"`) → none; after → none.
+- `bun test test/ui/bases.golden.test.ts` ×3 → `Passed` — 21 pass each run; 1 snapshot added on the first run.
+- `bun run check` → `Passed` — 1002 tests, biome/tsc/knip zero findings, 4.38 s.
+- `bun run test:ci` → `Passed` — 191 tests across 26 files, 34.22 s.
+- The bench was not re-run: the remediation adds a test only. V44 evidence is the CI run on `06e27cf`.
+- V20 `rg -n '\.base\b' src/core/kernel src/core/state src/ui src/app -g '!*.test.ts'` → no match. `KANBAN_TYPE: string | undefined = undefined`. `kanban-test` has no match in non-test `src`. `git diff main -- package.json bun.lock .github/workflows` → empty. Work-process identifier search over added lines in `git diff 1d6b191..HEAD -- src test scripts` → no match.
+- Self-review of `1d6b191..f545ea0`: the only change since the verified range is the test file and its snapshot. The test reuses the existing `BOARD` fixture, `indexed`, `textFile`, `mountShell`, and `cellStyle`, and follows the table-embed test's pattern.
+- No push, `gh pr edit`, amend, merge, tag, or release. No parent file edited.
 
 ## Final Status
 
@@ -94,8 +145,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all five tasks implemented, verified, committed, and delivered to an open PR with CI green after the move.
+- **Final report status:** `Completed` — all five tasks are implemented and delivered to an open PR. `P3-G1-VER2` is fixed with a committed board-embed golden. `P3-G1-VER1` is fixed: the delivery evidence is corrected here, and the corrected PR body is prepared for the orchestrator to apply.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `181d749`, `840c6c2`, `d0d65d6`, `d820be7`, `fde80b6`, `10fa7c8`
-- **Final checks:** `bun run check` 1002 pass (4.98 s); `bun run test:ci` 190 pass (33.1 s); `bun run bench` all medians within limits (`liveKeystrokeP95` 11.50 ms local, 31.38 ms CI); V20 empty; dependency and workflow diff empty; CI green on `fde80b6` (2 m 12 s).
-- **Remaining issues:** V30 pending the user's Kanban fixture; parent synchronization pending; PR body evidence predates `d820be7` (item 8).
+- **Final commits:** `181d749`, `840c6c2`, `d0d65d6`, `d820be7`, `fde80b6`, `10fa7c8`; remediation `f545ea0`
+- **Final checks:** `bun run check` 1002 pass (4.38 s); `bun run test:ci` 191 pass (34.22 s); CI on PR head `06e27cf` green after the macOS re-run (`liveKeystrokeP95` 30.79 ms of 48); V20 empty; dependency and workflow diff empty.
+- **Remaining issues:** The orchestrator applies the PR body from `pr-8-body.md` and re-checks CI on the final head. V30 is pending the user's Kanban fixture. Parent synchronization is pending and was not applied.
