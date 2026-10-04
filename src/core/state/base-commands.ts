@@ -174,8 +174,7 @@ function toggleCheckbox(c: CommandContext): Result {
   const value =
     cell === undefined ? undefined : shownValue(a.s, cell.path, cell.property);
   const checkbox =
-    cell !== undefined &&
-    cell.col.editable &&
+    cell?.col.editable === true &&
     (typeof value === "boolean" ||
       ((value === undefined || value === null) &&
         cell.col.type === "checkbox"));
