@@ -9,6 +9,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
 import { localDateTime } from "../time/local";
+import { baseViewModel, selectBaseView } from "./base-model";
 import {
   activeBuffer,
   bufferForPath,
@@ -125,6 +126,16 @@ const fileItem = (path: string, line?: number): Candidate =>
   line === undefined
     ? { key: path, text: path, path }
     : { key: path, text: path, path, line };
+
+/** The active base window's views, with their layout type. */
+function baseViewCandidates(s: AppState, reg: Registries): Candidate[] {
+  const m = baseViewModel(s, s.windows.active, reg);
+  return (m?.views ?? []).map((v) => ({
+    key: v.name,
+    text: v.name,
+    detail: v.name === m?.selected ? `${v.type} · shown` : v.type,
+  }));
+}
 
 /** Close the picker, record a jump, and open `path` (at `line`). */
 function openAt(s: AppState, path: string, now: number, line?: number): Result {
@@ -386,6 +397,21 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
         ? message(s, "loading template…")
         : insertTemplate(s, file, now, reg);
     },
+  },
+  baseViews: {
+    id: "baseViews",
+    title: "Views",
+    action: "switch",
+    items: (s, reg, q) => ranked(baseViewCandidates(s, reg), q),
+    total: (s, reg) => baseViewCandidates(s, reg).length,
+    accept: (s, item) =>
+      none(
+        selectBaseView(
+          { ...s, overlay: { kind: "none" } },
+          s.windows.active,
+          item.key,
+        ),
+      ),
   },
   newNoteTemplates: {
     id: "newNoteTemplates",

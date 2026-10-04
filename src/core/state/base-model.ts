@@ -106,6 +106,24 @@ export function setBaseWindow(
     : setWindow(s, { ...w, content: { ...w.content, kindState: ws } });
 }
 
+/**
+ * Show view `name` in base window `id`, at its first row with no overrides;
+ * an open cell edit is dropped. The file is never touched.
+ */
+export function selectBaseView(
+  s: AppState,
+  id: WindowId,
+  name: string,
+): AppState {
+  return baseWindow(s, id) === undefined
+    ? s
+    : setBaseWindow(s, id, {
+        view: name,
+        focus: { column: 0 },
+        scroll: { row: 0, col: 0 },
+      });
+}
+
 const clamp = (n: number, max: number) => Math.max(0, Math.min(n, max));
 
 /** The window's overrides as the evaluator takes them. */

@@ -23,6 +23,7 @@ import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
+import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
 import { baseViewModel } from "../../src/core/state/base-model";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { initialState } from "../../src/core/state/init";
@@ -66,6 +67,7 @@ export function testRegistries(): Registries {
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
+  for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
@@ -83,6 +85,7 @@ export function testRegistries(): Registries {
       ...linkBindings,
       ...markdownBindings,
       ...noteBindings,
+      ...baseBindings,
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,

@@ -6,6 +6,7 @@ import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
+import { cellEditKey, editingCell } from "./base-commands";
 import {
   activeBuffer,
   activeWindow,
@@ -81,6 +82,7 @@ function routeKey(
     case "calendar":
       return calendarKey(s, a, reg);
   }
+  if (editingCell(s)) return cellEditKey(s, a, reg);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
   return bindingOrVim(s, a, reg);

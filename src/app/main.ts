@@ -25,6 +25,7 @@ import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
+import { baseBindings, baseCommands } from "../core/state/base-commands";
 import { baseViewModel } from "../core/state/base-model";
 import { activeBuffer } from "../core/state/buffers";
 import {
@@ -133,6 +134,7 @@ function registries(): Registries {
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
+  for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
@@ -149,6 +151,7 @@ function registries(): Registries {
       ...linkBindings,
       ...markdownBindings,
       ...noteBindings,
+      ...baseBindings,
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
