@@ -1,12 +1,14 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
-import { markdownViewContext } from "./markdown-view";
+import { markdownViewContextFor } from "./markdown-view";
 import { snapshotSession } from "./session";
 import type { Action, AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
+const markdownViewContext = markdownViewContextFor(reg);
 const FILES = ["a.md", "b.md", "c.md", "d.md", "e.md"];
 
 function indexed(): AppState {

@@ -24,8 +24,9 @@ import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
-import { baseViewModel } from "../../src/core/state/base-model";
+import { baseEmbedModel, baseViewModel } from "../../src/core/state/base-model";
 import { registerBuiltins } from "../../src/core/state/commands";
+import { EmbedModelRegistry } from "../../src/core/state/embed-models";
 import { initialState } from "../../src/core/state/init";
 import { editorBindings, nextLineCommand } from "../../src/core/state/keys";
 import {
@@ -37,7 +38,7 @@ import {
   markdownBindings,
   markdownCommands,
 } from "../../src/core/state/markdown-commands";
-import { markdownViewContext } from "../../src/core/state/markdown-view";
+import { markdownViewContextFor } from "../../src/core/state/markdown-view";
 import {
   noteBindings,
   noteCommands,
@@ -70,7 +71,7 @@ export function testRegistries(): Registries {
   for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
-  viewContexts.register("markdown", markdownViewContext);
+  const embedModels = new EmbedModelRegistry();
   builtinRenderers();
   const layouts = new BaseLayoutRegistry(tableLayout);
   if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
@@ -89,9 +90,12 @@ export function testRegistries(): Registries {
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    embedModels,
     layouts,
   };
+  viewContexts.register("markdown", markdownViewContextFor(reg));
   viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  embedModels.register("base", baseEmbedModel);
   return reg;
 }
 

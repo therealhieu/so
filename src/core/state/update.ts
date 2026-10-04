@@ -10,6 +10,7 @@ import { fullText, onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
+import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import {
@@ -65,6 +66,8 @@ export type Registries = {
   groups: Readonly<Record<string, string>>;
   /** Per-file-type builders of a view's input context. */
   viewContexts: ViewContextRegistry;
+  /** Per-file-type builders of what a note shows for an embedded non-note file. */
+  embedModels: EmbedModelRegistry;
   /** Base view types to the layouts that show them. */
   layouts: BaseLayoutRegistry;
 };
@@ -192,6 +195,7 @@ export function createUpdate(reg: Registries): Update {
       const r = syncEmbeds(
         state,
         followShownNote(state, syncEditorKinds(step(state, action), reg)),
+        reg,
       );
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {

@@ -1,4 +1,5 @@
 import { candidatesFrom } from "../features/bases/candidates";
+import { baseEmbedOf } from "../features/bases/embed";
 import { evaluateBase } from "../features/bases/evaluator";
 import {
   type BaseWindowState,
@@ -18,7 +19,8 @@ import type { NoteIndex } from "../features/links/note-index";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Doc } from "../lang/markdown/doc";
 import type { DocScan } from "../lang/markdown/scan";
-import { fullText, setWindow } from "./buffers";
+import { bufferForPath, fullText, setWindow } from "./buffers";
+import type { EmbedModelBuilder } from "./embed-models";
 import type { AppState, IndexState, WindowId } from "./types";
 import type { Registries } from "./update";
 
@@ -53,17 +55,19 @@ export type BaseViewModel = {
   focus: { row: number; column: number; lane: number; card: number };
 };
 
+/** A window's state, or an embed's view name and row cap. */
 type Key = {
   text: TextBuffer;
   ix: NoteIndex;
   types: IndexState["types"];
   status: IndexState["status"];
   dirty: string;
-  ws: BaseWindowState;
+  ws: BaseWindowState | string;
+  max: number;
   layouts: Registries["layouts"];
 };
 
-const memo = new Map<string, { key: Key; model: BaseViewModel }>();
+const memo = new Map<string, { key: Key; model: unknown }>();
 
 const sameKey = (a: Key, b: Key) =>
   a.text === b.text &&
@@ -72,7 +76,17 @@ const sameKey = (a: Key, b: Key) =>
   a.status === b.status &&
   a.dirty === b.dirty &&
   a.ws === b.ws &&
+  a.max === b.max &&
   a.layouts === b.layouts;
+
+/** The model memoized in `slot` for `key`, derived by `make` when an input changed. */
+function memoized<T>(slot: string, key: Key, make: () => T): T {
+  const prev = memo.get(slot);
+  if (prev !== undefined && sameKey(prev.key, key)) return prev.model as T;
+  const model = make();
+  memo.set(slot, { key, model });
+  return model;
+}
 
 const isNote = (path: string) => /\.md$/i.test(path);
 
@@ -208,15 +222,59 @@ export function baseViewModel(
     status: s.index.status,
     dirty: dirtyNoteSignature(s),
     ws,
+    max: 0,
     layouts: reg.layouts,
   };
-  const slot = `window:${windowId}`;
-  const prev = memo.get(slot);
-  if (prev !== undefined && sameKey(prev.key, key)) return prev.model;
-  const model = derive(s, b.path, fullText(b.text), ws, reg);
-  memo.set(slot, { key, model });
-  return model;
+  return memoized(`window:${windowId}`, key, () =>
+    derive(s, b.path, fullText(b.text), ws, reg),
+  );
 }
+
+/**
+ * What a note shows for an embedded base: the view `subpath` names (else
+ * the first), read-only, capped at `embedMaxRows` lines; a notice while the
+ * index loads or when the file is not valid YAML. Memoized per path and
+ * view like a window's model.
+ */
+export const baseEmbedModel: EmbedModelBuilder = (s, path, subpath, reg) => {
+  const b = bufferForPath(s, path);
+  if (b === undefined) return "missing";
+  const view = subpath?.replace(/^#/, "").trim() ?? "";
+  const max = s.config.preview.embedMaxRows;
+  const key: Key = {
+    text: b.text,
+    ix: s.index.ix,
+    types: s.index.types,
+    status: s.index.status,
+    dirty: dirtyNoteSignature(s),
+    ws: view,
+    max,
+    layouts: reg.layouts,
+  };
+  return memoized(`embed:${path}#${view}`, key, () => {
+    const ws: BaseWindowState = {
+      view,
+      focus: { column: 0 },
+      scroll: { col: 0 },
+    };
+    const m = derive(s, path, fullText(b.text), ws, reg);
+    const notice =
+      m.status === "waiting"
+        ? "◌ waiting for index"
+        : m.status === "parseError"
+          ? `⚠ ${m.message ?? "invalid base"}`
+          : m.notice;
+    return baseEmbedOf(
+      m.selected,
+      {
+        ...(m.table === undefined ? {} : { table: m.table }),
+        ...(m.board === undefined ? {} : { board: m.board }),
+        ...(notice === undefined ? {} : { notice }),
+      },
+      max,
+    );
+  });
+};
 
 function derive(
   s: AppState,

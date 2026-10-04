@@ -20,6 +20,7 @@ export function stubCtx(over: Partial<PreviewCtx> = {}): PreviewCtx {
     resolve: (t) => t,
     isResolved: () => true,
     embed: () => "missing",
+    embedModel: () => "missing",
     image: () => "unknown",
     folds: new Set(),
     embedMaxRows: 10,

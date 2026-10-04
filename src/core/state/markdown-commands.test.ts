@@ -10,11 +10,13 @@ import {
   type PreviewCtx,
 } from "../lang/markdown/live-preview";
 import { activeBuffer, activeWindow } from "./buffers";
-import { markdownViewContext } from "./markdown-view";
+import { markdownViewContextFor } from "./markdown-view";
 import type { Action, AppState } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
+const markdownViewContext = markdownViewContextFor(reg);
 
 function keys(s: AppState, seq: string): AppState {
   for (const key of splitKeys(seq))

@@ -73,6 +73,7 @@ function newNotePath(from: string, target: string): string {
  * `gd` on a link: open its target at the heading or block with the
  * source recorded as a jump (as Vim does, so the statusline reads "jump 2/2"
  * after one follow), offer to create a missing note, and do nothing off a link.
+ * A target shown in its own editor kind opens at the link's subpath.
  */
 export function followLink(c: CommandContext): Result {
   const s = c.state;
@@ -99,7 +100,9 @@ export function followLink(c: CommandContext): Result {
     });
   }
   const pos = { line: targetLine(s, target), col: 0 };
-  return goTo(recordJump(s), target.path, pos, c.now);
+  const ownKind = c.reg.fileTypes.forPath(target.path).editor !== undefined;
+  const subpath = ownKind ? link.subpath : undefined;
+  return goTo(recordJump(s), target.path, pos, c.now, subpath);
 }
 
 /** The file a rename or move is about: the explorer selection while it has focus, else the open file. */

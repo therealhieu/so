@@ -26,13 +26,14 @@ import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../core/state/base-commands";
-import { baseViewModel } from "../core/state/base-model";
+import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
   type CommandResult,
   registerBuiltins,
 } from "../core/state/commands";
+import { EmbedModelRegistry } from "../core/state/embed-models";
 import { initialState } from "../core/state/init";
 import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
@@ -44,7 +45,7 @@ import {
   markdownBindings,
   markdownCommands,
 } from "../core/state/markdown-commands";
-import { markdownViewContext } from "../core/state/markdown-view";
+import { markdownViewContextFor } from "../core/state/markdown-view";
 import {
   noteBindings,
   noteCommands,
@@ -138,7 +139,7 @@ function registries(): Registries {
   for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
-  viewContexts.register("markdown", markdownViewContext);
+  const embedModels = new EmbedModelRegistry();
   builtinRenderers();
   const layouts = new BaseLayoutRegistry(tableLayout);
   if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
@@ -156,9 +157,12 @@ function registries(): Registries {
     ],
     groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    embedModels,
     layouts,
   };
+  viewContexts.register("markdown", markdownViewContextFor(reg));
   viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  embedModels.register("base", baseEmbedModel);
   return reg;
 }
 
