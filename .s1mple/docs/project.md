@@ -6,7 +6,7 @@ Use this as the reusable baseline for discussion and plan inspection. Keep chang
 
 ## Purpose and Scope
 
-`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in an Obsidian-style `live` view by default (rendered blocks, with source shown on the cursor's lines), with `source` and read-only `reading` views; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Sources: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview).
+`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in an Obsidian-style `live` view by default (rendered blocks, with source shown on the cursor's lines), with `source` and read-only `reading` views; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Daily notes (`:Today`, `:Yesterday`, `:Tomorrow`, a calendar picker) and templates are created from Obsidian-compatible templates and never overwrite a file; Obsidian `.base` files open as read-only table and Kanban views whose cell edits and card moves write one frontmatter key back to the note, and `![[x.base#View]]` embeds render inline. Sources: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview), `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (daily notes, templates, and Bases).
 
 ## Technology Stack
 
@@ -23,7 +23,7 @@ Versions are exact pins from `package.json`; `bunfig.toml` sets `[install] exact
 | `mdast-util-from-markdown` | Markdown syntax tree, built on demand (`src/core/lang/markdown`) | `2.0.3` |
 | `micromark-extension-gfm`, `mdast-util-gfm` | GFM syntax for the tree (`src/core/lang/markdown`) | `3.0.0`, `3.1.0` |
 | `micromark-extension-math`, `mdast-util-math` | Math syntax for the tree (`src/core/lang/markdown`) | `3.1.0`, `3.0.0` |
-| `yaml` | Frontmatter (`src/core/lang/markdown`) | `2.9.1` |
+| `yaml` | Frontmatter (`src/core/lang/markdown`) and `.base` files (`src/core/features/bases`) | `2.9.1` |
 | `beautiful-mermaid` | Mermaid diagrams as terminal text, loaded on the first diagram (`src/core/lang/markdown`) | `1.1.3` |
 | `katex`, `mermaid` | Math and diagrams in the browser preview, embedded into the binary (`src/preview`) | `0.16.47`, `12.1.0` |
 | `ignore` | `.gitignore`-style exclusion (`src/workspace`) | `7.0.12` |
@@ -43,7 +43,7 @@ Default branch: `main`. One package, no monorepo.
 | `src/ui` | OpenTUI shell, input normalization, views, overlays, widget painters (`widgets/`), terminal image tiers and cache (`images.ts`) |
 | `src/workspace` | File-system, watcher, trash, clipboard, config-file, state-file, log, and image-loading (`images.ts`) adapters; the index worker (`index-worker.ts`) |
 | `src/preview` | Browser preview server (`server.ts`) and the page, KaTeX, and Mermaid files embedded into the binary (`assets.ts`) |
-| `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (links), `state`, `config` |
+| `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (`links`, `notes`, `bases`), `time` (local calendar fields and a Moment-compatible formatter), `state`, `config` |
 | `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`) |
 | `test` | Policy, boundary, vim, component, integration, e2e, and benchmark suites |
 | `.github/workflows` | `ci.yml`, `release.yml` |
@@ -80,6 +80,22 @@ Live preview is a decoration provider over the kernel's `layoutText`: the Markdo
 
 The server answers GET only, rejects a foreign `Host`, serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
 
+Notes are created only through the `createNote` effect, whose adapter expands the template and calls `createExclusive` (temp file + `link()`, `wx` fallback), so an existing path is never replaced:
+
+```text
+:Today | calendar Enter | <leader>nn → note-commands → (index hit) openPath{after} | createNote effect
+   → runner (serial): read template → expandTemplate → createExclusive → noteCreated → open, cursor on first unchecked task
+```
+
+`.base` files are file type and editor kind `base` by registration only (`src/core/features/bases/file-type.ts`): the buffer is `readOnly` (the save gate refuses it), keys never reach vim, and `EditorKindSpec.open` creates the window's `kindState`. `baseViewModel` (`src/core/state/base-model.ts`) derives the table or board from the index's candidates and memoizes it. A cell edit or card move writes one frontmatter key:
+
+```text
+open note   → applyBufferEdits (one undo step)
+closed note → patchFrontmatter effect (serial queue) → read → refuse if stale → patch → atomic write → frontmatterPatched
+```
+
+`![[x.base#View]]` loads the base as an unlisted embed buffer because its file type has an embed model (`EmbedModelRegistry`), and the `base` block renderer reads `PreviewCtx.embedModel`. Kanban stays behind `KANBAN_TYPE` (`src/core/features/bases/types.ts`), which is `undefined` until an Obsidian-saved Kanban `.base` fixture confirms the layout's `type`; until then, `kanban` views fall back to a table with a notice.
+
 ## Boundaries and Dependencies
 
 Import rules, enforced by `test/boundaries.test.ts` (`LAYER_RULES`):
@@ -93,7 +109,7 @@ core/state, core/config → any core module; nothing else in core imports them
 only src/ui imports @opentui/*
 ```
 
-Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name): the five Markdown tree packages, `yaml`, and `beautiful-mermaid` are imported only from `src/core/lang/markdown/`; `katex` and `mermaid` only from `src/preview/`; and `toml-eslint-parser` only from `src/core/config/`.
+Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name): the five Markdown tree packages and `beautiful-mermaid` are imported only from `src/core/lang/markdown/`; `yaml` only from `src/core/lang/markdown/` and `src/core/features/bases/`; `katex` and `mermaid` only from `src/preview/`; and `toml-eslint-parser` only from `src/core/config/`.
 
 ## Data and Contracts
 
@@ -104,13 +120,17 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 | App state, actions, effects (one-way protocol) | `src/core/state/types.ts` — `AppState`, `Action`, `Effect`, `FsOp`; `createUpdate` in `src/core/state/update.ts`, `createStore` in `src/core/state/store.ts` |
 | Editor kernel | `src/core/kernel/{text,editor,vim,commands,view}` — text buffer, vim engine (`handleKey`), `CommandRegistry`, `Keymap`, `layoutText` and decorations |
 | File types and highlighting | `src/core/filetypes/registry.ts` (`FileTypeRegistry`), `src/core/lang/code` (language table, `lowlightHighlighter`), `src/core/lang/markdown/file-type.ts` |
-| Effect execution | `src/app/effects.ts` — one serial file-system queue; writes queued behind a rename, move, or trash of their path follow it |
+| Effect execution | `src/app/effects.ts` — one serial file-system queue; writes queued behind a rename, move, or trash of their path follow it; `createNote` and `patchFrontmatter` run on it; `createExclusive` in `src/workspace/fs.ts` never replaces an entry |
 | Markdown model | `src/core/lang/markdown/{blocks,scan,doc,mdast}.ts` — block split and fast scan (links, tags, headings, block ids, frontmatter) with a per-block cache; the mdast tree only on demand |
 | Live preview (extension points used by later work) | `src/core/lang/markdown/live-preview.ts` — `PreviewCtx`, `MarkdownViewInput`, `livePreview`, `BlockRenderer`, `registerBlockRenderer`; `src/ui/widgets/registry.ts` — `registerWidgetPainter` (painters by widget type); `src/core/state/view-context.ts` — `ViewContextRegistry` (view-context builders by file type) |
-| Editor kinds | `src/core/filetypes/registry.ts` (`EditorKindRegistry`); `WindowState.content.editor` follows the file type's registered kind, else `"text"`; `src/ui/editors/registry.ts` (`registerEditorView`) |
+| Editor kinds | `src/core/filetypes/registry.ts` (`EditorKindRegistry`, `EditorKindSpec.open`, `FileType.readOnly`); `WindowState.content.editor` follows the file type's registered kind, else `"text"`, and `kindState` holds the kind's window state; `src/ui/editors/registry.ts` (`registerEditorView`, `WindowView`) — `text` (`EditorView`) and `base` (`BaseView`) |
 | Browser preview | `src/preview/server.ts` (routes `/`, `/assets/*`, `/render`, `/file/*`, SSE `/events`); `PreviewState` in `src/core/state/types.ts`; `renderHtml` in `src/core/lang/markdown/html.ts` (escaped HTML) |
 | Link index | `src/core/features/links/{note-index,resolve,rename,mentions}.ts` — `NoteIndex`, `resolveLink`, `planRename`; worker messages `ToWorker`/`FromWorker` in `src/workspace/index-worker.ts` |
-| Config file | `src/core/config/{schema,toml}.ts` — `ConfigSchema` (strict: unknown keys are errors; `[preview]` sets `mode` `live`/`source`/`reading`, `embedMaxRows`, `images` `auto`/`blocks`/`off`), `parseConfig` |
+| Config file | `src/core/config/{schema,toml}.ts` — `ConfigSchema` (strict: unknown keys are errors; `[preview]` sets `mode` `live`/`source`/`reading`, `embedMaxRows`, `images` `auto`/`blocks`/`off`; `[daily]` sets `folder` (default `daily`), `format` (Moment tokens, default `YYYY-MM-DD`), `template` (default `templates/daily.md`); `[templates]` sets `folder` (default `templates`)), `parseConfig` |
+| Daily notes and templates | `src/core/time/{local,format}.ts` (`localDateTime`, `addDays`, `formatDate` — Moment 2.29.4 output); `src/core/features/notes/{daily,template}.ts` (`dailyPath`, `parseDailyDate`, `expandTemplate` — Obsidian's `{{date}}`/`{{time}}`/`{{title}}` rules); `src/core/state/{note-commands,calendar}.ts` |
+| Frontmatter patch | `src/core/lang/markdown/frontmatter-patch.ts` — `patchFrontmatter` changes one key and keeps comments, order, quoting, line endings, and the body; `mergeFrontmatter` (template insert); `yamlScalar` |
+| Bases | `src/core/features/bases/*` — `parseBase`, `evaluateBase` (Obsidian `inFolder`/`hasTag`, `filter_hides_rows` diagnostics), `summarize` (15 default summaries), `propertyType` (`.obsidian/types.json`, else inference), `candidatesFrom` (every `file.*` field from index facts), `tableModel`, `kanbanModel`, `BaseLayoutRegistry`, `KANBAN_TYPE`; `src/core/state/base-{model,commands,write}.ts`; painters in `src/ui/widgets/base.ts` |
+| Embed models | `src/core/state/embed-models.ts` (`EmbedModelRegistry` by file type; `PreviewCtx.embedModel`); `base` registers `baseEmbedModel` |
 | Session state | `PersistedState` in `src/core/state/types.ts` (`"version": 1`); `snapshotSession`/`parsePersisted` in `src/core/state/session.ts` |
 | Vim behaviour | `test/vim/expected.json`, recorded from Neovim 0.11.x over RPC by `bun run record:vim` |
 
