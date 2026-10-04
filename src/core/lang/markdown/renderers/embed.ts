@@ -1,7 +1,7 @@
 import type { TextBuffer } from "../../../kernel/text/text-buffer";
 import type { DecorationProvider } from "../../../kernel/view/decorations";
 import { layoutText } from "../../../kernel/view/text-view";
-import type { LineRange, Span, TextView } from "../../../kernel/view/types";
+import type { LineRange, RenderLine, Span } from "../../../kernel/view/types";
 import { contentEnd, contentStart, embedLink, wholeBlock } from "../block-text";
 import type { Doc } from "../doc";
 import {
@@ -23,6 +23,17 @@ export type EmbedData = {
 const nested = new WeakSet<PreviewCtx>();
 
 const isBlank = (s: string) => s.trim() === "";
+
+/** Rows used by laid-out lines, counted as `layoutText` counts them against `TextView.rows`. */
+const rowCount = (laid: readonly RenderLine[]) =>
+  laid.reduce(
+    (n, r) =>
+      n +
+      (r.widget !== undefined && r.spans.length === 0
+        ? Math.max(1, r.widget.rows)
+        : 1),
+    0,
+  );
 
 /**
  * Source lines `[from, to)` of a section: `#Heading` (the last part of
@@ -85,20 +96,30 @@ export function embedRows(
     folds: new Set(),
   };
   nested.add(inner);
-  const v: TextView = {
-    buf: got.text,
-    width,
-    topRow: lines.from,
-    rows: max,
-    cursor: { line: -1, col: 0 },
-    folds: new Set(),
-    visible: lines,
-  };
-  const laid = layoutText(v, [livePreview as DecorationProvider], {
-    doc: got.doc,
-    view: "reading",
-    ctx: inner,
-  });
+  const input = { doc: got.doc, view: "reading", ctx: inner } as const;
+  const layout = (to: number) =>
+    layoutText(
+      {
+        buf: got.text,
+        width,
+        topRow: lines.from,
+        rows: max,
+        cursor: { line: -1, col: 0 },
+        folds: new Set(),
+        visible: { from: lines.from, to },
+      },
+      [livePreview as DecorationProvider],
+      input,
+    );
+  // Lay out a window that starts at `max` lines and doubles until it fills
+  // `max` rows or reaches the section end, so a long target costs about as
+  // much as the rows shown. Hidden lines can make a window short of rows.
+  let to = Math.min(lines.to, lines.from + Math.max(1, max));
+  let laid = layout(to);
+  while (to < lines.to && rowCount(laid) < max) {
+    to = Math.min(lines.to, lines.from + 2 * (to - lines.from));
+    laid = layout(to);
+  }
   const rows: Span[][] = [];
   for (const row of laid)
     if (row.widget?.type === "text")

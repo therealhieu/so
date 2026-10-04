@@ -92,6 +92,30 @@ test("an embed whose target does not resolve is missing", () => {
   expect(data.state).toBe("missing");
 });
 
+test("a capped embed of a long note renders only the blocks it shows", () => {
+  const lines: string[] = [];
+  for (let i = 0; i < 2500; i++) lines.push(`Long note paragraph ${i}`, "");
+  const long = target(lines.join("\n"));
+  const rendered: number[] = [];
+  registerBlockRenderer("paragraph", (block) => {
+    if (long.doc.blocks.includes(block)) rendered.push(block.startLine);
+    return [];
+  });
+  try {
+    const { data } = embedOf(
+      "Intro\n\n![[long]]\n",
+      stubCtx({ embed: (p) => (p === "long" ? long : "missing") }),
+    );
+    expect(data.rows).toHaveLength(10);
+    expect(data.more).toBe(4989);
+    expect(rendered.length).toBeGreaterThan(0);
+    expect(rendered.length).toBeLessThanOrEqual(2 * 10);
+    expect(Math.max(...rendered)).toBeLessThan(2 * 10);
+  } finally {
+    registerBlockRenderer("paragraph", () => []);
+  }
+});
+
 test("embeds stop at one level", () => {
   const self = target("Self intro\n\n![[self]]\n");
   const { data } = embedOf(
