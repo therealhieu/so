@@ -4,6 +4,7 @@ import { OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import { themes } from "../../src/ui/theme";
+import { noteSummary, TASK_NOTES, TASKS_BASE } from "../support/bases";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
 import {
@@ -69,12 +70,12 @@ async function windowRows(x: Mounted): Promise<string[]> {
   return rows.slice(1, x.store.get().terminal.rows - 2);
 }
 
-/** Open the tour with its embedded roadmap loaded. */
+/** Open the tour with its embedded roadmap and base loaded, and the base's task notes indexed. */
 function openTour(x: Mounted) {
   x.store.dispatch({
     type: "indexBatch",
-    summaries: [],
-    files: ["tour.md", "so-roadmap.md", "diagram.png"],
+    summaries: Object.entries(TASK_NOTES).map(([p, t]) => noteSummary(p, t)),
+    files: ["tour.md", "so-roadmap.md", "diagram.png", "tasks.base"],
     done: 0,
     total: 0,
   });
@@ -84,7 +85,35 @@ function openTour(x: Mounted) {
     path: "so-roadmap.md",
     file: textFile(ROADMAP_MD),
   });
+  x.store.dispatch({
+    type: "fileLoaded",
+    path: "tasks.base",
+    file: textFile(TASKS_BASE),
+    embed: true,
+  });
 }
+
+for (const cols of [60, 100])
+  test(`the tour at width ${cols} matches its golden, base embed included`, async () => {
+    m = await mountShell({ cols, rows: 140 });
+    openTour(m);
+    expect(m.effects).toContainEqual({
+      kind: "read",
+      path: "tasks.base",
+      embed: true,
+    });
+    await m.frame();
+    // diagram.png is not among the mounted files: let its load fail first.
+    await Bun.sleep(0);
+    const rows = await windowRows(m);
+    const title = rows.findIndex((r) => r.includes("╭ ↳ tasks.base#All tasks"));
+    expect(title).toBeGreaterThan(-1);
+    expect(rows[title + 1]).toContain("due ↑");
+    // Every indexed file is a row of the unfiltered base, empty dues first.
+    expect(rows.slice(title + 3, title + 13).join("\n")).toContain("review-pr");
+    expect(rows.join("\n")).not.toContain("loading…");
+    expect((await m.frame()).trimEnd()).toMatchSnapshot();
+  });
 
 test("a note frame paints signs, rules, embed rows, and folded callouts", async () => {
   m = await mountShell({ cols: 100, rows: 80 });

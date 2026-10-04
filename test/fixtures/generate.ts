@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /** A 17 MiB text file (over the 16 MiB open limit) in `dir`; returns its path. */
@@ -9,15 +9,30 @@ export async function makeLargeFile(dir: string): Promise<string> {
   return path;
 }
 
-/** A 5000-line Markdown note in `dir`; returns its path. */
+const WORKSPACE = join(import.meta.dir, "workspace");
+
+/** The 0-based line of the 5,000-line note that embeds `tasks.base`, between blank lines. */
+const EMBED_AT = 2540;
+
+/**
+ * A 5000-line Markdown note in `dir`, with `tasks.base` and its task notes
+ * beside it; the note embeds the base's first view at line `EMBED_AT`, in
+ * the stretch the live keystroke bench types in. Returns the note's path.
+ */
 export async function make5000LineNote(dir: string): Promise<string> {
   const path = join(dir, "long.md");
   const lines = Array.from({ length: 5000 }, (_, i) =>
     i % 50 === 0
       ? `## Section ${i / 50 + 1}`
-      : `Line ${i + 1} of a long note with **bold**, _italic_, and \`code\`.`,
+      : Math.abs(i - EMBED_AT) === 1
+        ? ""
+        : i === EMBED_AT
+          ? "![[tasks.base#All tasks]]"
+          : `Line ${i + 1} of a long note with **bold**, _italic_, and \`code\`.`,
   );
   await writeFile(path, `${lines.join("\n")}\n`);
+  await cp(join(WORKSPACE, "tasks.base"), join(dir, "tasks.base"));
+  await cp(join(WORKSPACE, "tasks"), join(dir, "tasks"), { recursive: true });
   return path;
 }
 

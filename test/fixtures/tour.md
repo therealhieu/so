@@ -75,3 +75,5 @@ flowchart LR
 ---
 
 [^1]: Footnotes render at the bottom, dimmed.
+
+![[tasks.base#All tasks]]

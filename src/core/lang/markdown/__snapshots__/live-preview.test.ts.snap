@@ -92,7 +92,11 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor on a bold line 1`] = `
@@ -187,7 +191,11 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the table 1`] = `
@@ -282,7 +290,11 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a callout 1`] = `
@@ -377,7 +389,11 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
@@ -474,7 +490,11 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
@@ -569,7 +589,11 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = `
@@ -660,7 +684,11 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 in reading view 1`] = `
@@ -755,7 +783,11 @@ exports[`tour note at width 60 in reading view 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 in source view 1`] = `
@@ -836,7 +868,9 @@ exports[`tour note at width 60 in source view 1`] = `
  75   │---
  76   │
  77   │[^1]: Footnotes render at the bottom, dimmed.
- 78   │"
+ 78   │
+ 79   │![[tasks.base#All tasks]]
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a blank line 1`] = `
@@ -939,7 +973,11 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a bold line 1`] = `
@@ -1042,7 +1080,11 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the table 1`] = `
@@ -1145,7 +1187,11 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a callout 1`] = `
@@ -1248,7 +1294,11 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
@@ -1353,7 +1403,11 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
@@ -1456,7 +1510,11 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] = `
@@ -1547,7 +1605,11 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 in reading view 1`] = `
@@ -1650,7 +1712,11 @@ exports[`tour note at width 100 in reading view 1`] = `
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 in source view 1`] = `
@@ -1731,5 +1797,7 @@ exports[`tour note at width 100 in source view 1`] = `
  75   │---
  76   │
  77   │[^1]: Footnotes render at the bottom, dimmed.
- 78   │"
+ 78   │
+ 79   │![[tasks.base#All tasks]]
+ 80   │"
 `;

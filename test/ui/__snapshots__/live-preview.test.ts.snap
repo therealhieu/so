@@ -1,0 +1,285 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the tour at width 60 matches its golden, base embed included 1`] = `
+" tour.md                                                    
+   1 ▕---                                                   
+   1 ▕title: Markdown tour                                  
+   2 ▕tags: [reference, so]                                 
+   3 ▕created: 2026-10-01                                   
+   4 ▕aliases: [tour, syntax]                               
+   5 ▕---                                                   
+   6  █ Markdown tour                                       
+   7                                                        
+   8  Text can be bold, italic, struck, highlighted or      
+      inline code.                                          
+   9  Links show their text: OpenTUI docs, the roadmap, and 
+      missing-note.                                         
+  10  Tags like #reference and #so/ui are coloured. A       
+      footnote¹ stays small.                                
+  11                                                        
+  13                                                        
+  14  ▊ Lists and tasks                                     
+  15                                                        
+  16  • Plain bullet                                        
+  17    ◦ Nested bullet                                     
+  18  1. First step                                         
+  19  2. Second step                                        
+  20  ☐ Toggle me with Enter                                
+  21  ☑ Already done                                        
+  22                                                        
+  23  ▊ Quotes and callouts                                 
+  24                                                        
+  25  ▎ Simplicity is prerequisite for reliability. —       
+      Dijkstra                                              
+  26                                                        
+  27  ● Reveal rule                                         
+  28  ▎ Inline syntax shows on the cursor line; whole       
+      blocks show while the cursor is inside.               
+  29                                                        
+  30  ★ Folded tip (za to open) ▸                           
+  32                                                        
+  33  ✗ Data safety                                         
+  34  ▎ Saves are atomic: temp file, fsync, rename.         
+  35                                                        
+  36  ▌ Table                                               
+  37                                                        
+  38  │ Key       │ Action      │  Mode  │                  
+  39  ├───────────┼─────────────┼────────┤                  
+  40  │ gd        │ Follow link │ normal │                  
+  41  │ Space f f │ Find file   │ normal │                  
+  42  │ Ctrl-o    │ Jump back   │ normal │                  
+  43                                                        
+  44  ▏ Code                                                
+  45                                                        
+  47  // one-way data flow                                  
+  48  export function update(state: AppState, action:       
+      Action) {                                             
+  49    const next = reduce(state, action);                 
+  50    return { state: next, effects: [] };                
+  51  }                                                     
+  53                                                        
+  54  ▊ Embeds and images                                   
+  55                                                        
+  56  ╭ ↳ so-roadmap#Goals                                  
+      │                                                     
+      │ • Goal 1                                            
+      │ • Goal 2                                            
+      │ • Goal 3                                            
+      │ • Goal 4                                            
+      │ • Goal 5                                            
+      │ • Goal 6                                            
+      │ • Goal 7                                            
+      │ • Goal 8                                            
+      │ • Goal 9                                            
+      ╰ … 7 more lines                                      
+  57                                                        
+  58  [image: diagram.png]                                  
+  59                                                        
+  60  ▊ Math and diagrams                                   
+  61                                                        
+  62  Inline math E = mc² renders as text.                  
+  63                                                        
+  64  ∑ᵢ₌₁ⁿ xᵢ ≤ a/b                                        
+  67                                                        
+  68  ┌───────┐ ┌──────┐         ┌───────┐ ┌────┐           
+      │Capture├►│Triage│   ├────►│  Plan ├►│Ship│           
+      └───────┘ └───┬──┘         └───────┘ └────┘           
+                    │                                       
+                    │            ┌───────┐                  
+                    └──someday──►│Archive│                  
+                                 └───────┘                  
+  73                                                        
+  74  ──────────────────────────────────────────────────────
+  75                                                        
+  76  ¹ Footnotes render at the bottom, dimmed.             
+  77                                                        
+  78  ╭ ↳ tasks.base#All tasks                              
+      │    name            │ Status │ due ↑      │ done     
+      │    ────────────────┼────────┼────────────┼─────     
+      │    diagram.png     │ —      │ —          │ —        
+      │    so-roadmap.md   │ —      │ —          │ —        
+      │    tasks.base      │ —      │ —          │ —        
+      │    tour.md         │ —      │ —          │ —        
+      │    ship-release.md │ done   │ 2026-10-01 │ ☑        
+      │    review-pr.md    │ doing  │ 2026-10-03 │ ☐        
+      │    write-report.md │ todo   │ 2026-10-05 │ ☐        
+      │    inbox.md        │ —      │ 2026-10-08 │ ☐        
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+    ~                                                       
+ NORMAL  │ tour.md                                      1:1"
+`;
+
+exports[`the tour at width 100 matches its golden, base embed included 1`] = `
+" tour.md                                                                                    ~/notes 
+   1 ▕---                                                                                           
+   1 ▕title: Markdown tour                                                                          
+   2 ▕tags: [reference, so]                                                                         
+   3 ▕created: 2026-10-01                                                                           
+   4 ▕aliases: [tour, syntax]                                                                       
+   5 ▕---                                                                                           
+   6  █ Markdown tour                                                                               
+   7                                                                                                
+   8  Text can be bold, italic, struck, highlighted or inline code.                                 
+   9  Links show their text: OpenTUI docs, the roadmap, and missing-note.                           
+  10  Tags like #reference and #so/ui are coloured. A footnote¹ stays small.                        
+  11                                                                                                
+  13                                                                                                
+  14  ▊ Lists and tasks                                                                             
+  15                                                                                                
+  16  • Plain bullet                                                                                
+  17    ◦ Nested bullet                                                                             
+  18  1. First step                                                                                 
+  19  2. Second step                                                                                
+  20  ☐ Toggle me with Enter                                                                        
+  21  ☑ Already done                                                                                
+  22                                                                                                
+  23  ▊ Quotes and callouts                                                                         
+  24                                                                                                
+  25  ▎ Simplicity is prerequisite for reliability. — Dijkstra                                      
+  26                                                                                                
+  27  ● Reveal rule                                                                                 
+  28  ▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.       
+  29                                                                                                
+  30  ★ Folded tip (za to open) ▸                                                                   
+  32                                                                                                
+  33  ✗ Data safety                                                                                 
+  34  ▎ Saves are atomic: temp file, fsync, rename.                                                 
+  35                                                                                                
+  36  ▌ Table                                                                                       
+  37                                                                                                
+  38  │ Key       │ Action      │  Mode  │                                                          
+  39  ├───────────┼─────────────┼────────┤                                                          
+  40  │ gd        │ Follow link │ normal │                                                          
+  41  │ Space f f │ Find file   │ normal │                                                          
+  42  │ Ctrl-o    │ Jump back   │ normal │                                                          
+  43                                                                                                
+  44  ▏ Code                                                                                        
+  45                                                                                                
+  47  // one-way data flow                                                                          
+  48  export function update(state: AppState, action: Action) {                                     
+  49    const next = reduce(state, action);                                                         
+  50    return { state: next, effects: [] };                                                        
+  51  }                                                                                             
+  53                                                                                                
+  54  ▊ Embeds and images                                                                           
+  55                                                                                                
+  56  ╭ ↳ so-roadmap#Goals                                                                          
+      │                                                                                             
+      │ • Goal 1                                                                                    
+      │ • Goal 2                                                                                    
+      │ • Goal 3                                                                                    
+      │ • Goal 4                                                                                    
+      │ • Goal 5                                                                                    
+      │ • Goal 6                                                                                    
+      │ • Goal 7                                                                                    
+      │ • Goal 8                                                                                    
+      │ • Goal 9                                                                                    
+      ╰ … 7 more lines                                                                              
+  57                                                                                                
+  58  [image: diagram.png]                                                                          
+  59                                                                                                
+  60  ▊ Math and diagrams                                                                           
+  61                                                                                                
+  62  Inline math E = mc² renders as text.                                                          
+  63                                                                                                
+  64  ∑ᵢ₌₁ⁿ xᵢ ≤ a/b                                                                                
+  67                                                                                                
+  68  ┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐                               
+      │         │     │        │             │         │     │      │                               
+      │ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │                               
+      │         │     │        │             │         │     │      │                               
+      └─────────┘     └────┬───┘             └─────────┘     └──────┘                               
+                           │                                                                        
+                           │                                                                        
+                           │                                                                        
+                           │                                                                        
+                           │                                                                        
+                           │                 ┌─────────┐                                            
+                           │                 │         │                                            
+                           └─────someday────►│ Archive │                                            
+                                             │         │                                            
+                                             └─────────┘                                            
+  73                                                                                                
+  74  ──────────────────────────────────────────────────────────────────────────────────────────────
+  75                                                                                                
+  76  ¹ Footnotes render at the bottom, dimmed.                                                     
+  77                                                                                                
+  78  ╭ ↳ tasks.base#All tasks                                                                      
+      │    name            │ Status │ due ↑      │ done                                             
+      │    ────────────────┼────────┼────────────┼─────                                             
+      │    diagram.png     │ —      │ —          │ —                                                
+      │    so-roadmap.md   │ —      │ —          │ —                                                
+      │    tasks.base      │ —      │ —          │ —                                                
+      │    tour.md         │ —      │ —          │ —                                                
+      │    ship-release.md │ done   │ 2026-10-01 │ ☑                                                
+      │    review-pr.md    │ doing  │ 2026-10-03 │ ☐                                                
+      │    write-report.md │ todo   │ 2026-10-05 │ ☐                                                
+      │    inbox.md        │ —      │ 2026-10-08 │ ☐                                                
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+    ~                                                                                               
+ NORMAL  │ live │ tour.md │ 252 words │ preview off                                             1:1"
+`;
