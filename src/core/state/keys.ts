@@ -10,7 +10,7 @@ import { cellEditKey, editingCell } from "./base-commands";
 import {
   activeBuffer,
   activeWindow,
-  READ_ONLY_HINT,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
 } from "./buffers";
@@ -271,7 +271,7 @@ function runVim(
     (r.s.text !== b.text || r.s.vim.mode === "insert") &&
     readOnlyView(reg, b)
   )
-    return message(refusedKey(s), READ_ONLY_HINT);
+    return message(refusedKey(s), readOnlyHint(b));
   const { line } = r.s.cursor;
   const top = w.content.scroll;
   const scroll =

@@ -9,7 +9,8 @@ import {
   activeWindow,
   listedBuffers,
   openPath,
-  READ_ONLY_HINT,
+  READ_ONLY_FILE,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
@@ -157,7 +158,7 @@ function substitute(
   const b = activeBuffer(s);
   const re = searchPattern(ex.pattern);
   if (w === undefined || b === undefined) return none(s);
-  if (readOnlyView(reg, b)) return message(s, READ_ONLY_HINT);
+  if (readOnlyView(reg, b)) return message(s, readOnlyHint(b));
   const notFound = message(
     s,
     `E486: Pattern not found: ${ex.pattern}`,
@@ -240,7 +241,7 @@ function editFile(ctx: CommandContext): Result {
 function writeActive(ctx: CommandContext): Result {
   const b = activeBuffer(ctx.state);
   if (b === undefined) return message(ctx.state, "E32: No file name", "error");
-  if (b.readOnly === true) return message(ctx.state, "read-only file", "error");
+  if (b.readOnly === true) return message(ctx.state, READ_ONLY_FILE, "error");
   return writeBuffer(ctx.state, b.id, ctx.now, {
     recreate: b.disk === "deleted",
   });

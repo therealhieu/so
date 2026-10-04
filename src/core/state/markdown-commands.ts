@@ -8,7 +8,7 @@ import {
   activeBuffer,
   activeWindow,
   applyBufferEdits,
-  READ_ONLY_HINT,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
@@ -48,7 +48,7 @@ function toggleTask(c: CommandContext): Result {
   const line = w.content.cursor.line;
   const m = TASK.exec(b.text.line(line));
   if (m === null) return message(s, "no checkbox on this line");
-  if (readOnlyView(c.reg, b)) return message(s, READ_ONLY_HINT);
+  if (readOnlyView(c.reg, b)) return message(s, readOnlyHint(b));
   const col = m[1]?.length ?? 0;
   const mark = m[2] ?? " ";
   const r = applyBufferEdits(

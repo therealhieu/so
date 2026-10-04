@@ -343,3 +343,12 @@ test("Enter opens the focused row's note", () => {
   const r = press(openPlan(), "j<CR>");
   expect(r.effects).toContainEqual({ kind: "read", path: "tasks/b.md" });
 });
+
+test("text edits in a base window are refused as a read-only file", () => {
+  const s = openBase().state;
+  const text = fullText(activeBuffer(s)?.text as never);
+  const r = run(s, ...keys(":s/a/b/"), key("<CR>"));
+  expect(r.state.notifications.message?.text).toBe("read-only file");
+  expect(fullText(activeBuffer(r.state)?.text as never)).toBe(text);
+  expect(r.effects).toEqual([]);
+});

@@ -25,7 +25,7 @@ import {
   fullText,
   openPath,
   placeCursor,
-  READ_ONLY_HINT,
+  readOnlyHint,
   readOnlyView,
 } from "./buffers";
 import { openCalendar } from "./calendar";
@@ -174,7 +174,7 @@ export function insertTemplate(
   const b = activeBuffer(closed);
   const w = activeWindow(closed);
   if (b === undefined || w === undefined) return none(closed);
-  if (readOnlyView(reg, b)) return message(closed, READ_ONLY_HINT);
+  if (readOnlyView(reg, b)) return message(closed, readOnlyHint(b));
   const text = expandTemplate(file.text.replaceAll("\r\n", "\n"), {
     title: noteTitle(b.path),
     at: localDateTime(now),

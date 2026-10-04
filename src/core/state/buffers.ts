@@ -45,7 +45,11 @@ export const bufferForPath = (
 ): BufferState | undefined =>
   Object.values(s.buffers).find((b) => b.path === path);
 
-export const READ_ONLY_HINT = "reading mode — <leader>m to edit";
+export const READ_ONLY_FILE = "read-only file";
+
+/** Why a text edit in `b` is refused: a read-only file, or a reading view to leave. */
+export const readOnlyHint = (b: BufferState): string =>
+  b.readOnly === true ? READ_ONLY_FILE : "reading mode — <leader>m to edit";
 
 /** Whether `b` is shown in a view its file type marks read-only. */
 export const readOnlyView = (reg: Registries, b: BufferState): boolean =>
