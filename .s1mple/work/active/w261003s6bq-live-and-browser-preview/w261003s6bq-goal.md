@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G3 — implementation`
+- **Current Position:** `P2-G1 — implementation`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -293,45 +293,45 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 #### P1-G3 — Terminal images
 
-- [ ] Context and dependencies confirmed (P1-G2 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P1-G3-T1` — Terminal graphics spike (outcome recorded before painter code).
-- [ ] `P1-G3-T2` — Workspace image loader with bounded web downloads.
-- [ ] `P1-G3-T3` — Image tiers and the decoded-image cache.
-- [ ] `P1-G3-T4` — Image painter and shell wiring.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (P1-G2 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G3-T1` — Terminal graphics spike (outcome recorded before painter code).
+- [x] `P1-G3-T2` — Workspace image loader with bounded web downloads.
+- [x] `P1-G3-T3` — Image tiers and the decoded-image cache.
+- [x] `P1-G3-T4` — Image painter and shell wiring.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `a0e278e` (group range `0876a21`..`3d9c36a`)
+- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g3-verification-report.md` — `Failed` (P1-G3-VER1 Minor, test coverage: no regression test for the `◌ name` loading placeholder or for the timeout covering the whole body download). The verifier re-ran the V43 analyzer on all seven raw captures and accepted the byte-level evidence and all six deviations
+- Verification report commit: `2ebd33a`
+- Remediation: `Completed` by a fresh `s1mple-implementer`. VER1 is `Fixed` by two regression tests: the dimmed `◌ name` loading placeholder and a whole-body download timeout with a slowly dripped body. Each test fails when its behaviour is broken. Production code is unchanged
+- Final implementation report commit: `b111355`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `0aec8db` (T2), `9407269` (T4)
+- Closure evidence: `bun run check` 714 pass; `CI=true bun run test:ci` 126 pass; `src/core` is unchanged from `0876a21`; the original verification report is unchanged at `2ebd33a`. Recorded residual: V43 was checked from the bytes each terminal received, not visually, because Screen Recording permission is unavailable. Accepted on 2026-10-04
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G3-T1` | `Pending implementation` (expected: no-change; spike outcome in `p1-g3-implementation-report.md`) |
-| `P1-G3-T2` | `Pending implementation` |
-| `P1-G3-T3` | `Pending implementation` |
-| `P1-G3-T4` | `Pending implementation` |
+| `P1-G3-T1` | No change: the agent-run V43 spike covered Ghostty, kitty and WezTerm (kitty protocol), WezTerm (sixel), iTerm2 3.6.11 (kitty and sixel) and Terminal.app (blocks). Every cell is cleared and no clearing call is needed. Evidence is the byte-level terminal output (`tty-*.raw`, `*.analysis.txt`). Screenshots were not possible because macOS Screen Recording permission is denied for Ghostty and not granted for the others. The outcome is in `p1-g3-implementation-report.md` under "Graphics spike outcome"; the fixtures were committed with T2 |
+| `P1-G3-T2` | `119d9c9`, `0aec8db` |
+| `P1-G3-T3` | `3bc3959` |
+| `P1-G3-T4` | `3d9c36a`, `9407269` |
 
 ### Part 2 — Browser preview
 
