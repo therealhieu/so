@@ -397,3 +397,78 @@ exports[`base cell editors a list cell shows its values as chips 1`] = `
                                                                                 
 "
 `;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the colour theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 0,
+    "bg": "45,63,118,255",
+    "fg": "192,202,245,255",
+  },
+  "focusedCell": {
+    "attrs": 0,
+    "bg": "45,63,118,255",
+    "fg": "192,202,245,255",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "26,27,38,255",
+    "fg": "125,207,255,255",
+  },
+  "movesOff": {
+    "attrs": 0,
+    "bg": "26,27,38,255",
+    "fg": "224,175,104,255",
+  },
+}
+`;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the NO_COLOR theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 32,
+    "bg": "default",
+    "fg": "default",
+  },
+  "focusedCell": {
+    "attrs": 32,
+    "bg": "default",
+    "fg": "default",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "default",
+    "fg": "default",
+  },
+  "movesOff": {
+    "attrs": 1,
+    "bg": "default",
+    "fg": "default",
+  },
+}
+`;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the light theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+  "focusedCell": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "225,226,231,255",
+    "fg": "0,113,151,255",
+  },
+  "movesOff": {
+    "attrs": 0,
+    "bg": "225,226,231,255",
+    "fg": "140,108,62,255",
+  },
+}
+`;

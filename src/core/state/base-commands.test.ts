@@ -441,3 +441,25 @@ views:
   expect(model(rest)?.filter).toBe('not (status == "todo" or done == true)');
   expect(model(rest)?.table?.rows).toEqual([]);
 });
+
+test("a board grouped by a file property refuses moves with an explanation", () => {
+  const BY_FOLDER = `views:
+  - type: kanban-test
+    name: By folder
+    order: [file.name]
+    groupBy:
+      property: file.folder
+      direction: ASC
+`;
+  const s = run(
+    fresh(),
+    loaded("folders.base", BY_FOLDER),
+    indexed(NOTES),
+  ).state;
+  expect(model(s)?.board?.movable).toBe(false);
+  const r = press(s, "L");
+  expect(writes(r.effects)).toEqual([]);
+  expect(r.state.notifications.toasts.at(-1)?.text).toBe(
+    "Moves are off: this board groups by a file property",
+  );
+});

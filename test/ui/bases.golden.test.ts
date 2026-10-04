@@ -229,3 +229,61 @@ describe("base cell editors", () => {
     expect(await m.frame()).toMatchSnapshot();
   });
 });
+
+/** Styles of the focused cell, focused card, a lane dot, and the moves-off notice. */
+async function baseStyles(o: Parameters<typeof mountShell>[0]) {
+  const table = await baseShell(o, "tasks.base", TASKS_BASE);
+  table.keys("jl");
+  await table.frame();
+  const cell = await find(table, "doing");
+  const focusedCell = cellStyle(table.t.captureSpans().lines, cell.x, cell.y);
+  table.destroy();
+  const board = await baseShell(o, "board.base", BOARD);
+  board.keys("ll");
+  await board.frame();
+  const card = await find(board, "write-report", 3);
+  const dot = await find(board, "● doing");
+  let spans = board.t.captureSpans().lines;
+  const focusedCard = cellStyle(spans, card.x, card.y);
+  const laneDot = cellStyle(spans, dot.x, dot.y);
+  board.keys("2");
+  await board.frame();
+  const off = await find(board, "⊘ moves off");
+  spans = board.t.captureSpans().lines;
+  const movesOff = cellStyle(spans, off.x, off.y);
+  board.destroy();
+  return { focusedCell, focusedCard, laneDot, movesOff };
+}
+
+describe("base styles", () => {
+  for (const v of variants)
+    test(`paints the focused cell and card, lane dots, and moves off in the ${v.name} theme`, async () => {
+      expect(await baseStyles(v.o)).toMatchSnapshot();
+    });
+
+  test("dark and light paint the base differently", async () => {
+    const dark = await baseStyles({ cols: 80, rows: 24, theme: "dark" });
+    const light = await baseStyles({ cols: 80, rows: 24, theme: "light" });
+    expect(dark.focusedCell).not.toEqual(light.focusedCell);
+    expect(dark.focusedCard).not.toEqual(light.focusedCard);
+    expect(dark.laneDot).not.toEqual(light.laneDot);
+    expect(dark.movesOff).not.toEqual(light.movesOff);
+  });
+
+  test("the board has no colour under NO_COLOR", async () => {
+    m = await baseShell(
+      { cols: 80, rows: 24, color: "nocolor" },
+      "board.base",
+      BOARD,
+    );
+    m.keys("ll");
+    await m.frame();
+    const colours = new Set(
+      m.t
+        .captureSpans()
+        .lines.flatMap((l) => l.spans)
+        .flatMap((s) => [s.fg.intent, s.bg.intent]),
+    );
+    expect([...colours]).toEqual(["default"]);
+  });
+});
