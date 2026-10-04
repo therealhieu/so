@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G2 — implementation dispatched`
+- **Current Position:** `P1-G3 — implementation`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -249,47 +249,47 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 #### P1-G2 — Views, embeds, commands, and painting
 
-- [ ] Context and dependencies confirmed (P1-G1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P1-G2-T1` — Markdown views through EditorView.
-- [ ] `P1-G2-T2` — Embed targets as unlisted buffers.
-- [ ] `P1-G2-T3` — Markdown commands and the read-only view.
-- [ ] `P1-G2-T4` — Sign column, widget painters, and cursor fit.
-- [ ] `P1-G2-T5` — No-colour, light theme, and 80×24 live-view states.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (P1-G1 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G2-T1` — Markdown views through EditorView.
+- [x] `P1-G2-T2` — Embed targets as unlisted buffers.
+- [x] `P1-G2-T3` — Markdown commands and the read-only view.
+- [x] `P1-G2-T4` — Sign column, widget painters, and cursor fit.
+- [x] `P1-G2-T5` — No-colour, light theme, and 80×24 live-view states.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `c10496f` (group range `f296fc5`..`9530f5b`)
+- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` — `Failed` (P1-G2-VER1 Major: stale or duplicate embed reads can open a listed buffer; VER2 Minor: `:s` edits in reading view; VER3 Minor: three missing tests; VER4 Minor: report T1 row)
+- Verification report commit: `183db2a`
+- Remediation: `Completed` by a fresh `s1mple-implementer` — VER1…VER4 `Fixed`; every completion checklist satisfied. Accepted residual: if the last note embedding a target is closed with `:bd` before its read answers, a later open or new embed of that path sends one more `read`. The second answer has the same stamp, so `onDiskLoaded` makes no change (`src/core/state/disk.ts:69`). The target is never shown or listed by the embed answer. Closing this would need request state above the note, which S5 forbids. Design refinements to sync into the W system design (§6 `embeds.requested`, §7 `syncEmbeds` and `onFileLoaded`/`onFileRefused`): `requested` keeps a target until its read answers, and embed reads carry `embed?: true` on the `read` effect and its answer (`types.ts`, `src/app/effects.ts`)
+- Final implementation report commit: `47bb688`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `7f491e8` (T2); VER2 → `a1c9e50` (T3); VER3 → `ebf4d95` (T2), `c1edc70` (T4), `324e886` (T5); VER4 → no code change (report-only correction in `47bb688`)
+- Closure evidence: at `324e886`, `bun run check` exit 0 (701 pass, 18 snapshots); `CI=true bun run test:ci` 122 pass; no-Markdown grep has no match; `paintPreview` unchanged; frozen surfaces unchanged; the original verification report is unchanged at `183db2a`. The orchestrator checked VER1's required proofs (1)–(3) in `embeds.test.ts`, the stale-answer path in `buffers.ts:370`, and that the duplicate-answer path is a no-op. Accepted on 2026-10-04
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G2-T1` | `Pending implementation` |
-| `P1-G2-T2` | `Pending implementation` |
-| `P1-G2-T3` | `Pending implementation` |
-| `P1-G2-T4` | `Pending implementation` |
-| `P1-G2-T5` | `Pending implementation` |
+| `P1-G2-T1` | `4bcea47` |
+| `P1-G2-T2` | `db27ea5`, `7f491e8`, `ebf4d95` |
+| `P1-G2-T3` | `97f84ef`, `a1c9e50` |
+| `P1-G2-T4` | `195bc95`, `c1edc70` |
+| `P1-G2-T5` | `9530f5b`, `324e886` |
 
 #### P1-G3 — Terminal images
 
