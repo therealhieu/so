@@ -723,8 +723,10 @@ function calloutTransform(tree: MdNode) {
  * paragraph by `inlineSpans` before these scanners run, and comments come
  * first, so later scanners skip all three; links come before tags and block
  * ids. Highlight, footnote, and callout contribute mdast transforms only.
+ * Another syntax registers by appending its extension before the first
+ * parse, since trees are cached by block content.
  */
-export const syntaxExtensions: readonly SyntaxExtension[] = [
+export const syntaxExtensions: SyntaxExtension[] = [
   {
     name: "comment",
     scan: scanComments,
