@@ -2,6 +2,8 @@ import { afterEach, expect, test } from "bun:test";
 import { readFileSync, symlinkSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import { join } from "node:path";
+import { createEffectRunner } from "../../src/app/effects";
+import type { Action } from "../../src/core/state/types";
 import {
   FILE_CSP,
   type PreviewServer,
@@ -9,6 +11,8 @@ import {
   startPreviewServer,
 } from "../../src/preview/server";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
+import { openUrl } from "../../src/workspace/system";
+import { createOwnOps } from "../../src/workspace/watcher";
 import { type App, startApp, tmpWorkspace } from "./helpers";
 
 const FILES = {
@@ -273,4 +277,48 @@ test("every response carries the same-origin security policy", async () => {
 
   const refused = await fetch(url("/file/.git/config"));
   expect(refused.headers.get("content-security-policy")).toBe(policy);
+});
+
+test("a browser launcher that fails rejects", async () => {
+  const spawn = () => ({ exited: Promise.resolve(1) });
+  await expect(
+    openUrl("http://127.0.0.1:8731/", "darwin", spawn),
+  ).rejects.toThrow("open failed");
+  const argv: string[][] = [];
+  await openUrl("http://127.0.0.1:8731/a.md", "linux", (a: string[]) => {
+    argv.push(a);
+    return { exited: Promise.resolve(0) };
+  });
+  expect(argv).toEqual([["xdg-open", "http://127.0.0.1:8731/a.md"]]);
+});
+
+test("a failed browser launch is reported with its address and logged", async () => {
+  const root = await tmpWorkspace();
+  const actions: Action[] = [];
+  const logged: { event: string; fields: unknown }[] = [];
+  const runner = createEffectRunner({
+    root,
+    matcher: createExclusionMatcher(root, () => null),
+    ownOps: createOwnOps(),
+    trash: { available: false, move: () => Promise.reject(new Error("no")) },
+    clipboard: { name: "none", copy: async () => {} },
+    dispatch: (a) => actions.push(a),
+    exit: () => {},
+    logger: {
+      info: () => {},
+      error: (event, fields) => logged.push({ event, fields }),
+    },
+    configPath: join(root, "none.toml"),
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: () => Promise.reject(new Error("xdg-open failed")),
+  });
+  const url = "http://127.0.0.1:8731/notes/plan.md";
+  runner.run({ kind: "openUrl", url });
+  await Bun.sleep(10);
+  expect(actions).toEqual([
+    { type: "openUrlFailed", url, reason: "xdg-open failed" },
+  ]);
+  expect(logged).toEqual([
+    { event: "browser.openFailed", fields: { reason: "xdg-open failed" } },
+  ]);
 });

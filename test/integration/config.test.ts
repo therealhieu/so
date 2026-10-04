@@ -66,6 +66,8 @@ async function start(config?: string) {
     exit: () => {},
     logger: createLogger({}, base),
     configPath: path,
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: async () => {},
   });
   const store: Store = createStore(
     initialState({ root, cols: 80, rows: 24, color: "color" }),

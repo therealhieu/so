@@ -239,6 +239,12 @@ export type LinkRewrite = {
 
 export type Toast = { id: number; level: "info" | "error"; text: string };
 
+/** The browser preview server: off, starting, or listening on a loopback port. Never persisted. */
+export type PreviewState =
+  | { status: "off" }
+  | { status: "starting" }
+  | { status: "on"; port: number };
+
 export type MouseEvent = { kind: "scroll"; delta: number };
 
 export type AppState = {
@@ -280,6 +286,7 @@ export type AppState = {
   jumps: JumpList;
   /** Workspace paths, most recently opened first. */
   recent: string[];
+  preview: PreviewState;
 };
 
 export type Action =
@@ -333,7 +340,11 @@ export type Action =
       text?: string;
       stamp?: Stamp;
       reason?: string;
-    };
+    }
+  | { type: "previewStarted"; port: number }
+  | { type: "previewStopped" }
+  | { type: "previewFailed"; reason: string }
+  | { type: "openUrlFailed"; url: string; reason: string };
 
 export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
@@ -358,7 +369,10 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
-  | { kind: "applyEdits"; batch: number; edit: FileEdit };
+  | { kind: "applyEdits"; batch: number; edit: FileEdit }
+  | { kind: "startPreview" }
+  | { kind: "stopPreview" }
+  | { kind: "openUrl"; url: string };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

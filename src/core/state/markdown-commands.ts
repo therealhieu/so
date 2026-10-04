@@ -15,6 +15,7 @@ import {
 } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { followLink } from "./link-commands";
+import { startPreview, stopPreview } from "./preview";
 import { message, none } from "./result";
 import type { Result } from "./types";
 
@@ -130,6 +131,13 @@ export const markdownCommands: readonly AppCommand[] = [
     filetypes: ["markdown"],
     run: noteEnter,
   },
+  {
+    id: "preview.start",
+    title: "Preview in browser",
+    filetypes: ["markdown"],
+    run: startPreview,
+  },
+  { id: "preview.stop", title: "Stop browser preview", run: stopPreview },
 ];
 
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;

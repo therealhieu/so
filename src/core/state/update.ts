@@ -19,6 +19,12 @@ import {
   onSearchResults,
   onSearchTimer,
 } from "./picker";
+import {
+  onOpenUrlFailed,
+  onPreviewFailed,
+  onPreviewStarted,
+  onPreviewStopped,
+} from "./preview";
 import { clearMessage, none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
@@ -107,6 +113,14 @@ export function createUpdate(reg: Registries): Update {
           : onSearchResults(state, action);
       case "previewLoaded":
         return onPreviewLoaded(state, action);
+      case "previewStarted":
+        return onPreviewStarted(state, action);
+      case "previewStopped":
+        return onPreviewStopped(state);
+      case "previewFailed":
+        return onPreviewFailed(state, action);
+      case "openUrlFailed":
+        return onOpenUrlFailed(state, action);
     }
     const unhandled: never = action;
     return unhandled;

@@ -45,6 +45,8 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     exit: (code) => exits.push(code),
     logger: createLogger({}, root),
     configPath: join(root, "no-such-config.toml"),
+    preview: { start: () => {}, stop: async () => {} },
+    openUrl: async () => {},
     ...patch,
   };
   return { ...createEffectRunner(deps), deps, actions, exits };

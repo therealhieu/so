@@ -32,7 +32,8 @@ export type PreviewServerOptions = {
   isExcluded(rel: string): boolean;
   port?: number;
 };
-export type PreviewServer = { port: number; stop(): void };
+/** `stop` resolves once every connection has closed. */
+export type PreviewServer = { port: number; stop(): Promise<void> };
 
 /** How long the server lets edits settle before it tells pages about them. */
 const FOLLOW_DELAY_MS = 100;
@@ -230,7 +231,7 @@ export function startPreviewServer(o: PreviewServerOptions): PreviewServer {
       }
       clients.clear();
       // Graceful: the closed streams finish delivering `stopped`; new connections are refused at once.
-      void server.stop();
+      return server.stop();
     },
   };
 }

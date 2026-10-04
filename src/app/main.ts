@@ -57,7 +57,7 @@ import {
   saveStateFileSync,
   statePath,
 } from "../workspace/state-file";
-import { detectClipboard } from "../workspace/system";
+import { detectClipboard, openUrl } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
 import {
@@ -67,6 +67,7 @@ import {
 } from "./effects";
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
+import { createPreviewHost } from "./preview-host";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -255,6 +256,13 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
+  const previewHost = createPreviewHost({
+    root: ws.root,
+    store: () => store,
+    isExcluded: matcher.isExcludedPath,
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
   // Trash, clipboard, and exit are bound once detected or constructed; the
   // runner reads them at call time.
   const deps: RunnerDeps = {
@@ -273,6 +281,8 @@ async function main(argv: string[]): Promise<void> {
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
     index: indexHost,
+    preview: previewHost,
+    openUrl: (url) => openUrl(url, process.platform),
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -302,6 +312,7 @@ async function main(argv: string[]): Promise<void> {
     shell,
     runner,
     ...(saveSession === undefined ? {} : { saveSession }),
+    stopPreview: previewHost.stop,
   });
   deps.exit = lifecycle.exitNow;
 

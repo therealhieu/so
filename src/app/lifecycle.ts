@@ -7,12 +7,15 @@ import type { EffectRunner } from "./effects";
 
 /** The longest a shutdown waits for its writes before restoring the terminal. */
 export const FLUSH_BOUND_MS = 2000;
+/** The longest a shutdown waits for preview pages to receive `stopped`. */
+const PREVIEW_STOP_BOUND_MS = 250;
 
 /**
  * Install the process handlers that end `so`. Signals exit 0 and uncaught
  * errors exit 1; both first write every writable buffer (bounded by
- * `FLUSH_BOUND_MS`), then save the session, then restore the terminal once,
- * then name any file left unsaved on stderr. `exitNow` is the `exit`
+ * `FLUSH_BOUND_MS`), then save the session, then stop the browser preview
+ * (bounded by `PREVIEW_STOP_BOUND_MS`), then restore the terminal once, then
+ * name any file left unsaved on stderr. `exitNow` is the `exit`
  * effect after `:q`, which has already saved or was told to discard; it
  * still saves the session.
  */
@@ -23,6 +26,8 @@ export function installLifecycle(d: {
   exit?: (code: number) => void;
   /** Saves the session synchronously; a failure must not stop the shutdown. */
   saveSession?: (s: AppState) => void;
+  /** Tells connected preview pages the preview stopped, then closes the server. */
+  stopPreview?: () => Promise<void>;
 }): { exitNow(code: number): void } {
   let done = false;
   const shutdown = async (code: number, flush: boolean, error?: unknown) => {
@@ -41,6 +46,11 @@ export function installLifecycle(d: {
     await Promise.race([all, Bun.sleep(FLUSH_BOUND_MS)]);
     try {
       d.saveSession?.(d.store.get());
+    } catch {}
+    try {
+      const stopped = d.stopPreview?.().catch(() => {});
+      if (stopped !== undefined)
+        await Promise.race([stopped, Bun.sleep(PREVIEW_STOP_BOUND_MS)]);
     } catch {}
     d.shell.destroy();
     // Written after the restore, so the lines land on the main screen, and

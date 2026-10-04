@@ -3,7 +3,9 @@ import type { TextBuffer } from "../kernel/text/text-buffer";
 import { type Doc, parseDoc } from "../lang/markdown/doc";
 import type { HtmlCtx } from "../lang/markdown/html";
 import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
-import type { AppState, BufferState } from "./types";
+import type { CommandContext } from "./commands";
+import { message, none, toast } from "./result";
+import type { AppState, BufferState, Result } from "./types";
 
 const encodePath = (path: string) =>
   path.split("/").map(encodeURIComponent).join("/");
@@ -80,4 +82,56 @@ export function htmlCtx(
       return path === undefined ? undefined : (openNote(s, path) ?? load(path));
     },
   };
+}
+
+/** `:Preview`: start the one server, or open the browser again when it already runs. */
+export function startPreview(c: CommandContext): Result {
+  const s = c.state;
+  const p = s.preview;
+  if (p.status === "on")
+    return {
+      state: s,
+      effects: [
+        { kind: "openUrl", url: previewUrl(p.port, followTarget(s)?.path) },
+      ],
+    };
+  if (p.status === "starting") return none(s);
+  return {
+    state: { ...s, preview: { status: "starting" } },
+    effects: [{ kind: "startPreview" }],
+  };
+}
+
+/** `:PreviewStop`: stop the server, or say that none runs. */
+export function stopPreview(c: CommandContext): Result {
+  if (c.state.preview.status === "off")
+    return message(c.state, "preview is not running");
+  return { state: c.state, effects: [{ kind: "stopPreview" }] };
+}
+
+/** The server listens: record its port and open the browser at the current note. */
+export function onPreviewStarted(s: AppState, a: { port: number }): Result {
+  return {
+    state: { ...s, preview: { status: "on", port: a.port } },
+    effects: [
+      { kind: "openUrl", url: previewUrl(a.port, followTarget(s)?.path) },
+    ],
+  };
+}
+
+export function onPreviewStopped(s: AppState): Result {
+  return message({ ...s, preview: { status: "off" } }, "preview stopped");
+}
+
+export function onPreviewFailed(s: AppState, a: { reason: string }): Result {
+  return toast(
+    { ...s, preview: { status: "off" } },
+    "error",
+    `preview failed: ${a.reason}`,
+  );
+}
+
+/** No browser could be opened; the server keeps serving, so show where it is. */
+export function onOpenUrlFailed(s: AppState, a: { url: string }): Result {
+  return toast(s, "info", `could not open a browser — ${a.url}`);
 }
