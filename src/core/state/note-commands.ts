@@ -10,6 +10,7 @@ import {
   withDate,
 } from "../time/local";
 import { activeBuffer, openPath } from "./buffers";
+import { openCalendar } from "./calendar";
 import type { CommandContext, CommandResult } from "./commands";
 import { chain, none, toast } from "./result";
 import type { Action, AppState, Result } from "./types";
@@ -134,10 +135,12 @@ export const noteCommands: readonly AppCommand[] = [
     title: "Next day's daily note",
     run: (c) => openDaily(c, relativeDay(c, 1)),
   },
+  { id: "note.pickDate", title: "Pick a daily note date", run: openCalendar },
 ];
 
 export const noteBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>nd", id: "note.today" },
+  { scope: { mode: "normal" }, seq: "<leader>np", id: "note.pickDate" },
 ];
 
 export const noteGroups = { "<leader>n": "notes" } as const;

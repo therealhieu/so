@@ -13,6 +13,7 @@ import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Key } from "../kernel/vim/keys";
 import type { VimState } from "../kernel/vim/types";
+import type { LocalDate } from "../time/local";
 
 export type BufferId = number;
 export type WindowId = number;
@@ -166,13 +167,21 @@ export type CompletionState = {
   selected: number;
 };
 
+/** The open calendar: the month shown, today, and the selected day (always in `month`). */
+export type CalendarState = {
+  month: { year: number; month: number };
+  today: LocalDate;
+  selected: LocalDate;
+};
+
 export type Overlay =
   | { kind: "none" }
   | { kind: "prompt"; prompt: PromptState }
   | { kind: "conflict"; bufferId: BufferId; disk: TextFile; showDiff: boolean }
   | { kind: "whichKey"; whichKey: WhichKeyState }
   | { kind: "picker" | "palette" | "help"; picker: PickerState }
-  | { kind: "completion"; completion: CompletionState };
+  | { kind: "completion"; completion: CompletionState }
+  | { kind: "calendar"; calendar: CalendarState };
 
 /** One picker row; `matches` are the label's matched character positions. */
 export type PickerItem = {

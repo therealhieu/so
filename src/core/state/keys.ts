@@ -13,6 +13,7 @@ import {
   readOnlyView,
   setBuffer,
 } from "./buffers";
+import { calendarKey } from "./calendar";
 import {
   type CommandContext,
   type CommandResult,
@@ -77,6 +78,8 @@ function routeKey(
     case "palette":
     case "help":
       return pickerKey(s, a, reg);
+    case "calendar":
+      return calendarKey(s, a, reg);
   }
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
