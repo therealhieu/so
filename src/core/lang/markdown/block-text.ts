@@ -67,3 +67,28 @@ export function nodeRange(block: Block, node: MdNode): Range | undefined {
     end: { line: block.startLine + p.end.line - 1, col: p.end.column - 1 },
   };
 }
+
+/** The target of an embed-only paragraph (`![[x#Section|alias]]` or `![alt](url)`). */
+export function embedLink(
+  doc: Doc,
+  block: Block,
+  text: TextBuffer,
+): { target: string; section?: string; alt?: string } {
+  const para = rootOf(doc, block, text).children?.[0];
+  const node = para?.children?.find(
+    (c) => c.type === "embed" || c.type === "image",
+  );
+  if (node?.type === "image") {
+    const alt = String(node.alt ?? "");
+    return { target: String(node.url ?? ""), ...(alt === "" ? {} : { alt }) };
+  }
+  const alias = node?.alias as string | undefined;
+  return {
+    target: String(node?.target ?? ""),
+    ...(node?.subpath === undefined ? {} : { section: String(node.subpath) }),
+    // A numeric alias on an image embed is a display size, not alt text.
+    ...(alias === undefined || /^\d+(x\d+)?$/.test(alias)
+      ? {}
+      : { alt: alias }),
+  };
+}
