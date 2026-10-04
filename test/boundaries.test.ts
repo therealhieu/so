@@ -50,6 +50,8 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   "mdast-util-math": ["src/core/lang/markdown/"],
   yaml: ["src/core/lang/markdown/"],
   "beautiful-mermaid": ["src/core/lang/markdown/"],
+  katex: ["src/preview/"],
+  mermaid: ["src/preview/"],
   "toml-eslint-parser": ["src/core/config/"],
 };
 
