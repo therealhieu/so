@@ -5,6 +5,7 @@ import { nodeRange, rootOf } from "./block-text";
 import type { Block } from "./doc";
 import type { MarkdownViewInput } from "./live-preview";
 import type { MdNode } from "./mdast";
+import { mathText } from "./renderers/math";
 
 /** Emphasis-like nodes: a style for the content and how many marker characters sit on each side. */
 const WRAPPED: Readonly<
@@ -78,7 +79,13 @@ export function inlineDecorations(
     if (range !== undefined && !touchesReveal(range)) {
       const src = v.buf.line(range.start.line).slice(range.start.col);
       const wrapped = WRAPPED[node.type];
-      if (wrapped !== undefined) {
+      const math =
+        node.type === "inlineMath"
+          ? mathText(String(node.value ?? ""))
+          : undefined;
+      if (math?.kind === "unicode")
+        out.push(show(range, [{ text: math.text, style: "mdCode" }]));
+      else if (wrapped !== undefined) {
         const n = wrapped.marker(src);
         const inner = { start: at(range.start, n), end: at(range.end, -n) };
         out.push(

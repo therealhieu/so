@@ -1,5 +1,6 @@
 import type { Range } from "../../kernel/text/pos";
 import type { TextBuffer } from "../../kernel/text/text-buffer";
+import { closesFence, openFence } from "./blocks";
 import type { Block, Doc } from "./doc";
 import { blockNode, type MdNode } from "./mdast";
 
@@ -24,6 +25,28 @@ export function contentEnd(text: TextBuffer, block: Block): number {
   let i = block.endLine;
   while (i > block.startLine && isBlank(text.line(i))) i--;
   return i;
+}
+
+/** The block's content lines, without its trailing blank lines. */
+export function wholeBlock(text: TextBuffer, block: Block): Range {
+  const end = contentEnd(text, block);
+  return {
+    start: { line: contentStart(text, block), col: 0 },
+    end: { line: end, col: text.line(end).length },
+  };
+}
+
+/** The lines between a fence's opening and closing lines (to the block's end when unclosed). */
+export function fenceBody(text: TextBuffer, block: Block): string[] {
+  const first = contentStart(text, block);
+  const last = contentEnd(text, block);
+  const fence = openFence(text.line(first));
+  const closed =
+    fence !== undefined && last > first && closesFence(fence, text.line(last));
+  const lines: string[] = [];
+  for (let i = first + 1; i <= (closed ? last - 1 : last); i++)
+    lines.push(text.line(i));
+  return lines;
 }
 
 /** The block's cached mdast root. */
