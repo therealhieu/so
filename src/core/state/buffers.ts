@@ -7,6 +7,7 @@ import { closeWindow } from "../kernel/editor/windows";
 import type { Edit, Pos } from "../kernel/text/pos";
 import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
 import { onDiskLoaded } from "./disk";
+import { embedRequested, settleEmbedRead } from "./embeds";
 import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -41,6 +42,10 @@ export const bufferForPath = (
   path: string,
 ): BufferState | undefined =>
   Object.values(s.buffers).find((b) => b.path === path);
+
+/** Buffers the user opened; embed targets loaded for display are left out. */
+export const listedBuffers = (s: AppState): BufferState[] =>
+  Object.values(s.buffers).filter((b) => b.listed !== false);
 
 /** Buffers at `path` or, for a folder, anywhere below it. */
 export const buffersUnder = (s: AppState, path: string): BufferState[] =>
@@ -227,7 +232,7 @@ export function closeActiveWindow(s: AppState): Result {
  */
 export function removeBuffer(s: AppState, id: BufferId): Result {
   const { [id]: _, ...buffers } = s.buffers;
-  const other = Object.values(buffers).sort((a, b) => a.id - b.id)[0];
+  const other = listedBuffers({ ...s, buffers }).sort((a, b) => a.id - b.id)[0];
   const byId: Record<number, WindowState> = {};
   for (const w of Object.values(s.windows.byId)) {
     if (w.content.bufferId !== id) byId[w.id] = w;
@@ -279,12 +284,13 @@ export function splitFile(f: TextFile): {
   return { body: finalNewline ? text.slice(0, -1) : text, finalNewline };
 }
 
-/** Show buffer `id` in the active window. */
+/** Show buffer `id` in the active window; a shown buffer is listed. */
 export function showBuffer(s: AppState, id: BufferId): AppState {
-  const w = activeWindow(s);
-  if (w?.content.bufferId === id) return s;
-  return setWindow(s, {
-    id: s.windows.active,
+  const listed = listBuffer(s, id);
+  const w = activeWindow(listed);
+  if (w?.content.bufferId === id) return listed;
+  return setWindow(listed, {
+    id: listed.windows.active,
     content: {
       editor: "text",
       bufferId: id,
@@ -292,6 +298,21 @@ export function showBuffer(s: AppState, id: BufferId): AppState {
       scroll: 0,
     },
   });
+}
+
+/** The active window waits for `path`, so its read shows it even when a note also embeds it. */
+function awaitOpen(s: AppState, path: string): AppState {
+  const restore = s.windows.restore ?? { pending: {}, missing: 0 };
+  const pending = {
+    ...restore.pending,
+    [s.windows.active]: {
+      path,
+      cursor: { line: 0, col: 0 },
+      scroll: 0,
+      navigated: true as const,
+    },
+  };
+  return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }
 
 /**
@@ -306,12 +327,15 @@ export function openPath(s: AppState, path: string, now: number): Result {
       : none(s);
   return chain(left, (st) => {
     const open = bufferForPath(st, path);
-    return open === undefined
-      ? { state: st, effects: [{ kind: "read", path }] }
-      : none({
-          ...showBuffer(st, open.id),
-          recent: touchRecent(st.recent, path),
-        });
+    // An embed target already being read is shown when that read answers.
+    if (open === undefined)
+      return embedRequested(st, path)
+        ? none(awaitOpen(st, path))
+        : { state: st, effects: [{ kind: "read", path }] };
+    return none({
+      ...showBuffer(st, open.id),
+      recent: touchRecent(st.recent, path),
+    });
   });
 }
 
@@ -330,8 +354,12 @@ export function onFileLoaded(
   const open = bufferForPath(s, a.path);
   if (open !== undefined)
     return chain(onDiskLoaded(s, open, a.file, reg), (st) =>
-      awaitsRestore(st, a.path) ? fillRestored(st, a.path, open.id) : none(st),
+      awaitsRestore(st, a.path)
+        ? fillRestored(listBuffer(st, open.id), a.path, open.id)
+        : none(st),
     );
+  // A read only a note's embed asked for opens the target unlisted and unshown.
+  const embedOnlyRead = embedRequested(s, a.path) && !awaitsRestore(s, a.path);
   const ft = reg.fileTypes.forPath(a.path);
   const { body, finalNewline } = splitFile(a.file);
   const text = createTextBuffer(body);
@@ -352,14 +380,20 @@ export function onFileLoaded(
       dirty: false,
       disk: "present",
       save: { kind: "idle" },
+      ...(embedOnlyRead ? { listed: false as const } : {}),
     },
     ft,
   );
+  const settled = settleEmbedRead(s, a.path, false);
+  const withBuffer: AppState = {
+    ...settled,
+    buffers: { ...settled.buffers, [id]: b },
+    nextBufferId: id + 1,
+  };
+  if (embedOnlyRead) return none(withBuffer);
   const explorer = { ...s.panels.explorer, focused: false };
   const added: AppState = {
-    ...s,
-    buffers: { ...s.buffers, [id]: b },
-    nextBufferId: id + 1,
+    ...withBuffer,
     panels: { ...s.panels, explorer },
   };
   const recent = touchRecent(s.recent, a.path);
@@ -379,6 +413,14 @@ const REFUSED = {
   io: (path: string) => `cannot read file — not opened (${path})`,
 };
 
+/** A buffer shown in a window is listed. */
+function listBuffer(s: AppState, id: BufferId): AppState {
+  const b = s.buffers[id];
+  if (b?.listed !== false) return s;
+  const { listed: _, ...rest } = b;
+  return { ...s, buffers: { ...s.buffers, [id]: rest } };
+}
+
 /** The open policy refused a file: nothing opens and nothing changes. */
 export function onFileRefused(
   s: AppState,
@@ -386,7 +428,13 @@ export function onFileRefused(
 ): Result {
   const refused = (st: AppState) =>
     message(st, REFUSED[a.reason](a.path), "error");
-  if (!awaitsRestore(s, a.path)) return refused(s);
-  const dropped = dropRestored(s, a.path);
+  // A refused embed shows as missing in its note, so no notice interrupts typing.
+  const embed = embedRequested(s, a.path);
+  if (!awaitsRestore(s, a.path))
+    return embed ? none(settleEmbedRead(s, a.path, true)) : refused(s);
+  const dropped = dropRestored(
+    embed ? settleEmbedRead(s, a.path, true) : s,
+    a.path,
+  );
   return awaitsNavigation(s, a.path) ? chain(dropped, refused) : dropped;
 }

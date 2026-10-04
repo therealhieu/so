@@ -8,6 +8,7 @@ import { onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
+import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
@@ -55,7 +56,8 @@ export type Registries = {
 /**
  * A pure reducer over the given registries; a thrown error keeps the
  * previous state. A change to the persisted session (re)starts the save
- * debounce, and the backlinks panel follows the active note.
+ * debounce, the backlinks panel follows the active note, and notes' embed
+ * targets stay loaded while they are embedded.
  */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
@@ -111,7 +113,7 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = followShownNote(state, step(state, action));
+      const r = syncEmbeds(state, followShownNote(state, step(state, action)));
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {
             state: r.state,

@@ -3,7 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { activeBuffer } from "../../core/state/buffers";
+import { activeBuffer, listedBuffers } from "../../core/state/buffers";
 import type { AppState } from "../../core/state/types";
 import type { LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -38,7 +38,7 @@ export class Bufferline extends Renderable {
     drawCells(buf, theme.style("bufferline"), 0, 0, "", cols);
     const right = this.lc === "narrow" ? "" : `${s.workspace.root} `;
     const active = activeBuffer(s)?.id;
-    const tabs = Object.values(s.buffers)
+    const tabs = listedBuffers(s)
       .sort((a, b) => a.id - b.id)
       .map((b) => ({
         name: ` ${basename(b.path)}`,

@@ -7,7 +7,12 @@ import type { Binding } from "../kernel/commands/defaults";
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
-import { activeBuffer, bufferForPath, openPath } from "./buffers";
+import {
+  activeBuffer,
+  bufferForPath,
+  listedBuffers,
+  openPath,
+} from "./buffers";
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
@@ -73,7 +78,7 @@ function ranked(cands: readonly Candidate[], query: string): PickerItem[] {
   }));
 }
 
-const openPaths = (s: AppState) => Object.values(s.buffers).map((b) => b.path);
+const openPaths = (s: AppState) => listedBuffers(s).map((b) => b.path);
 
 /** Every workspace file and open buffer; recent files first, then by path. */
 function allFiles(s: AppState): string[] {

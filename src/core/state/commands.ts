@@ -7,6 +7,7 @@ import { searchPattern } from "../kernel/vim/search";
 import {
   activeBuffer,
   activeWindow,
+  listedBuffers,
   openPath,
   setBuffer,
   setWindow,
@@ -246,7 +247,7 @@ function closeActive(ctx: CommandContext, force: boolean): Result {
 /** `:bn` / `:bp`: show the next or previous open buffer, saving the one left. */
 function cycleBuffer(ctx: CommandContext, delta: 1 | -1): Result {
   const s = ctx.state;
-  const ids = Object.values(s.buffers)
+  const ids = listedBuffers(s)
     .map((b) => b.id)
     .sort((a, b) => a - b);
   const current = activeBuffer(s);
