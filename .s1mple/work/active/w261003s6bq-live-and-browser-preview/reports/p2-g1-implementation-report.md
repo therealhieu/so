@@ -82,12 +82,23 @@ A fresh remediator must preserve these decisions:
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p2-g1-verification-report.md` (commit `510e7c6`, status `Failed`, finding `P2-G1-VER1`; left unchanged)
+- **Status:** `Completed`
+
+The one finding is fixed. The fake browser launcher in the exit test now writes the address to a temporary name and renames it into place. As a result, the test can no longer read an empty file. A delayed launcher reproduces the old failure and passes with the fix, and both gates pass.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | `test/e2e/quit.test.ts:fakeLaunchers`: the stand-in `open`/`xdg-open` scripts now run `printf '%s' "$1" > '<opened>.tmp'` then `mv '<opened>.tmp' '<opened>'`. `mv` within one directory is a `rename(2)`, so `opened.txt` appears only with its full content, and `existsSync(opened)` cannot see a partly written file. Race proof: two scratch copies of the suite (deleted afterwards) added `sleep 1` between creating the file and writing to it. With the old direct redirect, `bun test … -t "exit tells a connected preview page"` failed with `TypeError: Invalid URL` (0 pass, 1 fail). With the new launcher it passed (1 pass, 0 fail). `bun test test/e2e/quit.test.ts test/integration/preview-server.test.ts` ×10 → 14 pass, 0 fail every run. A grep of `test/` and `src/` for shell launchers (`#!/bin/sh`, `printf`, redirects) and existence checks (`existsSync`, `.exists()`) found no other poll of a file that an external process writes. The other `.exists()` calls run after an awaited in-process operation. `bun run check` → exit 0, 736 pass. `CI=true bun run test:ci` → exit 0, 139 pass | `d128f6f` | `Fixed` |
+
+**P2-G1-VER1 Completion Checklist:**
+
+- [x] Required resolution is implemented: the launcher writes to a temporary name, then `mv`s it into place.
+- [x] Required proof passes: `bun test test/e2e/quit.test.ts` passes (10 of 10 runs, together with the preview-server suite). The `rename(2)` publishes the file only when it is complete, and the delayed-launcher experiment shows the old code fails and the new code passes.
+- [x] Change evidence is recorded: `test/e2e/quit.test.ts:fakeLaunchers`, commit `d128f6f`.
+- [x] Verification evidence is recorded: race reproduction, 10 repeated runs, `bun run check`, and `CI=true bun run test:ci` (see the table above).
 
 ## Final Status
 
@@ -95,8 +106,14 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — every task is implemented and committed, and every group check passes.
+- **Final report status:** `Completed`. Every task is implemented and committed, `P2-G1-VER1` is fixed, and every group check passes.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `c486398`, `7dabcdc`, `b3258a8`, `c28abe0`, `8d6e7d4`
-- **Final checks:** `bun run check` → 736 pass; `CI=true bun run test:ci` → 139 pass; `bun test test/boundaries.test.ts` → 2 pass; `rg` page-origin check → no match.
-- **Remaining issues:** The transient check failure (item 11) and the page not yet run in a browser (item 12), both described above.
+- **Final commits:** `c486398`, `7dabcdc`, `b3258a8`, `c28abe0`, `8d6e7d4`, `d128f6f`
+- **Final checks:**
+  - `bun run check` → exit 0; Biome, tsc, and knip clean; 736 pass, 0 fail.
+  - `CI=true bun run test:ci` → exit 0; 139 pass, 0 fail across 21 files.
+  - `bun test test/e2e/quit.test.ts test/integration/preview-server.test.ts` ×10 → 14 pass, 0 fail each run.
+  - A grep of the lines added in `8d20862..HEAD` under `src`, `test`, and `scripts` for work-process identifiers → no match.
+- **Remaining issues:**
+  - The transient check failure (Initial Implementation item 11) did not reproduce.
+  - The manual in-browser checklist (V42) is still owned by P3-G1.
