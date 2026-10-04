@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
-import { type Mounted, mountShell } from "../support/ui";
+import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
 afterEach(() => {
@@ -137,4 +137,44 @@ test("code files paint raw lines and ignore note keys", async () => {
     (at?.line ?? 0) + 1,
   );
   expect(activeBuffer(m.store.get())?.text).toBe(activeBuffer(before)?.text);
+});
+
+test("a missing embed paints its title in the unresolved link style", async () => {
+  m = await mountShell({ cols: 100, rows: 30 });
+  m.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["notes/hub.md", "notes/present.md", "notes/gone.md"],
+    done: 0,
+    total: 0,
+  });
+  openNote(
+    m,
+    "notes/hub.md",
+    "# Hub\n\nSee [[nowhere]].\n\n![[present]]\n\n![[gone]]\n",
+  );
+  m.store.dispatch({
+    type: "fileLoaded",
+    path: "notes/present.md",
+    file: textFile("# Present\n\nBody.\n"),
+    embed: true,
+  });
+  m.store.dispatch({
+    type: "fileRefused",
+    path: "notes/gone.md",
+    reason: "io",
+    embed: true,
+  });
+  const lines = (await m.frame()).split("\n");
+  const at = (text: string) => {
+    const y = lines.findIndex((l) => l.includes(text));
+    return { x: [...(lines[y] ?? "")].indexOf(text[0] ?? ""), y };
+  };
+  const missing = at("↳ gone");
+  expect(missing.y).toBeGreaterThan(-1);
+  const spans = m.t.captureSpans().lines;
+  const style = (p: { x: number; y: number }) => cellStyle(spans, p.x, p.y);
+  expect(style(missing)).toEqual(style(at("nowhere")));
+  expect(style(missing)).not.toEqual(style(at("↳ present")));
+  expect(lines.join("\n")).not.toContain("cannot read file");
 });
