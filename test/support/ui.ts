@@ -10,7 +10,7 @@ import type {
   Effect,
   TimerId,
 } from "../../src/core/state/types";
-import { createUpdate } from "../../src/core/state/update";
+import { createUpdate, type Registries } from "../../src/core/state/update";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
 import { createShell, type GraphicsSupport } from "../../src/ui/shell";
@@ -34,6 +34,8 @@ export type MountOptions = {
   files?: Record<string, Uint8Array>;
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
+  /** The registries to run on; `testRegistries()` otherwise. */
+  reg?: Registries;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -70,7 +72,7 @@ export async function mountShell(o: MountOptions) {
   let now = 1_000_000;
   const timers = new Map<TimerId, number>();
   const effects: Effect[] = [];
-  const reg = testRegistries();
+  const reg = o.reg ?? testRegistries();
   const base = initialState({
     root: "~/notes",
     cols: o.cols,
