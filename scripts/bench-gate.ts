@@ -7,7 +7,11 @@ import { join } from "node:path";
 /** Targets in milliseconds; the gate fails above twice these. */
 export const TARGETS = {
   sourceKeystrokeP95: 16,
+  liveKeystrokeP95: 16,
   openFile: 50,
+  sourceOpenFile: 50,
+  liveScrollFrameP95: 16.7,
+  sourceScrollFrameP95: 16.7,
   firstFrame: 200,
   indexReady: 3000,
   indexingKeystrokeP95: 16,
@@ -16,7 +20,11 @@ export const TARGETS = {
 /** The bench file for each target, followed by its arguments. */
 const BENCHES: Record<keyof typeof TARGETS, string> = {
   sourceKeystrokeP95: "test/bench/source-keystroke.bench.ts",
+  liveKeystrokeP95: "test/bench/live-keystroke.bench.ts",
   openFile: "test/bench/open-file.bench.ts",
+  sourceOpenFile: "test/bench/source-open.bench.ts",
+  liveScrollFrameP95: "test/bench/scroll.bench.ts --file note",
+  sourceScrollFrameP95: "test/bench/scroll.bench.ts --file ts",
   firstFrame: "test/bench/startup.bench.ts --metric firstFrame",
   indexReady: "test/bench/startup.bench.ts --metric indexReady",
   indexingKeystrokeP95: "test/bench/indexing-keystroke.bench.ts",
