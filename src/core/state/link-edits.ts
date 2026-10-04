@@ -268,7 +268,7 @@ export function onEditsApplied(
 ): Result {
   const written =
     a.ok && a.text !== undefined
-      ? summarizeWritten(s, a.path, a.text, a.stamp?.mtimeMs ?? 0)
+      ? summarizeWritten(s, a.path, a.text, a.stamp)
       : s;
   const r = written.index.rewrite;
   if (r === undefined || r.batch !== a.batch || !r.pending.includes(a.path))

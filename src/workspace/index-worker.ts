@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
+import type { FileFacts } from "../core/features/links/note-index";
 import { type NoteSummary, summarize } from "../core/features/links/summarize";
 import type { Pos, Range } from "../core/kernel/text/pos";
 import { splitBlocks } from "../core/lang/markdown/blocks";
@@ -32,6 +33,8 @@ export type FromWorker =
       done: number;
       total: number;
       files?: string[];
+      /** Size and times of files that are not notes. */
+      facts?: FileFacts[];
     }
   | { t: "ready" }
   | { t: "results"; id: number; hits: SearchHit[]; capped?: boolean }
@@ -61,10 +64,26 @@ const readOrNull = (p: string): string | null => {
   }
 };
 
-/** Every file below `root` the explorer would show; symlinked folders are not entered. */
-async function walk(): Promise<string[]> {
+/** The facts of a file that is not a note; `undefined` when it cannot be stat-ed. */
+async function factsOf(path: string): Promise<FileFacts | undefined> {
+  const st = await stat(join(root, path)).catch(() => null);
+  if (st === null) return undefined;
+  return {
+    path,
+    size: st.size,
+    mtime: st.mtimeMs,
+    ctime: st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
+  };
+}
+
+/**
+ * Every file below `root` the explorer would show, and the facts of those that
+ * are not notes; symlinked folders are not entered.
+ */
+async function walk(): Promise<{ paths: string[]; facts: FileFacts[] }> {
   const matcher = createExclusionMatcher(root, readOrNull);
   const out: string[] = [];
+  const facts: FileFacts[] = [];
   const visit = async (dir: string) => {
     const entries = await readdir(join(root, dir), {
       withFileTypes: true,
@@ -79,11 +98,15 @@ async function walk(): Promise<string[]> {
         d.isFile() ||
         (d.isSymbolicLink() &&
           (await stat(join(root, rel)).catch(() => null))?.isFile() === true);
-      if (isFile && !matcher.isExcluded(rel, false)) out.push(rel);
+      if (!isFile || matcher.isExcluded(rel, false)) continue;
+      out.push(rel);
+      if (isNote(rel)) continue;
+      const f = await factsOf(rel);
+      if (f !== undefined) facts.push(f);
     }
   };
   await visit("");
-  return out.sort();
+  return { paths: out.sort(), facts };
 }
 
 /** The text of a readable text file; `undefined` for binary, large, or missing files. */
@@ -103,11 +126,20 @@ async function summarizeFile(path: string): Promise<NoteSummary | undefined> {
   }
   if (r.text.length <= CACHE_MAX_CHARS) cache.set(path, r.text);
   else cache.delete(path);
-  return summarize(path, r.stamp.mtimeMs, scanDoc(r.text), linesOf(r.text));
+  return summarize(
+    path,
+    {
+      mtime: r.stamp.mtimeMs,
+      size: r.stamp.size,
+      ctime: r.createdMs ?? r.stamp.mtimeMs,
+    },
+    scanDoc(r.text),
+    linesOf(r.text),
+  );
 }
 
 async function scan(): Promise<void> {
-  const listed = await walk();
+  const { paths: listed, facts } = await walk();
   files.clear();
   cache.clear();
   for (const f of listed) files.add(f);
@@ -121,7 +153,7 @@ async function scan(): Promise<void> {
       summaries: pending,
       done,
       total: notes.length,
-      ...(filesSent ? {} : { files: listed }),
+      ...(filesSent ? {} : { files: listed, facts }),
     });
     filesSent = true;
     pending = [];
@@ -143,13 +175,25 @@ async function scan(): Promise<void> {
 
 async function changed(paths: string[]): Promise<void> {
   const summaries: NoteSummary[] = [];
+  const facts: FileFacts[] = [];
   for (const path of paths) {
     files.add(path);
-    if (!isNote(path)) continue;
-    const s = await summarizeFile(path);
-    if (s !== undefined) summaries.push(s);
+    if (isNote(path)) {
+      const s = await summarizeFile(path);
+      if (s !== undefined) summaries.push(s);
+    } else {
+      const f = await factsOf(path);
+      if (f !== undefined) facts.push(f);
+    }
   }
-  if (summaries.length > 0) post({ t: "batch", summaries, done: 0, total: 0 });
+  if (summaries.length > 0 || facts.length > 0)
+    post({
+      t: "batch",
+      summaries,
+      done: 0,
+      total: 0,
+      ...(facts.length > 0 ? { facts } : {}),
+    });
 }
 
 function removed(paths: string[]): void {

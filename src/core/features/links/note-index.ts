@@ -3,9 +3,19 @@ import type { LinkRef, NoteSummary } from "./summarize";
 
 export type Backlink = { from: string; link: LinkRef };
 
+/** Size and times of a workspace file that is not a note; times are epoch milliseconds. */
+export type FileFacts = {
+  path: string;
+  size: number;
+  mtime: number;
+  ctime: number;
+};
+
 export type NoteIndex = {
   readonly summaries: ReadonlyMap<string, NoteSummary>;
   readonly files: ReadonlySet<string>;
+  /** Facts of files without a summary; never a Markdown path. */
+  readonly facts: ReadonlyMap<string, FileFacts>;
   /** lowercased name ("plan" for plan.md; "photo.png") → paths */
   readonly byBasename: ReadonlyMap<string, readonly string[]>;
   /** lowercased alias → notes */
@@ -118,9 +128,15 @@ function outgoing(ix: NoteIndex, s: NoteSummary): [string, Backlink][] {
 export function buildIndex(
   summaries: readonly NoteSummary[],
   files: readonly string[],
+  facts: readonly FileFacts[] = [],
 ): NoteIndex {
   const notes = summaries.filter((s) => isNote(s.path));
-  const all = new Set([...files, ...notes.map((s) => s.path)]);
+  const other = facts.filter((f) => !isNote(f.path));
+  const all = new Set([
+    ...files,
+    ...notes.map((s) => s.path),
+    ...other.map((f) => f.path),
+  ]);
   const byBasename = editLists(new Map());
   for (const f of all) addPath(byBasename, nameKey(f), f);
   const maps = {
@@ -132,6 +148,7 @@ export function buildIndex(
   const ix: NoteIndex = {
     summaries: new Map(notes.map((s) => [s.path, s])),
     files: all,
+    facts: new Map(other.map((f) => [f.path, f])),
     byBasename: byBasename.map,
     byAlias: maps.byAlias.map,
     byTag: maps.byTag.map,
@@ -149,18 +166,25 @@ export function buildIndex(
 export const emptyIndex = (): NoteIndex => buildIndex([], []);
 
 /**
- * Remove `remove` (files and their summaries), then add `add` summaries and
- * `files`. Only notes whose links may resolve differently are re-resolved:
- * the changed notes, and notes linking to a name whose files or aliases changed.
+ * Remove `remove` (files with their summaries and facts), then add `add`
+ * summaries, `files`, and `facts`. Only notes whose links may resolve
+ * differently are re-resolved: the changed notes, and notes linking to a name
+ * whose files or aliases changed.
  */
 function patch(
   ix: NoteIndex,
   remove: readonly string[],
   add: readonly NoteSummary[],
   files: readonly string[],
+  facts: readonly FileFacts[] = [],
 ): NoteIndex {
   const added = add.filter((s) => isNote(s.path));
-  const newFiles = [...files, ...added.map((s) => s.path)];
+  const addedFacts = facts.filter((f) => !isNote(f.path));
+  const newFiles = [
+    ...files,
+    ...added.map((s) => s.path),
+    ...addedFacts.map((f) => f.path),
+  ];
   const removed = remove.filter((p) => ix.files.has(p));
   const changedNotes = new Set([
     ...removed.filter((p) => ix.summaries.has(p)),
@@ -194,6 +218,7 @@ function patch(
   for (const path of stale) dropFrom(path, relink);
 
   const summaries = new Map(ix.summaries);
+  const nextFacts = new Map(ix.facts);
   const all = new Set(ix.files);
   const byBasename = editLists(ix.byBasename);
   const maps = {
@@ -205,6 +230,7 @@ function patch(
     const old = summaries.get(p);
     if (old !== undefined) linkSummary(maps, old, false);
     summaries.delete(p);
+    nextFacts.delete(p);
     all.delete(p);
     removePath(byBasename, nameKey(p), p);
   }
@@ -214,6 +240,7 @@ function patch(
     linkSummary(maps, s, true);
     summaries.set(s.path, s);
   }
+  for (const f of addedFacts) nextFacts.set(f.path, f);
   for (const f of newFiles) {
     all.add(f);
     addPath(byBasename, nameKey(f), f);
@@ -222,6 +249,7 @@ function patch(
   const next: NoteIndex = {
     summaries,
     files: all,
+    facts: nextFacts,
     byBasename: byBasename.map,
     byAlias: maps.byAlias.map,
     byTag: maps.byTag.map,
@@ -237,13 +265,18 @@ function patch(
   return next;
 }
 
-/** Add or replace note summaries; `files` adds other workspace files. Only `.md` paths have summaries. */
+/**
+ * Add or replace note summaries; `files` adds other workspace files and
+ * `facts` adds or replaces their facts. Only `.md` paths have summaries, and
+ * only other paths have facts.
+ */
 export function applySummaries(
   ix: NoteIndex,
   summaries: readonly NoteSummary[],
   files: readonly string[] = [],
+  facts: readonly FileFacts[] = [],
 ): NoteIndex {
-  return patch(ix, [], summaries, files);
+  return patch(ix, [], summaries, files, facts);
 }
 
 /** Paths at or below `root` (a file, or a folder without a trailing "/"). */
@@ -268,12 +301,15 @@ export function movePaths(
     for (const f of under(ix, from)) mapping.set(f, to + f.slice(from.length));
   const summaries: NoteSummary[] = [];
   const files: string[] = [];
+  const facts: FileFacts[] = [];
   for (const [from, to] of mapping) {
     const s = ix.summaries.get(from);
+    const f = ix.facts.get(from);
     if (s !== undefined) summaries.push({ ...s, path: to });
+    else if (f !== undefined && !isNote(to)) facts.push({ ...f, path: to });
     else files.push(to);
   }
-  return patch(ix, [...mapping.keys()], summaries, files);
+  return patch(ix, [...mapping.keys()], summaries, files, facts);
 }
 
 /** Add workspace files that have no summary yet. */

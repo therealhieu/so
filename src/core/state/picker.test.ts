@@ -206,7 +206,9 @@ test("the backlinks picker lists linking notes, then unlinked mentions", () => {
   for (const a of [
     {
       type: "indexBatch",
-      summaries: files.map((p) => summarize(p, 1, scanDoc(notes[p] ?? ""))),
+      summaries: files.map((p) =>
+        summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(notes[p] ?? "")),
+      ),
       files,
       done: files.length,
       total: files.length,

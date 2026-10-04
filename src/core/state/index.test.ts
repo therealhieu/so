@@ -13,7 +13,8 @@ const update = createUpdate(testRegistries());
 const run = (s: AppState, ...actions: Action[]) =>
   actions.reduce((st, a) => update(st, a).state, s);
 
-const note = (path: string, text: string) => summarize(path, 1, scanDoc(text));
+const note = (path: string, text: string) =>
+  summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text));
 
 /** A ready index over `notes` (path → text) and other `files`. */
 function indexed(notes: Record<string, string>, files: string[] = []) {

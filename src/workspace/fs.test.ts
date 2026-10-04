@@ -237,3 +237,13 @@ test("exclusive create fails cleanly in a read-only folder", async () => {
     await chmod(dir, 0o755);
   }
 });
+
+test("a read reports the file's created time", async () => {
+  const p = join(root, "created.md");
+  await writeFile(p, "x\n");
+  const r = await readTextFile(p);
+  const st = await stat(p);
+  expect("createdMs" in r && r.createdMs).toBe(
+    st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
+  );
+});

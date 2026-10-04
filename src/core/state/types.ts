@@ -1,6 +1,6 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
-import type { NoteIndex } from "../features/links/note-index";
+import type { FileFacts, NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
 import type { TemplateVars } from "../features/notes/template";
@@ -26,6 +26,8 @@ export type TextFile = {
   bom: boolean;
   eol: "\n" | "\r\n";
   stamp: Stamp;
+  /** Birth time when the file system reports one, else the modification time. */
+  createdMs?: number;
 };
 /** One listed folder entry; symlinks report their target's kind. */
 export type DirEntry = { name: string; kind: "file" | "dir" };
@@ -351,6 +353,8 @@ export type Action =
       type: "indexBatch";
       summaries: NoteSummary[];
       files: string[];
+      /** Facts of files that are not notes. */
+      facts?: FileFacts[];
       done: number;
       total: number;
     }

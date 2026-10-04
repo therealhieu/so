@@ -36,7 +36,7 @@ const tree = async () =>
 /** A finished index over `notes` (path → text); its toast is dismissed. */
 function indexed(notes: Record<string, string>) {
   const summaries = Object.entries(notes).map(([p, t]) =>
-    summarize(p, 1, scanDoc(t)),
+    summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(t)),
   );
   const files = Object.keys(notes);
   m.store.dispatch({

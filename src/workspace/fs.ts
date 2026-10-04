@@ -85,6 +85,7 @@ export async function readTextFile(
     bom,
     eol: text.includes("\r\n") ? "\r\n" : "\n",
     stamp: stampOfBytes(st, bytes),
+    createdMs: st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
   };
 }
 

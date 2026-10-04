@@ -11,7 +11,7 @@ import { markdownFileType } from "../lang/markdown/file-type";
 import { linesOf, scanDoc } from "../lang/markdown/scan";
 import { bufferForPath } from "./buffers";
 import { none, toast } from "./result";
-import type { Action, AppState, FileEvent, FsOp, Result } from "./types";
+import type { Action, AppState, FileEvent, FsOp, Result, Stamp } from "./types";
 
 const isNote = (path: string) => /\.md$/i.test(path);
 
@@ -28,7 +28,7 @@ export function onIndexBatch(
   s: AppState,
   a: Extract<Action, { type: "indexBatch" }>,
 ): Result {
-  const ix = applySummaries(s.index.ix, a.summaries, a.files);
+  const ix = applySummaries(s.index.ix, a.summaries, a.files, a.facts);
   if (a.done === 0 && a.total === 0) return none(withIx(s, ix));
   return none({
     ...s,
@@ -69,10 +69,17 @@ export function summarizeSaved(s: AppState, path: string): AppState {
   return withIx(
     s,
     applySummaries(s.index.ix, [
-      summarize(path, b.stamp.mtimeMs, doc.scan, b.text),
+      summarize(path, factsOf(s, path, b.stamp), doc.scan, b.text),
     ]),
   );
 }
+
+/** A note's facts after `so` wrote it: the write's stamp, and the created time the index already knows. */
+const factsOf = (s: AppState, path: string, stamp: Stamp) => ({
+  mtime: stamp.mtimeMs,
+  size: stamp.size,
+  ctime: s.index.ix.summaries.get(path)?.ctime ?? stamp.mtimeMs,
+});
 
 /** A file operation `so` completed; the watcher stays silent about it. */
 export function indexAfterFsOp(s: AppState, op: FsOp): AppState {
@@ -83,7 +90,9 @@ export function indexAfterFsOp(s: AppState, op: FsOp): AppState {
       return withIx(
         s,
         isNote(op.from)
-          ? applySummaries(ix, [summarize(op.from, 0, scanDoc(""))])
+          ? applySummaries(ix, [
+              summarize(op.from, { mtime: 0, size: 0, ctime: 0 }, scanDoc("")),
+            ])
           : addFiles(ix, [op.from]),
       );
     case "rename":
@@ -108,11 +117,16 @@ export const summarizeWritten = (
   s: AppState,
   path: string,
   text: string,
-  mtime: number,
+  stamp: Stamp | undefined,
 ): AppState =>
   withIx(
     s,
     applySummaries(s.index.ix, [
-      summarize(path, mtime, scanDoc(text), linesOf(text)),
+      summarize(
+        path,
+        factsOf(s, path, stamp ?? { mtimeMs: 0, size: 0, hash: "" }),
+        scanDoc(text),
+        linesOf(text),
+      ),
     ]),
   );

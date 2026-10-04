@@ -42,7 +42,9 @@ function workspace(extra: Record<string, string> = {}) {
 }
 
 const summaries = (notes: Record<string, string>) =>
-  Object.entries(notes).map(([p, t]) => summarize(p, 1, scanDoc(t)));
+  Object.entries(notes).map(([p, t]) =>
+    summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(t)),
+  );
 
 function indexing(notes = workspace()): AppState {
   const all = summaries(notes);

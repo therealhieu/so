@@ -20,7 +20,9 @@ function indexed(): AppState {
   const files = Object.keys(NOTES);
   let s = update(fresh(), {
     type: "indexBatch",
-    summaries: files.map((p) => summarize(p, 1, scanDoc(NOTES[p] ?? ""))),
+    summaries: files.map((p) =>
+      summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(NOTES[p] ?? "")),
+    ),
     files,
     done: files.length,
     total: files.length,
@@ -149,7 +151,13 @@ test("note items follow index changes made while the popup is open", () => {
   let s = keys(indexed(), "Go[[pl").state;
   s = update(s, {
     type: "indexBatch",
-    summaries: [summarize("projects/plan-b.md", 1, scanDoc("# B\n"))],
+    summaries: [
+      summarize(
+        "projects/plan-b.md",
+        { mtime: 1, size: 0, ctime: 1 },
+        scanDoc("# B\n"),
+      ),
+    ],
     files: [],
     done: 4,
     total: 4,

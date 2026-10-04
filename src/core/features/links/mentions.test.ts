@@ -7,7 +7,7 @@ import { summarize } from "./summarize";
 const ix = applySummaries(
   emptyIndex(),
   ["plan.md", "notes/x.md", "archive/plan.md"].map((p) =>
-    summarize(p, 1, scanDoc("")),
+    summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc("")),
   ),
 );
 const range = { start: { line: 2, col: 4 }, end: { line: 2, col: 8 } };
