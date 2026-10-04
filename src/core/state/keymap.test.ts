@@ -67,7 +67,7 @@ test("config overrides replace defaults per scope and are marked", () => {
 test("an override written with a named key replaces the same sequence", () => {
   const config = withConfig({ keys: { normal: { " e": "window.split" } } });
   const bindings = effectiveBindings(testRegistries(), config).filter(
-    (b) => b.scope.mode === "normal" && b.id.endsWith("toggle"),
+    (b) => b.scope.mode === "normal" && b.id === "explorer.toggle",
   );
   expect(bindings).toEqual([]);
 });

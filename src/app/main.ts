@@ -25,11 +25,16 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { initialState } from "../core/state/init";
+import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
   linkBindings,
   linkCommands,
   linkGroups,
 } from "../core/state/link-commands";
+import {
+  markdownBindings,
+  markdownCommands,
+} from "../core/state/markdown-commands";
 import { markdownViewContext } from "../core/state/markdown-view";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
@@ -104,6 +109,8 @@ function registries(): Registries {
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
+  for (const c of markdownCommands) commands.register(c);
+  commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   viewContexts.register("markdown", markdownViewContext);
   builtinRenderers();
@@ -111,7 +118,12 @@ function registries(): Registries {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
-    bindings: [...defaultBindings, ...linkBindings],
+    bindings: [
+      ...defaultBindings,
+      ...editorBindings,
+      ...linkBindings,
+      ...markdownBindings,
+    ],
     groups: { ...defaultGroups, ...linkGroups },
     viewContexts,
   };
