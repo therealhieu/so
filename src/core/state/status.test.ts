@@ -28,6 +28,32 @@ test("status shows a word count only for Markdown buffers", () => {
   expect(statusSegments(open("a.ts", "one two\n")).words).toBeUndefined();
 });
 
+test("the word count covers every block and follows edits", () => {
+  const note = [
+    "---",
+    "tags: [a, b]",
+    "---",
+    "# Title here",
+    "",
+    "One two three",
+    "four five",
+    "",
+    "```ts",
+    "const x = 1;",
+    "```",
+    "",
+    "- item one",
+    "- item two",
+    "",
+  ].join("\n");
+  const naive = (text: string) => text.match(/\S+/g)?.length ?? 0;
+  let s = open("a.md", note);
+  expect(statusSegments(s).words).toBe(naive(note));
+  for (const key of ["G", "o", "s", "i", "x", " ", "w", "<Esc>"])
+    s = update(s, { type: "key", key, now: 0 }).state;
+  expect(statusSegments(s).words).toBe(naive(note) + 2);
+});
+
 test("status shows a failed save and its retry time", () => {
   let s = open("a.md", "x\n");
   s = update(s, { type: "key", key: "x", now: 0 }).state;
