@@ -101,12 +101,48 @@ No unresolved implementation or verification issue remains.
 
 ## Remediation
 
-- **Verification reports:** None yet
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-verification-report.md` (commit `eb6e489`, `Failed`, five Minor findings)
+- **Status:** `Completed`
+
+All five findings are fixed in separate commits on top of `eb6e489`: `9bfcc4b` (VER5), `9760ead` (VER4), `0f18201` (VER1), `f4d216d` (VER2), `9295198` (VER3). The orchestrator ruled that UREQ9@R1's suggestions, list chips, and filter summary are owned by this work, so VER2 was implemented, not deferred. The verification report is unchanged.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G2-VER1` | `src/core/state/status.ts` `modeOf`: in a base window in normal mode the mode is `base`, and `insert` while `kindState.edit` is set. Explorer, command line, and visual modes keep their badges. `src/ui/views/statusline.ts` adds the `BASE` badge (`modeNormal` token); `INSERT` reuses `modeInsert`.<br>RED: three new assertions in `test/ui/bases.golden.test.ts` failed on ` NORMAL  │ tasks.base …`.<br>GREEN: `bun test test/ui/bases.golden.test.ts` passes. The table and board frames start the status line with ` BASE `, and the edited-cell frame with ` INSERT `. The snapshot diff changes only the badge line of each base golden (12 lines) | `0f18201` | `Fixed` |
+| `P2-G2-VER2` | **Text suggestions:** `base-model.ts` `suggestionsFor` lists the distinct non-empty string values of the edited property across the base's candidates (the evaluator's input, unsaved notes included). Property names match in any letter case, values match the typed prefix ignoring case, and the list is sorted and capped at 5. They are exposed as `BaseViewModel.suggestions` while a text cell is edited. In `cellEditKey`, `<Tab>` completes the first suggestion.<br>**List chips:** `CellEdit.items` holds the chips of a `list`/`tags`/`aliases` cell. `Enter` with typed text adds a chip (a leading `#` is stripped for tags). `Backspace` on an empty input removes the last chip. `Enter` on an empty input writes the list through the same `writeProperty`; an empty list writes `null`.<br>**Filter summary:** `BaseViewModel.filter` is the base's and, unless toggled off, the view's filters as one expression (`and`/`or` joined, nested groups parenthesized, `not` as "none of"). The toolbar shows `⧩ <expression>`, cut at 32 cells, and `view filters off` when toggled off. A toolbar that does not fit drops the expression first, then everything but the count.<br>**Painter:** `src/ui/widgets/base.ts` paints the error, the chips (`baseChip`), and the suggestions (the first in `baseFocus`, the rest in `baseSuggest`) under the edited cell. `base-view.ts` passes them on and shows matching hint rows. There are two new theme tokens.<br>RED: three unit tests and three golden assertions failed before the change.<br>GREEN: `bun test src/core/state/base-commands.test.ts` passes, covering:<br>• suggestions `["doing","todo"]` → `["doing"]` after `d`, `Tab` → `doing`, and `Enter` → `patchFrontmatter status: doing`;<br>• chips: `api, docs` + `ui` → `Backspace` → `x` → write `["api","x"]` expecting `["api","docs"]`;<br>• the filter `file.inFolder("tasks") and (status == "todo" or done == false)`, which drops the view part after `f`, and `not (status == "todo" or done == true)`.<br>`bun test test/ui/bases.golden.test.ts` passes. The suggestion list sits under the cell, chips show `#api × #docs × #ui ×`, and the empty view's toolbar shows `⧩ status == "archived" · 0 rows`. There is no new dependency, no kernel change, and no expression-evaluation change | `f4d216d` | `Fixed` |
+| `P2-G2-VER3` | `test/ui/bases.golden.test.ts` `describe("base styles")`:<br>• For colour, `NO_COLOR`, and light, snapshots the fg, bg, and attrs of the focused cell, the focused card, the `doing` lane dot, and the `⊘ moves off` notice.<br>• Asserts that dark and light differ for each of the four.<br>• Asserts that the `NO_COLOR` board frame has only `default` colour intents.<br>`src/core/state/base-commands.test.ts` adds a board grouped by `file.folder`: `movable` is false, `L` writes nothing, and the toast reads "Moves are off: this board groups by a file property".<br>These tests cover existing behavior, so there was no natural RED. They passed on first run.<br>Snapshots (dark): focused cell bg `45,63,118`; light: `183,197,240`; `NO_COLOR`: `INVERSE` (32) on default colours | `9295198` | `Fixed` |
+| `P2-G2-VER4` | `src/core/state/buffers.ts`: `READ_ONLY_HINT` is replaced by `readOnlyHint(b)`. It returns `READ_ONLY_FILE` ("read-only file") for a `readOnly` buffer, else the reading-view hint. All four refusal sites use it: `commands.ts` `:s`, `markdown-commands.ts` checkbox toggle, `keys.ts` vim edits, and `note-commands.ts` template insertion. `writeActive` uses the same constant.<br>RED: the new test received "reading mode — <leader>m to edit".<br>GREEN: `bun test src/core/state/base-commands.test.ts` passes. `:s/a/b/` in `tasks.base` → "read-only file", the text is unchanged, and there are no effects. The existing reading-view messages in Markdown tests are unchanged | `9760ead` | `Fixed` |
+| `P2-G2-VER5` | `BaseWindowState.focus.index` holds the row (table) or card in its lane (board) last focused. `focusCell`, `focusCard`, and `moveCard` write it. `derive` no longer takes the memoized previous model: when the focused path is gone, focus stays at `ws.focus.index`. It starts at 0 when the window has not focused a note, or when its view name no longer exists in the file. `scroll.row` is removed (`scroll: { col }`), and `isBaseWindowState` checks `scroll.col`. The memo now only returns a model equal to a fresh derivation of its key.<br>RED: the new test returned row 0 after a memo primed by a state focused on row 0, but row 1 before.<br>GREEN: `bun test src/core/state/base-model.test.ts` → 10 pass. The new test derives the same focus (row 1, `tasks/write-report.md`) whichever state primed the memo. The existing focus-follow, fresh-window, and memo-hit cases still pass | `9bfcc4b` | `Fixed` |
+
+**Completion checklists.** Every finding's four items are satisfied:
+
+- the required resolution is implemented;
+- the required proof passes;
+- the change evidence is recorded in the table above;
+- the verification evidence is recorded there too.
+
+**Group verification after remediation:**
+
+| Check | Result | Actual result |
+|---|---|---|
+| `bun run check` | `Passed` | Biome, tsc, and knip are clean. 990 pass, 0 fail; 3.6 s |
+| Orphan check → `bun run test:ci` → orphan check | `Passed` | No `so`/`bun test` process before or after. 187 pass, 0 fail, 54 snapshots; 33 s |
+| `bun test test/ui/bases.golden.test.ts` | `Passed` | 19 pass. Only `test/ui/__snapshots__/bases.golden.test.ts.snap` changed among snapshot files since `80ea2c8` |
+| Base state suites | `Passed` | `base-model.test.ts` 10 pass, `base-commands.test.ts` 19 pass, `base-write.test.ts` 6 pass |
+| V20: `rg -n '\.base\b' src/core/kernel src/core/state src/ui src/app -g '!*.test.ts'` | `Passed` | No match (exit 1) |
+| Kanban gate: `rg -n 'kanban-test' src -g '!*.test.ts'` | `Passed` | No match. `KANBAN_TYPE` is still `undefined` |
+| Protected scope: `git diff 80ea2c8 HEAD -- package.json bun.lock .github src/core/kernel` | `Passed` | Empty. Registrations are unchanged, so `registries()` and `testRegistries` stay mirrored |
+| Work-process identifiers in added `src`/`test` lines | `Passed` | No match |
+
+**Decisions a later reader must preserve:**
+
+1. **Suggestions** come from every candidate the base evaluates, not only the shown rows. Only string values count. `Tab` completes the first one; there is no up/down selection.
+2. **Chips** are painted on the line under the edited cell, the way the inline error is, not in a titled float. Only `tags` chips carry `#`.
+3. **The filter summary** shows the expression text as written, for example `!=`, not `≠`. On a narrow toolbar it is dropped before the group and count, so the 80-column board golden keeps `group: status · 4 cards`.
+4. **An empty chip list** writes `null`, matching `validateCell` for empty text.
+5. **Read-only refusals.** Only buffers whose file type is `readOnly` say "read-only file". The Markdown reading view keeps its `<leader>m` hint.
 
 ## Final Status
 
@@ -114,13 +150,15 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`. All tasks and group checks pass.
+- **Final report status:** `Completed`. All tasks are implemented, all five verification findings are fixed, and every group check passes.
 - **Final report commit:** returned to the orchestrator
-- **Final commits:** `122ee39`, `d5fee20`, `b59ad85`, `16d6d2b`, `b6ae4a8`, `fbb838c`, `80ea2c8`
+- **Final commits:**
+  - Initial: `122ee39`, `d5fee20`, `b59ad85`, `16d6d2b`, `b6ae4a8`, `fbb838c`, `80ea2c8`
+  - Remediation: `9bfcc4b`, `9760ead`, `0f18201`, `f4d216d`, `9295198`
 - **Final checks:**
-  - `bun run check` → 984 pass
-  - `bun run test:ci` → 180 pass
-  - Bases goldens → 12 pass
+  - `bun run check` → 990 pass
+  - `bun run test:ci` → 187 pass, 54 snapshots
+  - Bases goldens → 19 pass
   - V20 → no match
   - Kanban gate → no match
 - **Remaining issues:** None
