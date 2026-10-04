@@ -32,6 +32,8 @@ export type MountOptions = {
   capabilities?: GraphicsSupport;
   /** Image bytes by workspace path or URL; any other image fails to load. */
   files?: Record<string, Uint8Array>;
+  /** Loads images in place of `files`, so a test controls when each settles. */
+  loadImage?: (ref: string) => Promise<Uint8Array>;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -93,6 +95,7 @@ export async function mountShell(o: MountOptions) {
   const loads: string[] = [];
   const loadImage = (ref: string) => {
     loads.push(ref);
+    if (o.loadImage !== undefined) return o.loadImage(ref);
     const bytes = o.files?.[ref];
     return bytes === undefined
       ? Promise.reject(new Error(`${ref}: no such file`))

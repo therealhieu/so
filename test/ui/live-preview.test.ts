@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
+import { themes } from "../../src/ui/theme";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
 import {
@@ -269,6 +270,41 @@ test("images draw with the terminal's best protocol and fall back to blocks or a
   } finally {
     draw.mockRestore();
   }
+});
+
+test("an image shows a dimmed loading placeholder until its bytes arrive", async () => {
+  const bytes = Promise.withResolvers<Uint8Array>();
+  m = await mountShell({
+    cols: 100,
+    rows: 40,
+    capabilities: KITTY,
+    loadImage: () => bytes.promise,
+  });
+  m.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["notes/diagram.md", "images/diagram.png"],
+    done: 0,
+    total: 0,
+  });
+  openNote(m, "notes/diagram.md", IMAGE_NOTE);
+  await m.frame();
+  await Bun.sleep(0);
+  const lines = (await m.frame()).split("\n");
+  const y = lines.findIndex((l) => l.includes("◌ diagram.png"));
+  expect(y).toBeGreaterThan(0);
+  expect(m.loads).toEqual(["images/diagram.png"]);
+  const s = themes.dark.style("imagePlaceholder");
+  const x = [...(lines[y] ?? "")].indexOf("◌");
+  expect(cellStyle(m.t.captureSpans().lines, x, y)).toEqual({
+    fg: s.fg.toInts().join(","),
+    bg: s.bg.toInts().join(","),
+    attrs: s.attrs,
+  });
+
+  bytes.resolve(PNG);
+  await Bun.sleep(0);
+  expect(await m.frame()).not.toContain("◌");
 });
 
 test("an image is drawn only while it is on screen, so no placement outlives it", async () => {
