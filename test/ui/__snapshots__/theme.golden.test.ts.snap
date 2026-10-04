@@ -122,3 +122,84 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
 2/18 config.yaml                                                                
 "
 `;
+
+exports[`live view states stay distinguishable without colour at 80×24 1`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/states.md                                                  1:1 
+                                                                                
+"
+`;
+
+exports[`live view states matches the light theme golden 1`] = `
+{
+  "error": {
+    "attrs": 1,
+    "bg": "225,226,231,255",
+    "fg": "198,67,67,255",
+  },
+  "resolved": {
+    "attrs": 8,
+    "bg": "225,226,231,255",
+    "fg": "0,113,151,255",
+  },
+  "reveal": {
+    "attrs": 0,
+    "bg": "225,226,231,255",
+    "fg": "140,108,62,255",
+  },
+  "unresolved": {
+    "attrs": 8,
+    "bg": "225,226,231,255",
+    "fg": "198,67,67,255",
+  },
+}
+`;
+
+exports[`live view states matches the light theme golden 2`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ notes/states.md                                                  1:1 
+                                                                                
+"
+`;
