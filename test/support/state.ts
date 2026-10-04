@@ -1,3 +1,4 @@
+import { baseEmbedRenderer } from "../../src/core/features/bases/embed";
 import {
   baseEditorKind,
   baseFileType,
@@ -22,6 +23,7 @@ import { UndoHistory } from "../../src/core/kernel/editor/undo";
 import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
+import { registerBlockRenderer } from "../../src/core/lang/markdown/live-preview";
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../../src/core/state/base-model";
@@ -96,6 +98,7 @@ export function testRegistries(): Registries {
   viewContexts.register("markdown", markdownViewContextFor(reg));
   viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
   embedModels.register("base", baseEmbedModel);
+  registerBlockRenderer("base", baseEmbedRenderer);
   return reg;
 }
 

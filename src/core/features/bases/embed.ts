@@ -1,3 +1,6 @@
+import { embedLink, wholeBlock } from "../../lang/markdown/block-text";
+import type { BlockRenderer } from "../../lang/markdown/live-preview";
+import { embedAsLink } from "../../lang/markdown/renderers/embed";
 import type { KanbanModel } from "./kanban";
 import type { TableModel } from "./table";
 
@@ -35,7 +38,8 @@ function tableLines(t: TableModel): ("group" | "row")[] {
 
 /**
  * `view` shown as `shown` with at most `max` body lines: a table keeps its
- * header and separator and counts the rows past the cap; a board keeps its
+ * header and separator, leaves its summaries out, and counts the rows past
+ * the cap; a board keeps its
  * lane headers and `max` one-line cards per lane, plus a row for `↓ N more`
  * when a lane has more.
  */
@@ -55,7 +59,10 @@ export function baseEmbedOf(
     const hidden = lines.slice(cap).filter((l) => l === "row").length;
     return {
       ...common,
-      table: shown.table,
+      table: {
+        ...shown.table,
+        summaries: shown.table.summaries.map(() => undefined),
+      },
       bodyRows: 2 + Math.max(1, Math.min(lines.length, cap)),
       more: hidden,
     };
@@ -71,3 +78,46 @@ export function baseEmbedOf(
   }
   return { ...common, bodyRows: 1, more: 0 };
 }
+
+/** What the base embed painter draws under the embed's title. */
+export type BaseEmbedData =
+  | { title: string; state: "loading" }
+  | { title: string; state: "missing"; notice: string }
+  | { title: string; state: "ok"; model: BaseEmbedModel };
+
+/**
+ * `![[x.base]]` and `![[x.base#View]]` as a read-only `base` widget: the
+ * model's rows under a title row and `↓ N more` when capped, three rows at
+ * most while the base loads, and the title with a notice when it is
+ * missing or cannot be shown. Inside an embedded note it stays a link.
+ */
+export const baseEmbedRenderer: BlockRenderer = (block, v, { doc, ctx }) => {
+  const nestedLink = embedAsLink(block, v, doc, ctx);
+  if (nestedLink !== undefined) return nestedLink;
+  const { target, section } = embedLink(doc, block, v.buf);
+  const title = `${target}${section ?? ""}`;
+  const path = ctx.resolve(target);
+  const got = path === undefined ? "missing" : ctx.embedModel(path, section);
+  let data: BaseEmbedData;
+  let rows: number;
+  if (got === "loading") {
+    data = { title, state: "loading" };
+    rows = Math.min(ctx.embedMaxRows, 3);
+  } else if (isBaseEmbedModel(got)) {
+    data = { title, state: "ok", model: got };
+    rows = 1 + got.bodyRows + (got.more > 0 ? 1 : 0);
+  } else {
+    const notice =
+      got === "missing" ? "base not found" : "cannot show this file as a base";
+    data = { title, state: "missing", notice };
+    rows = 2;
+  }
+  return [
+    {
+      kind: "replace",
+      range: wholeBlock(v.buf, block),
+      block: true,
+      widget: { type: "base", data, rows },
+    },
+  ];
+};

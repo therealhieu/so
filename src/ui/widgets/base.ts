@@ -1,8 +1,10 @@
 import type { OptimizedBuffer } from "@opentui/core";
+import type { BaseEmbedData } from "../../core/features/bases/embed";
 import type { KanbanModel } from "../../core/features/bases/kanban";
 import type { TableCell, TableModel } from "../../core/features/bases/table";
 import type { Rect } from "../editors/text-view";
 import { drawCells, type Theme } from "../theme";
+import type { WidgetPainter } from "./registry";
 
 /**
  * The text of a cell being edited, its caret, and why it cannot be written;
@@ -557,3 +559,55 @@ export function paintBaseBoard(
     put(buf, theme, rect, "dim", rect.w - 1, rect.y, "›");
   return l;
 }
+
+/**
+ * A base embedded in a note, read-only: a framed title, the table or a
+ * one-line board inside the frame (with the view's notice on the title
+ * row), and `↓ N more` when the table is capped. A model with nothing to
+ * show has its notice in the frame; `loading…` shows while the base is read,
+ * and the title in the unresolved style with a notice when it cannot be shown.
+ */
+export const paintBaseEmbed: WidgetPainter = (t, w) => {
+  const d = w.data as BaseEmbedData;
+  const rect: Rect = { x: t.x, y: t.y, w: t.width, h: t.rows };
+  const row = (i: number, parts: [string, string][]) => {
+    let x = 0;
+    for (const [text, token] of parts) {
+      put(t.buf, t.theme, rect, token, x, t.y + i, text);
+      x += len(text);
+    }
+    put(t.buf, t.theme, rect, "text", x, t.y + i, "", Math.max(0, t.width - x));
+  };
+  if (d.state === "missing") {
+    row(0, [[`↳ ${d.title}`, "linkUnresolved"]]);
+    for (let i = 1; i < t.rows; i++)
+      row(i, i === 1 ? [[`  ${d.notice}`, "dim"]] : []);
+    return;
+  }
+  const m = d.state === "ok" ? d.model : undefined;
+  const shows = m?.table !== undefined || m?.board !== undefined;
+  const title: [string, string][] = [
+    ["╭ ", "dim"],
+    [`↳ ${d.title}`, "mdLink"],
+  ];
+  if (shows && m?.notice !== undefined) title.push([`  ${m.notice}`, "dim"]);
+  row(0, title);
+  for (let i = 1; i < t.rows; i++) row(i, [["│", "dim"]]);
+  if (m === undefined || !shows) {
+    const text = m === undefined ? "loading…" : (m.notice ?? "");
+    if (t.rows > 1) row(1, [[`│ ${text}`, "dim"]]);
+    return;
+  }
+  const body = Math.min(m.bodyRows, Math.max(0, t.rows - 1));
+  const inner: Rect = {
+    x: t.x + 2,
+    y: t.y + 1,
+    w: Math.max(0, t.width - 2),
+    h: body,
+  };
+  if (m.table !== undefined) paintBaseTable(t.buf, t.theme, inner, m.table);
+  else if (m.board !== undefined)
+    paintBaseBoard(t.buf, t.theme, inner, m.board, { wide: false });
+  if (m.more > 0 && body + 1 < t.rows)
+    row(body + 1, [[`╰ ↓ ${m.more} more`, "dim"]]);
+};

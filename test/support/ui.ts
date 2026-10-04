@@ -15,6 +15,7 @@ import { BaseView } from "../../src/ui/editors/base-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
 import { createShell, type GraphicsSupport } from "../../src/ui/shell";
+import { paintBaseEmbed } from "../../src/ui/widgets/base";
 import { paintEmbed } from "../../src/ui/widgets/embed";
 import { paintImage } from "../../src/ui/widgets/image";
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
@@ -66,6 +67,7 @@ export async function mountShell(o: MountOptions) {
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
   registerWidgetPainter("image", paintImage);
+  registerWidgetPainter("base", paintBaseEmbed);
   const t = await createTestRenderer({
     width: o.cols,
     height: o.rows,

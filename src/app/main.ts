@@ -5,6 +5,7 @@ import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
 import { parseConfig } from "../core/config/toml";
+import { baseEmbedRenderer } from "../core/features/bases/embed";
 import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
 import { KANBAN_TYPE } from "../core/features/bases/types";
 import {
@@ -24,6 +25,7 @@ import {
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
+import { registerBlockRenderer } from "../core/lang/markdown/live-preview";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
@@ -60,6 +62,7 @@ import { BaseView } from "../ui/editors/base-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
+import { paintBaseEmbed } from "../ui/widgets/base";
 import { paintEmbed } from "../ui/widgets/embed";
 import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
@@ -163,6 +166,7 @@ function registries(): Registries {
   viewContexts.register("markdown", markdownViewContextFor(reg));
   viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
   embedModels.register("base", baseEmbedModel);
+  registerBlockRenderer("base", baseEmbedRenderer);
   return reg;
 }
 
@@ -276,6 +280,7 @@ async function main(argv: string[]): Promise<void> {
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
   registerWidgetPainter("image", paintImage);
+  registerWidgetPainter("base", paintBaseEmbed);
   const renderer = await createRenderer();
   const shell = createShell(renderer, {
     reg,

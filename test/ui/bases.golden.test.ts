@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { TextAttributes } from "@opentui/core";
 import { indexed, TASK_NOTES, TASKS_BASE } from "../support/bases";
+import { textFile } from "../support/state";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
 const BOARD = `filters:
@@ -285,5 +286,49 @@ describe("base styles", () => {
         .flatMap((s) => [s.fg.intent, s.bg.intent]),
     );
     expect([...colours]).toEqual(["default"]);
+  });
+});
+
+describe("base embed", () => {
+  const NOTE = "# Today\n\n![[tasks.base]]\n\n![[gone.base]]\n\nAfter\n";
+
+  test("a note paints an embedded base read-only, capped with a more marker", async () => {
+    m = await mountShell({
+      cols: 80,
+      rows: 24,
+      config: "[preview]\nembedMaxRows = 2\n",
+    });
+    m.store.dispatch(indexed(TASK_NOTES, ["today.md", "tasks.base"]));
+    m.keys("<leader>e");
+    m.open("today.md", NOTE);
+    expect(m.effects).toContainEqual({
+      kind: "read",
+      path: "tasks.base",
+      embed: true,
+    });
+    let frame = await m.frame();
+    expect(frame).toContain("╭ ↳ tasks.base");
+    expect(frame).toContain("│ loading…");
+    expect(frame).toContain("↳ gone.base");
+    expect(frame).toContain("base not found");
+
+    m.store.dispatch({
+      type: "fileLoaded",
+      path: "tasks.base",
+      file: textFile(TASKS_BASE),
+      embed: true,
+    });
+    frame = await m.frame();
+    const rows = frame.split("\n");
+    const title = rows.findIndex((r) => r.includes("╭ ↳ tasks.base"));
+    expect(rows[title + 1]).toContain("│ ");
+    expect(rows[title + 1]).toContain("due ↑");
+    expect(rows[title + 2]).toContain("─┼─");
+    // The base has no filters: every indexed file is a row, empty dues first.
+    expect(rows[title + 3]).toContain("tasks.base");
+    expect(rows[title + 4]).toContain("today.md");
+    expect(rows[title + 5]).toContain("╰ ↓ 4 more");
+    expect(frame).not.toContain("▌");
+    expect(frame).toMatchSnapshot();
   });
 });

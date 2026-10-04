@@ -472,3 +472,31 @@ exports[`base styles paints the focused cell and card, lane dots, and moves off 
   },
 }
 `;
+
+exports[`base embed a note paints an embedded base read-only, capped with a more marker 1`] = `
+" today.md                                                                       
+   1 ▕# Today                                                                   
+   1                                                                            
+   2  ╭ ↳ tasks.base                                                            
+      │    name            │ Status │ due ↑      │ done                         
+      │    ────────────────┼────────┼────────────┼─────                         
+      │    tasks.base      │ —      │ —          │ —                            
+      │    today.md        │ —      │ —          │ —                            
+      ╰ ↓ 4 more                                                                
+   3                                                                            
+   4  ↳ gone.base                                                               
+        base not found                                                          
+   5                                                                            
+   6  After                                                                     
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ today.md                                                         1:1 
+                                                                                
+"
+`;
