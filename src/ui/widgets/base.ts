@@ -4,8 +4,18 @@ import type { TableCell, TableModel } from "../../core/features/bases/table";
 import type { Rect } from "../editors/text-view";
 import { drawCells, type Theme } from "../theme";
 
-/** The text of a cell being edited, its caret, and why it cannot be written. */
-export type CellEditView = { value: string; caret: number; error?: string };
+/**
+ * The text of a cell being edited, its caret, and why it cannot be written;
+ * a list cell's chips, or a text cell's suggested values (the first is the
+ * one Tab completes).
+ */
+export type CellEditView = {
+  value: string;
+  caret: number;
+  error?: string;
+  chips?: string[];
+  suggestions?: string[];
+};
 export type TableFocus = { row: number; column: number; edit?: CellEditView };
 /** The first body line and the first column the window prefers to show. */
 export type TableScroll = { top: number; col: number };
@@ -158,6 +168,33 @@ export function layoutBaseTable(
   };
 }
 
+type Part = { token: string; text: string };
+
+/** What goes under an edited cell: its error, then its chips or suggestions. */
+function underEdit(e: CellEditView): Part[][] {
+  const lines: Part[][] = [];
+  if (e.error !== undefined)
+    lines.push([{ token: "messageError", text: `✗ ${e.error}` }]);
+  if (e.chips !== undefined && e.chips.length > 0)
+    lines.push(
+      e.chips.flatMap((c, i) => [
+        ...(i === 0 ? [] : [{ token: "text", text: " " }]),
+        { token: "baseChip", text: `${c} ×` },
+      ]),
+    );
+  const w = Math.max(0, ...(e.suggestions ?? []).map(len)) + 2;
+  for (const [i, v] of (e.suggestions ?? []).entries()) {
+    const text = ` ${v}`;
+    lines.push([
+      {
+        token: i === 0 ? "baseFocus" : "baseSuggest",
+        text: text + " ".repeat(w - len(text)),
+      },
+    ]);
+  }
+  return lines;
+}
+
 /** Paint `text` at column `x` of a row, never past the rect's right edge. */
 function put(
   buf: OptimizedBuffer,
@@ -184,8 +221,8 @@ function put(
 /**
  * Paint a table model in `rect` and nowhere else: header with sort arrows
  * and `› +N cols`, group headers, rows with the focused cell reversed and
- * its row marked `▌`, an edited cell's text and inline error, and the
- * summary row. Without rows it says so, with `empty` below.
+ * its row marked `▌`, an edited cell's text with its inline error, chips,
+ * or suggestions below, and the summary row. Without rows it says so, with `empty` below.
  */
 export function paintBaseTable(
   buf: OptimizedBuffer,
@@ -252,7 +289,8 @@ export function paintBaseTable(
     if (o.empty !== undefined && rect.h > 3)
       put(buf, theme, rect, "dim", 2, rect.y + 3, o.empty);
   }
-  let errorAt: { x: number; y: number; text: string } | undefined;
+  /** Lines painted under the edited cell: its error, chips, or suggestions. */
+  let under: { x: number; y: number; lines: Part[][] } | undefined;
   for (let i = 0; i < l.bodyRows; i++) {
     const line = l.lines[l.top + i];
     const y = rect.y + 2 + i;
@@ -288,8 +326,7 @@ export function paintBaseTable(
           fit(focus.edit.value, c.w),
           c.w,
         );
-        if (focus.edit.error !== undefined)
-          errorAt = { x: c.x, y: y + 1, text: `✗ ${focus.edit.error}` };
+        under = { x: c.x, y: y + 1, lines: underEdit(focus.edit) };
         continue;
       }
       const v = shown(cell);
@@ -310,17 +347,16 @@ export function paintBaseTable(
       );
     }
   }
-  if (errorAt !== undefined && errorAt.y < rect.y + 2 + l.bodyRows)
-    put(
-      buf,
-      theme,
-      rect,
-      "messageError",
-      errorAt.x,
-      errorAt.y,
-      errorAt.text,
-      rect.w - errorAt.x,
-    );
+  for (const [i, parts] of (under?.lines ?? []).entries()) {
+    const y = (under?.y ?? 0) + i;
+    if (y >= rect.y + 2 + l.bodyRows) break;
+    let x = under?.x ?? 0;
+    put(buf, theme, rect, "text", x, y, "", rect.w - x);
+    for (const p of parts) {
+      put(buf, theme, rect, p.token, x, y, p.text);
+      x += len(p.text);
+    }
+  }
   // Summaries.
   if (l.summaries && rect.h >= 4) {
     const y = rect.y + rect.h - 2;

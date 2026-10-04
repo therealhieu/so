@@ -136,6 +136,9 @@ function focusedCell(a: Active) {
 const READ_ONLY_WHY = (id: string) =>
   id.startsWith("formula.") ? "formula" : "file property";
 
+const isList = (type: PropertyType) =>
+  type === "list" || type === "tags" || type === "aliases";
+
 /** Text a value is edited as: lists comma-separated, absent values empty. */
 function editText(v: FrontmatterValue | undefined): string {
   if (v === undefined || v === null) return "";
@@ -160,7 +163,12 @@ function startEdit(c: CommandContext): Result {
       ? cell.col.type
       : propertyType(cell.property, original, a.s.index.types);
   if (type === "checkbox") return toggleCheckbox(c);
-  const value = editText(original);
+  const items = isList(type)
+    ? Array.isArray(original)
+      ? original.map((x) => String(x))
+      : []
+    : undefined;
+  const value = items === undefined ? editText(original) : "";
   const edit: CellEdit = {
     path: cell.path,
     property: cell.property,
@@ -168,6 +176,7 @@ function startEdit(c: CommandContext): Result {
     value,
     caret: value.length,
     original,
+    ...(items === undefined ? {} : { items }),
   };
   return none(setWs(a, { ...a.ws, edit }));
 }
@@ -449,7 +458,10 @@ function commitCellEdit(
   now: number,
   reg: Registries,
 ): Result {
-  const v = validateCell(e.type, e.value);
+  const v: ReturnType<typeof validateCell> =
+    e.items === undefined
+      ? validateCell(e.type, e.value)
+      : { ok: true, value: e.items.length === 0 ? null : e.items };
   const id = s.windows.active;
   if (!v.ok)
     return none(
@@ -473,10 +485,17 @@ function commitCellEdit(
   );
 }
 
+/** A typed chip as stored: trimmed, and without a leading `#` for tags. */
+const chip = (e: CellEdit) =>
+  e.type === "tags" ? e.value.trim().replace(/^#/, "") : e.value.trim();
+
 /**
  * A key while a cell is being edited: characters, Backspace, and the arrows
- * edit the text; `Ctrl-a`/`Ctrl-x` step numbers and dates; Esc drops the
- * edit; Enter writes it. No other key reaches base commands or vim.
+ * edit the text; `Ctrl-a`/`Ctrl-x` step numbers and dates; Tab completes a
+ * text cell with its first suggestion; Esc drops the edit; Enter writes it.
+ * In a list cell Enter adds the typed chip, Backspace on an empty input
+ * removes the last chip, and Enter on an empty input writes the list. No
+ * other key reaches base commands or vim.
  */
 export function cellEditKey(
   s: AppState,
@@ -498,8 +517,18 @@ export function cellEditKey(
       return none(setBaseWindow(s, id, rest));
     }
     case "<CR>":
-      return commitCellEdit(s, ws, e, a.now, reg);
+      return e.items !== undefined && chip(e) !== ""
+        ? set({ ...e, items: [...e.items, chip(e)], value: "", caret: 0 })
+        : commitCellEdit(s, ws, e, a.now, reg);
+    case "<Tab>": {
+      const first = baseViewModel(s, id, reg)?.suggestions?.[0];
+      return first === undefined
+        ? none(s)
+        : set({ ...e, value: first, caret: first.length });
+    }
     case "<BS>":
+      if (e.items !== undefined && value === "")
+        return set({ ...e, items: e.items.slice(0, -1) });
       return caret === 0
         ? none(s)
         : set({

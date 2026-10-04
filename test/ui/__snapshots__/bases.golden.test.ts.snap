@@ -226,7 +226,7 @@ exports[`base states waiting and empty states match their goldens 1`] = `
 
 exports[`base states waiting and empty states match their goldens 2`] = `
 " empty.base                                                                     
- ▦ empty.base   1 Archived                                ⧩ filters on · 0 rows 
+ ▦ empty.base   1 Archived                      ⧩ status == "archived" · 0 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name                                                                         
    ────                                                                         
@@ -339,5 +339,61 @@ exports[`base states a wide window shows every view tab 1`] = `
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open                                                
  BASE  │ base │ tasks.base │ preview off                                                                            1:1 
                                                                                                                         
+"
+`;
+
+exports[`base cell editors a text cell lists the property's existing values 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                 
+   ────────────────┼────────┼────────────┼─────                                 
+▌  ship-release.md │ d      │ 2026-10-01 │ ☑                                    
+   review-pr.md    │  doing                                                     
+   write-report.md │  done                                                      
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴────────────┴─────                                 
+ Σ                            2026-10-01   1                                    
+ editing — Tab complete · ⏎ write to frontmatter · esc cancel                   
+ INSERT  │ tasks.base                                                       1:1 
+                                                                                
+"
+`;
+
+exports[`base cell editors a list cell shows its values as chips 1`] = `
+" labels.base                                                                    
+ ▦ labels.base   1 Labels                                                4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ status │ tags                                              
+   ────────────────┼────────┼──────────                                         
+▌  inbox.md        │ —      │                                                   
+   review-pr.md    │ doing  │ #api × #docs × #ui ×                              
+   ship-release.md │ done   │ —                                                 
+   write-report.md │ todo   │ —                                                 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ editing — ⏎ add · ⏎ on empty writes · ⌫ removes · esc cancel                   
+ INSERT  │ labels.base                                                      1:1 
+                                                                                
 "
 `;

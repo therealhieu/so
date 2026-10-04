@@ -352,3 +352,92 @@ test("text edits in a base window are refused as a read-only file", () => {
   expect(fullText(activeBuffer(r.state)?.text as never)).toBe(text);
   expect(r.effects).toEqual([]);
 });
+
+test("a text cell edit suggests the property's existing values and Tab completes", () => {
+  const s = openPlan();
+  const editing = press(s, "li<BS><BS><BS><BS>");
+  expect(model(editing.state)?.suggestions).toEqual(["doing", "todo"]);
+  const typed = press(editing.state, "d");
+  expect(model(typed.state)?.suggestions).toEqual(["doing"]);
+  const completed = press(typed.state, "<Tab>");
+  expect(ws(completed.state).edit).toMatchObject({ value: "doing", caret: 5 });
+  expect(press(completed.state, "<CR>").effects).toEqual([
+    {
+      kind: "patchFrontmatter",
+      path: "tasks/a.md",
+      patch: { set: "status", value: "doing" },
+      expected: "todo",
+    },
+  ]);
+  expect(model(press(s, "l").state)?.suggestions).toBeUndefined();
+});
+
+const LABELS = `views:
+  - type: table
+    name: Labels
+    order: [file.name, labels]
+`;
+
+test("a list cell edits as chips: Enter adds, Backspace removes, Enter on empty writes", () => {
+  const s = run(
+    fresh(),
+    loaded("labels.base", LABELS),
+    indexed({ "tasks/a.md": "---\nlabels: [api, docs]\n---\n# A\n" }),
+  ).state;
+  const editing = press(s, "li");
+  expect(ws(editing.state).edit).toMatchObject({
+    type: "list",
+    value: "",
+    items: ["api", "docs"],
+  });
+  const added = press(editing.state, "ui<CR>");
+  expect(ws(added.state).edit).toMatchObject({
+    value: "",
+    caret: 0,
+    items: ["api", "docs", "ui"],
+  });
+  expect(writes(added.effects)).toEqual([]);
+  const removed = press(added.state, "<BS>");
+  expect(ws(removed.state).edit?.items).toEqual(["api", "docs"]);
+  const dropped = press(removed.state, "<BS>x<CR><CR>");
+  expect(dropped.effects).toEqual([
+    {
+      kind: "patchFrontmatter",
+      path: "tasks/a.md",
+      patch: { set: "labels", value: ["api", "x"] },
+      expected: ["api", "docs"],
+    },
+  ]);
+  expect(ws(dropped.state).edit).toBeUndefined();
+});
+
+test("the model summarizes the filters in effect", () => {
+  const FILTERED = `filters:
+  and:
+    - file.inFolder("tasks")
+views:
+  - type: table
+    name: Open
+    filters:
+      or:
+        - 'status == "todo"'
+        - 'done == false'
+`;
+  const s = run(fresh(), loaded("open.base", FILTERED), indexed(NOTES)).state;
+  expect(model(s)?.filter).toBe(
+    'file.inFolder("tasks") and (status == "todo" or done == false)',
+  );
+  expect(model(press(s, "f").state)?.filter).toBe('file.inFolder("tasks")');
+  expect(model(openPlan())?.filter).toBeUndefined();
+  const NONE_OF = `views:
+  - type: table
+    name: Rest
+    filters:
+      not:
+        - 'status == "todo"'
+        - 'done == true'
+`;
+  const rest = run(fresh(), loaded("rest.base", NONE_OF), indexed(NOTES)).state;
+  expect(model(rest)?.filter).toBe('not (status == "todo" or done == true)');
+  expect(model(rest)?.table?.rows).toEqual([]);
+});

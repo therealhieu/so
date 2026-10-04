@@ -234,6 +234,8 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   baseFocus: ["fg", "bg-sel", 0, INVERSE],
   baseMarker: ["border-hl", "bg", BOLD, BOLD],
   baseEdit: ["fg", "bg-hl", UNDERLINE, UNDERLINE],
+  baseChip: ["tag", "bg-hl", 0, BOLD],
+  baseSuggest: ["fg-muted", "bg-float", 0, 0],
   baseInfo: ["info", "bg", 0, 0],
   baseWarn: ["warn", "bg", 0, BOLD],
   baseLane0: ["info", "bg", BOLD, BOLD],

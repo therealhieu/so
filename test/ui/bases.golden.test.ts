@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { TextAttributes } from "@opentui/core";
-import { indexed, TASKS_BASE } from "../support/bases";
+import { indexed, TASK_NOTES, TASKS_BASE } from "../support/bases";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
 const BOARD = `filters:
@@ -159,6 +159,7 @@ describe("base states", () => {
     m = await baseShell({ cols: 80, rows: 24 }, "empty.base", NOTHING);
     const empty = await m.frame();
     expect(empty).toContain("No notes match this view's filters");
+    expect(empty.split("\n")[1]).toContain('⧩ status == "archived"');
     expect(empty).toMatchSnapshot();
   });
 
@@ -184,5 +185,47 @@ describe("base states", () => {
     expect(frame).toContain("1 All tasks");
     expect(frame).toContain("4 Cards");
     expect(frame).toMatchSnapshot();
+  });
+});
+
+const LABELS = `views:
+  - type: table
+    name: Labels
+    order: [file.name, status, tags]
+`;
+
+describe("base cell editors", () => {
+  test("a text cell lists the property's existing values", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys("li<BS><BS><BS><BS>d");
+    const frame = await m.frame();
+    // The caret follows the typed "d".
+    const typed = { x: cursorAt(m).x - 1, y: cursorAt(m).y };
+    const rows = frame.split("\n");
+    expect(rows[typed.y]?.slice(typed.x)).toMatch(/^d /);
+    expect(rows[typed.y + 1]?.slice(typed.x)).toMatch(/^ doing /);
+    expect(rows[typed.y + 2]?.slice(typed.x)).toMatch(/^ done /);
+    expect(rows.at(-4)).toContain("Tab complete");
+    expect(frame).toMatchSnapshot();
+  });
+
+  test("a list cell shows its values as chips", async () => {
+    m = await mountShell({ cols: 80, rows: 24 });
+    m.store.dispatch(
+      indexed({
+        ...TASK_NOTES,
+        "tasks/inbox.md": "---\ntags: [api, docs]\n---\n# Inbox\n",
+      }),
+    );
+    m.keys("<leader>e");
+    m.open("labels.base", LABELS);
+    m.keys("lli");
+    const frame = await m.frame();
+    expect(frame).toContain("#api ×");
+    expect(frame).toContain("#docs ×");
+    m.keys("ui<CR>");
+    expect(await m.frame()).toContain("#ui ×");
+    expect(frame.split("\n").at(-4)).toContain("⏎ on empty writes");
+    expect(await m.frame()).toMatchSnapshot();
   });
 });

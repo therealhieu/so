@@ -96,6 +96,16 @@ export class BaseView extends Renderable implements WindowView {
                 value: edit.value,
                 caret: cells(edit.value.slice(0, edit.caret)),
                 ...(edit.error === undefined ? {} : { error: edit.error }),
+                ...(edit.items === undefined
+                  ? {}
+                  : {
+                      chips: edit.items.map((x) =>
+                        edit.type === "tags" ? `#${x}` : x,
+                      ),
+                    }),
+                ...(m.suggestions === undefined || m.suggestions.length === 0
+                  ? {}
+                  : { suggestions: m.suggestions }),
               },
             }),
       };
@@ -209,8 +219,10 @@ export class BaseView extends Renderable implements WindowView {
       x += cells(p.text);
     }
     const width = (ps: Part[]) => ps.reduce((n, p) => n + cells(p.text), 0);
-    // When it does not fit, the count (or the state) alone.
-    if (width(right) > r.w - x - 2) right = statusOf(m, true);
+    // When it does not fit, without the filter expression, then the count
+    // (or the state) alone.
+    for (const fallback of ["noFilter", "short"] as const)
+      if (width(right) > r.w - x - 2) right = statusOf(m, fallback);
     const rw = width(right);
     let rx = Math.max(x + 1, r.w - rw - 1);
     for (const p of right) {
@@ -228,14 +240,27 @@ export class BaseView extends Renderable implements WindowView {
   }
 }
 
+/** Toolbar cells the filter expression may take before it is cut. */
+const MAX_FILTER = 32;
+
+/** Cut `text` to `w` cells with a trailing `…`. */
+const clip = (text: string, w: number) =>
+  cells(text) <= w ? text : `${[...text].slice(0, w - 1).join("")}…`;
+
 /** The toolbar's right side: filters, sort, and count; or why it shows nothing. */
-function statusOf(m: BaseViewModel, short = false): Part[] {
+function statusOf(
+  m: BaseViewModel,
+  fit: "full" | "noFilter" | "short" = "full",
+): Part[] {
+  const short = fit === "short";
   if (m.status === "waiting")
     return [{ text: "◌ waiting for index", token: "dim" }];
   if (m.status === "parseError")
     return [{ text: "✗ not valid YAML", token: "messageError" }];
   const parts: string[] = [];
-  if (m.filters !== "none") parts.push(`⧩ filters ${m.filters}`);
+  if (m.filter !== undefined && fit === "full")
+    parts.push(`⧩ ${clip(m.filter, MAX_FILTER)}`);
+  if (m.filters === "off") parts.push("view filters off");
   if (m.board !== undefined) {
     const cards = m.board.lanes.reduce((n, l) => n + l.cards.length, 0);
     parts.push(
@@ -283,8 +308,12 @@ function noticesOf(m: BaseViewModel): Part[] {
 /** The keys that apply to what the window shows. */
 function hintOf(m: BaseViewModel, ws: BaseWindowState | undefined): string {
   if (m.status !== "ok") return "Tab next view · 1-4 switch view";
+  if (ws?.edit?.items !== undefined)
+    return "editing — ⏎ add · ⏎ on empty writes · ⌫ removes · esc cancel";
   if (ws?.edit !== undefined)
-    return "editing — ⏎ write to frontmatter · esc cancel";
+    return m.suggestions !== undefined && m.suggestions.length > 0
+      ? "editing — Tab complete · ⏎ write to frontmatter · esc cancel"
+      : "editing — ⏎ write to frontmatter · esc cancel";
   if (m.board !== undefined)
     return m.board.movable
       ? "h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next"

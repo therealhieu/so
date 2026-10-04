@@ -7,7 +7,13 @@ import {
 import type { KanbanModel } from "../features/bases/kanban";
 import { parseBase } from "../features/bases/parser";
 import type { TableModel } from "../features/bases/table";
-import type { BaseDiagnostic, BaseSort, BaseUi } from "../features/bases/types";
+import type {
+  BaseCandidate,
+  BaseDiagnostic,
+  BaseFilter,
+  BaseSort,
+  BaseUi,
+} from "../features/bases/types";
 import type { NoteIndex } from "../features/links/note-index";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Doc } from "../lang/markdown/doc";
@@ -39,6 +45,10 @@ export type BaseViewModel = {
   grouped: boolean;
   /** Whether the view's own filters apply ("none" when it has none). */
   filters: "on" | "off" | "none";
+  /** The filters in effect as one expression; absent when none apply. */
+  filter?: string;
+  /** Existing values of the text cell being edited that start with its text. */
+  suggestions?: string[];
   /** Table: row and column. Board: lane and card. */
   focus: { row: number; column: number; lane: number; card: number };
 };
@@ -126,6 +136,48 @@ export function selectBaseView(
 
 const clamp = (n: number, max: number) => Math.max(0, Math.min(n, max));
 
+/** A filter as one expression; nested groups are parenthesized, and `not` matches none of its parts. */
+function filterText(f: BaseFilter): string {
+  if (typeof f === "string") return f.trim();
+  const group = (fs: readonly BaseFilter[], op: string) =>
+    fs
+      .map((x) =>
+        typeof x === "string" || Object.values(x)[0]?.length === 1
+          ? filterText(x)
+          : `(${filterText(x)})`,
+      )
+      .join(` ${op} `);
+  if ("and" in f) return group(f.and, "and");
+  if ("or" in f) return group(f.or, "or");
+  return `not (${group(f.not, "or")})`;
+}
+
+const MAX_SUGGESTIONS = 5;
+
+/**
+ * Distinct text values the candidates hold for `property` (any letter case
+ * of its name) that start with `typed`, ignoring case, in order.
+ */
+function suggestionsFor(
+  candidates: readonly BaseCandidate[],
+  property: string,
+  typed: string,
+): string[] {
+  const lower = property.toLowerCase();
+  const prefix = typed.trim().toLowerCase();
+  const values = new Set<string>();
+  for (const c of candidates)
+    for (const [k, v] of Object.entries(c.properties))
+      if (
+        k.toLowerCase() === lower &&
+        typeof v === "string" &&
+        v !== "" &&
+        v.toLowerCase().startsWith(prefix)
+      )
+        values.add(v);
+  return [...values].sort().slice(0, MAX_SUGGESTIONS);
+}
+
 /** The window's overrides as the evaluator takes them. */
 const uiOf = (ws: BaseWindowState): BaseUi => ({
   ...(ws.sort === undefined ? {} : { sort: ws.sort }),
@@ -197,9 +249,10 @@ function derive(
   if (s.index.status !== "ready" && s.index.ix.files.size === 0)
     return { ...withViews, status: "waiting" };
   const ui = uiOf(ws);
+  const candidates = candidatesFrom(s.index.ix, overlayOf(s));
   const e = evaluateBase({
     base,
-    candidates: candidatesFrom(s.index.ix, overlayOf(s)),
+    candidates,
     ...(view === undefined ? {} : { view: view.name }),
     ui,
   });
@@ -209,12 +262,26 @@ function derive(
   // A window that has not focused a note in this view starts at the first
   // row or card.
   const near = ws.view === e.selectedView.name ? (ws.focus.index ?? 0) : 0;
+  const inEffect = [
+    base.filters,
+    ws.filtered === false ? undefined : view?.filters,
+  ].filter((f): f is BaseFilter => f !== undefined);
+  const [only, ...more] = inEffect;
+  const filter =
+    only === undefined
+      ? undefined
+      : filterText(more.length === 0 ? only : { and: inEffect });
+  const edit = ws.edit;
   const common = {
     ...withViews,
     status: "ok" as const,
     selected: e.selectedView.name,
     ...(notice === undefined ? {} : { notice }),
     ...(sort === undefined ? {} : { sort }),
+    ...(filter === undefined ? {} : { filter }),
+    ...(edit?.type === "text"
+      ? { suggestions: suggestionsFor(candidates, edit.property, edit.value) }
+      : {}),
     grouped: e.selectedView.groupBy !== undefined,
     filters:
       view?.filters === undefined

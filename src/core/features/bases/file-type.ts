@@ -14,6 +14,8 @@ export type CellEdit = {
   caret: number;
   /** The note's value when editing began; a write expects it still there. */
   original: FrontmatterValue | undefined;
+  /** A list cell's values as chips; `value` is the chip being typed. */
+  items?: string[];
   /** Why `value` cannot be written; Enter does nothing while it is set. */
   error?: string;
 };
