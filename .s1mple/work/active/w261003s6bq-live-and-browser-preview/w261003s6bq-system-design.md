@@ -895,11 +895,11 @@ EditorView.renderSelf → per RenderLine: gutter + sign | widget ? widgetPainter
 **Illustrative Flow:**
 
 ```text
-listed note N analyzed → syncEmbeds: for N, embedTargets(N) − open paths − N.embeds.requested − N.embeds.refused → read effects
+listed note N analyzed → syncEmbeds: for N, embedTargets(N) − open paths − N.embeds.requested − N.embeds.refused → read{embed:true} effects
                         (a path already requested by another buffer is recorded on N without a second read); N.embeds.requested += …
-read → fileLoaded(path) → onFileLoaded: some listed buffer requested path and no window waits → buffer {listed: false};
+read → fileLoaded(path, embed) → onFileLoaded: embed-tagged or some listed buffer requested path, and no window waits → buffer {listed: false};
                           every requesting buffer: requested −= path
-read → fileRefused(path) → onFileRefused: every requesting buffer: requested −= path, refused += path; no error notice
+read → fileRefused(path, embed) → onFileRefused: every requesting buffer: requested −= path, refused += path; no error notice
 frame → ctx.embed(path) → {doc, text} | "loading" | "missing" → embedRenderer → widget{type:"embed", rows}
 open embed (Enter) → openPath → showBuffer → listed: true
 listed note closed / embed removed → syncEmbeds → unlisted buffers no listed note embeds are removed
@@ -1167,19 +1167,21 @@ livePreview → Decoration[] → layoutText → RenderLine[] → EditorView
 
 - `BufferState.listed?: false` — absent means listed.
 - `BufferState.embeds?: { requested: string[]; refused: string[] }` — on a listed Markdown buffer: the embed targets it requested whose `read` is still outstanding, and the targets whose read was refused. It is optional, never persisted, and not in the session snapshot. It lives inside the RM261003ABZP-DES2@R2 buffers map, so DI3 adds no top-level `AppState` field besides `preview`.
+- `embed?: true` on the PH1 `read` effect and on the `fileLoaded` and `fileRefused` actions — marks a read that only a note's embed sent; the effect runner echoes it back on the answer. A tagged answer, or one some listed buffer still has in `requested`, opens the buffer `listed: false` and unshown unless a window waits for the path (`awaitsRestore`); a tagged refusal is settled with no notice.
 
 **Usage:**
 
 ```text
-syncEmbeds → per listed buffer N: N.embeds.requested += missing → read effects (one per path across buffers)
-fileLoaded(p) → buffer{listed:false}; requesters: requested −= p ; fileRefused(p) → requesters: requested −= p, refused += p
+syncEmbeds → per listed buffer N: N.embeds.requested += missing → read{embed:true} effects (one per path across buffers)
+fileLoaded(p, embed) → buffer{listed:false} unless a window waits; requesters: requested −= p
+fileRefused(p, embed) → requesters: requested −= p, refused += p; no notice
 showBuffer → listed removed ; syncEmbeds → evict unlisted not embedded by any listed Markdown buffer
 ```
 
 **Rules:**
 
 - **Compatibility:** Absent `listed` keeps every PH1 buffer listed; absent `embeds` means nothing requested; `state.json` unchanged (`snapshotSession` writes only `path` and `view`, `src/core/state/session.ts:92`).
-- **Invariants:** An unlisted buffer is never shown in a window, never dirty, never in `snapshotSession`, the bufferline, `:bn`/`:bp`, or picker open paths; at most one `read` is outstanding per path across all buffers; a buffer's `requested` and `refused` hold only targets that buffer currently embeds; an unlisted buffer has no `embeds` (one level).
+- **Invariants:** An unlisted buffer is never shown in a window, never dirty, never in `snapshotSession`, the bufferline, `:bn`/`:bp`, or picker open paths; at most one `read` is outstanding per path across all buffers, except that closing the last note embedding a path with `:bd` before its read answers drops that request, so a later open or embed can send one more `read` (an answer that finds the buffer already open is a no-op through `onDiskLoaded`'s stamp check, `src/core/state/disk.ts:69`); a buffer's `requested` keeps a target from its `read` until that read answers, even after the note stops embedding it, while `refused` holds only targets that buffer currently embeds; an unlisted buffer has no `embeds` (one level).
 - **Ownership and Lifecycle:** `listed` is set by `onFileLoaded`, removed by `showBuffer`, and the buffer evicted by `syncEmbeds`; `embeds` is owned by its listed buffer, written by `syncEmbeds`, `onFileLoaded`, and `onFileRefused`, and dropped with the buffer.
 
 **Location:** `src/core/state/types.ts:67-86` (`BufferState`)
@@ -1979,23 +1981,26 @@ export function syncEmbeds(prev: AppState, r: Result): Result {
   const buffers = mapListedMarkdown(r.state.buffers, (b) => {
     const targets = embedTargets(r.state, b);
     targets.forEach((p) => wanted.add(p));
-    const keep = (ps: string[] = []) => ps.filter((p) => targets.has(p));
-    const requested = keep(b.embeds?.requested), refused = keep(b.embeds?.refused);
+    const requested = b.embeds?.requested ?? [];                                 // kept until its read answers
+    const refused = (b.embeds?.refused ?? []).filter((p) => targets.has(p));     // trimmed to current embeds
     const fresh = [...targets].filter((p) => !bufferForPath(r.state, p) && !requested.includes(p) && !refused.includes(p));
     fresh.filter((p) => !inFlight.has(p)).forEach((p) => reads.add(p));
     return sameEmbeds(b, requested, refused, fresh) ? b : { ...b, embeds: { requested: [...requested, ...fresh], refused } };
   });
   return { state: { ...r.state, buffers: dropUnlisted(buffers, (u) => !wanted.has(u.path)) },
-           effects: [...r.effects, ...[...reads].map((path) => ({ kind: "read", path }) as const)] };
+           effects: [...r.effects, ...[...reads].map((path) => ({ kind: "read", path, embed: true }) as const)] };
 }
+/** Whether a read of `path` a listed note's embed sent is still outstanding. */
+export const embedRequested = (s: AppState, path: string): boolean;
 /** fileLoaded / fileRefused: clear the request on every listed buffer that made it; refusal records it. */
 export function settleEmbedRead(s: AppState, path: string, refused: boolean): AppState;
 ```
 
-`syncEmbeds` does nothing unless buffers or the index changed. Otherwise it walks each listed Markdown buffer: targets that are not open and not yet in that buffer's `requested` or `refused` are added to its `requested`, and a `read` is emitted only for paths no buffer already has in flight, so two notes embedding one target share one read. Requests and refusals for targets the note no longer embeds are dropped, and unlisted buffers no listed note embeds are removed. A buffer object is replaced only when its `embeds` changed, so unchanged buffers keep their identity. `settleEmbedRead` runs in `onFileLoaded` (removing the path from every requester's `requested`) and in `onFileRefused` (moving it to `refused`); because a refused target stays in `refused`, the next keystroke's `syncEmbeds` does not request it again.
+`syncEmbeds` does nothing unless buffers or the index changed. Otherwise it walks each listed Markdown buffer: targets that are not open and not yet in that buffer's `requested` or `refused` are added to its `requested`, and a `read` tagged `embed: true` is emitted only for paths no buffer already has in flight, so two notes embedding one target share one read. A request stays in `requested` until its read answers, even after the note stops embedding the target, so removing and re-adding an embed while the read is outstanding does not read the path twice; refusals for targets the note no longer embeds are dropped, and unlisted buffers no listed note embeds are removed. A buffer object is replaced only when its `embeds` changed, so unchanged buffers keep their identity. `settleEmbedRead` runs in `onFileLoaded` (removing the path from every requester's `requested`) and in `onFileRefused` (moving it to `refused`); because a refused target stays in `refused`, the next keystroke's `syncEmbeds` does not request it again.
 
 - **Invariants:**
-  - At most one outstanding `read` per path across all buffers.
+  - At most one outstanding `read` per path across all buffers. The one exception: when the last note embedding a path is closed with `:bd` before the read answers, its request goes with the buffer, so a later open or embed can send one more `read`; an answer that finds the buffer already open is a no-op through `onDiskLoaded`'s stamp check (`src/core/state/disk.ts:69`).
+  - A target stays in `requested` until its read answers; only `refused` is trimmed to current embeds.
   - A refused target is not requested again while its embedding note keeps it.
   - An unlisted buffer exists only while wanted.
 - **Verification Coverage:** S5 — V9, V11, V12, V49
@@ -2017,8 +2022,8 @@ export function settleEmbedRead(s: AppState, path: string, refused: boolean): Ap
 | `BufferState` | `:67-86`, no `listed` | `+ listed?: false; + embeds?: { requested: string[]; refused: string[] }` | buffers, embeds, markdown-view, session, bufferline, picker, commands |
 | `WindowState` | `:88-91` `content: { editor: "text"; bufferId; cursor; scroll }` | `editor: EditorKind` (derived after each reducer step from the buffer's file-type kind when that kind is registered, else `"text"`; not persisted); `+ folds?: number[]` | markdown-commands, markdown-view, update, window-tree |
 | `AppState` | `:233-272` | `+ preview: PreviewState` | preview, status, init |
-| `Action` | `:274-319` | `+ previewStarted, previewStopped, previewFailed, openUrlFailed` | `update.ts` |
-| `Effect` | `:321-345` | `+ startPreview, stopPreview, openUrl` | `effects.ts` |
+| `Action` | `:274-319` | `+ previewStarted, previewStopped, previewFailed, openUrlFailed`; `fileLoaded`, `fileRefused` `+ embed?: true` | `update.ts`, `buffers.ts` |
+| `Effect` | `:321-345` | `+ startPreview, stopPreview, openUrl`; `read` `+ embed?: true` | `effects.ts`, `embeds.ts` |
 
 **Existing Shape:** `src/core/state/types.ts:88-91`
 
@@ -2044,13 +2049,16 @@ export type PreviewState = { status: "off" } | { status: "starting" } | { status
 // BufferState: listed?: false; embeds?: { requested: string[]; refused: string[] };
 // Action: | { type: "previewStarted"; port: number } | { type: "previewStopped" }
 //         | { type: "previewFailed"; reason: string } | { type: "openUrlFailed"; url: string; reason: string }
+//         fileLoaded, fileRefused: + embed?: true   (answers a read a note's embed sent)
 // Effect: | { kind: "startPreview" } | { kind: "stopPreview" } | { kind: "openUrl"; url: string }
+//         | { kind: "read"; path: string; embed?: true }   (embed: only a note's embed asked; the runner echoes it on the answer)
 ```
 
-All additions are optional or default-initialized, so existing reducers and tests keep compiling; the exhaustive `never` checks in `createUpdate` and `createEffectRunner` force the new cases to be handled. `preview` is the only new top-level field; `listed` and `embeds` are buffer fields.
+All additions are optional or default-initialized, so existing reducers and tests keep compiling; the exhaustive `never` checks in `createUpdate` and `createEffectRunner` force the new cases to be handled. `preview` is the only new top-level field; `listed` and `embeds` are buffer fields. The `embed` tag lets an answer stay unlisted when no note still records the request, for example after the embedding note was closed with `:bd`.
 
 - **Invariants:**
   - `listed` is never `true`; absence means listed.
+  - `embed` is never `false`; the runner copies it from the `read` effect onto its `fileLoaded` or `fileRefused` unchanged.
 - **Verification Coverage:** S5, S6, S12 — V12, V13, V31, V47
 
 ## `src/core/state/update.ts`
@@ -2115,8 +2123,8 @@ The view-context registry travels with the others to every view through `ViewDep
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `onFileLoaded` | `:318-375`, `view: ft.views[0]?.id ?? "source"` (`:337`), always shows | `view: defaultView(ft, s.config)`; when a listed buffer's `embeds.requested` has the path and no window waits, add `listed: false`, do not show, and `settleEmbedRead` | update |
-| `onFileRefused` | `:376-385`, error notice unless a restore waits | when a listed buffer requested the path and no restore or navigation waits, `settleEmbedRead(s, path, true)` with no notice; otherwise unchanged | update |
+| `onFileLoaded` | `:318-375`, `view: ft.views[0]?.id ?? "source"` (`:337`), always shows | `view: defaultView(ft, s.config)`; when the answer carries `embed: true` or a listed buffer's `embeds.requested` has the path, and no window waits, add `listed: false`, do not show, and `settleEmbedRead` | update |
+| `onFileRefused` | `:376-385`, error notice unless a restore waits | when the answer carries `embed: true` or a listed buffer requested the path, and no restore or navigation waits, `settleEmbedRead(s, path, true)` with no notice; otherwise unchanged | update |
 | `showBuffer` | `:282-298` | removes `listed` from the shown buffer; resets the window's `folds` when the buffer changes | open paths |
 | `defaultView` | None — new symbol | `ft.views.some(v => v.id === cfg.preview.mode) ? cfg.preview.mode : ft.views[0]?.id ?? "source"` | `onFileLoaded` |
 
@@ -2139,10 +2147,10 @@ A new buffer always starts in its file type's first view.
 export const defaultView = (ft: FileType, cfg: AppConfig): string =>
   ft.views.some((v) => v.id === cfg.preview.mode) ? cfg.preview.mode : (ft.views[0]?.id ?? "source");
 // embedRequested(s, p) = some listed buffer's embeds.requested has p
-// onFileLoaded:  const embedOnlyRead = embedRequested(s, a.path) && !awaitsRestore(s, a.path);
+// onFileLoaded:  const embedOnlyRead = (a.embed === true || embedRequested(s, a.path)) && !awaitsRestore(s, a.path);
 //                b = { …, view: defaultView(ft, s.config), ...(embedOnlyRead ? { listed: false } : {}) };
 //                embedOnlyRead → none(settleEmbedRead(added, a.path, false))   (not shown, recent untouched)
-// onFileRefused: embedRequested(s, a.path) && !awaitsRestore(s, a.path) → none(settleEmbedRead(s, a.path, true))
+// onFileRefused: (a.embed === true || embedRequested(s, a.path)) && !awaitsRestore(s, a.path) → none(settleEmbedRead(s, a.path, true))
 ```
 
 The configured mode applies to any file type that has a view with that id, so code files stay in `source` without a Markdown special case. An embed read neither shows the buffer nor touches recent files, and a refused embed read shows no error notice because the widget already shows the unresolved state. Restored windows keep using `onFileLoaded`, so they get the default view as before.
@@ -2876,7 +2884,7 @@ Mermaid styles each diagram with a per-diagram `<style>` element and `style` att
 |---|---|---|---|
 | `PreviewHost`, `createPreviewHost` | None — new symbol | `{ start(): void; stop(): void }` dispatching results | effects, lifecycle |
 | `RunnerDeps` | `effects.ts:29-49` | `+ preview: Pick<PreviewHost, "start" \| "stop">; openUrl: (url: string) => Promise<void>` | main |
-| `createEffectRunner` `run` | `effects.ts:170-340` | `+ case "startPreview"`, `"stopPreview"`, `"openUrl"` | store |
+| `createEffectRunner` `run` | `effects.ts:170-340` | `+ case "startPreview"`, `"stopPreview"`, `"openUrl"`; `case "read"` copies `embed: true` from the effect onto its `fileLoaded` or `fileRefused` | store |
 | `installLifecycle` | `lifecycle.ts:20-63` | `+ stopPreview?: () => void` called before `shell.destroy()` | main |
 | `registries`, `main` | `main.ts:97-111`, `:186-310` | `+ viewContexts`, markdown commands and bindings, `builtinRenderers()`, painters, `loadImage`, preview host | — |
 
