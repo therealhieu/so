@@ -81,7 +81,11 @@ function openTour(x: Mounted) {
 test("a note frame paints signs, rules, embed rows, and folded callouts", async () => {
   m = await mountShell({ cols: 100, rows: 80 });
   openTour(m);
-  expect(m.effects).toContainEqual({ kind: "read", path: "so-roadmap.md" });
+  expect(m.effects).toContainEqual({
+    kind: "read",
+    path: "so-roadmap.md",
+    embed: true,
+  });
 
   m.keys("24G");
   let rows = await windowRows(m);

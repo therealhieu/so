@@ -38,6 +38,17 @@ const load = (path: string, text: string): Action => ({
   path,
   file: textFile(text),
 });
+/** The answer to the `read` of `path` among `effects`, as the runner reports it. */
+function answer(effects: Effect[], path: string, text: string): Action {
+  const read = effects.find((e) => e.kind === "read" && e.path === path);
+  if (read?.kind !== "read") throw new Error(`no read of ${path}`);
+  return {
+    type: "fileLoaded",
+    path,
+    file: textFile(text),
+    ...(read.embed === true ? { embed: true as const } : {}),
+  };
+}
 const keys = (seq: string): Action[] =>
   splitKeys(seq).map((key) => ({ type: "key", key, now: 0 }));
 
@@ -146,4 +157,63 @@ test("opening an embed target while it loads shows it when the read answers", ()
   expect(shownPath(shown)).toBe("b.md");
   expect(buffer(shown, "b.md")?.listed).toBeUndefined();
   expect(buffer(shown, "a.md")?.embeds?.requested).toEqual(["c.md"]);
+});
+
+test("a read that answers after its embed was deleted opens nothing", () => {
+  const opened = run(indexed(), load("a.md", "# A\n\n![[b]]\n"));
+  const removed = run(opened.state, ...keys("Gdd"));
+  expect(buffer(removed.state, "a.md")?.text.lineCount).toBe(2);
+  const loaded = run(
+    removed.state,
+    answer(opened.effects, "b.md", "# B\n"),
+  ).state;
+  expect(shownPath(loaded)).toBe("a.md");
+  expect(buffer(loaded, "b.md")).toBeUndefined();
+  expect(loaded.recent).toEqual(removed.state.recent);
+});
+
+test("a read that answers after its note was closed opens nothing", () => {
+  const opened = run(indexed(), load("a.md", "# A\n\n![[b]]\n"));
+  const closed = run(opened.state, ...keys(":bd<CR>"));
+  expect(shownPath(closed.state)).toBeUndefined();
+  const loaded = run(
+    closed.state,
+    answer(opened.effects, "b.md", "# B\n"),
+  ).state;
+  expect(shownPath(loaded)).toBeUndefined();
+  expect(
+    Object.values(loaded.buffers).filter((b) => b.listed !== false),
+  ).toEqual([]);
+  expect(loaded.notifications.message).toBeUndefined();
+});
+
+test("a refused read of a closed note's embed shows no error", () => {
+  const opened = run(indexed(), load("a.md", "![[d]]\n"));
+  const closed = run(opened.state, ...keys(":bd<CR>")).state;
+  const refused = run(closed, {
+    type: "fileRefused",
+    path: "d.md",
+    reason: "io",
+    embed: true,
+  }).state;
+  expect(refused.notifications.message).toBeUndefined();
+  expect(refused.notifications.toasts).toEqual([]);
+});
+
+test("re-embedding a target whose read is outstanding sends no second read", () => {
+  const opened = run(indexed(), load("a.md", "# A\n\n![[b]]\n"));
+  expect(reads(opened.effects)).toEqual(["b.md"]);
+  const removed = run(opened.state, ...keys("Gdd"));
+  const other = run(removed.state, load("e.md", "# E\n\n![[b]]\n"));
+  const undone = run(other.state, ...keys(":bp<CR>u"));
+  expect(
+    reads([...removed.effects, ...other.effects, ...undone.effects]),
+  ).toEqual([]);
+  const loaded = run(
+    undone.state,
+    answer(opened.effects, "b.md", "# B\n"),
+  ).state;
+  expect(buffer(loaded, "b.md")?.listed).toBe(false);
+  for (const p of ["a.md", "e.md"])
+    expect(buffer(loaded, p)?.embeds?.requested).toEqual([]);
 });

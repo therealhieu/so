@@ -28,9 +28,11 @@ const same = (a: readonly string[], b: readonly string[]) =>
  * Keep embed targets loaded exactly while a listed note embeds them. Each
  * listed note records the targets it is waiting for; a target that is
  * neither open, waited for, nor refused gets one `read`, shared by every
- * note embedding it. Requests and refusals for targets a note no longer
- * embeds are dropped, and an unlisted buffer no listed note embeds is
- * removed once it has nothing to save. Unchanged buffers keep their identity.
+ * note embedding it. A request stays recorded until its read answers, even
+ * after the note stops embedding the target, so the path is not read twice;
+ * refusals for targets a note no longer embeds are dropped. An unlisted
+ * buffer no listed note embeds is removed once it has nothing to save.
+ * Unchanged buffers keep their identity.
  */
 export function syncEmbeds(prev: AppState, r: Result): Result {
   const s = r.state;
@@ -45,10 +47,8 @@ export function syncEmbeds(prev: AppState, r: Result): Result {
     if (!isListedNote(b)) continue;
     const targets = embedTargets(s, b);
     for (const p of targets) wanted.add(p);
-    const keep = (ps: readonly string[] = []) =>
-      ps.filter((p) => targets.has(p));
-    const requested = keep(b.embeds?.requested);
-    const refused = keep(b.embeds?.refused);
+    const requested = b.embeds?.requested ?? [];
+    const refused = (b.embeds?.refused ?? []).filter((p) => targets.has(p));
     const fresh = [...targets].filter(
       (p) =>
         bufferForPath(s, p) === undefined &&
@@ -81,11 +81,15 @@ export function syncEmbeds(prev: AppState, r: Result): Result {
     return r;
   const buffers = { ...s.buffers, ...changed };
   for (const b of evicted) delete buffers[b.id];
-  const effects: Effect[] = [...reads].map((path) => ({ kind: "read", path }));
+  const effects: Effect[] = [...reads].map((path) => ({
+    kind: "read",
+    path,
+    embed: true,
+  }));
   return { state: { ...s, buffers }, effects: [...r.effects, ...effects] };
 }
 
-/** Whether a listed note is waiting for `path` as an embed target. */
+/** Whether a read of `path` a listed note's embed sent is still outstanding. */
 export const embedRequested = (s: AppState, path: string): boolean =>
   Object.values(s.buffers).some(
     (b) => b.listed !== false && b.embeds?.requested.includes(path) === true,

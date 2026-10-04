@@ -285,8 +285,14 @@ export type AppState = {
 export type Action =
   | { type: "key"; key: Key; now: number }
   | { type: "resize"; cols: number; rows: number }
-  | { type: "fileLoaded"; path: string; file: TextFile }
-  | { type: "fileRefused"; path: string; reason: "binary" | "tooLarge" | "io" }
+  /** `embed` answers a read a note's embed sent (see the `read` effect). */
+  | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
+  | {
+      type: "fileRefused";
+      path: string;
+      reason: "binary" | "tooLarge" | "io";
+      embed?: true;
+    }
   | { type: "saved"; path: string; stamp: Stamp }
   | { type: "saveFailed"; path: string; reason: string }
   | { type: "fileChanged"; event: FileEvent }
@@ -330,7 +336,8 @@ export type Action =
     };
 
 export type Effect =
-  | { kind: "read"; path: string }
+  /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
+  | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
   | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
   | { kind: "listDir"; dir: string }

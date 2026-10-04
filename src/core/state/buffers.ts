@@ -358,8 +358,11 @@ export function onFileLoaded(
         ? fillRestored(listBuffer(st, open.id), a.path, open.id)
         : none(st),
     );
-  // A read only a note's embed asked for opens the target unlisted and unshown.
-  const embedOnlyRead = embedRequested(s, a.path) && !awaitsRestore(s, a.path);
+  // A read only a note's embed asked for opens the target unlisted and unshown,
+  // even when the note no longer embeds it or was closed before the answer.
+  const embedOnlyRead =
+    (a.embed === true || embedRequested(s, a.path)) &&
+    !awaitsRestore(s, a.path);
   const ft = reg.fileTypes.forPath(a.path);
   const { body, finalNewline } = splitFile(a.file);
   const text = createTextBuffer(body);
@@ -429,7 +432,7 @@ export function onFileRefused(
   const refused = (st: AppState) =>
     message(st, REFUSED[a.reason](a.path), "error");
   // A refused embed shows as missing in its note, so no notice interrupts typing.
-  const embed = embedRequested(s, a.path);
+  const embed = a.embed === true || embedRequested(s, a.path);
   if (!awaitsRestore(s, a.path))
     return embed ? none(settleEmbedRead(s, a.path, true)) : refused(s);
   const dropped = dropRestored(

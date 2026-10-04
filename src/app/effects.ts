@@ -175,13 +175,19 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
             return { refused: "io" as const };
           })
-          .then((r) =>
+          .then((r) => {
+            const embed = e.embed === true ? { embed: true as const } : {};
             d.dispatch(
               "refused" in r
-                ? { type: "fileRefused", path: e.path, reason: r.refused }
-                : { type: "fileLoaded", path: e.path, file: r },
-            ),
-          );
+                ? {
+                    type: "fileRefused",
+                    path: e.path,
+                    reason: r.refused,
+                    ...embed,
+                  }
+                : { type: "fileLoaded", path: e.path, file: r, ...embed },
+            );
+          });
         return;
       case "listDir":
         void listDir(d.root, e.dir, d.matcher).then(
