@@ -5,6 +5,7 @@ import type {
 } from "../filetypes/registry";
 import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
+import { onFrontmatterPatched } from "./base-write";
 import { fullText, onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
@@ -180,6 +181,8 @@ export function createUpdate(reg: Registries): Update {
         return onNoteCreated(state, action, 0, reg);
       case "propertyTypesLoaded":
         return onPropertyTypesLoaded(state, action);
+      case "frontmatterPatched":
+        return onFrontmatterPatched(state, action);
     }
     const unhandled: never = action;
     return unhandled;

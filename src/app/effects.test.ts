@@ -391,3 +391,47 @@ test("property types are read from the workspace and reported", async () => {
   ]);
   await rm(join(root, ".obsidian"), { recursive: true, force: true });
 });
+
+test("a frontmatter patch is written only while the property still holds the shown value", async () => {
+  const note = "---\nstatus: todo # next up\ndue: 2026-10-05\n---\n# Task\n";
+  await writeFile(join(root, "task.md"), note);
+  const notified: string[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => notified.push(e.path) },
+  });
+  r.run({
+    kind: "patchFrontmatter",
+    path: "task.md",
+    patch: { set: "status", value: "doing" },
+    expected: "todo",
+  });
+  await waitFor(() => r.actions.length === 1);
+  const written = await readFile(join(root, "task.md"), "utf8");
+  expect(written).toBe(note.replace("todo", "doing"));
+  expect(r.actions[0]).toMatchObject({
+    type: "frontmatterPatched",
+    path: "task.md",
+    ok: true,
+    text: written,
+    removed: ["status: todo # next up"],
+    added: ["status: doing # next up"],
+  });
+  expect(notified).toEqual(["task.md"]);
+
+  r.run({
+    kind: "patchFrontmatter",
+    path: "task.md",
+    patch: { remove: "status" },
+    expected: "todo",
+  });
+  await waitFor(() => r.actions.length === 2);
+  expect(r.actions[1]).toEqual({
+    type: "frontmatterPatched",
+    path: "task.md",
+    ok: false,
+    removed: [],
+    added: [],
+    reason: "changed on disk",
+  });
+  expect(await readFile(join(root, "task.md"), "utf8")).toBe(written);
+});

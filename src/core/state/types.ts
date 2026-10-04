@@ -14,6 +14,10 @@ import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Key } from "../kernel/vim/keys";
 import type { VimState } from "../kernel/vim/types";
+import type {
+  FrontmatterPatch,
+  FrontmatterValue,
+} from "../lang/markdown/frontmatter-patch";
 import type { LocalDate } from "../time/local";
 
 export type BufferId = number;
@@ -404,7 +408,21 @@ export type Action =
       failure?: string;
     }
   /** `.obsidian/types.json` was read; `{}` when absent or malformed. */
-  | { type: "propertyTypesLoaded"; types: PropertyTypes };
+  | { type: "propertyTypesLoaded"; types: PropertyTypes }
+  /**
+   * A `patchFrontmatter` finished: `text` and `stamp` are what was written,
+   * `removed` and `added` the changed property lines; `reason` says why not.
+   */
+  | {
+      type: "frontmatterPatched";
+      path: string;
+      ok: boolean;
+      text?: string;
+      stamp?: Stamp;
+      removed: string[];
+      added: string[];
+      reason?: string;
+    };
 
 export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
@@ -448,7 +466,18 @@ export type Effect =
       reason: "daily" | "new";
     }
   /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
-  | { kind: "readPropertyTypes" };
+  | { kind: "readPropertyTypes" }
+  /**
+   * Change one frontmatter property of a closed note on disk, only while the
+   * property still holds `expected` (`undefined`: absent); answered by
+   * `frontmatterPatched`.
+   */
+  | {
+      kind: "patchFrontmatter";
+      path: string;
+      patch: FrontmatterPatch;
+      expected: FrontmatterValue | undefined;
+    };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };
