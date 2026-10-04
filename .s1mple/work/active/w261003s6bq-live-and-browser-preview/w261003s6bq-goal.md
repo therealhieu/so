@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G1 — implementation dispatched`
+- **Current Position:** `P1-G2 — implementation dispatched`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -201,51 +201,51 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 #### P1-G1 — Core provider, renderers, and view context
 
-- [ ] Context and dependencies confirmed (G2 re-confirmed and recorded).
-- [ ] Implementation turn completed.
-- [ ] `P1-G1-T1` — Package homes by package name.
-- [ ] `P1-G1-T2` — Preview configuration section.
-- [ ] `P1-G1-T3` — Live-preview provider core and renderer registry.
-- [ ] `P1-G1-T4` — Math and Mermaid text renderers.
-- [ ] `P1-G1-T5` — Embed and image renderers.
-- [ ] `P1-G1-T6` — Built-in renderers and the tour goldens.
-- [ ] `P1-G1-T7` — View-context registry and Markdown context builder.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (G2 re-confirmed and recorded).
+- [x] Implementation turn completed.
+- [x] `P1-G1-T1` — Package homes by package name.
+- [x] `P1-G1-T2` — Preview configuration section.
+- [x] `P1-G1-T3` — Live-preview provider core and renderer registry.
+- [x] `P1-G1-T4` — Math and Mermaid text renderers.
+- [x] `P1-G1-T5` — Embed and image renderers.
+- [x] `P1-G1-T6` — Built-in renderers and the tour goldens.
+- [x] `P1-G1-T7` — View-context registry and Markdown context builder.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-implementation-report.md` — `Completed` (initial)
+- Initial implementation report commit: `c85739c` (group range `e7f259f`..`d3c1776`)
+- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g1-verification-report.md` — `Failed` (VER1 Major perf: embed rows lay out whole target; VER2 Major perf: reveal walks whole selection; VER3 Minor: `comment` not in `MULTILINE_KEYS`; VER4 Minor: goldens differ from M2 mockup)
+- Verification report commit: `eeba8fd`
+- Remediation: `Completed` by a fresh `s1mple-implementer`; all four findings `Fixed`; verification report unchanged since `eeba8fd`
+- Final implementation report commit: `e03ae9e`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 → `91fadb7` (P1-G1-T5; capped embed layout bounded, 5,000-line target 236.6 ms → 0.03 ms/frame); VER2 → `4a5e455` (P1-G1-T3; reveal limited to `v.visible`, select-all 232–261 ms → 0.07 ms/frame); VER3 → `37d5774` (P1-G1-T3; `comment` in `MULTILINE_KEYS`); VER4 → `a358999` (P1-G1-T6; tag chips, M2 callout icons, closing rule; code-fence language row and `▾` recorded as deviations with rationale, as the finding's required resolution allows)
+- Closure evidence: orchestrator validated on 2026-10-04 — commits `91fadb7`..`e03ae9e` present on the branch; tree clean apart from this goal; remediator reports `bun run check` 682 pass / knip clean, `bun run test:ci` 115 pass with no component snapshot change, kernel/`src/ui`/`file-type.ts` diff empty from `e7f259f`, G4 exports unchanged; new regression tests fail on the pre-fix code. Accepted
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G1-T1` | `Pending implementation` |
-| `P1-G1-T2` | `Pending implementation` |
-| `P1-G1-T3` | `Pending implementation` |
-| `P1-G1-T4` | `Pending implementation` |
-| `P1-G1-T5` | `Pending implementation` |
-| `P1-G1-T6` | `Pending implementation` |
-| `P1-G1-T7` | `Pending implementation` |
+| `P1-G1-T1` | `8d0cb51` |
+| `P1-G1-T2` | `2af5239` |
+| `P1-G1-T3` | `470720b` |
+| `P1-G1-T4` | `1150aa3` |
+| `P1-G1-T5` | `b5f906c` |
+| `P1-G1-T6` | `6e74e72` |
+| `P1-G1-T7` | `d3c1776` |
 
 #### P1-G2 — Views, embeds, commands, and painting
 
