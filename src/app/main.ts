@@ -45,10 +45,12 @@ import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
 import { paintEmbed } from "../ui/widgets/embed";
+import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
 import { paintRule } from "../ui/widgets/rule";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createExclusionMatcher } from "../workspace/ignore";
+import { createImageLoader } from "../workspace/images";
 import { createLogger, type Logger } from "../workspace/log";
 import {
   readStateFile,
@@ -240,8 +242,13 @@ async function main(argv: string[]): Promise<void> {
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
+  registerWidgetPainter("image", paintImage);
   const renderer = await createRenderer();
-  const shell = createShell(renderer, { reg, now: clock });
+  const shell = createShell(renderer, {
+    reg,
+    now: clock,
+    loadImage: createImageLoader(ws.root),
+  });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
   const indexHost = createIndexHost({

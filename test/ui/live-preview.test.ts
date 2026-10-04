@@ -1,9 +1,16 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { OptimizedBuffer } from "@opentui/core";
+import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
-import { cellStyle, type Mounted, mountShell } from "../support/ui";
+import {
+  cellStyle,
+  type Mounted,
+  type MountOptions,
+  mountShell,
+} from "../support/ui";
 
 let m: Mounted | undefined;
 afterEach(() => {
@@ -81,6 +88,9 @@ function openTour(x: Mounted) {
 test("a note frame paints signs, rules, embed rows, and folded callouts", async () => {
   m = await mountShell({ cols: 100, rows: 80 });
   openTour(m);
+  // diagram.png is not among the mounted files: its load fails on the first frame.
+  await m.frame();
+  await Bun.sleep(0);
   expect(m.effects).toContainEqual({
     kind: "read",
     path: "so-roadmap.md",
@@ -104,7 +114,7 @@ test("a note frame paints signs, rules, embed rows, and folded callouts", async 
 
   expect(embed.some((r) => r.includes("│ • Goal 1"))).toBe(true);
   expect(embed.at(-1)).toMatch(/╰ … \d+ more lines/);
-  expect(rows.some((r) => r.includes("[image]"))).toBe(true);
+  expect(rows.some((r) => r.includes("[image: diagram.png]"))).toBe(true);
 
   m.keys("G");
   rows = await windowRows(m);
@@ -177,4 +187,145 @@ test("a missing embed paints its title in the unresolved link style", async () =
   expect(style(missing)).toEqual(style(at("nowhere")));
   expect(style(missing)).not.toEqual(style(at("↳ present")));
   expect(lines.join("\n")).not.toContain("cannot read file");
+});
+
+const PNG = new Uint8Array(
+  readFileSync(new URL("../fixtures/images/diagram.png", import.meta.url)),
+);
+const IMAGE_NOTE = `# Diagram\n\n![[diagram.png]]\n\n${Array.from(
+  { length: 40 },
+  (_, i) => `Line ${i + 5}`,
+).join("\n")}\n`;
+
+const KITTY = {
+  caps: createTerminalCapabilities({ kitty_graphics: true }),
+  hasResolution: true,
+};
+const SIXEL = {
+  caps: createTerminalCapabilities({ sixel: true }),
+  hasResolution: true,
+};
+const NO_GRAPHICS = { caps: null, hasResolution: false };
+const BLOCK_GLYPH = /[▀▄█▌▐▖▗▘▙▚▛▜▝▞▟]/;
+
+/** Mount with `images/diagram.png` on disk, open a note that shows it, and let the image load. */
+async function mountImageNote(
+  o: Partial<MountOptions>,
+  note = IMAGE_NOTE,
+): Promise<Mounted> {
+  const x = await mountShell({
+    cols: 100,
+    rows: 40,
+    files: { "images/diagram.png": PNG },
+    ...o,
+  });
+  x.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["notes/diagram.md", "notes/other.md", "images/diagram.png"],
+    done: 0,
+    total: 0,
+  });
+  openNote(x, "notes/diagram.md", note);
+  x.keys("G");
+  x.keys("gg");
+  await x.frame();
+  await Bun.sleep(0);
+  await x.frame();
+  return x;
+}
+
+test("images draw with the terminal's best protocol and fall back to blocks or a placeholder", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    for (const [capabilities, protocol] of [
+      [KITTY, "kitty"],
+      [SIXEL, "sixel"],
+    ] as const) {
+      m = await mountImageNote({ capabilities });
+      draw.mockClear();
+      await m.frame();
+      expect(draw).toHaveBeenCalledTimes(1);
+      expect(draw.mock.calls[0]?.[11]).toBe(protocol);
+      expect(m.loads).toEqual(["images/diagram.png"]);
+      m.destroy();
+    }
+
+    m = await mountImageNote({ capabilities: NO_GRAPHICS });
+    const rows = await windowRows(m);
+    const image = rows.filter((r) => BLOCK_GLYPH.test(r));
+    expect(image.length).toBeGreaterThan(10);
+    expect(rows.join("\n")).not.toContain("diagram.png");
+    m.destroy();
+
+    draw.mockClear();
+    m = await mountImageNote({
+      capabilities: KITTY,
+      config: '[preview]\nimages = "off"\n',
+    });
+    expect((await windowRows(m)).join("\n")).toContain("[image: diagram.png]");
+    expect(m.loads).toEqual([]);
+    expect(draw).not.toHaveBeenCalled();
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("an image is drawn only while it is on screen, so no placement outlives it", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    // 20 lines above the image, so the window's bottom cuts its 24 rows.
+    m = await mountImageNote(
+      { capabilities: KITTY },
+      `${Array.from({ length: 20 }, (_, i) => `Above ${i + 1}`).join("\n")}\n\n${IMAGE_NOTE}`,
+    );
+    const drawn = async () => {
+      draw.mockClear();
+      await m?.frame();
+      return draw.mock.calls.length;
+    };
+    expect(await drawn()).toBe(1);
+    const [, , y, , height, , , , , , sourceHeight] = draw.mock.calls[0] ?? [];
+    expect(height).toBe(37 - ((y as number) - 1));
+    expect(height).toBeLessThan(24);
+    expect(sourceHeight).toBe(Math.round((120 * (height as number)) / 24));
+
+    m.keys("G");
+    expect(await drawn()).toBe(0);
+    m.keys("gg");
+    expect(await drawn()).toBe(1);
+
+    m.keys("<leader>m");
+    expect(activeBuffer(m.store.get())?.view).toBe("source");
+    expect(await drawn()).toBe(0);
+    expect((await windowRows(m)).join("\n")).toContain("![[diagram.png]]");
+    m.keys("<leader>m<leader>m");
+    expect(await drawn()).toBe(1);
+
+    m.open("notes/other.md", "# Other\n\nPlain text.\n");
+    expect(await drawn()).toBe(0);
+    expect((await windowRows(m)).join("\n")).toContain("Plain text.");
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("the cursor stays on screen below a tall image", async () => {
+  m = await mountImageNote({ cols: 120, rows: 24, capabilities: KITTY });
+  const textRows = 24 - 3;
+  // The image takes 80% of the window: its first row is numbered, the rest are blank.
+  const blankGutter = (await windowRows(m)).filter((r) =>
+    r.startsWith(" ".repeat(6)),
+  );
+  expect(blankGutter).toHaveLength(Math.floor(textRows * 0.8) - 1);
+  for (let line = 0; line < 30; line++) {
+    expect(activeWindow(m.store.get())?.content.cursor.line).toBe(line);
+    const frame = (await m.frame()).split("\n");
+    const c = m.t.renderer.getCursorState();
+    const y = c.y - 1;
+    expect(y).toBeGreaterThanOrEqual(1);
+    expect(y).toBeLessThan(1 + textRows);
+    expect(frame[y]?.slice(0, 4)).toBe(String(line + 1).padStart(4));
+    m.keys("j");
+  }
 });

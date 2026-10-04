@@ -193,7 +193,8 @@ test("the cell aspect comes from the terminal when known", () => {
     load: async () => PNG,
     repaint: () => {},
     now: () => 0,
-    cellAspect: () => 0.45,
+    cell: () => ({ width: 9, height: 20 }),
   });
   expect(sized.cellAspect()).toBe(0.45);
+  expect(sized.cellPixels()).toEqual({ width: 9, height: 20 });
 });

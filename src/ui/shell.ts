@@ -3,10 +3,12 @@ import {
   type CliRendererConfig,
   createCliRenderer,
   type Renderable,
+  type TerminalCapabilities,
 } from "@opentui/core";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import type { Registries } from "../core/state/update";
+import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
@@ -50,10 +52,27 @@ export type ShellDeps = {
   /** The registries `update` reads; views use them for titles, file types, and keys. */
   reg: Registries;
   now: () => number;
+  /** Bytes for a workspace path or an http(s) URL. */
+  loadImage: (ref: string) => Promise<Uint8Array>;
+  /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
+  capabilities?: () => GraphicsSupport;
 };
 
-/** What views get: the shell's dependencies and the store's dispatch. */
-export type ViewDeps = ShellDeps & { dispatch: Store["dispatch"] };
+/** What the terminal can draw images with. */
+export type GraphicsSupport = {
+  caps: TerminalCapabilities | null;
+  hasResolution: boolean;
+};
+
+/**
+ * What views get: the shell's dependencies, the store's dispatch, the
+ * decoded images, and the terminal's graphics support.
+ */
+export type ViewDeps = ShellDeps & {
+  dispatch: Store["dispatch"];
+  images: ImageCache;
+  capabilities: () => GraphicsSupport;
+};
 
 export type Shell = {
   /** Build the views, follow the store, and feed it keys and resizes. */
@@ -78,9 +97,33 @@ export type View = Renderable & {
 
 export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
   let destroyed = false;
+  // A finished image load lays the views out again, so its rows are reserved.
+  let repaint = () => renderer.requestRender();
+  const images = new ImageCache({
+    load: deps.loadImage,
+    repaint: () => repaint(),
+    now: deps.now,
+    cell: () => {
+      const r = renderer.resolution;
+      const { terminalWidth: cols, terminalHeight: rows } = renderer;
+      return r === null || cols <= 0 || rows <= 0
+        ? undefined
+        : { width: r.width / cols, height: r.height / rows };
+    },
+  });
   return {
     attach(store) {
-      const ctx: ViewDeps = { ...deps, dispatch: store.dispatch };
+      const ctx: ViewDeps = {
+        ...deps,
+        dispatch: store.dispatch,
+        images,
+        capabilities:
+          deps.capabilities ??
+          (() => ({
+            caps: renderer.capabilities,
+            hasResolution: renderer.resolution !== null,
+          })),
+      };
       const windows = new WindowTree(renderer, ctx);
       const explorer = new ExplorerView(renderer, ctx);
       const cmdline = new CommandLine(renderer, ctx);
@@ -117,6 +160,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         renderer.requestRender();
       };
       store.subscribe(paint);
+      repaint = () => paint(store.get());
       const normalizer = createKeyNormalizer({
         escTimeoutMs: () => store.get().config.escTimeoutMs,
         now: deps.now,
@@ -136,6 +180,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      images.clear();
       renderer.destroy();
     },
   };

@@ -41,8 +41,8 @@ export class ImageCache {
       load: (ref: string) => Promise<Uint8Array>;
       repaint: () => void;
       now: () => number;
-      /** Cell width ÷ cell height, when the terminal reports its pixel size. */
-      cellAspect?: () => number;
+      /** A cell's size in pixels, when the terminal reports it. */
+      cell?: () => { width: number; height: number } | undefined;
       limitBytes?: number;
       retryMs?: number;
     },
@@ -74,8 +74,15 @@ export class ImageCache {
       : undefined;
   }
 
+  /** A cell's size in pixels, when the terminal reports it. */
+  cellPixels(): { width: number; height: number } | undefined {
+    return this.o.cell?.();
+  }
+
+  /** Cell width ÷ cell height: from the cell's pixels when known, else 0.5. */
   cellAspect(): number {
-    return this.o.cellAspect?.() ?? 0.5;
+    const c = this.cellPixels();
+    return c === undefined || c.height <= 0 ? 0.5 : c.width / c.height;
   }
 
   /** Bytes of decoded pixels held. */

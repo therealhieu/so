@@ -546,8 +546,8 @@ export class EditorView extends Renderable {
       const host: ViewHost = {
         width,
         rows,
-        imageSize: () => undefined,
-        cellAspect: 0.5,
+        imageSize: (path) => this.deps.images.size(path),
+        cellAspect: this.deps.images.cellAspect(),
       };
       const input =
         spec?.input === undefined
