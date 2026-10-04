@@ -59,7 +59,7 @@ Not established — empty repository (only .s1mple/ guidance)
 
 The core owns all product behavior; the three edge layers are adapters. This reuses Alfred's parsing, Obsidian syntax, vim, terminal-graphics knowledge, and Bases engine by porting them into `core/` (Alfred's kernel, client, protocol, chat, Git, SQLite, Ink, and Next.js are not reused). Main tradeoff: one process keeps latency and code minimal, but a CPU-heavy task on the main thread would stall input — so scanning, parsing for the index, and full-text search run in a worker (RM261003ABZP-DES7@R4).
 
-Inside the core, the kernel edits and lays out text for any language; Markdown is one registered file type whose parser, live-preview decorations, and highlighter plug into the kernel (RM261003ABZP-DES1@R2, RM261003ABZP-DES17@R1). A code editor or notebook later adds file types, decoration providers, and editor kinds; the kernel does not change. Tradeoff: one more indirection (the file-type registry) between an open buffer and its Markdown behaviour, accepted because it is also what Bases and plain text files need in v1.
+Inside the core, the kernel edits and lays out text for any language; Markdown is one registered file type whose parser, live-preview decorations, and highlighter plug into the kernel (RM261003ABZP-DES1@R2, RM261003ABZP-DES17@R2). A code editor or notebook later adds file types, decoration providers, and editor kinds; the kernel does not change. Tradeoff: one more indirection (the file-type registry) between an open buffer and its Markdown behaviour, accepted because it is also what Bases and plain text files need in v1.
 
 ## Components and Boundaries
 
@@ -91,7 +91,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** rendering, clipboard I/O (expressed as effects), and anything Markdown-, link-, note-, or Bases-specific (enforced by the boundary test).
 
 - **Core — file types**
-  - **Decisions:** RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES17@R2
   - **Location:** `src/core/filetypes/`
   - **Responsibilities:** `FileType` contract and `FileTypeRegistry`: path → file type (extension, then file name, then the `text` fallback); per file type the editor kind, views, highlighter, and analysis hook; the built-in `text` file type.
   - **Collaborators:** `app/main` → registers `markdown`, `base`, and code file types; `update` → `fileTypes.forPath(path)` on open
@@ -100,7 +100,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** language parsing (lives in `lang/`), file reading (workspace).
 
 - **Core — languages (Markdown and code highlighting)**
-  - **Decisions:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES13@R3, RM261003ABZP-DES17@R2
   - **Location:** `src/core/lang/markdown/`, `src/core/lang/code/`
   - **Responsibilities:** Markdown block splitting, per-block parse cache, Obsidian syntax extensions, `Doc` model; the live-preview decoration provider with reveal rules and block renderers; pure HTML rendering for the preview; the `markdown` file type. `lang/code` wraps lowlight as `Highlighter`s and registers code file types (TypeScript, JavaScript, JSON, YAML, TOML, shell, Python, CSS, HTML, …) used for code files and fenced code blocks.
   - **Collaborators:** `update` → `markdown.analyze(buf, prevDoc)` → `Doc`; UI → `layoutText(view, [highlight, livePreview(doc)])` → paint; preview → `renderHtml(doc, ctx)`
@@ -127,7 +127,7 @@ Inside the core, the kernel edits and lays out text for any language; Markdown i
   - **Must not own:** file writes (expressed as `write` effects).
 
 - **Workspace adapters**
-  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R2
   - **Location:** `src/workspace/`
   - **Responsibilities:** atomic save, text read with binary and size checks, create, rename, move, delete-to-trash; directory watcher with own-write suppression; index worker (scan, summarize, search); config and state files; clipboard; opening URLs/browser.
   - **Collaborators:** app effect runner → `workspace/*` → `dispatch(resultAction)`
@@ -219,7 +219,7 @@ Unit tests sit next to code as `*.test.ts`.
 ## Runtime Flows
 
 - **Keystroke to frame**
-  - **Decisions:** RM261003ABZP-DES2@R2, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES2@R2, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R2
   - **Participants:** OpenTUI key event → `ui/input.normalizeKey` → `store.dispatch({type:"key"})` → `core/state/update` → `keymap.lookup({mode, filetype})` or `vim.handleKey` → `TextBuffer.apply` → file type `analyze` (Markdown: `parseDoc` reparses changed blocks) → store notifies → `ui/shell.render` → `layoutText` with the view's decoration providers (visible rows only) → `EditorView` paint → OpenTUI native diff
   - **Flow:**
 
@@ -240,14 +240,14 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/core/state/update.ts` `update`; `src/core/kernel/view/text-view.ts` `layoutText`; `src/ui/shell.ts` `createShell`
 
 - **Startup**
-  - **Decisions:** RM261003ABZP-DES1@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES1@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES14@R2, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R2
   - **Participants:** `app/main` → register file types (`markdown`, `base`, code types, `text` fallback) → `loadConfig`, `loadState` → `createStore` → `createShell` (first frame) → `startIndexWorker` → `watchWorkspace`
   - **Flow:**
 
     ```text
     so [path] → resolve workspace (folder | file's parent) ── missing → stderr + exit 2
              → load config (invalid → defaults + error notice) → load state (corrupt → empty)
-             → first frame (explorer from a shallow readdir; opened file read directly)   ← < 200 ms target
+             → first frame (explorer from a shallow readdir; opened file read directly)   ← < 250 ms target
              → worker: list all non-excluded files + summarize Markdown notes → post batches → dispatch(indexBatch) → status "indexing 4,210/10,000"
              → watcher starts → index ready
     ```
@@ -257,7 +257,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Control flow:** `src/app/main.ts` `main`
 
 - **Open a file**
-  - **Decisions:** RM261003ABZP-DES17@R1, RM261003ABZP-DES2@R2, RM261003ABZP-DES12@R2
+  - **Decisions:** RM261003ABZP-DES17@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES12@R2
   - **Participants:** `:e`, explorer `Enter`, picker, or link follow → effect `read(path)` → `workspace/fs.readTextFile` → `dispatch(fileLoaded | fileRefused)` → `update` → `fileTypes.forPath(path)` → buffer and window content
   - **Flow:**
 
@@ -270,8 +270,9 @@ Unit tests sit next to code as `*.test.ts`.
                                           ".base" → base (editor "base" → Bases view)
                                           ".ts" → typescript (views source, lowlight highlighter)
                                           other  → text (views source, no highlighter)
-               → editor "text": buffer {fileType, view: first view, analysis: analyze?(buf)} → content {editor:"text", bufferId, …}
-               → other editor: editorKinds.get(fileType.editor).open(path, text) → content {editor, state}
+               → buffer {fileType, view: first view, analysis: analyze?(buf)} → content {editor, bufferId, …}
+                 editor = fileType.editor when editorKinds has it, else "text" (re-derived after every update step)
+               → kind with its own state (first: base): editorKinds.get(fileType.editor).open(path, text) → content {editor, state}
     fileRefused → notify "binary file — not opened" | "file too large — not opened (limit 16 MiB)"; no buffer, no write
     ```
 
@@ -315,7 +316,7 @@ Unit tests sit next to code as `*.test.ts`.
 
 - **Preview**
   - **Decisions:** RM261003ABZP-DES13@R3
-  - **Participants:** `:Preview` (a Markdown-scoped command) → effect `startPreview` → `preview/server` → browser; store change (active Markdown doc or version) → SSE event → page fetches `/render`. Switching to a non-Markdown buffer sends nothing, so the page keeps the last note (RM261003ABZP-DES17@R1 note-only scope)
+  - **Participants:** `:Preview` (a Markdown-scoped command) → effect `startPreview` → `preview/server` → browser; store change (active Markdown doc or version) → SSE event → page fetches `/render`. Switching to a non-Markdown buffer sends nothing, so the page keeps the last note (RM261003ABZP-DES17@R2 note-only scope)
   - **Flow:**
 
     ```text
@@ -348,12 +349,12 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/core/state/types.ts`
 
 - **AppState — State model**
-  - **Decisions:** RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R2
   - **Purpose:** single source of truth for everything visible.
   - **Participants:** `update` (owner) → ui/preview (readers)
-  - **Meaning:** `workspace` (root, tree), `buffers` (by id: path, `fileType` id, TextBuffer, `analysis` (the file type's analysis state; Markdown: `Doc`), stamp, `bom`, `eol`, dirty, `view` — one of the file type's view ids, e.g. live|source|reading for Markdown, source for code), `windows` (split tree, active, and per-window `content` by editor kind: `{editor:"text", bufferId, cursor, scroll, folds}` where `folds` is the set of folded callout and expanded embed block ids, or `{editor: <registered kind>, state}` whose `state` comes from that kind's `EditorKindSpec.open` — in v1 only `base`, with state `{path, view, cursor}`), `vim` (mode, pending keys, registers, last change, search), `panels` (explorer, side panel kind), `overlay` (none | picker | whichKey | palette | prompt | help | conflict | calendar | completion), `index` (NoteIndex + status), `notifications`, `config`, `jumps`, `preview` (off | starting | on(port)).
+  - **Meaning:** `workspace` (root, tree), `buffers` (by id: path, `fileType` id, TextBuffer, `analysis` (the file type's analysis state; Markdown: `Doc`), stamp, `bom`, `eol`, dirty, `view` — one of the file type's view ids, e.g. live|source|reading for Markdown, source for code), `windows` (split tree, active, and per-window `content` by editor kind: `{editor, bufferId, cursor, scroll, folds}` for a window showing a buffer, where `editor` is the buffer's file-type editor kind when that kind is registered and `"text"` otherwise (derived after each reducer step, never persisted) and `folds` is the set of folded callout and expanded embed block ids, or `{editor: <registered kind>, state}` whose `state` comes from that kind's `EditorKindSpec.open` — in v1 only `base`, with state `{path, view, cursor}`), `vim` (mode, pending keys, registers, last change, search), `panels` (explorer, side panel kind), `overlay` (none | picker | whichKey | palette | prompt | help | conflict | calendar | completion), `index` (NoteIndex + status), `notifications`, `config`, `jumps`, `preview` (off | starting | on(port)).
   - **Ownership and lifecycle:** created at startup from config + state file; `jumps` and recent notes persisted through `saveState` effects (debounced 2 s and on exit).
-  - **Invariants:** one active window; each `text` window references an open buffer; a buffer's `view` is one of its file type's views; a buffer with `dirty=false` matches its last saved stamp. Adding an editor kind (a notebook later) registers an `EditorKindSpec` in core and an editor view in the UI; neither the `AppState` type nor the kernel changes.
+  - **Invariants:** one active window; each window showing a buffer references an open buffer; a buffer's `view` is one of its file type's views; a buffer with `dirty=false` matches its last saved stamp. Adding an editor kind (a notebook later) registers an `EditorKindSpec` in core and an editor view in the UI; neither the `AppState` type nor the kernel changes.
   - **State flow:** `None — plain value replaced by update`
   - **Shape:** `src/core/state/types.ts` `AppState`
 
@@ -388,7 +389,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Shape:** `src/core/kernel/view/types.ts`
 
 - **FileType and Decoration model — Data model**
-  - **Decisions:** RM261003ABZP-DES17@R1, RM261003ABZP-DES9@R3
+  - **Decisions:** RM261003ABZP-DES17@R2, RM261003ABZP-DES9@R3
   - **Purpose:** the only way language-specific behaviour reaches the kernel.
   - **Participants:** `lang/*`, `features/bases` → `FileTypeRegistry.register` (wired in `app/main`) → `update` (`forPath` on open; `analyze` per version) → `layoutText(view, providers, analysis)`
   - **Meaning:** `FileType { id, match: {extensions, names}, editor: EditorKind (an open string: "text" and "base" in v1, more by registration), views: [{id, readOnly?, decorations: DecorationProvider[], input?}], highlighter?, analyze? }`. `Decoration` = `mark` (style a range) | `replace` (hide or substitute a range, inline or whole lines, optionally with spans or a widget) | `widget` (insert rows or inline content at a position) | `line` (line style or sign). The kernel's `highlightMarks` turns `Highlighter` output into `mark` decorations; `Highlighter` and `Span` are kernel types, so the kernel never imports `filetypes`. A view's optional `input(analysis, ctx)` hook builds the per-frame provider input from a context type the language declares and `core/state` builds (Markdown: `MarkdownViewInput`), so the UI never branches on a file type. This is the decoration model of CodeMirror 6 (Obsidian's editor), Neovim extmarks, and VS Code decorations.
@@ -588,7 +589,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Dependencies:** `mdast-util-from-markdown`, `micromark-extension-gfm`, `mdast-util-gfm`, `micromark-extension-math`, `mdast-util-math`, `yaml`
   - **Callers and wiring:** registered as the `markdown` file type's `analyze`; `update` runs it after edits; the worker runs `scanDoc` before `summarize`; live preview and `renderHtml` call `blockNode`.
   - **Invariants:** `parseDoc(buf, prev)` equals `parseDoc(buf)` structurally (cache is transparent).
-  - **Verification:** RM261003ABZP-S5@R1, RM261003ABZP-V7@R2; RM261003ABZP-S9@R1, RM261003ABZP-V12@R2
+  - **Verification:** RM261003ABZP-S5@R1, RM261003ABZP-V7@R2; RM261003ABZP-S9@R1, RM261003ABZP-V12@R3
 
 - **`src/core/kernel/view/text-view.ts` and `src/core/lang/markdown/live-preview.ts`**
   - **Decisions:** RM261003ABZP-DES9@R3
@@ -637,7 +638,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S5@R1, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1; RM261003ABZP-S11@R1, RM261003ABZP-V16@R2
 
 - **`src/core/filetypes/registry.ts` and `src/core/lang/code/highlight.ts`**
-  - **Decisions:** RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES17@R2
   - **Change:** Add (highlighter adapted from `alfred/apps/tui/src/view/markdown/code-highlight.ts`)
   - **Responsibilities:** file-type contract and lookup; the lowlight-backed highlighter.
   - **Current source:** `alfred/apps/tui/src/view/markdown/code-highlight.ts` (96 lines, `lowlight`; porting reference)
@@ -686,7 +687,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Dependencies:** `lowlight`; TextBuffer
   - **Callers and wiring:** `update` (`forPath` on `fileLoaded`; `analyze` after edits); the kernel's `highlightMarks` (`Highlighter` → `mark` decorations); `lang/markdown` fenced code blocks.
   - **Invariants:** registry lookup is deterministic and pure; highlighting is viewport-bounded and never runs the whole file per keystroke; a highlighter error drops to plain text for that range.
-  - **Verification:** RM261003ABZP-S12@R1, RM261003ABZP-V18@R1; RM261003ABZP-S9@R1, RM261003ABZP-V12@R2; RM261003ABZP-S11@R1, RM261003ABZP-V16@R2
+  - **Verification:** RM261003ABZP-S12@R1, RM261003ABZP-V18@R1; RM261003ABZP-S9@R1, RM261003ABZP-V12@R3; RM261003ABZP-S11@R1, RM261003ABZP-V16@R2
 
 - **`src/core/features/links/resolve.ts` and `src/core/features/links/rename.ts`**
   - **Decisions:** RM261003ABZP-DES7@R4
@@ -720,7 +721,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Verification:** RM261003ABZP-S4@R1, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2
 
 - **`src/workspace/fs.ts` and `src/workspace/watcher.ts`**
-  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES17@R1
+  - **Decisions:** RM261003ABZP-DES8@R2, RM261003ABZP-DES17@R2
   - **Change:** Add
   - **Responsibilities:** text reads with binary and size checks; atomic writes and directory watching with own-write suppression.
   - **Current source:** None — new surface
@@ -797,7 +798,7 @@ Unit tests sit next to code as `*.test.ts`.
   - **Dependencies:** `@opentui/core` (exact pin)
   - **Callers and wiring:** `ui/shell.ts` composes views; store subscription triggers `requestRender()`.
   - **Invariants:** UI never mutates AppState; all input becomes Actions.
-  - **Verification:** RM261003ABZP-S9@R1, RM261003ABZP-V12@R2; RM261003ABZP-S11@R1, RM261003ABZP-V17@R1
+  - **Verification:** RM261003ABZP-S9@R1, RM261003ABZP-V12@R3; RM261003ABZP-S11@R1, RM261003ABZP-V17@R1
 
 - **`src/preview/server.ts`**
   - **Decisions:** RM261003ABZP-DES13@R3
@@ -839,7 +840,7 @@ Unit tests sit next to code as `*.test.ts`.
 |---|---|---|
 | Security and privacy | The only outbound network use is fetching web (`http:`/`https:`) images referenced by notes the user views, in the terminal (`src/workspace/images.ts`: 10 s timeout, 16 MiB cap, no cookies, no Referer, disabled by `preview.images = "off"`, kept only in the in-memory image cache) and in the browser preview, whose Content Security Policy allows `http:` and `https:` images; everything else is loopback-only: the preview binds 127.0.0.1 with a Host allowlist, realpath containment, and a same-origin Content Security Policy for code, styles, fonts and connections (RM261003ABZP-DES13@R3); config is data (TOML), never executed (RM261003ABZP-DES14@R2); no telemetry; notes never logged | RM261003ABZP-V11@R3 |
 | Configuration and observability | XDG TOML config validated by schema; errors as notifications; `so --version`; `SO_LOG=debug` writes a log to `$XDG_STATE_HOME/so/so.log` without note content (RM261003ABZP-DES14@R2) | RM261003ABZP-V4@R2 |
-| Performance and scalability | Viewport-only layout, block parse cache, worker index and search, frame coalescing, lazy image decode with cache (RM261003ABZP-DES16@R1) | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
+| Performance and scalability | Viewport-only layout, block parse cache, worker index and search, frame coalescing, lazy image decode with cache (RM261003ABZP-DES16@R1) | RM261003ABZP-V12@R3, RM261003ABZP-V13@R2 |
 | Concurrency, retry, and idempotency | Single-threaded store; worker communicates by messages; saves serialized per path; autosave retry with backoff; own-write stamps make watcher events idempotent (RM261003ABZP-DES8@R2) | RM261003ABZP-V1@R1 |
 | Migration and backfill | None — greenfield; Obsidian files are read as-is and written in place | None — no prior data format |
 | Mixed-version compatibility | Obsidian file compatibility (Markdown, links, frontmatter, `.base`); Kanban `type` constant isolated in `core/features/bases/types.ts` and verified against an Obsidian-saved file (RM261003ABZP-DES12@R2) | RM261003ABZP-V10@R1 |
@@ -1023,29 +1024,29 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
 
 - **RM261003ABZP-S9@R1 — Performance targets hold**
   - **Definition:** This document
-  - **Outcome:** the targets in RM261003ABZP-REQ9@R2 are met on the reference machine and gated at 2× in CI.
-  - **Requirements:** RM261003ABZP-REQ9@R2
-  - **Design:** RM261003ABZP-DES16@R1, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES7@R4, RM261003ABZP-DES17@R1
+  - **Outcome:** the targets in RM261003ABZP-REQ9@R3 are met on the reference machine and gated at 2× in CI.
+  - **Requirements:** RM261003ABZP-REQ9@R3
+  - **Design:** RM261003ABZP-DES16@R1, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES7@R4, RM261003ABZP-DES17@R2
   - **Predecessors:** None
   - **Verification:**
-    - **RM261003ABZP-V12@R2 — Keystroke and open-file benchmarks**
+    - **RM261003ABZP-V12@R3 — Keystroke and open-file benchmarks**
       - **Definition:** This document
       - **Success:** RM261003ABZP-S9@R1
       - **Scenario:** open the 5,000-line fixture note in live preview, and the 5,000-line TypeScript fixture in source view with highlighting, in the OpenTUI test renderer (120×40); send 200 mixed keystrokes (`j`, `w`, `i` + text + `Esc`, `dd`, `u`) to each; measure input → frame complete; measure open time; scroll each file for 2 s with held `j` and repeated `Ctrl-d`/`Ctrl-u` and record frame times with the in-process frame metrics (`RM261003ABZP-RF2`).
-      - **Expected result:** for both files, p95 < 16 ms and open < 50 ms on the reference machine; scrolling frame time p95 < 16.7 ms (60 fps); CI median of 5 runs < 32 ms, < 100 ms, and < 33.4 ms.
+      - **Expected result:** on the reference machine, the note in live preview has keystroke p95 < 24 ms and open < 80 ms, and the TypeScript file in source view has keystroke p95 < 16 ms and open < 50 ms; scrolling frame time p95 < 16.7 ms (60 fps) for both. In CI the median of 5 runs stays within 2× of each target: < 48 ms and < 160 ms for the note, < 32 ms and < 100 ms for the TypeScript file, and < 33.4 ms for scrolling.
       - **Method and target:** benchmark in `test/bench/`
       - **Environment:** OpenTUI test renderer; fixed CI runner type
       - **Unique risk:** full-document parse, layout, or highlighting sneaking into the keystroke path.
-      - **Predecessors:** RM261003ABZP-V12@R1
-    - **RM261003ABZP-V13@R1 — Startup and index benchmarks**
+      - **Predecessors:** RM261003ABZP-V12@R1, RM261003ABZP-V12@R2
+    - **RM261003ABZP-V13@R2 — Startup and index benchmarks**
       - **Definition:** This document
       - **Success:** RM261003ABZP-S9@R1
       - **Scenario:** generate a 10,000-note workspace; start `so`; record time to first interactive frame and to index ready; type during indexing.
-      - **Expected result:** first frame < 200 ms; index ready < 3 s; keystrokes during indexing still meet the V12 budget.
+      - **Expected result:** first frame < 250 ms; index ready < 3 s; keystroke p95 while indexing < 30 ms. In CI the median of 5 runs stays within 2× of each target: < 500 ms, < 6 s, and < 60 ms.
       - **Method and target:** benchmark in `test/bench/`
       - **Environment:** generated fixture; real worker
       - **Unique risk:** indexing blocking the main thread.
-      - **Predecessors:** None
+      - **Predecessors:** RM261003ABZP-V13@R1
 
 - **RM261003ABZP-S10@R2 — Development and CI are fast; releases are manual and proven by a dry run**
   - **Definition:** This document
@@ -1068,7 +1069,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** boundary violations fail CI; features extend by registration; terminal state is restored on every exit path; standards are followed.
   - **Requirements:** RM261003ABZP-REQ11@R3
-  - **Design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1
+  - **Design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R2
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V15@R2 — Import boundary test**
@@ -1103,7 +1104,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Definition:** This document
   - **Outcome:** non-Markdown UTF-8 files open in source view with highlighting where recognized, binary and oversized files are refused without writes, and saves keep the file's BOM and line endings. Keeping note-only keys and commands out of other file types is part of RM261003ABZP-S3@R1 (RM261003ABZP-V4@R2).
   - **Requirements:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ11@R3
-  - **Design:** RM261003ABZP-DES17@R1, RM261003ABZP-DES9@R3
+  - **Design:** RM261003ABZP-DES17@R2, RM261003ABZP-DES9@R3
   - **Predecessors:** None
   - **Verification:**
     - **RM261003ABZP-V18@R1 — Open text, code, binary, and oversized files**
@@ -1129,7 +1130,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES1@R1
 
 - **RM261003ABZP-DES2@R2 — One store with a pure reducer and data-only effects**
-  - **Requirements:** RM261003ABZP-REQ11@R3 - stable, testable foundations; RM261003ABZP-REQ1@R3 - autosave and conflicts; RM261003ABZP-REQ9@R2 - predictable rendering
+  - **Requirements:** RM261003ABZP-REQ11@R3 - stable, testable foundations; RM261003ABZP-REQ1@R3 - autosave and conflicts; RM261003ABZP-REQ9@R3 - predictable rendering
   - **Decision:** `update(state, action) → { state, effects }`; effects are plain data executed by `app/effects.ts`; results return as actions.
   - **Explanation:** Action and Effect protocol; AppState; `src/core/state/update.ts`. Every behavior (autosave timing, conflict choice, rename) is a pure function test.
   - **Evidence:** `alfred/apps/tui/src/view/editor/vim.ts` - Alfred's vim core already returns effects instead of performing them.
@@ -1139,7 +1140,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES2@R1
 
 - **RM261003ABZP-DES3@R1 — Line-array TextBuffer behind an interface, with vim undo blocks**
-  - **Requirements:** RM261003ABZP-REQ2@R2 - undo per undo block; RM261003ABZP-REQ9@R2 - 5,000-line target
+  - **Requirements:** RM261003ABZP-REQ2@R2 - undo per undo block; RM261003ABZP-REQ9@R3 - 5,000-line target
   - **Decision:** immutable line array with structural sharing; `apply(edit)` returns an inverse; undo stack of blocks (one Normal command or one Insert session).
   - **Explanation:** TextBuffer model; `src/core/kernel/text/text-buffer.ts`. A piece table can replace the implementation without changing callers.
   - **Evidence:** `alfred/apps/tui/src/view/editor/text-buffer.ts` - single-string buffer (186 lines) as reference.
@@ -1169,7 +1170,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES5@R1
 
 - **RM261003ABZP-DES6@R2 — micromark/mdast with Obsidian extensions and block-level reparse**
-  - **Requirements:** RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2
+  - **Requirements:** RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R3
   - **Decision:** port Alfred's micromark + GFM + math parsing and Obsidian syntax into `core/lang/markdown` as the `markdown` file type's `analyze`; split into blocks and reparse only changed blocks; one `Doc` with two levels feeds layout, index, and HTML: a linear scan level (links, tags, headings, block ids, frontmatter) used by the index and link features, and mdast built lazily per block for live preview and HTML. Each Obsidian syntax is defined once in `syntaxExtensions` for both levels.
   - **Explanation:** Doc model; `src/core/lang/markdown/doc.ts`.
   - **Evidence:** `alfred/apps/tui/src/view/markdown/parse.ts:40-44` - existing micromark pipeline; `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (DES2, Assigned Parent Obligation Coverage) - a full mdast parse took 11.8 s for 10,000 notes and about 350 ms for the `openFile` fixture; delivered in `src/core/lang/markdown/` (PR #2).
@@ -1179,13 +1180,13 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES6@R1
 
 - **RM261003ABZP-DES7@R4 — Worker-built in-memory index with a documented resolution rule**
-  - **Requirements:** RM261003ABZP-REQ4@R3 - links, backlinks, tags, rename; RM261003ABZP-REQ3@R4 - pickers and full-text search; RM261003ABZP-REQ9@R2 - non-blocking index
+  - **Requirements:** RM261003ABZP-REQ4@R3 - links, backlinks, tags, rename; RM261003ABZP-REQ3@R4 - pickers and full-text search; RM261003ABZP-REQ9@R3 - non-blocking index
   - **Decision:** a Bun `Worker` lists every non-excluded workspace file, summarizes Markdown notes from the scan level of `parseDoc`, and answers full-text queries over Markdown notes and other text files that pass the REQ1 text checks; the main thread holds `NoteIndex` (summaries plus the file list) under `core/features/links`; resolution order: root path → alias → basename ranked by same folder, shortest path, alphabetical; `planRename(ix, moves, open)` rewrites link spans only, from open buffers' scans and the summaries' link spans, without reading files; one link rewrite runs at a time; `link.linkMention` wraps one unlinked mention in `[[…]]` in its source note through a span edit (open buffer in memory, closed file via `write`).
   - **Explanation:** NoteSummary and NoteIndex; `resolve.ts`; `rename.ts`.
   - **Evidence:** `rm261003abzp-roadmap-context.md@R1` - Alfred used SQLite; `so` has no persistence need for the index; `.s1mple/work/done/w261003fx70-navigation-and-links/` system design DES3, DES4, DES6 and goal deviations D2, D3; delivered in `src/core/features/links/` and `src/workspace/index-worker.ts` (PR #2).
   - **Research:** `RM261003ABZP-RF8` - duplicate resolution undocumented; evaluated RM261003ABZP-REQ4@R1 → informed RM261003ABZP-REQ4@R2 (current RM261003ABZP-REQ4@R3)
   - **Tradeoffs:** reindex on every start (< 3 s target); searching all text files reads more bytes than notes alone, bounded by `.gitignore` exclusion and the 16 MiB per-file limit; rejected SQLite (persistence and schema cost without need) and ripgrep (external binary).
-  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R2
   - **Predecessors:** RM261003ABZP-DES7@R1, RM261003ABZP-DES7@R2, RM261003ABZP-DES7@R3
 
 - **RM261003ABZP-DES8@R2 — Atomic saves, directory watching, own-write stamps, and trash adapters**
@@ -1199,13 +1200,13 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES8@R1
 
 - **RM261003ABZP-DES9@R3 — Viewport-only text view with decorations; Markdown live preview as a decoration provider**
-  - **Requirements:** RM261003ABZP-REQ5@R2 - live preview; RM261003ABZP-REQ9@R2 - smooth scrolling; RM261003ABZP-REQ11@R3 - language-neutral kernel, registered decoration providers
+  - **Requirements:** RM261003ABZP-REQ5@R2 - live preview; RM261003ABZP-REQ9@R3 - smooth scrolling; RM261003ABZP-REQ11@R3 - language-neutral kernel, registered decoration providers
   - **Decision:** the kernel's pure `layoutText` produces `RenderLine[]` for visible rows only from text plus decorations (`mark`, `replace`, `widget`, `line`) returned by the view's providers and the file type's highlighter. Markdown live preview is the `livePreview` provider in `lang/markdown`: the cursor line reveals inline syntax, a cursor inside a multi-line block reveals the whole block, folded callouts and expanded embeds follow the window's `folds` set, block renderers are registered per block kind, and widgets (image, embed, base) reserve rows. Source view uses highlighter marks only — the same path code files use. The live-preview input (`MarkdownViewInput`: the `Doc` plus a read-only `PreviewCtx`) comes from the Markdown views' `input` hook, so neither the kernel nor the UI knows about Markdown.
   - **Explanation:** FileType and Decoration model; RenderLine model; `src/core/kernel/view/text-view.ts`; `src/core/lang/markdown/live-preview.ts`.
   - **Evidence:** `alfred/apps/tui/src/view/editor/reveal-units.ts` - reveal units reference. Industry precedent: CodeMirror 6 decorations (the basis of Obsidian's live preview), Neovim extmarks and conceal, VS Code decorations.
   - **Research:** `RM261003ABZP-RF7` - per-element reveal in Obsidian; block reveal for multi-line constructs; evaluated RM261003ABZP-REQ5@R1 → informed RM261003ABZP-REQ5@R2
   - **Tradeoffs:** block reveal shifts more text than Obsidian's per-span reveal; one decoration list per frame instead of direct painting, accepted because it is bounded by visible lines; rejected OpenTUI `MarkdownRenderable` conceal (UI-owned parsing, no Obsidian syntax) and a Markdown-specific `layoutViewport` (would make every future language reimplement layout).
-  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES17@R2
   - **Predecessors:** RM261003ABZP-DES9@R1, RM261003ABZP-DES9@R2
 
 - **RM261003ABZP-DES10@R2 — OpenTUI shell with editor-kind views, widget painters, normalized input, and guaranteed terminal restore**
@@ -1235,7 +1236,7 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Evidence:** `alfred/packages/vault/src/domain/bases/parser.ts:19`, `evaluator.ts:164` - no file-system or Bun imports (context assumption).
   - **Research:** `RM261003ABZP-RF9` - layouts, Kanban rules; evaluated RM261003ABZP-REQ7@R1 → informed RM261003ABZP-REQ7@R2
   - **Tradeoffs:** follows an early-access Obsidian layout; guarded by the constant, a fixture, and the table fallback. Bases is the first non-text editor kind, so the seam a notebook needs is exercised in v1 rather than designed speculatively.
-  - **Dependencies:** RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1
+  - **Dependencies:** RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R2
   - **Predecessors:** RM261003ABZP-DES12@R1
 
 - **RM261003ABZP-DES13@R3 — `Bun.serve` preview with Host allowlist, SSE, and pure HTML rendering**
@@ -1269,46 +1270,46 @@ empty repo → scaffold (tooling, CI, boundary test, shell) → editor usable �
   - **Predecessors:** RM261003ABZP-DES15@R1, RM261003ABZP-DES15@R2, RM261003ABZP-DES15@R3
 
 - **RM261003ABZP-DES16@R1 — Performance by construction plus benchmark gates**
-  - **Requirements:** RM261003ABZP-REQ9@R2 - performance targets
+  - **Requirements:** RM261003ABZP-REQ9@R3 - performance targets
   - **Decision:** viewport-only layout (DES9), block parse cache (DES6), worker index and search (DES7), frame coalescing (one render per input burst), first frame before indexing, lazy image decode with an LRU cache (64 MiB), and benchmarks through the OpenTUI test renderer gated at 2× (median of 5) in CI.
   - **Explanation:** Keystroke to frame and Startup flows; `test/bench/`.
   - **Evidence:** `alfred/.s1mple/docs/project.md` - Alfred's 64 MiB image budget precedent.
-  - **Research:** `RM261003ABZP-RF2` - in-process metrics; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2
+  - **Research:** `RM261003ABZP-RF2` - in-process metrics; evaluated RM261003ABZP-REQ9@R1 → informed RM261003ABZP-REQ9@R2 (current RM261003ABZP-REQ9@R3)
   - **Tradeoffs:** benchmarks add CI time (bounded by the 3 min budget); terminal display latency is outside the measurement.
   - **Dependencies:** RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES9@R3
   - **Predecessors:** None
 
-- **RM261003ABZP-DES17@R1 — File-type registry, highlighter interface, and text-file open policy**
+- **RM261003ABZP-DES17@R2 — File-type registry, highlighter interface, and text-file open policy**
   - **Requirements:** RM261003ABZP-REQ1@R3 - any text file, binary and size guard, BOM; RM261003ABZP-REQ3@R4 - file-type scope; RM261003ABZP-REQ11@R3 - file types, highlighters, decoration providers, editor kinds by registration
-  - **Decision:** a `FileTypeRegistry` maps a path to a `FileType` (extension, then file name, then the built-in `text` fallback); a file type declares its editor kind (an open string; non-`text` kinds register an `EditorKindSpec` in core, which creates the window state, and a UI view in `editorViews`, which paints it), views with decoration providers and an optional `input` hook whose context type the language declares and `core/state` builds, optional `Highlighter` (a kernel interface), and optional `analyze` hook. Note-only commands, including `:Preview`, are limited to `markdown`. v1 registers `text`, `markdown`, `base`, and code file types backed by one lowlight `Highlighter` (viewport-bounded, cached per buffer version). `workspace/fs.readTextFile` refuses files over 16 MiB and files with a NUL in the first 8 KiB or invalid UTF-8, strips and remembers a BOM and line separator; saves restore both.
-  - **Explanation:** FileType and Decoration model; Open a file flow; `src/core/filetypes/registry.ts`; `src/core/lang/code/highlight.ts`; `src/workspace/fs.ts` `readTextFile`.
-  - **Evidence:** `rm261003abzp-roadmap-context.md@R2` - "Apply all six" decision; `alfred/apps/tui/src/view/markdown/code-highlight.ts` - lowlight precedent. Industry precedent: Neovim `filetype` + ftplugins, VS Code language contributions, Git's NUL-byte binary heuristic.
+  - **Decision:** a `FileTypeRegistry` maps a path to a `FileType` (extension, then file name, then the built-in `text` fallback); a file type declares its editor kind (an open string; non-`text` kinds register an `EditorKindSpec` in core and a UI view in `editorViews`, which paints it; a window shows its buffer in the buffer's file-type kind when that kind is registered in core, else in `text`, derived after each reducer step and never persisted; a kind that needs its own window state creates it through `EditorKindSpec.open`, first used by `base`), views with decoration providers and an optional `input` hook whose context type the language declares and `core/state` builds, optional `Highlighter` (a kernel interface), and optional `analyze` hook. Note-only commands, including `:Preview`, are limited to `markdown`. v1 registers `text`, `markdown`, `base`, and code file types backed by one lowlight `Highlighter` (viewport-bounded, cached per buffer version). `workspace/fs.readTextFile` refuses files over 16 MiB and files with a NUL in the first 8 KiB or invalid UTF-8, strips and remembers a BOM and line separator; saves restore both.
+  - **Explanation:** FileType and Decoration model; Open a file flow; `src/core/filetypes/registry.ts`; `src/core/lang/code/highlight.ts`; `src/workspace/fs.ts` `readTextFile`; `src/core/state/update.ts` `syncEditorKinds`.
+  - **Evidence:** `rm261003abzp-roadmap-context.md@R2` - "Apply all six" decision; `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` §6 (`WindowState`) and PR #6 - DI3 derives the window editor kind (a registered test kind `grid` opens in its view; an unregistered kind falls back to `text`); `alfred/apps/tui/src/view/markdown/code-highlight.ts` - lowlight precedent. Industry precedent: Neovim `filetype` + ftplugins, VS Code language contributions, Git's NUL-byte binary heuristic.
   - **Research:** None - the decision reuses existing findings (RF6 pure text model, RF7 parse and reveal).
   - **Tradeoffs:** lowlight is regex-based and not incremental, so very long multi-line constructs above the 200-line look-back can highlight wrongly; accepted for v1 and replaceable by tree-sitter behind `Highlighter`. Rejected adding tree-sitter now (WASM grammars, build and size cost without a v1 need) and a generic notebook-ready `Document` abstraction (speculative; editor kinds already cover it). The 16 MiB limit is a fixed constant, not configuration.
   - **Dependencies:** RM261003ABZP-DES1@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES8@R2
-  - **Predecessors:** None
+  - **Predecessors:** RM261003ABZP-DES17@R1
 
 | Current requirement | Design decision | Canonical design location | Success | Verification |
 |---|---|---|---|---|
-| RM261003ABZP-REQ1@R3 - folder workspace, text files, safe file management | RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R1 | `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; `src/core/filetypes/`; Open a file and Save and external change flows | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
+| RM261003ABZP-REQ1@R3 - folder workspace, text files, safe file management | RM261003ABZP-DES8@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES17@R2 | `src/workspace/fs.ts`, `watcher.ts`, `trash.ts`; `src/core/filetypes/`; Open a file and Save and external change flows | RM261003ABZP-S1@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V1@R1, RM261003ABZP-V18@R1 |
 | RM261003ABZP-REQ2@R2 - vim editing | RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES10@R2 | `src/core/kernel/text/`, `src/core/kernel/editor/`, `src/core/kernel/vim/`, `src/ui/input.ts` | RM261003ABZP-S2@R1 | RM261003ABZP-V2@R1, RM261003ABZP-V3@R1 |
-| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R1 | `src/core/kernel/commands/`, `src/ui/overlays/`, `src/workspace/config-file.ts`, `state-file.ts` | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
+| RM261003ABZP-REQ3@R4 - navigation, config, state, file-type scope | RM261003ABZP-DES5@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES10@R2, RM261003ABZP-DES14@R2, RM261003ABZP-DES17@R2 | `src/core/kernel/commands/`, `src/ui/overlays/`, `src/workspace/config-file.ts`, `state-file.ts` | RM261003ABZP-S3@R1 | RM261003ABZP-V4@R2 |
 | RM261003ABZP-REQ4@R3 - links | RM261003ABZP-DES7@R4, RM261003ABZP-DES6@R2 | `src/core/features/links/` | RM261003ABZP-S4@R1 | RM261003ABZP-V5@R1, RM261003ABZP-V6@R2 |
-| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R1 | `src/core/lang/markdown/`, `src/core/kernel/view/`, `src/ui/editors/`, `src/ui/widgets/` | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
+| RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R2 | `src/core/lang/markdown/`, `src/core/kernel/view/`, `src/ui/editors/`, `src/ui/widgets/` | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
 | RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-DES11@R1 | `src/core/time/`, `src/core/features/notes/` | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
-| RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R1 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
+| RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R2 | `src/core/features/bases/`, `src/ui/editors/` | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
 | RM261003ABZP-REQ8@R2 - preview | RM261003ABZP-DES13@R3, RM261003ABZP-DES6@R2 | `src/preview/`, `src/core/lang/markdown/html.ts` | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
-| RM261003ABZP-REQ9@R2 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R2, RM261003ABZP-V13@R1 |
+| RM261003ABZP-REQ9@R3 - performance | RM261003ABZP-DES16@R1 | Keystroke and Startup flows; `test/bench/` | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R3, RM261003ABZP-V13@R2 |
 | RM261003ABZP-REQ10@R4 - dev, CI, release | RM261003ABZP-DES15@R4, RM261003ABZP-DES1@R2 | `package.json`, `.github/workflows/` | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
-| RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R1 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
+| RM261003ABZP-REQ11@R3 - foundations, language-neutral kernel | RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R2 | `test/boundaries.test.ts`, `src/core/kernel/`, `src/core/filetypes/`, registries, `src/ui/shell.ts` | RM261003ABZP-S11@R1, RM261003ABZP-S12@R1 | RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1 |
 
 ## Unresolved Items
 
-None — open technical confirmations are delivery constraints with named verification, not design decisions. DI1 confirmed the OpenTUI paint, buffer, and test-renderer APIs at `@opentui/core` 0.5.14 and recursive `fs.watch` on macOS and Linux. The OpenTUI image API at the pinned version (before DI3 relies on it) and the Kanban `type` value (DI4) remain.
+None — open technical confirmations are delivery constraints with named verification, not design decisions. DI1 confirmed the OpenTUI paint, buffer, and test-renderer APIs at `@opentui/core` 0.5.14 and recursive `fs.watch` on macOS and Linux. DI3 confirmed the OpenTUI image API at the pinned version (W261003S6BQ V43 terminal spike, PR #6). The Kanban `type` value (DI4) remains.
 
 ## Approval
 
 - **Requirement baseline:** RM261003ABZP-REQ1@R3, RM261003ABZP-REQ2@R2, RM261003ABZP-REQ3@R4, RM261003ABZP-REQ4@R3, RM261003ABZP-REQ5@R2 … RM261003ABZP-REQ10@R4, RM261003ABZP-REQ11@R3
-- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1
-- **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1, RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V13@R1, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
-- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint). On 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing dry run: DES15@R4, S10@R2, V14@R2. DI3 design synchronization (W261003S6BQ) approved by the user on 2026-10-04: DES13@R3 (KaTeX and Mermaid served from the binary, same-origin Content Security Policy with web images, `line` in the `doc` payload) and the outbound-network rule for web images.
+- **Approved design:** RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES3@R1, RM261003ABZP-DES4@R1, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES7@R4, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R2
+- **Approved success and verification:** RM261003ABZP-S1@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1, RM261003ABZP-S12@R1; RM261003ABZP-V1@R1, RM261003ABZP-V2@R1, RM261003ABZP-V3@R1, RM261003ABZP-V4@R2, RM261003ABZP-V5@R1, RM261003ABZP-V6@R2, RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R3, RM261003ABZP-V13@R2, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1, RM261003ABZP-V18@R1
+- **Approval evidence:** User delegated all decisions on 2026-10-03 ("you self-drive and decide all based on the proposal and these criteria … don't raise any question to me"); the agent approved this design, the DES2/DES7/DES9/DES13 R2 revisions from the UI system-impact assessment, and the V6/V11 R2 verification revisions, under that delegation. On 2026-10-03 the user approved the Markdown-first, language-neutral core by selecting "Apply all six (Recommended)" (kernel split, FileType registry, decorations, file-type keymaps, highlighter interface, open any text file); this produced DES1@R2, DES5@R2, DES7@R3, DES9@R3, DES10@R2, DES12@R2, DES17@R1, S12@R1, V18@R1, and the V4/V7/V12/V15/V16 R2 revisions. The user then delegated every remaining sub-decision on 2026-10-03 ("you self-drive everything. Everything is good now, don't need to stop"), covering the 16 MiB limit, binary check, BOM preservation, all-file picker and text-file search, `[filetypes.<id>.keys.<mode>]` config, no statusline file-type segment, S12/V18, the TypeScript benchmark, and the lowlight look-back. Post-DI1 synchronization approved by the user on 2026-10-03: DES8@R2 (macOS trash without a prompt) and DES15@R2 (pull-request-only CI, `workflow_call` release, native smoke). Post-DI2 synchronization approved by the user on 2026-10-04: DES6@R2 (two-level Markdown model), DES7@R4 (scan-level summaries, `planRename` from moves and open scans, one link rewrite at a time), DES14@R2 (`toml-eslint-parser`, editor options), and DES15@R3 (index worker as a second compile entrypoint). On 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing dry run: DES15@R4, S10@R2, V14@R2. DI3 design synchronization (W261003S6BQ) approved by the user on 2026-10-04: DES13@R3 (KaTeX and Mermaid served from the binary, same-origin Content Security Policy with web images, `line` in the `doc` payload) and the outbound-network rule for web images. DI3 delivery synchronization (W261003S6BQ, PR #6) approved by the user on 2026-10-04: DES17@R2 (a window shows its buffer in the file type's registered editor kind, else `text`), and V12@R3 and V13@R2 (relaxed live-view and startup targets of RM261003ABZP-REQ9@R3).
