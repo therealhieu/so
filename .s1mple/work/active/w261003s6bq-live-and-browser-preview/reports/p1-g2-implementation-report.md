@@ -67,12 +67,30 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** Not yet issued
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p1-g2-verification-report.md` (commit `183db2a`, status `Failed`; left unchanged)
+- **Status:** `Completed`
+
+All four findings are fixed in follow-up commits `7f491e8`..`324e886` on top of `183db2a`. Baseline recheck before the fixes: the tree was clean apart from the orchestrator's uncommitted edit to `w261003s6bq-goal.md`, which was never staged; `git merge-base --is-ancestor 9adb285 HEAD` → exit 0 (G2 gate baseline still holds); no parent sources were edited.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G2-VER1` | **Cause:** a note's `requested` was the only record of an outstanding embed read, and `syncEmbeds` dropped it when the note stopped embedding the target. `:bd` dropped it with the note. `onFileLoaded` then treated the answer as a user open. **Change:** `src/core/state/embeds.ts:syncEmbeds` keeps a request until its read answers and drops only stale refusals. It also tags its reads `{ kind: "read", path, embed: true }`. `src/core/state/types.ts` adds an optional `embed?: true` to the `read` effect and to `fileLoaded`/`fileRefused`. `src/app/effects.ts` returns the tag with the answer. `src/core/state/buffers.ts:onFileLoaded` opens a tagged answer unlisted and unshown unless a window waits (`awaitsRestore`), and `onFileRefused` settles it with no notice. `syncEmbeds` then evicts an unwanted target in the same step. **RED** (tests run against the old sources via `git stash` of the source files): `bun test src/core/state/embeds.test.ts` → 4 fail. The delete and `:bd` cases showed `b.md` (`Received: "b.md"`), the refused case showed `cannot read file — not opened (d.md)`, and the re-embed case emitted a second `read b.md`. **GREEN:** `bun test src/core/state/embeds.test.ts` → 9 pass. New cases: "a read that answers after its embed was deleted opens nothing", "a read that answers after its note was closed opens nothing", "a refused read of a closed note's embed shows no error", and "re-embedding a target whose read is outstanding sends no second read" (`Gdd`, a second note E embeds B, `:bp`, `u` → no read; one answer settles A and E). `src/app/effects.test.ts` "an embed read's answer says it was for an embed" passes. The staged snapshot of `7f491e8`, checked out alone, passes `bun run check` → 699 pass. | `7f491e8` (`P1-G2-T2`) | `Fixed` |
+| `P1-G2-VER2` | **Change:** `src/core/state/commands.ts:substitute` returns `READ_ONLY_HINT` without editing when `readOnlyView(reg, b)`. `READ_ONLY_HINT` and `readOnlyView` moved from `keys.ts` to `buffers.ts` so `commands.ts` can import them without the `keys.ts` cycle; `keys.ts` and `markdown-commands.ts` import them from there. **RED:** `src/core/state/markdown-commands.test.ts` "substitution is refused in reading view and works in live view" → fail (`Received: "bar"`). **GREEN:** it passes: in reading view, `:s/foo/bar/<CR>` leaves `foo`, the buffer clean, and the message `reading mode — <leader>m to edit`; in live view the same keys give `bar` and dirty. The staged snapshot of `a1c9e50` passes `bun run check` → 700 pass. | `a1c9e50` (`P1-G2-T3`) | `Fixed` |
+| `P1-G2-VER3` | The three missing assertions are added; the code needed no change. (1) `src/core/state/embeds.test.ts` "an embed target reads as loading until its read answers": after A requests B, `ctx.embed("b.md")` is `"loading"`. (2) `test/ui/live-preview.test.ts` "a missing embed paints its title in the unresolved link style": `![[gone]]` is refused, so `↳ gone` has the same cell style as the unresolved `[[nowhere]]` and a different style from the loaded `↳ present` title, with no error notice. (3) `test/ui/theme.golden.test.ts` "keep the command line and its message unclipped at 80×24" (NO_COLOR): a 76-character `:s/…/r/` command line shows in full, and the reading-mode refusal shows `reading mode — <leader>m to edit` in full. All pass: `bun test src/core/state/embeds.test.ts` → 9 pass; `CI=true bun test --ci test/ui/live-preview.test.ts test/ui/theme.golden.test.ts` → 10 pass, 7 snapshots. Snapshot files are unchanged. | `ebf4d95` (`P1-G2-T2`), `c1edc70` (`P1-G2-T4`), `324e886` (`P1-G2-T5`) | `Fixed` |
+| `P1-G2-VER4` | **Correction to the Initial Implementation's `P1-G2-T1` row:** `defaultView` is defined in `src/core/state/buffers.ts` (`defaultView`, where design §7 places it), not in `src/core/lang/markdown/file-type.ts`. `file-type.ts` holds only the `live`, `source`, and `reading` view specs. Session restore does **not** keep the saved view. `snapshotSession` still writes `view` (`src/core/state/session.ts:92`), but no code reads it, so a restored note opens in `defaultView` (`live` by default) as design §5 Open and restore requires. `src/core/state/session.test.ts` "a restored note opens in live view" proves it. Evidence: `rg -n "defaultView" src` → defined only in `buffers.ts`. The Initial Implementation section is left unchanged. | No change to code — the report text was wrong, the code was correct; corrected here in the report commit | `Fixed` |
+
+### Design Refinement for Orchestrator Follow-up
+
+The design's §6 and §7 embed rules had the gap the verifier found. The fix adds two internal, additive refinements. Neither adds a top-level `AppState` key or a persisted field, and `state.json` stays version 1.
+
+| Refinement | Design text it refines | Why |
+|---|---|---|
+| `requested` keeps a target until its read answers, even after the note stops embedding it; only `refused` is trimmed to current embeds | §6 invariant "a buffer's `requested` and `refused` hold only targets that buffer currently embeds"; §7 `syncEmbeds` `keep(requested)` | `requested` is the only record of an outstanding read. Trimming it lets a re-embed or another note send a second read |
+| Embed reads carry `embed?: true` on the `read` effect, and the runner returns it on `fileLoaded`/`fileRefused`. A tagged answer is shown only when a window waits for the path | §7 `onFileLoaded`/`onFileRefused` predicate "a listed buffer's `embeds.requested` has the path" | `:bd` removes the note and its record. Without the tag, the answer looks like a user open and is shown and listed |
+
+**Remaining edge (recorded, not fixed):** when the last note that requested a target is closed with `:bd` before the read answers, nothing records the read any more. If the user then opens the same path, or another open note embeds it, before the answer arrives, a second `read` is sent. The tag keeps the outcome correct: the embed answer never shows or lists the target, and the user's answer shows it. Closing this edge would need a record that outlives the note. That conflicts with S5 ("request state lives on the embedding note, never top-level"), so it is left for a design decision.
 
 ## Final Status
 
@@ -80,8 +98,16 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all five tasks are committed and the group checks pass.
+- **Final report status:** `Completed` — all four verification findings are fixed and the group checks pass at `324e886`.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `4bcea47`, `db27ea5`, `97f84ef`, `195bc95`, `9530f5b`
-- **Final checks:** `bun run check` → 694 pass; `bun run test:ci` → 120 pass, 28 snapshots
-- **Remaining issues:** None
+- **Final commits:** `4bcea47`, `db27ea5`, `97f84ef`, `195bc95`, `9530f5b` (initial); `7f491e8`, `a1c9e50`, `ebf4d95`, `c1edc70`, `324e886` (remediation)
+- **Final checks:** at `324e886`:
+  - `bun run check` → exit 0; Biome clean, tsc and knip pass; 701 pass, 0 fail, 18 snapshots.
+  - `CI=true bun run test:ci` → 122 pass, 0 fail, 28 snapshots.
+  - `rg -n "markdown|Markdown" src/ui/editors src/core/kernel` → no match.
+  - `rg "markdown|Markdown|livePreview" src/ui/editors/text-view.ts src/ui/widgets/registry.ts` → no match.
+  - `git diff f296fc5..HEAD -- src/ui/editors/text-view.ts | grep -c paintPreview` → 0 (`paintPreview` unchanged).
+  - `git diff 9530f5b..HEAD --stat -- src/ui src/core/kernel src/core/lang` → empty.
+  - Added lines in `src` and `test` contain no work-process identifiers.
+  - `bun test test/boundaries.test.ts` → pass.
+- **Remaining issues:** The duplicate-read edge after `:bd` of the last requesting note, described above. It needs a design decision; behaviour stays correct.
