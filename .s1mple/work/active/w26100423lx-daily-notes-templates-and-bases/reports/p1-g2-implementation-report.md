@@ -75,12 +75,31 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** —
-- **Status:** `Not required`
+Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
+
+- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-verification-report.md` (status `Failed`; findings `P1-G2-VER1`, `P1-G2-VER2`, `P1-G2-VER3`, all Minor)
+- **Status:** `Completed`
+
+All three findings are fixed in separate commits on top of `50c7831`. Only `P1-G2-VER1` changes product code; `P1-G2-VER2` and `P1-G2-VER3` add tests and new snapshot entries. The verifier's note that the calendar's `· no note` wording should join the pending parent synchronization is an orchestrator item and needs no code change.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G2-VER1` | **Change:** `src/core/state/picker.ts` `templates.empty` returns `No templates in <folder>/` and, on a second line, `Create a .md file there to add one`; `src/ui/overlays/picker.ts` paints each line of a source's empty message as its own dim row, bounded by the rows left. One line did not fit: the single-line hint was clipped at 80 columns (probe frame showed only `No templates in templates/`). `newNoteTemplates` is unchanged, since `(blank note)` is always listed. **Verification:** RED first: `bun test src/core/state/note-commands.test.ts` → 1 fail (`Received: "No templates in templates/"`). GREEN: the unit case `the template picker without templates says how to add one` (opens `<leader>nt` with no templates indexed, asserts empty items and both lines) and the component case `empty template picker > names the folder and says how to add a template` (80×24 frame: the hint row sits directly under the message row) pass. **Checklist:** [x] resolution implemented · [x] required proof passes · [x] change evidence recorded · [x] verification evidence recorded | `29a7f0d` | `Fixed` |
+| `P1-G2-VER2` | **Change:** `src/core/state/note-commands.test.ts` case `a template is not inserted into a note in reading view` (`<leader>m` twice → `reading`, `<leader>nt`, select, load, Enter → picker closed, message `reading mode — <leader>m to edit`, text still `hello`, `dirty` false). `test/ui/notes.golden.test.ts` `new note prompt`: `a/b` shows `❯ a/b`, `→ a/b.md`, and the `⏎ choose a template · esc cancel` footer; `../x` shows `✗ outside the workspace`, no `→`, and the reason's fg differs from the field's. **Verification:** `bun test src/core/state/note-commands.test.ts test/ui/notes.golden.test.ts` → 32 pass. Mutation check: removing the `readOnlyView` refusal in `insertTemplate` and the `→` preview in `src/ui/overlays/prompt.ts` → both new cases fail (2 fail); sources restored with `git checkout`. **Checklist:** [x] resolution implemented · [x] required proof passes · [x] change evidence recorded · [x] verification evidence recorded | `61b4359` | `Fixed` |
+| `P1-G2-VER3` | **Change:** `test/ui/notes.golden.test.ts` `calendar styles` follows the `themes` pattern in `test/ui/shell.golden.test.ts` (`cellStyle(...)` → `toMatchSnapshot()`): for colour, `NO_COLOR`, and light it snapshots fg, bg, and attrs of the selected day and its `•`, today, a marked day and its `•`, and a plain day. A second case asserts that dark and light differ on the selected day and the mark. `test/ui/__snapshots__/notes.golden.test.ts.snap` gains 3 entries (+105 lines, 0 removed); the existing calendar and picker snapshots are unchanged. Stored values: colour mark fg `255,158,100` vs light `177,92,0`; selection bg `45,63,118` vs `183,197,240`; today attrs `8` (underline) in all three; `NO_COLOR` selection attrs `32` (inverse) with `default` colours. **Verification:** `bun test test/ui/notes.golden.test.ts` → 13 pass, 9 snapshots. Mutation check: `calendarMark` token `tag` → `fg` in `src/ui/theme.ts` → colour and light style snapshots fail (2 fail); restored. **Checklist:** [x] resolution implemented · [x] required proof passes · [x] change evidence recorded · [x] verification evidence recorded | `9056f28` | `Fixed` |
+
+**Commit caveat:** `29a7f0d` leaves one trailing blank line in `test/ui/notes.golden.test.ts`, so `biome check .` fails at that single commit. The next commit, `61b4359`, appends after that line and `biome check .` passes from there on. History was not rewritten.
+
+**Group verification after remediation (at `9056f28`):**
+
+- Orphan check (`pgrep -fl 'bin/so|src/app/main.ts|bun test|index-worker'`) → none before and after the runs
+- `bun run check` → `Passed` — Biome, `tsc`, knip clean; 824 pass, 0 fail
+- `bun run test:ci` → `Passed` — 165 pass, 0 fail, 37 snapshots, 24 files
+- Notes slice (`note-commands`, `calendar`, `fs`, `test/integration/notes.test.ts`, `test/ui/notes.golden.test.ts`) → `Passed` — 64 pass, 0 fail
+- `git diff --stat 50c7831..HEAD -- test/ui/__snapshots__ package.json bun.lock .github` → only `notes.golden.test.ts.snap`, +105 / −0
+- Work-process identifier scan over the changed files → no match
 
 ## Final Status
 
@@ -88,8 +107,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all six tasks are committed, and every group check passed.
+- **Final report status:** `Completed` — the six tasks are committed, and the three verification findings are fixed and verified.
 - **Final report commit:** returned to the orchestrator
-- **Final commits:** `d899132`, `d0c5fe4`, `bb494b6`, `5846289`, `24274cc`, `2652dc9`
-- **Final checks:** `bun run check` → 822 pass; `bun run test:ci` → 158 pass; notes unit 41, integration 8, goldens 6 pass
-- **Remaining issues:** None
+- **Final commits:** `d899132`, `d0c5fe4`, `bb494b6`, `5846289`, `24274cc`, `2652dc9`; remediation `29a7f0d`, `61b4359`, `9056f28`
+- **Final checks:** `bun run check` → 824 pass; `bun run test:ci` → 165 pass; notes slice 64 pass
+- **Remaining issues:** None in group code. The calendar's `· no note` wording versus the parent's `will be created` remains an orchestrator item for parent synchronization.
