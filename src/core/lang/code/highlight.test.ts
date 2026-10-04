@@ -72,6 +72,17 @@ test("the same buffer is highlighted once", () => {
   expect(h.highlight(edited, { from: 400, to: 440 })).not.toBe(first);
 });
 
+test("a range shifted within the last highlight matches a fresh highlight", () => {
+  const buf = createTextBuffer(source);
+  const h = lowlightHighlighter("typescript");
+  h.highlight(buf, { from: 400, to: 440 });
+  const shifted = h.highlight(buf, { from: 410, to: 450 });
+  expect(shifted).toHaveLength(40);
+  expect(shifted).toEqual(
+    lowlightHighlighter("typescript").highlight(buf, { from: 410, to: 450 }),
+  );
+});
+
 test("an unknown grammar yields no marks", () => {
   const buf = createTextBuffer("const a = 1;");
   const view: TextView = {
