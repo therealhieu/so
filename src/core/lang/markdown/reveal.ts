@@ -20,6 +20,7 @@ export const MULTILINE_KEYS = new Set([
   "mermaid",
   "frontmatter",
   "html",
+  "comment",
 ]);
 
 const NOTHING: RevealSet = { lines: new Set(), blocks: new Set() };

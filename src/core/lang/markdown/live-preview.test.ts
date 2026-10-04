@@ -122,6 +122,24 @@ test("a selection over a long note reads only the visible blocks", () => {
   ).toEqual(Array.from({ length: 15 }, (_, i) => visible.from + 2 * i));
 });
 
+test("a multi-line comment shows its whole source while the cursor is inside", () => {
+  builtinRenderers();
+  const note = "Intro\n\n%%\nhidden one\nhidden two\n%%\n\nAfter";
+  const at = (line: number) =>
+    layoutNote(noteView(note, { cursor: { line, col: 0 } }));
+  const inside = at(3);
+  expect(
+    inside.filter((r) => r.sourceLine >= 2 && r.sourceLine <= 5).map(rowText),
+  ).toEqual(["%%", "hidden one", "hidden two", "%%"]);
+  expect(
+    inside.filter((r) => r.sign?.text === "▕").map((r) => r.sourceLine),
+  ).toEqual([2, 3, 4, 5]);
+  const outside = at(7);
+  expect(outside.some((r) => r.sourceLine >= 2 && r.sourceLine <= 5)).toBe(
+    false,
+  );
+});
+
 const TOUR = readFileSync("test/fixtures/tour.md", "utf8");
 
 const ROADMAP = (() => {
