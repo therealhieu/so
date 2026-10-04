@@ -209,3 +209,18 @@ test("the outline shows a new heading before saving", () => {
   expect(s.buffers[1]?.dirty).toBe(true);
   expect(titles()).toEqual(["A", "New"]);
 });
+
+test("property types start empty and each load replaces them", () => {
+  const s = fresh();
+  expect(s.index.types).toEqual({});
+  const a = update(s, {
+    type: "propertyTypesLoaded",
+    types: { status: "number" },
+  });
+  expect(a.effects).toEqual([]);
+  expect(a.state.index.types).toEqual({ status: "number" });
+  expect(
+    update(a.state, { type: "propertyTypesLoaded", types: {} }).state.index
+      .types,
+  ).toEqual({});
+});

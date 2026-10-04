@@ -47,6 +47,7 @@ export function initialState(boot: {
       total: 0,
       ix: emptyIndex(),
       searchSeq: 0,
+      types: {},
     },
     jumps: { entries: [], at: 0 },
     recent: [],

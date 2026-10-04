@@ -19,6 +19,7 @@ import {
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
+import { readPropertyTypes } from "../workspace/property-types";
 import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
@@ -292,6 +293,11 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       }
       case "create":
         void serial(async () => d.dispatch(await runFsOp(e.op)));
+        return;
+      case "readPropertyTypes":
+        void readPropertyTypes(d.root, (reason) =>
+          d.logger.error("bases.typesInvalid", { reason }),
+        ).then((types) => d.dispatch({ type: "propertyTypesLoaded", types }));
         return;
       case "createNote":
         void serial(async () => {

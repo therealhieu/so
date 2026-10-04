@@ -359,3 +359,18 @@ test("an embed read's answer says it was for an embed", async () => {
     embed: true,
   });
 });
+
+test("property types are read from the workspace and reported", async () => {
+  await mkdir(join(root, ".obsidian"), { recursive: true });
+  await writeFile(
+    join(root, ".obsidian/types.json"),
+    '{ "types": { "Due": "date" } }',
+  );
+  const r = runner();
+  r.run({ kind: "readPropertyTypes" });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions).toEqual([
+    { type: "propertyTypesLoaded", types: { due: "date" } },
+  ]);
+  await rm(join(root, ".obsidian"), { recursive: true, force: true });
+});

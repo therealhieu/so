@@ -10,7 +10,12 @@ import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
 import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
-import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
+import {
+  onIndexBatch,
+  onIndexFailed,
+  onIndexReady,
+  onPropertyTypesLoaded,
+} from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
 import { onNoteCreated } from "./note-commands";
@@ -151,6 +156,8 @@ export function createUpdate(reg: Registries): Update {
       case "noteCreated":
         // The runner's answer has no time, so a save of the note left is due now (0).
         return onNoteCreated(state, action, 0, reg);
+      case "propertyTypesLoaded":
+        return onPropertyTypesLoaded(state, action);
     }
     const unhandled: never = action;
     return unhandled;

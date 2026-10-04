@@ -1,5 +1,6 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
+import type { PropertyTypes } from "../features/bases/property-types";
 import type { FileFacts, NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
@@ -251,6 +252,8 @@ export type IndexState = {
   ix: NoteIndex;
   /** Next id for `search` effects; results with an older id are dropped. */
   searchSeq: number;
+  /** Obsidian's property type assignments, replaced on every load. */
+  types: PropertyTypes;
   /** A rename or link-mention waiting for its file operation or its closed-file writes. */
   rewrite?: LinkRewrite;
 };
@@ -391,7 +394,9 @@ export type Action =
       after: AfterOpen;
       reason: "daily" | "new";
       failure?: string;
-    };
+    }
+  /** `.obsidian/types.json` was read; `{}` when absent or malformed. */
+  | { type: "propertyTypesLoaded"; types: PropertyTypes };
 
 export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
@@ -433,7 +438,9 @@ export type Effect =
       vars: TemplateVars;
       after: AfterOpen;
       reason: "daily" | "new";
-    };
+    }
+  /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
+  | { kind: "readPropertyTypes" };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

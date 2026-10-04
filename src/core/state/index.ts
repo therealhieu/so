@@ -36,6 +36,14 @@ export function onIndexBatch(
   });
 }
 
+/** Property types from `.obsidian/types.json` replace the previous ones. */
+export function onPropertyTypesLoaded(
+  s: AppState,
+  a: Extract<Action, { type: "propertyTypesLoaded" }>,
+): Result {
+  return none({ ...s, index: { ...s.index, types: a.types } });
+}
+
 export function onIndexReady(s: AppState): Result {
   const index = { ...s.index, status: "ready" as const, done: s.index.total };
   return toast({ ...s, index }, "info", "index ready");

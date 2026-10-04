@@ -333,6 +333,7 @@ async function main(argv: string[]): Promise<void> {
       indexHost.notify(event);
     });
     indexHost.start(ws.root, []);
+    runner.run({ kind: "readPropertyTypes" });
     logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
     void detectTrash({
       platform: process.platform,
