@@ -74,21 +74,44 @@ No blockers remain.
 
 ## Remediation
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Pending verification`
+- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-verification-report.md` (commit `8f2629b`, status `Failed`; unchanged)
+- **Status:** `Completed`
+
+All three findings are fixed test-first. Each regression test failed before its fix: `ReferenceError: Unresolved alias` for VER1, `undefined` instead of the date for VER2, and `"b: 2"` at column 0 for VER3. Each fix is its own commit, and `bun run check` passed on each commit's tree before it was made. The verifier's note that the design and REQ3 wording on backslash escapes should be aligned is a document-owner item; no code or design change was made for it.
 
 ### Finding Closure
 
-Pending verification.
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G1-VER1` | `src/core/lang/markdown/frontmatter-patch.ts`: new private `resolves(doc)` returns `false` when `doc.toJS()` throws. `parseBlock` treats an unresolvable block as `invalid frontmatter`, so `frontmatterValue` returns `undefined`, `splitFrontmatter` keeps the text as body, and `patchFrontmatter`/`mergeFrontmatter` return `{ ok: false }`. `yamlString` writes text plain only when it resolves and reads back as the same text, so alias-shaped text is double-quoted. Tests `text that YAML would read as an alias is quoted` (`yamlScalar("*urgent*", "")` → `"\"*urgent*\""` and re-parses to `*urgent*`, likewise `*a` and `**bold**`; `patchFrontmatter` with `**bold**` → `ok: true`, `a: "**bold**" # c`) and `frontmatter with an unresolved alias is unreadable, not a crash` (all four functions on `"---\na: *x\n---\nbody\n"` return without throwing). Probe: 33 YAML-indicator text values (`*a`, `&x`, `!tag`, `%x`, `` `x ``, `? x`, `~`, `0x1F`, `1_000`, …) through `patchFrontmatter` all re-parse to the same text; a valid anchor `b: *x` still reads as `1`. `bun run check` → passed, 790 pass | `bd99610` | `Fixed` |
+| `P1-G1-VER2` | `src/core/features/notes/daily.ts`: new private `literalRuns` joins adjacent literal parts before `parseDailyDate` trims the first and last parts, so every space that `dailyPath`'s `trim()` removes is left out of the pattern. Test `whitespace the title trims is not required in the path` round-trips `"  YYYY-MM-DD"`, `"[ ] YYYY-MM-DD"`, and `"YYYY-MM-DD  "` for 2026-10-03, 2025-12-25, and 2028-02-29. Probe: 12 formats (including those three, `" [ ]YYYY-MM-DD [ ] "`, and the existing round-trip formats) × 800 consecutive days from 2025-01-01 → 0 failures. `bun run check` → passed, 791 pass | `d07ecd0` | `Fixed` |
+| `P1-G1-VER3` | `src/core/lang/markdown/frontmatter-patch.ts`: new private `mapIndent` takes the spaces before the map's first key; a new key and its list lines are written with that indent. Test `a new key in an indented block keeps the block's indent`: `"---\n  a: 1\n---\n"` + `b: 2` → `"---\n  a: 1\n  b: 2\n---\n"`, re-parsing to `{ a: 1, b: 2 }`; a new list re-parses to `{ a: 1, tags: ["x"] }`; `applySpanEdits` equality holds. Probes: a leading comment before an indented map, a CRLF indented block with a list, and `mergeFrontmatter` into an indented block all re-parse to the expected object; an empty block still gets a column-0 key. `bun run check` → passed, 792 pass | `83da566` | `Fixed` |
+
+**Completion checklists:**
+
+- `P1-G1-VER1`: [x] resolution implemented; [x] required proof passes; [x] change evidence recorded; [x] verification evidence recorded.
+- `P1-G1-VER2`: [x] resolution implemented; [x] required proof passes; [x] change evidence recorded; [x] verification evidence recorded.
+- `P1-G1-VER3`: [x] resolution implemented (the "use the map's own indentation" option); [x] required proof passes; [x] change evidence recorded; [x] verification evidence recorded.
+
+### Remediation Group Verification
+
+- `bun run check` → `Passed` — Biome checked 260 files with no issues; `tsc` clean; knip zero findings; 792 pass, 0 fail across 74 files, including `test/boundaries.test.ts`.
+- `bun test src/core/time src/core/features/notes src/core/lang/markdown/frontmatter-patch.test.ts src/core/config` → `Passed` — 59 pass, 0 fail, 362 `expect()` calls across 7 files.
+- `TZ` set to Europe/Berlin, America/New_York, and Australia/Lord_Howe: `bun test src/core/time src/core/features/notes` → `Passed` — 24 pass, 0 fail in each.
+- `rg -n "W26100423LX|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P1-G1|\bS[0-9]+\b|RF[0-9]" src/core/time src/core/features/notes src/core/lang/markdown/frontmatter-patch* src/core/config` → `Passed` — no match (exit 1).
+- `yaml` importers → `Passed` — `scan.ts`, `frontmatter-patch.ts`, its test, and the existing boundary-violation fixture.
+- `git diff --stat fb86f9c HEAD -- package.json bun.lock .github knip.json biome.json` → `Passed` — empty.
+- Remediation changed only `src/core/features/notes/daily.ts`, `daily.test.ts`, `src/core/lang/markdown/frontmatter-patch.ts`, and its test.
+- Orphan processes → `Passed` — every test and probe process exited. One `bun run tui --kernel-url …` process belongs to another project and was left alone. No PTY tests, `test:ci`, or benches ran.
 
 ## Final Status
 
-`Pending verification`
+`Completed`
 
 ### Final Evidence
 
-- **Final report status:** `Pending verification`
-- **Final report commit:** `Pending verification`
-- **Final commits:** `66081ed`, `ce29b1e`, `71863fb`, `10963a8`, `b912315`
-- **Final checks:** `bun run check` → passed (788 pass); group unit suites → 55 pass
-- **Remaining issues:** None
+- **Final report status:** `Completed` — all three verifier findings are fixed with regression tests, and every check passes.
+- **Final report commit:** Returned to the orchestrator; not written here, as stated in Scope.
+- **Final commits:** `66081ed`, `ce29b1e`, `71863fb`, `10963a8`, `b912315` (initial); `bd99610`, `d07ecd0`, `83da566` (remediation)
+- **Final checks:** `bun run check` → passed (792 pass, 0 fail); group unit suites → 59 pass, 0 fail
+- **Remaining issues:** None in code. The design and REQ3 wording on backslash escapes is left for the document owner, as the verification report records.
