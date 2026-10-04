@@ -1,4 +1,4 @@
-import { parseMermaid, renderMermaidASCII } from "beautiful-mermaid";
+import type * as BeautifulMermaid from "beautiful-mermaid";
 import { fenceBody, wholeBlock } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
@@ -70,6 +70,11 @@ const SPACINGS: readonly Spacing[] = [
   { paddingX: 1, paddingY: 1, boxBorderPadding: 0 },
 ];
 
+/** The library, loaded on the first diagram so startup does not pay for it. */
+let library: typeof BeautifulMermaid | undefined;
+const mermaid = (): typeof BeautifulMermaid =>
+  (library ??= require("beautiful-mermaid") as typeof BeautifulMermaid);
+
 const INVALID: MermaidResult = {
   kind: "source",
   label: "mermaid: invalid diagram shown as source",
@@ -81,12 +86,14 @@ function draw(
   spacing: Spacing,
 ): string[] | undefined {
   try {
-    if (needsNodes && parseMermaid(source).nodes.size === 0) return undefined;
-    const lines = renderMermaidASCII(source, {
-      useAscii: false,
-      colorMode: "none",
-      ...spacing,
-    })
+    if (needsNodes && mermaid().parseMermaid(source).nodes.size === 0)
+      return undefined;
+    const lines = mermaid()
+      .renderMermaidASCII(source, {
+        useAscii: false,
+        colorMode: "none",
+        ...spacing,
+      })
       .split("\n")
       .map((line) => line.trimEnd());
     while (lines.at(-1) === "") lines.pop();
