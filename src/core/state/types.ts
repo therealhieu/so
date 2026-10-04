@@ -203,6 +203,10 @@ export type PickerState = {
   total: number;
   selected: number;
   search?: { id: number; pending: boolean; capped: boolean };
+  /** When the picker opened; sources that expand dates in their preview use it. */
+  time?: number;
+  /** Below the preview width, `Tab` shows the preview in place of the list. */
+  showPreview?: true;
   preview?: {
     id: number;
     path: string;

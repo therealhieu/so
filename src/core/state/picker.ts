@@ -3,13 +3,16 @@ import {
   notesWithTag,
   tagCounts,
 } from "../features/links/note-index";
+import { expandTemplate } from "../features/notes/template";
 import type { Binding } from "../kernel/commands/defaults";
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
+import { localDateTime } from "../time/local";
 import {
   activeBuffer,
   bufferForPath,
+  fullText,
   listedBuffers,
   openPath,
 } from "./buffers";
@@ -17,6 +20,7 @@ import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
 import { unlinkedHits } from "./mentions";
+import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -26,6 +30,7 @@ import type {
   PickerState,
   Result,
   SearchHit,
+  TextFile,
 } from "./types";
 import type { Registries } from "./update";
 
@@ -38,9 +43,19 @@ export const PREVIEW_MIN_COLS = 100;
 /** Rows `Ctrl-d` and `Ctrl-u` move the selection. */
 const PAGE = 10;
 
+/** Display lines a source computes for its preview pane; styles are theme tokens. */
+export type PreviewLines = {
+  text: string;
+  style?: string;
+  /** Code-point ranges of `text` drawn in their own style. */
+  ranges?: { from: number; to: number; style: string }[];
+}[];
+
 export type PickerSource = {
   id: string;
   title: string;
+  /** What Enter does, for the footer ("open" or "run" when absent). */
+  action?: string;
   overlay?: "palette" | "help";
   /** Whether the source reads the workspace index. */
   indexed?: boolean;
@@ -56,6 +71,15 @@ export type PickerSource = {
   accept(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
   /** File-based sources: the path and line to preview. */
   preview?(item: PickerItem): { path: string; line: number } | undefined;
+  /** Display lines computed from the loaded preview file, instead of its raw lines. */
+  render?(s: AppState, item: PickerItem, file: TextFile): PreviewLines;
+  /**
+   * Load the preview even below `PREVIEW_MIN_COLS`, because `accept` needs
+   * the file; there `Tab` shows it in place of the list.
+   */
+  previewAlways?: true;
+  /** What an empty list says when nothing is typed. */
+  empty?(s: AppState): string;
 };
 
 type Candidate = {
@@ -168,6 +192,81 @@ function backlinkCandidates(s: AppState, target?: string): Candidate[] {
   return [...linked, ...unlinked];
 }
 
+/** Every `.md` file under the configured templates folder, by path. */
+export function templatePaths(s: AppState): string[] {
+  const { folder } = s.config.templates;
+  const prefix = folder === "" ? "" : `${folder}/`;
+  return [...s.index.ix.files]
+    .filter((p) => p.startsWith(prefix) && /\.md$/i.test(p))
+    .sort();
+}
+
+const templateItem =
+  (s: AppState) =>
+  (path: string): Candidate => ({
+    key: path,
+    text: path.slice(
+      s.config.templates.folder === ""
+        ? 0
+        : s.config.templates.folder.length + 1,
+    ),
+    path,
+  });
+
+/**
+ * The preview's file once it is loaded: the read file, or the text of an
+ * open buffer at that path.
+ */
+export function loadedPreview(
+  s: AppState,
+  item: PickerItem,
+): TextFile | undefined {
+  const p = pickerOf(s);
+  if (item.path === undefined || p?.preview?.path !== item.path)
+    return undefined;
+  if (p.preview.file !== undefined) return p.preview.file;
+  const b = bufferForPath(s, item.path);
+  return b === undefined
+    ? undefined
+    : {
+        text: fullText(b.text) + (b.finalNewline ? "\n" : ""),
+        bom: b.bom,
+        eol: "\n",
+        stamp: b.stamp,
+      };
+}
+
+/** A note's title for `{{title}}`: its file name without `.md`. */
+export const noteTitle = (path: string | undefined): string =>
+  (path ?? "").slice((path ?? "").lastIndexOf("/") + 1).replace(/\.md$/i, "");
+
+const lineList = (text: string) =>
+  text.replaceAll("\r\n", "\n").replace(/\n$/, "").split("\n");
+const cp = (text: string) => [...text].length;
+
+/** The template's source with `{{…}}` marked, `▸`, then its expansion. */
+export function templatePreview(
+  text: string,
+  title: string,
+  time: number,
+): PreviewLines {
+  const source = lineList(text).map((line) => {
+    const ranges = [...line.matchAll(/\{\{[^}]*\}\}/g)].map((m) => {
+      const from = cp(line.slice(0, m.index));
+      return { from, to: from + cp(m[0]), style: "floatMatch" };
+    });
+    return ranges.length === 0 ? { text: line } : { text: line, ranges };
+  });
+  const expanded = expandTemplate(text, { title, at: localDateTime(time) });
+  return [
+    ...source,
+    { text: "▸", style: "floatDim" },
+    ...lineList(expanded).map((line) => ({ text: line })),
+  ];
+}
+
+const timeOf = (s: AppState) => pickerOf(s)?.time ?? 0;
+
 export const pickerSources: Readonly<Record<string, PickerSource>> = {
   files: {
     id: "files",
@@ -265,6 +364,25 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     accept: acceptFile,
     preview: previewFile,
   },
+  templates: {
+    id: "templates",
+    title: "Insert template",
+    action: "insert",
+    indexed: true,
+    previewAlways: true,
+    items: (s, _r, q) => ranked(templatePaths(s).map(templateItem(s)), q),
+    total: (s) => templatePaths(s).length,
+    empty: (s) => `No templates in ${s.config.templates.folder}/`,
+    preview: previewFile,
+    render: (s, _item, file) =>
+      templatePreview(file.text, noteTitle(activeBuffer(s)?.path), timeOf(s)),
+    accept: (s, item, now, reg) => {
+      const file = loadedPreview(s, item);
+      return file === undefined
+        ? message(s, "loading template…")
+        : insertTemplate(s, file, now, reg);
+    },
+  },
   commands: {
     id: "commands",
     title: "Commands",
@@ -345,7 +463,9 @@ function requestPreview(s: AppState): Result {
   const source = pickerSources[p.source];
   const item = p.items[p.selected];
   const target = item && source?.preview?.(item);
-  if (s.terminal.cols < PREVIEW_MIN_COLS || target === undefined) {
+  const wanted =
+    s.terminal.cols >= PREVIEW_MIN_COLS || source?.previewAlways === true;
+  if (!wanted || target === undefined) {
     const { preview: _, ...rest } = p;
     return none(withPicker(s, rest));
   }
@@ -403,6 +523,7 @@ export function openPicker(
     total: source.total?.(s, c.reg, arg) ?? items.length,
     selected: 0,
     ...(arg === undefined ? {} : { arg }),
+    ...(source.render === undefined ? {} : { time: c.now }),
     ...(source.indexed && s.index.status === "unavailable"
       ? { error: "index unavailable" }
       : {}),
@@ -457,6 +578,11 @@ function select(s: AppState, p: PickerState, to: number): Result {
   );
 }
 
+function togglePreview(p: PickerState): PickerState {
+  const { showPreview, ...rest } = p;
+  return showPreview === true ? rest : { ...rest, showPreview: true };
+}
+
 /** Keys while a picker is open: type to filter, move, `Enter` to accept, `Esc` to close. */
 export function pickerKey(
   s: AppState,
@@ -490,6 +616,10 @@ export function pickerKey(
     case "<C-u>":
     case "<PageUp>":
       return select(s, p, p.selected - PAGE);
+    case "<Tab>":
+      return pickerSources[p.source]?.previewAlways === true
+        ? none(withPicker(s, togglePreview(p)))
+        : none(s);
     case "<BS>":
       return p.query === ""
         ? none(s)

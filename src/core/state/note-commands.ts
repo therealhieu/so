@@ -1,19 +1,38 @@
 import type { NoteIndex } from "../features/links/note-index";
+import type { SpanEdit } from "../features/links/rename";
 import { dailyPath, parseDailyDate } from "../features/notes/daily";
-import { BUILTIN_DAILY_TEMPLATE } from "../features/notes/template";
+import {
+  BUILTIN_DAILY_TEMPLATE,
+  expandTemplate,
+} from "../features/notes/template";
 import type { Binding } from "../kernel/commands/defaults";
 import type { Command } from "../kernel/commands/registry";
+import type { Pos } from "../kernel/text/pos";
+import {
+  mergeFrontmatter,
+  splitFrontmatter,
+} from "../lang/markdown/frontmatter-patch";
 import {
   addDays,
   type LocalDate,
   localDateTime,
   withDate,
 } from "../time/local";
-import { activeBuffer, openPath } from "./buffers";
+import {
+  activeBuffer,
+  activeWindow,
+  applyBufferEdits,
+  fullText,
+  openPath,
+  placeCursor,
+  READ_ONLY_HINT,
+  readOnlyView,
+} from "./buffers";
 import { openCalendar } from "./calendar";
 import type { CommandContext, CommandResult } from "./commands";
-import { chain, none, toast } from "./result";
-import type { Action, AppState, Result } from "./types";
+import { noteTitle, openPicker } from "./picker";
+import { chain, message, none, toast } from "./result";
+import type { Action, AppState, Result, TextFile } from "./types";
 import type { Registries } from "./update";
 
 type AppCommand = Command<CommandContext, CommandResult>;
@@ -119,6 +138,76 @@ function createdToasts(
   return info;
 }
 
+/** Where `text` ends when inserted at `at`. */
+function endOf(at: Pos, text: string): Pos {
+  const lines = text.split("\n");
+  const last = lines.at(-1) ?? "";
+  return lines.length === 1
+    ? { line: at.line, col: at.col + last.length }
+    : { line: at.line + lines.length - 1, col: last.length };
+}
+
+/** Lines that `edits` above `at` add (or remove) before it. */
+function linesAdded(edits: readonly SpanEdit[], at: Pos): number {
+  let n = 0;
+  for (const e of edits) {
+    const { start, end } = e.range;
+    if (end.line > at.line || (end.line === at.line && end.col > at.col))
+      continue;
+    n += e.text.split("\n").length - 1 - (end.line - start.line);
+  }
+  return n;
+}
+
+/**
+ * Insert `file`, a template, into the active note as one undo step: whole
+ * at the note's start, else its body at the cursor with its properties
+ * merged into the note's. The cursor ends after the inserted text.
+ */
+export function insertTemplate(
+  s: AppState,
+  file: TextFile,
+  now: number,
+  reg: Registries,
+): Result {
+  const closed: AppState = { ...s, overlay: { kind: "none" } };
+  const b = activeBuffer(closed);
+  const w = activeWindow(closed);
+  if (b === undefined || w === undefined) return none(closed);
+  if (readOnlyView(reg, b)) return message(closed, READ_ONLY_HINT);
+  const text = expandTemplate(file.text.replaceAll("\r\n", "\n"), {
+    title: noteTitle(b.path),
+    at: localDateTime(now),
+  });
+  const at = w.content.cursor;
+  const start = at.line === 0 && at.col === 0;
+  const { fm, body } = start
+    ? { fm: undefined, body: text }
+    : splitFrontmatter(text);
+  const merged = fm && mergeFrontmatter(fullText(b.text), fm);
+  const merges = merged?.ok ? merged.edits : [];
+  const insert: SpanEdit = {
+    range: { start: at, end: at },
+    expected: "",
+    text: body,
+  };
+  const r = applyBufferEdits(
+    closed,
+    { path: b.path, edits: [insert, ...merges] },
+    now,
+    reg,
+  );
+  if (r.stale)
+    return message(closed, "cannot insert the template here", "error");
+  const shifted = { line: at.line + linesAdded(merges, at), col: at.col };
+  const placed = { ...r, state: placeCursor(r.state, endOf(shifted, body)) };
+  return merged === undefined || merged.ok
+    ? placed
+    : chain(placed, (st) =>
+        message(st, `template properties not merged: ${merged.reason}`),
+      );
+}
+
 export const noteCommands: readonly AppCommand[] = [
   {
     id: "note.today",
@@ -136,11 +225,22 @@ export const noteCommands: readonly AppCommand[] = [
     run: (c) => openDaily(c, relativeDay(c, 1)),
   },
   { id: "note.pickDate", title: "Pick a daily note date", run: openCalendar },
+  {
+    id: "template.insert",
+    title: "Insert template",
+    filetypes: ["markdown"],
+    run: (c) => openPicker(c, "templates"),
+  },
 ];
 
 export const noteBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>nd", id: "note.today" },
   { scope: { mode: "normal" }, seq: "<leader>np", id: "note.pickDate" },
+  {
+    scope: { mode: "normal", filetype: "markdown" },
+    seq: "<leader>nt",
+    id: "template.insert",
+  },
 ];
 
 export const noteGroups = { "<leader>n": "notes" } as const;
