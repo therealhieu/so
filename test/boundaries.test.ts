@@ -49,6 +49,7 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   "micromark-extension-math": ["src/core/lang/markdown/"],
   "mdast-util-math": ["src/core/lang/markdown/"],
   yaml: ["src/core/lang/markdown/"],
+  "beautiful-mermaid": ["src/core/lang/markdown/"],
   "toml-eslint-parser": ["src/core/config/"],
 };
 
@@ -70,6 +71,13 @@ function packageViolation(
   return undefined;
 }
 
+/** `yaml/dist/index.js` → `yaml`; `@scope/pkg/sub` → `@scope/pkg`. */
+const packageName = (specifier: string) =>
+  specifier
+    .split("/")
+    .slice(0, specifier.startsWith("@") ? 2 : 1)
+    .join("/");
+
 function checkImports(source: string, path: string): string[] {
   const rule = LAYER_RULES.filter((r) => path.startsWith(r.from)).sort(
     (a, b) => b.from.length - a.from.length,
@@ -87,7 +95,7 @@ function checkImports(source: string, path: string): string[] {
       if (!rule.allow.some((prefix) => target.startsWith(prefix)))
         reason = `${rule.from} may import only ${rule.allow.join(", ")}`;
     } else {
-      const homes = PACKAGE_HOMES[specifier];
+      const homes = PACKAGE_HOMES[packageName(specifier)];
       reason =
         homes !== undefined && !homes.some((home) => path.startsWith(home))
           ? `${specifier} may be imported only from ${homes.join(", ")}`
@@ -116,6 +124,7 @@ const VIOLATION_FIXTURES = [
   { file: "core-imports-fs.ts", as: "src/core/state/x.ts" },
   { file: "kernel-imports-markdown.ts", as: "src/core/kernel/x.ts" },
   { file: "state-imports-yaml.ts", as: "src/core/state/x.ts" },
+  { file: "state-imports-yaml-subpath.ts", as: "src/core/state/x.ts" },
 ];
 
 test("violation fixtures are reported", async () => {
