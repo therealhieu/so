@@ -12,7 +12,7 @@
 
 **Research Reconciliation:** None — research skipped
 
-**Unresolved Items:** None — the parent text changes for W261003S6BQ-REQ7@R3 and W261003S6BQ-REQ2@R2 follow user decisions and are recorded as a pending parent synchronization (Assigned Parent Obligation Coverage); they await the user's authorization to edit the roadmap and are not an open design decision.
+**Unresolved Items:** None
 
 **Approval evidence:** Self-drive of this discussion approved by the user on 2026-10-04, with the criteria "stable, simple, easy to maintain and extend" and "follow industry standards and comply project standards". Under that delegation the agent decided the system-design topics (folds, view input, render keys and G4, embed and image data flow, reading mode and commands, preview server and lifecycle, configuration, verification) by choosing the option that best meets those criteria. Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04; the delivery mechanism (embedded files, same-origin Content Security Policy) and the inline-style allowance for Mermaid were chosen under the same delegation. Loading web images in the terminal (W261003S6BQ-REQ2@R2) and in the browser page (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04; the download limits, the memory-only cache, and the retry interval were chosen under the same delegation.
 
@@ -173,8 +173,8 @@
 ## Assigned Parent Obligation Coverage
 
 - **Parent Baseline**
-  - **Binding:** `w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R3 / RM261003ABZP-DI3@R2).
-  - **Assessment:** Aligned, with two user decisions pending parent reconciliation. The phase file, index, design, and UI design were re-read on 2026-10-04 at `main` `6a04729` and match the binding. This design refines the phase design in seven places, all additive or internal, which change no PH, DI, REQ, S, or V definition (items 1–7 below). Separately, on 2026-10-04 the user decided that KaTeX and Mermaid are served from the binary instead of jsDelivr (W261003S6BQ-REQ7@R3); that reverses a parent design tradeoff and a phase exclusion, so it needs parent text changes (item 8). The user also decided that web images load in the terminal and in the page (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ7@R3), which makes web image downloads the one outbound network use and changes the design's security row (item 9). All nine items are listed under `Pending parent synchronization` below; parent files are not edited by this work without explicit authorization.
+  - **Binding:** `w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3; the earlier PH2@R3 / DI3@R2 binding is archived under Previous Accepted Bindings).
+  - **Assessment:** Aligned. The phase file, index, design, and UI design were re-read on 2026-10-04 at `main` `6a04729`, and this design refined the phase design in seven places, all additive or internal, which change no PH, DI, REQ, S, or V definition (items 1–7 below). Separately, on 2026-10-04 the user decided that KaTeX and Mermaid are served from the binary instead of jsDelivr (W261003S6BQ-REQ7@R3), which reversed a parent design tradeoff and a phase exclusion (item 8), and that web images load in the terminal and in the page (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ7@R3), which made web image downloads the one outbound network use and changed the design's security row (item 9). All nine items were applied to the roadmap in `da4739d`, approved by the user on 2026-10-04, producing RM261003ABZP-PH2@R4, RM261003ABZP-DI3@R3, RM261003ABZP-DES13@R3, RM261003ABZP-UDES10@R2, and RM261003ABZP-UV9@R2; this design's parent citations were re-checked against that commit.
     1. `PreviewCtx` gains `folds: ReadonlySet<number>` and `resolve(target): string | undefined`, and `embed()` returns `{ doc, text }` instead of `{ doc }` (all additive for DI4's `BlockRenderer`).
     2. The window fold set reaches the provider through `PreviewCtx.folds`; kernel `TextView.folds` keeps its generic hidden-line meaning and is empty for Markdown in v1 (the UI design's Editor window note said `TextView.folds` would carry it).
     3. The SSE `doc` payload carries `line` (the cursor line) instead of `anchor`; the page scrolls to the block containing it.
@@ -184,9 +184,9 @@
     7. `src/app/preview-host.ts` owns the running server, mirroring `index-host.ts`.
     8. KaTeX and Mermaid are exact-pinned dependencies embedded in the binary and served from the preview's own origin under a same-origin Content Security Policy (user decision 2026-10-04; W261003S6BQ-DES12).
     9. Web images load in the terminal through `fetchImage` in `src/workspace/images.ts` (10 s, 16 MiB, at most 4 at once, no Cookie or Referer, memory-only cache, 60 s retry) and in the browser page through `img-src 'self' data: http: https:` (user decision 2026-10-04; W261003S6BQ-DES7, W261003S6BQ-DES10, W261003S6BQ-DES12).
-  - **Pending parent synchronization:** Approved direction, not an unresolved item: the user requested items 8 and 9 directly, and items 1–7 are additive refinements. Proposed parent changes:
+  - **Applied parent synchronization (`da4739d`):** The user requested items 8 and 9 directly, and items 1–7 are additive refinements. The table records each parent change; "Text before `da4739d`" quotes the parent as it read before the synchronization.
 
-    | Parent location | Current text | Proposed change |
+    | Parent location | Text before `da4739d` | Applied change |
     |---|---|---|
     | `rm261003abzp-design.md` RM261003ABZP-DES13@R2 → R3, Decision | "the page loads KaTeX and Mermaid from jsDelivr and falls back to showing source when offline" | "the page loads KaTeX and Mermaid from the server's own `/assets/*`, embedded in the binary from exact-pinned npm packages, under a `'self'`-only Content Security Policy with `nosniff` and `no-referrer`; a render error shows the source"; also add `/assets/*` to the routes and use the `doc` payload `{path, version, line}` (item 3) |
     | same, Tradeoffs | "math and diagrams need network in the browser (fallback to source); rejected bundling KaTeX/Mermaid into the binary (multi-MB size) and WebSocket (bidirectional not needed)" | "binary grows by several MB for the embedded KaTeX and Mermaid builds (no size budget); rejected loading them from a CDN (third-party code in a page showing private notes; no offline rendering) and WebSocket (bidirectional not needed)"; Predecessors: RM261003ABZP-DES13@R2 |
@@ -199,7 +199,7 @@
     | `rm261003abzp-design.md` cross-cutting Security and privacy row | "No network except loopback preview with Host allowlist and realpath containment (RM261003ABZP-DES13@R2)" | State that the only outbound network use is downloading web images referenced by notes the user views, in the terminal (`fetchImage`: 10 s, 16 MiB, no Cookie or Referer, `preview.images = "off"` disables) and in the browser page (`img-src` allows `http:` and `https:`); everything else stays loopback-only (RM261003ABZP-DES13@R3) |
     | RM261003ABZP-DES13@R3 Decision and Tradeoffs (with item 8) | — | The CSP allows code, styles, fonts, and connections only from the server's own origin, and images also from the web; Tradeoffs add that loading a web image reveals the viewer's IP address to that image's host (no Referer is sent) |
     | Phase design shapes and state (items 1–7) | as listed above | Record `PreviewCtx.folds`, `resolve`, and `embed().text`; folds through `PreviewCtx`; `line` payload; `markdown-commands.ts` home; `note.enter`; the buffer fields `listed` and `embeds`, `WindowState.content.folds`, `AppState.preview` with its `starting` variant, and the new actions and effects; `preview-host.ts` |
-  - **Design Approval Gates:** G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing and the PH1 exit recorded (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:576`, `:580`). No gate is due at design approval. G4 is produced here (W261003S6BQ-DES2, W261003S6BQ-DES4, W261003S6BQ-DES6).
+  - **Design Approval Gates:** G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing and the PH1 exit recorded (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:582`, `:586`). No gate is due at design approval. G4 is produced here (W261003S6BQ-DES2, W261003S6BQ-DES4, W261003S6BQ-DES6).
 
 - **Live preview**
   - **Parent:** RM261003ABZP-REQ5@R2; RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES17@R1; RM261003ABZP-S5@R1 with RM261003ABZP-V7@R2
@@ -232,7 +232,7 @@
   - **Treatment:** Refined — module home in `core/state`; `note.enter` combines task toggle and link follow on `Enter`.
 
 - **Browser preview**
-  - **Parent:** RM261003ABZP-REQ8@R2; RM261003ABZP-DES13@R2; RM261003ABZP-S8@R1 with RM261003ABZP-V11@R3
+  - **Parent:** RM261003ABZP-REQ8@R2; RM261003ABZP-DES13@R3; RM261003ABZP-S8@R1 with RM261003ABZP-V11@R3
   - **Work Requirements:** W261003S6BQ-REQ1@R1, W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES9, W261003S6BQ-DES10, W261003S6BQ-DES11, W261003S6BQ-DES12
@@ -242,14 +242,14 @@
   - **Treatment:** Refined — `{path, version, line}` payload, injected exclusion rule, preview host.
 
 - **Browser library delivery**
-  - **Parent:** RM261003ABZP-DES13@R2 (Decision "from jsDelivr" and the tradeoff rejecting bundling); `rm261003abzp-roadmap-phase-2-obsidian-experience.md:35` (PH2 Out of scope), `:344` (DI3 scope "from jsDelivr"), `:353` (DI3 Exclusions "Bundled KaTeX and Mermaid"); RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1 offline wording
+  - **Parent:** RM261003ABZP-DES13@R3 (KaTeX and Mermaid served from the binary under a same-origin Content Security Policy that allows web images); RM261003ABZP-PH2@R4 (no bundling exclusion); RM261003ABZP-DI3@R3 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:339-356`); RM261003ABZP-UDES10@R2 and RM261003ABZP-UV9@R2 offline wording
   - **Work Requirements:** W261003S6BQ-REQ7@R3
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES10, W261003S6BQ-DES12
   - **Existing Evidence:** None — system change required
   - **Success Criteria:** S13
   - **Verification:** V34, V35, V42, V47, V48
-  - **Treatment:** Refined — pending parent reconciliation (user decision 2026-10-04). The exact parent changes are in `Pending parent synchronization` above.
+  - **Treatment:** Refined — reconciled with the parent in `da4739d` (user decision 2026-10-04). The parent changes are listed under `Applied parent synchronization` above.
 
 - **Configuration**
   - **Parent:** RM261003ABZP-DES14@R2 (`preview.*`)
@@ -292,7 +292,7 @@
   - **Treatment:** Refined — a `ViewContextRegistry` joins the registries; the `csv` proof registers a view context too.
 
 - **UI obligations**
-  - **Parent:** RM261003ABZP-M2@R1, M7@R1, M1@R1 (segments); UREQ3@R2, UREQ4@R1, UREQ10@R1, UREQ6@R1, UREQ1@R2, UREQ11@R1; UDES1@R2, UDES3@R2, UDES4@R1, UDES10@R1, UDES11@R1; US1@R2/UV1@R2 (full), US2@R2/UV3@R2, US8@R1/UV9@R1, US9@R1/UV10@R1 and UV9@R1
+  - **Parent:** RM261003ABZP-M2@R1, M7@R1, M1@R1 (segments); UREQ3@R2, UREQ4@R1, UREQ10@R1, UREQ6@R1, UREQ1@R2, UREQ11@R1; UDES1@R2, UDES3@R2, UDES4@R1, UDES10@R2, UDES11@R1; US1@R2/UV1@R2 (full), US2@R2/UV3@R2, US8@R1/UV9@R2, US9@R1/UV10@R1 and UV9@R2
   - **Work Requirements:** W261003S6BQ-REQ1@R1
   - **Coverage Outcome:** System design required
   - **Work Design:** W261003S6BQ-DES2, W261003S6BQ-DES6, W261003S6BQ-DES11, W261003S6BQ-DES12
@@ -3282,7 +3282,7 @@ src/ + test/
     │   └── Unique risk: CI headroom hiding a real-machine miss
     ├── V46 CI timing: check < 30 s locally, CI < 3 min on the DI3 PR [S15]
     │   └── Unique risk: budget erosion from added benches
-    ├── V42 Manual UV9@R1 checklist at 1200 px and 375 px, light and dark, with the network disabled, recorded in the PR: math and Mermaid render; a malformed formula and a malformed diagram show their source; the developer-tools network panel lists only 127.0.0.1:<port> requests and the console shows no CSP violation [S13]
+    ├── V42 Manual UV9@R2 checklist at 1200 px and 375 px, light and dark, with the network disabled, recorded in the PR: math and Mermaid render; a malformed formula and a malformed diagram show their source; the developer-tools network panel lists only 127.0.0.1:<port> requests and the console shows no CSP violation [S13]
     │   └── Unique risk: visual, offline, or policy-blocked rendering not covered by automation
     ├── V43 Graphics spike before painter implementation: in kitty, Ghostty, WezTerm, iTerm2 (kitty or sixel), and Terminal.app (blocks), scroll an image half off screen, switch view, switch buffer; outcome recorded in the plan; the confirmed clearing behaviour becomes a component assertion in V18 [S8]
     │   └── Unique risk: stale kitty/sixel placements OpenTUI does not clear
@@ -3603,7 +3603,7 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 
 **Research Support:** None
 
-**Rationale:** Implements RM261003ABZP-DES13@R2 with the parent invariants; injecting `isExcluded` keeps `src/preview` free of `src/workspace` imports. One header set on every response is the simplest way to make the policy impossible to forget on a new route, and a map lookup for assets keeps request paths away from the disk.
+**Rationale:** Implements RM261003ABZP-DES13@R3 with the parent invariants; injecting `isExcluded` keeps `src/preview` free of `src/workspace` imports. One header set on every response is the simplest way to make the policy impossible to forget on a new route, and a map lookup for assets keeps request paths away from the disk.
 
 **Code Impact:**
 
@@ -3679,7 +3679,7 @@ Each risk is tested at the lowest level that can see it. Layout and rendering ar
 - The binary grows by several MB (Mermaid about 3 MB, KaTeX under 1 MB); accepted, no size budget; startup unaffected.
 - Only woff2 fonts are embedded; every targeted browser picks woff2 first.
 - Inline styles allowed for Mermaid; rejected unstyled diagrams (`style-src 'self'`) and moving Mermaid's CSS into constructed stylesheets (depends on Mermaid internals).
-- Reverses the parent DES13@R2 tradeoff and the PH2/DI3 exclusion; pending parent synchronization.
+- Reverses the RM261003ABZP-DES13@R2 tradeoff and the PH2@R3/DI3@R2 exclusion; reconciled in `da4739d` (RM261003ABZP-DES13@R3, RM261003ABZP-PH2@R4, RM261003ABZP-DI3@R3).
 
 **Success Criteria:** S13
 

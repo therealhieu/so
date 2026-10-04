@@ -24,6 +24,8 @@
 
 Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-REQ7@R2) was decided by the user on 2026-10-04; the mechanism (embedded files, same-origin Content Security Policy) was chosen under the same self-drive delegation. Loading web images in the terminal (W261003S6BQ-REQ2@R2) and in the page (W261003S6BQ-REQ7@R3) was decided by the user on 2026-10-04.
 
+After the parent synchronization in `da4739d`, the parent citations were refreshed to RM261003ABZP-PH2@R4, RM261003ABZP-DI3@R3, RM261003ABZP-DES13@R3, RM261003ABZP-UDES10@R2, and RM261003ABZP-UV9@R2 without changing any requirement ID or revision: the new parent revisions record this Work's own decisions, and the obligations W261003S6BQ-REQ1@R1 inherits are covered by W261003S6BQ-REQ2@R2, W261003S6BQ-REQ7@R3, and the system design.
+
 # Table of Contents
 
 1. [Problem and Desired Outcome](#1-problem-and-desired-outcome)
@@ -46,7 +48,7 @@ Serving KaTeX and Mermaid from the repository instead of jsDelivr (W261003S6BQ-R
 
 ## Problem Statement
 
-Markdown notes still render as highlighted source. PH1 registered only a `source` view on `markdownFileType` (`src/core/lang/markdown/file-type.ts:10`), the text view paints neither signs nor widgets and always passes an empty fold set (`src/ui/editors/text-view.ts:396-419`), and no preview server exists. RM261003ABZP-DI3@R2 must add Obsidian-style live preview and a read-only browser mirror on top of the PH1 kernel without putting Markdown into the kernel or the UI, without laying out rows outside the viewport, and within the 16 ms keystroke budget.
+Markdown notes still render as highlighted source. PH1 registered only a `source` view on `markdownFileType` (`src/core/lang/markdown/file-type.ts:10`), the text view paints neither signs nor widgets and always passes an empty fold set (`src/ui/editors/text-view.ts:396-419`), and no preview server exists. RM261003ABZP-DI3@R3 must add Obsidian-style live preview and a read-only browser mirror on top of the PH1 kernel without putting Markdown into the kernel or the UI, without laying out rows outside the viewport, and within the 16 ms keystroke budget.
 
 ## Desired Outcome
 
@@ -83,7 +85,7 @@ key → update → markdown analyze → Doc
 
 ## In Scope
 
-- Everything in RM261003ABZP-DI3@R2 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:332-349`), as refined by W261003S6BQ-REQ2@R2 … W261003S6BQ-REQ8@R1.
+- Everything in RM261003ABZP-DI3@R3 Scope (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:339-356`), as refined by W261003S6BQ-REQ2@R2 … W261003S6BQ-REQ8@R1.
 - The G4 outputs DI4 consumes, with the signatures in the phase design (`…phase-2…md:205-216`, `:72`).
 - The `beautiful-mermaid` dependency (exact pin) for Mermaid text art, and the `katex` and `mermaid` dependencies (exact pins) served to the browser page.
 
@@ -98,7 +100,7 @@ key → update → markdown analyze → Doc
 
 ## Roadmap Assignment
 
-- **Binding and parent scope:** `w261003s6bq-discuss-context.md`, Roadmap Binding — RM261003ABZP-PH2@R3 / RM261003ABZP-DI3@R2 (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:315-396`).
+- **Binding and parent scope:** `w261003s6bq-discuss-context.md`, Roadmap Binding — RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3 (`rm261003abzp-roadmap-phase-2-obsidian-experience.md:322-403`).
 - **Assigned requirement coverage:**
 
   | Parent requirement | Current W requirements |
@@ -109,9 +111,9 @@ key → update → markdown analyze → Doc
   | RM261003ABZP-REQ11@R3 - registration-only extension, language-neutral kernel | W261003S6BQ-REQ1@R1, W261003S6BQ-REQ6@R1 |
   | RM261003ABZP-REQ10@R4 - budgets kept | W261003S6BQ-REQ1@R1 |
 
-- **Baseline and due-gate assessment:** The parent references in the context binding were re-read on 2026-10-04 and match the phase file and index at `main` `6a04729`. Gate G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (`…phase-2…md:576`, `:580`). No gate is due before requirements approval. G4 is produced by this Work.
+- **Baseline and due-gate assessment:** The parent references in the context binding were re-read on 2026-10-04 and matched the phase file and index at `main` `6a04729`, and were re-checked against `da4739d` after the parent synchronization. Gate G2 (due before DI3 execution) is met: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (`…phase-2…md:582`, `:586`). No gate is due before requirements approval. G4 is produced by this Work.
 
-  One parent impact is pending reconciliation. On 2026-10-04 the user decided that KaTeX and Mermaid are managed in this repository instead of loaded from jsDelivr (W261003S6BQ-REQ7@R2), and later that web images load in the page (W261003S6BQ-REQ7@R3) and in the terminal (W261003S6BQ-REQ2@R2); the latter changes the RM261003ABZP-design Security and privacy row "No network except loopback preview". That reverses the RM261003ABZP-DES13@R2 tradeoff "rejected bundling KaTeX/Mermaid into the binary", removes the PH2 out-of-scope line and the DI3 exclusion "Bundled KaTeX and Mermaid" (`…phase-2…md:35`, `:353`), changes DI3 scope "from jsDelivr" (`…phase-2…md:344`), and changes the offline expectation of RM261003ABZP-UDES10@R1 and RM261003ABZP-UV9@R1. The exact parent changes are recorded as `Pending parent synchronization` in the system design; parent files are not edited without explicit authorization.
+  The parent impacts of this work's user decisions are reconciled. On 2026-10-04 the user decided that KaTeX and Mermaid are managed in this repository instead of loaded from jsDelivr (W261003S6BQ-REQ7@R2), and later that web images load in the page (W261003S6BQ-REQ7@R3) and in the terminal (W261003S6BQ-REQ2@R2). The parent synchronization in `da4739d`, approved by the user on 2026-10-04, applied them: RM261003ABZP-DES13@R3 serves KaTeX and Mermaid from the binary and allows web images, RM261003ABZP-PH2@R4 and RM261003ABZP-DI3@R3 drop the bundling exclusion and reword the DI3 scope, RM261003ABZP-UDES10@R2 and RM261003ABZP-UV9@R2 expect math and diagrams to render offline, and the design's Security and privacy row names web image downloads as the only outbound network use. This Work now binds those revisions (context, Previous Accepted Bindings).
 
 ## Affected Interfaces and Actors
 
@@ -191,14 +193,14 @@ key → update → markdown analyze → Doc
 
 **Question:** Which parent obligations must this Work deliver unchanged?
 
-**Answer:** All of RM261003ABZP-DI3@R2 as defined in the phase file:
+**Answer:** All of RM261003ABZP-DI3@R3 as defined in the phase file:
 
-- its Scope, Exclusions, and the DI3 rows, flows, and code shapes of the Phase Design (`…phase-2…md:130-135`, `:141`, `:143-241`);
-- Design RM261003ABZP-DES5@R2, DES6@R2, DES9@R3, DES10@R2, DES13@R2, DES14@R2 (`preview.*`), DES16@R1, and DES17@R1 (`live` and `reading` views);
+- its Scope, Exclusions, and the DI3 rows, flows, and code shapes of the Phase Design (`…phase-2…md:130-136`, `:142`, `:144-249`);
+- Design RM261003ABZP-DES5@R2, DES6@R2, DES9@R3, DES10@R2, DES13@R3, DES14@R2 (`preview.*`), DES16@R1, and DES17@R1 (`live` and `reading` views);
 - Success RM261003ABZP-S5@R1, S8@R1, S9@R1, and S11@R1, with Verification RM261003ABZP-V7@R2, V8@R1, V11@R3, V12@R2, and V16@R2;
-- the UI scope: M2@R1 (S1–S16), M7@R1, M1@R1 (segments); UREQ3@R2, UREQ4@R1, UREQ10@R1, UREQ6@R1 (unresolved-link style), UREQ1@R2 (segments), UREQ11@R1; UDES1@R2, UDES3@R2, UDES4@R1, UDES10@R1, UDES11@R1; US2@R2 via UV3@R2, US8@R1 via UV9@R1 (with the recorded manual check), US1@R2 via UV1@R2 (full), US9@R1 via UV10@R1 and UV9@R1;
+- the UI scope: M2@R1 (S1–S16), M7@R1, M1@R1 (segments); UREQ3@R2, UREQ4@R1, UREQ10@R1, UREQ6@R1 (unresolved-link style), UREQ1@R2 (segments), UREQ11@R1; UDES1@R2, UDES3@R2, UDES4@R1, UDES10@R2, UDES11@R1; US2@R2 via UV3@R2, US8@R1 via UV9@R2 (with the recorded manual check), US1@R2 via UV1@R2 (full), US9@R1 via UV10@R1 and UV9@R2;
 - the G4 outputs with the phase-design signatures;
-- the downstream work boundary (`…phase-2…md:390-395`).
+- the downstream work boundary (`…phase-2…md:396-401`).
 
 The requirements below refine these. None waives one.
 
@@ -207,7 +209,7 @@ The requirements below refine these. None waives one.
 **Acceptance Criteria:**
 
 - [ ] Every parent REQ, DES, S, V, and UI record listed above maps to at least one decision in the W261003S6BQ system design.
-- [ ] V7@R2, V8@R1, V11@R3, V12@R2, V16@R2, UV1@R2 (full), UV3@R2, UV10@R1 (DI3 states), and the automated part of UV9@R1 pass in CI on the DI3 PR; the UV9@R1 manual checklist is recorded.
+- [ ] V7@R2, V8@R1, V11@R3, V12@R2, V16@R2, UV1@R2 (full), UV3@R2, UV10@R1 (DI3 states), and the automated part of UV9@R2 pass in CI on the DI3 PR; the UV9@R2 manual checklist is recorded.
 - [ ] `bun run check` stays < 30 s and CI < 3 min (RM261003ABZP-REQ10@R4), and the V13@R1 startup benches still pass on the DI3 PR.
 - [ ] `layoutText`'s signature, `RenderLine`, and the G4 signatures equal the phase design; the boundary test passes with no Markdown import in `core/kernel` and no Markdown parsing in `src/ui`.
 - [ ] Every `AppState` field and `Action` or `Effect` variant DI3 adds is reported for parent synchronization; no DI4 variant is added.
@@ -407,8 +409,8 @@ browser → GET / → page.html (CSP: default-src 'none'; script-src 'self'; sty
 - [ ] A compiled binary serves `/` and every `/assets/*` file with no `node_modules` and no other file on disk besides the workspace; an unknown asset returns 404.
 - [ ] The page and every served file reference no origin other than the server's own; `/` responds with the Content Security Policy, `nosniff`, and `no-referrer` headers.
 - [ ] A note containing `![chart](https://example.com/chart.png)` renders `<img src="https://example.com/chart.png" alt="chart">`; a `javascript:` image target never reaches the output; the policy's `img-src` allows `http:` and `https:` while `script-src`, `font-src`, and `connect-src` stay `'self'`.
-- [ ] Offline, math and Mermaid render in the page; a malformed formula or diagram shows its source (UV9@R1 manual checklist).
-- [ ] The page passes UV9@R1 semantics and contrast at 1200 px and 375 px in both themes.
+- [ ] Offline, math and Mermaid render in the page; a malformed formula or diagram shows its source (UV9@R2 manual checklist).
+- [ ] The page passes UV9@R2 semantics and contrast at 1200 px and 375 px in both themes.
 
 **Depends On:** W261003S6BQ-REQ1@R1
 

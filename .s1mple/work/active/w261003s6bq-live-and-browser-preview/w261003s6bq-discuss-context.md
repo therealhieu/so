@@ -6,10 +6,10 @@
 |---|---|
 | `.s1mple/S1MPLE.md` | Discuss behavior and required context |
 | `.s1mple/docs/project.md` | Reusable project baseline |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI3 definition (lines 315–396), PH2 phase design (99–311), gates G2/G4 (66–72), progress (573–581), approval (587–602) |
+| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI3 definition (lines 322–403), PH2 phase design (98–319), gates G2/G4 (65–73), progress (579–588), approval (593–609) |
 | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI3 assignment (Delivery Items line 133) and Work Progress row (line 144) |
 | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ5@R2 (149), REQ8@R2 (207), REQ9@R2 (226), REQ10@R4 (248), REQ11@R3 (273) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | DES and S/V definitions (Success and Verification 858+, Design Decisions 1118+), Preview HTTP routes (409), AppConfig (419) |
+| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | DES and S/V definitions (Success and Verification 859+, Design Decisions 1119+), Preview HTTP routes (410), AppConfig (420) |
 | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | UREQ/UDES/US/UV and accepted mockups M1, M2, M7 |
 | `src/core/kernel/view/{types,decorations,text-view}.ts` | Current `TextView`, `RenderLine`, `Decoration`, `DecorationProvider`, `layoutText` |
 | `src/core/filetypes/registry.ts`, `src/core/lang/markdown/{file-type,doc,mdast,blocks,syntax}.ts` | `ViewSpec.input` hook, `markdownFileType`, `Doc`, `blockNode`, `syntaxExtensions` |
@@ -22,41 +22,70 @@
 ## Roadmap Binding
 
 - **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
-- **Phase:** RM261003ABZP-PH2@R3 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–38)
-- **Delivery item:** RM261003ABZP-DI3@R2 — same file, Delivery Items (lines 315–396); index Delivery Items row (line 133)
+- **Phase:** RM261003ABZP-PH2@R4 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–38)
+- **Delivery item:** RM261003ABZP-DI3@R3 — same file, Delivery Items (lines 322–403); index Delivery Items row (line 133)
 - **Accepted upstream baseline:**
   - Context: `rm261003abzp-roadmap-context.md@R2`.
-  - Requirements (`rm261003abzp-requirements.md`): RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ11@R3, RM261003ABZP-REQ10@R4 (budgets kept; phase file Coverage line 557).
-  - Design (`rm261003abzp-design.md`, Design Decisions): RM261003ABZP-DES5@R2 (1160), RM261003ABZP-DES6@R2 (1170), RM261003ABZP-DES9@R3 (1200), RM261003ABZP-DES10@R2 (1210), RM261003ABZP-DES13@R2 (1240), RM261003ABZP-DES14@R2 (1250), RM261003ABZP-DES16@R1 (1270), RM261003ABZP-DES17@R1 (1280); contracts Preview HTTP routes (409) and AppConfig (419).
-  - Success and verification (`rm261003abzp-design.md`, Success and Verification): RM261003ABZP-S5@R1 (946) with RM261003ABZP-V7@R2 (953) and RM261003ABZP-V8@R1 (962); RM261003ABZP-S8@R1 (1006) with RM261003ABZP-V11@R3 (1013); RM261003ABZP-S9@R1 (1023) with RM261003ABZP-V12@R2 (1030); RM261003ABZP-S11@R1 (1066) with RM261003ABZP-V16@R2 (1082).
+  - Requirements (`rm261003abzp-requirements.md`): RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ11@R3, RM261003ABZP-REQ10@R4 (budgets kept; phase file Coverage line 563).
+  - Design (`rm261003abzp-design.md`, Design Decisions): RM261003ABZP-DES5@R2 (1161), RM261003ABZP-DES6@R2 (1171), RM261003ABZP-DES9@R3 (1201), RM261003ABZP-DES10@R2 (1211), RM261003ABZP-DES13@R3 (1241), RM261003ABZP-DES14@R2 (1251), RM261003ABZP-DES16@R1 (1271), RM261003ABZP-DES17@R1 (1281); contracts Preview HTTP routes (410) and AppConfig (420).
+  - Success and verification (`rm261003abzp-design.md`, Success and Verification): RM261003ABZP-S5@R1 (947) with RM261003ABZP-V7@R2 (954) and RM261003ABZP-V8@R1 (963); RM261003ABZP-S8@R1 (1007) with RM261003ABZP-V11@R3 (1014); RM261003ABZP-S9@R1 (1024) with RM261003ABZP-V12@R2 (1031); RM261003ABZP-S11@R1 (1067) with RM261003ABZP-V16@R2 (1083).
   - Accepted mockups (`ui-mockups/manifest.md` line 91): RM261003ABZP-M2@R1 (S1–S16), RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (statusline segments).
   - UI requirements (`rm261003abzp-ui-requirements.md`): RM261003ABZP-UREQ3@R2 (56), RM261003ABZP-UREQ4@R1 (74), RM261003ABZP-UREQ10@R1 (168), RM261003ABZP-UREQ6@R1 (105, unresolved-link style), RM261003ABZP-UREQ1@R2 (23, view and preview segments), RM261003ABZP-UREQ11@R1 (184).
-  - UI design (`rm261003abzp-ui-design.md`): RM261003ABZP-UDES1@R2 (2271), RM261003ABZP-UDES3@R2 (2291), RM261003ABZP-UDES4@R1 (2301), RM261003ABZP-UDES10@R1 (2361), RM261003ABZP-UDES11@R1 (2371); surfaces Editor window (541) and Browser preview page (1025); RM261003ABZP-US1@R2 (2061), RM261003ABZP-US2@R2 (2070), RM261003ABZP-US8@R1 (2124), RM261003ABZP-US9@R1 (2133); RM261003ABZP-UV1@R2 (2144), RM261003ABZP-UV3@R2 (2168), RM261003ABZP-UV9@R1 (2240), RM261003ABZP-UV10@R1 (2252).
+  - UI design (`rm261003abzp-ui-design.md`): RM261003ABZP-UDES1@R2 (2271), RM261003ABZP-UDES3@R2 (2291), RM261003ABZP-UDES4@R1 (2301), RM261003ABZP-UDES10@R2 (2361), RM261003ABZP-UDES11@R1 (2371); surfaces Editor window (541) and Browser preview page (1025); RM261003ABZP-US1@R2 (2061), RM261003ABZP-US2@R2 (2070), RM261003ABZP-US8@R1 (2124), RM261003ABZP-US9@R1 (2133); RM261003ABZP-UV1@R2 (2144), RM261003ABZP-UV3@R2 (2168), RM261003ABZP-UV9@R2 (2240), RM261003ABZP-UV10@R1 (2252).
 - **Assigned parent obligations:**
   - Requirements: RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2 (live-preview and TypeScript-source keystroke/open, scrolling), RM261003ABZP-REQ11@R3 (registration-only extension incl. block renderer and `csv` file type).
-  - Design: RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2 (`preview.*` config), RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (`live` and `reading` views).
+  - Design: RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2 (`preview.*` config), RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (`live` and `reading` views).
   - Success/verification: RM261003ABZP-S5@R1, RM261003ABZP-S8@R1, RM261003ABZP-S9@R1, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V16@R2.
-  - UI: RM261003ABZP-M2@R1, RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (segments); RM261003ABZP-UREQ3@R2, RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ6@R1 (unresolved-link style), RM261003ABZP-UREQ1@R2 (segments), RM261003ABZP-UREQ11@R1; RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1; RM261003ABZP-US1@R2 via RM261003ABZP-UV1@R2 (full), RM261003ABZP-US2@R2 via RM261003ABZP-UV3@R2, RM261003ABZP-US8@R1 via RM261003ABZP-UV9@R1 (incl. recorded manual check at 1200 px and 375 px, light/dark, offline), RM261003ABZP-US9@R1 via RM261003ABZP-UV10@R1 and RM261003ABZP-UV9@R1.
-  - Phase design: Components and files (DI3 rows, lines 130–135, 141), Runtime and failure flow (143–173), Code shapes `live-preview.ts` (200–222) and `preview/server.ts` (224–241), Contracts, data, and state DI3 additions (175–197).
-  - Downstream work boundary (lines 390–395): confirm the OpenTUI image API at the pinned version; choose math/Mermaid approximation details within M2 and page CSS within M7; may not parse Markdown in `src/ui`, lay out rows outside the viewport, add a mutating preview route, change `RenderLine`, the `layoutText` signature, or the G4 registry signatures, or add Markdown knowledge to `core/kernel`.
+  - UI: RM261003ABZP-M2@R1, RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (segments); RM261003ABZP-UREQ3@R2, RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ6@R1 (unresolved-link style), RM261003ABZP-UREQ1@R2 (segments), RM261003ABZP-UREQ11@R1; RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES10@R2, RM261003ABZP-UDES11@R1; RM261003ABZP-US1@R2 via RM261003ABZP-UV1@R2 (full), RM261003ABZP-US2@R2 via RM261003ABZP-UV3@R2, RM261003ABZP-US8@R1 via RM261003ABZP-UV9@R2 (incl. recorded manual check at 1200 px and 375 px, light/dark, offline, where math and diagrams still render), RM261003ABZP-US9@R1 via RM261003ABZP-UV10@R1 and RM261003ABZP-UV9@R2.
+  - Phase design: Components and files (DI3 rows, lines 130–136, 142), Runtime and failure flow (144–177), Code shapes `live-preview.ts` (205–230) and `preview/server.ts` (231–249), Contracts, data, and state DI3 additions (178–203).
+  - Downstream work boundary (lines 396–401): confirm the OpenTUI image API at the pinned version; choose math/Mermaid approximation details within M2 and page CSS within M7; may not parse Markdown in `src/ui`, lay out rows outside the viewport, add a mutating preview route, change `RenderLine`, the `layoutText` signature, or the G4 registry signatures, or add Markdown knowledge to `core/kernel`.
 - **Dependency gates:**
-  - G2 (consumer; due before DI3 execution) — phase file line 70. Satisfied: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (phase file Progress lines 576, 580; index line 144).
-  - G4 (producer; DI4's `![[file.base]]` renderer waits for it) — phase file line 72. Required output: the `blockRenderers` registry, `widget` decorations with row reservation through `layoutText`, the `widgetPainters` registry, and unlisted embed buffers; evidence is the DI3 PR merged with V7@R2 and V16@R2 passing.
-- **Accepted at:** PH2@R3 and DI3@R2 approved (phase file Approval, lines 587–602): R1 and R2 under the user's delegation on 2026-10-03; post-DI1 and post-DI2 synchronizations approved by the user on 2026-10-03 and 2026-10-04 (revisions retained); R3 approved by the user on 2026-10-04 (manual releases; DI3@R2 retained). This W accepts the binding on 2026-10-04 under the user's self-drive request for this discussion run.
+  - G2 (consumer; due before DI3 execution) — phase file line 69. Satisfied: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (phase file Progress lines 582, 586; index line 144).
+  - G4 (producer; DI4's `![[file.base]]` renderer waits for it) — phase file line 71. Required output: the `blockRenderers` registry, `widget` decorations with row reservation through `layoutText`, the `widgetPainters` registry, and unlisted embed buffers; evidence is the DI3 PR merged with V7@R2 and V16@R2 passing.
+- **Accepted at:** PH2@R4 and DI3@R3 approved (phase file Approval, lines 593–609): R1 and R2 under the user's delegation on 2026-10-03; post-DI1 and post-DI2 synchronizations approved by the user on 2026-10-03 and 2026-10-04 (revisions retained); R3 approved by the user on 2026-10-04 (manual releases); R4 approved by the user on 2026-10-04 (KaTeX and Mermaid served from the binary, web images in the terminal and the browser preview; DI3@R3, with RM261003ABZP-DES13@R3, RM261003ABZP-UDES10@R2, and RM261003ABZP-UV9@R2). This W accepts the new binding on 2026-10-04 after the parent synchronization in `da4739d`.
 
 Use revision-qualified parent PH/DI/REQ/DES/S/V and applicable M/UREQ/UDES/US/UV references. Reference definitions instead of copying them; if paths move, resolve the same IDs and revisions. Check current index/phase assignments and existing W bindings before accepting a new assignment.
 
 ### Previous Accepted Bindings
 
-None
+#### Binding accepted 2026-10-04, replaced 2026-10-04
+
+- **Reason:** The parent synchronization in `da4739d` applied this work's user decisions W261003S6BQ-REQ7@R3 (KaTeX and Mermaid served from the binary; web images in the browser page) and W261003S6BQ-REQ2@R2 (web images in the terminal), plus seven additive design refinements. It moved RM261003ABZP-PH2@R3 → R4, RM261003ABZP-DI3@R2 → R3, RM261003ABZP-DES13@R2 → R3, RM261003ABZP-UDES10@R1 → R2, and RM261003ABZP-UV9@R1 → R2; every other bound record kept its revision.
+- **Approval evidence:** Approved by the user on 2026-10-04.
+- **Resulting baseline:** RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3 with RM261003ABZP-DES13@R3, RM261003ABZP-UDES10@R2, and RM261003ABZP-UV9@R2 (Roadmap Binding above). The W requirements and system design keep their IDs and revisions; their parent citations were refreshed to this baseline.
+- **Archived fields (line numbers refer to the parent files before `da4739d`):**
+
+  - **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
+  - **Phase:** RM261003ABZP-PH2@R3 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–38)
+  - **Delivery item:** RM261003ABZP-DI3@R2 — same file, Delivery Items (lines 315–396); index Delivery Items row (line 133)
+  - **Accepted upstream baseline:**
+    - Context: `rm261003abzp-roadmap-context.md@R2`.
+    - Requirements (`rm261003abzp-requirements.md`): RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2, RM261003ABZP-REQ11@R3, RM261003ABZP-REQ10@R4 (budgets kept; phase file Coverage line 557).
+    - Design (`rm261003abzp-design.md`, Design Decisions): RM261003ABZP-DES5@R2 (1160), RM261003ABZP-DES6@R2 (1170), RM261003ABZP-DES9@R3 (1200), RM261003ABZP-DES10@R2 (1210), RM261003ABZP-DES13@R2 (1240), RM261003ABZP-DES14@R2 (1250), RM261003ABZP-DES16@R1 (1270), RM261003ABZP-DES17@R1 (1280); contracts Preview HTTP routes (409) and AppConfig (419).
+    - Success and verification (`rm261003abzp-design.md`, Success and Verification): RM261003ABZP-S5@R1 (946) with RM261003ABZP-V7@R2 (953) and RM261003ABZP-V8@R1 (962); RM261003ABZP-S8@R1 (1006) with RM261003ABZP-V11@R3 (1013); RM261003ABZP-S9@R1 (1023) with RM261003ABZP-V12@R2 (1030); RM261003ABZP-S11@R1 (1066) with RM261003ABZP-V16@R2 (1082).
+    - Accepted mockups (`ui-mockups/manifest.md` line 91): RM261003ABZP-M2@R1 (S1–S16), RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (statusline segments).
+    - UI requirements (`rm261003abzp-ui-requirements.md`): RM261003ABZP-UREQ3@R2 (56), RM261003ABZP-UREQ4@R1 (74), RM261003ABZP-UREQ10@R1 (168), RM261003ABZP-UREQ6@R1 (105, unresolved-link style), RM261003ABZP-UREQ1@R2 (23, view and preview segments), RM261003ABZP-UREQ11@R1 (184).
+    - UI design (`rm261003abzp-ui-design.md`): RM261003ABZP-UDES1@R2 (2271), RM261003ABZP-UDES3@R2 (2291), RM261003ABZP-UDES4@R1 (2301), RM261003ABZP-UDES10@R1 (2361), RM261003ABZP-UDES11@R1 (2371); surfaces Editor window (541) and Browser preview page (1025); RM261003ABZP-US1@R2 (2061), RM261003ABZP-US2@R2 (2070), RM261003ABZP-US8@R1 (2124), RM261003ABZP-US9@R1 (2133); RM261003ABZP-UV1@R2 (2144), RM261003ABZP-UV3@R2 (2168), RM261003ABZP-UV9@R1 (2240), RM261003ABZP-UV10@R1 (2252).
+  - **Assigned parent obligations:**
+    - Requirements: RM261003ABZP-REQ5@R2, RM261003ABZP-REQ8@R2, RM261003ABZP-REQ9@R2 (live-preview and TypeScript-source keystroke/open, scrolling), RM261003ABZP-REQ11@R3 (registration-only extension incl. block renderer and `csv` file type).
+    - Design: RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES13@R2, RM261003ABZP-DES14@R2 (`preview.*` config), RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R1 (`live` and `reading` views).
+    - Success/verification: RM261003ABZP-S5@R1, RM261003ABZP-S8@R1, RM261003ABZP-S9@R1, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R2, RM261003ABZP-V16@R2.
+    - UI: RM261003ABZP-M2@R1, RM261003ABZP-M7@R1, RM261003ABZP-M1@R1 (segments); RM261003ABZP-UREQ3@R2, RM261003ABZP-UREQ4@R1, RM261003ABZP-UREQ10@R1, RM261003ABZP-UREQ6@R1 (unresolved-link style), RM261003ABZP-UREQ1@R2 (segments), RM261003ABZP-UREQ11@R1; RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES10@R1, RM261003ABZP-UDES11@R1; RM261003ABZP-US1@R2 via RM261003ABZP-UV1@R2 (full), RM261003ABZP-US2@R2 via RM261003ABZP-UV3@R2, RM261003ABZP-US8@R1 via RM261003ABZP-UV9@R1 (incl. recorded manual check at 1200 px and 375 px, light/dark, offline), RM261003ABZP-US9@R1 via RM261003ABZP-UV10@R1 and RM261003ABZP-UV9@R1.
+    - Phase design: Components and files (DI3 rows, lines 130–135, 141), Runtime and failure flow (143–173), Code shapes `live-preview.ts` (200–222) and `preview/server.ts` (224–241), Contracts, data, and state DI3 additions (175–197).
+    - Downstream work boundary (lines 390–395): confirm the OpenTUI image API at the pinned version; choose math/Mermaid approximation details within M2 and page CSS within M7; may not parse Markdown in `src/ui`, lay out rows outside the viewport, add a mutating preview route, change `RenderLine`, the `layoutText` signature, or the G4 registry signatures, or add Markdown knowledge to `core/kernel`.
+  - **Dependency gates:**
+    - G2 (consumer; due before DI3 execution) — phase file line 70. Satisfied: DI2 merged as `9adb285` (PR #2) with V4/V5/V6/V18 passing, and the PH1 exit is recorded (phase file Progress lines 576, 580; index line 144).
+    - G4 (producer; DI4's `![[file.base]]` renderer waits for it) — phase file line 72. Required output: the `blockRenderers` registry, `widget` decorations with row reservation through `layoutText`, the `widgetPainters` registry, and unlisted embed buffers; evidence is the DI3 PR merged with V7@R2 and V16@R2 passing.
+  - **Accepted at:** PH2@R3 and DI3@R2 approved (phase file Approval, lines 587–602): R1 and R2 under the user's delegation on 2026-10-03; post-DI1 and post-DI2 synchronizations approved by the user on 2026-10-03 and 2026-10-04 (revisions retained); R3 approved by the user on 2026-10-04 (manual releases; DI3@R2 retained). This W accepts the binding on 2026-10-04 under the user's self-drive request for this discussion run.
 
 ### Parent Synchronization
 
-- **Registration or discussion update:** Pending parent synchronization.
-  - `rm261003abzp-roadmap-index.md`, Delivery Items, RM261003ABZP-DI3@R2 row (line 133): Work `Pending` → `W261003S6BQ`; PR stays `Pending`. Line 136 sentence: add "RM261003ABZP-DI3@R2 W261003S6BQ (PR pending)".
-  - `rm261003abzp-roadmap-index.md`, Work Progress, RM261003ABZP-DI3@R2 row (line 144): Work stage `Not started` → `Discuss`; Next gate → the DI3 requirements and system design; evidence → this context file.
-  - `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Progress table, RM261003ABZP-DI3@R2 row (line 580): Work `Pending` → `W261003S6BQ`; delivery status `Not started` → `In progress (discussion)`.
-  - Evidence: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`. No other W binds DI3: `.s1mple/work/done/` holds only W261003HEGE (DI1) and W261003FX70 (DI2), and `.s1mple/work/active/` holds only the roadmap and this W.
+- **Registration or discussion update:** Applied in `da4739d`, approved by the user on 2026-10-04.
+  - `rm261003abzp-roadmap-index.md`: DI3 Delivery Items row (line 133) Work → `W261003S6BQ`, PR `Pending`; line 136 names W261003S6BQ; Work Progress row (line 144) stage `Discuss`, next gate Plan.
+  - `rm261003abzp-roadmap-phase-2-obsidian-experience.md`: Progress (lines 581–586) — phase `In progress`; DI3 row `In progress`, `W261003S6BQ`, system design finalized.
+  - Parent records revised for this work's decisions: RM261003ABZP-DES13@R3, RM261003ABZP-PH2@R4, RM261003ABZP-DI3@R3, RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2; the design's Security and privacy row and the DI3 phase design record the seven refinements and web image downloads (system design, Assigned Parent Obligation Coverage, items 1–9). Prior definitions are archived in the roadmap `-revisions.md` companions.
+  - The index Work Progress row moved from `Needs reconciliation` to `Aligned` once this binding was reconciled.
+  - Evidence: this context file. No other W binds DI3: `.s1mple/work/done/` holds only W261003HEGE (DI1) and W261003FX70 (DI2), and `.s1mple/work/active/` holds only the roadmap and this W.
 
 The main orchestrator owns this receipt. It does not replace parent W/PR assignments or the index's work-progress view; update the parent only with explicit authorization. Later stages record their synchronization receipts in their own artifacts.
 
@@ -69,18 +98,18 @@ The main orchestrator owns this receipt. It does not replace parent W/PR assignm
 > - choose options/designs/approaches that are stable, simple, easy to maintain and extend
 > - follow industry standards and comply project standards
 
-The topic, set earlier in the conversation, is the next roadmap item RM261003ABZP-DI3@R2 on branch `feat/rm261003abzp-di3-live-preview`.
+The topic, set earlier in the conversation, is the next roadmap item RM261003ABZP-DI3@R3 on branch `feat/rm261003abzp-di3-live-preview`.
 
 ### Consolidated Requirement or Problem
 
-Deliver RM261003ABZP-DI3@R2. Markdown notes render in Obsidian-style live preview: the `livePreview` decoration provider for the `live` and `reading` views on `markdownFileType`, with reveal, rich blocks, folds, note embeds, images on the kitty/sixel/blocks/placeholder tiers, the `view.cycle`/`task.toggle`/`fold.toggle` commands, widget painters, and the statusline `view` and `preview` segments. `:Preview` serves a read-only local browser mirror: `renderHtml`, a `src/preview` server with a Host allowlist, realpath containment, SSE `doc`/`stopped`, and `:Preview`/`:PreviewStop`, plus the page per the UI design. The work also adds the V12 keystroke/open benchmarks and the V16 registration-only extension proof (including a test-only `csv` file type), and produces the G4 outputs DI4 consumes.
+Deliver RM261003ABZP-DI3@R3. Markdown notes render in Obsidian-style live preview: the `livePreview` decoration provider for the `live` and `reading` views on `markdownFileType`, with reveal, rich blocks, folds, note embeds, images on the kitty/sixel/blocks/placeholder tiers, the `view.cycle`/`task.toggle`/`fold.toggle` commands, widget painters, and the statusline `view` and `preview` segments. `:Preview` serves a read-only local browser mirror: `renderHtml`, a `src/preview` server with a Host allowlist, realpath containment, SSE `doc`/`stopped`, and `:Preview`/`:PreviewStop`, plus the page per the UI design. The work also adds the V12 keystroke/open benchmarks and the V16 registration-only extension proof (including a test-only `csv` file type), and produces the G4 outputs DI4 consumes.
 
 ### Constraints and Assumptions
 
 - The user delegated discussion decisions for this run (self-drive). Every choice favors stable, simple, maintainable, extensible options that follow industry and project standards.
 - Parent definitions are binding: this W may refine DI3 scope but may not waive obligations or change the shared contracts listed in the downstream work boundary.
 - `src/core` stays pure; only `src/ui` imports `@opentui/*`; `src/preview` imports only `src/preview` and `src/core` (`test/boundaries.test.ts:29-31`).
-- Exact npm pins; any new dependency is a deliberate, exact-pinned addition (`project.md` Constraints). KaTeX and Mermaid are loaded by the page from jsDelivr, not bundled (DES13@R2).
+- Exact npm pins; any new dependency is a deliberate, exact-pinned addition (`project.md` Constraints). KaTeX and Mermaid are exact-pinned dependencies embedded in the binary and served by the preview from its own origin (RM261003ABZP-DES13@R3, W261003S6BQ-REQ7@R3).
 - No work-process identifiers in code (`.s1mple/S1MPLE.md` Implementation).
 - The state file stays `"version": 1`; fold state is not persisted (phase file line 287).
 - Accepted mockups are M1@R1, M2@R1, M7@R1. M1@R2 and M3@R2 are awaiting review as drafts (`ui-mockups/manifest.md:92`); DI3 binds to M1@R1.
@@ -173,7 +202,7 @@ store notifies → Shell repaint → EditorView.layout(s, b, rows, cursor, width
 
 ### In Scope
 
-- Everything in DI3@R2 Scope (phase file lines 332–349): the `livePreview` provider and `live`/`reading` views, reveal (line, block, selection-aware), the full REQ5@R2 element list, note embeds with `embedMaxRows`, Markdown-scoped `view.cycle`/`task.toggle`/`fold.toggle`, widget painters (`image`, `embed`, `rule`) and sign painting, image tiers with lazy decode and a 64 MiB LRU, `preview.*` config, `renderHtml`, the preview server and page, the statusline `view` and `preview` segments, the V12 bench in CI, and the V16 registration test.
+- Everything in DI3@R3 Scope (phase file lines 339–356): the `livePreview` provider and `live`/`reading` views, reveal (line, block, selection-aware), the full REQ5@R2 element list, note embeds with `embedMaxRows`, Markdown-scoped `view.cycle`/`task.toggle`/`fold.toggle`, widget painters (`image`, `embed`, `rule`) and sign painting, image tiers with lazy decode and a 64 MiB LRU, `preview.*` config, `renderHtml`, the preview server and page, the statusline `view` and `preview` segments, the V12 bench in CI, and the V16 registration test.
 - G4 outputs for DI4: `registerBlockRenderer`, widget row reservation, `widgetPainters`, and unlisted embed buffers, with stable signatures.
 - AppState additions: `buffers[].view` default `live` for Markdown, `buffers[].listed`, window `folds`, `preview` (phase file lines 182–186).
 
