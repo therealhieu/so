@@ -7,17 +7,17 @@ type Look = { icon: string; style: string };
 /** Callout types by look: an icon and a style token. Unknown types look like notes. */
 const LOOKS = new Map<string, Look>();
 const GROUPS: readonly [string, string, string][] = [
-  ["ℹ", "mdCalloutNote", "note info abstract summary tldr"],
+  ["●", "mdCalloutNote", "note info abstract summary tldr"],
   ["☐", "mdCalloutNote", "todo"],
   ["❝", "mdCalloutNote", "quote cite example"],
-  ["✦", "mdCalloutTip", "tip hint important success check done"],
+  ["★", "mdCalloutTip", "tip hint important success check done"],
   ["?", "mdCalloutTip", "question help faq"],
-  ["⚠", "mdCalloutWarning", "warning caution attention"],
-  ["✘", "mdCalloutDanger", "danger error failure fail missing bug"],
+  ["▲", "mdCalloutWarning", "warning caution attention"],
+  ["✗", "mdCalloutDanger", "danger error failure fail missing bug"],
 ];
 for (const [icon, style, types] of GROUPS)
   for (const type of types.split(" ")) LOOKS.set(type, { icon, style });
-const NOTE: Look = { icon: "ℹ", style: "mdCalloutNote" };
+const NOTE: Look = { icon: "●", style: "mdCalloutNote" };
 const QUOTE: Look = { icon: "", style: "mdQuote" };
 
 const TITLE = /^ {0,3}>[ \t]?\[!([\w-]+)\]([+-]?)[ \t]*(.*)$/;

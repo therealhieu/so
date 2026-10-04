@@ -3,9 +3,10 @@
 exports[`tour note at width 60 with the cursor on a blank line 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -26,12 +27,12 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -97,9 +98,10 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
 exports[`tour note at width 60 with the cursor on a bold line 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9 ▕ │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
@@ -120,12 +122,12 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -191,9 +193,10 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
 exports[`tour note at width 60 with the cursor inside the table 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -214,12 +217,12 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -285,9 +288,10 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
 exports[`tour note at width 60 with the cursor inside a callout 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -311,9 +315,9 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -379,9 +383,10 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
 exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -402,12 +407,12 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -499,12 +504,12 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -570,9 +575,10 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
 exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -593,12 +599,12 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -660,9 +666,10 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
 exports[`tour note at width 60 in reading view 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -683,12 +690,12 @@ exports[`tour note at width 60 in reading view 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -835,9 +842,10 @@ exports[`tour note at width 60 in source view 1`] = `
 exports[`tour note at width 100 with the cursor on a blank line 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -858,12 +866,12 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -937,9 +945,10 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
 exports[`tour note at width 100 with the cursor on a bold line 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9 ▕ │Text can be **bold**, *italic*, ~~struck~~, ==highlighted== or \`inline code\`.
@@ -960,12 +969,12 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1039,9 +1048,10 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
 exports[`tour note at width 100 with the cursor inside the table 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -1062,12 +1072,12 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1141,9 +1151,10 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
 exports[`tour note at width 100 with the cursor inside a callout 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -1167,9 +1178,9 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1243,9 +1254,10 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
 exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -1266,12 +1278,12 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1371,12 +1383,12 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1450,9 +1462,10 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
 exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -1473,12 +1486,12 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧
@@ -1540,9 +1553,10 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
 exports[`tour note at width 100 in reading view 1`] = `
 "  1   │Properties  ⟦mdProperty@0+10⟧
   2   │title    Markdown tour  ⟦mdProperty@0+7⟧
-  3   │tags     reference · so  ⟦mdProperty@0+7⟧
+  3   │tags     #reference  #so  ⟦mdProperty@0+7 mdTag@9+10 mdTag@21+3⟧
   4   │created  2026-10-01  ⟦mdProperty@0+7⟧
-  5   │aliases  tour · syntax  ⟦mdProperty@0+7⟧
+  5   │aliases  tour  syntax  ⟦mdProperty@0+7⟧
+  6   │────────────────────────────────────────────────  ⟦dim@0+48⟧
   7   │█ Markdown tour  ⟦mdHeading1@0+2 mdHeading1@2+13⟧
   8   │
   9   │Text can be bold, italic, struck, highlighted or inline code.  ⟦mdBold@12+4 mdItalic@18+6 mdStrike@26+6 mdHighlight@34+11 mdCode@49+11⟧
@@ -1563,12 +1577,12 @@ exports[`tour note at width 100 in reading view 1`] = `
  25   │
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
- 28   │ℹ Reveal rule  ⟦mdCalloutNote@0+13⟧
+ 28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │✦ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
  33   │
- 34   │✘ Data safety  ⟦mdCalloutDanger@0+13⟧
+ 34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
  36   │
  37   │▌ Table  ⟦mdHeading3@0+2 mdHeading3@2+5⟧

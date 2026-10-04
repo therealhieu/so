@@ -254,6 +254,33 @@ test("headings start with their level glyph and comments are hidden", () => {
   expect(rows.map(rowText).join("\n")).not.toContain("%%");
 });
 
+test("frontmatter tags render as tag chips", () => {
+  builtinRenderers();
+  const rows = layoutNote(tour(100, 7), "live", tourCtx);
+  const tags = rows.find((r) => r.sourceLine === 2)?.spans ?? [];
+  expect(tags.filter((s) => s.style === "mdTag").map((s) => s.text)).toEqual([
+    "#reference",
+    "#so",
+  ]);
+  const block = layoutNote(
+    noteView("---\ntags:\n  - daily\n---\n", { cursor: { line: 5, col: 0 } }),
+  );
+  expect(block.find((r) => r.sourceLine === 2)?.spans).toContainEqual({
+    text: "#daily",
+    style: "mdTag",
+  });
+});
+
+test("a warning callout icon differs from the render-error sign", () => {
+  builtinRenderers();
+  const rows = layoutNote(
+    noteView("> [!warning] Careful\n> Body\n\nAfter", {
+      cursor: { line: 3, col: 0 },
+    }),
+  );
+  expect(rowText(rows[0])).toBe("▲ Careful");
+});
+
 test("the reveal sign marks exactly the revealed rows", () => {
   builtinRenderers();
   const signed = (line: number) =>
