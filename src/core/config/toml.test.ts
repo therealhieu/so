@@ -47,7 +47,7 @@ test("unknown top-level tables and dotted keys name their lines", () => {
     lines(
       "escTimeoutMs = 10",
       "daily.folder = 'x'",
-      "[preview]",
+      "[export]",
       "port = 1",
       "[filetypes.markdown]",
       "keys.normal.x = 'file.save'",
@@ -58,7 +58,7 @@ test("unknown top-level tables and dotted keys name their lines", () => {
   if (r.ok) return;
   expect(r.errors).toEqual([
     { line: 2, message: 'unknown key "daily"' },
-    { line: 3, message: 'unknown key "preview"' },
+    { line: 3, message: 'unknown key "export"' },
     { line: 7, message: 'unknown key "filetypes.markdown.colour"' },
   ]);
 });
@@ -92,6 +92,7 @@ test("a valid file parses with binding lines", () => {
       theme: "light",
       color: "never",
       editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
+      preview: { mode: "live", embedMaxRows: 10, images: "auto" },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },

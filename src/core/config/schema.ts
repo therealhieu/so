@@ -30,6 +30,13 @@ export const ConfigSchema = z.strictObject({
       relativeNumbers: z.boolean().default(true),
     })
     .prefault({}),
+  preview: z
+    .strictObject({
+      mode: z.enum(["live", "source", "reading"]).default("live"),
+      embedMaxRows: z.number().int().min(1).max(200).default(10),
+      images: z.enum(["auto", "blocks", "off"]).default("auto"),
+    })
+    .prefault({}),
   keys: KeyBindingsSchema.default({}),
   filetypes: z
     .record(
