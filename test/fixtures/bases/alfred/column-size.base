@@ -1,0 +1,10 @@
+views:
+  - type: table
+    name: Table
+    columnSize:
+      file.name: 240
+      note.age: 120
+      bad: "not a number"
+    wrapText:
+      - file.name
+      - 123

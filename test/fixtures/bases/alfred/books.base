@@ -1,0 +1,15 @@
+filters:
+  and:
+    - file.hasTag("book")
+formulas:
+  ppu: price / pages
+properties:
+  formula.ppu:
+    displayName: Price/page
+views:
+  - type: table
+    name: Reading
+    order:
+      - file.name
+      - status
+      - formula.ppu

@@ -1,0 +1,10 @@
+views:
+  - type: table
+    name: Table
+    columnSize:
+      a: -5
+      b: 0
+      c: 120
+    wrapText:
+      - file.name
+      - file.name
