@@ -8,6 +8,7 @@ import {
 import { splitKeys } from "../kernel/vim/keys";
 import { frontmatterValue } from "../lang/markdown/frontmatter-patch";
 import { activeBuffer, activeWindow, fullText } from "./buffers";
+import { newNotePath, newNoteTitleError } from "./explorer";
 import { pickerSources } from "./picker";
 import type { Action, AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
@@ -311,5 +312,104 @@ test("template insertion is a Markdown command", () => {
   expect(s.overlay.kind).toBe("none");
   expect(s.notifications.message?.text).toBe(
     "not available for typescript files",
+  );
+});
+
+const prompt = (s: AppState) =>
+  s.overlay.kind === "prompt" ? s.overlay.prompt : undefined;
+
+function newNotePrompt(): AppState {
+  return run(
+    indexed(fresh(), ["templates/meeting.md"]),
+    loaded("index.md", "# Index"),
+    ...keys(" nn"),
+  ).state;
+}
+
+test("<leader>nn asks for a new note's title", () => {
+  expect(prompt(newNotePrompt())).toEqual({
+    kind: "input",
+    title: "New note",
+    value: "",
+    newNote: true,
+  });
+});
+
+test("new-note titles that leave the workspace are refused inline", () => {
+  const s = newNotePrompt();
+  for (const typed of ["../x", "/x", "a/./b", "a//b"]) {
+    const r = run(s, ...keys(typed), ...keys("<CR>"));
+    expect(prompt(r.state)?.invalid).toBeDefined();
+    expect(r.state.overlay.kind).toBe("prompt");
+    expect(r.effects.some((e) => e.kind === "createNote")).toBe(false);
+  }
+  const cleared = run(s, ...keys("a<BS>")).state;
+  expect(prompt(cleared)?.invalid).toBe("title is empty");
+  expect(run(cleared, ...keys("<CR>")).state.overlay.kind).toBe("prompt");
+  expect(newNoteTitleError("a/b")).toBeUndefined();
+  expect(newNotePath("a/b")).toBe("a/b.md");
+  expect(newNotePath(" Garden plan.md ")).toBe("Garden plan.md");
+});
+
+test("a new note's template is chosen with the blank note first", () => {
+  // Each step starts from a fresh chooser: toMatchObject may rewrite what it inspects.
+  const chooser = () => run(newNotePrompt(), ...keys("a/b<CR>")).state;
+  expect(chooser().overlay).toMatchObject({
+    kind: "picker",
+    picker: {
+      source: "newNoteTemplates",
+      arg: "a/b.md",
+      items: [
+        expect.objectContaining({ label: "(blank note)" }),
+        expect.objectContaining({ path: "templates/meeting.md" }),
+      ],
+    },
+  });
+  const blank = run(chooser(), ...keys("<CR>"));
+  expect(blank.state.overlay.kind).toBe("none");
+  expect(blank.effects).toContainEqual({
+    kind: "createNote",
+    path: "a/b.md",
+    vars: {
+      title: "b",
+      at: expect.objectContaining({ year: 2026, month: 10, day: 3 }),
+    },
+    after: "insert",
+    reason: "new",
+  });
+  const templated = run(chooser(), ...keys("<C-n><CR>"));
+  expect(templated.effects).toContainEqual(
+    expect.objectContaining({
+      kind: "createNote",
+      path: "a/b.md",
+      template: "templates/meeting.md",
+      after: "insert",
+      reason: "new",
+    }),
+  );
+});
+
+test("Esc at either step creates nothing", () => {
+  const atTitle = run(newNotePrompt(), ...keys("x<Esc>"));
+  expect(atTitle.state.overlay.kind).toBe("none");
+  const atTemplate = run(newNotePrompt(), ...keys("x<CR><Esc>"));
+  expect(atTemplate.state.overlay.kind).toBe("none");
+  for (const r of [atTitle, atTemplate])
+    expect(r.effects.some((e) => e.kind === "createNote")).toBe(false);
+});
+
+test("a new note with an existing name is refused and not opened", () => {
+  const s = newNotePrompt();
+  const r = run(
+    { ...s, overlay: { kind: "none" } },
+    created("a/b.md", { outcome: "exists", reason: "new", after: "insert" }),
+  );
+  expect(r.effects.some((e) => e.kind === "read")).toBe(false);
+  expect(activeBuffer(r.state)?.path).toBe("index.md");
+  expect(r.state.notifications.toasts).toContainEqual(
+    expect.objectContaining({
+      level: "error",
+      text: "E13: File exists (a/b.md)",
+    }),
   );
 });

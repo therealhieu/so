@@ -4,7 +4,11 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { isNote, visiblePaths } from "../../core/state/explorer";
-import type { AppState, PromptState } from "../../core/state/types";
+import type {
+  AppState,
+  ExplorerPrompt,
+  PromptState,
+} from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -36,10 +40,11 @@ type Row = {
  * The open create or rename prompt, which the open tree edits in place
  * (otherwise the prompt shows as a float).
  */
-export function treeField(s: AppState): PromptState | undefined {
+export function treeField(s: AppState): ExplorerPrompt | undefined {
   if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
   const p = s.overlay.prompt;
-  return p.kind === "input" &&
+  return p.newNote !== true &&
+    p.kind === "input" &&
     (p.op.kind === "create" ||
       (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
     ? p

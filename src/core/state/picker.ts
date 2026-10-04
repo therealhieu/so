@@ -267,6 +267,9 @@ export function templatePreview(
 
 const timeOf = (s: AppState) => pickerOf(s)?.time ?? 0;
 
+/** The new-note picker's first row: no template. */
+const BLANK = "\u0000blank";
+
 export const pickerSources: Readonly<Record<string, PickerSource>> = {
   files: {
     id: "files",
@@ -381,6 +384,44 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
       return file === undefined
         ? message(s, "loading template…")
         : insertTemplate(s, file, now, reg);
+    },
+  },
+  newNoteTemplates: {
+    id: "newNoteTemplates",
+    title: "New note — choose a template",
+    action: "create",
+    indexed: true,
+    previewAlways: true,
+    items: (s, _r, q) =>
+      ranked(
+        [
+          { key: BLANK, text: "(blank note)", detail: "empty" },
+          ...templatePaths(s).map(templateItem(s)),
+        ],
+        q,
+      ),
+    total: (s) => templatePaths(s).length + 1,
+    preview: (item) =>
+      item.path === undefined ? undefined : previewFile(item),
+    render: (s, _item, file) =>
+      templatePreview(file.text, noteTitle(pickerOf(s)?.arg), timeOf(s)),
+    accept: (s, item, now) => {
+      const path = pickerOf(s)?.arg;
+      const closed: AppState = { ...s, overlay: { kind: "none" } };
+      if (path === undefined) return none(closed);
+      return {
+        state: closed,
+        effects: [
+          {
+            kind: "createNote",
+            path,
+            ...(item.path === undefined ? {} : { template: item.path }),
+            vars: { title: noteTitle(path), at: localDateTime(now) },
+            after: "insert",
+            reason: "new",
+          },
+        ],
+      };
     },
   },
   commands: {

@@ -208,6 +208,27 @@ export function insertTemplate(
       );
 }
 
+/** `<leader>nn`: ask for the new note's title. */
+export function startNewNote(c: CommandContext): Result {
+  return none({
+    ...c.state,
+    overlay: {
+      kind: "prompt",
+      prompt: { kind: "input", title: "New note", value: "", newNote: true },
+    },
+  });
+}
+
+/** The title is valid: choose the new note's template, "(blank note)" first. */
+export function submitNewNote(
+  s: AppState,
+  path: string,
+  now: number,
+  reg: Registries,
+): Result {
+  return openPicker({ state: s, now, reg }, "newNoteTemplates", path);
+}
+
 export const noteCommands: readonly AppCommand[] = [
   {
     id: "note.today",
@@ -225,6 +246,7 @@ export const noteCommands: readonly AppCommand[] = [
     run: (c) => openDaily(c, relativeDay(c, 1)),
   },
   { id: "note.pickDate", title: "Pick a daily note date", run: openCalendar },
+  { id: "note.new", title: "New note from a template", run: startNewNote },
   {
     id: "template.insert",
     title: "Insert template",
@@ -236,6 +258,7 @@ export const noteCommands: readonly AppCommand[] = [
 export const noteBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>nd", id: "note.today" },
   { scope: { mode: "normal" }, seq: "<leader>np", id: "note.pickDate" },
+  { scope: { mode: "normal" }, seq: "<leader>nn", id: "note.new" },
   {
     scope: { mode: "normal", filetype: "markdown" },
     seq: "<leader>nt",

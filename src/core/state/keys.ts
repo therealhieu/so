@@ -68,7 +68,7 @@ function routeKey(
     case "conflict":
       return conflictKey(s, a, reg);
     case "prompt":
-      return promptKey(s, a.key, a.now);
+      return promptKey(s, a.key, a.now, reg);
     case "whichKey":
       return (
         whichKeyKey(s, a, reg) ??

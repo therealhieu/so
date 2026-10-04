@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { newNotePath } from "../../core/state/explorer";
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -28,6 +29,23 @@ function layout(p: PromptState): {
   footer: string;
 } {
   const field = { text: ` ❯ ${p.value}`, token: "float" };
+  if (p.newNote === true)
+    return {
+      title: p.title,
+      border: "floatBorder",
+      lines: [
+        field,
+        { text: "", token: "float" },
+        p.invalid === undefined
+          ? {
+              text: p.value.trim() === "" ? "" : ` → ${newNotePath(p.value)}`,
+              token: "floatDim",
+            }
+          : { text: ` ✗ ${p.invalid}`, token: "floatError" },
+      ],
+      field: 0,
+      footer: "⏎ choose a template · esc cancel",
+    };
   if (p.kind === "confirm" && p.op.kind === "create")
     return {
       title: "New note",

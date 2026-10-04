@@ -36,13 +36,22 @@ afterEach(async () => {
 
 async function workspace(
   files: Record<string, string> = {},
-  opts: { templates?: boolean; env?: Record<string, string> } = {},
+  opts: {
+    templates?: boolean;
+    env?: Record<string, string>;
+    index?: boolean;
+  } = {},
 ): Promise<App> {
   const root = await tmpWorkspace(files);
   if (opts.templates !== false)
     await cp(TEMPLATES, join(root, "templates"), { recursive: true });
-  const app = await startApp(root, opts.env ? { env: opts.env } : {});
+  const app = await startApp(root, {
+    ...(opts.env === undefined ? {} : { env: opts.env }),
+    ...(opts.index === true ? { index: {} } : {}),
+  });
   started.push(app);
+  if (opts.index === true)
+    await waitFor(() => app.store.get().index.status === "ready");
   return app;
 }
 
@@ -228,4 +237,46 @@ test(":Yesterday from a subfolder daily note creates the previous day and logs t
   ]);
   for (const line of ["Friday, October 2", "started the day", "today"])
     expect(log).not.toContain(line);
+});
+
+test("a new blank note opens empty in Insert mode; an existing name is refused", async () => {
+  const app = await workspace({ "index.md": "# Index\n" }, { index: true });
+  await app.open("index.md");
+  const before = answers(app).length;
+  press(app, " nnMeeting<CR>");
+  expect(app.store.get().overlay).toMatchObject({
+    kind: "picker",
+    picker: { source: "newNoteTemplates", arg: "Meeting.md" },
+  });
+  press(app, "<CR>");
+  await waitFor(() => answers(app).length > before);
+  expect(answers(app)[before]).toMatchObject({
+    outcome: "created",
+    template: "none",
+  });
+  await waitFor(() => shown(app) === "Meeting.md");
+  expect(await readFile(join(app.root, "Meeting.md"), "utf8")).toBe("");
+  expect(app.store.get().vim.mode).toBe("insert");
+
+  press(app, "<Esc>");
+  const again = answers(app).length;
+  press(app, " nnMeeting<CR><C-n><C-n>");
+  const p = app.store.get().overlay;
+  expect(p.kind === "picker" && p.picker.items[p.picker.selected]?.path).toBe(
+    "templates/meeting.md",
+  );
+  press(app, "<CR>");
+  await waitFor(() => answers(app).length > again);
+  expect(answers(app)[again]).toMatchObject({
+    outcome: "exists",
+    reason: "new",
+  });
+  expect(await readFile(join(app.root, "Meeting.md"), "utf8")).toBe("");
+  expect(app.store.get().notifications.toasts).toContainEqual(
+    expect.objectContaining({
+      level: "error",
+      text: "E13: File exists (Meeting.md)",
+    }),
+  );
+  expect(await leftovers(app.root)).toEqual([]);
 });

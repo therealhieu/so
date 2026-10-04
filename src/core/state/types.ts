@@ -129,21 +129,24 @@ export type ExplorerState = {
   trash: "unknown" | "available" | "unavailable";
 };
 
-/**
- * An explorer prompt. `op` is the operation it completes: for "create",
- * `from` is the folder the new entry goes in; otherwise the selected path.
- * "typed" enables Enter only when `value` equals the selected name.
- */
-export type PromptState = {
+/** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */
+type PromptBase = {
   kind: "confirm" | "input" | "typed";
   title: string;
   value: string;
-  op: FsOp;
   /** Rename and move: the links the operation will update, or why it will not. */
   impact?: string;
   /** Why `value` cannot be submitted; Enter does nothing while it is set. */
   invalid?: string;
 };
+/**
+ * An explorer prompt. `op` is the operation it completes: for "create",
+ * `from` is the folder the new entry goes in; otherwise the selected path.
+ */
+export type ExplorerPrompt = PromptBase & { op: FsOp; newNote?: never };
+/** A new note's title, before its template is chosen. */
+type NewNotePrompt = PromptBase & { newNote: true; op?: never };
+export type PromptState = ExplorerPrompt | NewNotePrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {

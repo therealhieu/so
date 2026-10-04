@@ -13,12 +13,14 @@ import {
   startRename,
   submitRename,
 } from "./link-edits";
+import { submitNewNote } from "./note-commands";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
   Action,
   AppState,
   Effect,
+  ExplorerPrompt,
   ExplorerState,
   FsOp,
   PromptState,
@@ -344,11 +346,17 @@ export function startOp(
 }
 
 /** A key while a prompt is open: edit the field, submit, or cancel. */
-export function promptKey(s: AppState, key: string, now: number): Result {
+export function promptKey(
+  s: AppState,
+  key: string,
+  now: number,
+  reg: Registries,
+): Result {
   if (s.overlay.kind !== "prompt") return none(s);
   const p = s.overlay.prompt;
   const closed: AppState = { ...s, overlay: { kind: "none" } };
   if (key === "<Esc>") return none(closed);
+  if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);
@@ -367,7 +375,7 @@ export function promptKey(s: AppState, key: string, now: number): Result {
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
 
-function submit(s: AppState, p: PromptState, now: number): Result {
+function submit(s: AppState, p: ExplorerPrompt, now: number): Result {
   const value = p.value.trim();
   const { op } = p;
   if (op.kind === "trash")
@@ -389,4 +397,56 @@ function submit(s: AppState, p: PromptState, now: number): Result {
     );
   }
   return none(s);
+}
+
+/**
+ * Why a new note's title cannot be used: empty, or a path that would leave
+ * the workspace or has an empty, "." or ".." segment or a NUL.
+ */
+export function newNoteTitleError(value: string): string | undefined {
+  const title = value.trim();
+  if (title === "") return "title is empty";
+  if (title.startsWith("/")) return "outside the workspace";
+  if (title.includes("\u0000")) return "invalid character";
+  const parts = title.split("/");
+  if (parts.includes("..")) return "outside the workspace";
+  if (parts.some((p) => p === "" || p === ".")) return "invalid path";
+  return undefined;
+}
+
+/** The workspace path a valid title names: the title plus ".md", once. */
+export const newNotePath = (value: string): string =>
+  `${value.trim().replace(/\.md$/i, "")}.md`;
+
+/** Typing edits the title and re-checks it; Enter goes on to the template unless it is invalid. */
+function newNotePromptKey(
+  s: AppState,
+  p: PromptState,
+  key: string,
+  now: number,
+  reg: Registries,
+): Result {
+  if (key === "<CR>") {
+    const invalid = newNoteTitleError(p.value);
+    return invalid === undefined
+      ? submitNewNote(
+          { ...s, overlay: { kind: "none" } },
+          newNotePath(p.value),
+          now,
+          reg,
+        )
+      : none({ ...s, overlay: { kind: "prompt", prompt: { ...p, invalid } } });
+  }
+  const value =
+    key === "<BS>"
+      ? p.value.slice(0, -1)
+      : [...key].length === 1
+        ? p.value + key
+        : p.value;
+  if (value === p.value) return none(s);
+  const { invalid: _, ...rest } = p;
+  const invalid = newNoteTitleError(value);
+  const prompt: PromptState =
+    invalid === undefined ? { ...rest, value } : { ...rest, value, invalid };
+  return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
