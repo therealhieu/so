@@ -6,13 +6,13 @@
 
 ## Sources
 
-- Plan context: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
-- System design: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
+- Plan context: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
+- System design: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
 - UI design: Not applicable — no work-local UI design; the parent `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (`Ready for Planning`) governs the assigned RM261003ABZP-UREQ8@R2, UREQ9@R1, UREQ11@R1 chains, mapped by the system design section 1, Assigned Parent Obligation Coverage, UI obligations
-- System requirements: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
+- System requirements: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
 - UI requirements: Not applicable — parent `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` through the roadmap binding
-- Research: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-research.md`
-- Discussion context: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md`
+- Research: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-research.md`
+- Discussion context: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md`
 - UI context: Not applicable — no work-local UI context; the discussion context and the system design Focused Code Surface carry the UI code evidence
 
 ## Roadmap Contract

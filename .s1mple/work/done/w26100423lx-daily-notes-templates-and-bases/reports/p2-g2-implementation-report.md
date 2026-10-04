@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
-- **Plan Part:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-2-bases.md`
+- **Goal:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
+- **Plan Part:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-2-bases.md`
 - **Group:** `P2-G2` — Base editor kind, write-back, and view
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`, `P2-G2-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -101,7 +101,7 @@ No unresolved implementation or verification issue remains.
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-verification-report.md` (commit `eb6e489`, `Failed`, five Minor findings)
+- **Verification reports:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-verification-report.md` (commit `eb6e489`, `Failed`, five Minor findings)
 - **Status:** `Completed`
 
 All five findings are fixed in separate commits on top of `eb6e489`: `9bfcc4b` (VER5), `9760ead` (VER4), `0f18201` (VER1), `f4d216d` (VER2), `9295198` (VER3). The orchestrator ruled that UREQ9@R1's suggestions, list chips, and filter summary are owned by this work, so VER2 was implemented, not deferred. The verification report is unchanged.

@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
-- **Plan Part:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-1-daily-notes-and-templates.md`
+- **Goal:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
+- **Plan Part:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-1-daily-notes-and-templates.md`
 - **Group:** `P1-G2` — Notes state, I/O, and surfaces
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -77,7 +77,7 @@ Written by the implementer after the initial implementation turn and before retu
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-verification-report.md` (status `Failed`; findings `P1-G2-VER1`, `P1-G2-VER2`, `P1-G2-VER3`, all Minor)
+- **Verification reports:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-verification-report.md` (status `Failed`; findings `P1-G2-VER1`, `P1-G2-VER2`, `P1-G2-VER3`, all Minor)
 - **Status:** `Completed`
 
 All three findings are fixed in separate commits on top of `50c7831`. Only `P1-G2-VER1` changes product code; `P1-G2-VER2` and `P1-G2-VER3` add tests and new snapshot entries. The verifier's note that the calendar's `· no note` wording should join the pending parent synchronization is an orchestrator item and needs no code change.

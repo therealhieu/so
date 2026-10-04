@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-implementation-report.md`
 
 Verified range: `fb86f9c..b912315` (task commits `66081ed`, `ce29b1e`, `71863fb`, `10963a8`, `b912315`), inspected at `HEAD` `93ca0fc` with a clean tree. Baseline `main` is `d398ad7`, an ancestor of `HEAD`; no cross-work gate is due for this group.
 

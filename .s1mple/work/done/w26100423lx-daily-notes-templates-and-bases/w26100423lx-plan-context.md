@@ -10,12 +10,12 @@
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline |
-| System design | `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (`Finalized System Design`, `c1e095a`) | Technical authority |
+| System design | `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (`Finalized System Design`, `c1e095a`) | Technical authority |
 | UI design | Not applicable — no work-local UI design; the parent UI design `rm261003abzp-ui-design.md` (`Ready for Planning`) governs the assigned UREQ/UDES/US/UV, recorded under Roadmap sources | UI/UX authority for the assigned parent UI scope |
-| System requirements | `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md` (`Ready for System Design`; REQ1–REQ13 current revisions) | Required system behavior |
+| System requirements | `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md` (`Ready for System Design`; REQ1–REQ13 current revisions) | Required system behavior |
 | UI requirements | Not applicable — no work-local UI requirements; parent RM261003ABZP-UREQ8@R2, UREQ9@R1, UREQ11@R1 apply through the roadmap binding | — |
-| Research | `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-research.md` (RF1–RF9) | Relevant research findings |
-| Discussion context | `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md` | Work-specific findings, roadmap binding, constraints |
+| Research | `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-research.md` (RF1–RF9) | Relevant research findings |
+| Discussion context | `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md` | Work-specific findings, roadmap binding, constraints |
 | UI context | Not applicable — no work-local UI context; the discussion context section 2–3 and the system design Focused Code Surface carry the UI code evidence | — |
 | Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`; `rm261003abzp-roadmap-phase-2-obsidian-experience.md`; `rm261003abzp-design.md`; `rm261003abzp-requirements.md`; `rm261003abzp-ui-requirements.md`; `rm261003abzp-ui-design.md`; `ui-mockups/manifest.md` | Validate the accepted binding, assigned scope, and dependency gates |
 | Additional project files | `src/core/filetypes/registry.ts`, `src/core/state/{update,keys,save,embeds,markdown-view,picker}.ts`, `src/workspace/fs.ts`, `src/app/{main,effects}.ts`, `src/ui/editors/registry.ts`, `test/boundaries.test.ts`, `test/support/{state,ui}.ts`, `test/ui/live-preview.test.ts`, `test/bench/live-keystroke.bench.ts`, `test/fixtures/{tour.md,generate.ts}`; Alfred at `/Users/hieunguyen/git/hieu/projects/alfred` `5fde89b0` | Re-check of design-cited current shapes and test-harness seeding |

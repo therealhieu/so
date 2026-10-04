@@ -20,11 +20,11 @@ This part finishes and delivers RM261003ABZP-DI4@R2:
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-index.md`
-- Plan context: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
-- System design: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
+- Plan index: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-index.md`
+- Plan context: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
+- System design: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
 - UI design: Not applicable — no W UI design. The parent `rm261003abzp-ui-design.md` UV3@R2 is re-checked through V46 (system design §1, Assigned Parent Obligation Coverage, Cross-work integration).
-- System requirements: `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
+- System requirements: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
 - UI requirements: Not applicable — no W UI requirements; parent UREQs are bound through the discussion context.
 
 ## Dependencies

@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1` — Bases engine and index facts
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-implementation-report.md` (commit `9cc9e5a`)
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-implementation-report.md` (commit `9cc9e5a`)
 
 Verified range: `6906b65..9b3e0d4` (task commits `3ee3aa0`, `0b133d0`, `bd43e23`, `834a5e5`, `9b3e0d4`), inspected and run at `HEAD` `9cc9e5a` on `feat/rm261003abzp-di4-daily-notes-and-bases` with a clean tree. Baseline: `git merge-base HEAD main` = `main` = `d398ad7`. Port source: Alfred `5fde89b0`.
 

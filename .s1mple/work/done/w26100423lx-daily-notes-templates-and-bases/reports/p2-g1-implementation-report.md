@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
-- **Plan Part:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-2-bases.md`
+- **Goal:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
+- **Plan Part:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-2-bases.md`
 - **Group:** `P2-G1` — Bases engine and index facts
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -99,7 +99,7 @@ Decisions a remediator must preserve:
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-verification-report.md` (commit `228dd1b`, `Failed`: VER1 Major, VER2–VER4 Minor)
+- **Verification reports:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-verification-report.md` (commit `228dd1b`, `Failed`: VER1 Major, VER2–VER4 Minor)
 - **Status:** `Completed`
 
 All four findings are fixed with regression tests that failed before each fix, one commit per finding. The remediation range is `228dd1b..0f636be`. Each fix was checked with the tests it touched and `bun run check` before its commit.

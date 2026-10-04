@@ -61,7 +61,7 @@ None
 
 - **Registration or discussion update:** Pending parent synchronization. Proposed changes, evidence: this context document and the absence of any prior DI4 binding (see Accepted at):
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, Delivery Items, RM261003ABZP-DI4@R2 row (line 134): Work `Pending` → `W26100423LX`; PR stays `Pending`.
-  - Same file, Work Progress, RM261003ABZP-DI4@R2 row (line 145): Work stage `Not started` → `Discuss`; Next gate `None — G3 and G4 satisfied; next: W26100423LX requirements and system design, which confirm the Kanban type value`; Evidence `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md`; Checked at 2026-10-04.
+  - Same file, Work Progress, RM261003ABZP-DI4@R2 row (line 145): Work stage `Not started` → `Discuss`; Next gate `None — G3 and G4 satisfied; next: W26100423LX requirements and system design, which confirm the Kanban type value`; Evidence `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md`; Checked at 2026-10-04.
   - Same file, introductory paragraph (line 7): add that DI4 is in discussion as W26100423LX.
   - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Progress, RM261003ABZP-DI4@R2 row (line 590): Delivery status `Not started` → `In progress`; Work `Pending` → `W26100423LX`; PR stays `Pending`; Next `W26100423LX discussion`.
   - Same file, introductory paragraph (line 8): replace "DI4 has no work, PR, or verification result yet" with "DI4 is in discussion as W26100423LX; it has no PR or verification result yet".

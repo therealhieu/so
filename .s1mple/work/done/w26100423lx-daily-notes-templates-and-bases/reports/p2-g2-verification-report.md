@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G2` — Base editor kind, write-back, and view
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`, `P2-G2-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-implementation-report.md` (commit `de008ce`)
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p2-g2-implementation-report.md` (commit `de008ce`)
 
 Verified range: `cb4593d..80ea2c8` (commits `122ee39` T1, `d5fee20` T2, `b59ad85` T3, `16d6d2b` T4, `b6ae4a8` T2 fix, `fbb838c` T5, `80ea2c8` T4 lint). Inspected and run at `HEAD` `de008ce` on `feat/rm261003abzp-di4-daily-notes-and-bases`, with a clean tree. `git diff 80ea2c8 de008ce` changes only the implementation report. Baseline: `main` `d398ad7`, as recorded in the goal's execution-start row.
 

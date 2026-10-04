@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2`
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g2-implementation-report.md`
 
 Verified range: `f5c6a1b..2652dc9` (task commits `d899132`, `d0c5fe4`, `bb494b6`, `5846289`, `24274cc`, `2652dc9`), inspected at `HEAD` `ca5a8e5` with a clean tree. `ca5a8e5` adds only the implementation report, so the code under test equals `2652dc9`. Baseline `main` is `d398ad7` (`git merge-base HEAD main`), an ancestor of `HEAD`.
 

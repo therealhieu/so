@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
-- **Plan Part:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-1-daily-notes-and-templates.md`
+- **Goal:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-goal.md`
+- **Plan Part:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-1-daily-notes-and-templates.md`
 - **Group:** `P1-G1` — Pure notes foundations
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`
-- **Report:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -74,7 +74,7 @@ No blockers remain.
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-verification-report.md` (commit `8f2629b`, status `Failed`; unchanged)
+- **Verification reports:** `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/p1-g1-verification-report.md` (commit `8f2629b`, status `Failed`; unchanged)
 - **Status:** `Completed`
 
 All three findings are fixed test-first. Each regression test failed before its fix: `ReferenceError: Unresolved alias` for VER1, `undefined` instead of the date for VER2, and `"b: 2"` at column 0 for VER3. Each fix is its own commit, and `bun run check` passed on each commit's tree before it was made. The verifier's note that the design and REQ3 wording on backslash escapes should be aligned is a document-owner item; no code or design change was made for it.

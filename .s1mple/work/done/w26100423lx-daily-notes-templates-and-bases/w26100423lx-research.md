@@ -694,7 +694,7 @@ daily "YYYY/MMMM/YYYY-MMM-DD" → "2026/October/2026-Oct-03"
 
 ## Project Evidence
 
-- `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md:7` — Supports `RF1`–`RF9` by establishing that the baseline had no research source.
+- `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md:7` — Supports `RF1`–`RF9` by establishing that the baseline had no research source.
 - `w26100423lx-requirements.md:147-148` — Supports `RF1` by establishing the Kanban gate and the local 1.12.7 assumption, now stale (the app auto-updated to 1.13.7 during this pass).
 - `w26100423lx-requirements.md:207,210-212` — Supports `RF7` by establishing REQ1's `{{title}}` base name, built-in fallback template, cursor rule, and `:Yesterday`/`:Tomorrow` creation.
 - `w26100423lx-requirements.md:262-269,274-276` — Supports `RF6` and `RF9` by establishing REQ3's whitespace-trimming claim and its `{{ Title }}` and `YYYY-[W]ww` examples.
