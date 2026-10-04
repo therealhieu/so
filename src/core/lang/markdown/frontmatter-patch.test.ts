@@ -213,6 +213,29 @@ test("text that would change type is quoted", () => {
   );
 });
 
+test("text that YAML would read as an alias is quoted", () => {
+  for (const text of ["*urgent*", "*a", "**bold**"]) {
+    const rendered = yamlScalar(text, "");
+    expect(rendered).toBe(JSON.stringify(text));
+    expect(parse(`k: ${rendered}`)).toEqual({ k: text });
+  }
+  const r = ok(
+    patchFrontmatter("---\na: 1 # c\nb: 2\n---\n", {
+      set: "a",
+      value: "**bold**",
+    }),
+  );
+  expect(r.text).toBe('---\na: "**bold**" # c\nb: 2\n---\n');
+});
+
+test("frontmatter with an unresolved alias is unreadable, not a crash", () => {
+  const text = "---\na: *x\n---\nbody\n";
+  expect(frontmatterValue(text, "a")).toBeUndefined();
+  expect(splitFrontmatter(text)).toEqual({ fm: undefined, body: text });
+  expect(patchFrontmatter(text, { set: "b", value: 1 }).ok).toBe(false);
+  expect(mergeFrontmatter(text, { b: 1 }).ok).toBe(false);
+});
+
 test("numbers, booleans, dates, and lists keep their Obsidian type", () => {
   expect(yamlScalar(42, "")).toBe("42");
   expect(yamlScalar(2.5, "")).toBe("2.5");

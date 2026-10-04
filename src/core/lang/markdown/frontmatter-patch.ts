@@ -66,6 +66,16 @@ function findBlock(text: string): Block | undefined {
   return undefined;
 }
 
+/** Whether every alias in `doc` has an anchor, so `toJS` does not throw. */
+function resolves(doc: Document): boolean {
+  try {
+    doc.toJS();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 type Parsed = {
   doc: Document;
   map: YAMLMap<unknown, unknown> | undefined;
@@ -74,7 +84,7 @@ type Parsed = {
 /** The block's top-level property map (`undefined` when empty), or why it cannot be patched. */
 function parseBlock(text: string, block: Block): Parsed | Failure {
   const doc = parseDocument(text.slice(block.start, block.close));
-  if (doc.errors.length > 0)
+  if (doc.errors.length > 0 || !resolves(doc))
     return { ok: false, reason: "invalid frontmatter" };
   if (doc.contents === null) return { doc, map: undefined };
   if (!isMap(doc.contents) || doc.contents.flow)
@@ -387,7 +397,7 @@ function yamlString(text: string, date: boolean): string {
   if (dateLike) return date ? text : JSON.stringify(text);
   if (text.includes("\n")) return JSON.stringify(text);
   const doc = parseDocument(text);
-  return doc.errors.length === 0 && doc.toJS() === text
+  return doc.errors.length === 0 && resolves(doc) && doc.toJS() === text
     ? text
     : JSON.stringify(text);
 }
