@@ -3,6 +3,7 @@ import type { ConfigResult } from "../config/toml";
 import type { NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
+import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
@@ -92,7 +93,8 @@ export type BufferState = {
 export type WindowState = {
   id: WindowId;
   content: {
-    editor: "text";
+    /** The editor kind showing the buffer: its file type's kind when registered, else "text". */
+    editor: EditorKind;
     bufferId: BufferId;
     cursor: Pos;
     scroll: number;

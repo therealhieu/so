@@ -65,6 +65,31 @@ export type Registries = {
  * debounce, the backlinks panel follows the active note, and notes' embed
  * targets stay loaded while they are embedded.
  */
+/**
+ * Each window shows its buffer in the editor kind the buffer's file type
+ * names when that kind is registered, and in "text" otherwise. Unchanged
+ * windows keep their identity.
+ */
+function syncEditorKinds(r: Result, reg: Registries): Result {
+  const s = r.state;
+  let byId: AppState["windows"]["byId"] | undefined;
+  for (const w of Object.values(s.windows.byId)) {
+    const b = s.buffers[w.content.bufferId];
+    if (b === undefined) continue;
+    const kind = reg.fileTypes.get(b.fileType)?.editor;
+    const editor =
+      kind !== undefined && reg.editorKinds.get(kind) !== undefined
+        ? kind
+        : "text";
+    if (editor === w.content.editor) continue;
+    byId ??= { ...s.windows.byId };
+    byId[w.id] = { ...w, content: { ...w.content, editor } };
+  }
+  return byId === undefined
+    ? r
+    : { ...r, state: { ...s, windows: { ...s.windows, byId } } };
+}
+
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
     switch (action.type) {
@@ -127,7 +152,10 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncEmbeds(state, followShownNote(state, step(state, action)));
+      const r = syncEmbeds(
+        state,
+        followShownNote(state, syncEditorKinds(step(state, action), reg)),
+      );
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {
             state: r.state,

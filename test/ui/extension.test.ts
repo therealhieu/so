@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import type { OptimizedBuffer } from "@opentui/core";
 import type { FileType } from "../../src/core/filetypes/registry";
 import type { Command } from "../../src/core/kernel/commands/registry";
 import type { DecorationProvider } from "../../src/core/kernel/view/decorations";
@@ -10,7 +11,7 @@ import {
   type SyntaxExtension,
   syntaxExtensions,
 } from "../../src/core/lang/markdown/syntax";
-import { activeBuffer } from "../../src/core/state/buffers";
+import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import type {
   CommandContext,
   CommandResult,
@@ -18,7 +19,9 @@ import type {
 import { message } from "../../src/core/state/result";
 import type { Registries } from "../../src/core/state/update";
 import type { ViewHost } from "../../src/core/state/view-context";
-import { drawCells } from "../../src/ui/theme";
+import { editorViews, registerEditorView } from "../../src/ui/editors/registry";
+import { EditorView } from "../../src/ui/editors/text-view";
+import { drawCells, themeOf } from "../../src/ui/theme";
 import {
   registerWidgetPainter,
   widgetPainters,
@@ -237,4 +240,61 @@ test("a command, syntax, block renderer, and widget painter extend the editor by
   m.keys("<leader>:Grid: say<CR>");
   expect(m.store.get().overlay.kind).toBe("none");
   expect(await m.row(-1)).toContain("hello from the grid");
+});
+
+/** A grid editor's view: one header row naming the shown file's line count. */
+class GridView extends EditorView {
+  protected override renderSelf(buf: OptimizedBuffer): void {
+    const s = this.s;
+    const w = s?.windows.byId[this.windowId];
+    const b = w && s?.buffers[w.content.bufferId];
+    if (s === undefined || b === undefined) return;
+    drawCells(
+      buf,
+      themeOf(s).style("mdBold"),
+      this.x,
+      this.y,
+      `GRID VIEW ${b.text.lineCount} rows`,
+      this.width,
+    );
+  }
+}
+
+const gridFileType: FileType = {
+  id: "grid",
+  match: { extensions: [".grid"] },
+  editor: "grid",
+  views: [{ id: "cells", decorations: [] }],
+};
+
+test("a grid editor kind opens its files in its own registered view", async () => {
+  registerEditorView("grid", (ctx, deps) => new GridView(ctx, deps));
+  cleanups.push(() => editorViews.delete("grid"));
+  const reg = testRegistries();
+  reg.editorKinds.register({ id: "grid", open: (_path, text) => text });
+  reg.fileTypes.register(gridFileType);
+  m = await mount(reg);
+  m.open("t.grid", "a,b\n1,2\n3,4\n");
+  expect(activeWindow(m.store.get())?.content.editor).toBe("grid");
+  expect(await m.frame()).toContain("GRID VIEW 3 rows");
+
+  m.open("notes/plan.md", "# Plan\n");
+  expect(activeWindow(m.store.get())?.content.editor).toBe("text");
+  const frame = await m.frame();
+  expect(frame).toContain("# Plan");
+  expect(frame).not.toContain("GRID VIEW");
+});
+
+test("a file type naming an unregistered editor kind opens as text", async () => {
+  const reg = testRegistries();
+  reg.fileTypes.register({
+    ...gridFileType,
+    id: "sheet",
+    match: { extensions: [".sheet"] },
+    editor: "sheet",
+  });
+  m = await mount(reg);
+  m.open("t.sheet", "a,b\n");
+  expect(activeWindow(m.store.get())?.content.editor).toBe("text");
+  expect(await m.frame()).toContain("a,b");
 });
