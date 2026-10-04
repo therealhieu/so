@@ -99,12 +99,60 @@ Decisions a remediator must preserve:
 
 ## Remediation
 
-- **Verification reports:** Not yet produced.
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w26100423lx-daily-notes-templates-and-bases/reports/p2-g1-verification-report.md` (commit `228dd1b`, `Failed`: VER1 Major, VER2–VER4 Minor)
+- **Status:** `Completed`
+
+All four findings are fixed with regression tests that failed before each fix, one commit per finding. The remediation range is `228dd1b..0f636be`. Each fix was checked with the tests it touched and `bun run check` before its commit.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | `evaluator.ts` `buildGroups` now compares groups by their typed `value`, falling back to the text key on a tie. So `2, 9, 10` sort as numbers, while booleans and strings sort as before. `orderedGroups` still puts None last, and `groupOrder` is unchanged. New tests: `kanban.test.ts` "numeric lanes sort by number, not by text" (`ASC` → `[2, 9, 10, null]`, `DESC` → `[10, 9, 2, null]`) and `table.test.ts` "numeric groups sort by number, not by text" (`DESC` over `10, 9, 2, 100` → `[100, 10, 9, 2]`). RED: both failed (2 fail, 12 pass). GREEN: `bun test src/core/features/bases` → 118 pass, 0 fail. `bun run check` → 951 pass, 0 fail | `c5ea0d2` | `Fixed` |
+| `P2-G1-VER2` | Following the design rule, a filter subtree with an unsupported expression now excludes the row, even under negation. `matchesFilter` returns `true`, `false`, or `undefined` for an expression it cannot evaluate. `and` is false on any false child, `or` is true on any true child, `not` is false on any true child, and otherwise an `undefined` child propagates. Only `true` keeps a row. The ported Alfred `and`/`or`/`not` cases still pass, because a decided `or` branch still shows its row. New test: `evaluator.test.ts` "an unsupported filter under not hides its rows as its diagnostic says". With `not: ["status.contains('x')"]` it expects 0 rows and exactly the `filter_hides_rows` message. RED: 1 fail, 67 pass. GREEN: `bun test src/core/features/bases` → 119 pass, 0 fail. `bun run check` → 952 pass, 0 fail | `f3eaf30` | `Fixed` |
+| `P2-G1-VER3` | `table.ts` `tableModel` collects the distinct evaluation rows it shows (all rows when ungrouped, otherwise the rows of the ordered groups). `total` and every summary now use that set, so rows in groups hidden by `groupOrder` are left out of both, and a row shown in several groups counts once. The `TableModel.total` doc comment states this. New test: `table.test.ts` "total and summaries count only the rows the groups show". With `groupOrder: [todo]`, one `todo` row (`n: 1`), and one `done` row (`n: 100`), it expects 1 row, `total` 1, and `Sum` `"1"`. RED: `total` was 2 (1 fail, 9 pass). GREEN: `bun test src/core/features/bases` → 120 pass, 0 fail. `bun run check` → 953 pass, 0 fail | `ce27d62` | `Fixed` |
+| `P2-G1-VER4` | After a successful non-folder `create`, the runner's `create` case in `src/app/effects.ts` now calls `d.index?.notify({ kind: "changed", path, isDir: false })`. It does this after dispatching `fsResult`, as the `write`, `applyEdits`, and `createNote` cases notify after their writes. `update` stays pure, and the worker computes the facts. New tests: (1) `src/app/effects.test.ts` "a created file is sent to the index; a failed create or a folder is not". RED: 1 fail, 16 pass. GREEN: 17 pass. (2) `test/integration/index-host.test.ts` "a file created in the explorer gets its size and times in the index". It runs the real worker and host and checks that `ix.facts` for `data.csv` equals `stat` (size, `mtimeMs`, birth time) and that an `indexBatch` action carried those facts. This also covers the `index-host.ts` `facts` forwarding that the verifier listed as untested. The integration case passed before the fix as well. `runFsOp` does not mark a create as an own operation, so on macOS the watcher already reported the file. The verification report's claim that the watcher ignores this own operation does not hold for `create`. The runner notification removes the dependence on the watcher's timing and its coverage, and the unit test is the failing-first proof. `bun run check` → 954 pass, 0 fail. `bun run test:ci` → 166 pass, 0 fail | `0f636be` | `Fixed` |
+
+**Completion checklists:**
+
+- `P2-G1-VER1`:
+  - [x] Required resolution is implemented.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+- `P2-G1-VER2`:
+  - [x] Required resolution is implemented.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+- `P2-G1-VER3`:
+  - [x] Required resolution is implemented.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+- `P2-G1-VER4`:
+  - [x] Required resolution is implemented.
+  - [x] Required proof passes.
+  - [x] Change evidence is recorded.
+  - [x] Verification evidence is recorded.
+
+**Group checks after remediation (at `0f636be`):**
+
+- `bun test src/core/features/bases` → 120 pass, 0 fail, 9 files.
+- `bun run check` → Biome, `tsc`, and `knip` clean. 954 pass, 0 fail, 3.7 s.
+- `bun run test:ci` → 166 pass, 0 fail, 24 files, 32.4 s. `pgrep -fl 'bin/so|src/app/main.ts|bun test|index-worker|bench'` found no process before or after.
+- Constraints:
+  - `git diff main -- package.json bun.lock .github/workflows` is empty.
+  - The added lines contain no work-process identifiers.
+  - `KANBAN_TYPE` is still `undefined`.
+  - `src/core/features/bases` imports no `core/state`.
+  - No `.base` write was added.
+
+**Self-review of the remediation diff (`228dd1b..0f636be`, 8 files, +151/−26):**
+
+- The changes are limited to the four findings, and each commit maps to one finding.
+- Alfred's ported evaluator cases are unchanged and pass.
+- Initial deviation 11 is now resolved by `0f636be`.
 
 ## Final Status
 
@@ -112,12 +160,13 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all tasks committed and all checks passed.
+- **Final report status:** `Completed` — all tasks committed, all four verification findings `Fixed`, and every check passes.
 - **Final report commit:** returned to the orchestrator.
-- **Final commits:** `3ee3aa0`, `0b133d0`, `bd43e23`, `834a5e5`, `9b3e0d4`
+- **Final commits:**
+  - Initial: `3ee3aa0`, `0b133d0`, `bd43e23`, `834a5e5`, `9b3e0d4`.
+  - Remediation: `c5ea0d2` (VER1), `f3eaf30` (VER2), `ce27d62` (VER3), `0f636be` (VER4).
 - **Final checks:**
-  - `bun run check` → 949 pass, 4.35 s.
-  - `bun run test:ci` → 165 pass.
-  - `bun test src/core/features/bases` → 116 pass.
-  - `bun test src/core/features/links src/workspace` → 85 pass.
-- **Remaining issues:** V30 `Pending — user fixture`; item 11 above (low).
+  - `bun run check` → 954 pass.
+  - `bun run test:ci` → 166 pass.
+  - `bun test src/core/features/bases` → 120 pass.
+- **Remaining issues:** V30 `Pending — user fixture`.
