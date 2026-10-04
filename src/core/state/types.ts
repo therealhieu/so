@@ -83,11 +83,22 @@ export type BufferState = {
   closing?: true;
   /** The file type's analysis of `text` at its current version (`Doc` for Markdown). */
   analysis?: unknown;
+  /** Absent means listed; an unlisted buffer is an embed target, never shown or persisted. */
+  listed?: false;
+  /** On a listed note: embed targets whose read is outstanding, and those refused. Never persisted. */
+  embeds?: { requested: string[]; refused: string[] };
 };
 
 export type WindowState = {
   id: WindowId;
-  content: { editor: "text"; bufferId: BufferId; cursor: Pos; scroll: number };
+  content: {
+    editor: "text";
+    bufferId: BufferId;
+    cursor: Pos;
+    scroll: number;
+    /** Block ids toggled from their default fold in this window. Never persisted. */
+    folds?: number[];
+  };
 };
 
 export type TerminalState = {

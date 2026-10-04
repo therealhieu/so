@@ -32,6 +32,7 @@ import {
   onMentionResults,
 } from "./side-panel";
 import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
+import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
 
 export type Update = (
@@ -47,6 +48,8 @@ export type Registries = {
   bindings: readonly Binding[];
   /** Which-key group labels by prefix sequence ("<leader>f" → "find"). */
   groups: Readonly<Record<string, string>>;
+  /** Per-file-type builders of a view's input context. */
+  viewContexts: ViewContextRegistry;
 };
 
 /**

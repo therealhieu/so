@@ -17,6 +17,7 @@ import {
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
+import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
@@ -29,10 +30,12 @@ import {
   linkCommands,
   linkGroups,
 } from "../core/state/link-commands";
+import { markdownViewContext } from "../core/state/markdown-view";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
+import { ViewContextRegistry } from "../core/state/view-context";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
@@ -101,12 +104,16 @@ function registries(): Registries {
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
+  const viewContexts = new ViewContextRegistry();
+  viewContexts.register("markdown", markdownViewContext);
+  builtinRenderers();
   return {
     fileTypes,
     editorKinds: new EditorKindRegistry(),
     commands,
     bindings: [...defaultBindings, ...linkBindings],
     groups: { ...defaultGroups, ...linkGroups },
+    viewContexts,
   };
 }
 
