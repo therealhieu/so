@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — remediation`
+- **Current Position:** `Overall verification`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -387,7 +387,7 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 - **Plan:** `.s1mple/work/active/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-3-extension-performance-delivery.md`
 - **Dependencies:** Parts 1 and 2
-- **Status:** `In Progress`
+- **Status:** `Completed` (P3-G1 accepted; T4 steps 2–4 in Delivery Completion)
 
 #### P3-G1 — Extension proof, benchmarks, and delivery
 
@@ -404,12 +404,12 @@ these do not imply authorization to merge, deploy, or edit parent files.
 - [x] Verification report persisted and separately committed.
 - [x] Verification report commit SHA recorded.
 - [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
@@ -417,20 +417,20 @@ these do not imply authorization to merge, deploy, or edit parent files.
 - Initial implementation report commit: `8521c98` (initial), `f6c98ee` (blocker resolution appended in the same implementation turn); group range `607b12b`..`f6c98ee`
 - Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Failed`. VER1 (Major, performance): the CI bench passes only on fast runners; on slow runners `openFile` is about 1.7× the earlier code. VER2 (Major, performance): local readings miss the REQ9@R2 1× targets (`liveKeystrokeP95` 16.7–20.0, `openFile` 51.9–57.6). VER3 (Minor, documentation): the design and PR parent-sync list do not show `editor: EditorKind`, and `EditorKindSpec.open` is never called. VER4 (Minor): an orphaned doc comment in `update.ts`. Passed: V35, V38, V41, V42, V46, V47 and the G4 evidence; `test:ci` passed 6/6
 - Verification report commit: `06886c7`
-- Remediation: the consultant recommended five no-output-change speedups. The user then approved relaxed live and startup targets on 2026-10-04 so the bench gate does not slow development: `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250. Source targets are unchanged. The W requirements Constraints and system design §6, §7 `TARGETS` and V44 were updated, which also syncs VER3's design part. A fresh `s1mple-implementer` applies the new targets and four quick speedups (lazy `beautiful-mermaid`, scanner trigger skip, block-hash reuse, letter-line paragraph fast path) and fixes VER3's PR part and VER4 — in progress
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Remediation: the consultant recommended five no-output-change speedups. The user then approved relaxed live and startup targets on 2026-10-04 so the bench gate does not slow development: `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250. Source targets are unchanged. The W requirements Constraints and system design §6, §7 `TARGETS` and V44 were updated, which also syncs VER3's design part. A fresh `s1mple-implementer` applies the new targets and four quick speedups (lazy `beautiful-mermaid`, scanner trigger skip, block-hash reuse, letter-line paragraph fast path) and fixes VER3's PR part and VER4. Result `Completed`: all four speedups were kept and VER1–VER4 are `Fixed`. Ten `yes` load generators orphaned by an earlier agent (PIDs 63481–63490) were killed; they had inflated the verifier's local readings
+- Final implementation report commit: `46032b8`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): VER1 and VER2 → `e5602b4` (new targets), `77ce68c` (lazy `beautiful-mermaid`), `50f9222` (scanner triggers), `4603fdb` (block-hash reuse), `00011bd` (paragraph fast path), all T2; VER3 → design `2495edd` (orchestrator) and the PR #6 body (not versioned); VER4 → `8a79835` (T1)
+- Closure evidence: clean local bench on `00011bd` meets even the old 1× targets: `liveKeystrokeP95` 7.18–8.80, `openFile` 35.47–41.29, `firstFrame` 146.76–150.69, `indexingKeystrokeP95` 10.17–10.24. Linux CI on a slow-class runner (run 37178733100) passed the new 2× limits (`openFile` 114.39/160, `indexingKeystrokeP95` 37.09/60). On the final head `46032b8`, run https://github.com/therealhieu/so/actions/runs/37179396485 is all green (`openFile` 98.98, `indexingKeystrokeP95` 24.42, `firstFrame` 269.05). Also: `bun run check` 739 pass; `test:ci` 144 pass; binary 84,105,330 B; frozen lockfile ok; `origin/main` not ahead. The original verification report is unchanged at `06886c7`. Accepted on 2026-10-04
 - PR URL and CI runs: https://github.com/therealhieu/so/pull/6. CI on `f6c98ee`: https://github.com/therealhieu/so/actions/runs/37175881079, all green (Linux `openFile` 74.73, `indexingKeystrokeP95` 25.00). On `c58e8eb`: https://github.com/therealhieu/so/actions/runs/37175517956, green (96.54, 30.50). Failing earlier runs: 37173732484 and 37174620974. V46: local `check` 5.17 s; CI wall time 1 min 52 s. V35: the binary is 83,940,210 bytes. V42 passes by Playwright. Pins: `katex@0.16.47`, `mermaid@12.1.0`
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P3-G1-T1` | `ee55fa9`, `352cf50`, `c58e8eb` |
-| `P3-G1-T2` | `2348fa4`, `5ca1945` |
+| `P3-G1-T1` | `ee55fa9`, `352cf50`, `c58e8eb`, `8a79835` |
+| `P3-G1-T2` | `2348fa4`, `5ca1945`, `e5602b4`, `77ce68c`, `50f9222`, `4603fdb`, `00011bd` |
 | `P3-G1-T3` | `a11c8a9` |
-| `P3-G1-T4` (step 1) | No change: delivery only. Pushed; PR #6 opened; `origin/main` was not ahead; CI green on `f6c98ee` |
+| `P3-G1-T4` (step 1) | No change: delivery only. Pushed; PR #6 opened; `origin/main` was not ahead; CI green on the final head `46032b8` |
 
 ## Roadmap Evidence
 
