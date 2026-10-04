@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — implementation`
+- **Current Position:** `P3-G1 — remediation`
 - **Last Updated:** `2026-10-04`
 
 ## Sources
@@ -392,18 +392,18 @@ these do not imply authorization to merge, deploy, or edit parent files.
 #### P3-G1 — Extension proof, benchmarks, and delivery
 
 - [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P3-G1-T1` — Registration-only extension proof.
-- [ ] `P3-G1-T2` — Live and source bench targets.
-- [ ] `P3-G1-T3` — Build, offline page, and fast-gate checks.
-- [ ] `P3-G1-T4` — Delivery (step 1: PR open, conflicts resolved, CI green; steps 2–4 in Delivery Completion).
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementation turn completed.
+- [x] `P3-G1-T1` — Registration-only extension proof.
+- [x] `P3-G1-T2` — Live and source bench targets.
+- [x] `P3-G1-T3` — Build, offline page, and fast-gate checks.
+- [x] `P3-G1-T4` — Delivery (step 1: PR open, conflicts resolved, CI green; steps 2–4 in Delivery Completion).
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
 - [ ] Implementer completed the remediation checklist or no remediation was required.
 - [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
 - [ ] Final implementation report commit SHA recorded.
@@ -413,24 +413,24 @@ these do not imply authorization to merge, deploy, or edit parent files.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-implementation-report.md` — first turn `Blocked` (report `8521c98`; PR https://github.com/therealhieu/so/pull/6). Two blockers: (1) the `grid` editor-kind part of V41 cannot pass because `WindowState.content.editor` is the literal `"text"`; (2) the Linux CI bench gate fails, with `openFile` 134.04 against a 100 ms limit and `indexingKeystrokeP95` 38.60 against a 32 ms limit, because `live` is now the default view. Orchestrator decisions on 2026-10-04: (1) implement inside approved S16 as a minimal refinement: widen `content.editor` to `EditorKind`, set it from the registered file-type kind, and fall back to `"text"`, with no new state and no persisted field; (2) profile and fix in code, with no target or method change. The same implementer was resumed for both and returned `Completed` with risk: B1 is closed by `c58e8eb`; B2 has no code fix and the CI gate is now green only because runners vary. Profiling found the live-open cost in the designed per-block mdast parse (about 13–15 ms locally). The larger costs are the existing `parseDoc`, the index `patch` and the completion `poolFor`
+- Initial implementation report commit: `8521c98` (initial), `f6c98ee` (blocker resolution appended in the same implementation turn); group range `607b12b`..`f6c98ee`
+- Verification: `.s1mple/work/active/w261003s6bq-live-and-browser-preview/reports/p3-g1-verification-report.md` — `Failed`. VER1 (Major, performance): the CI bench passes only on fast runners; on slow runners `openFile` is about 1.7× the earlier code. VER2 (Major, performance): local readings miss the REQ9@R2 1× targets (`liveKeystrokeP95` 16.7–20.0, `openFile` 51.9–57.6). VER3 (Minor, documentation): the design and PR parent-sync list do not show `editor: EditorKind`, and `EditorKindSpec.open` is never called. VER4 (Minor): an orphaned doc comment in `update.ts`. Passed: V35, V38, V41, V42, V46, V47 and the G4 evidence; `test:ci` passed 6/6
+- Verification report commit: `06886c7`
+- Remediation: the consultant recommended five no-output-change speedups. The user then approved relaxed live and startup targets on 2026-10-04 so the bench gate does not slow development: `openFile` 80, `liveKeystrokeP95` 24, `indexingKeystrokeP95` 30, `firstFrame` 250. Source targets are unchanged. The W requirements Constraints and system design §6, §7 `TARGETS` and V44 were updated, which also syncs VER3's design part. A fresh `s1mple-implementer` applies the new targets and four quick speedups (lazy `beautiful-mermaid`, scanner trigger skip, block-hash reuse, letter-line paragraph fast path) and fixes VER3's PR part and VER4 — in progress
 - Final implementation report commit: `Pending implementation`
 - Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
 - Closure evidence: `Pending implementation`
-- PR URL and CI runs: `Pending implementation`
+- PR URL and CI runs: https://github.com/therealhieu/so/pull/6. CI on `f6c98ee`: https://github.com/therealhieu/so/actions/runs/37175881079, all green (Linux `openFile` 74.73, `indexingKeystrokeP95` 25.00). On `c58e8eb`: https://github.com/therealhieu/so/actions/runs/37175517956, green (96.54, 30.50). Failing earlier runs: 37173732484 and 37174620974. V46: local `check` 5.17 s; CI wall time 1 min 52 s. V35: the binary is 83,940,210 bytes. V42 passes by Playwright. Pins: `katex@0.16.47`, `mermaid@12.1.0`
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P3-G1-T1` | `Pending implementation` |
-| `P3-G1-T2` | `Pending implementation` |
-| `P3-G1-T3` | `Pending implementation` |
-| `P3-G1-T4` (step 1) | `Pending implementation` |
+| `P3-G1-T1` | `ee55fa9`, `352cf50`, `c58e8eb` |
+| `P3-G1-T2` | `2348fa4`, `5ca1945` |
+| `P3-G1-T3` | `a11c8a9` |
+| `P3-G1-T4` (step 1) | No change: delivery only. Pushed; PR #6 opened; `origin/main` was not ahead; CI green on `f6c98ee` |
 
 ## Roadmap Evidence
 

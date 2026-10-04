@@ -48,7 +48,7 @@ After the parent synchronization in `da4739d`, the parent citations were refresh
 
 ## Problem Statement
 
-Markdown notes still render as highlighted source. PH1 registered only a `source` view on `markdownFileType` (`src/core/lang/markdown/file-type.ts:10`), the text view paints neither signs nor widgets and always passes an empty fold set (`src/ui/editors/text-view.ts:396-419`), and no preview server exists. RM261003ABZP-DI3@R3 must add Obsidian-style live preview and a read-only browser mirror on top of the PH1 kernel without putting Markdown into the kernel or the UI, without laying out rows outside the viewport, and within the 16 ms keystroke budget.
+Markdown notes still render as highlighted source. PH1 registered only a `source` view on `markdownFileType` (`src/core/lang/markdown/file-type.ts:10`), the text view paints neither signs nor widgets and always passes an empty fold set (`src/ui/editors/text-view.ts:396-419`), and no preview server exists. RM261003ABZP-DI3@R3 must add Obsidian-style live preview and a read-only browser mirror on top of the PH1 kernel without putting Markdown into the kernel or the UI, without laying out rows outside the viewport, and within the keystroke budget (Constraints).
 
 ## Desired Outcome
 
@@ -146,7 +146,7 @@ key → update → markdown analyze → Doc
 - No new top-level `AppState` field beyond `preview` (`…phase-2…md:182-190`).
 - State file stays `"version": 1`; fold state is not persisted.
 - The single compiled binary (`bun build --compile`) must contain everything the app and the browser page need, including KaTeX and Mermaid.
-- RM261003ABZP-REQ9@R2 targets hold: keystroke p95 < 16 ms, open < 50 ms, first frame < 200 ms, 60 fps scrolling.
+- RM261003ABZP-REQ9@R2 targets hold for the source view: keystroke p95 < 16 ms, open < 50 ms, 60 fps scrolling. The live view (the Markdown default) and startup use relaxed targets, approved by the user on 2026-10-04 so the bench gate does not slow development: live keystroke p95 < 24 ms, live note open < 80 ms, keystroke p95 while indexing < 30 ms, first frame < 250 ms. This relaxes RM261003ABZP-REQ9@R2 for the live view and is pending parent synchronization.
 
 ## Accepted Assumptions
 

@@ -74,7 +74,7 @@
 ## Goals
 
 - Render Markdown in `live` and `reading` views as one pure decoration provider over the existing `Doc`, with no change to `core/kernel` and no Markdown in `src/ui` (W261003S6BQ-REQ1@R1, W261003S6BQ-REQ6@R1).
-- Show images, embeds, math, and Mermaid inside the 16 ms keystroke budget, with heavy work cached by block hash and kept out of `AppState` where it is presentation-only (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1).
+- Show images, embeds, math, and Mermaid inside the keystroke budget, with heavy work cached by block hash and kept out of `AppState` where it is presentation-only (W261003S6BQ-REQ2@R2, W261003S6BQ-REQ3@R1, W261003S6BQ-REQ4@R1).
 - Keep folds and reserved rows correct under edits and scrolling without layout in the reducer (W261003S6BQ-REQ5@R1).
 - Serve a read-only, local-only browser mirror from the same `Doc`, with the page, KaTeX, and Mermaid embedded in the single binary and loaded only from the server's own origin (W261003S6BQ-REQ7@R3, W261003S6BQ-REQ8@R1).
 - Ship the G4 outputs DI4 consumes with the phase-design signatures, and prove registration-only extension with a `csv` file type (W261003S6BQ-REQ1@R1).
@@ -2015,7 +2015,7 @@ export function settleEmbedRead(s: AppState, path: string, refused: boolean): Ap
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
 | `BufferState` | `:67-86`, no `listed` | `+ listed?: false; + embeds?: { requested: string[]; refused: string[] }` | buffers, embeds, markdown-view, session, bufferline, picker, commands |
-| `WindowState` | `:88-91` `content: { editor: "text"; bufferId; cursor; scroll }` | `+ folds?: number[]` | markdown-commands, markdown-view |
+| `WindowState` | `:88-91` `content: { editor: "text"; bufferId; cursor; scroll }` | `editor: EditorKind` (derived after each reducer step from the buffer's file-type kind when that kind is registered, else `"text"`; not persisted); `+ folds?: number[]` | markdown-commands, markdown-view, update, window-tree |
 | `AppState` | `:233-272` | `+ preview: PreviewState` | preview, status, init |
 | `Action` | `:274-319` | `+ previewStarted, previewStopped, previewFailed, openUrlFailed` | `update.ts` |
 | `Effect` | `:321-345` | `+ startPreview, stopPreview, openUrl` | `effects.ts` |
@@ -2036,8 +2036,9 @@ Window content carries only the buffer, cursor, and top line.
 ```ts
 export type WindowState = {
   id: WindowId;
-  content: { editor: "text"; bufferId: BufferId; cursor: Pos; scroll: number; folds?: number[] };
+  content: { editor: EditorKind; bufferId: BufferId; cursor: Pos; scroll: number; folds?: number[] };
 };
+// editor: the file type's registered kind, else "text"; EditorKindSpec.open and per-kind state stay with the first non-text kind (DI4 `base`).
 export type PreviewState = { status: "off" } | { status: "starting" } | { status: "on"; port: number };
 // AppState: preview: PreviewState;
 // BufferState: listed?: false; embeds?: { requested: string[]; refused: string[] };
@@ -2934,7 +2935,7 @@ The host mirrors `index-host.ts`: the app owns the long-lived resource, effects 
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `TARGETS` | `bench-gate.ts:8-14` five targets | `+ liveKeystrokeP95: 16, sourceOpenFile: 50, liveScrollFrameP95: 16.7, sourceScrollFrameP95: 16.7` | gate |
+| `TARGETS` | `bench-gate.ts:8-14` five targets | `+ liveKeystrokeP95: 24, sourceOpenFile: 50, liveScrollFrameP95: 16.7, sourceScrollFrameP95: 16.7`; `openFile` 50 → 80, `firstFrame` 200 → 250, `indexingKeystrokeP95` 16 → 30 (relaxed live and startup targets approved by the user on 2026-10-04) | gate |
 | `BENCHES` | `:17-23` | `+ live-keystroke.bench.ts, source-open.bench.ts, scroll.bench.ts --file note, scroll.bench.ts --file ts` | gate |
 | `make5000LineTs` | None — inline `tsSource` in `source-keystroke.bench.ts:7-17` | moved to `test/fixtures/generate.ts` | both TS benches |
 
@@ -2956,10 +2957,10 @@ export const TARGETS = {
 
 ```ts
 export const TARGETS = {
-  sourceKeystrokeP95: 16, liveKeystrokeP95: 16,
-  openFile: 50, sourceOpenFile: 50,
+  sourceKeystrokeP95: 16, liveKeystrokeP95: 24,
+  openFile: 80, sourceOpenFile: 50,
   liveScrollFrameP95: 16.7, sourceScrollFrameP95: 16.7,
-  firstFrame: 200, indexReady: 3000, indexingKeystrokeP95: 16,
+  firstFrame: 250, indexReady: 3000, indexingKeystrokeP95: 30,
 } as const;
 ```
 
@@ -3276,7 +3277,7 @@ src/ + test/
     │   └── Unique risk: layer or export mismatch
     ├── V35 Build check: bun run build; copy dist/so to an empty temp directory with no node_modules; run it in a tmp workspace, :Preview via PTY; GET /, /assets/katex.min.js, /assets/mermaid.min.js, /assets/fonts/KaTeX_Main-Regular.woff2 → 200 with bytes equal to the package files; record the binary size in the PR [S13]
     │   └── Unique risk: page, browser libraries, or worker not embedded in the binary
-    ├── V44 Bench: bun run bench on Linux CI — liveKeystrokeP95, sourceKeystrokeP95 < 32; openFile, sourceOpenFile < 100; live/sourceScrollFrameP95 < 33.4; firstFrame < 400; indexReady < 6000; indexingKeystrokeP95 < 32 (medians of 5) [S15, S4]
+    ├── V44 Bench: bun run bench on Linux CI — sourceKeystrokeP95 < 32, liveKeystrokeP95 < 48; openFile < 160, sourceOpenFile < 100; live/sourceScrollFrameP95 < 33.4; firstFrame < 500; indexReady < 6000; indexingKeystrokeP95 < 60 (medians of 5) [S15, S4]
     │   └── Unique risk: performance regression, including Mermaid at startup
     ├── V45 Reference-machine readings of the same benches recorded in the PR (targets 1×) [S15]
     │   └── Unique risk: CI headroom hiding a real-machine miss
