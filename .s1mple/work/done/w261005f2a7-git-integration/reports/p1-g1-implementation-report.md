@@ -120,6 +120,51 @@ Append remediation evidence here after verifier findings. This is not a separate
 - `grep -rnE "W261005F2A7|\b(REQ|DES|UDES|UV)[0-9]" src test` → `Passed` — no matches. An extra grep for `S`/`V`/`US`/`UREQ`/group/finding ids in the remediation diff also found none.
 - Self-review of `6e3eba5..a4d613c` → no new issue. `normalizeIndexText` has no caller outside `src/core/features/git` yet, so the zero-byte rule changes nothing elsewhere.
 
+### Post-PR remediation — flaky bounded-diff timing assertion
+
+**CI evidence.** PR #10 run `37341220895` on head `6d66394`: job `check` failed on one unit test; `test (ubuntu-24.04)` and `test (macos-15)` passed.
+
+```text
+(fail) diffs with nothing in common or too many edits fall back to one change hunk quickly [103.33ms]
+error: expect(received).toBeLessThan(expected)
+Expected: < 50
+Received: 90.30844900000011
+```
+
+The same case failed once locally under load before (82.9 ms) and passed on rerun.
+
+**Cause.** The failing assertion was the every-other-line case (system design §8 V4: D > `MAX_EDIT` → one change hunk, < 50 ms). It has shared lines, so `diffLines` ran Myers' search to the full 2,000-step cap before falling back. Locally that took 17–18 ms cold and 9–10 ms warm, so a shared CI runner at about 5× slower crossed 50 ms. The disjoint case also timed its `toEqual` over 5,000 lines, but that was under 0.1 ms and not the cause. Removing the per-step `trace` copy saved only 2–3 ms, so no quick speedup existed inside the search itself.
+
+A wider bound alone could not fix it: uncapped Myers on the same input takes only 54–68 ms locally, so no single wall-clock value separates bounded from unbounded both locally and on CI.
+
+**Change** (`cabff60`).
+
+| Path and symbol | Change |
+|---|---|
+| `src/core/features/git/diff.ts:editFloor` | New. Sums the per-line count difference between the two middles. This is a lower bound on the edit distance, because every surplus copy of a line must be deleted or inserted. It equals `a.length + b.length` exactly when the middles share no line. It replaces `shareLine`. |
+| `src/core/features/git/diff.ts:diffLines` | `floor === a.length + b.length \|\| floor > MAX_EDIT` → one change hunk. Hunks are unchanged: when the floor exceeds `MAX_EDIT`, the search would also have given up. `MAX_EDIT` stays 2000, and the hunk contract is unchanged. |
+| `src/core/features/git/diff.test.ts` | The disjoint case times only `diffLines` and asserts the hunk afterwards. The disjoint and every-other-line cases keep the < 50 ms bound. A new reversed-order case (same lines, D ≈ 10,000, no count difference) still runs the capped search, so the cap stays under test. Its bound is 150 ms. |
+
+**Bounds.** The disjoint and every-other-line bound stays 50 ms. The new reversed-order case has a 150 ms bound. The old 50 ms bound would leave little CI headroom for the capped search (9–27 ms locally), so 150 ms gives about 5× headroom over the loaded local worst case. It still sits below the uncapped cost of the same input (193–222 ms idle, 321–362 ms under load locally).
+
+| Input (5,000 lines) | Capped, after fix (idle) | Capped, after fix (12 busy loops) | Uncapped (idle) | Uncapped (load) |
+|---|---|---|---|---|
+| disjoint | 0.2–1.0 ms | 0.4–1.4 ms | — (no search) | — |
+| every other line | 0.3 ms (was 9–18 ms) | 0.3–0.6 ms | 54–67 ms | 55–79 ms |
+| reversed | 8.7–16.1 ms | 9.0–26.6 ms | 193–222 ms | 321–362 ms |
+
+The timings are 3 calls per fresh `bun` process, first call cold. They were measured on a 10-core macOS laptop. "Uncapped" is a scratch copy of `diff.ts` with `MAX_EDIT = 1e9`.
+
+**Verification evidence.**
+
+- `bun run check` (with `set -o pipefail`) → exit 0: biome, tsc, and knip clean, 1205 pass, 0 fail.
+- `bun test src/core/features/git` 10× idle → 10/10 pass. 10× under 12 busy CPU loops on 10 cores → 10/10 pass.
+- `bun test src/core/features/git/diff.test.ts` 10× under 12 busy loops → 10/10 pass.
+- Work-process id grep over `diff.ts` and `diff.test.ts` → no matches.
+- The busy loops and scratch scripts were removed. No process started for this fix is left running.
+
+**Remaining issues.** None. CI on the next pushed head is the final confirmation; this fix was not pushed.
+
 ## Final Status
 
 `Completed`
