@@ -1,12 +1,12 @@
 # so
 
-- **Last Modified:** 2026-10-04
+- **Last Modified:** 2026-10-05
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
 ## Purpose and Scope
 
-`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in an Obsidian-style `live` view by default (rendered blocks, with source shown on the cursor's lines), with `source` and read-only `reading` views; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Daily notes (`:Today`, `:Yesterday`, `:Tomorrow`, a calendar picker) and templates are created from Obsidian-compatible templates and never overwrite a file; Obsidian `.base` files open as read-only table and Kanban views whose cell edits and card moves write one frontmatter key back to the note, and `![[x.base#View]]` embeds render inline. Sources: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview), `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (daily notes, templates, and Bases).
+`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in an Obsidian-style `live` view by default (rendered blocks, with source shown on the cursor's lines), with `source` and read-only `reading` views; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Daily notes (`:Today`, `:Yesterday`, `:Tomorrow`, a calendar picker) and templates are created from Obsidian-compatible templates and never overwrite a file; Obsidian `.base` files open as read-only table and Kanban views whose cell edits and card moves write one frontmatter key back to the note, and `![[x.base#View]]` embeds render inline. The mouse (wheel, click, double- and triple-click, drag, Ctrl+click) works on every TUI surface and always runs the same path as a keyboard action; the `mouse` setting turns terminal mouse reporting off. Sources: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview), `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (daily notes, templates, and Bases), `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md` (mouse support).
 
 ## Technology Stack
 
@@ -56,6 +56,15 @@ key → src/ui (normalize) → store.dispatch(action) → core update(state, act
                      src/ui repaints visible lines ◄── state        effects ──► src/app effect runner
                                                                                     │
                                               result actions ◄── src/workspace (fs, trash, clipboard)
+```
+
+Mouse input enters through one full-screen, paint-free `MouseLayer` and one router (`src/ui/mouse.ts`); views translate a cell into a model-level `MouseTarget` from the geometry of their last layout, and the pure `onMouse` reducer (`src/core/state/mouse.ts`) replays the matching keyboard path:
+
+```text
+SGR mouse (button-event tracking) → MouseLayer → router: drop when off / right / middle button
+   → first source in z-order with a target (overlays → toasts (wheel only) → cmdline → statusline → side panel → explorer → bufferline → windows)
+   → click count (same cell ≤ 500 ms) · drag capture to the press window
+   → store.dispatch({type:"mouse", event, now}) → onMouse: overlay gate → focus → keys / commands / exported reducers
 ```
 
 `update` is pure and synchronous; adapters only execute effects and report results as actions. Saves are atomic (private `0600` temp file, fsync, rename) and keep mode, BOM, line endings, and the trailing newline; the watcher ignores the app's own operations.
@@ -126,12 +135,13 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 | Editor kinds | `src/core/filetypes/registry.ts` (`EditorKindRegistry`, `EditorKindSpec.open`, `FileType.readOnly`); `WindowState.content.editor` follows the file type's registered kind, else `"text"`, and `kindState` holds the kind's window state; `src/ui/editors/registry.ts` (`registerEditorView`, `WindowView`) — `text` (`EditorView`) and `base` (`BaseView`) |
 | Browser preview | `src/preview/server.ts` (routes `/`, `/assets/*`, `/render`, `/file/*`, SSE `/events`); `PreviewState` in `src/core/state/types.ts`; `renderHtml` in `src/core/lang/markdown/html.ts` (escaped HTML) |
 | Link index | `src/core/features/links/{note-index,resolve,rename,mentions}.ts` — `NoteIndex`, `resolveLink`, `planRename`; worker messages `ToWorker`/`FromWorker` in `src/workspace/index-worker.ts` |
-| Config file | `src/core/config/{schema,toml}.ts` — `ConfigSchema` (strict: unknown keys are errors; `[preview]` sets `mode` `live`/`source`/`reading`, `embedMaxRows`, `images` `auto`/`blocks`/`off`; `[daily]` sets `folder` (default `daily`), `format` (Moment tokens, default `YYYY-MM-DD`), `template` (default `templates/daily.md`); `[templates]` sets `folder` (default `templates`)), `parseConfig` |
+| Config file | `src/core/config/{schema,toml}.ts` — `ConfigSchema` (strict: unknown keys are errors; top-level `mouse` (default `true`) switches terminal mouse reporting, synced to `renderer.useMouse` on every paint, off after every exit; `[preview]` sets `mode` `live`/`source`/`reading`, `embedMaxRows`, `images` `auto`/`blocks`/`off`; `[daily]` sets `folder` (default `daily`), `format` (Moment tokens, default `YYYY-MM-DD`), `template` (default `templates/daily.md`); `[templates]` sets `folder` (default `templates`)), `parseConfig` |
 | Daily notes and templates | `src/core/time/{local,format}.ts` (`localDateTime`, `addDays`, `formatDate` — Moment 2.29.4 output); `src/core/features/notes/{daily,template}.ts` (`dailyPath`, `parseDailyDate`, `expandTemplate` — Obsidian's `{{date}}`/`{{time}}`/`{{title}}` rules); `src/core/state/{note-commands,calendar}.ts` |
 | Frontmatter patch | `src/core/lang/markdown/frontmatter-patch.ts` — `patchFrontmatter` changes one key and keeps comments, order, quoting, line endings, and the body; `mergeFrontmatter` (template insert); `yamlScalar` |
 | Bases | `src/core/features/bases/*` — `parseBase`, `evaluateBase` (Obsidian `inFolder`/`hasTag`, `filter_hides_rows` diagnostics), `summarize` (15 default summaries), `propertyType` (`.obsidian/types.json`, else inference), `candidatesFrom` (every `file.*` field from index facts), `tableModel`, `kanbanModel`, `BaseLayoutRegistry`, `KANBAN_TYPE`; `src/core/state/base-{model,commands,write}.ts`; painters in `src/ui/widgets/base.ts` |
 | Embed models | `src/core/state/embed-models.ts` (`EmbedModelRegistry` by file type; `PreviewCtx.embedModel`); `base` registers `baseEmbedModel` |
 | Session state | `PersistedState` in `src/core/state/types.ts` (`"version": 1`); `snapshotSession`/`parsePersisted` in `src/core/state/session.ts` |
+| Mouse | `MouseEvent`, `MouseTarget`, `WindowSpot` in `src/core/state/types.ts` (model values only, no screen coordinates or buttons); `onMouse` and `pressStops` in `src/core/state/mouse.ts`; `rowAt`, `displayColAt`, `sourceColAt` in `src/core/kernel/view/hit.ts` (screen row and display column → source column, using `Span.col`/`Span.inserted` set by `spansOf`); `createMouseRouter`, `MouseSource`, `MouseLayer`, `CLICK_MS` in `src/ui/mouse.ts`; each view's `targetAt`/`dragAt`/`itemAt`. Prompt and conflict dialogs ignore the mouse; toasts pass clicks through |
 | Vim behaviour | `test/vim/expected.json`, recorded from Neovim 0.11.x over RPC by `bun run record:vim` |
 
 ## Engineering Standards and Patterns
@@ -199,5 +209,5 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
 
 ## Sources and Open Questions
 
-- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`, `src/core/state/types.ts`, `src/app/{main,effects,index-host}.ts`, `src/workspace/{config-file,state-file,log,index-worker,images}.ts`, `src/core/config/schema.ts`, `src/core/lang/markdown/live-preview.ts`, `src/preview/{server,assets}.ts`, `src/app/preview-host.ts`, `scripts/bench-gate.ts`; initiative design `rm261003abzp-design.md`.
+- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`, `src/core/state/types.ts`, `src/app/{main,effects,index-host}.ts`, `src/workspace/{config-file,state-file,log,index-worker,images}.ts`, `src/core/config/schema.ts`, `src/core/state/mouse.ts`, `src/ui/mouse.ts`, `src/core/lang/markdown/live-preview.ts`, `src/preview/{server,assets}.ts`, `src/app/preview-host.ts`, `scripts/bench-gate.ts`; initiative design `rm261003abzp-design.md`.
 - **Open Questions:** None.
