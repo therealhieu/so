@@ -72,6 +72,37 @@ test("editing, saving, and staging puts the typed line in the index", async () =
   expect(a.buffer("a.md")?.dirty).toBe(false);
 });
 
+test("a clean note with a BOM has no hunks and stages an edit", async () => {
+  const a = await startInRepo({ "a.md": "﻿hello\nworld\n" });
+  await a.open("a.md");
+  await waitFor(
+    () => a.store.get().git.files["a.md"]?.index?.kind === "tracked",
+  );
+  expect(a.store.get().git.files["a.md"]?.hunks).toEqual([]);
+  expect(statusSegments(a.store.get()).git).toMatchObject({
+    added: 0,
+    changed: 0,
+    removed: 0,
+  });
+
+  a.keys("<Esc>ggA there<Esc>");
+  a.keys("<leader>ghs");
+  await waitFor(() => a.actions.some((x) => x.type === "gitStaged"));
+  expect(a.actions.find((x) => x.type === "gitStaged")).toMatchObject({
+    path: "a.md",
+    result: "ok",
+  });
+  const r = repo as GitRepo;
+  expect(await r.run(["show", ":a.md"])).toBe("﻿hello there\nworld\n");
+  await waitFor(() => a.store.get().git.files["a.md"]?.hunks.length === 0);
+
+  a.keys("ggA again<Esc>");
+  await waitFor(() => (a.store.get().git.files["a.md"]?.hunks.length ?? 0) > 0);
+  a.keys("<leader>ghr");
+  expect(a.text("a.md")).toBe("hello there\nworld");
+  expect(a.buffer("a.md")?.bom).toBe(true);
+});
+
 test("a tool that checks out an open file reloads its buffer", async () => {
   const runs: string[] = [];
   const checkout: ToolHost = {

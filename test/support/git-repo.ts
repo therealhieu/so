@@ -2,6 +2,9 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
+/** UTF-8 that keeps a leading BOM, so `git show` returns a blob's exact text. */
+const utf8 = new TextDecoder("utf-8", { ignoreBOM: true });
+
 /**
  * An environment that keeps Git away from the user's and the system's
  * configuration, with a fixed identity, so temp repos behave the same on
@@ -61,7 +64,7 @@ export async function gitRepo(
       stderr: "pipe",
     });
     const [out, err, code] = await Promise.all([
-      new Response(p.stdout).text(),
+      new Response(p.stdout).arrayBuffer().then((b) => utf8.decode(b)),
       new Response(p.stderr).text(),
       p.exited,
     ]);

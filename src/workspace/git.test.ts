@@ -231,6 +231,22 @@ test("index reads classify ignored, untracked, and conflicted files, and blame o
   expect(String(logger.logged[0]?.fields?.reason)).toStartWith("fatal:");
 });
 
+test("an index entry that starts with a BOM keeps it", async () => {
+  const r = await repo({ "a.md": "﻿hello\nworld\n" });
+  const g = gitIn(r);
+  const info = await detected(r);
+  expect(tracked(await g.readIndex(info, "a.md")).text).toEqual({
+    lines: ["hello", "world"],
+    finalNewline: true,
+    bom: true,
+    eol: "\n",
+  });
+  expect(await g.blame(info, "a.md", 0, "﻿hello\nworld\n")).toMatchObject({
+    committed: true,
+    summary: "init",
+  });
+});
+
 /** A file's text in the buffer's line model. */
 const bufferOf = (text: string) => {
   const lf = text.replaceAll("\r\n", "\n");

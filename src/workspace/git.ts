@@ -74,6 +74,11 @@ const older = (v: readonly number[], min: readonly number[]): boolean => {
   return false;
 };
 
+/** UTF-8 that keeps a leading BOM: blob output is file content, BOM included. */
+const utf8 = new TextDecoder("utf-8", { ignoreBOM: true });
+const decode = async (s: ReadableStream<Uint8Array>): Promise<string> =>
+  utf8.decode(await new Response(s).arrayBuffer());
+
 /** Bun's spawn with `env` (the process environment by default). */
 export function bunGitSpawn(
   env: Record<string, string | undefined> = process.env,
@@ -87,8 +92,8 @@ export function bunGitSpawn(
       stderr: "pipe",
     });
     const [stdout, stderr, code] = await Promise.all([
-      new Response(p.stdout).text(),
-      new Response(p.stderr).text(),
+      decode(p.stdout),
+      decode(p.stderr),
       p.exited,
     ]);
     return { code, stdout, stderr };
