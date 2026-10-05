@@ -4,15 +4,15 @@ import { homedir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { codeFileTypes } from "../core/lang/code/file-types";
 
-/** Whether `file` opens in a code file type. */
-function isCode(file: string): boolean {
+/** The code file type `file` opens in, if any. */
+function codeFileType(file: string): string | undefined {
   const ext = extname(file).toLowerCase();
   const name = basename(file);
-  return codeFileTypes.some(
+  return codeFileTypes.find(
     (ft) =>
       (ft.match.extensions ?? []).includes(ext) ||
       (ft.match.names ?? []).includes(name),
-  );
+  )?.id;
 }
 
 /**
@@ -32,12 +32,14 @@ export function gitRoot(
 }
 
 /**
- * The workspace folder, and the file to open when `path` names one. A code
- * file opens in its repository, so language servers see the whole project;
- * any other file opens in its own folder.
+ * The workspace folder, and the file to open when `path` names one. A file
+ * a language server serves (its file type is in `served`) opens in its
+ * repository, so the server sees the whole project; any other file opens in
+ * its own folder.
  */
 export async function resolveWorkspace(
   path: string,
+  served: ReadonlySet<string>,
   root: (dir: string) => string | undefined = gitRoot,
 ): Promise<{ root: string; file?: string } | undefined> {
   const abs = resolve(path);
@@ -45,7 +47,8 @@ export async function resolveWorkspace(
   if (st === undefined) return undefined;
   if (st.isDirectory()) return { root: abs };
   const dir = dirname(abs);
-  const repo = isCode(abs) ? root(dir) : undefined;
+  const type = codeFileType(abs);
+  const repo = type !== undefined && served.has(type) ? root(dir) : undefined;
   return repo === undefined
     ? { root: dir, file: basename(abs) }
     : { root: repo, file: relative(repo, abs) };

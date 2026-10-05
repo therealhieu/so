@@ -2,6 +2,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
+import { resolveServers } from "../core/config/lsp";
 import { parseConfig } from "../core/config/toml";
 import { baseEmbedRenderer } from "../core/features/bases/embed";
 import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
@@ -191,6 +192,16 @@ function loadStartupConfig(path: string, logger: Logger): Action | undefined {
   return { type: "configLoaded", result, reload: false };
 }
 
+/** The file types an enabled language server serves under the startup config. */
+function servedFileTypes(config: Action | undefined): ReadonlySet<string> {
+  const lsp =
+    config?.type === "configLoaded" && config.result.ok
+      ? config.result.config.lsp
+      : undefined;
+  if (lsp?.enabled !== true) return new Set();
+  return new Set(resolveServers(lsp).flatMap((spec) => spec.fileTypes));
+}
+
 /** Saves the session on shutdown; a failure is logged and never stops the exit. */
 function sessionSaver(
   path: string | undefined,
@@ -259,15 +270,15 @@ async function main(argv: string[]): Promise<void> {
     process.exit(0);
   }
   const target = cli.path ?? process.cwd();
-  const ws = await resolveWorkspace(target);
+  const logger = createLogger(process.env, homedir());
+  const configFile = configPath(process.env, homedir());
+  const config = loadStartupConfig(configFile, logger);
+  const ws = await resolveWorkspace(target, servedFileTypes(config));
   if (ws === undefined) {
     process.stderr.write(`so: no such file or directory: ${target}\n`);
     process.exit(2);
   }
-
-  const logger = createLogger(process.env, homedir());
   logger.info("app.startup", { root: ws.root });
-  const configFile = configPath(process.env, homedir());
   const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
@@ -337,7 +348,6 @@ async function main(argv: string[]): Promise<void> {
     runner.run,
   );
   store.subscribe(lspHost.observe);
-  const config = loadStartupConfig(configFile, logger);
   if (config !== undefined) store.dispatch(config);
   if (stateFile !== undefined)
     store.dispatch({
