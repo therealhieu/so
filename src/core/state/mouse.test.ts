@@ -640,3 +640,74 @@ test("a click on inert chrome or a stale item changes nothing", () => {
   const stale = mouse(picking, press({ kind: "overlayItem", index: 999 }));
   expect(stale.state).toEqual(picking);
 });
+
+const ALL_TARGETS: MouseTarget[] = [
+  text(1, 1, 1),
+  { kind: "window", window: 1, spot: { kind: "winbar" } },
+  { kind: "explorer", path: "" },
+  { kind: "sidePanel", row: 0 },
+  { kind: "bufferTab", bufferId: 1 },
+  { kind: "overlayItem", index: 0 },
+  { kind: "calendarDay", date: { year: 2026, month: 10, day: 5 } },
+  { kind: "overlay" },
+  { kind: "outside" },
+  { kind: "inert" },
+];
+
+test("prompt and conflict dialogs ignore every mouse gesture", () => {
+  const prompting = keys(open("a.md", "see [[b]] here\nmore\n"), "wwgd").state;
+  expect(prompting.overlay.kind).toBe("prompt");
+  const conflicted: AppState = {
+    ...open("a.md", LINES),
+    overlay: {
+      kind: "conflict",
+      bufferId: 1,
+      disk: textFile("changed\n", 2),
+      showDiff: false,
+    },
+  };
+  for (const start of [prompting, conflicted])
+    for (const target of ALL_TARGETS)
+      for (const event of [
+        press(target),
+        press(target, 2, true),
+        { kind: "drag", target } as const,
+        wheel(target, 1),
+        wheel(target, 0, -1),
+      ]) {
+        const r = mouse(start, event);
+        expect(r.state).toBe(start);
+        expect(r.effects).toEqual([]);
+      }
+});
+
+test("a click outside an overlay or the command line closes it and goes no further", () => {
+  const s = open("a.md", LINES);
+  const picking = keys(s, " sc").state;
+  for (const target of [{ kind: "outside" }, text(1, 2, 2)] as MouseTarget[]) {
+    const r = mouse(picking, press(target));
+    expectSame(r, keys(picking, "<Esc>"));
+    expect(r.state.overlay.kind).toBe("none");
+    expect(cursorOf(r.state)).toEqual(cursorOf(s));
+  }
+  const inside = mouse(picking, press({ kind: "overlay" }));
+  expect(inside.state).toEqual(picking);
+
+  for (const line of [":", "/"]) {
+    const typing = keys(s, `${line}ab`).state;
+    expect(typing.vim.mode).toBe("cmdline");
+    const r = mouse(typing, press(text(1, 2, 2)));
+    expectSame(r, keys(typing, "<Esc>"));
+    expect(r.state.vim.mode).toBe("normal");
+    expect(cursorOf(r.state)).toEqual(cursorOf(s));
+    expect(mouse(typing, press({ kind: "inert" })).state).toEqual(typing);
+  }
+});
+
+test("a click on the text closes completion and still moves the cursor", () => {
+  const s = completing();
+  const r = mouse(s, press(text(1, 0, 0)));
+  expect(r.state.overlay.kind).toBe("none");
+  expect(r.state.vim.mode).toBe("insert");
+  expect(cursorOf(r.state)).toEqual({ line: 0, col: 0 });
+});

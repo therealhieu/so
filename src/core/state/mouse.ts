@@ -41,11 +41,14 @@ const WHEEL_LINES = 3;
  * press, and the wheel scrolls what it is over.
  */
 export function onMouse(
-  s: AppState,
+  state: AppState,
   a: { event: MouseEvent; now: number },
   reg: Registries,
 ): Result {
   const e = a.event;
+  const gate = overlayGate(state, e, a.now, reg);
+  if ("stop" in gate) return gate.stop;
+  const s = gate.go;
   if (stale(s, e.target)) return none(s);
   switch (e.kind) {
     case "press":
@@ -62,6 +65,33 @@ export function onMouse(
       return wheel(s, e.target, e.dx, e.dy, a.now, reg);
   }
 }
+
+/**
+ * Prompt and conflict dialogs take no mouse input. A press outside any
+ * other overlay, or anywhere but the command line while it is open, closes
+ * it like `<Esc>` and goes no further. Completion gives way to a press in
+ * the body: it closes, Insert stays, and the press goes on.
+ */
+function overlayGate(
+  s: AppState,
+  e: MouseEvent,
+  now: number,
+  reg: Registries,
+): { stop: Result } | { go: AppState } {
+  const open = s.overlay.kind;
+  if (open === "prompt" || open === "conflict") return { stop: none(s) };
+  if (e.kind !== "press") return { go: s };
+  const t = e.target;
+  const dismiss = () => ({ stop: feedKeys(none(s), ["<Esc>"], now, reg) });
+  if (open === "completion")
+    return { go: inBody(t) ? { ...s, overlay: { kind: "none" } } : s };
+  if (open !== "none") return onOverlay(t) ? { go: s } : dismiss();
+  if (s.vim.mode === "cmdline" && t.kind !== "inert") return dismiss();
+  return { go: s };
+}
+
+const onOverlay = (t: MouseTarget): boolean =>
+  t.kind === "overlayItem" || t.kind === "calendarDay" || t.kind === "overlay";
 
 const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
 
