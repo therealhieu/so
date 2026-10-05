@@ -8,7 +8,7 @@ import {
 } from "./buffers";
 import { onCompletionTimer, onResolveTimeout } from "./code-completion";
 import { summarizeSaved } from "./index";
-import { onFormatTimeout, onLspTimeout } from "./lsp";
+import { onFormatTimeout, onHighlightTimer, onLspTimeout } from "./lsp";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -128,6 +128,7 @@ export function onTimer(
     });
   if (kind === "completion") return onCompletionTimer(s);
   if (kind === "lspResolve") return onResolveTimeout(s, a.now, reg);
+  if (kind === "lspHighlight") return onHighlightTimer(s);
   if (kind === "lsp") return onLspTimeout(s, id);
   if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;

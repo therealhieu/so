@@ -25,6 +25,7 @@ import {
 } from "../../core/kernel/view/inlay-hints";
 import {
   highlightMarks,
+  referenceMarks,
   searchMarks,
   selectionMarks,
 } from "../../core/kernel/view/marks";
@@ -720,6 +721,10 @@ export class EditorView extends Renderable implements WindowView {
                   : undefined,
               ),
             ]
+          : []),
+        ...(s.lsp.highlights?.path === b.path &&
+        s.lsp.highlights.version === b.text.version
+          ? [referenceMarks(s.lsp.highlights.ranges)]
           : []),
         searchMarks(s.vim.search),
         selectionMarks(selection),

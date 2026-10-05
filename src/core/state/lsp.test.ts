@@ -802,3 +802,48 @@ test("detaching a server from a path drops its inlay hints there", () => {
   );
   expect(r.state.lsp.inlayHints).toEqual({});
 });
+
+test("a resting cursor asks for the uses of its symbol and they last while it stays on one", () => {
+  const s = attached([ready("ra", ["documentHighlight"])]);
+  // TEXT line 1 is "    helper();": move onto `helper`.
+  const moved = keys(s, "j4l");
+  expect(moved.effects).toContainEqual({
+    kind: "startTimer",
+    id: "lspHighlight",
+    ms: 250,
+  });
+  const fired = run(moved.state, { type: "timer", id: "lspHighlight", now: 6 });
+  const sent = fired.effects.find(
+    (e): e is Extract<Effect, { kind: "lsp" }> => e.kind === "lsp",
+  );
+  expect(sent?.op).toEqual({ kind: "documentHighlight", pos: at(1, 4) });
+  const uses = [
+    { start: at(1, 4), end: at(1, 10) },
+    { start: at(0, 3), end: at(0, 7) },
+  ];
+  const shown = run(
+    fired.state,
+    result(sent?.id ?? -1, { kind: "highlights", ranges: uses }),
+  );
+  expect(shown.state.lsp.highlights?.ranges).toEqual(uses);
+  // Moving within a use keeps them; leaving every use drops them.
+  const within = keys(shown.state, "l");
+  expect(within.state.lsp.highlights?.ranges).toEqual(uses);
+  const away = keys(within.state, "$");
+  expect(away.state.lsp.highlights).toBeUndefined();
+});
+
+test("no highlight is asked for without a capable server or outside Normal mode", () => {
+  const plain = attached([ready("ra", ["hover"])]);
+  expect(
+    keys(plain, "j").effects.some(
+      (e) => e.kind === "startTimer" && e.id === "lspHighlight",
+    ),
+  ).toBe(false);
+  const capable = attached([ready("ra", ["documentHighlight"])]);
+  const typing = keys(capable, "ix");
+  expect(typing.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "lspHighlight",
+  });
+});

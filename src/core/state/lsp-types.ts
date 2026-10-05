@@ -21,7 +21,8 @@ export type LspFeature =
   | "format"
   | "rangeFormat"
   | "executeCommand"
-  | "inlayHints";
+  | "inlayHints"
+  | "documentHighlight";
 
 /**
  * One server for one root. `missing`: its binary resolved nowhere;
@@ -95,7 +96,8 @@ export type LspOp =
         | "implementation"
         | "references"
         | "signature"
-        | "prepareRename";
+        | "prepareRename"
+        | "documentHighlight";
       pos: Pos;
     }
   | { kind: "symbols" }
@@ -124,6 +126,7 @@ export type LspResult =
       active?: { start: number; end: number };
     }
   | { kind: "prepareRename"; placeholder: string }
+  | { kind: "highlights"; ranges: Range[] }
   | { kind: "edit"; edit: CodeEdit }
   | { kind: "actions"; items: CodeAction[] }
   | { kind: "action"; action: CodeAction }
@@ -190,5 +193,7 @@ export type LspState = {
   actions?: { key: ServerKey; path: string; items: CodeAction[] };
   edit?: CodeEditBatch;
   format?: { bufferId: number; requestId: number };
+  /** Uses of the symbol under the cursor in `path` at buffer `version`. */
+  highlights?: { path: string; version: number; ranges: Range[] };
   accept?: CodeAccept;
 };

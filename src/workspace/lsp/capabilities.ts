@@ -31,6 +31,7 @@ export function clientCapabilities(o: {
       definition: {},
       implementation: {},
       references: {},
+      documentHighlight: {},
       documentSymbol: { hierarchicalDocumentSymbolSupport: true },
       rename: { prepareSupport: true },
       codeAction: {

@@ -750,3 +750,34 @@ test("turning inlay hints off clears them and stops asking", async () => {
   await Bun.sleep(300);
   expect(messages(rs.log, "textDocument/inlayHint")).toHaveLength(before);
 });
+
+test("a resting cursor shows the uses a server reports", async () => {
+  const root = await tmpWorkspace({
+    "main.rs": "fn main() { let x = 1; x; }\n",
+  });
+  const rs = fake("rs", ["rust"], {
+    capabilities: { documentHighlightProvider: true },
+    responses: {
+      "textDocument/documentHighlight": [
+        {
+          range: {
+            start: { line: 0, character: 16 },
+            end: { line: 0, character: 17 },
+          },
+        },
+        {
+          range: {
+            start: { line: 0, character: 23 },
+            end: { line: 0, character: 24 },
+          },
+        },
+      ],
+    },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  app.keys("16l");
+  await waitFor(() => app?.store.get().lsp.highlights !== undefined);
+  expect(app.store.get().lsp.highlights?.ranges).toHaveLength(2);
+});

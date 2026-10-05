@@ -15,6 +15,7 @@ import {
   toDiagnostic,
   toErrorResult,
   toFormatEdit,
+  toHighlights,
   toHover,
   toInlayHints,
   toLocations,
@@ -433,4 +434,15 @@ test("a server with an inlay hint provider offers inlay hints", () => {
     inlayHintProvider: { resolveProvider: false },
   });
   expect(view.features).toContain("inlayHints");
+});
+
+test("document highlights become ranges, and none when there are no uses", () => {
+  expect(
+    toHighlights([{ range: range(1, 4, 10), kind: 2 }, { kind: 1 }]),
+  ).toEqual({
+    kind: "highlights",
+    ranges: [{ start: { line: 1, col: 4 }, end: { line: 1, col: 10 } }],
+  });
+  expect(toHighlights([])).toEqual({ kind: "none" });
+  expect(toHighlights(null)).toEqual({ kind: "none" });
 });

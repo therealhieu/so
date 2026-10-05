@@ -47,6 +47,7 @@ import {
   toDiagnostic,
   toErrorResult,
   toFormatEdit,
+  toHighlights,
   toHover,
   toInlayHints,
   toLocations,
@@ -431,6 +432,10 @@ export function createLspClient(o: {
             ...position(path, op),
             context: { includeDeclaration: true },
           }),
+        );
+      case "documentHighlight":
+        return toHighlights(
+          await ask("textDocument/documentHighlight", position(path, op)),
         );
       case "signature":
         return toSignature(

@@ -76,6 +76,7 @@ export type TimerId =
   | "search"
   | "completion"
   | "lspResolve"
+  | "lspHighlight"
   | `lsp:${number}`
   | `lspFormat:${BufferId}`;
 

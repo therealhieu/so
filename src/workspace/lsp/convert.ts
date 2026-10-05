@@ -212,6 +212,16 @@ export function toSymbols(
   return { kind: "symbols", items };
 }
 
+/** The ranges of a document highlight answer; none when there are no uses. */
+export function toHighlights(r: unknown): LspResult {
+  if (!Array.isArray(r)) return NONE;
+  const ranges = r.flatMap((h) => {
+    const range = isObject(h) ? toRange(h.range) : undefined;
+    return range === undefined ? [] : [range];
+  });
+  return ranges.length === 0 ? NONE : { kind: "highlights", ranges };
+}
+
 /**
  * Inlay hints as plain labels: label parts are joined, and `paddingLeft` /
  * `paddingRight` become spaces. Hints without a position or text are dropped.
@@ -607,6 +617,7 @@ export function toServerView(
   add("rangeFormat", has(caps.documentRangeFormattingProvider));
   add("executeCommand", has(caps.executeCommandProvider));
   add("inlayHints", has(caps.inlayHintProvider));
+  add("documentHighlight", has(caps.documentHighlightProvider));
   return {
     name,
     ...(root === undefined ? {} : { root }),

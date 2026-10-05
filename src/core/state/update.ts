@@ -31,6 +31,7 @@ import {
   onLspServer,
   syncDiagnostics,
   syncFloat,
+  syncHighlight,
 } from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
@@ -221,14 +222,17 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncFloat(
+      const r = syncHighlight(
         state,
-        syncDiagnostics(
+        syncFloat(
           state,
-          syncEmbeds(
+          syncDiagnostics(
             state,
-            followShownNote(state, syncEditorKinds(step(state, action), reg)),
-            reg,
+            syncEmbeds(
+              state,
+              followShownNote(state, syncEditorKinds(step(state, action), reg)),
+              reg,
+            ),
           ),
         ),
       );

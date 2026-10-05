@@ -275,6 +275,12 @@ function applyResult(
             }),
           );
     }
+    case "highlights":
+      return none(
+        withLsp(s, {
+          highlights: { path: p.path, version: p.version, ranges: r.ranges },
+        }),
+      );
     case "signature":
       return none(
         withLsp(s, {
@@ -706,4 +712,67 @@ export function cursorDiagnostic(
     severity: best.severity,
     text: best.source === undefined ? text : `${best.source}: ${text}`,
   };
+}
+
+/** How long the cursor rests before the uses of its symbol are asked for. */
+export const HIGHLIGHT_MS = 250;
+
+/** `s` without symbol highlights. */
+function withoutHighlights(s: AppState): AppState {
+  const { highlights: _, ...lsp } = s.lsp;
+  return { ...s, lsp };
+}
+
+/**
+ * After the cursor, buffer, window, or mode changes: highlights that no
+ * longer hold the cursor go, and in Normal mode on a buffer whose server
+ * finds symbol uses, the uses are asked for once the cursor rests.
+ */
+export function syncHighlight(prev: AppState, r: Result): Result {
+  const s = r.state;
+  const w = s.windows.byId[s.windows.active];
+  const was = prev.windows.byId[prev.windows.active];
+  const b = w === undefined ? undefined : s.buffers[w.content.bufferId];
+  const pb = was === undefined ? undefined : prev.buffers[was.content.bufferId];
+  const same =
+    w !== undefined &&
+    was !== undefined &&
+    prev.windows.active === s.windows.active &&
+    b === pb &&
+    w.content.cursor.line === was.content.cursor.line &&
+    w.content.cursor.col === was.content.cursor.col &&
+    prev.vim.mode === s.vim.mode;
+  if (same) return r;
+  const h = s.lsp.highlights;
+  const cursor = w?.content.cursor;
+  const holds =
+    h !== undefined &&
+    b !== undefined &&
+    cursor !== undefined &&
+    s.vim.mode === "normal" &&
+    h.path === b.path &&
+    h.version === b.text.version &&
+    h.ranges.some((range) => covers(range, cursor.line, cursor.col));
+  const st = h === undefined || holds ? s : withoutHighlights(s);
+  const capable =
+    b !== undefined &&
+    pickServer(st, b.path, "documentHighlight") !== undefined;
+  if (!capable) return st === s ? r : { state: st, effects: r.effects };
+  const effect: Effect =
+    s.vim.mode === "normal" && !holds
+      ? { kind: "startTimer", id: "lspHighlight", ms: HIGHLIGHT_MS }
+      : { kind: "cancelTimer", id: "lspHighlight" };
+  return { state: st, effects: [...r.effects, effect] };
+}
+
+/** The cursor rested: ask for the uses of the symbol under it. */
+export function onHighlightTimer(s: AppState): Result {
+  const w = s.windows.byId[s.windows.active];
+  if (w === undefined || s.vim.mode !== "normal") return none(s);
+  return request(
+    s,
+    "documentHighlight",
+    { kind: "documentHighlight", pos: w.content.cursor },
+    { auto: true, replace: true },
+  );
 }
