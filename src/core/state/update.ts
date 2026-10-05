@@ -21,6 +21,7 @@ import {
 } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import { onLspAttached, onLspMessage, onLspResult, onLspServer } from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
 import {
@@ -190,6 +191,14 @@ export function createUpdate(reg: Registries): Update {
         return onPropertyTypesLoaded(state, action);
       case "frontmatterPatched":
         return onFrontmatterPatched(state, action);
+      case "lspServer":
+        return onLspServer(state, action);
+      case "lspAttached":
+        return onLspAttached(state, action);
+      case "lspResult":
+        return onLspResult(state, action, reg);
+      case "lspMessage":
+        return onLspMessage(state, action);
     }
     const unhandled: never = action;
     return unhandled;

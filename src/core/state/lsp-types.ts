@@ -82,6 +82,50 @@ export type CodeAction = {
   data: unknown;
 };
 
+/** One request to a server; each kind maps to one protocol method in the client. */
+export type LspOp =
+  | {
+      kind:
+        | "hover"
+        | "definition"
+        | "implementation"
+        | "references"
+        | "signature"
+        | "prepareRename";
+      pos: Pos;
+    }
+  | { kind: "symbols" }
+  | { kind: "completion"; pos: Pos; trigger?: string }
+  | { kind: "resolveCompletion"; item: CodeCompletionItem }
+  | { kind: "rename"; pos: Pos; newName: string }
+  | { kind: "codeActions"; range: Range; diagnostics: readonly Diagnostic[] }
+  | { kind: "resolveAction"; action: CodeAction }
+  | { kind: "executeCommand"; command: unknown }
+  | {
+      kind: "format";
+      range?: Range;
+      options: { tabSize: number; insertSpaces: boolean };
+    };
+
+/** A server's answer; `quiet` marks errors that are never shown (content modified, cancelled). */
+export type LspResult =
+  | { kind: "hover"; text: string }
+  | { kind: "locations"; items: CodeLocation[]; outside: number }
+  | { kind: "symbols"; items: CodeSymbol[] }
+  | { kind: "completion"; items: CodeCompletionItem[]; incomplete: boolean }
+  | { kind: "completionItem"; item: CodeCompletionItem }
+  | {
+      kind: "signature";
+      label: string;
+      active?: { start: number; end: number };
+    }
+  | { kind: "prepareRename"; placeholder: string }
+  | { kind: "edit"; edit: CodeEdit }
+  | { kind: "actions"; items: CodeAction[] }
+  | { kind: "action"; action: CodeAction }
+  | { kind: "none" }
+  | { kind: "error"; message: string; quiet?: boolean };
+
 /** A request in flight; `auto` marks one the user did not ask for, whose errors stay silent. */
 export type PendingRequest = {
   feature: LspFeature;

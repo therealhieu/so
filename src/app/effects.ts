@@ -502,6 +502,18 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           d.dispatch({ type: "openUrlFailed", url: e.url, reason: msg(x) });
         });
         return;
+      case "lsp":
+        // No language-server host: every request fails at once.
+        d.dispatch({
+          type: "lspResult",
+          id: e.id,
+          result: { kind: "error", message: "language servers off" },
+        });
+        return;
+      case "lspCancel":
+      case "lspReply":
+      case "lspRestart":
+        return;
     }
     const unhandled: never = e;
     throw new Error(`unknown effect: ${JSON.stringify(unhandled)}`);

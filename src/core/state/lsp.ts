@@ -1,0 +1,385 @@
+import type { Pos } from "../kernel/text/pos";
+import { activeBuffer, bufferForPath } from "./buffers";
+import { goTo, recordJump } from "./jumps";
+import type {
+  LspFeature,
+  LspOp,
+  LspResult,
+  LspState,
+  PendingRequest,
+  ServerKey,
+} from "./lsp-types";
+import { openPicker } from "./picker";
+import { chain, message, none, toast } from "./result";
+import type { Action, AppState, Effect, Result } from "./types";
+import type { Registries } from "./update";
+
+/** User requests that get no answer in this long report a timeout. */
+const REQUEST_MS = 5000;
+
+const LOCATION_TITLES: Partial<Record<LspFeature, string>> = {
+  definition: "Definitions",
+  implementation: "Implementations",
+  references: "References",
+};
+
+const withLsp = (s: AppState, patch: Partial<LspState>): AppState => ({
+  ...s,
+  lsp: { ...s.lsp, ...patch },
+});
+
+const serverName = (s: AppState, key: ServerKey): string =>
+  s.lsp.servers[key]?.name ?? key;
+
+/** Only starting and ready servers are attached to files. */
+const running = (s: AppState, key: ServerKey): boolean => {
+  const state = s.lsp.servers[key]?.state;
+  return state === "starting" || state === "ready";
+};
+
+/** The first attached, ready server with `feature`, in table order. */
+export function pickServer(
+  s: AppState,
+  path: string,
+  feature: LspFeature,
+): ServerKey | undefined {
+  return (s.lsp.attached[path] ?? []).find((key) => {
+    const v = s.lsp.servers[key];
+    return v?.state === "ready" && v.features.includes(feature);
+  });
+}
+
+/** `pending` without the requests `drop` selects, and the effects that end them. */
+function dropPending(
+  s: AppState,
+  drop: (p: PendingRequest) => boolean,
+): Result {
+  const pending: LspState["pending"] = {};
+  const effects: Effect[] = [];
+  for (const [n, p] of Object.entries(s.lsp.pending)) {
+    const id = Number(n);
+    if (!drop(p)) {
+      pending[id] = p;
+      continue;
+    }
+    effects.push({ kind: "lspCancel", id, key: p.key });
+    if (!p.auto) effects.push({ kind: "cancelTimer", id: `lsp:${id}` });
+  }
+  return effects.length === 0
+    ? none(s)
+    : { state: withLsp(s, { pending }), effects };
+}
+
+/**
+ * Record a pending request for the active buffer and emit it. `key` pins the
+ * server that produced the item or action; otherwise the first capable one
+ * answers. `replace` cancels older requests of the same feature. An `auto`
+ * request gets no timeout and stays silent when nothing can answer it.
+ */
+export function request(
+  s: AppState,
+  feature: LspFeature,
+  op: LspOp,
+  o: { auto?: boolean; replace?: boolean; key?: ServerKey } = {},
+): Result {
+  const auto = o.auto === true;
+  const b = activeBuffer(s);
+  const keys = b === undefined ? [] : (s.lsp.attached[b.path] ?? []);
+  const key =
+    b === undefined
+      ? undefined
+      : o.key !== undefined
+        ? s.lsp.servers[o.key]?.state === "ready"
+          ? o.key
+          : undefined
+        : pickServer(s, b.path, feature);
+  if (b === undefined || key === undefined) {
+    if (auto) return none(s);
+    return keys.length === 0 || o.key !== undefined
+      ? message(s, `no language server for ${b?.fileType ?? "this window"}`)
+      : message(
+          s,
+          `${feature}: not supported by ${keys.map((k) => serverName(s, k)).join(", ")}`,
+        );
+  }
+  const cleared =
+    o.replace === true ? dropPending(s, (p) => p.feature === feature) : none(s);
+  return chain(cleared, (st) => {
+    const id = st.lsp.nextId;
+    const p: PendingRequest = {
+      feature,
+      key,
+      path: b.path,
+      version: b.text.version,
+      window: st.windows.active,
+      auto,
+      ...("pos" in op ? { pos: op.pos } : {}),
+    };
+    const effects: Effect[] = auto
+      ? []
+      : [{ kind: "startTimer", id: `lsp:${id}`, ms: REQUEST_MS }];
+    effects.push({ kind: "lsp", id, key, path: b.path, op });
+    return {
+      state: withLsp(st, {
+        pending: { ...st.lsp.pending, [id]: p },
+        nextId: id + 1,
+      }),
+      effects,
+    };
+  });
+}
+
+/** Remove request `id`, returning it with the state without it. */
+function takePending(
+  s: AppState,
+  id: number,
+): { state: AppState; p: PendingRequest | undefined } {
+  const p = s.lsp.pending[id];
+  if (p === undefined) return { state: s, p };
+  const { [id]: _, ...pending } = s.lsp.pending;
+  return { state: withLsp(s, { pending }), p };
+}
+
+/** A server answered request `id`; stale, unknown, and quiet answers change nothing. */
+export function onLspResult(
+  s: AppState,
+  a: { id: number; result: LspResult },
+  reg: Registries,
+): Result {
+  const { state, p } = takePending(s, a.id);
+  if (p === undefined) return none(s);
+  const ended: Effect[] = p.auto
+    ? []
+    : [{ kind: "cancelTimer", id: `lsp:${a.id}` }];
+  const b = bufferForPath(state, p.path);
+  const fresh =
+    b !== undefined && b.text.version === p.version
+      ? applyResult(state, p, a.result, reg)
+      : none(state);
+  return { state: fresh.state, effects: [...ended, ...fresh.effects] };
+}
+
+function applyResult(
+  s: AppState,
+  p: PendingRequest,
+  r: LspResult,
+  reg: Registries,
+): Result {
+  const pos = p.pos ?? { line: 0, col: 0 };
+  switch (r.kind) {
+    case "error":
+      return r.quiet === true || p.auto
+        ? none(s)
+        : message(s, `${p.feature}: ${r.message}`, "error");
+    case "none":
+      return p.auto ? none(s) : message(s, `${p.feature}: nothing found`);
+    case "hover": {
+      const lines = r.text.split("\n");
+      return lines.every((l) => l.trim() === "")
+        ? message(s, `${p.feature}: nothing found`)
+        : none(
+            withLsp(s, {
+              float: { kind: "hover", window: p.window, at: pos, lines },
+            }),
+          );
+    }
+    case "signature":
+      return none(
+        withLsp(s, {
+          float: {
+            kind: "signature",
+            window: p.window,
+            at: pos,
+            lines: [r.label],
+            ...(r.active === undefined
+              ? {}
+              : { active: { line: 0, ...r.active } }),
+          },
+        }),
+      );
+    case "locations":
+      return onLocations(s, r, p.feature, reg);
+    case "symbols":
+      return r.items.length === 0
+        ? message(s, `${p.feature}: nothing found`)
+        : openPicker(
+            {
+              state: withLsp(s, { symbols: { path: p.path, items: r.items } }),
+              now: 0,
+              reg,
+            },
+            "lspSymbols",
+          );
+    case "prepareRename":
+      return openRenamePrompt(
+        s,
+        { key: p.key, path: p.path, pos, version: p.version },
+        r.placeholder,
+      );
+    case "edit":
+    case "actions":
+    case "action":
+    case "completion":
+    case "completionItem":
+      return none(s);
+  }
+}
+
+/** Ask for a new name for the symbol at `rename.pos`, starting from `value`. */
+export function openRenamePrompt(
+  s: AppState,
+  rename: { key: ServerKey; path: string; pos: Pos; version: number },
+  value: string,
+): Result {
+  return none({
+    ...s,
+    overlay: {
+      kind: "prompt",
+      prompt: {
+        kind: "input",
+        title: "Rename symbol",
+        value,
+        invalid: "type a new name",
+        rename,
+      },
+    },
+  });
+}
+
+const outsideNote = (n: number) => `${n} outside the workspace`;
+
+/**
+ * One location jumps there (recorded, so <C-o> returns); several open the
+ * `lspLocations` picker. Locations outside the workspace are only counted.
+ * The answer has no time, so a save of the buffer left is due now (0).
+ */
+function onLocations(
+  s: AppState,
+  r: Extract<LspResult, { kind: "locations" }>,
+  feature: LspFeature,
+  reg: Registries,
+): Result {
+  const [first] = r.items;
+  if (first === undefined)
+    return message(
+      s,
+      r.outside === 0
+        ? `${feature}: nothing found`
+        : r.outside === 1
+          ? `${feature} is outside the workspace`
+          : `${feature}: ${outsideNote(r.outside)}`,
+    );
+  const shown =
+    r.items.length === 1
+      ? goTo(recordJump(s), first.path, first.range.start, 0)
+      : (() => {
+          const title = LOCATION_TITLES[feature] ?? feature;
+          return openPicker(
+            {
+              state: withLsp(s, { list: { title, items: r.items } }),
+              now: 0,
+              reg,
+            },
+            "lspLocations",
+            title,
+          );
+        })();
+  return r.outside === 0
+    ? shown
+    : chain(shown, (st) => message(st, outsideNote(r.outside)));
+}
+
+/** Request `id`'s timer fired first: drop it, cancel it, and say so. */
+export function onLspTimeout(s: AppState, id: number): Result {
+  const { state, p } = takePending(s, id);
+  if (p === undefined) return none(s);
+  const shown = p.auto
+    ? none(state)
+    : message(state, `${p.feature}: timed out`, "error");
+  return {
+    state: shown.state,
+    effects: [{ kind: "lspCancel", id, key: p.key }],
+  };
+}
+
+/** `diagnostics` without server `key`'s lists; emptied paths are removed. */
+function withoutServerDiagnostics(
+  d: LspState["diagnostics"],
+  key: ServerKey,
+): LspState["diagnostics"] {
+  const out: LspState["diagnostics"] = {};
+  for (const [path, byKey] of Object.entries(d)) {
+    const { [key]: _, ...rest } = byKey;
+    if (Object.keys(rest).length > 0) out[path] = rest;
+  }
+  return out;
+}
+
+/** `attached` without server `key`; emptied paths are removed. */
+function detached(
+  a: LspState["attached"],
+  key: ServerKey,
+): LspState["attached"] {
+  const out: LspState["attached"] = {};
+  for (const [path, keys] of Object.entries(a)) {
+    const rest = keys.filter((k) => k !== key);
+    if (rest.length > 0) out[path] = rest;
+  }
+  return out;
+}
+
+/**
+ * A server's view changed. A server that stopped (`undefined`) is forgotten;
+ * one that is not starting or ready is detached and its diagnostics dropped.
+ * Turning `failed` toasts once; `missing` and `unavailable` stay quiet.
+ */
+export function onLspServer(
+  s: AppState,
+  a: Extract<Action, { type: "lspServer" }>,
+): Result {
+  const { key, view } = a;
+  const prev = s.lsp.servers[key];
+  const { [key]: _, ...others } = s.lsp.servers;
+  const servers =
+    view === undefined ? others : { ...s.lsp.servers, [key]: view };
+  const live = view?.state === "starting" || view?.state === "ready";
+  const next = live
+    ? withLsp(s, { servers })
+    : withLsp(s, {
+        servers,
+        attached: detached(s.lsp.attached, key),
+        diagnostics: withoutServerDiagnostics(s.lsp.diagnostics, key),
+      });
+  const ended = live ? none(next) : dropPending(next, (p) => p.key === key);
+  return view?.state === "failed" && prev?.state !== "failed"
+    ? chain(ended, (st) =>
+        toast(st, "error", `${view.name} stopped: ${view.reason ?? "crashed"}`),
+      )
+    : ended;
+}
+
+/** The servers attached to a path; keys that are not running are left out. */
+export function onLspAttached(
+  s: AppState,
+  a: Extract<Action, { type: "lspAttached" }>,
+): Result {
+  const keys = a.keys.filter((k) => running(s, k));
+  const { [a.path]: _, ...rest } = s.lsp.attached;
+  return none(
+    withLsp(s, {
+      attached: keys.length === 0 ? rest : { ...rest, [a.path]: keys },
+    }),
+  );
+}
+
+/** A server's error or warning, as a toast named after the server. */
+export function onLspMessage(
+  s: AppState,
+  a: Extract<Action, { type: "lspMessage" }>,
+): Result {
+  return toast(
+    s,
+    a.level === "error" ? "error" : "info",
+    `${serverName(s, a.key)}: ${a.text}`,
+  );
+}

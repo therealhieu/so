@@ -7,6 +7,7 @@ import {
   setBuffer,
 } from "./buffers";
 import { summarizeSaved } from "./index";
+import { onLspTimeout } from "./lsp";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -122,6 +123,7 @@ export function onTimer(
         toasts: s.notifications.toasts.filter((t) => t.id !== id),
       },
     });
+  if (kind === "lsp") return onLspTimeout(s, id);
   const save = s.buffers[id]?.save;
   if (kind === "autosave" && save?.kind === "scheduled" && save.at <= a.now)
     return writeBuffer(s, id, a.now);

@@ -20,7 +20,14 @@ import type {
 } from "../lang/markdown/frontmatter-patch";
 import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
-import type { CodeCompletionItem, LspState, ServerKey } from "./lsp-types";
+import type {
+  CodeCompletionItem,
+  LspOp,
+  LspResult,
+  LspState,
+  ServerKey,
+  ServerView,
+} from "./lsp-types";
 
 export type BufferId = number;
 export type WindowId = number;
@@ -541,6 +548,17 @@ export type Action =
       removed: string[];
       added: string[];
       reason?: string;
+    }
+  /** A server's state changed; `undefined`: it was stopped. */
+  | { type: "lspServer"; key: ServerKey; view: ServerView | undefined }
+  /** The servers attached to `path`, in routing order. */
+  | { type: "lspAttached"; path: string; keys: ServerKey[] }
+  | { type: "lspResult"; id: number; result: LspResult }
+  | {
+      type: "lspMessage";
+      key: ServerKey;
+      level: "error" | "warning";
+      text: string;
     };
 
 export type Effect =
@@ -596,7 +614,19 @@ export type Effect =
       path: string;
       patch: FrontmatterPatch;
       expected: FrontmatterValue | undefined;
-    };
+    }
+  /** Send `op` for `path` to server `key`; answered by `lspResult` with `id`. */
+  | { kind: "lsp"; id: number; key: ServerKey; path: string; op: LspOp }
+  | { kind: "lspCancel"; id: number; key: ServerKey }
+  /** Answer the server's edit request `requestId`. */
+  | {
+      kind: "lspReply";
+      key: ServerKey;
+      requestId: number | string;
+      applied: boolean;
+      failureReason?: string;
+    }
+  | { kind: "lspRestart"; keys: ServerKey[] };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };
