@@ -3,6 +3,7 @@ import { statSync, utimesSync } from "node:fs";
 import { join } from "node:path";
 import { type GitRepo, gitRepo } from "../../test/support/git-repo";
 import { diffLines } from "../core/features/git/diff";
+import type { IndexText } from "../core/features/git/index-text";
 import { hunkPatch } from "../core/features/git/patch";
 import type { IndexEntry, RepoInfo } from "../core/state/types";
 import {
@@ -284,7 +285,12 @@ test("staging an untracked file and a CRLF line stage only the hunk", async () =
   const cur = bufferOf("first\r\nsecond\r\n");
   const [whole] = diffLines([], cur.lines, { untracked: true });
   if (whole === undefined) throw new Error("no hunk");
-  const empty = { lines: [], finalNewline: false, bom: false, eol: "\r\n" };
+  const empty: IndexText = {
+    lines: [],
+    finalNewline: false,
+    bom: false,
+    eol: "\r\n",
+  };
   const patch = hunkPatch("new.md", "100644", whole, empty, cur);
   expect(
     await g.stage(info, { repoPath: "new.md", expectedOid: null, patch }),
