@@ -18,8 +18,25 @@ async function eventually(ok: () => boolean, ms: number): Promise<void> {
   }
 }
 
+/**
+ * rust-analyzer runs here. CI runners have rustup's proxy on PATH without
+ * the component, and the proxy fails `--version`.
+ */
+const installed = (() => {
+  try {
+    return (
+      Bun.spawnSync(["rust-analyzer", "--version"], {
+        stdout: "ignore",
+        stderr: "ignore",
+      }).exitCode === 0
+    );
+  } catch {
+    return false;
+  }
+})();
+
 // Runs only where rust-analyzer is installed; CI has none.
-test.skipIf(Bun.which("rust-analyzer") === null)(
+test.skipIf(!installed)(
   "a real rust-analyzer becomes ready and answers hover",
   async () => {
     const root = await tmpWorkspace({
