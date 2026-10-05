@@ -6,6 +6,7 @@
  * script, and exits when its stdin closes.
  */
 import { appendFileSync, readFileSync, writeSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import {
   createMessageConnection,
   ResponseError,
@@ -20,6 +21,8 @@ export type FakeScript = {
   responses?: Record<string, unknown>;
   /** Published for each document on open and change. */
   diagnostics?: unknown[];
+  /** Published for these other files, by absolute path, whenever a document opens. */
+  otherDiagnostics?: { path: string; diagnostics: unknown[] }[];
   /** Answers pulls with these items and a new result id each time. */
   pull?: { items: unknown[] };
   /** Progress reports sent after `initialized`, `everyMs` apart. */
@@ -203,6 +206,12 @@ conn.onNotification((method, params) => {
       diagnostics: script.diagnostics,
     });
   }
+  if (method === "textDocument/didOpen")
+    for (const o of script.otherDiagnostics ?? [])
+      void conn.sendNotification("textDocument/publishDiagnostics", {
+        uri: pathToFileURL(o.path).href,
+        diagnostics: o.diagnostics,
+      });
 });
 
 conn.onClose(() => process.exit(0));
