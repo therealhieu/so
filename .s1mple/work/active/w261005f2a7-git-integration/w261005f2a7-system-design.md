@@ -8,13 +8,15 @@
 
 **Research Source:** `w261005f2a7-research.md`
 
-**Current Requirement Revisions:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1`, `W261005F2A7-REQ9@R1`
+**Current Requirement Revisions:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1`, `W261005F2A7-REQ9@R1`
 
 **Research Reconciliation:** `w261005f2a7-requirements.md` §6 Research Impact Review (28 relationships, approved by the user on 2026-10-05)
 
 **Unresolved Items:** None
 
-**Design Approval:** The user delegated the system-design decisions to self-drive on 2026-10-05. Every decision in §9 was made under that delegation.
+**Design Approval:** The user delegated the system-design decisions to self-drive on 2026-10-05. Every decision in §9 was made under that delegation. The UI-originated revision on 2026-10-05 (DES9–DES11 revised, DES12 and DES13 added) ran in focused auto mode under the same delegation, with the accepted mockups and the draft UI design held fixed.
+
+**UI Design Source:** `w261005f2a7-ui-design.md` (draft, commit `0d0f0b0`); accepted mockups `W261005F2A7-M1@R3`, `W261005F2A7-M2@R3`, `W261005F2A7-M3@R3`
 
 **Design Boundary:** This artifact is authoritative for whole-system architecture and technical design, including UI/frontend applications, routes, modules, components, state ownership, contracts, files, symbols, boundaries, wiring, and verification when material. UI/UX look and feel, visual composition, concrete interaction treatment, responsive presentation, accessibility realization, mockups, and accepted UI-design authority belong to `s1mple-discuss-ui`.
 
@@ -65,6 +67,8 @@
    - [W261005F2A7-DES9: The tool hand-off is a save-gated effect run by a suspend-aware shell](#w261005f2a7-des9-the-tool-hand-off-is-a-save-gated-effect-run-by-a-suspend-aware-shell)
    - [W261005F2A7-DES10: Display is derived per frame from git state](#w261005f2a7-des10-display-is-derived-per-frame-from-git-state)
    - [W261005F2A7-DES11: Commands, keys, preview overlay, blame, and config](#w261005f2a7-des11-commands-keys-preview-overlay-blame-and-config)
+   - [W261005F2A7-DES12: Git signs paint in their own change column inside a repository](#w261005f2a7-des12-git-signs-paint-in-their-own-change-column-inside-a-repository)
+   - [W261005F2A7-DES13: Git notices come from one catalogue with a warn level](#w261005f2a7-des13-git-notices-come-from-one-catalogue-with-a-warn-level)
 
 # 1. Design Goals, Constraints, and Requirement Coverage
 
@@ -80,51 +84,51 @@
 
 - `W261005F2A7-REQ1@R2` — Native Git writes are limited to stage hunk and reset hunk, with intent-to-add, conflict refusal, an oid guard, EOL form, and EOF newline handling.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES1`, `W261005F2A7-DES4`, `W261005F2A7-DES5`
+  - **System Design:** `W261005F2A7-DES1`, `W261005F2A7-DES4`, `W261005F2A7-DES5`, `W261005F2A7-DES13`
   - **How Addressed:** `stageHunk` saves first, builds a zero-context patch in index form, and runs a serial `gitStage` effect. The effect adds intent-to-add for untracked files, compares the expected index oid, and only then applies. `resetHunk` is one `applyBufferEdits` span plus a `finalNewline` patch. The adapter exposes no other mutating command.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/core/features/git/patch.ts` — `hunkPatch`; `src/core/state/git.ts` — `stageHunk`, `resetHunk`, `onGitStaged`; `src/workspace/git.ts` — `stage`; `src/app/effects.ts` — `gitStage` case
   - **Callers and Wiring:** `gitCommands` in `src/core/state/git-commands.ts`; `serial` queue in `createEffectRunner`
   - **Runtime Flow:** §5 Stage Hunk; §5 Reset Hunk
-  - **Success Criteria:** `S1`, `S2`, `S3`, `S4`, `S5`, `S6`, `S30`
-  - **Verification:** `V1`–`V3`, `V10`–`V13`, `V20`–`V23`, `V40`, `V62`
+  - **Success Criteria:** `S1`, `S2`, `S3`, `S4`, `S5`, `S6`, `S30`, `S34`
+  - **Verification:** `V1`–`V3`, `V10`–`V13`, `V20`–`V23`, `V40`, `V62`, `V66`
   - **Research Support:** `RF2`, `RF3`, `RF4`, `RF5` evaluated `W261005F2A7-REQ1@R1` and informed `W261005F2A7-REQ1@R2`
 
 - `W261005F2A7-REQ2@R2` — The Git tool runs full screen with so suspended, survives interrupts, resets foreign modes, and refreshes after exit.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES9`
-  - **How Addressed:** A `runTool` effect calls the `ToolHost` built in `main.ts`, which holds interrupts, calls `Shell.suspend()`, spawns the tool with inherited stdio, writes the foreign-mode reset, calls `Shell.resume()`, and dispatches `toolExited`. `onToolExited` emits a refresh and a `read` for every open buffer.
+  - **System Design:** `W261005F2A7-DES9`, `W261005F2A7-DES13`
+  - **How Addressed:** A `runTool` effect calls the `ToolHost` built in `main.ts`, which awaits `Shell.flush()` so the pre-suspend message is on screen, holds interrupts, calls `Shell.suspend()`, spawns the tool with inherited stdio, writes the foreign-mode reset, calls `Shell.resume()`, and dispatches `toolExited`. `onToolExited` emits a refresh and a `read` for every open buffer.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/ui/shell.ts` — `Shell.suspend`, `Shell.resume`, `paint`, `FOREIGN_MODES_RESET`; `src/app/lifecycle.ts` — `holdInterrupts`; `src/app/tool-host.ts` — `createToolHost`; `src/core/state/git.ts` — `openTool`, `onToolExited`
   - **Callers and Wiring:** `main.ts` builds the `ToolHost` from `shell` and `lifecycle` and sets `deps.tool`
   - **Runtime Flow:** §5 Tool Hand-off
-  - **Success Criteria:** `S12`, `S13`, `S14`, `S15`, `S31`
-  - **Verification:** `V30`–`V33`, `V41`, `V42`, `V50`, `V60`, `V61`
+  - **Success Criteria:** `S12`, `S13`, `S14`, `S15`, `S31`, `S35`
+  - **Verification:** `V30`–`V33`, `V41`, `V42`, `V50`, `V60`, `V61`, `V67`, `V68`
   - **Research Support:** `RF11`, `RF12` evaluated `W261005F2A7-REQ2@R1` and informed `W261005F2A7-REQ2@R2`; `RF10` evaluated `W261005F2A7-REQ2@R1` and supported the retained shape
 
 - `W261005F2A7-REQ3@R1` — The `git.tool` argv is configurable, with a notice when it is missing or there is no repository.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES9`, `W261005F2A7-DES11`
+  - **System Design:** `W261005F2A7-DES9`, `W261005F2A7-DES11`, `W261005F2A7-DES13`
   - **How Addressed:** `ConfigSchema.git.tool` is a non-empty string array. `openTool` refuses with "not a git repository" when `git.repo` is absent. `ToolHost.run` resolves `argv[0]` with `which` before suspending and reports `missing`.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/core/config/schema.ts` — `git`; `src/core/state/git.ts` — `openTool`, `onToolExited`; `src/app/tool-host.ts` — `run`
   - **Callers and Wiring:** `toml.ts` reports schema errors with line numbers (existing)
   - **Runtime Flow:** §5 Tool Hand-off
-  - **Success Criteria:** `S16`, `S17`
-  - **Verification:** `V34`, `V35`, `V43`
+  - **Success Criteria:** `S16`, `S17`, `S34`
+  - **Verification:** `V34`, `V35`, `V43`, `V66`
   - **Research Support:** `RF8` evaluated and retained `W261005F2A7-REQ3@R1`; the `RF10` consideration was deferred
 
-- `W261005F2A7-REQ4@R2` — Native display: six sign types, navigation, preview, stage and reset, the statusline segment, explorer markers, and blame.
+- `W261005F2A7-REQ4@R3` — Native display: six sign types in their own gutter column, navigation, preview, stage and reset, the statusline segment, explorer markers, and blame.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES10`, `W261005F2A7-DES11`
-  - **How Addressed:** `hunkSigns` is a decoration provider built per frame from `git.files`. `statusSegments` adds `git`. Explorer rows read the `explorerMarkers` derivation. The `gitHunk` overlay shows preview. Navigation commands move to hunk starts. `blameLine` emits a `gitBlame` effect, or answers "not committed yet" in core when there is no base.
+  - **System Design:** `W261005F2A7-DES10`, `W261005F2A7-DES11`, `W261005F2A7-DES12`, `W261005F2A7-DES13`
+  - **How Addressed:** `hunkSigns` is a decoration provider built per frame from `git.files`. It fills the separate `changeSign` channel, which the editor paints in a change column that exists only inside a repository (DES12). `statusSegments` adds `git`, with no counts for untracked files or unborn repositories. Explorer rows read the `explorerMarkers` derivation. The `gitHunk` overlay shows preview. Navigation commands move to hunk starts. `blameLine` emits a `gitBlame` effect, or answers "not committed yet" in core when there is no base.
   - **Existing Evidence:** None — system change required
-  - **Affected Files and Symbols:** `src/core/features/git/signs.ts`; `src/core/features/git/status.ts` — `explorerMarkers`; `src/core/state/status.ts` — `statusSegments`; `src/core/kernel/view/text-view.ts` — `layoutText`; `src/ui/editors/text-view.ts` — `layoutFrame`; `src/ui/views/statusline.ts`; `src/ui/views/explorer.ts`; `src/ui/overlays/hunk.ts`
+  - **Affected Files and Symbols:** `src/core/features/git/signs.ts`; `src/core/features/git/status.ts` — `explorerMarkers`, `Marker`; `src/core/state/status.ts` — `statusSegments`; `src/core/kernel/view/types.ts` — `RenderLine.changeSign`; `src/core/kernel/view/decorations.ts` — line `Decoration.changeSign`; `src/core/kernel/view/text-view.ts` — `layoutLine`, `layoutText`; `src/ui/editors/text-view.ts` — `layoutFrame`, `gutterWidth`; `src/ui/views/statusline.ts`; `src/ui/views/explorer.ts`; `src/ui/overlays/hunk.ts`
   - **Callers and Wiring:** `EditorView.layoutFrame` provider list; `OverlayHost` view list in `shell.ts`
   - **Runtime Flow:** §5 Live Hunks; §5 Blame
-  - **Success Criteria:** `S7`, `S8`, `S9`, `S10`, `S11`
-  - **Verification:** `V4`–`V9`, `V14`–`V17`, `V24`, `V44`–`V47`
-  - **Research Support:** `RF1`, `RF8`, `RF9`, `RF13` evaluated `W261005F2A7-REQ4@R1` and informed `W261005F2A7-REQ4@R2`; `RF6` evaluated it with no impact
+  - **Success Criteria:** `S7`, `S8`, `S9`, `S10`, `S11`, `S32`, `S33`, `S34`, `S36`
+  - **Verification:** `V4`–`V9`, `V14`–`V17`, `V24`, `V44`–`V47`, `V63`–`V66`, `V69`
+  - **Research Support:** `RF1`, `RF8`, `RF9`, `RF13` evaluated `W261005F2A7-REQ4@R1` and informed `W261005F2A7-REQ4@R2`; `RF6` evaluated it with no impact. `W261005F2A7-REQ4@R3` was revised from the accepted UI mockups, not from research
 
 - `W261005F2A7-REQ5@R2` — Live buffer against index, normalized, bounded, debounced, with an untracked sign.
   - **Coverage Outcome:** System design required
@@ -152,39 +156,55 @@
 
 - `W261005F2A7-REQ7@R2` — Any layout inside one repository, linked worktrees, no-commit repositories, Git ≥ 2.31, and silence without Git.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES8`, `W261005F2A7-DES6`
+  - **System Design:** `W261005F2A7-DES8`, `W261005F2A7-DES6`, `W261005F2A7-DES13`
   - **How Addressed:** `detectRepo` runs `git --version` (gate at 2.31), then one `rev-parse --path-format=absolute --show-toplevel --git-dir --git-common-dir --show-prefix`, then `symbolic-ref -q HEAD` for unborn branches. Status runs with pathspec `-- <prefix>` and converts repo-relative paths to workspace-relative ones.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/workspace/git.ts` — `detectRepo`, `parseVersion`; `src/core/features/git/status.ts` — `parseStatus`; `src/core/state/git.ts` — `onGitDetected`
   - **Callers and Wiring:** `main.ts` deferred startup block
   - **Runtime Flow:** §5 Discovery
-  - **Success Criteria:** `S24`, `S25`, `S26`
-  - **Verification:** `V14`, `V28`, `V29`, `V39`
+  - **Success Criteria:** `S24`, `S25`, `S26`, `S34`
+  - **Verification:** `V14`, `V28`, `V29`, `V39`, `V66`
   - **Research Support:** `RF7`, `RF8` evaluated `W261005F2A7-REQ7@R1` and informed `W261005F2A7-REQ7@R2`; `RF9` supported it
 
 - `W261005F2A7-REQ8@R1` — Dirty buffers are saved before the tool opens; a failed save cancels the launch.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES9`
-  - **How Addressed:** `openTool` sets `git.pending = { op: "tool", waiting }` and emits `writeBuffer` for each dirty buffer. `onSaved` advances the pending operation and `onSaveFailed` cancels it with a notice, mirroring `advanceQuit` (`src/core/state/save.ts:165-191`). A dirty buffer that cannot be written (`blocked`: in a conflict, or dirty and deleted on disk; read-only buffers cannot become dirty) cancels up front.
+  - **System Design:** `W261005F2A7-DES9`, `W261005F2A7-DES13`
+  - **How Addressed:** `openTool` sets `git.pending = { op: "tool", waiting, saved }` and emits `writeBuffer` for each dirty buffer. `onSaved` advances the pending operation and `onSaveFailed` cancels it with a notice, mirroring `advanceQuit` (`src/core/state/save.ts:165-191`). A dirty buffer that cannot be written (`blocked`: in a conflict, or dirty and deleted on disk; read-only buffers cannot become dirty) cancels up front.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/core/state/git.ts` — `openTool`, `advanceGitPending`, `cancelGitPending`; `src/core/state/save.ts` — `onSaved`, `onSaveFailed`, `blocked` export
   - **Callers and Wiring:** `onSaved` / `onSaveFailed` call into `git.ts`
   - **Runtime Flow:** §5 Tool Hand-off
-  - **Success Criteria:** `S27`, `S28`
-  - **Verification:** `V31`, `V32`
+  - **Success Criteria:** `S27`, `S28`, `S35`
+  - **Verification:** `V31`, `V32`, `V68`
   - **Research Support:** `RF10` evaluated and retained `W261005F2A7-REQ8@R1`
 
 - `W261005F2A7-REQ9@R1` — Stage hunk saves the buffer first; a failed save stages nothing.
   - **Coverage Outcome:** System design required
-  - **System Design:** `W261005F2A7-DES4`
+  - **System Design:** `W261005F2A7-DES4`, `W261005F2A7-DES13`
   - **How Addressed:** `stageHunk` uses the same pending mechanism with `{ op: "stage", bufferId, line }`. The patch is computed from the saved text after `saved` arrives.
   - **Existing Evidence:** None — system change required
   - **Affected Files and Symbols:** `src/core/state/git.ts` — `stageHunk`, `advanceGitPending`
   - **Callers and Wiring:** Same as REQ8
   - **Runtime Flow:** §5 Stage Hunk
-  - **Success Criteria:** `S29`
-  - **Verification:** `V20`, `V40`
+  - **Success Criteria:** `S29`, `S34`
+  - **Verification:** `V20`, `V40`, `V66`
   - **Research Support:** `RF2`, `RF3` evaluated and retained `W261005F2A7-REQ9@R1`
+
+## UI Design Support Coverage
+
+The draft UI design's `Required System Support` table (`w261005f2a7-ui-design.md` §1) listed these rows as conflicting with this design or uncovered. Each now maps to a current requirement and a decision.
+
+| UI Design | Required System Support | Requirement | System Design | Success / Verification |
+|---|---|---|---|---|
+| `W261005F2A7-UDES1@R1` | Git sign per row, separate from `▕`/`⚠`; block rows inherit it; gutter +1 cell only in a repository, the same for paint, hit-testing, and cursor | `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ5@R2` | `W261005F2A7-DES12` | `S8`, `S32`, `S33`; `V9`, `V63`, `V64`, `V65` |
+| `W261005F2A7-UDES3@R1` | Navigation, stage, reset, and no-hunk wording | `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ9@R1` | `W261005F2A7-DES13` | `S34`; `V66` |
+| `W261005F2A7-UDES4@R1` | No counts for untracked files and unborn repositories | `W261005F2A7-REQ4@R3` | `W261005F2A7-DES10` | `S10`; `V15` |
+| `W261005F2A7-UDES5@R1` | No `deleted` marker; precedence conflict > untracked > modified > staged; `contains` covers deleted tracked files | `W261005F2A7-REQ4@R3` | `W261005F2A7-DES10` | `S9`; `V16`, `V17` |
+| `W261005F2A7-UDES6@R1` | `no hunk at cursor` when preview has no hunk | `W261005F2A7-REQ4@R3` | `W261005F2A7-DES11`, `W261005F2A7-DES13` | `S34`; `V66` |
+| `W261005F2A7-UDES7@R1` | Command titles `Lazygit (full screen)`, `Stage hunk`, `Reset hunk`, `Preview hunk`, `Blame line` | `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ2@R2` | `W261005F2A7-DES11` | `S36`; `V69` |
+| `W261005F2A7-UDES9@R1` | `warn` level; conflict notice; one save-gated tool notice; busy notice on every pending path | `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1` | `W261005F2A7-DES13` | `S34`; `V66` |
+| `W261005F2A7-UDES10@R1` | Pre-suspend `written · opening <tool>` message painted once before `suspend()`; cleared on resume | `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ8@R1` | `W261005F2A7-DES9`, `W261005F2A7-DES13` | `S35`; `V30`, `V67`, `V68` |
+| `W261005F2A7-UDES12@R1` | `warn` level selecting `messageWarn`; per-surface token names | `W261005F2A7-REQ4@R3` | `W261005F2A7-DES10`, `W261005F2A7-DES13` | `S34`; `V66` |
 
 ## Assigned Parent Obligation Coverage
 
@@ -201,7 +221,7 @@ None — standalone work
 - `src/workspace/system.ts:85-99`, `src/workspace/trash.ts:11-18` — argv spawning with no shell and an injectable spawn for tests.
 - `src/core/config/schema.ts:46-105` — the strict schema gets one `git` section with defaults (`prefault({})`).
 - `.s1mple/docs/project.md` Pins and `knip` zero findings — no new npm dependency; every new export has a consumer.
-- `src/core/kernel/view/text-view.ts:98-101` — the last provider with a sign wins. Git signs are appended last, so they win over the transient `▕` reveal and `⚠` error signs (`src/core/lang/markdown/live-preview.ts:86-141`).
+- `src/core/kernel/view/text-view.ts:98-101` — the last provider with a sign wins. Git signs use a separate `changeSign` channel, so they never compete with the `▕` reveal and `⚠` error signs (`src/core/lang/markdown/live-preview.ts:86-141`) and that rule stays as it is (DES12).
 - `.s1mple/S1MPLE.md` Implementation — no work-process identifiers in code, comments, tests, or logs.
 
 ## Cross-Cutting Applicability
@@ -223,7 +243,10 @@ None — standalone work
 - **Existing:** `src/core/state/save.ts` — `onSaved`, `onSaveFailed`, `blocked` — the git pending operation. Traces to `W261005F2A7-DES4`, `W261005F2A7-DES9`
 - **Existing:** `src/ui/shell.ts` — `Shell`, `paint` — suspend and resume, plus the paint guard. Traces to `W261005F2A7-DES9`
 - **Existing:** `src/app/lifecycle.ts` — signal handlers — interrupt hold. Traces to `W261005F2A7-DES9`
-- **Existing:** `src/core/kernel/view/text-view.ts` — `layoutText` block-replace row — sign inheritance. Traces to `W261005F2A7-DES10`
+- **Existing:** `src/core/kernel/view/types.ts`, `decorations.ts` — `RenderLine`, line `Decoration` — a `changeSign` channel. Traces to `W261005F2A7-DES12`
+- **Existing:** `src/core/kernel/view/text-view.ts` — `layoutLine`, `layoutText` block-replace row — `changeSign` merge and inheritance. Traces to `W261005F2A7-DES12`
+- **Existing:** `src/ui/editors/text-view.ts` — `gutterWidth` and its three callers — the change column. Traces to `W261005F2A7-DES12`
+- **Existing:** `src/core/state/result.ts` — `message` — a `warn` level. Traces to `W261005F2A7-DES13`
 - **Proposed:** `src/core/features/git/` — diff, patch, index text, status parse, blame parse, signs. Traces to `W261005F2A7-DES2`, `W261005F2A7-DES3`, `W261005F2A7-DES10`
 - **Proposed:** `src/core/state/git.ts`, `git-commands.ts` — reducers and commands. Traces to `W261005F2A7-DES4`, `W261005F2A7-DES5`, `W261005F2A7-DES6`, `W261005F2A7-DES9`, `W261005F2A7-DES11`
 - **Proposed:** `src/workspace/git.ts`, `git-watcher.ts`; `src/app/tool-host.ts`; `src/ui/overlays/hunk.ts`. Traces to `W261005F2A7-DES1`, `W261005F2A7-DES7`, `W261005F2A7-DES9`, `W261005F2A7-DES11`
@@ -257,7 +280,11 @@ src/core/features/git/        pure algorithms, no state
   patch.ts       hunkPatch(path, mode, hunk, index, buf) → string
   status.ts      parseStatus(z, prefix) → RepoStatus;  explorerMarkers(status) → Map
   blame.ts       parseBlame(porcelain) → BlameLine
-  signs.ts       hunkSigns(hunks) → DecorationProvider; hunkAt / nextHunk / prevHunk
+  signs.ts       hunkSigns(hunks) → DecorationProvider (changeSign); hunkAt / nextHunk / prevHunk
+
+src/core/kernel/view/
+  types.ts, decorations.ts   RenderLine.changeSign, line Decoration.changeSign
+  text-view.ts   layoutLine merges changeSign; block-replace rows inherit it
 
 src/core/state/
   git.ts          GitState reducers: onGitDetected, onGitStatus, onGitIndexRead,
@@ -267,6 +294,7 @@ src/core/state/
   types.ts        AppState.git, Action/Effect/TimerId/Overlay members
   update.ts       switch cases, text-version → gitDiff timer hook, gitRefresh timer routing
   status.ts       StatusSegments.git
+  result.ts       message(s, text, "info" | "warn" | "error")
 
 src/workspace/
   git.ts          createGit(spawn, logger) → Git { detect, status, readIndex, stage, blame }
@@ -279,8 +307,9 @@ src/app/
   lifecycle.ts    holdInterrupts()
 
 src/ui/
-  shell.ts        Shell.suspend/resume, paint guard, FOREIGN_MODES_RESET
-  editors/text-view.ts  append hunkSigns provider
+  shell.ts        Shell.flush/suspend/resume, paint guard, FOREIGN_MODES_RESET
+  editors/text-view.ts  append hunkSigns provider; change column in gutterWidth
+  views/cmdline.ts      warn level → messageWarn
   views/statusline.ts, views/explorer.ts   git segment, markers
   overlays/hunk.ts      HunkView (gitHunk overlay)
   theme.ts        git* style tokens
@@ -321,7 +350,7 @@ Core owns every decision: which hunk to stage, when to refresh, when the tool ma
   - Own `AppState.git` and every transition on it.
   - Gate stage and tool launch on saves (pending operation).
   - Emit `gitStatus`, `gitReadIndex`, `gitStage`, `gitBlame`, `gitWatch`, and `runTool` effects.
-  - Turn results into notices (`message()`, `src/core/state/result.ts:12-21`).
+  - Turn results into notices from one catalogue (`message()`, `src/core/state/result.ts:12-21`, with a new `warn` level; DES13).
 - **Collaborators:**
 
   ```text
@@ -381,6 +410,7 @@ Core owns every decision: which hunk to stage, when to refresh, when the tool ma
 - **Kind:** Composition-level service plus UI shell extension
 - **Responsibilities:**
   - Resolve the tool executable, and refuse before suspending if it is missing.
+  - Wait until the frame with the pre-suspend message is written.
   - Hold interrupts, suspend, spawn with inherited stdio at the repo top level, and await exit or signal.
   - Reset foreign terminal modes, resume, and release interrupts in a `finally`.
   - Stop painting while suspended.
@@ -388,7 +418,7 @@ Core owns every decision: which hunk to stage, when to refresh, when the tool ma
 
   ```text
   effects.ts runTool → deps.tool.run(argv, cwd) → { kind: "exited" | "missing" | "failed" }
-  ToolHost → lifecycle.holdInterrupts() · shell.suspend() · spawn · shell.resume()
+  ToolHost → await shell.flush() · lifecycle.holdInterrupts() · shell.suspend() · spawn · shell.resume()
   ```
 
 - **Boundary Contract:** §6 `ToolHost`, `Shell` extension
@@ -398,14 +428,15 @@ Core owns every decision: which hunk to stage, when to refresh, when the tool ma
 
 ## Display surfaces (ui)
 
-- **Target:** `src/ui/editors/text-view.ts`, `src/ui/views/statusline.ts`, `src/ui/views/explorer.ts`, `src/ui/overlays/hunk.ts`, `src/ui/theme.ts`
+- **Target:** `src/ui/editors/text-view.ts`, `src/ui/views/statusline.ts`, `src/ui/views/explorer.ts`, `src/ui/views/cmdline.ts`, `src/ui/overlays/hunk.ts`, `src/ui/theme.ts`
 - **Kind:** Views
 - **Responsibilities:**
-  - Paint git-derived data: signs, segment, markers, hunk popup.
+  - Paint git-derived data: signs in the change column, segment, markers, hunk popup, warn notices.
+  - Keep one gutter width per frame for paint, mouse hit-testing, and cursor placement (`gutterWidth(lineCount, s.git.repo !== null)`).
 - **Collaborators:**
 
   ```text
-  layoutFrame → hunkSigns(s.git.files[b.path]?.hunks)
+  layoutFrame → hunkSigns(s.git.files[b.path]?.hunks) → RenderLine.changeSign → gutter cell 0
   statusline → statusSegments(s).git
   explorer → explorerMarkers(s.git.status)
   OverlayHost → HunkView when overlay.kind === "gitHunk"
@@ -447,10 +478,16 @@ so/
 │   │   │   │                          Decisions: DES10
 │   │   │   └── [A] *.test.ts          Contains: unit suites (§8)
 │   │   ├── kernel/view/
-│   │   │   ├── [M] text-view.ts       Contains: block-replace row inherits a line sign in its range
-│   │   │   │                          Symbols: layoutText
-│   │   │   │                          Decisions: DES10
-│   │   │   └── [M] text-view.test.ts  Contains: V9
+│   │   │   ├── [M] types.ts           Contains: change-column sign on a render row
+│   │   │   │                          Symbols: RenderLine.changeSign
+│   │   │   │                          Decisions: DES12
+│   │   │   ├── [M] decorations.ts     Contains: change-column sign on a line decoration
+│   │   │   │                          Symbols: Decoration (line kind) changeSign
+│   │   │   │                          Decisions: DES12
+│   │   │   ├── [M] text-view.ts       Contains: changeSign merge; block-replace row inherits the last changeSign in its range
+│   │   │   │                          Symbols: layoutLine, layoutText
+│   │   │   │                          Decisions: DES12
+│   │   │   └── [M] text-view.test.ts  Contains: V9, V63
 │   │   ├── config/
 │   │   │   ├── [M] schema.ts          Contains: git section
 │   │   │   │                          Symbols: ConfigSchema.git
@@ -462,10 +499,11 @@ so/
 │   │       │                                   onGitDiffTimer, requestRefresh, stageHunk, resetHunk,
 │   │       │                                   openTool, advanceGitPending, cancelGitPending,
 │   │       │                                   onGitStaged, onToolExited, onGitBlamed, onGitRefreshTimer
-│   │       │                          Decisions: DES1, DES4, DES5, DES6, DES9
+│   │       │                          Decisions: DES1, DES4, DES5, DES6, DES9, DES13
 │   │       ├── [A] git-commands.ts    Contains: commands, default bindings, group
 │   │       │                          Symbols: gitCommands, gitBindings, gitGroups
 │   │       │                          Decisions: DES11
+│   │       ├── [A] git-commands.test.ts Contains: V69
 │   │       ├── [A] git.test.ts        Contains: reducer suites (§8)
 │   │       ├── [M] types.ts           Contains: AppState.git, Action/Effect/TimerId/Overlay members
 │   │       │                          Symbols: GitState, AppState, Action, Effect, TimerId, Overlay
@@ -479,9 +517,12 @@ so/
 │   │       ├── [M] disk.ts            Contains: fileChanged requests refresh
 │   │       │                          Symbols: onFileChanged
 │   │       │                          Decisions: DES6
-│   │       ├── [M] status.ts          Contains: git segment
+│   │       ├── [M] status.ts          Contains: git segment (no counts for untracked or unborn)
 │   │       │                          Symbols: StatusSegments, statusSegments
 │   │       │                          Decisions: DES10
+│   │       ├── [M] result.ts          Contains: warn message level
+│   │       │                          Symbols: message
+│   │       │                          Decisions: DES13
 │   │       ├── [M] keys.ts            Contains: gitHunk overlay key route (Esc/q close)
 │   │       │                          Symbols: routeKey
 │   │       │                          Decisions: DES11
@@ -517,12 +558,14 @@ so/
 │   │                                  Symbols: registries, main startup block
 │   │                                  Decisions: DES8, DES9, DES11
 │   └── ui/
-│       ├── [M] shell.ts               Contains: suspend/resume, paint guard, HunkView registration
+│       ├── [M] shell.ts               Contains: flush/suspend/resume, paint guard, HunkView registration
 │       │                              Symbols: Shell, createShell, FOREIGN_MODES_RESET
 │       │                              Decisions: DES9, DES11
-│       ├── [M] editors/text-view.ts   Contains: hunkSigns provider appended last
-│       │                              Symbols: EditorView.layoutFrame
-│       │                              Decisions: DES10
+│       ├── [M] editors/text-view.ts   Contains: hunkSigns provider; change column in the gutter width for paint, hit-test, cursor
+│       │                              Symbols: EditorView.layoutFrame, gutterWidth
+│       │                              Decisions: DES10, DES12
+│       ├── [M] views/cmdline.ts       Contains: warn level → messageWarn
+│       │                              Decisions: DES13
 │       ├── [M] views/statusline.ts    Contains: git segment, first optional dropped
 │       │                              Decisions: DES10
 │       ├── [M] views/explorer.ts      Contains: marker after name
@@ -530,14 +573,14 @@ so/
 │       ├── [A] overlays/hunk.ts       Contains: hunk preview float
 │       │                              Symbols: HunkView
 │       │                              Decisions: DES11
-│       └── [M] theme.ts               Contains: gitAdd, gitChange, gitDelete, gitTopDelete,
-│                                                gitChangeDelete, gitUntracked, gitConflict, gitBranch tokens
-│                                      Decisions: DES10
+│       └── [M] theme.ts               Contains: gitAdd, gitChange, gitDelete, gitTopDelete, gitChangeDelete,
+│                                                gitUntracked, statusGit*, explorerGit*, messageWarn tokens
+│                                      Decisions: DES10, DES13
 ├── test/
 │   ├── support/[M] state.ts           Contains: testRegistries adds git commands/bindings/groups
 │   ├── support/[A] git-repo.ts        Contains: gitRepo(files, opts) temp repo helper (isolated config)
 │   ├── integration/[A] git.test.ts    Contains: V36–V39 real runner + real git
-│   ├── ui/[A] git.test.ts             Contains: V44–V47 mounted shell snapshots
+│   ├── ui/[A] git.test.ts             Contains: V44–V47, V60, V64, V65, V67 mounted shell
 │   ├── e2e/[A] git-tool.test.ts       Contains: V50 PTY hand-off with a stub tool
 │   └── bench/[A] git-diff.bench.ts    Contains: V51 keystroke P95 with a 5,000-line all-changed note
 ├── scripts/[M] bench-gate.ts          Contains: gitDiffKeystrokeP95 target 24 ms
@@ -555,7 +598,7 @@ so/
 ```text
 first frame → setImmediate → git.detect(root)
   ├─ which git = null ──────────────────────► gitDetected { repo: null }                  (silent)
-  ├─ git --version < 2.31 ──────────────────► gitDetected { repo: null, notice: "git 2.20 is older than 2.31; git features off" }
+  ├─ git --version < 2.31 ──────────────────► gitDetected { repo: null, notice: "git 2.20.1 is older than 2.31; git features off" }   (warn)
   ├─ rev-parse fails (not a repo) ──────────► gitDetected { repo: null }                  (silent)
   └─ ok → { top, gitDir, commonDir, prefix, head } ► gitDetected { repo }
           onGitDetected → state.git.repo = repo → effects [gitWatch(dirs), requestRefresh]
@@ -563,7 +606,7 @@ first frame → setImmediate → git.detect(root)
 ```
 
 1. `main.ts` calls `git.detect(ws.root)` inside the deferred block (`src/app/main.ts:361-390`) and dispatches `gitDetected`.
-2. `onGitDetected` stores `repo`, shows a notice when one is present, emits `gitWatch` with `watchDirs(repo, head)`, and starts the refresh timer.
+2. `onGitDetected` stores `repo`, shows the notice at `warn` level when one is present, emits `gitWatch` with `watchDirs(repo, head)`, and starts the refresh timer.
 
 **Detailed Control Flow:** §7 `src/workspace/git.ts` `detect`; §7 `src/core/state/git.ts` `onGitDetected`
 
@@ -579,12 +622,14 @@ buffer opened / index changed → gitReadIndex { bufferId, path } → git.readIn
    → onGitIndexRead → files[path].index = entry → diff now
 keystroke → update → wrapper sees text.version changed → startTimer gitDiff:<id> 100 ms
    → timer → onGitDiffTimer → files[path].hunks = diffLines(index.lines, bufferLines)
-frame → layoutFrame → hunkSigns(files[path].hunks)
+frame → layoutFrame → hunkSigns(files[path].hunks) → line decorations { changeSign }
+      → layoutText → RenderLine.changeSign → gutter cell 0 (change column, only when git.repo)
 ```
 
 1. When a buffer is loaded (`fileLoaded`) in a repo, or when status shows its path changed in the index, core emits `gitReadIndex`.
 2. The wrapper compares `prev.buffers[id].text.version` with `next.buffers[id].text.version` and emits one `startTimer` for each changed buffer.
 3. `onGitDiffTimer` runs the diff synchronously in core. It is bounded by `MAX_EDIT`.
+4. The editor computes one gutter width per frame with `gutterWidth(lineCount, s.git.repo !== null)` and uses it for painting, mouse hit-testing, and cursor placement (DES12).
 
 **Detailed Control Flow:** §7 `src/core/features/git/diff.ts`; §7 `src/core/state/update.ts`
 
@@ -617,22 +662,30 @@ saved | fileChanged | gitStaged | toolExited | gitDirChanged | gitDetected
 
 ```text
 <leader>ghs → stageHunk
-  ├─ no repo / no hunk at cursor / file conflicted / pending op ─► message, no effect
+  ├─ no repo ─────────────────────────────────────────────────► "not a git repository"
+  ├─ pending op ──────────────────────────────────────────────► "git: another operation is running"
+  ├─ no hunk at cursor ───────────────────────────────────────► "no hunk at cursor"
+  ├─ file conflicted ─────────────────────────────────────────► "<path> has conflicts; resolve them in <tool>"   (error)
   ├─ buffer blocked (read-only, deleted, conflict overlay) ─────► message "cannot save <path>"
   ├─ buffer dirty → git.pending = { op: "stage", bufferId, line } → writeBuffer
-  │     saved → onSaved → advanceGitPending → continue below
+  │     saved → onSaved → advanceGitPending → continue below with saved = true
   │     saveFailed → cancelGitPending → message "not staged: <path> could not be saved"
   └─ clean → hunks = diffLines(index.lines, buffer lines)     (fresh, not the debounced copy)
-            hunk = hunkAt(hunks, line)
-            gitStage { path, expectedOid, intentToAdd: untracked, patch: hunkPatch(...) }   (serial queue)
+            hunk = hunkAt(hunks, line); n = its 1-based position; m = hunks.length
+            gitStage { path, expectedOid, intentToAdd: untracked, patch: hunkPatch(...), report: { n, m, saved } }   (serial queue)
               adapter: intentToAdd? git add --intent-to-add -- path
                        ls-files -s -- path → oid ≠ expectedOid (and not intent-to-add) → { kind: "stale" }
                        git apply --cached --unidiff-zero --whitespace=nowarn -   (stdin = patch)
-            gitStaged { ok | stale | failed(reason) } → onGitStaged → message on non-ok → gitReadIndex + requestRefresh
+            gitStaged { result: ok | stale | failed(reason), report } → onGitStaged:
+              ok     → "staged hunk n/m", or '"<path>" written · staged hunk n/m' when saved
+              stale  → "index changed; hunks refreshed"   (warn)
+              failed → first stderr line                  (error)
+              always → gitReadIndex + requestRefresh
 ```
 
 1. The hunk is recomputed at execution time. A stale debounced copy therefore never selects the wrong lines.
 2. The oid guard compares against the `IndexText.oid` the diff used. A difference means another writer changed the index, so nothing is applied.
+3. `<tool>` is `config.git.tool[0]`, which reads `lazygit` with the default config. Every message text and level comes from the DES13 catalogue.
 
 **Detailed Control Flow:** §7 `src/core/state/git.ts` `stageHunk`; §7 `src/workspace/git.ts` `stage`; §7 `src/core/features/git/patch.ts`
 
@@ -644,9 +697,11 @@ saved | fileChanged | gitStaged | toolExited | gitDirChanged | gitDetected
 
 ```text
 <leader>ghr → resetHunk → hunk = hunkAt(diffLines(index.lines, lines), cursorLine)
+   ├─ no repo → "not a git repository"; no hunk → "no hunk at cursor"
    → applyBufferEdits(s, { path, edits: [{ range: newSideRange, expected, text: oldSideText }] })
         stale → message "buffer changed; try again"
    → hunk touches EOF and index.finalNewline ≠ buffer.finalNewline → setBuffer({ finalNewline: index.finalNewline })
+   → message "reset hunk n/m · buffer changed, autosave pending"
    → normal autosave / save path
 ```
 
@@ -663,25 +718,29 @@ saved | fileChanged | gitStaged | toolExited | gitDirChanged | gitDetected
 ```text
 <leader>gg → openTool
   ├─ no repo ───────────────────────► message "not a git repository"
-  ├─ pending op ────────────────────► message "busy"
-  ├─ any dirty buffer blocked ──────► message "cannot save <path>; git tool not started"
-  ├─ dirty buffers → git.pending = { op: "tool", waiting } → writeBuffer each
-  │     all saved → runTool { argv: config.git.tool, cwd: repo.top }
-  │     any saveFailed → cancel → message "git tool not started: <path> could not be saved"
-  └─ none dirty → runTool
+  ├─ pending op ────────────────────► message "git: another operation is running"
+  ├─ any dirty buffer blocked ──────► message "git tool not started: <path> could not be saved"   (error)
+  ├─ dirty buffers → git.pending = { op: "tool", waiting, saved: paths } → writeBuffer each
+  │     all saved → message '"<path>" written · opening <tool>' (one) | "N files written · opening <tool>" (N > 1)
+  │                 + runTool { argv: config.git.tool, cwd: repo.top }
+  │     any saveFailed → cancel → message "git tool not started: <path> could not be saved"   (error)
+  └─ none dirty → runTool (no message)
+store.dispatch: effects run, then the frame with the message is painted (requestRender)
 runner → deps.tool.run(argv, cwd):
    which(argv[0]) = null → { kind: "missing" }              (no suspend)
+   await shell.flush()                                      (repaint + renderer.idle(): the message is on screen)
    release = lifecycle.holdInterrupts(); shell.suspend()
    try   child = spawn(argv, { cwd, stdio: inherit }); await child.exited
    finally shell.resetForeignModes(); shell.resume(); release()
    → toolExited { result: exited(code, signal) | missing | failed(reason) }
-onToolExited → missing → message "<tool> not found (git.tool)"
-             → exited  → requestRefresh + read effect for every open buffer + gitReadIndex for each
+onToolExited → missing → message "<tool> not found (git.tool)"   (error)
+             → exited  → clear message + requestRefresh + read effect for every open buffer + gitReadIndex for each
 ```
 
 1. While suspended, `paint` returns early, so watcher events and timers cannot re-enable the mouse. The latest state is painted once on resume.
 2. `holdInterrupts` makes the permanent SIGINT handler ignore SIGINT until release. SIGTERM and SIGHUP still shut down. The child shares the terminal and receives them too.
 3. Re-reading each open buffer reuses `onDiskLoaded`. It reloads clean buffers and does nothing for unchanged stamps. Buffers are clean after the save gate, so no conflict dialog appears.
+4. The pre-suspend message reaches the screen exactly once: `Shell.flush()` paints the current state and resolves when OpenTUI's render queue is idle, and the paint guard then blocks every later frame until `resume()`. The message is cleared on `toolExited`, because it no longer applies.
 
 **Detailed Control Flow:** §7 `src/app/tool-host.ts`; §7 `src/ui/shell.ts`; §7 `src/core/state/git.ts` `openTool`
 
@@ -704,12 +763,12 @@ onToolExited → missing → message "<tool> not found (git.tool)"
 
 ## Failure and Recovery Rules
 
-- **git missing or older than 2.31** — Detected by `git.detect`; represented as `gitDetected { repo: null, notice? }`; handled by leaving all Git UI off. The version case shows one notice.
+- **git missing or older than 2.31** — Detected by `git.detect`; represented as `gitDetected { repo: null, notice? }`; handled by leaving all Git UI off. The version case shows one `warn` notice.
 - **Not a repository** — Detected by `rev-parse` exit ≠ 0; represented as `repo: null`; commands answer "not a git repository".
 - **Status/read/blame process failure** — Detected by the adapter (exit ≠ 0); represented as `gitStatus { failed }`, `gitIndexRead { failed }`, or `gitBlamed { failed }`; logged as `git.fail`. The previous state is kept, and the next trigger retries naturally. A blame failure shows a notice.
-- **Stale index at stage** — Detected by the adapter oid check; represented as `{ kind: "stale" }`; handled by `gitReadIndex` + refresh + notice "index changed; hunks refreshed". There is no retry.
-- **Patch rejected by git apply** — Detected by exit ≠ 0; represented as `{ kind: "failed", reason }`; handled by a notice with the first stderr line, plus a refresh.
-- **Save fails before stage or tool** — Detected by `onSaveFailed`; represented by clearing `git.pending`; handled by a notice naming the path.
+- **Stale index at stage** — Detected by the adapter oid check; represented as `{ kind: "stale" }`; handled by `gitReadIndex` + refresh + `warn` notice "index changed; hunks refreshed". There is no retry.
+- **Patch rejected by git apply** — Detected by exit ≠ 0; represented as `{ kind: "failed", reason }`; handled by an `error` notice with the first stderr line, plus a refresh.
+- **Save fails before stage or tool** — Detected by `onSaveFailed`; represented by clearing `git.pending`; handled by an `error` notice naming the path: "not staged: <path> could not be saved" for stage, "git tool not started: <path> could not be saved" for the tool.
 - **Tool missing** — Detected by `ToolHost.run` (`which`); represented as `{ kind: "missing" }`; handled with no suspend and a notice.
 - **Tool spawn throws or child killed** — Detected by `ToolHost.run` (catch / exit signal); represented as `{ kind: "failed" }` or `exited { signal }`. `finally` always resets modes, resumes, and releases interrupts, then refresh runs as for a normal exit.
 - **Git-dir watcher cannot start** — Detected by `watchGitDirs` (`fs.watch` throws); logged as `git.watch.fail`. The other triggers continue (REQ6).
@@ -754,6 +813,8 @@ src/app/main.ts
 | `Shell` extension | Contract | `suspend` / `resume` | ToolHost |
 | `StatusSegments.git` | Data Model | Statusline Git fields | statusline view |
 | `ConfigSchema.git` | Schema | User config | core reducers |
+| `changeSign` on `RenderLine` and line `Decoration` | Data Model | The change-column sign, separate from `sign` | `hunkSigns`, `layoutText`, editor gutter |
+| Message level | State Model | `info`, `warn`, or `error` on the message line | `message()`, Git reducers, cmdline view |
 
 ## `GitState` — State Model
 
@@ -897,7 +958,8 @@ git.status → parseStatus(z, prefix) → gitStatus → explorerMarkers / status
 
 **Includes:**
 
-- `{ op: "tool"; waiting: BufferId[] }` or `{ op: "stage"; bufferId: BufferId; line: number; waiting: BufferId[] }`.
+- `{ op: "tool"; waiting: BufferId[]; saved: string[] }` or `{ op: "stage"; bufferId: BufferId; line: number; waiting: BufferId[] }`.
+- `saved` holds the workspace-relative paths the tool gate writes, for the pre-suspend message (DES13).
 
 **Usage:**
 
@@ -929,6 +991,7 @@ openTool / stageHunk → pending → onSaved (remove id; empty → continue) | o
   - `` `gitDiff:${BufferId}` ``, `"gitRefresh"`.
 - Overlay:
   - `{ kind: "gitHunk"; bufferId; hunk: Hunk }`.
+- `gitStage` carries `report: { n; m; saved }`, and the runner echoes it on `gitStaged`, so the success notice needs no state (DES13).
 
 **Usage:**
 
@@ -960,10 +1023,10 @@ createEffectRunner(deps.git, deps.tool, deps.gitWatcher)
 
 **Rules:**
 
-- **Compatibility:** `Shell` gains two methods. The test shell (`test/support/ui.ts`) implements them as flag setters.
+- **Compatibility:** `Shell` gains `flush`, `suspend`, `resume`, and `resetForeignModes`. The test shell (`test/support/ui.ts`) implements them as recorders; its `flush` resolves at once.
 - **Invariants:**
   - `Git` exposes only two mutating operations, `stage` (`add -N`, `apply --cached`).
-  - `ToolHost.run` always resumes and releases in `finally`.
+  - `ToolHost.run` awaits `flush` before `suspend`, and always resumes and releases in `finally`.
 - **Ownership and Lifecycle:** Constructed in `main.ts`.
 
 **Location:** None — proposed items; `Shell` at `src/ui/shell.ts:85-92`
@@ -976,7 +1039,7 @@ createEffectRunner(deps.git, deps.tool, deps.gitWatcher)
 
 **Includes:**
 
-- `{ ref: string; op?: "rebasing" | "merging"; added: number; changed: number; removed: number }` — counts are for the active buffer, following gitsigns' summary rule (RF1).
+- `{ ref: string; op?: "rebasing" | "merging"; added: number; changed: number; removed: number }` — counts are for the active buffer, following gitsigns' summary rule (RF1). An untracked file, or any file while `head.kind` is `unborn`, has all three counts at 0.
 
 **Usage:**
 
@@ -987,7 +1050,7 @@ statusSegments(s) → statusline view
 **Rules:**
 
 - **Compatibility:** Optional; absent outside a repository.
-- **Invariants:** `ref` is the branch name, the unborn name, or a 7-character short SHA.
+- **Invariants:** `ref` is the branch name, the unborn name, or a 7-character short SHA. `untracked` hunks never add to the counts.
 - **Ownership and Lifecycle:** Derived per paint.
 
 **Location:** `src/core/state/status.ts:12-32`
@@ -1018,13 +1081,66 @@ config.toml [git] tool = [...] → AppConfig.git.tool → openTool → runTool.a
 
 **Detailed Shape:** §7 `src/core/config/schema.ts`
 
+## `changeSign` on `RenderLine` and line `Decoration` — Data Model
+
+**Purpose:** Carry a per-line sign for the change column, left of the line numbers, without competing with the existing `sign` cell.
+
+**Includes:**
+
+- `Decoration` line kind: `{ kind: "line"; line; style?; sign?; changeSign?: Sign }`.
+- `RenderLine`: `{ sourceLine; spans; widget?; sign?; changeSign?: Sign }`.
+
+**Usage:**
+
+```text
+hunkSigns → line decorations { changeSign } → layoutLine / layoutText → RenderLine.changeSign → editor gutter cell 0
+```
+
+**Rules:**
+
+- **Compatibility:** Optional field. Providers and rows without it are unchanged, so existing snapshots do not change.
+- **Invariants:**
+  - `sign` and `changeSign` merge independently; for each, the last provider wins.
+  - A block-replace row carries the last `changeSign` in its covered range. Its `sign` behaviour is unchanged.
+  - Only the first screen row of a wrapped line paints the `changeSign`.
+- **Ownership and Lifecycle:** Derived per frame.
+
+**Location:** `src/core/kernel/view/types.ts:45-50`, `src/core/kernel/view/decorations.ts:10-20`
+
+**Detailed Shape:** §7 `src/core/kernel/view/types.ts`, `decorations.ts`, `text-view.ts`
+
+## Message level — State Model
+
+**Purpose:** Let a notice say how serious it is: `warn` sits between `info` and `error`.
+
+**Includes:**
+
+- `notifications.message.level: "info" | "warn" | "error"` (`src/core/state/types.ts:419`).
+- `message(s, text, level = "info")` (`src/core/state/result.ts:12-21`).
+
+**Usage:**
+
+```text
+Git reducers → message(s, text, level) → notifications.message → cmdline painter token (message / messageWarn / messageError)
+```
+
+**Rules:**
+
+- **Compatibility:** Adding a member keeps every current call valid. The only reader that branches on the level is `src/ui/views/cmdline.ts:95`. Toasts keep their two levels (`types.ts:331`).
+- **Invariants:** Every Git notice has the level its DES13 catalogue entry names.
+- **Ownership and Lifecycle:** Cleared on the next key (`src/core/state/update.ts:133`).
+
+**Location:** `src/core/state/types.ts:419`, `src/core/state/result.ts:12-21`
+
+**Detailed Shape:** §7 `src/core/state/result.ts`
+
 # 7. Detailed Code Design
 
 ## `src/core/features/git/diff.ts`
 
 - **Change:** Add
 - **Decisions:** DES2
-- **Requirements:** `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ4@R2`
+- **Requirements:** `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ4@R3`
 - **Responsibilities:** Line diff to hunks with bounded cost.
 - **Affected Callers/Consumers:** `src/core/state/git.ts` (`onGitDiffTimer`, `stageHunk`, `resetHunk`)
 - **Construction/Wiring:** None — pure module
@@ -1168,8 +1284,8 @@ export function hunkPatch(repoPath: string, mode: string, h: Hunk, index: IndexT
 
 - **Change:** Add
 - **Decisions:** DES6, DES10
-- **Requirements:** `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`
-- **Responsibilities:** Parse porcelain v2 `-z` output, and derive explorer markers.
+- **Requirements:** `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`
+- **Responsibilities:** Parse porcelain v2 `-z` output, and derive explorer markers (no deleted-file marker).
 - **Affected Callers/Consumers:** `src/workspace/git.ts` (`status`), `src/ui/views/explorer.ts`, `src/core/state/git.ts`
 - **Construction/Wiring:** None
 - **Dependencies:** None
@@ -1180,7 +1296,7 @@ export function hunkPatch(repoPath: string, mode: string, h: Hunk, index: IndexT
 |---|---|---|---|
 | `RepoStatus`, `FileStatus` | None — new symbol | Per §6 | git.ts, explorer.ts, status.ts (state) |
 | `parseStatus` | None — new symbol | `(z: string, prefix: string) => RepoStatus` | workspace/git.ts |
-| `Marker` | None — new symbol | `"modified" \| "staged" \| "untracked" \| "deleted" \| "conflict" \| "contains"` | explorer.ts |
+| `Marker` | None — new symbol | `"modified" \| "staged" \| "untracked" \| "conflict" \| "contains"` | explorer.ts |
 | `explorerMarkers` | None — new symbol | `(st: RepoStatus) => Map<string, Marker>` (memoized per `st` via WeakMap) | explorer.ts |
 
 **Existing Shape:** None — new file
@@ -1199,23 +1315,25 @@ export function parseStatus(z: string, prefix: string): RepoStatus {
   // keep paths starting with prefix; strip prefix
 }
 export function explorerMarkers(st: RepoStatus): Map<string, Marker> {
-  // file: conflict > deleted > untracked > modified (worktree≠".") > staged (index≠".")
-  // each ancestor dir of a marked file → "contains" (unless it has its own marker)
+  // file: conflict > untracked > modified (worktree≠".") > staged (index≠".")
+  // a deleted tracked file (worktree or index "D") gets no own marker: it has no explorer row
+  // each ancestor dir of any changed path, deleted ones included → "contains" (unless it has its own marker)
 }
 ```
 
-`parseStatus` is pure, so its edge cases (renames, submodule `S…`, NUL paths, detached `(detached)` head) are unit-tested without Git. `explorerMarkers` gives each workspace-relative row path one marker by a fixed precedence. Folder aggregation needs no repo walk (RF9). The `op` (rebasing/merging) is not in porcelain output. It comes from `git.status`, which checks `<gitDir>/rebase-merge`, `rebase-apply`, and `MERGE_HEAD` and sets it on the result.
+`parseStatus` is pure, so its edge cases (renames, submodule `S…`, NUL paths, detached `(detached)` head) are unit-tested without Git. `explorerMarkers` gives each workspace-relative row path one marker by a fixed precedence. A deleted tracked file is not on disk, so the explorer has no row for it; it still marks every ancestor folder `contains`, which is how the user sees that a folder lost a file (`W261005F2A7-REQ4@R3`). A file both staged and modified in the worktree shows `modified`. Folder aggregation needs no repo walk (RF9). The `op` (rebasing/merging) is not in porcelain output. It comes from `git.status`, which checks `<gitDir>/rebase-merge`, `rebase-apply`, and `MERGE_HEAD` and sets it on the result.
 
 - **Invariants:**
   - Every key is workspace-relative and under the workspace.
   - Precedence is total, so each path gets exactly one marker.
+  - No key maps to a path that has no explorer row: deleted files never get a file marker.
 - **Verification Coverage:** `S9`, `S10`, `S24`; `V14`–`V17`
 
 ## `src/core/features/git/blame.ts`
 
 - **Change:** Add
 - **Decisions:** DES11
-- **Requirements:** `W261005F2A7-REQ4@R2`
+- **Requirements:** `W261005F2A7-REQ4@R3`
 - **Responsibilities:** Parse a one-line porcelain blame.
 - **Affected Callers/Consumers:** `src/workspace/git.ts` (`blame`), `src/core/state/git.ts` (`onGitBlamed`)
 - **Construction/Wiring:** None
@@ -1254,9 +1372,9 @@ export function parseBlame(out: string): BlameLine {
 ## `src/core/features/git/signs.ts`
 
 - **Change:** Add
-- **Decisions:** DES10, DES11
-- **Requirements:** `W261005F2A7-REQ4@R2`
-- **Responsibilities:** The sign decoration provider and hunk navigation.
+- **Decisions:** DES10, DES11, DES12
+- **Requirements:** `W261005F2A7-REQ4@R3`
+- **Responsibilities:** The change-column sign provider and hunk navigation.
 - **Affected Callers/Consumers:** `src/ui/editors/text-view.ts` (`layoutFrame`), `src/core/state/git-commands.ts`
 - **Construction/Wiring:** None
 - **Dependencies:** `DecorationProvider` (`src/core/kernel/view/decorations.ts:10-26`)
@@ -1266,7 +1384,7 @@ export function parseBlame(out: string): BlameLine {
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
 | `GIT_SIGNS` | None — new symbol | `Record<HunkKind, Sign>` with one-cell glyph + `git*` token | text-view (ui) |
-| `hunkSigns` | None — new symbol | `(hunks: readonly Hunk[]) => DecorationProvider` | text-view (ui) |
+| `hunkSigns` | None — new symbol | `(hunks: readonly Hunk[]) => DecorationProvider` emitting `{ kind: "line", line, changeSign }` | text-view (ui) |
 | `hunkAt` | None — new symbol | `(hunks, line) => Hunk \| undefined` (delete anchors match their anchor line) | git.ts |
 | `nextHunkLine`, `prevHunkLine` | None — new symbol | `(hunks, line) => number \| undefined` | git-commands.ts |
 
@@ -1288,21 +1406,73 @@ export const GIT_SIGNS: Record<HunkKind, Sign> = {
   changedelete: { text: "≃", style: "gitChangeDelete" }, untracked: { text: "┆", style: "gitUntracked" },
 };
 export const hunkSigns = (hunks: readonly Hunk[]): DecorationProvider =>
-  (v) => /* line decorations for hunk lines intersecting v's visible range */ [];
+  (v) => /* { kind: "line", line, changeSign: GIT_SIGNS[h.kind] } for hunk lines in v's visible range */ [];
 ```
 
-`GIT_SIGNS` gives each kind a distinct one-cell glyph as well as a token. The kinds stay distinguishable when `color = "never"`, matching the theme's no-colour rule (`src/ui/theme.ts:209-210` comment). The glyphs are presentation defaults; final look-and-feel belongs to UI design. `hunkSigns` emits decorations only for visible lines. Delete hunks mark their anchor line: `topdelete` marks line 0, and `delete` marks the line before the gap.
+`GIT_SIGNS` gives each kind a distinct one-cell glyph as well as a token. The kinds stay distinguishable when `color = "never"`, matching the theme's no-colour rule (`src/ui/theme.ts:209-210` comment). The glyphs and tokens match the accepted UI design (`w261005f2a7-ui-design.md` §7 Component: Git sign column). The provider sets only `changeSign`, never `sign`, so the `▕` reveal and `⚠` error signs on the same line stay visible (DES12). `hunkSigns` emits decorations only for visible lines. Delete hunks mark their anchor line: `topdelete` marks line 0, and `delete` marks the line before the gap.
 
 - **Invariants:**
   - At most one git sign per line. When a delete anchor coincides with a change line, the change sign wins.
-- **Verification Coverage:** `S7`, `S8`; `V4`, `V5`, `V6`
+  - `hunkSigns` never sets `sign`.
+- **Verification Coverage:** `S7`, `S8`, `S32`; `V4`, `V5`, `V6`
+
+## `src/core/kernel/view/types.ts`, `src/core/kernel/view/decorations.ts`
+
+- **Change:** Modify
+- **Decisions:** DES12
+- **Requirements:** `W261005F2A7-REQ4@R3`
+- **Responsibilities:** Add the change-column sign to line decorations and render rows.
+- **Affected Callers/Consumers:** `layoutLine`, `layoutText` (`src/core/kernel/view/text-view.ts`), the editor gutter (`src/ui/editors/text-view.ts:540-584`), `hunkSigns`
+- **Construction/Wiring:** None
+- **Dependencies:** None
+
+**Symbol Changes:**
+
+| Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
+|---|---|---|---|
+| `RenderLine` | `types.ts:45-50` `{ sourceLine; spans; widget?; sign? }` | adds `changeSign?: Sign` | layoutText, editor gutter |
+| `Decoration` (line kind) | `decorations.ts:20` `{ kind: "line"; line; style?; sign? }` | adds `changeSign?: Sign` | layoutLine, hunkSigns |
+
+**Existing Shape:** `src/core/kernel/view/types.ts:45-50`
+
+```ts
+export type RenderLine = {
+  sourceLine: number;
+  spans: Span[];
+  widget?: Widget;
+  sign?: Sign;
+};
+```
+
+A row has one sign, painted in the cell after the line number.
+
+**Proposed Shape:**
+
+```ts
+export type RenderLine = {
+  sourceLine: number;
+  spans: Span[];
+  widget?: Widget;
+  sign?: Sign;
+  /** The sign in the change column, left of the line number. */
+  changeSign?: Sign;
+};
+// decorations.ts
+| { kind: "line"; line: number; style?: StyleToken; sign?: Sign; changeSign?: Sign };
+```
+
+The kernel stays free of Git: `changeSign` is a second, generic sign channel, and the editor decides when to paint its column. Each channel keeps the existing "last provider wins" rule, so the two never compete.
+
+- **Invariants:**
+  - A row without `changeSign` is structurally identical to today's row.
+- **Verification Coverage:** `S32`; `V63`
 
 ## `src/core/kernel/view/text-view.ts`
 
 - **Change:** Modify
-- **Decisions:** DES10
-- **Requirements:** `W261005F2A7-REQ4@R2`
-- **Responsibilities:** Block-replace rows show a sign from their covered range.
+- **Decisions:** DES12
+- **Requirements:** `W261005F2A7-REQ4@R3`
+- **Responsibilities:** Merge `changeSign` per line; block-replace rows show the last `changeSign` from their covered range.
 - **Affected Callers/Consumers:** `layoutText` callers (`src/ui/editors/text-view.ts:675-681`)
 - **Construction/Wiring:** None
 - **Dependencies:** None
@@ -1311,11 +1481,19 @@ export const hunkSigns = (hunks: readonly Hunk[]): DecorationProvider =>
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `layoutText` | `src/core/kernel/view/text-view.ts:19-55` — a block `replace` row carries no sign | The replace row carries the last sign among `line` decorations whose line is in `[range.start.line, range.end.line]` | Live view of every filetype with block replaces |
+| `layoutLine` | `text-view.ts:88-124` — keeps the last `sign` of the line's `line` decorations | also keeps the last `changeSign`, independently | layoutText |
+| `layoutText` | `text-view.ts:19-55` — a block `replace` row carries no sign | the replace row carries the last `changeSign` among `line` decorations whose line is in `[range.start.line, range.end.line]`; `sign` unchanged | Live view of every filetype with block replaces |
 
-**Existing Shape:** `src/core/kernel/view/text-view.ts:45-55`
+**Existing Shape:** `src/core/kernel/view/text-view.ts:95-101`, `:45-55`
 
 ```ts
+let sign: Sign | undefined;
+for (const d of decos)
+  if (d.kind === "line" && d.line === line) {
+    if (d.style !== undefined) base = d.style;
+    if (d.sign !== undefined) sign = d.sign;
+  }
+// …
 if (block?.kind === "replace") {
   if (block.spans !== undefined || block.widget !== undefined)
     emit(withWidget({ sourceLine: line, spans: block.spans ?? [] }, block.widget));
@@ -1329,27 +1507,34 @@ The replaced row currently drops every line decoration in its range. A changed t
 **Proposed Shape:**
 
 ```ts
+let changeSign: Sign | undefined;
+//   in the line-decoration loop:
+    if (d.changeSign !== undefined) changeSign = d.changeSign;
+//   at the end of layoutLine:
+const signed = sign === undefined ? row : { ...row, sign };
+return changeSign === undefined ? signed : { ...signed, changeSign };
+
 if (block?.kind === "replace") {
-  const sign = lastSignIn(decos, line, block.range.end.line);
+  const changeSign = lastChangeSignIn(decos, line, block.range.end.line);
   if (block.spans !== undefined || block.widget !== undefined)
-    emit(withWidget({ sourceLine: line, spans: block.spans ?? [], ...(sign && { sign }) }, block.widget));
+    emit(withWidget({ sourceLine: line, spans: block.spans ?? [], ...(changeSign && { changeSign }) }, block.widget));
   line = block.range.end.line;
   continue;
 }
 ```
 
-`lastSignIn` is a local helper that scans `decos` for `line` decorations inside the block range and keeps the last sign, so the "later provider wins" rule stays consistent. Snapshot output changes only where a sign exists, which today means only the markdown `⚠` error sign on a failing block's first line.
+`lastChangeSignIn` is a local helper that scans `decos` for `line` decorations inside the block range and keeps the last `changeSign`, so the "later provider wins" rule stays consistent. The `sign` of a block row is not inherited, so the existing `⚠` and `▕` behaviour and every existing snapshot are unchanged.
 
 - **Invariants:**
-  - Rows without signs in range are unchanged, so existing snapshots do not change.
-- **Verification Coverage:** `S8`; `V9`
+  - Rows without a `changeSign` in range are unchanged, so existing snapshots do not change.
+- **Verification Coverage:** `S8`, `S32`; `V9`, `V63`
 
 ## `src/core/state/types.ts`
 
 - **Change:** Modify
-- **Decisions:** DES1, DES4, DES9, DES11
+- **Decisions:** DES1, DES4, DES9, DES11, DES13
 - **Requirements:** All current revisions
-- **Responsibilities:** State and message unions.
+- **Responsibilities:** State and message unions, and the message level.
 - **Affected Callers/Consumers:** `update.ts`, `effects.ts`, every exhaustive switch, `initialState`, `test/support/state.ts`
 - **Construction/Wiring:** `initialState` adds `git: initialGit`
 - **Dependencies:** `Hunk`, `IndexText`, `RepoStatus`, `BlameLine` (core features)
@@ -1364,6 +1549,7 @@ if (block?.kind === "replace") {
 | `Effect` | `types.ts:518-571` | adds the 6 git members | effects.ts |
 | `TimerId` | `types.ts:59-65` | adds `` `gitDiff:${BufferId}` `` and `"gitRefresh"` | update.ts `onTimerAction` |
 | `Overlay` | `types.ts:194-202` | adds `{ kind: "gitHunk"; bufferId: BufferId; hunk: Hunk }` | keys.ts, mouse.ts, shell.ts |
+| `AppState.notifications.message` | `types.ts:419` `level: "info" \| "error"` | `level: "info" \| "warn" \| "error"` | result.ts, cmdline.ts |
 
 **Existing Shape:** `src/core/state/types.ts:59-65`
 
@@ -1382,28 +1568,29 @@ export type IndexEntry =
   | { kind: "tracked"; oid: string; mode: string; conflicted: boolean; text: IndexText }
   | { kind: "untracked" } | { kind: "ignored" };
 export type GitPending =
-  | { op: "tool"; waiting: BufferId[] }
+  | { op: "tool"; waiting: BufferId[]; saved: string[] }
   | { op: "stage"; bufferId: BufferId; line: number; waiting: BufferId[] };
+export type StageReport = { n: number; m: number; saved: boolean };
 export type GitState = { repo: RepoInfo | null; status: RepoStatus | null;
   files: Record<string, { index?: IndexEntry; hunks: Hunk[] }>; pending?: GitPending };
 // Action additions
 | { type: "gitDetected"; repo: RepoInfo | null; notice?: string }
 | { type: "gitStatus"; result: { ok: true; status: RepoStatus } | { ok: false; reason: string } }
 | { type: "gitIndexRead"; path: string; entry: IndexEntry | { kind: "failed"; reason: string } }
-| { type: "gitStaged"; path: string; result: "ok" | "stale" | { failed: string } }
+| { type: "gitStaged"; path: string; result: "ok" | "stale" | { failed: string }; report: StageReport }
 | { type: "toolExited"; result: ToolResult }
 | { type: "gitBlamed"; path: string; line: number; result: BlameLine | { failed: string } }
 | { type: "gitDirChanged" }
 // Effect additions
 | { kind: "gitStatus"; prefix: string }
 | { kind: "gitReadIndex"; path: string; repoPath: string }
-| { kind: "gitStage"; path: string; repoPath: string; expectedOid: string | null; patch: string }
+| { kind: "gitStage"; path: string; repoPath: string; expectedOid: string | null; patch: string; report: StageReport }
 | { kind: "gitBlame"; path: string; repoPath: string; line: number; contents: string }
 | { kind: "gitWatch"; dirs: string[] }
 | { kind: "runTool"; argv: string[]; cwd: string }
 ```
 
-The unions carry only plain data, so `update` stays serializable and pure. `expectedOid: null` means "untracked, add intent-to-add first". `ToolResult` is declared here in core and imported by `src/app/tool-host.ts` (app may import core): `{ kind: "exited"; code: number; signal?: string } | { kind: "missing"; tool: string } | { kind: "failed"; reason: string }`.
+The unions carry only plain data, so `update` stays serializable and pure. `expectedOid: null` means "untracked, add intent-to-add first". `report` is opaque to the runner and the adapter; the runner copies it from `gitStage` to `gitStaged`, so `onGitStaged` can write `staged hunk n/m` without keeping state. `ToolResult` is declared here in core and imported by `src/app/tool-host.ts` (app may import core): `{ kind: "exited"; code: number; signal?: string } | { kind: "missing"; tool: string } | { kind: "failed"; reason: string }`.
 
 - **Invariants:**
   - Exhaustive switches stay exhaustive. The compiler enforces this.
@@ -1457,8 +1644,8 @@ One central hook covers every edit site (keys, `applyBufferEdits`, substitute, r
 ## `src/core/state/git.ts`
 
 - **Change:** Add
-- **Decisions:** DES1, DES4, DES5, DES6, DES9, DES11
-- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1`, `W261005F2A7-REQ9@R1`
+- **Decisions:** DES1, DES4, DES5, DES6, DES9, DES11, DES13
+- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1`, `W261005F2A7-REQ9@R1`
 - **Responsibilities:** Every git state transition.
 - **Affected Callers/Consumers:** `update.ts`, `save.ts`, `disk.ts`, `git-commands.ts`
 - **Construction/Wiring:** None
@@ -1490,31 +1677,43 @@ The pending git operation follows this pattern exactly.
 ```ts
 export function openTool(ctx: CommandContext): Result {
   const s = ctx.state;
-  if (!s.git.repo) return message(s, "not a git repository");
-  if (s.git.pending) return message(s, "git: another operation is running");
+  if (!s.git.repo) return message(s, NOT_A_REPO);
+  if (s.git.pending) return message(s, BUSY);
   const dirty = dirtyIds(s);
   const stuck = dirty.find((id) => blocked(s, s.buffers[id]));
-  if (stuck) return message(s, `git tool not started: cannot save ${s.buffers[stuck].path}`, "error");
-  if (dirty.length === 0) return runTool(s);
-  const st = { ...s, git: { ...s.git, pending: { op: "tool", waiting: dirty } } };
+  if (stuck) return message(s, toolNotStarted(s.buffers[stuck].path), "error");
+  if (dirty.length === 0) return runTool(s, []);
+  const saved = dirty.map((id) => s.buffers[id].path);
+  const st = { ...s, git: { ...s.git, pending: { op: "tool", waiting: dirty, saved } } };
   return dirty.reduce((r, id) => chain(r, (x) => writeBuffer(x, id, ctx.now)), none(st));
+}
+function runTool(s: AppState, saved: readonly string[]): Result {
+  // saved.length > 0 → message(openingTool(saved, tool(s))); effect runTool { argv: config.git.tool, cwd: repo.top }
 }
 export function advanceGitPending(s: AppState, id: BufferId, now: number): Result {
   // remove id; still dirty again (typed during write) → writeBuffer; empty → continue(op)
-  // continue: tool → runTool(s); stage → stageNow(s, bufferId, line)
+  // continue: tool → runTool(s, pending.saved); stage → stageNow(s, bufferId, line, true)
 }
-function stageNow(s: AppState, id: BufferId, line: number): Result {
-  // entry = files[path].index; conflicted → message; hunks = currentHunks(s, id); h = hunkAt(hunks, line)
-  // effect gitStage { path, repoPath, expectedOid: entry.kind === "tracked" ? entry.oid : null, patch: hunkPatch(...) }
+function stageNow(s: AppState, id: BufferId, line: number, saved: boolean): Result {
+  // entry = files[path].index; conflicted → message(hasConflicts(path, tool(s)), "error")
+  // hunks = currentHunks(s, id); i = hunkIndexAt(hunks, line); none → message(NO_HUNK)
+  // effect gitStage { path, repoPath, expectedOid: entry.kind === "tracked" ? entry.oid : null,
+  //                   patch: hunkPatch(...), report: { n: i + 1, m: hunks.length, saved } }
 }
 export function resetHunk(ctx: CommandContext): Result {
-  // h = hunkAt(currentHunks(...), cursor line); span = lines [h.new.start, h.new.start + h.new.count)
+  // i = hunkIndexAt(currentHunks(...), cursor line); none → message(NO_HUNK)
+  // span = lines [h.new.start, h.new.start + h.new.count)
   // applyBufferEdits(s, { path, edits: [{ range, expected, text: h.oldLines.join("\n") (+ "\n" when needed) }] })
   // EOF + finalNewline differs → setBuffer(st, id, { finalNewline: index.finalNewline })
+  // → message(`reset hunk ${i + 1}/${m} · buffer changed, autosave pending`)
+}
+export function gotoHunk(ctx: CommandContext, dir: 1 | -1): Result {
+  // target = dir > 0 ? nextHunkLine : prevHunkLine; none → message(dir > 0 ? "no next hunk" : "no previous hunk")
+  // else move the cursor and message(`hunk ${n}/${m}`)
 }
 ```
 
-`openTool` and `stageHunk` share the pending mechanism.
+`openTool` and `stageHunk` share the pending mechanism. Every notice text and level comes from the DES13 catalogue: the fixed strings are module constants (`NOT_A_REPO`, `BUSY`, `NO_HUNK`), and the strings with values are small functions (`toolNotStarted`, `openingTool`, `hasConflicts`, `stagedHunk`). `tool(s)` is `s.config.git.tool[0]`. `onGitStaged` writes `stagedHunk(report, path)` on `ok`, the `warn` stale notice, or the first stderr line as `error`. `onToolExited` clears the message on `exited` and writes `<tool> not found (git.tool)` as `error` on `missing`. `onGitDetected` writes its notice at `warn`. `previewHunk` answers `no hunk at cursor` and opens nothing when there is no hunk.
 
 - **Dirty buffers:** `writeBuffer` (`src/core/state/save.ts:71-105`) already writes any writable dirty buffer immediately and cancels its autosave timer, so no new option is needed. A buffer whose write is already in flight returns `none`; its pending `saved` advances the operation.
 - **Blocked buffers:** `blocked` (now exported from `save.ts:32-33`) rejects up front, because `writeBuffer` returns `none` silently for read-only, deleted, or conflicted buffers. Without the check, the pending operation would wait forever.
@@ -1526,13 +1725,14 @@ export function resetHunk(ctx: CommandContext): Result {
   - `pending` is cleared on every terminal path: continue, `saveFailed`, buffer close, `gitDetected`.
   - Stage never emits `gitStage` for a conflicted entry.
   - Reset never touches Git.
-- **Verification Coverage:** `S1`–`S6`, `S12`, `S16`, `S20`, `S27`–`S29`; `V10`–`V13`, `V19`–`V23`, `V25`–`V27`, `V31`–`V35`
+  - Every pending-gated command (`openTool`, `stageHunk`) answers `git: another operation is running` while `pending` is set.
+- **Verification Coverage:** `S1`–`S6`, `S12`, `S16`, `S20`, `S27`–`S29`, `S34`, `S35`; `V10`–`V13`, `V19`–`V23`, `V25`–`V27`, `V31`–`V35`, `V66`, `V68`
 
 ## `src/core/state/git-commands.ts`
 
 - **Change:** Add
 - **Decisions:** DES11
-- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ4@R2`
+- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ4@R3`
 - **Responsibilities:** Command entries, default bindings, groups.
 - **Affected Callers/Consumers:** `registries()` (`src/app/main.ts:131-172`), `testRegistries()` (`test/support/state.ts:61-103`)
 - **Construction/Wiring:** Merged like `noteBindings` / `noteGroups` (`src/core/state/note-commands.ts:258-269`)
@@ -1559,21 +1759,21 @@ Each feature exports its commands, bindings, and groups, and `registries()` merg
 
 ```ts
 export const gitCommands: AppCommand[] = [
-  { id: "git.tool", title: "Git: open tool", run: openTool },
-  { id: "git.stageHunk", title: "Git: stage hunk", run: stageHunk },
-  { id: "git.resetHunk", title: "Git: reset hunk", run: resetHunk },
-  { id: "git.previewHunk", title: "Git: preview hunk", run: previewHunk },
+  { id: "git.tool", title: "Lazygit (full screen)", run: openTool },
+  { id: "git.stageHunk", title: "Stage hunk", run: stageHunk },
+  { id: "git.resetHunk", title: "Reset hunk", run: resetHunk },
+  { id: "git.previewHunk", title: "Preview hunk", run: previewHunk },
   { id: "git.nextHunk", title: "Git: next hunk", run: (c) => gotoHunk(c, 1) },
   { id: "git.prevHunk", title: "Git: previous hunk", run: (c) => gotoHunk(c, -1) },
-  { id: "git.blameLine", title: "Git: blame line", run: blameLine },
+  { id: "git.blameLine", title: "Blame line", run: blameLine },
 ];
 ```
 
-The ids are reachable as `:git.tool` and so on through the existing `:id` fallback (`src/core/state/commands.ts:120-127`). `]h`/`[h` are free (no `[`/`]` prefix bindings exist), and keymap lookup runs before the vim engine (`src/core/state/keys.ts:107-115`).
+Which-key prints a command's `title` as its row label (`src/core/state/whichkey.ts:130-135`), and the leader commands sit under the `git` and `hunk` groups, so their titles carry no `Git:` prefix (`w261005f2a7-ui-design.md` §7 Surface: Which-key popup). `git.nextHunk` and `git.prevHunk` are bound to `]h`/`[h`, outside the leader tree, and keep the prefix for the palette. The ids are reachable as `:git.tool` and so on through the existing `:id` fallback (`src/core/state/commands.ts:120-127`). `]h`/`[h` are free (no `[`/`]` prefix bindings exist), and keymap lookup runs before the vim engine (`src/core/state/keys.ts:107-115`).
 
 - **Invariants:**
   - Every binding id exists in `gitCommands`.
-- **Verification Coverage:** `S7`; `V6`, `V44`
+- **Verification Coverage:** `S7`, `S36`; `V6`, `V44`, `V69`
 
 ## `src/core/state/save.ts`
 
@@ -1614,11 +1814,52 @@ Order: quit wins, because shutting down needs no git. The refresh is coalesced b
   - The existing quit behavior is unchanged (`save.test.ts` still passes).
 - **Verification Coverage:** `S27`, `S28`, `S29`, `S20`; `V20`, `V31`, `V32`, `V26`
 
+## `src/core/state/result.ts`
+
+- **Change:** Modify
+- **Decisions:** DES13
+- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ7@R2`
+- **Responsibilities:** Accept a `warn` message level.
+- **Affected Callers/Consumers:** `src/core/state/git.ts`; every existing `message()` caller (unchanged); `src/ui/views/cmdline.ts:95`
+- **Construction/Wiring:** None
+- **Dependencies:** `AppState.notifications.message` (`src/core/state/types.ts:419`)
+
+**Symbol Changes:**
+
+| Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
+|---|---|---|---|
+| `message` | `result.ts:12-21` `level: "info" \| "error" = "info"` | `level: "info" \| "warn" \| "error" = "info"` | git.ts; cmdline.ts reads the level |
+
+**Existing Shape:** `src/core/state/result.ts:12-21`
+
+```ts
+export function message(
+  s: AppState,
+  text: string,
+  level: "info" | "error" = "info",
+): Result {
+```
+
+The message line knows two levels, and the painter picks `messageError` or `message`.
+
+**Proposed Shape:**
+
+```ts
+export type MessageLevel = "info" | "warn" | "error";
+export function message(s: AppState, text: string, level: MessageLevel = "info"): Result {
+```
+
+`MessageLevel` is also the type of `notifications.message.level`. Existing callers keep their two values, and the UI maps `warn` to `messageWarn` (`w261005f2a7-ui-design.md` §7 Surface: Message line).
+
+- **Invariants:**
+  - The default stays `info`.
+- **Verification Coverage:** `S34`; `V52` (typecheck), `V66`
+
 ## `src/core/state/disk.ts`, `status.ts`, `keys.ts`, `mouse.ts`
 
 - **Change:** Modify
 - **Decisions:** DES6, DES10, DES11
-- **Requirements:** `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ6@R2`
+- **Requirements:** `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ6@R2`
 - **Responsibilities:**
   - `disk.ts`: refresh on external file change.
   - `status.ts`: git segment.
@@ -1654,10 +1895,11 @@ git?: { ref: string; op?: "rebasing" | "merging"; added: number; changed: number
 Counts follow RF1:
 
 - A change hunk adds `min(old,new)` to `changed` and the remainder to `added` or `removed`.
-- An untracked hunk counts as `added`.
+- An `untracked` hunk adds nothing, and every count is 0 while `repo.head.kind` is `unborn`. A file with no index base would otherwise only repeat its line count (`W261005F2A7-REQ4@R3`).
 
 - **Invariants:**
   - `git` is absent when `repo` is `null`.
+  - Counts are 0 for an untracked file and in an unborn repository.
 - **Verification Coverage:** `S10`; `V15`, `V45`
 
 ## `src/core/config/schema.ts`
@@ -1702,7 +1944,7 @@ An empty or non-string `tool` is a schema error that `toml.ts` reports with a li
 
 - **Change:** Add
 - **Decisions:** DES1, DES3, DES4, DES6, DES8, DES11
-- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`
+- **Requirements:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`
 - **Responsibilities:** All Git CLI calls.
 - **Affected Callers/Consumers:** `src/app/effects.ts`, `src/app/main.ts`
 - **Construction/Wiring:** `createGit` in `main.ts`
@@ -1824,8 +2066,8 @@ Mutating file operations already share one promise chain.
 
 ```ts
 case "gitStage": void serial(() => d.git.stage(repo(), e)).then(
-  (r) => d.dispatch({ type: "gitStaged", path: e.path, result: r }),
-  (x) => d.dispatch({ type: "gitStaged", path: e.path, result: { failed: msg(x) } })); break;
+  (r) => d.dispatch({ type: "gitStaged", path: e.path, result: r, report: e.report }),
+  (x) => d.dispatch({ type: "gitStaged", path: e.path, result: { failed: msg(x) }, report: e.report })); break;
 case "runTool": void d.tool.run(e.argv, e.cwd).then((result) => d.dispatch({ type: "toolExited", result })); break;
 case "gitWatch": (watcher ??= d.watchGit(e.dirs, () => d.dispatch({ type: "gitDirChanged" }))).retarget(e.dirs); break;
 // gitStatus, gitReadIndex, gitBlame: free-running, one action each
@@ -1852,7 +2094,7 @@ case "gitWatch": (watcher ??= d.watchGit(e.dirs, () => d.dispatch({ type: "gitDi
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
 | `ToolHost`, `ToolResult` | None — new symbol | `{ run(argv: string[], cwd: string): Promise<ToolResult> }` | effects.ts |
-| `createToolHost` | None — new symbol | `(d: { screen: { suspend(): void; resume(): void; resetForeignModes(): void }; holdInterrupts: () => () => void; spawn?: ToolSpawn; which: (c) => string \| null; logger }) => ToolHost` | main.ts |
+| `createToolHost` | None — new symbol | `(d: { screen: { flush(): Promise<void>; suspend(): void; resume(): void; resetForeignModes(): void }; holdInterrupts: () => () => void; spawn?: ToolSpawn; which: (c) => string \| null; logger }) => ToolHost` | main.ts |
 
 **Existing Shape:** `src/app/main.ts:356`
 
@@ -1868,6 +2110,7 @@ Late binding of deps that need the lifecycle is the established pattern.
 export function createToolHost(d: ToolDeps): ToolHost {
   return { async run(argv, cwd) {
     if (d.which(argv[0]) === null) return { kind: "missing", tool: argv[0] };
+    await d.screen.flush();
     const release = d.holdInterrupts();
     d.screen.suspend();
     try {
@@ -1880,11 +2123,12 @@ export function createToolHost(d: ToolDeps): ToolHost {
 }
 ```
 
-The `finally` block guarantees mode reset, resume, and interrupt release on every path, including a thrown spawn and a killed child (RF11, RF12). `FOREIGN_MODES_RESET` lives in `src/ui/shell.ts` and is written by `screen.resetForeignModes()`, so the escape bytes stay in the UI layer; `main.ts` passes the shell as `screen`.
+`flush` comes first, so the frame with the pre-suspend message is written before the tool takes the terminal (DES13). The `finally` block guarantees mode reset, resume, and interrupt release on every path, including a thrown spawn and a killed child (RF11, RF12). `FOREIGN_MODES_RESET` lives in `src/ui/shell.ts` and is written by `screen.resetForeignModes()`, so the escape bytes stay in the UI layer; `main.ts` passes the shell as `screen`.
 
 - **Invariants:**
   - `resume` and `release` run exactly once per `suspend`.
-- **Verification Coverage:** `S12`–`S16`; `V30`, `V33`, `V34`, `V50`
+  - `flush` resolves before `holdInterrupts` and `suspend` run.
+- **Verification Coverage:** `S12`–`S16`, `S35`; `V30`, `V33`, `V34`, `V50`
 
 ## `src/app/lifecycle.ts`
 
@@ -1969,8 +2213,8 @@ Discovery stays off the first-frame path. The watcher is created by the runner o
 
 - **Change:** Modify
 - **Decisions:** DES9, DES11
-- **Requirements:** `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ4@R2`
-- **Responsibilities:** Suspend and resume, paint guard, foreign-mode reset, hunk overlay registration.
+- **Requirements:** `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ4@R3`
+- **Responsibilities:** Flush, suspend and resume, paint guard, foreign-mode reset, hunk overlay registration.
 - **Affected Callers/Consumers:** `main.ts`, `test/support/ui.ts` (mounted shell)
 - **Construction/Wiring:** `HunkView` joins the overlay list (`shell.ts:142-150`)
 - **Dependencies:** OpenTUI `CliRenderer.suspend/resume` (`node_modules/@opentui/core/renderer.d.ts:590-591`)
@@ -1979,7 +2223,7 @@ Discovery stays off the first-frame path. The watcher is created by the runner o
 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
-| `Shell` | `shell.ts:85-92` `{ attach; copyOsc52; destroy }` | adds `suspend(): void; resume(): void; resetForeignModes(): void` | main.ts, test shell |
+| `Shell` | `shell.ts:85-92` `{ attach; copyOsc52; destroy }` | adds `flush(): Promise<void>; suspend(): void; resume(): void; resetForeignModes(): void` | main.ts, test shell |
 | `paint` | `shell.ts:189-203` repaints on every dispatch, syncing `useMouse` | returns early while suspended; `resume()` calls `repaint()` | — |
 | `FOREIGN_MODES_RESET` | None — new symbol | `"\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1004l\x1b[?2004l\x1b[<99u\x1b[>4;0m\x1b[0m\x1b[?25h"` | resetForeignModes |
 
@@ -1998,22 +2242,24 @@ Any dispatch repaints and re-enables the mouse if config wants it. That is unsaf
 ```ts
 let suspended = false;
 const paint = (s: AppState) => { if (suspended) return; /* existing */ };
+flush: async () => { repaint(); await renderer.idle(); },
 suspend: () => { suspended = true; renderer.suspend(); },
 resume: () => { renderer.resume(); suspended = false; repaint(); },
 resetForeignModes: () => process.stdout.write(FOREIGN_MODES_RESET),
 ```
 
-The flag closes the mouse leak. `resetForeignModes` turns off every mouse mode, focus tracking, and bracketed paste. It also pops up to 99 kitty keyboard flag entries, resets modifyOtherKeys and SGR, and shows the cursor. `resume()` then re-applies only so's own modes (RF11). It runs while still in cooked mode, before `resume`.
+`flush` paints the latest state and waits for OpenTUI's render queue to go idle (`renderer.idle()`, `node_modules/@opentui/core/renderer.d.ts:426`). so never calls `renderer.start()`, so the renderer renders on demand and `idle()` resolves once the requested frame is written. The flag closes the mouse leak. `resetForeignModes` turns off every mouse mode, focus tracking, and bracketed paste. It also pops up to 99 kitty keyboard flag entries, resets modifyOtherKeys and SGR, and shows the cursor. `resume()` then re-applies only so's own modes (RF11). It runs while still in cooked mode, before `resume`.
 
 - **Invariants:**
   - No terminal write from `paint` while suspended.
-- **Verification Coverage:** `S14`, `S15`, `S31`; `V33`, `V50`, `V60`, `V61`
+  - `flush` resolves only after the frame for the current state is rendered.
+- **Verification Coverage:** `S14`, `S15`, `S31`, `S35`; `V33`, `V50`, `V60`, `V61`, `V67`
 
-## `src/ui/editors/text-view.ts`, `src/ui/views/statusline.ts`, `src/ui/views/explorer.ts`, `src/ui/overlays/hunk.ts`, `src/ui/theme.ts`
+## `src/ui/editors/text-view.ts`, `src/ui/views/statusline.ts`, `src/ui/views/explorer.ts`, `src/ui/views/cmdline.ts`, `src/ui/overlays/hunk.ts`, `src/ui/theme.ts`
 
-- **Change:** Modify (first four are existing except `hunk.ts`: Add)
-- **Decisions:** DES10, DES11
-- **Requirements:** `W261005F2A7-REQ4@R2`
+- **Change:** Modify (all existing except `hunk.ts`: Add)
+- **Decisions:** DES10, DES11, DES12, DES13
+- **Requirements:** `W261005F2A7-REQ4@R3`
 - **Responsibilities:** Paint git data.
 - **Affected Callers/Consumers:** Shell views
 - **Construction/Wiring:** `HunkView` registered in `shell.ts`
@@ -2024,10 +2270,13 @@ The flag closes the mouse leak. `resetForeignModes` turns off every mouse mode, 
 | Symbol | Current Shape or Behavior | Final Shape or Behavior | Callers/Consumers Affected |
 |---|---|---|---|
 | `EditorView.layoutFrame` | `text-view.ts:667-672` providers `[highlight, ...spec, search, selection]` | appends `hunkSigns(s.git.files[b.path]?.hunks ?? [])` last when `s.git.repo` | — |
+| `gutterWidth` | `text-view.ts:50-51` `(lineCount) =>` numbers + space + sign cell | `(lineCount, change: boolean) =>` plus one leading change cell when `change` | cursor/scroll (`:335`), hit-test (`:457`), paint (`:520`) — each passes `s.git.repo !== null` |
+| gutter painter | `text-view.ts:540-557` number cell + sign cell | inside a repository also paints `row.changeSign` (or a blank) at x = 0 on a line's first screen row; the UI design owns the cell's look | — |
+| message painter | `cmdline.ts:92-100` `error` → `messageError`, else `message` | `warn` → `messageWarn` | — |
 | statusline segments | `statusline.ts:89-140` | adds a `git` seg after `path`; first in the drop list `[git, preview, words, view]` | — |
 | explorer row | `explorer.ts:299-315` | after the name (and `●`), a one-cell marker with a `git*` token | — |
 | `HunkView` | None — new symbol | float via `drawFrame` (`src/ui/overlays/host.ts:14-50`), lines with `diffDel` for `oldLines` and `diffAdd` for the new lines | shell.ts |
-| theme tokens | `theme.ts:206-232` | adds `gitAdd`, `gitChange`, `gitDelete`, `gitTopDelete`, `gitChangeDelete`, `gitUntracked`, `gitConflict`, `gitStaged`, `gitBranch` | views |
+| theme tokens | `theme.ts:206-232` | adds the sign tokens `gitAdd`, `gitChange`, `gitDelete`, `gitTopDelete`, `gitChangeDelete`, `gitUntracked`; the statusline tokens `statusGitRef`, `statusGitOp`, `statusGitAdd`, `statusGitChange`, `statusGitDelete`; the explorer tokens `explorerGitModified`, `explorerGitStaged`, `explorerGitUntracked`, `explorerGitConflict`, `explorerGitContains`; and `messageWarn`. Values are in the UI design (§7 Component: Git theme tokens) | views |
 
 **Existing Shape:** `src/ui/editors/text-view.ts:667-672`
 
@@ -2044,11 +2293,20 @@ const git = s.git.repo ? [hunkSigns(s.git.files[b.path]?.hunks ?? [])] : [];
 const providers = [highlightMarks(ft?.highlighter), ...(spec?.decorations ?? []), searchMarks(s.vim.search), selectionMarks(selection), ...git];
 ```
 
-Git comes last, so its sign wins (`src/core/kernel/view/text-view.ts:98-101`). Outside a repository the provider list is unchanged, so existing snapshots are stable. The gutter width is unchanged, because the one-cell sign column already exists (`text-view.ts:50-52`, `:549-556`).
+`hunkSigns` sets only `changeSign`, so its position in the list does not decide any winner, and the `▕`/`⚠` sign keeps its cell (DES12). Outside a repository the provider list is unchanged, so existing snapshots are stable.
+
+```ts
+const gutterWidth = (lineCount: number, change: boolean) =>
+  (change ? 1 : 0) + Math.max(4, String(lineCount).length) + 2;
+// renderSelf, cursor(), and the hit-test each call gutterWidth(b.text.lineCount, s.git.repo !== null)
+```
+
+One width function with one flag keeps paint, cursor placement, and mouse hit-testing in agreement: the text column starts at `x + gw` in all three. A wrapped line's continuation rows and the `~` filler rows leave the change cell blank.
 
 - **Invariants:**
   - Without a repository, rendering is byte-identical to today.
-- **Verification Coverage:** `S7`, `S9`, `S10`; `V44`–`V47`
+  - The three `gutterWidth` callers use the same flag in one frame.
+- **Verification Coverage:** `S7`, `S9`, `S10`, `S32`, `S33`, `S34`; `V44`–`V47`, `V64`, `V65`
 
 ## Migration and Delivery
 
@@ -2072,9 +2330,9 @@ Git comes last, so its sign wins (`src/core/kernel/view/text-view.ts:98-101`). O
 | `S5` | In a CRLF or `autocrlf=true` repo, one edited line stages as exactly one line | REQ1, REQ5, DES3, DES4 |
 | `S6` | Reset replaces the hunk with index lines in one undo step and restores the EOF newline flag; no Git process runs | REQ1, DES5 |
 | `S7` | Each hunk kind yields its distinct sign on the right line; navigation stops at ends | REQ4, REQ5, DES2, DES10 |
-| `S8` | A changed line inside a block-replaced region shows a sign on the block row | REQ4, DES10 |
-| `S9` | Explorer shows the correct marker per file and `contains` on ancestor folders, including per-file untracked inside new folders | REQ4, DES10 |
-| `S10` | Statusline shows ref (branch / unborn / short SHA), `rebasing`/`merging`, counts, and drops first on narrow terminals | REQ4, DES10 |
+| `S8` | A changed line inside a block-replaced region shows its Git sign on the block row | REQ4, DES12 |
+| `S9` | Explorer shows one marker per file by conflict > untracked > modified > staged, never a deleted marker, and `contains` on every ancestor folder of a changed path (deleted tracked files included), with per-file untracked inside new folders | REQ4, DES10 |
+| `S10` | Statusline shows ref (branch / unborn / short SHA), `rebasing`/`merging`, counts (0 for an untracked file and in an unborn repository), and drops first on narrow terminals | REQ4, DES10 |
 | `S11` | Blame shows author/date/summary, or "not committed yet" for zero SHA, both sentinels, untracked, unborn | REQ4, DES11 |
 | `S12` | While the tool runs, nothing is drawn and no keys reach the store | REQ2, DES9 |
 | `S13` | SIGINT during the tool does not exit so; SIGTERM still does | REQ2, DES9 |
@@ -2096,6 +2354,11 @@ Git comes last, so its sign wins (`src/core/kernel/view/text-view.ts:98-101`). O
 | `S29` | Stage in a dirty buffer saves, then stages the saved text; a failed save stages nothing | REQ9, DES4 |
 | `S30` | The adapter issues only the allowed subcommands (`--version`, `rev-parse`, `symbolic-ref`, `status`, `ls-files`, `cat-file`, `blame`, `add --intent-to-add`, `apply --cached`); patch and buffer contents travel only on stdin | REQ1, DES1, DES4 |
 | `S31` | After `resume()`, every image visible before suspend is drawn again | REQ2, DES9 |
+| `S32` | Inside a repository, a line with a Git sign and a `▕`/`⚠` sign shows both, and the gutter is one cell wider; outside a repository the gutter is byte-identical to today | REQ4, DES12 |
+| `S33` | With the change column present, a click in the text column and the drawn cursor map to the same source column as without it | REQ4, DES12 |
+| `S34` | Every Git command outcome sets the DES13 catalogue text at its catalogue level, including `warn` for the stale-index and Git-version notices | REQ1, REQ3, REQ4, REQ7, REQ9, DES13 |
+| `S35` | When the tool gate saved buffers, the `written · opening <tool>` message is on screen before `suspend()`, nothing is painted while suspended, and the message is cleared after the tool exits | REQ2, REQ8, DES9, DES13 |
+| `S36` | Which-key shows `Lazygit (full screen)` under `+git` and `Stage hunk`, `Reset hunk`, `Preview hunk`, `Blame line` under `+hunk` | REQ4, DES11 |
 
 ## Test Suites and Cases
 
@@ -2148,15 +2411,15 @@ src/core/features/git/
 │   ├── V14 fixture with "1 .M", "2 R. ... \0orig", "u", "? notes/new/x.md", submodule "S.M.", paths outside prefix, "# branch.head (detached)"
 │   │   ├── Expect: workspace-relative keys only; rename keeps new path; submodule single entry; head detached [S24, S9]
 │   │   └── Unique risk: prefix stripping, rename field consumption
-│   ├── V15 statusSegments counts from hunks (change 3→1 lines)
-│   │   ├── Expect: changed 1, removed 2 [S10]
-│   │   └── Unique risk: count rule drift from gitsigns
-│   ├── V16 markers precedence conflict > deleted > untracked > modified > staged
-│   │   ├── Expect: one marker per path [S9]
+│   ├── V15 statusSegments counts from hunks (change 3→1 lines); an untracked file; a tracked file while head is unborn
+│   │   ├── Expect: changed 1, removed 2; all 0 for untracked; all 0 when unborn [S10]
+│   │   └── Unique risk: count rule drift from gitsigns, or a line count shown as additions
+│   ├── V16 markers precedence conflict > untracked > modified > staged, with a staged-and-modified file
+│   │   ├── Expect: one marker per path; staged-and-modified → "modified" [S9]
 │   │   └── Unique risk: ambiguous marker
-│   └── V17 ancestor folders of marked files
-│       ├── Expect: "contains" on each ancestor without own marker [S9]
-│       └── Unique risk: folder aggregation missing nested paths
+│   └── V17 ancestor folders of marked files and of a deleted tracked file "old/gone.md"
+│       ├── Expect: "contains" on each ancestor without own marker, including "old"; no key "old/gone.md" [S9]
+│       └── Unique risk: folder aggregation missing nested or deleted paths, or a marker for a row that does not exist
 ├── patch.test.ts [Unit]
 │   Purpose: exact patch text
 │   SUT: hunkPatch
@@ -2175,9 +2438,12 @@ src/core/features/git/
         └── Unique risk: post-2.41 sentinel shown as an author
 
 src/core/kernel/view/text-view.test.ts [Unit]
-└── V9 block replace over lines 3–6 with a line sign on 5
-    ├── Expect: replace row carries that sign; rows without signs unchanged [S8]
-    └── Unique risk: git signs invisible inside rendered blocks
+├── V9 block replace over lines 3–6 with a line changeSign on 4 and 5, and a sign on 5
+│   ├── Expect: replace row carries the changeSign from line 5 and no sign; rows without changeSign unchanged [S8]
+│   └── Unique risk: git signs invisible inside rendered blocks, or v1 block signs changing
+└── V63 two providers on one line: one sets sign "▕", the other changeSign "~"; and two providers setting changeSign
+    ├── Expect: the row has sign "▕" and changeSign "~"; the later changeSign wins [S32]
+    └── Unique risk: one channel overwriting the other
 
 src/core/state/git.test.ts [Unit]
 │   Purpose: reducer decisions and continuations
@@ -2206,7 +2472,7 @@ src/core/state/git.test.ts [Unit]
 │   ├── Expect: write effect first; after saved → gitStage; after saveFailed → message, pending cleared, no gitStage [S29]
 │   └── Unique risk: staging unsaved text or hanging pending
 ├── V21 second stage/tool while pending
-│   ├── Expect: message "another operation is running"; no effects [S27]
+│   ├── Expect: message "git: another operation is running"; no effects [S27]
 │   └── Unique risk: overlapping continuations
 ├── V23 resetHunk change at EOF with finalNewline differing
 │   ├── Expect: buffer lines = index lines, finalNewline = index flag, one undo entry, no git effect; `u` restores lines [S6]
@@ -2229,9 +2495,25 @@ src/core/state/git.test.ts [Unit]
 ├── V34 openTool without repo; toolExited missing
 │   ├── Expect: "not a git repository"; "<tool> not found (git.tool)" [S16]
 │   └── Unique risk: silent no-op
-└── V35 toolExited exited
-    ├── Expect: gitRefresh timer, read effect per open buffer, gitReadIndex per open buffer [S12, S20]
-    └── Unique risk: stale buffers after checkout
+├── V35 toolExited exited
+│   ├── Expect: gitRefresh timer, read effect per open buffer, gitReadIndex per open buffer [S12, S20]
+│   └── Unique risk: stale buffers after checkout
+├── V66 message catalogue, one row per outcome: gotoHunk inside / at each end; stageHunk with no hunk, conflicted, busy;
+│   gitStaged ok with report saved false and true, stale, failed; resetHunk ok and no hunk; previewHunk with no hunk;
+│   openTool blocked and saveFailed; toolExited missing; gitDetected with the version notice
+│   ├── Expect: notifications.message equals the DES13 text and level for each row (e.g. "hunk 2/3" info,
+│   │   '"notes/a.md" written · staged hunk 1/2' info, "index changed; hunks refreshed" warn,
+│   │   "notes/a.md has conflicts; resolve them in lazygit" error, "git tool not started: notes/a.md could not be saved" error) [S34]
+│   └── Unique risk: wording or level drift from the accepted UI
+└── V68 openTool with two dirty buffers, then both saved; then toolExited exited
+    ├── Expect: after the last saved, message "2 files written · opening lazygit" and one runTool effect in the same result;
+    │   with one dirty buffer '"notes/a.md" written · opening lazygit'; with none, no message; after toolExited, no message [S35]
+    └── Unique risk: missing or stale pre-suspend message
+
+src/core/state/git-commands.test.ts [Unit]
+└── V69 whichKeyRows for "<leader>g" and "<leader>gh" with testRegistries
+    ├── Expect: rows "g Lazygit (full screen)", "+hunk"; then "s Stage hunk", "r Reset hunk", "p Preview hunk", "b Blame line" [S36]
+    └── Unique risk: palette-style titles shown in which-key
 
 src/core/config/schema.test.ts [Unit]
 └── V43 git.tool ["gitui"], [], [1], missing section
@@ -2269,7 +2551,7 @@ src/workspace/git-watcher.test.ts [Integration]
 │   Purpose: multi-dir first-level watching
 │   Real: watchGitDirs with fs.watch
 │   Infra: filesystem, git
-│   Doubles: watchFn throwing (V38b only)
+│   Doubles: watchFn throwing (V55 only)
 ├── V54 commit in temp repo (gitDir) and in linked worktree (gitDir + commonDir)
 │   ├── Expect: onChange called ≥ 1 within 1 s; never for index.lock-only writes [S22, S25]
 │   └── Unique risk: missed worktree common dir or lock noise
@@ -2282,9 +2564,9 @@ src/app/tool-host.test.ts [Unit]
 │   SUT: createToolHost
 │   Infra: None
 │   Doubles: screen, holdInterrupts, spawn, which, write (true boundaries)
-├── V30 normal exit
-│   ├── Expect: order hold → suspend → spawn(cwd) → write(reset) → resume → release; result exited 0 [S12, S14]
-│   └── Unique risk: resume before reset or missing release
+├── V30 normal exit, with a flush double that resolves on the next tick
+│   ├── Expect: order flush resolved → hold → suspend → spawn(cwd) → write(reset) → resume → release; result exited 0 [S12, S14, S35]
+│   └── Unique risk: suspending before the pre-suspend frame, resume before reset, or missing release
 ├── V33 spawn throws; child exit with signal SIGKILL
 │   ├── Expect: write/resume/release each once; result failed / exited{signal} [S14]
 │   └── Unique risk: terminal left suspended after crash
@@ -2337,9 +2619,19 @@ test/ui/git.test.ts [Integration]
 ├── V47 gitHunk overlay open/close (Esc, q, click outside)
 │   ├── Expect: overlay shows oldLines/newLines with diff tokens; closes [S7]
 │   └── Unique risk: overlay key/mouse gates missing
-└── V60 shell suspend() then resume() with an image widget visible (recording drawImage)
-    ├── Expect: drawImage is called again for that image after resume; no terminal writes between suspend and resume [S31, S15]
-    └── Unique risk: images stay blank after returning from the tool
+├── V60 shell suspend() then resume() with an image widget visible (recording drawImage)
+│   ├── Expect: drawImage is called again for that image after resume; no terminal writes between suspend and resume [S31, S15]
+│   └── Unique risk: images stay blank after returning from the tool
+├── V64 live-view note with a reveal sign "▕" and a change hunk on the same line, in a repository and with git.repo null
+│   ├── Expect: repo frame has the Git glyph at x = 0 and "▕" in the sign cell, text one cell further right;
+│   │   no-repo frame equals the existing v1 snapshot [S32]
+│   └── Unique risk: Git signs hiding v1 signs, or a gutter change leaking outside a repository
+├── V65 with the change column: a mouse press on text column 5 of line 3; cursor at line 3 column 5 in normal mode
+│   ├── Expect: the press moves the cursor to {line 3, col 5}; the drawn cursor x equals rect.x + gutterWidth(lineCount, true) + 5 [S33]
+│   └── Unique risk: hit-test or cursor one cell off from the painted text
+└── V67 dispatch an action that sets a message, then await shell.flush(), then suspend()
+    ├── Expect: the rendered frame before suspend contains the message text; no frame is rendered after suspend [S35]
+    └── Unique risk: the tool taking the terminal before the pre-suspend frame is written
 
 test/e2e/git-tool.test.ts [E2E]
 │   Purpose: real terminal hand-off
@@ -2357,7 +2649,7 @@ test/bench/git-diff.bench.ts [Bench]
 
 Non-test verification
 ├── V52 Type/build check — `bun run check` (biome, tsc --noEmit, knip, unit tests) passes; `bun run build` produces dist/so
-│   ├── Expect: zero errors; knip zero findings [S1–S29]
+│   ├── Expect: zero errors; knip zero findings [S1–S36]
 │   └── Unique risk: exhaustive-switch gaps, unused exports
 ├── V53 Bench gate — `bun run bench` firstFrame and keystroke targets unchanged
 │   ├── Expect: no regression beyond gate [S19, S26]
@@ -2432,7 +2724,7 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 - A central wrapper hook starts `gitDiff:<id>` (100 ms) on text-version changes.
 - Commands recompute hunks synchronously.
 
-**Requirements Addressed:** `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ4@R2`
+**Requirements Addressed:** `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ4@R3`
 
 **Research Support:** `RF14` evaluated `W261005F2A7-REQ5@R1` and informed `@R2` (0.02–6 ms normal, 0.3–5 s worst case without a cap); `RF1` (100 ms debounce)
 
@@ -2589,7 +2881,7 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 - `parseStatus` keeps workspace-relative entries.
 - `onGitStatus` re-reads the index only for open buffers whose index side changed, and emits `gitWatch` when the head changed.
 
-**Requirements Addressed:** `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ4@R2`
+**Requirements Addressed:** `W261005F2A7-REQ6@R2`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ4@R3`
 
 **Research Support:** `RF6`, `RF7` evaluated `W261005F2A7-REQ6@R1` and informed `@R2`; `RF9` supported `REQ6`, `REQ7`; `RF8` evaluated `W261005F2A7-REQ7@R1` and informed `@R2`
 
@@ -2698,11 +2990,11 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 **Decision:**
 
 - `openTool` refuses without a repository, or while an operation is pending or a dirty buffer is blocked.
-- Otherwise it saves dirty buffers through `GitPending { op: "tool" }`, then emits `runTool { argv: config.git.tool, cwd: repo.top }`.
-- `createToolHost` checks `which`, holds interrupts, calls `shell.suspend()`, and spawns with inherited stdio.
+- Otherwise it saves dirty buffers through `GitPending { op: "tool", saved }`, then sets the pre-suspend message (DES13) and emits `runTool { argv: config.git.tool, cwd: repo.top }`.
+- `createToolHost` checks `which`, awaits `shell.flush()` so the pre-suspend frame is written, holds interrupts, calls `shell.suspend()`, and spawns with inherited stdio.
 - In `finally` it writes `FOREIGN_MODES_RESET`, calls `shell.resume()`, and releases interrupts, then reports `ToolResult`.
 - `paint` returns early while suspended.
-- `onToolExited` refreshes and re-reads every open buffer and index.
+- `onToolExited` clears the message, refreshes, and re-reads every open buffer and index.
 
 **Requirements Addressed:** `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ8@R1`
 
@@ -2712,6 +3004,7 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 
 - OpenTUI's suspend and resume already handle so's own modes (RF11).
 - The paint guard closes the mouse leak found in exploration.
+- The store runs effects before it notifies painters (`src/core/state/store.ts`), and `requestRender` is asynchronous, so without `flush` the tool would take the terminal before the message frame is written. `renderer.idle()` is OpenTUI's own completion signal for a requested frame.
 - `holdInterrupts` mirrors micro's Ctrl-C trap (RF12).
 - Re-reading buffers reuses `onDiskLoaded`.
 - A structural `screen` interface keeps `src/app` free of UI imports.
@@ -2719,7 +3012,7 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 **Code Impact:**
 
 - `src/app/tool-host.ts` — `createToolHost` — new
-- `src/ui/shell.ts` — `Shell.suspend`, `resume`, `resetForeignModes`, `paint` — modified
+- `src/ui/shell.ts` — `Shell.flush`, `suspend`, `resume`, `resetForeignModes`, `paint` — modified
 - `src/app/lifecycle.ts` — `holdInterrupts` — modified
 - `src/core/state/git.ts` — `openTool`, `onToolExited` — new
 - `src/app/main.ts` — construction — modified
@@ -2731,11 +3024,11 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 - Typeahead typed after the child exits but before resume reaches so as keys (RF11). This is accepted.
 - Kitty images are deleted on suspend (RF11). `resume()` must force a full repaint that re-issues every visible image draw. `V60` proves the re-issue at the shell level, and the manual Ghostty/kitty check `V61` proves the images actually reappear.
 
-**Success Criteria:** `S12`–`S16`, `S27`, `S28`, `S31`
+**Success Criteria:** `S12`–`S16`, `S27`, `S28`, `S31`, `S35`
 
 **Verification Impact:**
 
-- `V30`, `V33`, `V59` ordering; `V42` signals; `V31`, `V32`, `V34`, `V35` reducer; `V58` integration; `V50` real PTY; `V60` image re-issue; `V61` manual image check.
+- `V30`, `V33`, `V59` ordering; `V42` signals; `V31`, `V32`, `V34`, `V35`, `V68` reducer; `V58` integration; `V50` real PTY; `V60` image re-issue; `V61` manual image check; `V67` pre-suspend frame.
 
 ## W261005F2A7-DES10: Display is derived per frame from git state
 
@@ -2743,41 +3036,42 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 
 **Decision:**
 
-- `hunkSigns` is appended last to `layoutFrame`'s providers, so git signs win.
-- `layoutText` lets a block-replace row carry the last sign in its range.
-- `statusSegments` adds `git`, and the statusline drops it first on narrow terminals.
-- `explorerMarkers` gives each row one marker by precedence, with `contains` on ancestors.
-- New `git*` theme tokens are added.
+- `hunkSigns` is appended to `layoutFrame`'s providers and fills the change-column channel (DES12).
+- `statusSegments` adds `git`, and the statusline drops it first on narrow terminals. Untracked hunks add no counts, and every count is 0 while the head is unborn.
+- `explorerMarkers` gives each row one marker by precedence conflict > untracked > modified > staged, with `contains` on the ancestors of every changed path. Deleted tracked files have no row and no marker; they only mark ancestors.
+- New theme tokens are added per surface: the sign tokens `git*`, the statusline tokens `statusGit*`, the explorer tokens `explorerGit*`, and `messageWarn` (values in the UI design).
 - `GIT_SIGNS` uses distinct one-cell glyphs, so kinds remain distinguishable with `color = "never"`.
 
-**Requirements Addressed:** `W261005F2A7-REQ4@R2`
+**Requirements Addressed:** `W261005F2A7-REQ4@R3`
 
-**Research Support:** `RF1`, `RF9` evaluated `W261005F2A7-REQ4@R1` and informed `@R2`
+**Research Support:** `RF1`, `RF9` evaluated `W261005F2A7-REQ4@R1` and informed `@R2` (current `@R3` follows the accepted UI mockups)
 
 **Rationale:**
 
-- It reuses the existing single sign cell (`src/ui/editors/text-view.ts:549-556`) and the `searchMarks` provider pattern.
+- It reuses the `searchMarks` provider pattern and the existing segment and row painters.
+- Counts for a file with no index base would only repeat its line count, so they are left out (`W261005F2A7-REQ4@R3`).
+- A deleted file is not on disk, so the explorer has no row to mark; the folder marker still shows the change.
+- Per-surface tokens follow the v1 split by background (`explorerDirty` on `bg-dark`, the gutter on `bg`), as the accepted UI design names them.
 - Without a repository, output is unchanged, so existing snapshots are unaffected.
 
 **Code Impact:**
 
 - `src/core/features/git/signs.ts`, `status.ts` — new
-- `src/core/kernel/view/text-view.ts` — `layoutText` — modified
 - `src/core/state/status.ts` — modified
 - `src/ui/editors/text-view.ts`, `views/statusline.ts`, `views/explorer.ts`, `theme.ts` — modified
 
-**Detailed Design:** §7 `src/core/features/git/signs.ts`, `src/core/kernel/view/text-view.ts`, `src/core/state/status.ts`, UI files
+**Detailed Design:** §7 `src/core/features/git/signs.ts`, `src/core/features/git/status.ts`, `src/core/state/status.ts`, UI files
 
 **Tradeoffs:**
 
-- Git signs override the transient markdown reveal and error signs on the same line.
-- Glyph and marker shapes are presentation defaults, open to UI refinement.
+- A file that is staged and then modified shows only `modified`; the staged part is visible in lazygit.
+- Glyphs, marker letters, and token values follow the accepted UI design; changing them is a UI-design change.
 
-**Success Criteria:** `S7`–`S10`
+**Success Criteria:** `S7`, `S9`, `S10`
 
 **Verification Impact:**
 
-- `V5`, `V6`, `V9`, `V15`–`V17` units; `V44`–`V46` UI snapshots.
+- `V5`, `V6`, `V15`–`V17` units; `V44`–`V46` UI snapshots.
 
 ## W261005F2A7-DES11: Commands, keys, preview overlay, blame, and config
 
@@ -2785,16 +3079,16 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 
 **Decision:**
 
-- `gitCommands` provides `git.tool`, `stageHunk`, `resetHunk`, `previewHunk`, `nextHunk`, `prevHunk`, and `blameLine`.
+- `gitCommands` provides `git.tool`, `stageHunk`, `resetHunk`, `previewHunk`, `nextHunk`, `prevHunk`, and `blameLine`. The leader commands are titled `Lazygit (full screen)`, `Stage hunk`, `Reset hunk`, `Preview hunk`, and `Blame line`, because which-key prints titles under the `git` and `hunk` groups; `]h`/`[h` keep `Git: next hunk` / `Git: previous hunk`.
 - `gitBindings` binds them to `<leader>gg`, `<leader>ghs`, `<leader>ghr`, `<leader>ghp`, `<leader>ghb`, `]h`, and `[h`.
 - `gitGroups` labels `<leader>g` as git and `<leader>gh` as hunk.
-- A `gitHunk` overlay shows `HunkView`, which closes on Esc, `q`, or a click outside.
+- A `gitHunk` overlay shows `HunkView`, which closes on Esc, `q`, or a click outside. With no hunk at the cursor, preview answers `no hunk at cursor` and opens nothing.
 - Blame emits `gitBlame` with `--contents -`, or answers "not committed yet" in core for untracked or unborn files.
 - `ConfigSchema.git.tool` is a non-empty string array defaulting to `["lazygit"]`.
 
-**Requirements Addressed:** `W261005F2A7-REQ4@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`
+**Requirements Addressed:** `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`
 
-**Research Support:** `RF13` evaluated `W261005F2A7-REQ4@R1` and informed `@R2`; `RF10` (LazyVim keys)
+**Research Support:** `RF13` evaluated `W261005F2A7-REQ4@R1` and informed `@R2` (current `@R3` follows the accepted UI mockups); `RF10` (LazyVim keys)
 
 **Rationale:**
 
@@ -2803,7 +3097,7 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 
 **Code Impact:**
 
-- `src/core/state/git-commands.ts` — new
+- `src/core/state/git-commands.ts` — `gitCommands`, `gitBindings`, `gitGroups` — new
 - `src/ui/overlays/hunk.ts` — `HunkView` — new
 - `src/core/state/keys.ts`, `mouse.ts` — overlay gates — modified
 - `src/core/config/schema.ts` — `git` — modified
@@ -2816,8 +3110,115 @@ Unit suites prove the algorithms (diff, normalize, patch, parse, markers) and th
 - Blame shows as a message-line notice, not an inline virtual-text annotation, which keeps the layout unchanged.
 - `.git-blame-ignore-revs` is deferred.
 
-**Success Criteria:** `S11`, `S17`, `S7`
+**Success Criteria:** `S11`, `S17`, `S7`, `S36`
 
 **Verification Impact:**
 
-- `V24`, `V43` units; `V39` real blame; `V47` overlay.
+- `V24`, `V43`, `V69` units; `V39` real blame; `V47` overlay.
+
+## W261005F2A7-DES12: Git signs paint in their own change column inside a repository
+
+**Question:** Where do Git signs go so they never hide the existing `▕` reveal and `⚠` error signs?
+
+**Decision:**
+
+- Line decorations and render rows gain a second sign channel, `changeSign`, beside `sign`. Each channel keeps "the last provider wins".
+- `hunkSigns` sets only `changeSign`.
+- A block-replace row carries the last `changeSign` in its covered range. Its `sign` is not inherited, so v1 behaviour stays as it is.
+- `gutterWidth(lineCount, change)` adds one leading cell when `change` is true. Paint, cursor placement, and mouse hit-testing all call it with `s.git.repo !== null`, so the text column starts at the same x in all three.
+- Outside a repository the flag is false, so the gutter and every row are byte-identical to today.
+
+**Requirements Addressed:** `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ5@R2`
+
+**Research Support:** None — this follows the accepted mockup `W261005F2A7-M1@R3` (accepted by the user on 2026-10-05).
+
+**Rationale:**
+
+- One shared cell would make Git signs hide the reveal and error signs, and the sign touched the text during mockup review.
+- A generic second channel keeps `src/core/kernel/view` free of Git and reuses the existing merge rule.
+- A single width function with one flag is the smallest way to keep paint, cursor, and hit-testing in agreement.
+- This replaces the earlier choice to reuse the single sign cell and let Git signs win by provider order.
+
+**Code Impact:**
+
+- `src/core/kernel/view/types.ts` — `RenderLine.changeSign` — modified
+- `src/core/kernel/view/decorations.ts` — line `Decoration.changeSign` — modified
+- `src/core/kernel/view/text-view.ts` — `layoutLine`, `layoutText` — modified
+- `src/core/features/git/signs.ts` — `hunkSigns` — new
+- `src/ui/editors/text-view.ts` — `gutterWidth` and its callers at `:335`, `:457`, `:520`; the gutter painter — modified
+
+**Detailed Design:** §7 `src/core/kernel/view/types.ts`, `decorations.ts`; `src/core/kernel/view/text-view.ts`; `src/core/features/git/signs.ts`; UI files
+
+**Tradeoffs:**
+
+- Inside a repository the text column moves one cell right, so a line wraps one cell earlier.
+- Opening or leaving a repository mid-session (a new `gitDetected`) changes the gutter width once.
+
+**Success Criteria:** `S8`, `S32`, `S33`
+
+**Verification Impact:**
+
+- `V9`, `V63` kernel units; `V64` gutter snapshot; `V65` hit-test and cursor.
+
+## W261005F2A7-DES13: Git notices come from one catalogue with a warn level
+
+**Question:** What exact text and level does every Git outcome show on the message line?
+
+**Decision:**
+
+- `message()` and `notifications.message.level` accept `"warn"` in addition to `"info"` and `"error"`.
+- Git reducers take every notice from one catalogue, the accepted UI design's Git message catalogue (`w261005f2a7-ui-design.md` §7 Component: Git message catalogue). `<tool>` is `config.git.tool[0]`, which reads `lazygit` by default.
+
+| Outcome | Text | Level | Set by |
+|---|---|---|---|
+| Navigate | `hunk n/m` | info | `gotoHunk` |
+| Navigate at an end | `no next hunk` / `no previous hunk` | info | `gotoHunk` |
+| No hunk at the cursor | `no hunk at cursor` | info | `stageHunk`, `resetHunk`, `previewHunk` |
+| Staged | `staged hunk n/m` | info | `onGitStaged` (`report.saved` false) |
+| Staged after a save | `"<path>" written · staged hunk n/m` | info | `onGitStaged` (`report.saved` true) |
+| Reset | `reset hunk n/m · buffer changed, autosave pending` | info | `resetHunk` |
+| Not a repository | `not a git repository` | info | every Git command |
+| Busy | `git: another operation is running` | info | `openTool`, `stageHunk` while `pending` |
+| Conflicted stage | `<path> has conflicts; resolve them in <tool>` | error | `stageHunk`, `stageNow` |
+| Stale index | `index changed; hunks refreshed` | warn | `onGitStaged` |
+| Patch rejected | first stderr line | error | `onGitStaged` |
+| Tool save blocked or failed | `git tool not started: <path> could not be saved` | error | `openTool`, `cancelGitPending` |
+| Before suspend | `"<path>" written · opening <tool>`, or `N files written · opening <tool>` when N > 1 | info | `runTool` in `git.ts` |
+| Tool missing | `<tool> not found (git.tool)` | error | `onToolExited` |
+| Git too old | `git <version> is older than 2.31; git features off` | warn | `onGitDetected` |
+| Blame | `<author>, <relative date> · <summary> (<sha7>)` or `not committed yet` | info | `onGitBlamed`, `blameLine` |
+
+- `n/m` is the 1-based position of the hunk among the file's hunks before the action. `gitStage` carries `report: { n, m, saved }`, and the runner echoes it on `gitStaged`.
+- The pre-suspend message is set only when the gate saved buffers, and `onToolExited` clears it on `exited`.
+
+**Requirements Addressed:** `W261005F2A7-REQ1@R2`, `W261005F2A7-REQ2@R2`, `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ4@R3`, `W261005F2A7-REQ7@R2`, `W261005F2A7-REQ8@R1`, `W261005F2A7-REQ9@R1`
+
+**Research Support:** None — the wording follows the accepted mockup `W261005F2A7-M3@R3` (accepted by the user on 2026-10-05).
+
+**Rationale:**
+
+- One catalogue removes the earlier mismatch between §5 (`busy`, `cannot save <path>; git tool not started`) and §7 (`git: another operation is running`, `git tool not started: cannot save <path>`).
+- A third level lets the stale-index and version notices stand out without looking like failures. The only level reader is the cmdline painter, so the change is small.
+- Echoing `report` through the effect keeps `GitState` free of display-only data.
+- Using `git.tool[0]` keeps the conflict and pre-suspend notices true when the user configures another tool, and it reads exactly as the mockups with the default config.
+
+**Code Impact:**
+
+- `src/core/state/result.ts` — `message`, `MessageLevel` — modified
+- `src/core/state/types.ts` — `notifications.message.level`, `StageReport`, `gitStage.report`, `gitStaged.report`, `GitPending.saved` — modified
+- `src/core/state/git.ts` — catalogue constants and helpers, every Git reducer that sets a message — new
+- `src/app/effects.ts` — `gitStage` case echoes `report` — modified
+- `src/ui/views/cmdline.ts` — `warn` → `messageWarn` — modified
+
+**Detailed Design:** §7 `src/core/state/result.ts`, `src/core/state/types.ts`, `src/core/state/git.ts`, `src/app/effects.ts`, UI files
+
+**Tradeoffs:**
+
+- The reset notice says "autosave pending" as accepted, even when autosave is off; the buffer is dirty either way.
+- Stage-specific save failures keep the existing wording (`cannot save <path>`, `not staged: <path> could not be saved`), because the accepted UI design does not define them.
+
+**Success Criteria:** `S34`, `S35`
+
+**Verification Impact:**
+
+- `V66`, `V68` reducer cases; `V67` pre-suspend frame; `V52` typecheck.
