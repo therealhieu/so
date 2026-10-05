@@ -545,3 +545,174 @@ test("hunk action messages read as the accepted catalogue", () => {
     ),
   ).toEqual({ text: "error: patch failed: a.md:3", level: "error" });
 });
+
+const B_NOTE = "notes/b.md";
+
+/** Two notes in the repository, both edited and not yet saved. */
+function twoDirty(): AppState {
+  const one = withoutAutosave(inRepo(NOTE, "a", tracked("a\n")));
+  const typed = keys(one, "A", "x", "<Esc>").state;
+  const two = inRepo(B_NOTE, "b", tracked("b\n"), typed);
+  return keys(two, "A", "y", "<Esc>").state;
+}
+
+const runTools = (r: Result): Effect[] =>
+  r.effects.filter((e) => e.kind === "runTool");
+
+test("opening the tool writes every dirty buffer first and then runs it at the repo top", () => {
+  const r = leader(twoDirty(), "gg");
+  expect(runTools(r)).toEqual([]);
+  expect(
+    r.effects.flatMap((e) => (e.kind === "write" ? [e.path] : [])).sort(),
+  ).toEqual([NOTE, B_NOTE]);
+  const first = update(r.state, { type: "saved", path: NOTE, stamp: stamp(2) });
+  expect(runTools(first)).toEqual([]);
+  expect(first.state.notifications.message).toBeUndefined();
+  const both = update(first.state, {
+    type: "saved",
+    path: B_NOTE,
+    stamp: stamp(2),
+  });
+  expect(runTools(both)).toEqual([
+    { kind: "runTool", argv: ["lazygit"], cwd: "/repo" },
+  ]);
+  expect(both.state.notifications.message).toEqual({
+    text: "2 files written · opening lazygit",
+    level: "info",
+  });
+  expect(both.state.git.pending).toBeUndefined();
+  const exited = update(both.state, {
+    type: "toolExited",
+    result: { kind: "exited", code: 0 },
+  });
+  expect(exited.state.notifications.message).toBeUndefined();
+});
+
+test("one dirty buffer names the file before opening the tool", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a", tracked("a\n")));
+  const r = leader(keys(s, "A", "x", "<Esc>").state, "gg");
+  const saved = update(r.state, { type: "saved", path: NOTE, stamp: stamp(2) });
+  expect(runTools(saved)).toHaveLength(1);
+  expect(saved.state.notifications.message).toEqual({
+    text: '"notes/a.md" written · opening lazygit',
+    level: "info",
+  });
+});
+
+test("with nothing to save the tool runs at once without a message", () => {
+  const s = inRepo(NOTE, "a");
+  const r = leader(s, "gg");
+  expect(runTools(r)).toEqual([
+    { kind: "runTool", argv: ["lazygit"], cwd: "/repo" },
+  ]);
+  expect(r.state.notifications.message).toBeUndefined();
+  const custom: AppState = {
+    ...s,
+    config: { ...s.config, git: { tool: ["gitui", "-l", "~/log"] } },
+  };
+  expect(runTools(leader(custom, "gg"))).toEqual([
+    { kind: "runTool", argv: ["gitui", "-l", "~/log"], cwd: "/repo" },
+  ]);
+});
+
+test("a failed or blocked save cancels the tool", () => {
+  const notStarted = {
+    text: "git tool not started: notes/a.md could not be saved",
+    level: "error" as const,
+  };
+  const r = leader(twoDirty(), "gg");
+  const failed = update(r.state, {
+    type: "saveFailed",
+    path: NOTE,
+    reason: "EACCES",
+  });
+  expect(failed.state.git.pending).toBeUndefined();
+  expect(failed.state.notifications.message).toEqual(notStarted);
+  const rest = update(failed.state, {
+    type: "saved",
+    path: B_NOTE,
+    stamp: stamp(2),
+  });
+  expect(runTools(rest)).toEqual([]);
+
+  const s = inRepo(NOTE, "a", tracked("a\n"));
+  const deleted = run(keys(s, "A", "x", "<Esc>").state, {
+    type: "fileChanged",
+    event: { kind: "removed", path: NOTE },
+  }).state;
+  const blocked = leader(deleted, "gg");
+  expect(runTools(blocked)).toEqual([]);
+  expect(blocked.effects.some((e) => e.kind === "write")).toBe(false);
+  expect(blocked.state.notifications.message).toEqual(notStarted);
+
+  const b = s.buffers[1];
+  if (b === undefined) throw new Error("expected the note");
+  const readOnly: AppState = {
+    ...s,
+    buffers: { ...s.buffers, 1: { ...b, dirty: true, readOnly: true } },
+  };
+  const refused = leader(readOnly, "gg");
+  expect(runTools(refused)).toEqual([]);
+  expect(refused.state.notifications.message).toEqual(notStarted);
+});
+
+test("without a repository or tool the user is told why", () => {
+  const outside = run(fresh(), load(NOTE, "a")).state;
+  const r = leader(outside, "gg");
+  expect(runTools(r)).toEqual([]);
+  expect(r.state.notifications.message).toEqual({
+    text: "not a git repository",
+    level: "info",
+  });
+  const missing = update(inRepo(NOTE, "a"), {
+    type: "toolExited",
+    result: { kind: "missing", tool: "lazygit" },
+  });
+  expect(missing.state.notifications.message).toEqual({
+    text: "lazygit not found (git.tool)",
+    level: "error",
+  });
+  expect(missing.effects).toEqual([]);
+});
+
+test("the tool is refused while a stage waits for its save", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const pending = leader(keys(s, "A", "x", "<Esc>").state, "ghs").state;
+  const r = leader(pending, "gg");
+  expect(runTools(r)).toEqual([]);
+  expect(r.state.notifications.message).toEqual({
+    text: "git: another operation is running",
+    level: "info",
+  });
+});
+
+test("after the tool exits buffers and git state are refreshed and the message is cleared", () => {
+  const s = inRepo(B_NOTE, "b", tracked("b\n"), inRepo(NOTE, "a"));
+  const shown = {
+    ...s,
+    notifications: {
+      ...s.notifications,
+      message: {
+        text: "2 files written · opening lazygit",
+        level: "info" as const,
+      },
+    },
+  };
+  const r = update(shown, {
+    type: "toolExited",
+    result: { kind: "exited", code: 0 },
+  });
+  expect(r.state.notifications.message).toBeUndefined();
+  expect(r.effects).toEqual([
+    { kind: "startTimer", id: "gitRefresh", ms: 200 },
+    { kind: "read", path: NOTE },
+    { kind: "read", path: B_NOTE },
+    { kind: "gitReadIndex", repo: REPO, path: NOTE, repoPath: "ws/notes/a.md" },
+    {
+      kind: "gitReadIndex",
+      repo: REPO,
+      path: B_NOTE,
+      repoPath: "ws/notes/b.md",
+    },
+  ]);
+});

@@ -12,7 +12,7 @@ import {
   setBuffer,
 } from "./buffers";
 import type { CommandContext } from "./commands";
-import { chain, message, none } from "./result";
+import { chain, clearMessage, message, none } from "./result";
 import { blocked, writeBuffer } from "./save";
 import type {
   Action,
@@ -41,6 +41,13 @@ const stagedHunk = ({ n, m, saved }: StageReport, path: string) =>
   saved ? `"${path}" written · staged hunk ${n}/${m}` : `staged hunk ${n}/${m}`;
 const resetDone = (n: number, m: number) =>
   `reset hunk ${n}/${m} · buffer changed, autosave pending`;
+const toolNotStarted = (path: string) =>
+  `git tool not started: ${path} could not be saved`;
+const openingTool = (saved: readonly string[], tool: string) =>
+  saved.length === 1
+    ? `"${saved[0]}" written · opening ${tool}`
+    : `${saved.length} files written · opening ${tool}`;
+const toolMissing = (tool: string) => `${tool} not found (git.tool)`;
 const firstLine = (text: string) => text.split("\n", 1)[0] ?? "";
 
 /** No repository until discovery answers. */
@@ -166,9 +173,29 @@ export function onGitStatus(
 /** The git tool ended: buffers and git state may have changed on disk. */
 export function onToolExited(
   s: AppState,
-  _a: Extract<Action, { type: "toolExited" }>,
+  a: Extract<Action, { type: "toolExited" }>,
 ): Result {
-  return requestRefresh(s);
+  if (a.result.kind === "missing")
+    return message(s, toolMissing(a.result.tool), "error");
+  // The pre-launch message no longer applies. Reading every buffer back
+  // reloads the clean ones a checkout changed; the save gate left none dirty.
+  const st = clearMessage(s);
+  const repo = st.git.repo;
+  return {
+    state: st,
+    effects: [
+      ...requestRefresh(st).effects,
+      ...Object.values(st.buffers).map(
+        (b): Effect => ({
+          kind: "read",
+          path: b.path,
+        }),
+      ),
+      ...(repo === null
+        ? []
+        : Object.keys(st.git.files).map((path) => readIndex(repo, path))),
+    ],
+  };
 }
 
 /** An index read for an open file: keep the entry and diff against it now. */
@@ -481,7 +508,9 @@ export function advanceGitPending(
   if (waiting.length > 0)
     return none(setGit(s, { pending: { ...p, waiting } }));
   const st = withoutPending(s);
-  return p.op === "stage" ? stageNow(st, p.bufferId, p.line, true) : none(st);
+  return p.op === "stage"
+    ? stageNow(st, p.bufferId, p.line, true)
+    : runTool(st, p.saved);
 }
 
 /** A pending operation's buffer could not be saved: the operation is cancelled. */
@@ -490,7 +519,46 @@ export function cancelGitPending(s: AppState, id: BufferId): Result {
   const b = s.buffers[id];
   if (p === undefined || b === undefined || !p.waiting.includes(id))
     return none(s);
-  return message(withoutPending(s), notStaged(b.path), "error");
+  const text = p.op === "stage" ? notStaged(b.path) : toolNotStarted(b.path);
+  return message(withoutPending(s), text, "error");
+}
+
+/**
+ * `<leader>gg`: hand the terminal to `git.tool` at the repository top. Every
+ * dirty buffer is saved first; one that cannot be saved stops the launch.
+ */
+export function openTool(ctx: CommandContext): Result {
+  const s = ctx.state;
+  if (s.git.repo === null) return message(s, NOT_A_REPO);
+  if (s.git.pending !== undefined) return message(s, BUSY);
+  const dirty = Object.values(s.buffers).filter((b) => b.dirty);
+  const stuck = dirty.find((b) => unwritable(s, b));
+  if (stuck !== undefined)
+    return message(s, toolNotStarted(stuck.path), "error");
+  if (dirty.length === 0) return runTool(s, []);
+  const waiting = setGit(s, {
+    pending: {
+      op: "tool",
+      waiting: dirty.map((b) => b.id),
+      saved: dirty.map((b) => b.path),
+    },
+  });
+  return dirty.reduce(
+    (r, b) => chain(r, (st) => writeBuffer(st, b.id, ctx.now)),
+    none(waiting),
+  );
+}
+
+/** Run the tool; when the gate saved files, say so on the frame before it starts. */
+function runTool(s: AppState, saved: readonly string[]): Result {
+  const repo = s.git.repo;
+  if (repo === null) return none(s);
+  const shown =
+    saved.length === 0 ? none(s) : message(s, openingTool(saved, tool(s)));
+  return {
+    state: shown.state,
+    effects: [{ kind: "runTool", argv: [...s.config.git.tool], cwd: repo.top }],
+  };
 }
 
 const lines = (b: BufferState): string[] =>
