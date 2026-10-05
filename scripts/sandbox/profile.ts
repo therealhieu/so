@@ -1,6 +1,6 @@
 // A sandbox profile: a named, reproducible scenario for checking end-to-end
 // journeys by hand. Profiles are staged once into `.sandbox/<name>/vault`.
-import { cpSync, mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 /** A manual check: what to do and what to see. */
@@ -13,10 +13,22 @@ export type Profile = {
   summary: string;
   /** `config.toml` text, written at stage time; none runs so with defaults. */
   config?: string;
+  /** The folder so opens, relative to the vault; the vault itself when absent. */
+  open?: string;
   journeys: Journey[];
   /** Write the vault's content into the empty folder `vault`. */
   stage(vault: string): void | Promise<void>;
 };
+
+/**
+ * Replace the first `before` in `file` with `after`. Throws when `before` is
+ * missing, so a fixture change cannot silently skip an edit.
+ */
+export function edit(file: string, before: string, after: string): void {
+  const text = readFileSync(file, "utf8");
+  if (!text.includes(before)) throw new Error(`${file}: no "${before}"`);
+  writeFileSync(file, text.replace(before, after));
+}
 
 export const fixtures = join(import.meta.dir, "../../test/fixtures");
 
@@ -52,11 +64,12 @@ export function localDay(daysAgo: number): string {
 /**
  * Run git in `cwd` away from the user's and the system's configuration, with
  * a fixed identity and `date`, so staged history is the same on every machine.
+ * Throws on a non-zero exit unless `allowFailure` (for an expected conflict).
  */
 export function git(
   cwd: string,
   args: string[],
-  date = "2026-01-01T09:00:00Z",
+  { date = "2026-01-01T09:00:00Z", allowFailure = false } = {},
 ): void {
   const proc = Bun.spawnSync(["git", ...args], {
     cwd,
@@ -77,6 +90,13 @@ export function git(
     stdout: "ignore",
     stderr: "pipe",
   });
-  if (proc.exitCode !== 0)
+  if (proc.exitCode !== 0 && !allowFailure)
     throw new Error(`git ${args.join(" ")}: ${proc.stderr.toString().trim()}`);
+}
+
+/** A repository on branch `main` in `dir` with everything in it committed. */
+export function initRepo(dir: string, message = "Import notes"): void {
+  git(dir, ["init", "--quiet", "--initial-branch=main"]);
+  git(dir, ["add", "--all"]);
+  git(dir, ["commit", "--quiet", `--message=${message}`]);
 }
