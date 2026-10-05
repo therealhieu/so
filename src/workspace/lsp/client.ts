@@ -64,7 +64,19 @@ export type ClientEvents = {
   applyEdit(requestId: number | string, edit: CodeEdit): void;
   /** The server asks for every open document's diagnostics to be pulled again. */
   refreshDiagnostics(): void;
+  /** The running work's latest report; undefined once all work has ended. */
+  progress(text: string | undefined): void;
+  /** A message the server shows or logs. */
+  message(level: MessageLevel, text: string): void;
+  /** The ready process ended without being stopped. */
+  exited(reason: string): void;
 };
+
+export type MessageLevel = "error" | "warning" | "info" | "log";
+
+/** `window/showMessage` types: 1 error, 2 warning, 3 info; anything else is a log line. */
+const messageLevel = (type: unknown): MessageLevel =>
+  type === 1 ? "error" : type === 2 ? "warning" : type === 3 ? "info" : "log";
 
 /** A pull's answer: new items, or the previous ones still hold. */
 export type PullResult =
@@ -152,6 +164,8 @@ export function createLspClient(o: {
   const uri = (path: string) => pathToUri(o.workspaceRoot, path);
   let settings = o.spec.settings;
   let exited = false;
+  let ready = false;
+  let stopping = false;
   let firstStderr: string | undefined;
   let stderrLines = 0;
   let caps: ServerCapabilities = {};
@@ -218,6 +232,40 @@ export function createLspClient(o: {
     p.items.map((item) => sectionValue(settings, item.section) ?? null),
   );
   conn.onRequest("window/workDoneProgress/create", () => null);
+  /** The latest report per progress token, in begin order. */
+  const work = new Map<string | number, { title: string; text: string }>();
+  conn.onUnhandledProgress(({ token, value }) => {
+    if (!isObject(value)) return;
+    if (value.kind === "end") work.delete(token);
+    else {
+      const title =
+        value.kind === "begin" && typeof value.title === "string"
+          ? value.title
+          : (work.get(token)?.title ?? "");
+      const parts = [title];
+      if (typeof value.message === "string") parts.push(value.message);
+      if (typeof value.percentage === "number")
+        parts.push(`${Math.round(value.percentage)}%`);
+      work.set(token, {
+        title,
+        text: parts.filter((p) => p !== "").join(" "),
+      });
+    }
+    o.events.progress([...work.values()].at(-1)?.text);
+  });
+  const shown = (p: unknown) => {
+    if (isObject(p) && typeof p.message === "string")
+      o.events.message(messageLevel(p.type), p.message);
+  };
+  conn.onNotification("window/showMessage", shown);
+  conn.onRequest("window/showMessageRequest", (p: unknown) => {
+    shown(p);
+    return null;
+  });
+  conn.onNotification("window/logMessage", (p: unknown) => {
+    if (isObject(p) && typeof p.message === "string")
+      o.events.message("log", p.message);
+  });
   conn.onRequest("workspace/diagnostic/refresh", () => {
     o.events.refreshDiagnostics();
     return null;
@@ -498,6 +546,7 @@ export function createLspClient(o: {
       notify("workspace/didChangeConfiguration", { settings });
     },
     stop(boundMs) {
+      stopping = true;
       stopped ??= (async () => {
         if (exited) return;
         const started = performance.now();
@@ -535,15 +584,15 @@ export function createLspClient(o: {
       exited = true;
       onClosed();
       conn.dispose();
-      if (!settled)
-        fail(
-          firstStderr ??
-            (code === null
-              ? `killed by ${signal}`
-              : `exited with code ${code}`),
-        );
+      const reason =
+        code === null ? `killed by ${signal}` : `exited with code ${code}`;
+      if (!settled) fail(firstStderr ?? reason);
+      else if (ready && !stopping) o.events.exited(reason);
     });
-    o.signal?.addEventListener("abort", () => fail("stopped"));
+    o.signal?.addEventListener("abort", () => {
+      stopping = true;
+      fail("stopped");
+    });
     const params: InitializeParams = {
       processId: process.pid,
       clientInfo: { name: "so" },
@@ -568,6 +617,7 @@ export function createLspClient(o: {
         notify("workspace/didChangeConfiguration", { settings });
         view = toServerView(name, o.root, caps);
         settled = true;
+        ready = true;
         resolve(client);
       },
       (e: unknown) => {

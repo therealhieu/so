@@ -478,3 +478,131 @@ test("pushed and pulled lists are both kept and closing clears only the pulled o
     ],
   });
 });
+
+/** The debug log's lines with `event`. */
+const logged = (state: string, event: string) =>
+  readFileSync(join(state, "so/so.log"), "utf8")
+    .split("\n")
+    .filter((l) => l.includes(`"event":"${event}"`))
+    .map((l) => JSON.parse(l) as Record<string, unknown>);
+
+test("a crashing server restarts until the fifth crash within three minutes", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn secret_name() {}\n" });
+  const state = await mkdtemp(join(tmpdir(), "so-state-"));
+  const rs = fake("rs", ["rust"], {
+    crash: { after: "textDocument/didOpen" },
+  });
+  app = await startApp(root, {
+    lsp: { config: lspConfig(true, rs.config) },
+    env: { SO_LOG: "debug", XDG_STATE_HOME: state },
+  });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "failed");
+  await Bun.sleep(200);
+  const order: (string | undefined)[] = readServerLog(rs.log)
+    .map((m) => m.method)
+    .filter((m) => m === "initialize" || m === "textDocument/didOpen");
+  expect(order).toEqual(
+    Array.from({ length: 5 }, () => [
+      "initialize",
+      "textDocument/didOpen",
+    ]).flat(),
+  );
+  expect(processes(rs.log)).toHaveLength(5);
+  expect(serverToasts(app).map((t) => t.text)).toEqual([
+    "rs stopped: exited with code 1",
+  ]);
+  const crashed = logged(state, "lsp.crashed");
+  expect(crashed).toHaveLength(5);
+  expect(crashed[0]?.reason).toBe("exited with code 1");
+  expect(readFileSync(join(state, "so/so.log"), "utf8")).not.toContain(
+    "secret_name",
+  );
+}, 15_000);
+
+test("crashes spread over more than three minutes keep restarting", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const rs = fake("rs", ["rust"], {
+    crash: { after: "textDocument/didOpen", times: 5 },
+  });
+  let t = 0;
+  const states: string[] = [];
+  app = await startApp(root, {
+    lsp: {
+      config: lspConfig(true, rs.config),
+      now: () => {
+        t += 50_000;
+        return t;
+      },
+    },
+  });
+  app.store.subscribe((s) => {
+    const v = s.lsp.servers["rs@"]?.state;
+    if (v !== undefined && v !== states.at(-1)) states.push(v);
+  });
+  await app.open("main.rs");
+  await waitForMessage(rs.log, "textDocument/didOpen", 5000, 6);
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  await Bun.sleep(200);
+  expect(processes(rs.log)).toHaveLength(6);
+  expect(states).not.toContain("failed");
+  expect(states.filter((s) => s === "starting").length).toBeGreaterThanOrEqual(
+    5,
+  );
+  expect(serverToasts(app)).toEqual([]);
+}, 15_000);
+
+test("progress is throttled and info messages do not toast", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const state = await mkdtemp(join(tmpdir(), "so-state-"));
+  const rs = fake("rs", ["rust"], {
+    progress: { count: 50, everyMs: 4 },
+    messages: [
+      { type: 3, message: "indexing finished" },
+      { type: 2, message: "toolchain is old" },
+    ],
+  });
+  app = await startApp(root, {
+    lsp: { config: lspConfig(true, rs.config) },
+    env: { SO_LOG: "debug", XDG_STATE_HOME: state },
+  });
+  await app.open("main.rs");
+  await waitForMessage(rs.log, "response:window/workDoneProgress/create");
+  await Bun.sleep(400);
+  const progress = app.actions.filter(
+    (a) => a.type === "lspServer" && a.view?.progress !== undefined,
+  );
+  expect(progress.length).toBeGreaterThanOrEqual(1);
+  // 50 reports over about 200 ms; unthrottled, each would dispatch.
+  expect(progress.length).toBeLessThanOrEqual(5);
+  expect(app.store.get().lsp.servers["rs@"]?.progress).toBe("indexing 50/50");
+  expect(serverToasts(app).map((t) => t.text)).toEqual([
+    "rs: toolchain is old",
+  ]);
+  const info = logged(state, "lsp.message");
+  expect(info).toHaveLength(1);
+  expect(info[0]?.level).toBe("info");
+  expect(JSON.stringify(info)).not.toContain("indexing finished");
+});
+
+test("a request still waiting when the server crashes fails as restarted", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const rs = fake("rs", ["rust"], {
+    crash: { after: "textDocument/hover", times: 1 },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  app.keys("K");
+  await waitFor(
+    () =>
+      app?.actions.some(
+        (a) =>
+          a.type === "lspResult" &&
+          a.result.kind === "error" &&
+          a.result.message === "server restarted",
+      ) === true,
+  );
+  await waitForMessage(rs.log, "textDocument/didOpen", 5000, 2);
+  expect(processes(rs.log)).toHaveLength(2);
+}, 15_000);

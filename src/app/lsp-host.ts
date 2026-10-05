@@ -34,6 +34,11 @@ export const LSP_STOP_BOUND_MS = 500;
 export const SYNC_DEBOUNCE_MS = 150;
 /** The longest a version probe runs before it counts as failed. */
 export const PROBE_BOUND_MS = 2000;
+/** A server that crashes this often within `CRASH_WINDOW_MS` is not restarted. */
+export const CRASH_LIMIT = 5;
+export const CRASH_WINDOW_MS = 180_000;
+/** Progress reaches the state at most once per this interval per server. */
+const PROGRESS_THROTTLE_MS = 100;
 
 type LspEffect = Extract<
   Effect,
@@ -82,6 +87,12 @@ type Server = {
   inflight: Set<number>;
   /** Paths whose pull failed, logged once each. */
   pullFailed: Set<string>;
+  /** When the ready process crashed, within the crash window. */
+  crashes: number[];
+  /** The latest progress not yet dispatched, and its timer. */
+  progress?:
+    | { text: string | undefined; timer: ReturnType<typeof setTimeout> }
+    | undefined;
 };
 
 /** A command's binary: `<dir>/node_modules/.bin/<cmd>` first when `localBin`, then `PATH`. */
@@ -258,6 +269,8 @@ export function createLspHost(d: {
   function stopServer(server: Server): void {
     servers.delete(server.key);
     server.generation++;
+    clearTimeout(server.progress?.timer);
+    server.progress = undefined;
     for (const doc of server.docs.values()) clearTimeout(doc.timer);
     server.abort?.abort();
     const done = server.client?.stop(LSP_STOP_BOUND_MS) ?? server.starting;
@@ -336,7 +349,78 @@ export function createLspHost(d: {
         for (const doc of server.docs.values())
           if (doc.sent !== undefined) pull(server, doc.path);
       },
+      progress: (text) => {
+        if (!live()) return;
+        if (server.progress !== undefined) {
+          server.progress.text = text;
+          return;
+        }
+        server.progress = {
+          text,
+          timer: setTimeout(() => {
+            const latest = server.progress?.text;
+            server.progress = undefined;
+            if (!live()) return;
+            const { progress: _, ...rest } = server.view;
+            server.view =
+              latest === undefined ? rest : { ...rest, progress: latest };
+            d.dispatch({
+              type: "lspServer",
+              key: server.key,
+              view: server.view,
+            });
+          }, PROGRESS_THROTTLE_MS),
+        };
+      },
+      message: (level, text) => {
+        if (!live()) return;
+        if (level === "error" || level === "warning")
+          d.dispatch({ type: "lspMessage", key: server.key, level, text });
+        else d.logger.info("lsp.message", { server: server.spec.name, level });
+      },
+      exited: (reason) => {
+        if (live()) crashed(server, reason);
+      },
     };
+  }
+
+  /**
+   * The ready process ended: unanswered requests fail, and the server
+   * starts again unless this is its `CRASH_LIMIT`th crash in the window.
+   */
+  function crashed(server: Server, reason: string): void {
+    d.logger.error("lsp.crashed", { server: server.spec.name, reason });
+    server.client = undefined;
+    clearTimeout(server.progress?.timer);
+    server.progress = undefined;
+    for (const id of server.inflight)
+      d.dispatch({
+        type: "lspResult",
+        id,
+        result: { kind: "error", message: "server restarted" },
+        now: now(),
+      });
+    server.inflight.clear();
+    for (const doc of server.docs.values()) {
+      clearTimeout(doc.timer);
+      doc.timer = undefined;
+      doc.sent = undefined;
+    }
+    const at = now();
+    server.crashes = [
+      ...server.crashes.filter((t) => at - t < CRASH_WINDOW_MS),
+      at,
+    ];
+    if (server.crashes.length < CRASH_LIMIT) {
+      server.view = viewOf(server.spec, server.root, "starting");
+      d.dispatch({ type: "lspServer", key: server.key, view: server.view });
+      launch(server);
+      return;
+    }
+    servers.delete(server.key);
+    server.generation++;
+    record(server.key, viewOf(server.spec, server.root, "failed", reason));
+    resync();
   }
 
   /** Pulls `path`'s diagnostics from a server that answers pulls. */
@@ -474,6 +558,7 @@ export function createLspHost(d: {
       docs: new Map(),
       inflight: new Set(),
       pullFailed: new Set(),
+      crashes: [],
     };
     servers.set(key, server);
     send({ type: "lspServer", key, view: server.view });
