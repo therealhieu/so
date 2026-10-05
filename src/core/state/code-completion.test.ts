@@ -349,6 +349,42 @@ test("a slow resolve applies the item once without waiting", () => {
   expect(expired.state.lsp.accept).toBeUndefined();
 });
 
+test("a key that moves the cursor during a resolve drops the accept", () => {
+  const unresolved = item("format", { resolved: false, data: { n: 1 } });
+  const accepted = keys(offered([unresolved]), "<CR>").state;
+  const resolvedItem: Action = {
+    type: "lspResult",
+    id: 2,
+    result: {
+      kind: "completionItem",
+      item: {
+        ...unresolved,
+        resolved: true,
+        additional: [{ range: range(0, 0, 0), text: IMPORT }],
+      },
+    },
+  };
+  const timer: Action = { type: "timer", id: "lspResolve", now: 700 };
+  const typed = "const value = obj\nfo\nlet n = 1;";
+
+  for (const seq of ["<Esc>", "<Esc>hi"]) {
+    const moved = keys(accepted, seq).state;
+    const resolvedFirst = run(moved, resolvedItem, timer);
+    expect(textOf(resolvedFirst.state)).toBe(typed);
+    expect(resolvedFirst.state.lsp.accept).toBeUndefined();
+
+    const timedOut = run(moved, timer);
+    expect(textOf(timedOut.state)).toBe(typed);
+    expect(timedOut.state.lsp.accept).toBeUndefined();
+    expect(timedOut.effects).toContainEqual({
+      kind: "lspCancel",
+      id: 2,
+      key: "a@/ws",
+    });
+    expect(textOf(run(timedOut.state, resolvedItem).state)).toBe(typed);
+  }
+});
+
 test("a signature trigger character asks for signature help", () => {
   const r = keys(open(ACCEPTS), "A(");
   expect(lspOps(r.effects)).toEqual([{ kind: "signature", pos: at(0, 18) }]);

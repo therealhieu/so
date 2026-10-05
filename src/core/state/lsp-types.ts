@@ -155,13 +155,18 @@ export type CodeEditBatch = {
 };
 /** Pushed and pulled diagnostics of one server for one path, kept apart. */
 export type DiagnosticSlots = { push?: Diagnostic[]; pull?: Diagnostic[] };
-/** A completion accept waiting for server `key` to resolve the item. */
+/**
+ * A completion accept waiting for server `key` to resolve the item, with the
+ * window and Insert-mode cursor it was accepted at.
+ */
 export type CodeAccept = {
   id: number;
   key: ServerKey;
   item: CodeCompletionItem;
   path: string;
   version: number;
+  window: number;
+  cursor: Pos;
 };
 
 export type LspState = {

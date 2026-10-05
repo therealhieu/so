@@ -256,12 +256,14 @@ export function acceptCode(
   reg: Registries,
 ): Result {
   const b = activeBuffer(s);
+  const w = activeWindow(s);
   const prev = s.lsp.accept;
   const closed: AppState = withoutAccept({ ...s, overlay: { kind: "none" } });
   const dropped: Result =
     prev === undefined ? none(closed) : endResolve(closed, prev);
   if (
     b === undefined ||
+    w === undefined ||
     item.resolved ||
     s.lsp.servers[key]?.features.includes("completionResolve") !== true
   )
@@ -281,7 +283,15 @@ export function acceptCode(
         ...asked.state,
         lsp: {
           ...asked.state.lsp,
-          accept: { id, key, item, path: b.path, version: b.text.version },
+          accept: {
+            id,
+            key,
+            item,
+            path: b.path,
+            version: b.text.version,
+            window: w.id,
+            cursor: w.content.cursor,
+          },
         },
       },
       effects: [
@@ -292,10 +302,21 @@ export function acceptCode(
   });
 }
 
-/** The accept still applies: same buffer, nothing typed since. */
+/**
+ * The accept still applies: same buffer and window, nothing typed since, and
+ * still in Insert mode with the cursor where the item was accepted.
+ */
 function stillAccepting(s: AppState, a: CodeAccept): boolean {
   const b = activeBuffer(s);
-  return b?.path === a.path && b.text.version === a.version;
+  const cursor = activeWindow(s)?.content.cursor;
+  return (
+    b?.path === a.path &&
+    b.text.version === a.version &&
+    s.windows.active === a.window &&
+    s.vim.mode === "insert" &&
+    cursor?.line === a.cursor.line &&
+    cursor.col === a.cursor.col
+  );
 }
 
 /** The resolve answer came first: apply the resolved item, unless typing moved on. */
