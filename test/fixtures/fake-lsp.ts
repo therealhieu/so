@@ -30,6 +30,8 @@ export type FakeScript = {
   crash?: { after: string; times?: number };
   /** Write this stderr line and exit before reading anything. */
   exitBeforeInitialize?: { stderr: string };
+  /** Never answer `initialize`. */
+  ignoreInitialize?: boolean;
   /** Never answer `shutdown` and ignore `exit`. */
   ignoreShutdown?: boolean;
   /** Completion items, offered only to clients with snippet support when `requiresSnippets`. */
@@ -141,6 +143,7 @@ conn.onRequest((method, params) => {
     return new ResponseError(-32801, "content modified");
   switch (method) {
     case "initialize": {
+      if (script.ignoreInitialize === true) return new Promise(() => {});
       const caps = params as {
         capabilities?: {
           textDocument?: {

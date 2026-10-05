@@ -233,7 +233,8 @@ export function createLspHost(d: {
   const roots = new Map<string, string | undefined>();
   const binaries = new Map<string, string | undefined>();
   const probes = new Map<string, number | undefined | Promise<void>>();
-  const probeChildren = new Set<ChildProcess>();
+  /** Running version probes, each with a promise that settles once it has exited. */
+  const probeChildren = new Map<ChildProcess, Promise<void>>();
   /** Stops still running, awaited by `stop`. */
   const stopping = new Set<Promise<void>>();
   /** The keys last reported per path. */
@@ -253,8 +254,12 @@ export function createLspHost(d: {
 
   const trackedSpawn = ((cmd: string, args: string[], opts: object) => {
     const child = spawn(cmd, args, opts);
-    probeChildren.add(child);
-    child.on("close", () => probeChildren.delete(child));
+    const exited = new Promise<void>((resolve) => {
+      child.on("exit", () => resolve());
+      child.on("error", () => resolve());
+    });
+    probeChildren.set(child, exited);
+    void exited.then(() => probeChildren.delete(child));
     return child;
   }) as typeof nodeSpawn;
 
@@ -513,17 +518,15 @@ export function createLspHost(d: {
       ...(d.spawn === undefined ? {} : { spawn: d.spawn }),
       signal: abort.signal,
     });
-    server.starting = started.then(
-      () => {},
-      () => {},
-    );
-    started.then(
+    // `starting` also waits for the stop of a client that became ready after
+    // its server was stopped.
+    const handled = started.then(
       (client) => {
         if (!live()) {
           const done = client.stop(LSP_STOP_BOUND_MS);
           stopping.add(done);
           void done.finally(() => stopping.delete(done));
-          return;
+          return done;
         }
         server.abort = undefined;
         server.client = client;
@@ -542,6 +545,10 @@ export function createLspHost(d: {
         );
         resync();
       },
+    );
+    server.starting = handled.then(
+      () => {},
+      () => {},
     );
   }
 
@@ -783,9 +790,13 @@ export function createLspHost(d: {
     async stop() {
       if (stopped) return;
       stopped = true;
-      for (const child of probeChildren) child.kill("SIGKILL");
+      for (const child of probeChildren.keys()) child.kill("SIGKILL");
+      const probesExited = Promise.race([
+        Promise.all(probeChildren.values()),
+        Bun.sleep(LSP_STOP_BOUND_MS),
+      ]);
       for (const server of [...servers.values()]) stopServer(server);
-      await Promise.allSettled([...stopping]);
+      await Promise.allSettled([...stopping, probesExited]);
     },
   };
 }

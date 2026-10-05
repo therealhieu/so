@@ -117,6 +117,8 @@ export type LspClient = {
 
 /** Server stderr lines written to the debug log per client, at most. */
 const STDERR_LINES = 200;
+/** How long a killed process is waited for before giving up on it. */
+const KILL_WAIT_MS = 100;
 /** Watched-file events are sent this long after the last one. */
 const WATCH_DEBOUNCE_MS = 100;
 
@@ -648,7 +650,7 @@ export function createLspClient(o: {
         await Promise.race([closed, Bun.sleep(Math.max(0, left))]);
         if (!exited) {
           child.kill("SIGKILL");
-          await Promise.race([closed, Bun.sleep(100)]);
+          await Promise.race([closed, Bun.sleep(KILL_WAIT_MS)]);
         }
         conn.dispose();
       })();
@@ -676,12 +678,17 @@ export function createLspClient(o: {
       conn.dispose();
       const reason =
         code === null ? `killed by ${signal}` : `exited with code ${code}`;
-      if (!settled) fail(firstStderr ?? reason);
+      if (!settled) fail(stopping ? "stopped" : (firstStderr ?? reason));
       else if (ready && !stopping) o.events.exited(reason);
     });
+    // Rejects once the killed process has closed, so nothing outlives the abort.
     o.signal?.addEventListener("abort", () => {
+      if (settled) return;
       stopping = true;
-      fail("stopped");
+      if (!exited) child.kill("SIGKILL");
+      void Promise.race([closed, Bun.sleep(KILL_WAIT_MS)]).then(() =>
+        fail("stopped"),
+      );
     });
     const params: InitializeParams = {
       processId: process.pid,
@@ -698,7 +705,7 @@ export function createLspClient(o: {
     };
     conn.sendRequest<InitializeResult>("initialize", params).then(
       (result) => {
-        if (settled) return;
+        if (settled || stopping) return;
         caps =
           isObject(result) && isObject(result.capabilities)
             ? result.capabilities

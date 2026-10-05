@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { chmodSync, readFileSync } from "node:fs";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { PROBE_BOUND_MS } from "../../src/app/lsp-host";
 import type { FakeScript } from "../fixtures/fake-lsp";
@@ -332,6 +332,60 @@ test("stopping kills a server that ignores shutdown within the bound", async () 
   const methods = readServerLog(rs.log).map((m) => m.method);
   expect(methods).toContain("shutdown");
   expect(methods.at(-1)).toBe("exit");
+});
+
+test("stopping leaves no version probe or starting server running", async () => {
+  const root = await tmpWorkspace({
+    "package.json": "{}\n",
+    "src/x.ts": "export const x = 1;\n",
+    "main.rs": "fn main() {}\n",
+  });
+  // A local tsc whose version probe records its pid and never answers.
+  const probePidFile = join(dir, "probe.pid");
+  const tsc = join(root, "node_modules/.bin/tsc");
+  await mkdir(dirname(tsc), { recursive: true });
+  await writeFile(
+    tsc,
+    `#!/bin/sh\nif [ "$1" = "--version" ]; then echo $$ > ${JSON.stringify(probePidFile)}; exec sleep 30; fi\n`,
+  );
+  chmodSync(tsc, 0o755);
+  // Pay macOS's first-run check now, not inside the probe's bound.
+  Bun.spawnSync([tsc], { stdout: "ignore", stderr: "ignore" });
+  const rs = fake("rs", ["rust"], { ignoreInitialize: true });
+  app = await startApp(root, {
+    lsp: {
+      config: lspConfig(
+        true,
+        '[lsp.servers."tsc"]\nenabled = true\n',
+        rs.config,
+      ),
+    },
+  });
+  let probePid: number | undefined;
+  try {
+    await app.open("src/x.ts");
+    await app.open("main.rs");
+    await waitForMessage(rs.log, "initialize");
+    await waitFor(() => {
+      probePid = Number(readFileSync(probePidFile, { flag: "a+" }).toString());
+      return probePid > 0;
+    });
+    const serverPid = processes(rs.log)[0]?.pid;
+    expect([pidGone(probePid), pidGone(serverPid)]).toEqual([false, false]);
+
+    const started = performance.now();
+    await app.stop();
+    app = undefined;
+    const took = performance.now() - started;
+    expect({ probe: pidGone(probePid), server: pidGone(serverPid) }).toEqual({
+      probe: true,
+      server: true,
+    });
+    expect(took).toBeLessThanOrEqual(700);
+  } finally {
+    if (probePid !== undefined && !pidGone(probePid))
+      process.kill(probePid, "SIGKILL");
+  }
 });
 
 const PULL_CAPS = {
