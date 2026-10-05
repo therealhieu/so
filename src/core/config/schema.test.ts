@@ -83,3 +83,16 @@ test("an unknown daily key names its line", () => {
     { line: 3, message: 'unknown key "daily.weekStart"' },
   ]);
 });
+
+test("mouse defaults to on and rejects a non-boolean", () => {
+  const r = parseConfig("");
+  if (!r.ok) throw new Error("expected a parsed config");
+  expect(r.config.mouse).toBe(true);
+  expect(defaults.mouse).toBe(true);
+  const off = parseConfig("mouse = false");
+  expect(off.ok && off.config.mouse).toBe(false);
+  const [e, ...rest] = errors('mouse = "yes"');
+  expect(rest).toEqual([]);
+  expect(e?.line).toBe(1);
+  expect(e?.message).toStartWith("mouse: ");
+});

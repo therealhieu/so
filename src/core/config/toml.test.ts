@@ -91,6 +91,7 @@ test("a valid file parses with binding lines", () => {
       autosave: { enabled: false, delayMs: 500 },
       theme: "light",
       color: "never",
+      mouse: true,
       editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
       preview: { mode: "live", embedMaxRows: 10, images: "auto" },
       daily: {

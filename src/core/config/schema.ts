@@ -59,6 +59,8 @@ export const ConfigSchema = z.strictObject({
     .prefault({}),
   theme: z.enum(["dark", "light"]).default("dark"),
   color: z.enum(["auto", "never"]).default("auto"),
+  /** Terminal mouse reporting: clicks, drags, and the wheel. */
+  mouse: z.boolean().default(true),
   editor: z
     .strictObject({
       tabWidth: z.number().int().min(1).max(16).default(8),
