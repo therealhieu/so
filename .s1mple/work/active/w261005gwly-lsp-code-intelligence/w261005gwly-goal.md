@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G1 — implementation`
+- **Current Position:** `P1-G2 — implementation`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -186,42 +186,42 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 #### P1-G1 — Contracts
 
 - [x] Context and dependencies confirmed.
-- [ ] Implementation turn completed.
-- [ ] `P1-G1-T1` — `[lsp]` config schema and built-in table.
-- [ ] `P1-G1-T2` — Diagnostic decoration provider.
-- [ ] `P1-G1-T3` — LSP state types.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementation turn completed.
+- [x] `P1-G1-T1` — `[lsp]` config schema and built-in table.
+- [x] `P1-G1-T2` — Diagnostic decoration provider.
+- [x] `P1-G1-T3` — LSP state types.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` — `Completed`
+- Initial implementation report commit: `41e7430`
+- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md` — `Passed`, no findings
+- Verification report commit: `f3aee3a`
+- Remediation: `Not required — Passed report with no outstanding items`
+- Final implementation report commit: `41e7430` (initial report is final)
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `None — no findings`
+- Closure evidence: `bun run check` passed (1110 pass, knip zero); `bun test src/core/config src/core/kernel/view` 57 pass; no work-process ids; tree clean at 41e7430. Accepted deviations: `severityRank` omitted (no shape, no caller); `rename?: never` compile guards and rename prompt layout in `src/ui/overlays/prompt.ts` (keep)
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G1-T1` | `Pending implementation` |
-| `P1-G1-T2` | `Pending implementation` |
-| `P1-G1-T3` | `Pending implementation` |
+| `P1-G1-T1` | `21af6c9` |
+| `P1-G1-T2` | `0de3c35` |
+| `P1-G1-T3` | `024d68a` |
 
 #### P1-G2 — Requests, diagnostics, and commands
 
@@ -477,13 +477,13 @@ Expected evidence per case is defined in system design §8 Test Suites and Cases
 
 | Complete | Case | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | `V1` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | No `[lsp]` → `{enabled:false, formatOnSave:false, servers:{}}` | `Pending implementation` |
-| [ ] | `V3` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Built-in order, field-wise overrides, eslint appended, rust-analyzer `initOptions` | `Pending implementation` |
-| [ ] | `V4` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Added server without command → error on its line | `Pending implementation` |
-| [ ] | `V11` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | `markdown`/`base`/`text`/typo → error on the `fileTypes` line | `Pending implementation` |
-| [ ] | `V50` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Exactly one TS gate passes per major | `Pending implementation` |
-| [ ] | `V13` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | One `E` sign, two marks | `Pending implementation` |
-| [ ] | `V14` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | Clamped / skipped, no throw | `Pending implementation` |
+| [x] | `V1` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | No `[lsp]` → `{enabled:false, formatOnSave:false, servers:{}}` | pass (lsp.test.ts, P1-G1 f3aee3a) |
+| [x] | `V3` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Built-in order, field-wise overrides, eslint appended, rust-analyzer `initOptions` | pass (lsp.test.ts) |
+| [x] | `V4` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Added server without command → error on its line | pass (lsp.test.ts) |
+| [x] | `V11` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | `markdown`/`base`/`text`/typo → error on the `fileTypes` line | pass (lsp.test.ts) |
+| [x] | `V50` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Exactly one TS gate passes per major | pass (lsp.test.ts) |
+| [x] | `V13` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | One `E` sign, two marks | pass (diagnostics.test.ts) |
+| [x] | `V14` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | Clamped / skipped, no throw | pass (diagnostics.test.ts) |
 | [ ] | `V5` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T2) | `lsp` effect to `b`; both diagnostics shown | `Pending implementation` |
 | [ ] | `V8` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T3) | One toast; `lspInfo` rows `not on PATH` / `unavailable: <reason>` | `Pending implementation` |
 | [ ] | `V10` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | `hover: not supported by a` | `Pending implementation` |
