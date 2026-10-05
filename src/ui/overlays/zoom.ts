@@ -1,4 +1,5 @@
 import {
+  type NativeImage,
   type OptimizedBuffer,
   Renderable,
   type RenderContext,
@@ -47,6 +48,10 @@ export class ZoomOverlay extends Renderable {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
     this.visible = zoomOf(s) !== undefined;
+    if (!this.visible && this.timer !== undefined) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
   }
 
   private box(s: AppState): Box {
@@ -204,14 +209,20 @@ export class ZoomOverlay extends Renderable {
     };
   }
 
-  /** The key of the last diagram raster drawn, shown while the next one renders. */
-  private lastRaster: string | undefined;
+  /** The diagram raster asked for last, and the last one drawn. */
+  private wanted: Raster | undefined;
+  private shown: Raster | undefined;
+  /** A pending start of the raster the view needs, while the view keeps moving. */
+  private timer: ReturnType<typeof setTimeout> | undefined;
 
   /**
-   * A diagram drawn from its SVG: only the part in view, rasterized at the
-   * float's pixel size, so it stays sharp at every zoom level. While a new
-   * part renders the last one stays up; without graphics, or when the SVG
-   * cannot be drawn (no font), the text drawing shows instead.
+   * A diagram drawn from its SVG. A raster covers the view plus a margin at
+   * the float's pixel density, so a pan within the margin only moves the
+   * placement. While the view moves past the raster, the part it still
+   * covers is drawn, and a new raster starts once the view rests for
+   * `RASTER_IDLE_MS`, so a drag never waits on rasterizing. Without
+   * graphics, or when the SVG cannot be drawn (no font), the text drawing
+   * shows instead.
    */
   private paintSvg(
     buf: OptimizedBuffer,
@@ -229,38 +240,49 @@ export class ZoomOverlay extends Renderable {
       title: `${z.name} · ${times(z.level)}`,
       footer: IMAGE_FOOTER,
     });
-    const v = this.view(inner, z, d.svg.width, d.svg.height);
-    const width = Math.round(v.cols * v.cell.width);
-    const height = Math.round(v.rows * v.cell.height);
-    const crop = { x: v.sx, y: v.sy, w: v.sw, h: v.sh };
-    const key = `${z.path}|${s.config.theme}|${[crop.x, crop.y, crop.w, crop.h]
-      .map((n) => n.toFixed(2))
-      .join(",")}|${width}x${height}`;
     if (tier === "placeholder") {
       drawLines(buf, theme, inner, d.lines, 0, 0);
       return;
     }
-    const got = this.deps.images.get(key, () =>
-      this.deps.rasterizeSvg({
-        svg: d.svg.svg,
-        background: d.svg.background,
-        crop,
-        width,
-        height,
-      }),
-    );
+    const v = this.view(inner, z, d.svg.width, d.svg.height);
+    const view = { x: v.sx, y: v.sy, w: v.sw, h: v.sh };
+    // Pixels per SVG unit.
+    const scale = (v.cols * v.cell.width) / v.sw;
+    const owner = `${z.path}|${s.config.theme}`;
+    const usable = (r: Raster | undefined) =>
+      r !== undefined &&
+      r.owner === owner &&
+      Math.abs(r.scale - scale) <= scale * 1e-3;
+    const covers = (r: Raster | undefined) =>
+      usable(r) && r !== undefined && contains(r.crop, view);
+    if (!covers(this.wanted)) {
+      const fresh = rasterFor(owner, view, scale, d.svg);
+      // A pan past the last raster waits for the view to rest; the first
+      // raster, or one after a zoom, starts at once.
+      if (usable(this.shown)) this.restartTimer(fresh);
+      else this.wanted = fresh;
+    }
+    const want = this.wanted;
+    const got =
+      want === undefined
+        ? undefined
+        : this.deps.images.get(want.key, () =>
+            this.deps.rasterizeSvg({
+              svg: d.svg.svg,
+              background: d.svg.background,
+              crop: want.crop,
+              width: want.width,
+              height: want.height,
+            }),
+          );
     if (got !== undefined && "failed" in got) {
       drawLines(buf, theme, inner, d.lines, 0, 0);
       return;
     }
-    const last = this.lastRaster?.startsWith(`${z.path}|`)
-      ? this.lastRaster
-      : undefined;
-    const image =
-      got?.image ??
-      (last === undefined ? undefined : this.deps.images.peek(last));
-    if (got !== undefined) this.lastRaster = key;
-    if (image === undefined) {
+    if (got !== undefined && want !== undefined) this.shown = want;
+    const shown = this.shown?.owner === owner ? this.shown : undefined;
+    const image = shown && this.deps.images.peek(shown.key);
+    if (shown === undefined || image === undefined) {
       drawCells(
         buf,
         theme.style("imagePlaceholder"),
@@ -271,22 +293,127 @@ export class ZoomOverlay extends Renderable {
       );
       return;
     }
-    const px = this.deps.images.cellPixels();
-    buf.drawImage(
-      image,
-      v.x,
-      v.y,
-      v.cols,
-      v.rows,
-      px === undefined ? 0 : Math.round(v.cols * px.width),
-      px === undefined ? 0 : Math.round(v.rows * px.height),
-      0,
+    drawPart(buf, image, shown, view, v, this.deps.images.cellPixels(), tier);
+  }
+
+  /** Ask for `r` once the view has rested for `RASTER_IDLE_MS`. */
+  private restartTimer(r: Raster): void {
+    if (this.timer !== undefined) clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      this.wanted = r;
+      this.requestRender();
+    }, RASTER_IDLE_MS);
+  }
+}
+
+/** How long the view rests before the raster it needs starts. */
+const RASTER_IDLE_MS = 80;
+/** The margin rasterized around the view, as a fraction of its size on each side. */
+const RASTER_MARGIN = 0.25;
+/** The most pixels one raster holds; past it the margin shrinks. */
+const RASTER_MAX_PIXELS = 8_000_000;
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+/** A diagram raster: `crop` of the SVG at `scale` pixels per unit, `width`×`height` pixels. */
+type Raster = {
+  key: string;
+  owner: string;
+  crop: Rect;
+  scale: number;
+  width: number;
+  height: number;
+};
+
+const contains = (a: Rect, b: Rect) =>
+  b.x >= a.x - 1e-6 &&
+  b.y >= a.y - 1e-6 &&
+  b.x + b.w <= a.x + a.w + 1e-6 &&
+  b.y + b.h <= a.y + a.h + 1e-6;
+
+/** The raster for `view`: the view grown by the margin, within the SVG and the pixel budget. */
+function rasterFor(
+  owner: string,
+  view: Rect,
+  scale: number,
+  svg: { width: number; height: number },
+): Raster {
+  const viewPixels = view.w * view.h * scale * scale;
+  const room = Math.sqrt(RASTER_MAX_PIXELS / Math.max(1, viewPixels));
+  const m = Math.max(0, Math.min(RASTER_MARGIN, (room - 1) / 2));
+  const x = Math.max(0, view.x - view.w * m);
+  const y = Math.max(0, view.y - view.h * m);
+  const crop = {
+    x,
+    y,
+    w: Math.min(svg.width, view.x + view.w * (1 + m)) - x,
+    h: Math.min(svg.height, view.y + view.h * (1 + m)) - y,
+  };
+  const width = Math.max(1, Math.round(crop.w * scale));
+  const height = Math.max(1, Math.round(crop.h * scale));
+  const key = `${owner}|${[crop.x, crop.y, crop.w, crop.h]
+    .map((n) => n.toFixed(2))
+    .join(",")}|${width}x${height}`;
+  return { key, owner, crop, scale, width, height };
+}
+
+/**
+ * The part of `view` that raster `r` covers, drawn where it belongs in the
+ * view's cells; a raster at another scale (just after a zoom) is stretched.
+ */
+function drawPart(
+  buf: OptimizedBuffer,
+  image: NativeImage,
+  r: Raster,
+  view: Rect,
+  v: { x: number; y: number; cols: number; rows: number },
+  px: { width: number; height: number } | undefined,
+  tier: Exclude<ReturnType<typeof imageTier>, "placeholder">,
+): void {
+  const x0 = Math.max(view.x, r.crop.x);
+  const y0 = Math.max(view.y, r.crop.y);
+  const x1 = Math.min(view.x + view.w, r.crop.x + r.crop.w);
+  const y1 = Math.min(view.y + view.h, r.crop.y + r.crop.h);
+  if (x1 <= x0 || y1 <= y0) return;
+  const cx0 = Math.round(((x0 - view.x) / view.w) * v.cols);
+  const cy0 = Math.round(((y0 - view.y) / view.h) * v.rows);
+  const cx1 = Math.round(((x1 - view.x) / view.w) * v.cols);
+  const cy1 = Math.round(((y1 - view.y) / view.h) * v.rows);
+  const cols = cx1 - cx0;
+  const rows = cy1 - cy0;
+  if (cols < 1 || rows < 1) return;
+  // The source rectangle of the cells drawn, in the raster's pixels.
+  const px0 = (u: number) =>
+    clamp(
+      Math.round(((u - r.crop.x) / r.crop.w) * image.width),
       0,
       image.width,
-      image.height,
-      tier,
     );
-  }
+  const py0 = (u: number) =>
+    clamp(
+      Math.round(((u - r.crop.y) / r.crop.h) * image.height),
+      0,
+      image.height,
+    );
+  const sx = px0(view.x + (cx0 / v.cols) * view.w);
+  const sy = py0(view.y + (cy0 / v.rows) * view.h);
+  const ex = px0(view.x + (cx1 / v.cols) * view.w);
+  const ey = py0(view.y + (cy1 / v.rows) * view.h);
+  buf.drawImage(
+    image,
+    v.x + cx0,
+    v.y + cy0,
+    cols,
+    rows,
+    px === undefined ? 0 : Math.round(cols * px.width),
+    px === undefined ? 0 : Math.round(rows * px.height),
+    sx,
+    sy,
+    Math.max(1, ex - sx),
+    Math.max(1, ey - sy),
+    tier,
+  );
 }
 
 /** `lines` from row `row` and column `col`, centred in the float when smaller. */

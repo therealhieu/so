@@ -559,8 +559,30 @@ test("the zoom float draws a diagram as a sharp image of the part in view", asyn
     await Bun.sleep(50);
     expect(await m.frame()).toContain("mermaid · 2×");
     const zoomed = rasters.at(-1);
-    expect(zoomed?.crop.w).toBeCloseTo(fit.crop.w / 2);
-    expect(zoomed?.width).toBe(fit.width);
+    if (zoomed === undefined) throw new Error("expected a raster");
+    // Twice the pixels per diagram unit, over the view plus a margin.
+    expect(zoomed.width / zoomed.crop.w).toBeCloseTo(
+      (2 * fit.width) / fit.crop.w,
+    );
+    expect(zoomed.crop.w).toBeGreaterThan(fit.crop.w / 2);
+
+    // A pan inside the margin moves the placement only: no new raster.
+    const count = rasters.length;
+    m.keys("l");
+    draw.mockClear();
+    await m.frame();
+    await Bun.sleep(120);
+    await m.frame();
+    expect(rasters.length).toBe(count);
+    expect(draw).toHaveBeenCalled();
+    // Panning past it draws what the last raster covers, and asks for a new
+    // one only once the view rests.
+    m.keys("llll");
+    await m.frame();
+    expect(rasters.length).toBe(count);
+    await Bun.sleep(120);
+    await m.frame();
+    expect(rasters.length).toBe(count + 1);
   } finally {
     draw.mockRestore();
   }
