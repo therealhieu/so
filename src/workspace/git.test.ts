@@ -163,6 +163,11 @@ test("status is scoped to the workspace prefix and reads the operation", async (
   const merging = await gitIn(r).status(info);
   expect(merging.op).toBe("merging");
   expect(merging.files.get("a.md")?.conflict).toBe(true);
+
+  await r.run(["merge", "--abort"]);
+  await r.run(["checkout", "-q", "side"]);
+  await r.run(["rebase", "main"]).catch(() => {});
+  expect((await gitIn(r).status(info)).op).toBe("rebasing");
 });
 
 test("index reads classify ignored, untracked, and conflicted files, and blame of an unsaved line is uncommitted", async () => {
