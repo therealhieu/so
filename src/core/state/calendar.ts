@@ -58,6 +58,12 @@ function show(s: AppState, cal: CalendarState, selected: LocalDate): Result {
   );
 }
 
+/** Select `date` in the open calendar, as moving to it does. */
+export function selectCalendarDay(s: AppState, date: LocalDate): Result {
+  const cal = calendarOf(s);
+  return cal === undefined ? none(s) : show(s, cal, date);
+}
+
 /** `<leader>np`: the calendar on today's month with today selected. */
 export function openCalendar(c: CommandContext): Result {
   const today = dateOf(localDateTime(c.now));

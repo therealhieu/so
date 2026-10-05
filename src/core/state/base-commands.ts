@@ -105,6 +105,26 @@ function focusCard(a: Active, lane: number, card: number): Result {
   );
 }
 
+/** Focus table cell (`row`, `column`) of the active base window. */
+export function focusBaseCell(
+  c: CommandContext,
+  row: number,
+  column: number,
+): Result {
+  const a = active(c);
+  return a === undefined ? none(c.state) : focusCell(a, row, column);
+}
+
+/** Focus card `card` of lane `lane` of the active base window. */
+export function focusBaseCard(
+  c: CommandContext,
+  lane: number,
+  card: number,
+): Result {
+  const a = active(c);
+  return a === undefined ? none(c.state) : focusCard(a, lane, card);
+}
+
 function moveFocus(c: CommandContext, dRow: number, dCol: number): Result {
   const a = active(c);
   if (a === undefined) return none(c.state);
@@ -256,6 +276,10 @@ function switchView(c: CommandContext, pick: (a: Active) => number): Result {
     : none(selectBaseView(a.s, a.id, view.name));
 }
 
+/** Show view `index` of the active base window, as `1`…`4` do. */
+export const showBaseView = (c: CommandContext, index: number): Result =>
+  switchView(c, () => index);
+
 const nextView = (a: Active) =>
   (a.m.views.findIndex((v) => v.name === a.m.selected) + 1) %
   Math.max(1, a.m.views.length);
@@ -322,6 +346,9 @@ function openFocused(c: CommandContext): Result {
     ? none(a.s)
     : openPath(recordJump(a.s), path, c.now);
 }
+
+/** Open the focused row's or card's note, as `<CR>` does. */
+export const openBaseFocused = openFocused;
 
 const BASE = ["base"] as const;
 const cmd = (

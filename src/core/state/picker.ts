@@ -646,6 +646,12 @@ function select(s: AppState, p: PickerState, to: number): Result {
   );
 }
 
+/** Select row `index` of the open picker, as moving to it does. */
+export function selectPickerItem(s: AppState, index: number): Result {
+  const p = pickerOf(s);
+  return p === undefined ? none(s) : select(s, p, index);
+}
+
 function togglePreview(p: PickerState): PickerState {
   const { showPreview, ...rest } = p;
   return showPreview === true ? rest : { ...rest, showPreview: true };

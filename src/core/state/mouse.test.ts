@@ -3,6 +3,7 @@ import { indexed, TASKS_BASE } from "../../../test/support/bases";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import type { BaseWindowState } from "../features/bases/file-type";
 import { splitKeys } from "../kernel/vim/keys";
+import { addDays } from "../time/local";
 import { baseViewModel } from "./base-model";
 import { fullText } from "./buffers";
 import type {
@@ -54,6 +55,17 @@ const press = (
   ctrl = false,
 ): MouseEvent => ({ kind: "press", target, clicks, ctrl });
 
+/** Buffer texts as strings: equal texts from separate edits are separate objects. */
+const plain = (s: AppState) => ({
+  ...s,
+  buffers: Object.fromEntries(
+    Object.entries(s.buffers).map(([id, b]) => [
+      id,
+      { ...b, text: fullText(b.text) },
+    ]),
+  ),
+});
+
 /**
  * The session-save debounce restarts once per action, so a gesture that
  * equals several keys restarts it fewer times; compare it once. A prefix key
@@ -69,7 +81,7 @@ function expectSame(actual: Result, expected: Result): void {
           effects.findIndex((f) => f.kind === "startTimer" && f.id === e.id) ===
             i),
     );
-  expect(actual.state).toEqual(expected.state);
+  expect(plain(actual.state)).toEqual(plain(expected.state));
   expect(comparable(actual.effects)).toEqual(comparable(expected.effects));
 }
 
@@ -162,6 +174,20 @@ test("an Insert-mode click keeps Insert and starts a new undo step", () => {
   const end = mouse(typed, press(text(1, 3, 99))).state;
   expect(end.vim.mode).toBe("insert");
   expect(cursorOf(end)).toEqual({ line: 3, col: "fourth".length });
+});
+
+test("an Insert-mode click in another window ends Insert where it was typed", () => {
+  const split = keys(open("a.md", LINES), "<C-w>v").state;
+  const typing = split.windows.active;
+  const other = typing === 1 ? 2 : 1;
+  const typed = keys(open("b.md", "bee\n", split), "Axy").state;
+  expect(cursorOf(typed, typing)).toEqual({ line: 0, col: 5 });
+  const clicked = mouse(typed, press(text(other, 2, 3))).state;
+  expect(clicked.windows.active).toBe(other);
+  expect(clicked.vim.mode).toBe("insert");
+  expect(cursorOf(clicked, typing)).toEqual({ line: 0, col: 4 });
+  expect(cursorOf(clicked, other)).toEqual({ line: 2, col: 3 });
+  expect(textOf(clicked, 2)).toBe("beexy");
 });
 
 test("dragging selects charwise from the press to the pointer", () => {
@@ -407,4 +433,210 @@ test("the wheel stops at the last completion item instead of wrapping", () => {
   const up = mouse(s, wheel({ kind: "overlay" }, -1));
   expectSame(up, keys(s, "<C-p><C-p>"));
   expect(up.state.vim.mode).toBe("insert");
+});
+
+const setPanels = (
+  s: AppState,
+  explorer: Partial<AppState["panels"]["explorer"]>,
+  side: Partial<AppState["panels"]["side"]> = {},
+): AppState => ({
+  ...s,
+  panels: {
+    explorer: { ...s.panels.explorer, ...explorer },
+    side: { ...s.panels.side, ...side },
+  },
+});
+
+/** a.md open, with an explorer listing two notes and a folder. */
+function withExplorer(): AppState {
+  const listed = update(open("a.md", MANY), {
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: "a.md", kind: "file" },
+      { name: "b.md", kind: "file" },
+      { name: "notes", kind: "dir" },
+    ],
+  }).state;
+  return setPanels(listed, { open: true, cursor: "a.md" });
+}
+
+function baseCase(): { s: AppState; id: WindowId } {
+  const s = noteAndBase();
+  const base = baseWindowOf(s);
+  if (base === undefined) throw new Error("expected a base window");
+  return { s, id: base.id };
+}
+
+test.each<
+  [string, () => { start: AppState; event: MouseEvent; expected: Result }]
+>([
+  [
+    "a buffer tab",
+    () => {
+      const start = open("b.md", "bee\n", open("a.md", MANY));
+      return {
+        start,
+        event: press({ kind: "bufferTab", bufferId: 1 }),
+        expected: keys(start, ":bn<CR>"),
+      };
+    },
+  ],
+  [
+    "an explorer file",
+    () => {
+      const start = withExplorer();
+      return {
+        start,
+        event: press({ kind: "explorer", path: "b.md" }),
+        expected: keys(
+          setPanels(start, { focused: true, cursor: "b.md" }),
+          "<CR>",
+        ),
+      };
+    },
+  ],
+  [
+    "an explorer folder",
+    () => {
+      const start = withExplorer();
+      return {
+        start,
+        event: press({ kind: "explorer", path: "notes" }),
+        expected: keys(
+          setPanels(start, { focused: true, cursor: "notes" }),
+          "<CR>",
+        ),
+      };
+    },
+  ],
+  [
+    "a side-panel row",
+    () => {
+      const start = withOutline();
+      return {
+        start,
+        event: press({ kind: "sidePanel", row: 3 }),
+        expected: keys(
+          setPanels(start, {}, { focused: true, cursor: 3 }),
+          "<CR>",
+        ),
+      };
+    },
+  ],
+  [
+    "a Bases view tab",
+    () => {
+      const { s, id } = baseCase();
+      return {
+        start: s,
+        event: press({
+          kind: "window",
+          window: id,
+          spot: { kind: "baseTab", view: 1 },
+        }),
+        expected: keys(withActive(s, id), "2"),
+      };
+    },
+  ],
+  [
+    "a picker row",
+    () => {
+      const start = keys(open("a.md", MANY), " sc").state;
+      return {
+        start,
+        event: press({ kind: "overlayItem", index: 1 }),
+        expected: keys(start, "<C-n><CR>"),
+      };
+    },
+  ],
+  [
+    "a completion row",
+    () => {
+      const start = completing();
+      return {
+        start,
+        event: press({ kind: "overlayItem", index: 2 }),
+        expected: keys(start, "<C-n><C-n><CR>"),
+      };
+    },
+  ],
+  [
+    "a calendar day",
+    () => {
+      const start = keys(open("a.md", MANY), " np").state;
+      if (start.overlay.kind !== "calendar")
+        throw new Error("expected a calendar");
+      const date = addDays(start.overlay.calendar.selected, 2);
+      return {
+        start,
+        event: press({ kind: "calendarDay", date }),
+        expected: keys(start, "ll<CR>"),
+      };
+    },
+  ],
+])("a click on %s equals its keyboard action", (_label, setup) => {
+  const { start, event, expected } = setup();
+  const r = mouse(start, event);
+  expectSame(r, expected);
+  expect(r.state).not.toEqual(start);
+});
+
+test("a single click on a Bases cell focuses it and a double click opens it", () => {
+  const { s, id } = baseCase();
+  const cell: MouseTarget = {
+    kind: "window",
+    window: id,
+    spot: { kind: "baseCell", row: 2, column: 1 },
+  };
+  const single = mouse(s, press(cell));
+  expectSame(single, keys(withActive(s, id), "jjl"));
+  expect(baseFocus(single.state)).toMatchObject({ index: 2, column: 1 });
+  expect(Object.keys(single.state.windows.byId)).toEqual(
+    Object.keys(s.windows.byId),
+  );
+  expect(single.effects).toEqual([]);
+
+  const double = mouse(s, press(cell, 2));
+  expectSame(double, keys(withActive(s, id), "jjl<CR>"));
+  expect(double.effects.length).toBeGreaterThan(0);
+});
+
+test("a click on panel chrome only focuses the panel", () => {
+  const start = withExplorer();
+  const explorer = mouse(start, press({ kind: "explorer", path: "" })).state;
+  expect(explorer.panels.explorer).toEqual({
+    ...start.panels.explorer,
+    focused: true,
+  });
+  const outline = withOutline();
+  const side = mouse(
+    {
+      ...outline,
+      panels: {
+        ...outline.panels,
+        side: { ...outline.panels.side, cursor: 2 },
+      },
+    },
+    press({ kind: "sidePanel", row: -1 }),
+  ).state;
+  expect(side.panels.side).toMatchObject({ focused: true, cursor: 2 });
+  expect(side.windows).toEqual(outline.windows);
+});
+
+test("a click on inert chrome or a stale item changes nothing", () => {
+  const s = open("a.md", MANY);
+  for (const target of [
+    { kind: "inert" },
+    { kind: "overlay" },
+    { kind: "outside" },
+    { kind: "bufferTab", bufferId: 42 },
+  ] as MouseTarget[]) {
+    const r = mouse(s, press(target));
+    expect(r.state).toEqual(s);
+    expect(r.effects).toEqual([]);
+  }
+  const picking = keys(s, " sc").state;
+  const stale = mouse(picking, press({ kind: "overlayItem", index: 999 }));
+  expect(stale.state).toEqual(picking);
 });

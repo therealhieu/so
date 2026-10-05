@@ -1,12 +1,34 @@
 import type { Pos } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
+import {
+  focusBaseCard,
+  focusBaseCell,
+  openBaseFocused,
+  showBaseView,
+} from "./base-commands";
 import { baseViewModel } from "./base-model";
-import { activeBuffer, leaves, placeCursor, setWindow } from "./buffers";
+import {
+  activeBuffer,
+  leaves,
+  placeCursor,
+  setWindow,
+  showBuffer,
+} from "./buffers";
+import { selectCalendarDay } from "./calendar";
 import { runCommand } from "./commands";
-import { moveCursor } from "./explorer";
+import { moveCursor, visiblePaths } from "./explorer";
 import { handleKeyAction } from "./keys";
+import { selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
-import type { AppState, MouseEvent, MouseTarget, Result } from "./types";
+import { autosaveNow } from "./save";
+import { sidePanelRows } from "./side-panel";
+import type {
+  AppState,
+  MouseEvent,
+  MouseTarget,
+  Result,
+  WindowSpot,
+} from "./types";
 import type { Registries } from "./update";
 
 const LINK_FOLLOW = "link.follow";
@@ -26,13 +48,8 @@ export function onMouse(
   const e = a.event;
   if (stale(s, e.target)) return none(s);
   switch (e.kind) {
-    case "press": {
-      const focused = focusTarget(s, e.target);
-      const t = e.target;
-      return t.kind === "window" && t.spot.kind === "text"
-        ? pressText(none(focused), t.spot.pos, e.clicks, e.ctrl, a.now, reg)
-        : none(focused);
-    }
+    case "press":
+      return press(s, e, a.now, reg);
     case "drag": {
       const t = e.target;
       return t.kind === "window" &&
@@ -243,32 +260,61 @@ function placeAt(r: Result, pos: Pos): Result {
   return { ...r, state: placeCursor({ ...r.state, vim }, pos) };
 }
 
+/** Targets in the editor area and its panels, as opposed to overlays and inert chrome. */
+const inBody = (t: MouseTarget): boolean =>
+  t.kind === "window" ||
+  t.kind === "explorer" ||
+  t.kind === "sidePanel" ||
+  t.kind === "bufferTab";
+
 /**
- * A press on text. In Insert a single click leaves Insert, moves, and
- * enters it again, so the typing after it is a new undo step; a click past
- * the line end appends. Otherwise Visual mode and pending keys are
- * cancelled first; a double click selects the word (`viw`), a triple click
- * the line (`V`), and Ctrl follows the link under the click (`gd`).
+ * A press in the body first ends Insert, Visual, and pending keys in the
+ * window they belong to, then gives focus to the target, then acts on it.
+ * A press on an overlay acts at once.
+ */
+function press(
+  s: AppState,
+  e: Extract<MouseEvent, { kind: "press" }>,
+  now: number,
+  reg: Registries,
+): Result {
+  const t = e.target;
+  if (!inBody(t)) return pressChrome(none(s), t, e.clicks, now, reg);
+  const { mode, pending } = s.vim;
+  const onText = t.kind === "window" && t.spot.kind === "text";
+  const reinsert = onText && mode === "insert" && e.clicks === 1 && !e.ctrl;
+  const idle = mode === "normal" && pending.length === 0;
+  const left = idle ? none(s) : feedKeys(none(s), ["<Esc>"], now, reg);
+  const focused = { ...left, state: focusTarget(left.state, t) };
+  return t.kind === "window" && t.spot.kind === "text"
+    ? pressText(focused, t.spot.pos, e.clicks, e.ctrl, reinsert, now, reg)
+    : pressChrome(focused, t, e.clicks, now, reg);
+}
+
+/**
+ * A press on text, after Insert and Visual have ended. A single click in
+ * Insert enters it again at the click, so the typing after it is a new undo
+ * step, and appends past the line end; a double click selects the word
+ * (`viw`), a triple click the line (`V`), and Ctrl follows the link under
+ * the click (`gd`).
  */
 function pressText(
   r: Result,
   pos: Pos,
   clicks: 1 | 2 | 3,
   ctrl: boolean,
+  reinsert: boolean,
   now: number,
   reg: Registries,
 ): Result {
-  const { mode, pending } = r.state.vim;
-  if (mode === "insert" && clicks === 1 && !ctrl) {
-    const placed = placeAt(feedKeys(r, ["<Esc>"], now, reg), pos);
+  const placed = placeAt(r, pos);
+  if (reinsert) {
     const length = activeBuffer(placed.state)?.text.line(
       cursorLine(placed.state),
     ).length;
     const append = length !== undefined && length > 0 && pos.col >= length;
     return feedKeys(placed, [append ? "a" : "i"], now, reg);
   }
-  const idle = mode === "normal" && pending.length === 0;
-  const placed = placeAt(idle ? r : feedKeys(r, ["<Esc>"], now, reg), pos);
   if (ctrl)
     return followsLinks(placed.state, reg)
       ? chain(placed, (s) => runCommand(s, LINK_FOLLOW, now, reg))
@@ -310,4 +356,168 @@ function dragText(
     r = feedKeys(r, ["v"], now, reg);
   }
   return placeAt(r, { line: pos.line + edge, col: pos.col });
+}
+
+/**
+ * A press on anything but text, after focus moved: a buffer tab shows its
+ * buffer (`:bn`), an explorer or side-panel row is selected and opened
+ * (`<CR>`), a Bases tab shows its view, a cell or card is focused and opened
+ * on a double click, and an overlay row or calendar day is selected and
+ * accepted. Panel frames, winbars, and inert chrome only take focus.
+ */
+function pressChrome(
+  r: Result,
+  t: MouseTarget,
+  clicks: number,
+  now: number,
+  reg: Registries,
+): Result {
+  const s = r.state;
+  switch (t.kind) {
+    case "bufferTab": {
+      const current = activeBuffer(s);
+      if (s.buffers[t.bufferId] === undefined || current?.id === t.bufferId)
+        return r;
+      const saved =
+        current === undefined
+          ? r
+          : chain(r, (st) => autosaveNow(st, current.id, now));
+      return { ...saved, state: showBuffer(saved.state, t.bufferId) };
+    }
+    case "explorer":
+      if (!visiblePaths(s).includes(t.path)) return r;
+      return feedKeys(
+        {
+          ...r,
+          state: {
+            ...s,
+            panels: {
+              ...s.panels,
+              explorer: { ...s.panels.explorer, cursor: t.path },
+            },
+          },
+        },
+        ["<CR>"],
+        now,
+        reg,
+      );
+    case "sidePanel":
+      if (t.row < 0 || t.row >= sidePanelRows(s).length) return r;
+      return feedKeys(
+        {
+          ...r,
+          state: {
+            ...s,
+            panels: { ...s.panels, side: { ...s.panels.side, cursor: t.row } },
+          },
+        },
+        ["<CR>"],
+        now,
+        reg,
+      );
+    case "window":
+      return pressBase(r, t.spot, clicks, now, reg);
+    case "overlayItem":
+      return pressItem(r, t.index, now, reg);
+    case "calendarDay":
+      return s.overlay.kind === "calendar"
+        ? feedKeys(
+            chain(r, (st) => selectCalendarDay(st, t.date)),
+            ["<CR>"],
+            now,
+            reg,
+          )
+        : r;
+    default:
+      return r;
+  }
+}
+
+/** A press on a Bases tab, cell, or card of the active window. */
+function pressBase(
+  r: Result,
+  spot: WindowSpot,
+  clicks: number,
+  now: number,
+  reg: Registries,
+): Result {
+  const s = r.state;
+  const c = { state: s, now, reg };
+  const m = baseViewModel(s, s.windows.active, reg);
+  let focused: Result;
+  switch (spot.kind) {
+    case "baseTab":
+      return chain(r, () => showBaseView(c, spot.view));
+    case "baseCell": {
+      const t = m?.table;
+      if (
+        t === undefined ||
+        spot.row >= t.rows.length ||
+        spot.column >= t.columns.length
+      )
+        return r;
+      focused = chain(r, () => focusBaseCell(c, spot.row, spot.column));
+      break;
+    }
+    case "baseCard": {
+      const lane = m?.board?.lanes[spot.lane];
+      if (
+        lane === undefined ||
+        (spot.card > 0 && spot.card >= lane.cards.length)
+      )
+        return r;
+      focused = chain(r, () => focusBaseCard(c, spot.lane, spot.card));
+      break;
+    }
+    default:
+      return r;
+  }
+  return clicks >= 2
+    ? chain(focused, (st) =>
+        openBaseFocused({ state: clearMessage(st), now, reg }),
+      )
+    : focused;
+}
+
+/** A press on row `index` of the open picker or completion list: select and accept it. */
+function pressItem(
+  r: Result,
+  index: number,
+  now: number,
+  reg: Registries,
+): Result {
+  const s = r.state;
+  switch (s.overlay.kind) {
+    case "picker":
+    case "palette":
+    case "help":
+      if (index < 0 || index >= s.overlay.picker.items.length) return r;
+      return feedKeys(
+        chain(r, (st) => selectPickerItem(st, index)),
+        ["<CR>"],
+        now,
+        reg,
+      );
+    case "completion": {
+      const completion = s.overlay.completion;
+      if (index < 0 || index >= completion.items.length) return r;
+      return feedKeys(
+        {
+          ...r,
+          state: {
+            ...s,
+            overlay: {
+              kind: "completion",
+              completion: { ...completion, selected: index },
+            },
+          },
+        },
+        ["<CR>"],
+        now,
+        reg,
+      );
+    }
+    default:
+      return r;
+  }
 }
