@@ -7,7 +7,7 @@ import {
   setBuffer,
 } from "./buffers";
 import { summarizeSaved } from "./index";
-import { onLspTimeout } from "./lsp";
+import { onFormatTimeout, onLspTimeout } from "./lsp";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -124,6 +124,7 @@ export function onTimer(
       },
     });
   if (kind === "lsp") return onLspTimeout(s, id);
+  if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;
   if (kind === "autosave" && save?.kind === "scheduled" && save.at <= a.now)
     return writeBuffer(s, id, a.now);

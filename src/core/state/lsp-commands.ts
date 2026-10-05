@@ -166,6 +166,29 @@ function formatCommand(c: CommandContext): Result {
       });
 }
 
+/** How long `:w` waits for the formatter before saving unformatted. */
+const FORMAT_ON_SAVE_MS = 1000;
+
+/** `:w` with format on save: format the whole buffer first; its result or the timeout writes it. */
+export function formatThenSave(c: CommandContext, b: BufferState): Result {
+  const s = c.state;
+  const requestId = s.lsp.nextId;
+  const r = request(s, "format", {
+    kind: "format",
+    options: formattingOptions(b, s.config.editor.tabWidth),
+  });
+  return {
+    state: {
+      ...r.state,
+      lsp: { ...r.state.lsp, format: { bufferId: b.id, requestId } },
+    },
+    effects: [
+      ...r.effects,
+      { kind: "startTimer", id: `lspFormat:${b.id}`, ms: FORMAT_ON_SAVE_MS },
+    ],
+  };
+}
+
 /** The active file's shown diagnostics, in position order. */
 function sortedDiagnostics(s: AppState): Diagnostic[] {
   const b = activeBuffer(s);

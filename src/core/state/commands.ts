@@ -26,6 +26,8 @@ import {
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
+import { pickServer } from "./lsp";
+import { formatThenSave } from "./lsp-commands";
 import { openPicker } from "./picker";
 import { chain, message, none } from "./result";
 import {
@@ -242,10 +244,23 @@ function editFile(ctx: CommandContext): Result {
   return openPath(recordJump(s), path, ctx.now);
 }
 
+/**
+ * `:w`; with format on save and a formatting server, the buffer is formatted
+ * first. While one buffer waits for its formatter, `:w` there changes
+ * nothing and `:w` in another buffer writes it unformatted.
+ */
 function writeActive(ctx: CommandContext): Result {
-  const b = activeBuffer(ctx.state);
-  if (b === undefined) return message(ctx.state, "E32: No file name", "error");
-  if (b.readOnly === true) return message(ctx.state, READ_ONLY_FILE, "error");
+  const s = ctx.state;
+  const b = activeBuffer(s);
+  if (b === undefined) return message(s, "E32: No file name", "error");
+  if (b.readOnly === true) return message(s, READ_ONLY_FILE, "error");
+  if (s.lsp.format?.bufferId === b.id) return none(s);
+  if (
+    s.config.lsp.formatOnSave &&
+    s.lsp.format === undefined &&
+    pickServer(s, b.path, "format") !== undefined
+  )
+    return formatThenSave(ctx, b);
   return writeBuffer(ctx.state, b.id, ctx.now, {
     recreate: b.disk === "deleted",
   });

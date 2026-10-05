@@ -3,10 +3,11 @@ import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import type { Pos } from "../kernel/text/pos";
 import type { Diagnostic } from "../kernel/view/diagnostics";
 import { splitKeys } from "../kernel/vim/keys";
+import { fullText } from "./buffers";
 import { executeEx, runCommand } from "./commands";
 import { formattingOptions } from "./lsp-commands";
-import type { LspFeature, ServerView } from "./lsp-types";
-import type { Action, AppState, BufferState, Result } from "./types";
+import type { LspFeature, LspResult, ServerView } from "./lsp-types";
+import type { Action, AppState, BufferState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
 
 const reg = testRegistries();
@@ -214,4 +215,124 @@ test(":Diagnostics and :LspInfo open their pickers in any file", () => {
   expect(
     runCommand(note, "lsp.hover", 0, reg).state.notifications.message?.text,
   ).toBe("not available for markdown files");
+});
+
+const UGLY = "fn a() {\nb();\n}";
+
+/** `src/a.rs` holding `UGLY`, with formatting server `a`; `formatOnSave` and autosave as given. */
+function formatting(o: { formatOnSave: boolean; autosave: boolean }): AppState {
+  const s = run(
+    fresh(),
+    { type: "fileLoaded", path: "src/a.rs", file: textFile(`${UGLY}\n`) },
+    { type: "lspServer", key: "a@/ws", view: ready("a", ["format"]) },
+    { type: "lspAttached", path: "src/a.rs", keys: ["a@/ws"] },
+  ).state;
+  return {
+    ...s,
+    config: {
+      ...s.config,
+      autosave: { ...s.config.autosave, enabled: o.autosave },
+      lsp: { ...s.config.lsp, formatOnSave: o.formatOnSave },
+    },
+  };
+}
+
+const textOf = (s: AppState) => {
+  const b = Object.values(s.buffers).find((x) => x.path === "src/a.rs");
+  return b === undefined ? undefined : fullText(b.text);
+};
+const kinds = (effects: Effect[]) => effects.map((e) => e.kind);
+const indent: LspResult = {
+  kind: "edit",
+  edit: {
+    files: [
+      {
+        path: "src/a.rs",
+        edits: [{ range: { start: at(1, 0), end: at(1, 0) }, text: "    " }],
+      },
+    ],
+    outside: 0,
+  },
+};
+const timerOf = (effects: Effect[]) =>
+  effects.find((e) => e.kind === "startTimer" && e.id.startsWith("lspFormat"));
+
+test(":Format applies the server edits as one undo step", () => {
+  const sent = keys(
+    formatting({ formatOnSave: false, autosave: false }),
+    ":Format<CR>",
+  );
+  const done = run(sent.state, { type: "lspResult", id: 1, result: indent });
+  expect(textOf(done.state)).toBe("fn a() {\n    b();\n}");
+  expect(textOf(keys(done.state, "u").state)).toBe(UGLY);
+});
+
+test("format on save formats :w only and never waits more than a second", () => {
+  const edited = keys(formatting({ formatOnSave: true, autosave: false }), "x");
+  const saving = keys(edited.state, ":w<CR>");
+  expect(kinds(saving.effects)).not.toContain("write");
+  expect(saving.effects.filter((e) => e.kind === "lsp")).toMatchObject([
+    { op: { kind: "format" } },
+  ]);
+  const timer = timerOf(saving.effects);
+  expect(timer).toMatchObject({ ms: 1000 });
+  const id = timer?.kind === "startTimer" ? timer.id : "lspFormat:0";
+  const twice = keys(saving.state, ":w<CR>");
+  expect(
+    kinds(twice.effects).filter((k) => k === "lsp" || k === "write"),
+  ).toEqual([]);
+
+  const formatted = run(saving.state, {
+    type: "lspResult",
+    id: 1,
+    result: indent,
+  });
+  expect(textOf(formatted.state)).toBe("n a() {\n    b();\n}");
+  expect(formatted.effects).toContainEqual({ kind: "cancelTimer", id });
+  expect(
+    formatted.effects.filter((e) => e.kind === "write").map((e) => e.text),
+  ).toEqual(["n a() {\n    b();\n}\n"]);
+  expect(formatted.state.lsp.format).toBeUndefined();
+
+  const silent = run(saving.state, { type: "timer", id, now: 1005 });
+  expect(kinds(silent.effects)).toContain("write");
+  expect(silent.effects).toContainEqual({
+    kind: "lspCancel",
+    id: 1,
+    key: "a@/ws",
+  });
+  expect(silent.state.notifications.toasts.map((t) => t.text)).toEqual([
+    "format timed out; saved without formatting",
+  ]);
+  const late = run(silent.state, { type: "lspResult", id: 1, result: indent });
+  expect(textOf(late.state)).toBe("n a() {\nb();\n}");
+  expect(kinds(late.effects)).not.toContain("write");
+});
+
+test("autosave never formats", () => {
+  const edited = keys(formatting({ formatOnSave: true, autosave: true }), "x");
+  const b = Object.values(edited.state.buffers)[0];
+  const fired = run(edited.state, {
+    type: "timer",
+    id: `autosave:${b?.id ?? 0}`,
+    now: 1_000_000,
+  });
+  expect(kinds(fired.effects)).toContain("write");
+  expect(kinds(fired.effects)).not.toContain("lsp");
+});
+
+test("a failed format on save still saves, with a warning", () => {
+  const saving = keys(
+    keys(formatting({ formatOnSave: true, autosave: false }), "x").state,
+    ":w<CR>",
+  );
+  const failed = run(saving.state, {
+    type: "lspResult",
+    id: 1,
+    result: { kind: "error", message: "syntax error" },
+  });
+  expect(kinds(failed.effects)).toContain("write");
+  expect(failed.state.notifications.toasts.map((t) => t.text)).toEqual([
+    "format failed (syntax error); saved without formatting",
+  ]);
 });

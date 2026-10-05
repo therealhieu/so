@@ -18,6 +18,7 @@ import type {
 } from "./lsp-types";
 import { openPicker } from "./picker";
 import { chain, message, none, toast } from "./result";
+import { writeBuffer } from "./save";
 import type { Action, AppState, Effect, Result } from "./types";
 import type { Registries } from "./update";
 
@@ -59,13 +60,13 @@ export function pickServer(
 /** `pending` without the requests `drop` selects, and the effects that end them. */
 function dropPending(
   s: AppState,
-  drop: (p: PendingRequest) => boolean,
+  drop: (p: PendingRequest, id: number) => boolean,
 ): Result {
   const pending: LspState["pending"] = {};
   const effects: Effect[] = [];
   for (const [n, p] of Object.entries(s.lsp.pending)) {
     const id = Number(n);
-    if (!drop(p)) {
+    if (!drop(p, id)) {
       pending[id] = p;
       continue;
     }
@@ -165,11 +166,72 @@ export function onLspResult(
     ? []
     : [{ kind: "cancelTimer", id: `lsp:${a.id}` }];
   const b = bufferForPath(state, p.path);
+  const current = b !== undefined && b.text.version === p.version;
+  const format = state.lsp.format;
   const fresh =
-    b !== undefined && b.text.version === p.version
-      ? applyResult(state, p, a.result, reg)
-      : none(state);
+    format?.requestId === a.id
+      ? formattedSave(state, format, current ? a.result : { kind: "none" }, reg)
+      : current
+        ? applyResult(state, p, a.result, reg)
+        : none(state);
   return { state: fresh.state, effects: [...ended, ...fresh.effects] };
+}
+
+/** `s` without the format-on-save wait. */
+function withoutFormat(s: AppState): AppState {
+  const { format: _, ...lsp } = s.lsp;
+  return { ...s, lsp };
+}
+
+/** Write buffer `id` as `:w` does. */
+const save = (s: AppState, id: number, now: number): Result =>
+  writeBuffer(s, id, now, { recreate: s.buffers[id]?.disk === "deleted" });
+
+/**
+ * The formatter answered a `:w`: apply its edits, then write. A failure
+ * writes the buffer unformatted with a warning; a stale answer just writes.
+ * The answer has no time, so the write is due now (0).
+ */
+function formattedSave(
+  s: AppState,
+  f: { bufferId: number },
+  r: LspResult,
+  reg: Registries,
+): Result {
+  const waited: Result = {
+    state: withoutFormat(s),
+    effects: [{ kind: "cancelTimer", id: `lspFormat:${f.bufferId}` }],
+  };
+  return chain(waited, (st) => {
+    if (r.kind === "edit")
+      return chain(
+        startCodeEdit(st, r.edit, { title: "format" }, 0, reg),
+        (x) => save(x, f.bufferId, 0),
+      );
+    if (r.kind !== "error" || r.quiet === true) return save(st, f.bufferId, 0);
+    return chain(save(st, f.bufferId, 0), (x) =>
+      toast(
+        x,
+        "info",
+        `format failed (${r.message}); saved without formatting`,
+      ),
+    );
+  });
+}
+
+/** `:w` waited a second for the formatter: give up on it and write unformatted. */
+export function onFormatTimeout(
+  s: AppState,
+  bufferId: number,
+  now: number,
+): Result {
+  const f = s.lsp.format;
+  if (f === undefined || f.bufferId !== bufferId) return none(s);
+  const dropped = dropPending(withoutFormat(s), (_p, id) => id === f.requestId);
+  return chain(
+    chain(dropped, (st) => save(st, bufferId, now)),
+    (st) => toast(st, "info", "format timed out; saved without formatting"),
+  );
 }
 
 function applyResult(
@@ -187,7 +249,10 @@ function applyResult(
         ? message(s, `${serverName(s, p.key)}: ${r.message}`, "error")
         : message(s, `${p.feature}: ${r.message}`, "error");
     case "none":
-      return p.auto || p.feature === "executeCommand"
+      return p.auto ||
+        p.feature === "executeCommand" ||
+        p.feature === "format" ||
+        p.feature === "rangeFormat"
         ? none(s)
         : message(s, `${p.feature}: nothing found`);
     case "hover": {
