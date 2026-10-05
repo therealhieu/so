@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
 import { createIndexHost, type IndexHost } from "../../src/app/index-host";
+import type { ToolHost } from "../../src/app/tool-host";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
 import { initialState } from "../../src/core/state/init";
@@ -37,10 +38,16 @@ export async function waitFor(pred: () => boolean, ms = 5000): Promise<void> {
   }
 }
 
-/** Runner deps for a test that never discovers a repository. */
+/** A git tool that never runs. */
+const noTool: ToolHost = {
+  run: async () => ({ kind: "failed", reason: "no git tool in this test" }),
+};
+
+/** Runner deps for a test that never discovers a repository or runs its tool. */
 export const gitOff = () => ({
   git: createGit({ which: () => null, logger: createLogger({}, "/") }),
   watchGit: (): GitWatcher => ({ retarget() {}, stop() {} }),
+  tool: noTool,
 });
 
 /** A fresh temp folder holding `files` (workspace-relative path → text). */
@@ -110,6 +117,8 @@ export async function startApp(
      * after the first frame, running git with `env`.
      */
     git?: { env: Record<string, string> };
+    /** Stands in for the git tool; without one, running it fails. */
+    tool?: ToolHost;
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -145,6 +154,7 @@ export async function startApp(
     preview: { start: () => {}, stop: async () => {} },
     openUrl: async () => {},
     git,
+    tool: opts.tool ?? noTool,
     watchGit: (dirs, onChange) => {
       const w = watchGitDirs(dirs, onChange, logger);
       gitWatchers.push(w);

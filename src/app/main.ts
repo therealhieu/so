@@ -90,6 +90,7 @@ import {
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 import { createPreviewHost } from "./preview-host";
+import { createToolHost } from "./tool-host";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -306,8 +307,8 @@ async function main(argv: string[]): Promise<void> {
   });
   // Constructing the adapter runs no git; discovery waits for the first frame.
   const git = createGit({ which: (c) => Bun.which(c), logger });
-  // Trash, clipboard, and exit are bound once detected or constructed; the
-  // runner reads them at call time.
+  // Trash, clipboard, exit, and the git tool are bound once detected or
+  // constructed; the runner reads them at call time.
   const deps: RunnerDeps = {
     root: ws.root,
     matcher,
@@ -328,6 +329,9 @@ async function main(argv: string[]): Promise<void> {
     openUrl: (url) => openUrl(url, process.platform),
     git,
     watchGit: (dirs, onChange) => watchGitDirs(dirs, onChange, logger),
+    tool: {
+      run: async () => ({ kind: "failed", reason: "git tool not ready" }),
+    },
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -360,6 +364,12 @@ async function main(argv: string[]): Promise<void> {
     stopPreview: previewHost.stop,
   });
   deps.exit = lifecycle.exitNow;
+  deps.tool = createToolHost({
+    screen: shell,
+    holdInterrupts: lifecycle.holdInterrupts,
+    which: (c) => Bun.which(c),
+    logger,
+  });
 
   runner.run({ kind: "listDir", dir: "" });
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });

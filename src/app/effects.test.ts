@@ -60,6 +60,7 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     openUrl: async () => {},
     git: noGit,
     watchGit: () => ({ retarget() {}, stop() {} }),
+    tool: { run: () => Promise.reject(new Error("no tool here")) },
     ...patch,
   };
   return { ...createEffectRunner(deps), deps, actions, exits };
@@ -630,4 +631,30 @@ test("git-dir watching reuses one watcher and retargets it", () => {
   ]);
   made[0]?.onChange();
   expect(r.actions).toEqual([{ type: "gitDirChanged" }]);
+});
+
+test("running the tool dispatches its result once", async () => {
+  const runs: { argv: string[]; cwd: string }[] = [];
+  const r = runner({
+    tool: {
+      run: async (argv, cwd) => {
+        runs.push({ argv, cwd });
+        return { kind: "exited", code: 0 };
+      },
+    },
+  });
+  r.run({ kind: "runTool", argv: ["lazygit", "-p", "x"], cwd: "/repo" });
+  await waitFor(() => r.actions.length > 0);
+  expect(runs).toEqual([{ argv: ["lazygit", "-p", "x"], cwd: "/repo" }]);
+  expect(r.actions).toEqual([
+    { type: "toolExited", result: { kind: "exited", code: 0 } },
+  ]);
+
+  const broken = runner();
+  broken.run({ kind: "runTool", argv: ["lazygit"], cwd: "/repo" });
+  await waitFor(() => broken.actions.length > 0);
+  await Bun.sleep(10);
+  expect(broken.actions).toEqual([
+    { type: "toolExited", result: { kind: "failed", reason: "no tool here" } },
+  ]);
 });

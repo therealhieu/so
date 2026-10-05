@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import type { ToolHost } from "../../src/app/tool-host";
 import { explorerMarkers } from "../../src/core/features/git/status";
 import { statusSegments } from "../../src/core/state/status";
 import { type GitRepo, gitRepo } from "../support/git-repo";
@@ -14,9 +15,15 @@ afterEach(async () => {
   repo = undefined;
 });
 
-async function startInRepo(files: Record<string, string>): Promise<App> {
+async function startInRepo(
+  files: Record<string, string>,
+  tool?: ToolHost,
+): Promise<App> {
   repo = await gitRepo(files);
-  app = await startApp(repo.root, { git: { env: repo.env } });
+  app = await startApp(repo.root, {
+    git: { env: repo.env },
+    ...(tool === undefined ? {} : { tool }),
+  });
   const a = app;
   await waitFor(() => a.store.get().git.status !== null);
   return a;
@@ -62,5 +69,41 @@ test("editing, saving, and staging puts the typed line in the index", async () =
   const r = repo as GitRepo;
   expect(await r.run(["diff", "--cached"])).toContain("+typed line\n");
   expect(await r.run(["show", ":a.md"])).toBe("first\ntyped line\nsecond\n");
+  expect(a.buffer("a.md")?.dirty).toBe(false);
+});
+
+test("a tool that checks out an open file reloads its buffer", async () => {
+  const runs: string[] = [];
+  const checkout: ToolHost = {
+    async run(argv, cwd) {
+      runs.push(`${argv.join(" ")} @ ${cwd}`);
+      await (repo as GitRepo).run(["checkout", "other", "--", "a.md"]);
+      return { kind: "exited", code: 0 };
+    },
+  };
+  repo = await gitRepo({ "a.md": "a\n" });
+  await repo.run(["checkout", "-q", "-b", "other"]);
+  await repo.write("a.md", "from other\n");
+  await repo.run(["commit", "-qam", "other"]);
+  await repo.run(["checkout", "-q", "main"]);
+  await repo.write("a.md", "a\nlocal\n");
+  app = await startApp(repo.root, {
+    git: { env: repo.env },
+    tool: checkout,
+  });
+  const a = app;
+  await a.open("a.md");
+  await waitFor(() => (a.store.get().git.files["a.md"]?.hunks.length ?? 0) > 0);
+  expect(a.buffer("a.md")?.dirty).toBe(false);
+
+  a.keys("<Esc><leader>gg");
+  await waitFor(() => a.text("a.md") === "from other");
+  await waitFor(() => a.store.get().git.files["a.md"]?.hunks.length === 0);
+  expect(runs).toEqual([`lazygit @ ${repo.root}`]);
+  expect(a.actions).toContainEqual({
+    type: "toolExited",
+    result: { kind: "exited", code: 0 },
+  });
+  expect(a.store.get().overlay.kind).not.toBe("conflict");
   expect(a.buffer("a.md")?.dirty).toBe(false);
 });

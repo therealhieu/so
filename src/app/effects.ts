@@ -32,6 +32,7 @@ import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
 import type { PreviewHost } from "./preview-host";
+import type { ToolHost } from "./tool-host";
 
 /**
  * What the runner needs. `exit` is read at call time, so `main` can bind it
@@ -65,6 +66,8 @@ export type RunnerDeps = {
   git: Git;
   /** Starts the one git-dir watcher, on the first `gitWatch`. */
   watchGit: (dirs: string[], onChange: () => void) => GitWatcher;
+  /** Hands the terminal to the git tool; bound once the lifecycle exists. */
+  tool: ToolHost;
 };
 
 export type EffectRunner = {
@@ -571,8 +574,15 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         );
         gitWatcher.retarget(e.dirs);
         return;
-      // The tool host is not wired yet, so this does nothing.
       case "runTool":
+        void d.tool.run(e.argv, e.cwd).then(
+          (result) => d.dispatch({ type: "toolExited", result }),
+          (x) =>
+            d.dispatch({
+              type: "toolExited",
+              result: { kind: "failed", reason: msg(x) },
+            }),
+        );
         return;
       case "openUrl":
         void d.openUrl(e.url).catch((x) => {
