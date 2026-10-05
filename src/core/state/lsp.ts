@@ -466,11 +466,11 @@ export function onLspTimeout(s: AppState, id: number): Result {
 }
 
 /** `diagnostics` without server `key`'s lists; emptied paths are removed. */
-function withoutServerDiagnostics(
-  d: LspState["diagnostics"],
+function withoutServer<T>(
+  d: Readonly<Record<string, Readonly<Record<ServerKey, T>>>>,
   key: ServerKey,
-): LspState["diagnostics"] {
-  const out: LspState["diagnostics"] = {};
+): Record<string, Record<ServerKey, T>> {
+  const out: Record<string, Record<ServerKey, T>> = {};
   for (const [path, byKey] of Object.entries(d)) {
     const { [key]: _, ...rest } = byKey;
     if (Object.keys(rest).length > 0) out[path] = rest;
@@ -511,7 +511,8 @@ export function onLspServer(
     : withLsp(s, {
         servers,
         attached: detached(s.lsp.attached, key),
-        diagnostics: withoutServerDiagnostics(s.lsp.diagnostics, key),
+        diagnostics: withoutServer(s.lsp.diagnostics, key),
+        inlayHints: withoutServer(s.lsp.inlayHints, key),
       });
   const ended = live ? none(next) : dropPending(next, (p) => p.key === key);
   return view?.state === "failed" && prev?.state !== "failed"
@@ -528,9 +529,36 @@ export function onLspAttached(
 ): Result {
   const keys = a.keys.filter((k) => running(s, k));
   const { [a.path]: _, ...rest } = s.lsp.attached;
+  // Hints of servers no longer attached to the path go with them.
+  const { [a.path]: hints, ...otherHints } = s.lsp.inlayHints;
+  const kept = Object.fromEntries(
+    Object.entries(hints ?? {}).filter(([k]) => keys.includes(k)),
+  );
   return none(
     withLsp(s, {
       attached: keys.length === 0 ? rest : { ...rest, [a.path]: keys },
+      inlayHints:
+        Object.keys(kept).length === 0
+          ? otherHints
+          : { ...otherHints, [a.path]: kept },
+    }),
+  );
+}
+
+/** Server `key`'s inlay hints for a path replaced; an empty list removes them. */
+export function onLspInlayHints(
+  s: AppState,
+  a: Extract<Action, { type: "lspInlayHints" }>,
+): Result {
+  if (a.items.length > 0 && !(s.lsp.attached[a.path] ?? []).includes(a.key))
+    return none(s);
+  const { [a.key]: _, ...others } = s.lsp.inlayHints[a.path] ?? {};
+  const byKey = a.items.length === 0 ? others : { ...others, [a.key]: a.items };
+  const { [a.path]: __, ...rest } = s.lsp.inlayHints;
+  return none(
+    withLsp(s, {
+      inlayHints:
+        Object.keys(byKey).length === 0 ? rest : { ...rest, [a.path]: byKey },
     }),
   );
 }

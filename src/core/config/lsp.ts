@@ -44,6 +44,21 @@ const TS_MARKERS: readonly RootMarker[] = [
   ".git",
 ];
 const TSC_PROBE = ["tsc", "--version"];
+/** TypeScript servers send inlay hints only for the kinds these settings turn on. */
+const TS_INLAY_HINTS = {
+  includeInlayParameterNameHints: "all",
+  includeInlayParameterNameHintsWhenArgumentMatchesName: false,
+  includeInlayFunctionParameterTypeHints: true,
+  includeInlayVariableTypeHints: true,
+  includeInlayVariableTypeHintsWhenTypeMatchesName: false,
+  includeInlayPropertyDeclarationTypeHints: true,
+  includeInlayFunctionLikeReturnTypeHints: true,
+  includeInlayEnumMemberValueHints: true,
+};
+const TS_SETTINGS = {
+  typescript: { inlayHints: TS_INLAY_HINTS },
+  javascript: { inlayHints: TS_INLAY_HINTS },
+};
 
 /** The servers `so` knows, in routing order. */
 export const BUILTIN_SERVERS: readonly ServerSpec[] = [
@@ -53,7 +68,7 @@ export const BUILTIN_SERVERS: readonly ServerSpec[] = [
     fileTypes: ["typescript", "javascript"],
     rootMarkers: TS_MARKERS,
     rootSearch: "nearest",
-    settings: {},
+    settings: TS_SETTINGS,
     snippets: false,
     localBin: true,
     gate: { probe: TSC_PROBE, atLeast: 7 },
@@ -64,7 +79,7 @@ export const BUILTIN_SERVERS: readonly ServerSpec[] = [
     fileTypes: ["typescript", "javascript"],
     rootMarkers: TS_MARKERS,
     rootSearch: "nearest",
-    settings: {},
+    settings: TS_SETTINGS,
     snippets: false,
     localBin: true,
     gate: { probe: TSC_PROBE, below: 7 },
@@ -94,7 +109,19 @@ export const BUILTIN_SERVERS: readonly ServerSpec[] = [
     fileTypes: ["go"],
     rootMarkers: ["go.work", "go.mod", ".git"],
     rootSearch: "nearest",
-    settings: {},
+    // gopls reads its settings from the "gopls" section.
+    settings: {
+      gopls: {
+        hints: {
+          assignVariableTypes: true,
+          compositeLiteralFields: true,
+          constantValues: true,
+          functionTypeParameters: true,
+          parameterNames: true,
+          rangeVariableTypes: true,
+        },
+      },
+    },
     snippets: false,
     localBin: false,
   },

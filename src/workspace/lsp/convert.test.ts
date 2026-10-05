@@ -16,6 +16,7 @@ import {
   toErrorResult,
   toFormatEdit,
   toHover,
+  toInlayHints,
   toLocations,
   toLspDiagnostic,
   toPrepareRename,
@@ -404,4 +405,32 @@ test("a server's capabilities become its features and triggers", () => {
     signatureTriggers: ["("],
   });
   expect(toServerView("json", undefined, {}).root).toBeUndefined();
+});
+
+test("inlay hints join label parts and turn padding into spaces", () => {
+  expect(
+    toInlayHints([
+      { position: { line: 1, character: 5 }, label: "f64", paddingLeft: true },
+      {
+        position: { line: 2, character: 9 },
+        label: [{ value: "a" }, { value: ":" }],
+        paddingRight: true,
+      },
+      { position: { line: 3, character: 0 }, label: "" },
+      { label: "no position" },
+      { position: { line: 4, character: 1 }, label: "multi\n  line" },
+    ]),
+  ).toEqual([
+    { pos: { line: 1, col: 5 }, label: " f64" },
+    { pos: { line: 2, col: 9 }, label: "a: " },
+    { pos: { line: 4, col: 1 }, label: "multi line" },
+  ]);
+  expect(toInlayHints(null)).toEqual([]);
+});
+
+test("a server with an inlay hint provider offers inlay hints", () => {
+  const view = toServerView("rs", undefined, {
+    inlayHintProvider: { resolveProvider: false },
+  });
+  expect(view.features).toContain("inlayHints");
 });

@@ -25,6 +25,7 @@ import {
   onLspApplyEdit,
   onLspAttached,
   onLspDiagnostics,
+  onLspInlayHints,
   onLspMessage,
   onLspResult,
   onLspServer,
@@ -206,6 +207,8 @@ export function createUpdate(reg: Registries): Update {
         return onLspAttached(state, action);
       case "lspDiagnostics":
         return onLspDiagnostics(state, action);
+      case "lspInlayHints":
+        return onLspInlayHints(state, action);
       case "lspResult":
         return onLspResult(state, action, reg);
       case "lspMessage":

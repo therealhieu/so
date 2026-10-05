@@ -1,5 +1,6 @@
 import type { Pos, Range } from "../kernel/text/pos";
 import type { Diagnostic } from "../kernel/view/diagnostics";
+import type { InlayHint } from "../kernel/view/inlay-hints";
 
 /** `${name}@${root}`, or `${name}@` for files with no project root. */
 export type ServerKey = string;
@@ -19,7 +20,8 @@ export type LspFeature =
   | "codeActionResolve"
   | "format"
   | "rangeFormat"
-  | "executeCommand";
+  | "executeCommand"
+  | "inlayHints";
 
 /**
  * One server for one root. `missing`: its binary resolved nowhere;
@@ -178,6 +180,8 @@ export type LspState = {
   diagnostics: Record<string, Record<ServerKey, DiagnosticSlots>>;
   /** What views draw for each path; frozen while inserting. */
   shown: Record<string, Diagnostic[]>;
+  /** Each server's latest inlay hints per path. */
+  inlayHints: Record<string, Record<ServerKey, InlayHint[]>>;
   pending: Record<number, PendingRequest>;
   nextId: number;
   float?: LspFloat;

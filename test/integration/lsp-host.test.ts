@@ -695,3 +695,58 @@ test("a watched file change reaches a server only when it matches a registered g
     messages(rs.log, "workspace/didChangeWatchedFiles").map((m) => m.params),
   ).toEqual([{ changes: [{ uri: uri(join(root, "lib.rs")), type: 2 }] }]);
 });
+
+/** A server that answers every inlay hint request with `: i32` after `x`. */
+const HINTS = {
+  capabilities: { hoverProvider: true, inlayHintProvider: true },
+  responses: {
+    "textDocument/inlayHint": [
+      {
+        position: { line: 0, character: 20 },
+        label: ": i32",
+        paddingLeft: false,
+      },
+    ],
+  },
+  inlayHintRefreshOn: "textDocument/hover",
+};
+
+test("inlay hints are fetched after opening and each change, and again on refresh", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const rs = fake("rs", ["rust"], HINTS);
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(
+    () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
+  );
+  expect(app.store.get().lsp.inlayHints["main.rs"]?.["rs@"]).toEqual([
+    { pos: { line: 0, col: 20 }, label: ": i32" },
+  ]);
+  const asked = () => messages(rs.log, "textDocument/inlayHint").length;
+  expect(asked()).toBe(1);
+  app.keys("A ");
+  app.keys("<Esc>");
+  await waitFor(() => asked() === 2);
+  app.keys("K");
+  await waitFor(() => asked() === 3);
+});
+
+test("turning inlay hints off clears them and stops asking", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const rs = fake("rs", ["rust"], HINTS);
+  const on = lspConfig(true, rs.config);
+  app = await startApp(root, { lsp: { config: on } });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.inlayHints["main.rs"] !== undefined);
+  await reload(
+    app,
+    on.replace("enabled = true\n", "enabled = true\ninlayHints = false\n"),
+  );
+  await waitFor(() => app?.store.get().lsp.inlayHints["main.rs"] === undefined);
+  const before = messages(rs.log, "textDocument/inlayHint").length;
+  app.keys("A ");
+  app.keys("<Esc>");
+  await waitForMessage(rs.log, "textDocument/didChange");
+  await Bun.sleep(300);
+  expect(messages(rs.log, "textDocument/inlayHint")).toHaveLength(before);
+});

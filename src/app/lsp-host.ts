@@ -300,6 +300,7 @@ export function createLspHost(d: {
   }
 
   function reconcile(next: LspConfig): void {
+    const hintsWere = config?.inlayHints;
     config = next;
     roots.clear();
     binaries.clear();
@@ -323,6 +324,16 @@ export function createLspHost(d: {
           JSON.stringify(server.spec.settings);
         server.spec = spec;
         if (settingsChanged) server.client?.configure(spec.settings);
+        if (hintsWere !== next.inlayHints)
+          for (const doc of server.docs.values())
+            if (next.inlayHints) hints(server, doc);
+            else
+              send({
+                type: "lspInlayHints",
+                key: server.key,
+                path: doc.path,
+                items: [],
+              });
       }
     }
     for (const key of stoppedViews.keys())
@@ -356,6 +367,10 @@ export function createLspHost(d: {
         if (!live()) return;
         for (const doc of server.docs.values())
           if (doc.sent !== undefined) pull(server, doc.path);
+      },
+      refreshInlayHints: () => {
+        if (!live()) return;
+        for (const doc of server.docs.values()) hints(server, doc);
       },
       progress: (text) => {
         if (!live()) return;
@@ -470,11 +485,42 @@ export function createLspHost(d: {
     );
   }
 
+  /** Fetches the hints of an open document from a server that has them, when they are on. */
+  function hints(server: Server, doc: Doc): void {
+    const client = server.client;
+    const sent = doc.sent;
+    if (
+      client === undefined ||
+      sent === undefined ||
+      config?.inlayHints !== true ||
+      !server.view.features.includes("inlayHints")
+    )
+      return;
+    const generation = server.generation;
+    client.inlayHints(doc.path, sent.lineCount).then(
+      (items) => {
+        if (stopped || server.generation !== generation || items === undefined)
+          return;
+        d.dispatch({
+          type: "lspInlayHints",
+          key: server.key,
+          path: doc.path,
+          items,
+        });
+      },
+      (e: unknown) => {
+        if (toErrorResult(e).quiet === true) return;
+        d.logger.error("lsp.inlayHintsFailed", { server: server.spec.name });
+      },
+    );
+  }
+
   function open(server: Server, doc: Doc): void {
     const text = fullText(doc.latest) + (doc.finalNewline ? "\n" : "");
     doc.sent = doc.latest;
     server.client?.didOpen(doc.path, doc.languageId, doc.latest.version, text);
     pull(server, doc.path);
+    hints(server, doc);
   }
 
   /** Sends the document's pending edits as one change, then pulls. */
@@ -488,6 +534,7 @@ export function createLspHost(d: {
     if (change === undefined) return;
     client.didChange(doc.path, doc.latest.version, change);
     pull(server, doc.path);
+    hints(server, doc);
   }
 
   function close(server: Server, doc: Doc): void {
@@ -496,6 +543,7 @@ export function createLspHost(d: {
     server.pullFailed.delete(doc.path);
     if (doc.sent === undefined || server.client === undefined) return;
     server.client.didClose(doc.path);
+    send({ type: "lspInlayHints", key: server.key, path: doc.path, items: [] });
     // A pulled list describes an open document; pushed lists stay.
     if (server.view.pullDiagnostics)
       send({

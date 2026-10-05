@@ -49,6 +49,8 @@ export type FakeScript = {
   registerWatchers?: { globs: string[] };
   /** Sends `workspace/diagnostic/refresh` when this method is received. */
   refreshOn?: string;
+  /** Sends `workspace/inlayHint/refresh` when this method is received. */
+  inlayHintRefreshOn?: string;
   /** Sends `workspace/applyEdit` with `edit` when `on` is received. */
   applyEdit?: { on: string; edit: unknown };
 };
@@ -136,6 +138,8 @@ function received(method: string, params: unknown): void {
   )
     process.exit(1);
   if (script.refreshOn === method) void asked("workspace/diagnostic/refresh");
+  if (script.inlayHintRefreshOn === method)
+    void asked("workspace/inlayHint/refresh");
   if (script.applyEdit?.on === method)
     void asked("workspace/applyEdit", { edit: script.applyEdit.edit });
 }

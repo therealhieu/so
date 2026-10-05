@@ -261,3 +261,43 @@ test("end-of-line diagnostics can be turned off", async () => {
   });
   expect(await m.frame()).not.toContain("●");
 });
+
+test("an inlay hint draws before its character and the cursor skips over it", async () => {
+  m = await mountShell({ cols: 100, rows: 24 });
+  m.open("foo.rs", RUST);
+  m.store.dispatch({
+    type: "lspServer",
+    key: "fake@/ws",
+    view: {
+      name: "fake",
+      root: "/ws",
+      state: "ready",
+      features: ["inlayHints"],
+      pullDiagnostics: false,
+      completionTriggers: [],
+      signatureTriggers: [],
+    },
+  });
+  m.store.dispatch({ type: "lspAttached", path: "foo.rs", keys: ["fake@/ws"] });
+  m.store.dispatch({
+    type: "lspInlayHints",
+    key: "fake@/ws",
+    path: "foo.rs",
+    items: [{ pos: { line: 1, col: 9 }, label: ": i32" }],
+  });
+  const frame = await m.frame();
+  const lines = frame.split("\n");
+  const y = lines.findIndex((l) => l.includes("let x: i32 = 1;"));
+  expect(y).toBeGreaterThan(-1);
+  // `j` then `$`: the cursor on `;` sits after the hint.
+  m.keys("j$");
+  await m.frame();
+  const c = m.t.renderer.getCursorState();
+  expect({ x: c.x - 1, y: c.y - 1 }).toEqual({
+    x: (lines[y] ?? "").indexOf(";"),
+    y,
+  });
+  // In Insert mode the hints of the cursor line are hidden.
+  m.keys("i");
+  expect(await m.frame()).toContain("let x = 1;");
+});

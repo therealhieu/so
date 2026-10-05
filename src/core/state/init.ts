@@ -56,6 +56,7 @@ export function initialState(boot: {
       servers: {},
       attached: {},
       diagnostics: {},
+      inlayHints: {},
       shown: {},
       pending: {},
       nextId: 1,

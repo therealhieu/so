@@ -55,6 +55,7 @@ export function clientCapabilities(o: {
       rangeFormatting: {},
       publishDiagnostics: {},
       diagnostic: { dynamicRegistration: false },
+      inlayHint: {},
     },
     workspace: {
       applyEdit: true,
@@ -64,6 +65,7 @@ export function clientCapabilities(o: {
       didChangeWatchedFiles: { dynamicRegistration: true },
       workspaceFolders: true,
       diagnostics: { refreshSupport: true },
+      inlayHint: { refreshSupport: true },
     },
     window: { workDoneProgress: true, showMessage: {} },
   };

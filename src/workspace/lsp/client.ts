@@ -27,6 +27,7 @@ import {
   type TextBuffer,
 } from "../../core/kernel/text/text-buffer";
 import type { Diagnostic } from "../../core/kernel/view/diagnostics";
+import type { InlayHint } from "../../core/kernel/view/inlay-hints";
 import type {
   CodeEdit,
   LspOp,
@@ -47,6 +48,7 @@ import {
   toErrorResult,
   toFormatEdit,
   toHover,
+  toInlayHints,
   toLocations,
   toLspDiagnostic,
   toLspPosition,
@@ -67,6 +69,8 @@ export type ClientEvents = {
   applyEdit(requestId: number | string, edit: CodeEdit): void;
   /** The server asks for every open document's diagnostics to be pulled again. */
   refreshDiagnostics(): void;
+  /** The server asks for every open document's inlay hints to be fetched again. */
+  refreshInlayHints(): void;
   /** The running work's latest report; undefined once all work has ended. */
   progress(text: string | undefined): void;
   /** A message the server shows or logs. */
@@ -103,6 +107,11 @@ export type LspClient = {
   cancel(id: number): void;
   /** Pulls `path`'s diagnostics with its last result id, cancelling an older pull of it. */
   pullDiagnostics(path: string): Promise<PullResult>;
+  /**
+   * The inlay hints of `path`'s first `lineCount` lines, cancelling an older
+   * request for it; undefined when a newer request or a close replaced this one.
+   */
+  inlayHints(path: string, lineCount: number): Promise<InlayHint[] | undefined>;
   reply(
     requestId: number | string,
     applied: boolean,
@@ -200,6 +209,7 @@ export function createLspClient(o: {
   /** What the server holds for each open document. */
   const docs = new Map<string, TextBuffer>();
   const pulls = new Map<string, CancellationTokenSource>();
+  const hintRequests = new Map<string, CancellationTokenSource>();
   /** Watchers per registration id. */
   const watchers = new Map<string, Watcher[]>();
   /** Changes waiting for the debounce, by URI. */
@@ -340,6 +350,10 @@ export function createLspClient(o: {
   });
   conn.onRequest("workspace/diagnostic/refresh", () => {
     o.events.refreshDiagnostics();
+    return null;
+  });
+  conn.onRequest("workspace/inlayHint/refresh", () => {
+    o.events.refreshInlayHints();
     return null;
   });
   conn.onRequest("workspace/workspaceFolders", () =>
@@ -558,6 +572,8 @@ export function createLspClient(o: {
       if (!docs.delete(path)) return;
       pulls.get(path)?.cancel();
       pulls.delete(path);
+      hintRequests.get(path)?.cancel();
+      hintRequests.delete(path);
       resultIds.delete(path);
       notify("textDocument/didClose", { textDocument: textDocument(path) });
     },
@@ -588,6 +604,29 @@ export function createLspClient(o: {
           : { kind: "unchanged" };
       } finally {
         if (pulls.get(path) === source) pulls.delete(path);
+        source.dispose();
+      }
+    },
+    async inlayHints(path, lineCount) {
+      hintRequests.get(path)?.cancel();
+      const source = new CancellationTokenSource();
+      hintRequests.set(path, source);
+      try {
+        const r = await conn.sendRequest(
+          "textDocument/inlayHint",
+          {
+            textDocument: textDocument(path),
+            range: {
+              start: { line: 0, character: 0 },
+              end: { line: lineCount, character: 0 },
+            },
+          },
+          source.token,
+        );
+        // A newer request or a close replaced this one.
+        return hintRequests.get(path) === source ? toInlayHints(r) : undefined;
+      } finally {
+        if (hintRequests.get(path) === source) hintRequests.delete(path);
         source.dispose();
       }
     },

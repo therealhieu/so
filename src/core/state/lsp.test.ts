@@ -733,3 +733,72 @@ test("K in a code file asks the first server for hover", () => {
     { key: "a@/ws", op: { kind: "hover", pos: at(0, 0) } },
   ]);
 });
+
+const hint = (line: number, col: number, label: string) => ({
+  pos: { line, col },
+  label,
+});
+
+test("inlay hints are kept per server and dropped when the server stops", () => {
+  const s = attached([ready("ra", []), ready("other", [])]);
+  const r = run(
+    s,
+    {
+      type: "lspInlayHints",
+      key: "ra@/ws",
+      path: "src/a.rs",
+      items: [hint(1, 4, ": i32")],
+    },
+    {
+      type: "lspInlayHints",
+      key: "other@/ws",
+      path: "src/a.rs",
+      items: [hint(0, 2, "x")],
+    },
+  );
+  expect(Object.keys(r.state.lsp.inlayHints["src/a.rs"] ?? {}).sort()).toEqual([
+    "other@/ws",
+    "ra@/ws",
+  ]);
+  const stopped = run(r.state, {
+    type: "lspServer",
+    key: "ra@/ws",
+    view: undefined,
+  });
+  expect(Object.keys(stopped.state.lsp.inlayHints["src/a.rs"] ?? {})).toEqual([
+    "other@/ws",
+  ]);
+  const cleared = run(stopped.state, {
+    type: "lspInlayHints",
+    key: "other@/ws",
+    path: "src/a.rs",
+    items: [],
+  });
+  expect(cleared.state.lsp.inlayHints).toEqual({});
+});
+
+test("inlay hints from a server not attached to the path are ignored", () => {
+  const s = attached([ready("ra", [])]);
+  const r = run(s, {
+    type: "lspInlayHints",
+    key: "stranger@/ws",
+    path: "src/a.rs",
+    items: [hint(0, 0, "x")],
+  });
+  expect(r.state.lsp.inlayHints).toEqual({});
+});
+
+test("detaching a server from a path drops its inlay hints there", () => {
+  const s = attached([ready("ra", [])]);
+  const r = run(
+    s,
+    {
+      type: "lspInlayHints",
+      key: "ra@/ws",
+      path: "src/a.rs",
+      items: [hint(0, 0, "x")],
+    },
+    { type: "lspAttached", path: "src/a.rs", keys: [] },
+  );
+  expect(r.state.lsp.inlayHints).toEqual({});
+});

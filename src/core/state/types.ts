@@ -13,6 +13,7 @@ import type { WindowTree } from "../kernel/editor/windows";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Diagnostic } from "../kernel/view/diagnostics";
+import type { InlayHint } from "../kernel/view/inlay-hints";
 import type { Key } from "../kernel/vim/keys";
 import type { VimState } from "../kernel/vim/types";
 import type {
@@ -569,6 +570,8 @@ export type Action =
       source: "push" | "pull";
       items: Diagnostic[];
     }
+  /** Server `key`'s inlay hints for `path`, replacing its list; empty removes it. */
+  | { type: "lspInlayHints"; key: ServerKey; path: string; items: InlayHint[] }
   | { type: "lspResult"; id: number; result: LspResult; now: number }
   | {
       type: "lspMessage";

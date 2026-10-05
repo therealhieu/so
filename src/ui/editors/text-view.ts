@@ -20,6 +20,10 @@ import {
   spanAt,
 } from "../../core/kernel/view/hit";
 import {
+  type InlayHint,
+  inlayHintMarks,
+} from "../../core/kernel/view/inlay-hints";
+import {
   highlightMarks,
   searchMarks,
   selectionMarks,
@@ -54,6 +58,10 @@ import type { WindowView } from "./registry";
 
 const NO_FOLDS: ReadonlySet<number> = new Set();
 const NO_DIAGNOSTICS: readonly Diagnostic[] = [];
+
+/** Every attached server's inlay hints for `path`. */
+const hintsOf = (s: AppState, path: string): InlayHint[] =>
+  Object.values(s.lsp.inlayHints[path] ?? {}).flat();
 
 /** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
 const gutterWidth = (lineCount: number) =>
@@ -702,6 +710,16 @@ export class EditorView extends Renderable implements WindowView {
         diagnosticMarks(s.lsp.shown[b.path] ?? NO_DIAGNOSTICS),
         ...(s.config.lsp.endOfLineDiagnostics
           ? [endOfLineDiagnosticMarks(s.lsp.shown[b.path] ?? NO_DIAGNOSTICS)]
+          : []),
+        ...(s.config.lsp.inlayHints
+          ? [
+              inlayHintMarks(
+                hintsOf(s, b.path),
+                this.windowId === s.windows.active && s.vim.mode === "insert"
+                  ? cursor.line
+                  : undefined,
+              ),
+            ]
           : []),
         searchMarks(s.vim.search),
         selectionMarks(selection),

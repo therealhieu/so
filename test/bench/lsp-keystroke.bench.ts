@@ -1,6 +1,8 @@
 // 200 keystrokes in a 5,000-line TypeScript file with a language server
 // attached: the real host and client talk to the fake server, which
-// publishes 200 diagnostics on every open and change. Keys arrive 10 ms
+// publishes 200 diagnostics on every open and change and answers 200 inlay
+// hints around the cursor, so both end-of-line text and hints are drawn.
+// Keys arrive 10 ms
 // apart; each time runs from the key's arrival, through any server message
 // queued ahead of it, the store, the reducer, and a rendered frame. Prints
 // {"metric":"lspKeystrokeP95","ms":<p95>} with the slowest key and the
@@ -32,11 +34,19 @@ const diagnostics = Array.from({ length: DIAGNOSTICS }, (_, i) => ({
   source: "fake",
   message: `problem ${i}`,
 }));
+const hints = Array.from({ length: DIAGNOSTICS }, (_, i) => ({
+  position: { line: LINE - 20 + (i % 60), character: i % 30 },
+  label: `: T${i}`,
+}));
 const config = lspConfig(
   true,
   fakeServerConfig({
     name: "fake",
-    script: { diagnostics },
+    script: {
+      diagnostics,
+      capabilities: { inlayHintProvider: true },
+      responses: { "textDocument/inlayHint": hints },
+    },
     log,
     fileTypes: ["typescript"],
   }),

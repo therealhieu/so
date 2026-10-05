@@ -28,6 +28,7 @@ import type {
   Diagnostic,
   DiagnosticSeverity,
 } from "../../core/kernel/view/diagnostics";
+import type { InlayHint } from "../../core/kernel/view/inlay-hints";
 import type {
   CodeAction,
   CodeCompletionItem,
@@ -209,6 +210,33 @@ export function toSymbols(
   };
   walk(r, 0);
   return { kind: "symbols", items };
+}
+
+/**
+ * Inlay hints as plain labels: label parts are joined, and `paddingLeft` /
+ * `paddingRight` become spaces. Hints without a position or text are dropped.
+ */
+export function toInlayHints(r: unknown): InlayHint[] {
+  if (!Array.isArray(r)) return [];
+  const out: InlayHint[] = [];
+  for (const h of r) {
+    if (!isObject(h)) continue;
+    const pos = toPos(h.position);
+    const text =
+      typeof h.label === "string"
+        ? h.label
+        : Array.isArray(h.label)
+          ? h.label
+              .map((p) =>
+                isObject(p) && typeof p.value === "string" ? p.value : "",
+              )
+              .join("")
+          : "";
+    if (pos === undefined || text === "") continue;
+    const label = `${h.paddingLeft === true ? " " : ""}${text.replace(/\s+/g, " ")}${h.paddingRight === true ? " " : ""}`;
+    out.push({ pos, label });
+  }
+  return out;
 }
 
 const COMPLETION_KINDS = [
@@ -578,6 +606,7 @@ export function toServerView(
   add("format", has(caps.documentFormattingProvider));
   add("rangeFormat", has(caps.documentRangeFormattingProvider));
   add("executeCommand", has(caps.executeCommandProvider));
+  add("inlayHints", has(caps.inlayHintProvider));
   return {
     name,
     ...(root === undefined ? {} : { root }),
