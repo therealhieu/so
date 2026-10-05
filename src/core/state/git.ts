@@ -152,9 +152,19 @@ export function onGitRefreshTimer(s: AppState): Result {
 }
 
 /**
+ * The git dir changed: refresh, and read every open file's index once when
+ * the status arrives, because `ls-files` is the source of truth for the oid.
+ */
+export function onGitDirChanged(s: AppState): Result {
+  if (s.git.repo === null) return none(s);
+  return requestRefresh(setGit(s, { dirChanged: true }));
+}
+
+/**
  * A status read. The head and operation follow it, a new head moves the
- * watch, and each open file whose index side changed is read again. A result
- * that arrives outside a repository, or a failed read, changes nothing.
+ * watch, and each open file whose index side changed is read again; after a
+ * git-dir change every open file is. A result that arrives outside a
+ * repository, or a failed read, changes nothing.
  */
 export function onGitStatus(
   s: AppState,
@@ -173,11 +183,15 @@ export function onGitStatus(
   if (!sameHead(repo.head, status.head))
     effects.push({ kind: "gitWatch", dirs: watchDirs(next) });
   const prev = s.git.status;
-  if (prev !== null)
-    for (const path of Object.keys(s.git.files))
-      if (indexChanged(prev.files.get(path), status.files.get(path)))
+  const { dirChanged, ...git } = s.git;
+  if (dirChanged || prev !== null)
+    for (const path of Object.keys(git.files))
+      if (
+        dirChanged ||
+        indexChanged(prev?.files.get(path), status.files.get(path))
+      )
         effects.push(readIndex(next, path));
-  return { state: setGit(s, { repo: next, status }), effects };
+  return { state: { ...s, git: { ...git, repo: next, status } }, effects };
 }
 
 /** The git tool ended: buffers and git state may have changed on disk. */

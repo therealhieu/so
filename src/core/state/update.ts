@@ -17,12 +17,12 @@ import {
   onGitBlamed,
   onGitDetected,
   onGitDiffTimer,
+  onGitDirChanged,
   onGitIndexRead,
   onGitRefreshTimer,
   onGitStaged,
   onGitStatus,
   onToolExited,
-  requestRefresh,
   syncGitFiles,
 } from "./git";
 import {
@@ -211,7 +211,7 @@ export function createUpdate(reg: Registries): Update {
       case "toolExited":
         return onToolExited(state, action);
       case "gitDirChanged":
-        return requestRefresh(state);
+        return onGitDirChanged(state);
       case "gitStaged":
         return onGitStaged(state, action);
       case "gitBlamed":

@@ -214,6 +214,42 @@ test("a head change retargets the watch and an index change re-reads only that f
   expect(r.state.git.status?.files.get("a.md")?.hI).toBe("h2");
 });
 
+test("a git-dir change re-reads every open file's index once", () => {
+  const s = run(inRepo("a.md", "one"), status({})).state;
+  const feature: RepoInfo = {
+    ...REPO,
+    head: { kind: "branch", name: "feature" },
+  };
+  const burst = run(
+    s,
+    { type: "gitDirChanged" },
+    { type: "gitDirChanged" },
+    { type: "timer", id: "gitRefresh", now: 200 },
+  );
+  expect(burst.effects).toEqual([
+    { kind: "gitStatus", repo: REPO, prefix: "ws/" },
+  ]);
+  const reads = (r: Result) =>
+    r.effects.filter((e) => e.kind === "gitReadIndex");
+  const r = update(burst.state, status({}, feature.head));
+  expect(reads(r)).toEqual([
+    { kind: "gitReadIndex", repo: feature, path: "a.md", repoPath: "ws/a.md" },
+  ]);
+  expect(reads(update(r.state, status({}, feature.head)))).toEqual([]);
+});
+
+test("a failed status read keeps a git-dir change for the next one", () => {
+  const s = run(
+    inRepo("a.md", "one"),
+    status({}),
+    { type: "gitDirChanged" },
+    { type: "gitStatus", result: { ok: false, reason: "index.lock" } },
+  ).state;
+  expect(gitEffects(update(s, status({})))).toEqual([
+    { kind: "gitReadIndex", repo: REPO, path: "a.md", repoPath: "ws/a.md" },
+  ]);
+});
+
 test("an index entry that appears or disappears is read again", () => {
   const s = run(inRepo("a.md", "one"), status({})).state;
   const appears = update(s, status({ "a.md": file({ index: "A" }) }));

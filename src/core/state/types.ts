@@ -373,12 +373,16 @@ export type StageReport = { n: number; m: number; saved: boolean };
 /**
  * Git state, never persisted. `files` holds the open buffers' index entries
  * and hunks by workspace-relative path; `repo` is null outside a repository.
+ * `dirChanged` marks a git-dir change that the next status read has not
+ * answered yet: a checkout or pull can change an index entry that status
+ * reports as clean both before and after.
  */
 export type GitState = {
   repo: RepoInfo | null;
   status: RepoStatus | null;
   files: Record<string, { index?: IndexEntry; hunks: Hunk[] }>;
   pending?: GitPending;
+  dirChanged?: true;
 };
 
 /** How the full-screen git tool ended. */
