@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { splitKeys } from "../kernel/vim/keys";
+import { LspConfigSchema } from "./lsp";
 
 /** `"<key-seq>" = "<command-id>"` */
 const KeyTable = z.record(z.string().min(1), z.string().min(1));
@@ -102,6 +103,7 @@ export const ConfigSchema = z.strictObject({
       z.strictObject({ keys: KeyBindingsSchema.default({}) }),
     )
     .default({}),
+  lsp: LspConfigSchema.prefault({}),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;

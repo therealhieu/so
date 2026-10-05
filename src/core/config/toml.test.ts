@@ -105,6 +105,7 @@ test("a valid file parses with binding lines", () => {
       filetypes: {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },
       },
+      lsp: { enabled: false, formatOnSave: false, servers: {} },
     },
     bindings: [
       { mode: "normal", seq: "<leader>w", id: "file.save", line: 13 },
