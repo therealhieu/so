@@ -6,7 +6,11 @@ import { bunToolSpawn, createToolHost, type ToolSpawn } from "./tool-host";
  * A tool host over recording doubles. `flush` resolves on the next tick,
  * so a step that does not wait for it is recorded before `flushed`.
  */
-function host(o: { spawn: ToolSpawn; which?: (c: string) => string | null }) {
+function host(o: {
+  spawn: ToolSpawn;
+  which?: (c: string) => string | null;
+  failing?: "reset" | "resume";
+}) {
   const calls: string[] = [];
   const logs: { event: string; fields?: unknown }[] = [];
   const logger: Logger = {
@@ -23,8 +27,14 @@ function host(o: { spawn: ToolSpawn; which?: (c: string) => string | null }) {
           }),
         ),
       suspend: () => calls.push("suspend"),
-      resume: () => calls.push("resume"),
-      resetForeignModes: () => calls.push("reset"),
+      resume: () => {
+        calls.push("resume");
+        if (o.failing === "resume") throw new Error("renderer gone");
+      },
+      resetForeignModes: () => {
+        calls.push("reset");
+        if (o.failing === "reset") throw new Error("EAGAIN: write");
+      },
     },
     holdInterrupts: () => {
       calls.push("hold");
@@ -92,6 +102,23 @@ test("a crashing or killed tool still restores the terminal once", async () => {
   expect(killed.calls.slice(-3)).toEqual(RESTORE);
   for (const step of RESTORE)
     expect(killed.calls.filter((c) => c === step)).toHaveLength(1);
+});
+
+test("a failing restore step still resumes and releases once", async () => {
+  for (const [failing, reason] of [
+    ["reset", "EAGAIN: write"],
+    ["resume", "renderer gone"],
+  ] as const) {
+    const h = host({ spawn: async () => ({ code: 0 }), failing });
+    await expect(h.tool.run(["lazygit"], "/repo")).rejects.toThrow(reason);
+    expect(h.calls.slice(-3)).toEqual(RESTORE);
+    for (const step of RESTORE)
+      expect(h.calls.filter((c) => c === step)).toHaveLength(1);
+    expect(h.logs).toContainEqual({
+      event: "git.tool.restore",
+      fields: { reason },
+    });
+  }
 });
 
 test("a missing tool never suspends", async () => {

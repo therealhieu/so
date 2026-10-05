@@ -31,7 +31,8 @@ export const bunToolSpawn: ToolSpawn = async (argv, cwd) => {
  * A missing program never takes the terminal. Otherwise the current frame
  * is written first, interrupts are held, and the screen is suspended while
  * the program runs; whatever happens to it, the foreign modes are reset, the
- * screen resumes, and interrupts are released exactly once.
+ * screen resumes, and interrupts are released exactly once. A failed restore
+ * step is logged and rejects the run.
  */
 export function createToolHost(d: {
   screen: Screen;
@@ -58,14 +59,33 @@ export function createToolHost(d: {
           ? { kind: "exited", code }
           : { kind: "exited", code, signal };
       } catch (x) {
-        const reason = x instanceof Error ? x.message : String(x);
+        const reason = message(x);
         d.logger.error("git.tool.exit", { reason });
         return { kind: "failed", reason };
       } finally {
-        d.screen.resetForeignModes();
-        d.screen.resume();
-        release();
+        restore(release);
       }
     },
   };
+
+  /** Each step runs even when an earlier one throws; the error still surfaces. */
+  function restore(release: () => void): void {
+    try {
+      try {
+        d.screen.resetForeignModes();
+      } finally {
+        try {
+          d.screen.resume();
+        } finally {
+          release();
+        }
+      }
+    } catch (x) {
+      d.logger.error("git.tool.restore", { reason: message(x) });
+      throw x;
+    }
+  }
 }
+
+const message = (x: unknown): string =>
+  x instanceof Error ? x.message : String(x);
