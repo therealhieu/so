@@ -83,12 +83,54 @@ All checks used a throwaway repo in the session scratchpad (`note.md` with an em
 
 ## Remediation
 
-- **Verification reports:** Pending
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p3-g1-verification-report.md` (commit `9c65aa0`, status `Failed`, one Minor finding)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P3-G1-VER1` — Benchmarks row for `gitDiffKeystrokeP95` renders outside the table | See the closure detail below | `f024d72` | `Fixed` |
+
+#### P3-G1-VER1 — Benchmarks row for `gitDiffKeystrokeP95` renders outside the table
+
+**Change evidence.** The Benchmarks table sits inside the `- **Benchmarks:**` list item, so every row needs the item's two-space indent. The new row had none, which ended the list and the table before it. The fix indents that one row; nothing else in `.s1mple/docs/project.md` changed.
+
+```diff
+   | `indexingKeystrokeP95` | 30 | `indexing-keystroke.bench.ts` — 200 keys, …
+-| `gitDiffKeystrokeP95` | 24 | `git-diff.bench.ts` — 200 keys in a 5,000-line note …
++  | `gitDiffKeystrokeP95` | 24 | `git-diff.bench.ts` — 200 keys in a 5,000-line note …
+```
+
+**Verification evidence.** A scratch script rendered the file with two parsers already in `node_modules`, and was then removed:
+
+- `marked.parse` → the row is the last `<tr>` of the table: `<tr><td><code>gitDiffKeystrokeP95</code></td><td>24</td><td><code>git-diff.bench.ts</code> — 200 keys …</td></tr></tbody></table>`. The stray `<p>| <code>gitDiffKeystrokeP95` paragraph is gone.
+- `mdast-util-from-markdown` with `micromark-extension-gfm` and `mdast-util-gfm` → the `Metric` table's parents are `root > list > listItem`, it has 11 rows (header plus the 10 `TARGETS` in `scripts/bench-gate.ts`), and its last two rows are `indexingKeystrokeP95 | 30` and `gitDiffKeystrokeP95 | 24`.
+- `bun run check` → exit 0: biome clean (355 files), tsc clean, knip zero findings, 1204 pass, 0 fail.
+
+**Completion Checklist:**
+
+- [x] Required resolution is implemented — the `gitDiffKeystrokeP95` row is indented two spaces like the other rows.
+- [x] Required proof passes — `marked` and mdast both show `gitDiffKeystrokeP95` inside a `<td>` of the Benchmarks table; `bun run check` exits 0.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Remediation Group Verification
+
+- `bun run check` → `Passed` — exit 0, 1204 pass, 0 fail, knip zero findings.
+- `grep -rnE "W261005F2A7|\b(REQ|DES|UDES|UV|UREQ|US)[0-9]" src test scripts` → `Passed` — no matches (exit 1).
+- Self-review of `4b8834f..f024d72` → no new issue. The fix changes only one Markdown line. The source diff still passes `this.change` to every `gutterWidth` caller (cursor, `textArea`, hit-test, paint), and the statusline measures `text` while painting `parts`.
+- `bun run test:ci`, `bun run bench`, and `bun run build` were not re-run: the fix touches no code, test, or bench input, so the Initial Implementation results still apply.
+- Housekeeping → `Passed`. The temp dirs `so-git-LtZtAZ` and `so-git-tool-J06wS8` in `$TMPDIR` were created at 22:46 on 2026-10-05, during this group's test runs, and match the prefixes in `test/support/git-repo.ts:47` (`so-git-`) and `test/e2e/git-tool.test.ts:25` (`so-git-tool-`). No process held them open (`lsof +D`), so both were removed. `ps` shows no so, lazygit, tui-test, kitty, iTerm2, or Terminal.app process from this work; only the pre-existing 43089/43090 and 49528–49530 remain.
+
+### Unverified Items
+
+These stay unverified; none is claimed as passed:
+
+- **`UV15@R1` hand-off in kitty:** Skipped. No kitty window could be observed: screen capture lacks Screen Recording permission, and tui-test mirrors only into its monitor.
+- **`V61` real graphics protocol by hand:** so ran in the tui-test emulator mirrored to Ghostty, so images drew as cell blocks and the kitty-graphics re-issue was not seen in a real terminal. Automated coverage exists (`V60`, `UV14@R1`).
+- **`UV16@R1` visual alignment:** Each glyph measured 1 cell via DSR in four terminals, but alignment was not seen, for the same Screen Recording reason.
+- **`P3-G1-T8` delivery:** Not assigned; the orchestrator's Delivery stages own it.
 
 ## Final Status
 
@@ -96,8 +138,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`. T1–T7 are implemented and committed, and every assigned group check passes. T8 is not assigned.
+- **Final report status:** `Completed` — T1–T7 are implemented and committed, and `P3-G1-VER1` is `Fixed`. T8 is not assigned.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `6f16712`, `10f7a65`, `0e189b4`, `af03592`, `2fd53a7`, `cc9e58e`, `e1d4b23`
-- **Final checks:** `bun run check` → exit 0, 1204 pass. `bun run test:ci` → exit 0, 255 pass. `bun run bench` → exit 0, all medians within the gate. `bun run build` → exit 0. The id grep finds no matches.
-- **Remaining issues:** The kitty hand-off check was skipped (no way to observe a kitty window). Delivery (T8) belongs to the orchestrator.
+- **Final commits:** `6f16712`, `10f7a65`, `0e189b4`, `af03592`, `2fd53a7`, `cc9e58e`, `e1d4b23`; remediation `f024d72`.
+- **Final checks:** `bun run check` → exit 0, 1204 pass. `marked` and mdast renders → `gitDiffKeystrokeP95` inside the Benchmarks table. Id grep → no matches. From the Initial Implementation: `bun run test:ci` → exit 0, 255 pass; `bun run bench` → exit 0; `bun run build` → exit 0.
+- **Remaining issues:** The kitty hand-off, the real graphics path, and `UV16@R1` visual alignment are unverified (see Unverified Items). The unstaged `.gitignore` change (`.worktrees/`) does not belong to this group and was left untouched.
