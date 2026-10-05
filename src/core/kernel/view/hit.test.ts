@@ -4,7 +4,7 @@ import type { Decoration } from "./decorations";
 import { rowAt, sourceColAt } from "./hit";
 import { layoutText } from "./text-view";
 import type { RenderLine, TextView } from "./types";
-import { wrapLine } from "./wrap";
+import { displayWidth, wrapLine } from "./wrap";
 
 function layout(lines: string[], ...decos: Decoration[]): RenderLine[] {
   const v: TextView = {
@@ -39,8 +39,10 @@ test("a click on a concealed link alias maps to the alias character in the sourc
   if (line === undefined) throw new Error("expected a laid-out line");
   expect(line.spans.map((sp) => sp.text).join("")).toBe("See plan now");
   const dc = "See p".length;
-  expect(sourceColAt(line.spans, dc, 4)).toBe("See [[Project Plan|".length + 1);
-  expect(sourceColAt(line.spans, "See plan ".length, 4)).toBe(
+  expect(sourceColAt(line.spans, dc, 4, text.length)).toBe(
+    "See [[Project Plan|".length + 1,
+  );
+  expect(sourceColAt(line.spans, "See plan ".length, 4, text.length)).toBe(
     text.indexOf("now"),
   );
 });
@@ -54,18 +56,60 @@ test("every cell of replacement text maps to the start of the hidden range", () 
     spans: [{ text: "Target", style: "mdLink" }],
   });
   if (line === undefined) throw new Error("expected a laid-out line");
-  for (let dc = 2; dc < 8; dc++) expect(sourceColAt(line.spans, dc, 4)).toBe(2);
-  expect(sourceColAt(line.spans, 9, 4)).toBe(text.indexOf("b"));
+  for (let dc = 2; dc < 8; dc++)
+    expect(sourceColAt(line.spans, dc, 4, text.length)).toBe(2);
+  expect(sourceColAt(line.spans, 9, 4, text.length)).toBe(text.indexOf("b"));
 });
 
 test("tabs map every covered cell to the tab and past-end cells to the line length", () => {
   const [line] = layout(["\tab"]);
   if (line === undefined) throw new Error("expected a laid-out line");
-  for (let dc = 0; dc < 4; dc++) expect(sourceColAt(line.spans, dc, 4)).toBe(0);
-  expect(sourceColAt(line.spans, 4, 4)).toBe(1);
-  expect(sourceColAt(line.spans, 5, 4)).toBe(2);
-  expect(sourceColAt(line.spans, 99, 4)).toBe(3);
-  expect(sourceColAt([], 7, 4)).toBe(0);
+  for (let dc = 0; dc < 4; dc++)
+    expect(sourceColAt(line.spans, dc, 4, 3)).toBe(0);
+  expect(sourceColAt(line.spans, 4, 4, 3)).toBe(1);
+  expect(sourceColAt(line.spans, 5, 4, 3)).toBe(2);
+  expect(sourceColAt(line.spans, 99, 4, 3)).toBe(3);
+  expect(sourceColAt([], 7, 4, 0)).toBe(0);
+});
+
+test("past-end cells on a line ending in hidden text map to the full line length", () => {
+  const text = "See [[Project Plan]]";
+  const [line] = layout(
+    [text],
+    { kind: "replace", range: range(0, 4, 6), block: false },
+    {
+      kind: "replace",
+      range: range(0, text.length - 2, text.length),
+      block: false,
+    },
+  );
+  if (line === undefined) throw new Error("expected a laid-out line");
+  expect(line.spans.map((sp) => sp.text).join("")).toBe("See Project Plan");
+  const lastShown = "See Project Plan".length - 1;
+  expect(sourceColAt(line.spans, lastShown, 4, text.length)).toBe(
+    text.length - 3,
+  );
+  for (const dc of [lastShown + 1, 99])
+    expect(sourceColAt(line.spans, dc, 4, text.length)).toBe(text.length);
+
+  const [replaced] = layout(["a [[Target]]"], {
+    kind: "replace",
+    range: range(0, 2, 12),
+    block: false,
+    spans: [{ text: "Target", style: "mdLink" }],
+  });
+  if (replaced === undefined) throw new Error("expected a laid-out line");
+  expect(sourceColAt(replaced.spans, 8, 4, 12)).toBe(12);
+});
+
+test("undecorated text maps each character's display column back to it", () => {
+  const text = "\tab c\td";
+  const [line] = layout([text]);
+  if (line === undefined) throw new Error("expected a laid-out line");
+  for (let c = 0; c <= text.length; c++) {
+    const dc = displayWidth(text.slice(0, c), 4);
+    expect(sourceColAt(line.spans, dc, 4, text.length)).toBe(c);
+  }
 });
 
 test("rowAt follows wrapped lines, widget rows, and skipped rows like the painter", () => {

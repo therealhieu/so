@@ -42,13 +42,15 @@ export function rowAt(
 /**
  * Source column shown at display column `dc`, counted from the line start.
  * Verbatim text maps cell by cell, replacement text maps to the start of the
- * range it hides, and cells after the last character map to the source
- * column after it. A span without `col` continues from the previous span.
+ * range it hides, and cells after the last one map to `lineLength`, the
+ * source line's length, even when the line ends in hidden text. A span
+ * without `col` continues from the previous span.
  */
 export function sourceColAt(
   spans: readonly Span[],
   dc: number,
   tabWidth: number,
+  lineLength: number,
 ): number {
   let v = 0;
   let end = 0;
@@ -63,5 +65,5 @@ export function sourceColAt(
     }
     end = span.inserted ? col : col + span.text.length;
   }
-  return end;
+  return lineLength;
 }

@@ -176,6 +176,22 @@ test("an Insert-mode click keeps Insert and starts a new undo step", () => {
   expect(cursorOf(end)).toEqual({ line: 3, col: "fourth".length });
 });
 
+test("a click at the length of a line ending in a link lands after the link", () => {
+  const link = "See [[Project Plan]]";
+  const s = open("a.md", `${link}\n`);
+  const atEnd = press(text(1, 0, link.length));
+
+  const normal = mouse(s, atEnd).state;
+  expect(normal.vim.mode).toBe("normal");
+  expect(cursorOf(normal)).toEqual({ line: 0, col: link.length - 1 });
+
+  const inserting = keys(s, "i").state;
+  const clicked = mouse(inserting, atEnd).state;
+  expect(clicked.vim.mode).toBe("insert");
+  expect(cursorOf(clicked)).toEqual({ line: 0, col: link.length });
+  expect(textOf(keys(clicked, "!").state).split("\n")[0]).toBe(`${link}!`);
+});
+
 test("an Insert-mode click in another window ends Insert where it was typed", () => {
   const split = keys(open("a.md", LINES), "<C-w>v").state;
   const typing = split.windows.active;
