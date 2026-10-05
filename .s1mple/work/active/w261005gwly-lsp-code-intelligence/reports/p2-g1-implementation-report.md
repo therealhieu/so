@@ -102,12 +102,34 @@ Remaining issues: None.
 
 ## Remediation
 
-- **Verification reports:** Not yet available
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` (status `Failed`; findings `P2-G1-VER1`, `P2-G1-VER2`, `P2-G1-VER3`)
+- **Status:** `Completed`
+
+Every finding was reproduced before its fix and is closed by its own commit. The verification report is unchanged.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` — The Cargo-root test depends on the order two processes write their logs | `test/integration/lsp-host.test.ts` ("one process serves a Cargo workspace…"): both sides of the `rootUri` comparison are sorted. The `processes(rs.log)` length 2 check and the `py@` `[null, null]` check are unchanged. Repro: the committed version run 12 times concurrently failed 4 times at line 142 (`Expected - 1 / Received + 1`). After the fix: 12 serial and 8 concurrent runs of `-t "Cargo workspace"` → 20/20 pass, and the test passed in every suite run below | `508df8b50cd04561022a1c9fba4cef2b979d128b` | `Fixed` |
+| `P2-G1-VER2` — The local-tsc test can exceed the default 5 s test timeout | Cause confirmed: a slow probe, not a slow start. On this macOS host the first run of a newly written executable takes ~130 ms and is serialized system-wide (4 fresh shell scripts run at once: 131/260/393/519 ms; a second run: 3 ms). Temporary probe timing (reverted) under 16 concurrent runs showed probes queued in ~245 ms steps, 15 probes returning `undefined` at 2001–2003 ms, and 11/16 runs failing with the reported timeout. A timed-out probe attaching `typescript` is the designed fallback (system design: "Version probe fails or times out"), so the product and `PROBE_BOUND_MS` are unchanged. Fix: `test/support/lsp.ts:fakeTsc` runs the stub once when it writes it; the test has a 15 s timeout and fails with the attached key, the time since open, and the probe outcome. With the warm-up disabled, the 16-way run failed with `tsc 7.0.0: expected tsc, attached ["typescript@…"] 2010 ms after open; the version probe answered no version (PROBE_BOUND_MS is 2000 ms)`. With it: 16/16 concurrent pass with probes at 3–6 ms; at the final head 20/20 serial and 16/16 concurrent pass | `11c0e0cffac89325e36449120073b69dee12f0e3` | `Fixed` |
+| `P2-G1-VER3` — `stop()` resolves before probe children and starting servers have exited | RED: new test "stopping leaves no version probe or starting server running" (a local `tsc` whose `--version` records its pid and `exec sleep 30`, and a fake server with the new `ignoreInitialize` option) failed with `{probe: false, server: false}` right after `await app.stop()`. Fix: `src/app/lsp-host.ts` tracks each probe with a promise that settles on `exit` or `error`, and `stop()` awaits them (raced with `LSP_STOP_BOUND_MS`) together with `stopping`; `launch` chains a late-ready client's `stop` into `server.starting`. `src/workspace/lsp/client.ts`: an abort before `initialize` completes kills the child and rejects once it has closed, at most `KILL_WAIT_MS` (100 ms) later; a late `initialize` answer after the abort no longer resolves the client. Worst-case stop time is unchanged and stays inside the lifecycle's `LSP_STOP_BOUND_MS + 100` race. After the fix the test passes (≤ 700 ms, both pids gone) 3/3 serial, 8/8 concurrent, and in every suite run below | `80affa6e6e36673633994f7837462707d48bd067` | `Fixed` |
+
+**Checks after remediation (final head `80affa6`):**
+
+- `bun run check` → `Passed`: Biome, tsc, knip clean; 1203 pass, 0 fail.
+- `bun run test:ci` → `Passed` on rerun: 249 pass, 0 fail. The first run had 1 failure in `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" (a < 10 ms latency assertion, unchanged since `c98aa19`), at load average ~20 on 10 cores. That test passed 5/5 in isolation, is outside this group, and was not changed.
+- `bun test test/integration/lsp-host.test.ts test/integration/lsp-edits.test.ts` → `Passed`: 10 serial runs and 3 batches of 4 concurrent runs, 19 pass and 0 fail each time; no `fake-lsp` or `sleep 30` process left after any run.
+- `bun test test/integration/lsp-real.test.ts` → `Passed`: 1 pass (rust-analyzer on this machine).
+- `pgrep -f fake-lsp` → `Passed`: empty after every run.
+- Work-process id scan (`W261005GWLY`, `REQ`/`DES`/`VER`/`V`/`S` numbers, `P<n>-G<n>`) over every `src`/`test` file changed since `1b3511e` → `Passed`: no matches.
+- Self-review of the group diff `1b3511e..80affa6` → `Passed`: no new issue. The new waits (≤ 100 ms after an abort, ≤ `LSP_STOP_BOUND_MS` for probes) stay inside the lifecycle's existing stop bound.
+- Process hygiene → `Passed`: no fake server, probe, `bin/so`, or `main.ts` process from this work remains. A `src/app/main.ts …/.sandbox/vault` process, an `apps/tui/src/main.ts` process, and rust-analyzer processes started on 5 Oct 2026 for other projects were running before this work and were left alone.
+
+**Decisions a later remediator must keep:**
+
+1. A timed-out version probe still attaches `typescript` (designed fallback). The test warms the stub instead of raising `PROBE_BOUND_MS`.
+2. `createLspClient` rejects an aborted start with `stopped` only after the process closed or `KILL_WAIT_MS` passed; the host relies on this through `server.starting`.
 
 ## Final Status
 
@@ -115,8 +137,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`: every task was implemented, committed, and verified.
+- **Final report status:** `Completed`: every task was implemented, committed, and verified, and all three verification findings are fixed and verified.
 - **Final report commit:** returned to the orchestrator
-- **Final commits:** `fbf5cdb0218e4be372eaac74bb07297b1b239ad0`, `3de75d7034058efa95cf465d377bcbdc690d5a2b`, `d474288210a8c5fb916e7d025a10424b16dcc946`, `eb1fd79d6bce22c9343b3fa691f8dd70a21bd1d1`, `d5f2cec28e20e507180bf3f64e39a9c12fdbcb43`, `0f0b3462c5fc6e84ce14600884d2c6e79ba72866`, `907e474e353159c02d0a7758ed8c29759a6c1f39`, `59f4f65f0b1a6558a4eda89ea8e6ad25a00698f4`
-- **Final checks:** `bun run check` → 1203 pass; `bun run test:ci` → 248 pass; `pgrep -f fake-lsp` → empty; id scan → no matches
-- **Remaining issues:** None
+- **Final commits:** `fbf5cdb0218e4be372eaac74bb07297b1b239ad0`, `3de75d7034058efa95cf465d377bcbdc690d5a2b`, `d474288210a8c5fb916e7d025a10424b16dcc946`, `eb1fd79d6bce22c9343b3fa691f8dd70a21bd1d1`, `d5f2cec28e20e507180bf3f64e39a9c12fdbcb43`, `0f0b3462c5fc6e84ce14600884d2c6e79ba72866`, `907e474e353159c02d0a7758ed8c29759a6c1f39`, `59f4f65f0b1a6558a4eda89ea8e6ad25a00698f4`, `508df8b50cd04561022a1c9fba4cef2b979d128b`, `11c0e0cffac89325e36449120073b69dee12f0e3`, `80affa6e6e36673633994f7837462707d48bd067`
+- **Final checks:** `bun run check` → 1203 pass; `bun run test:ci` → 249 pass (rerun; first run hit the unrelated `esc.test.ts` latency flake); LSP suites → 22 runs (10 serial, 12 concurrent) all pass; `lsp-real.test.ts` → 1 pass; `pgrep -f fake-lsp` → empty; id scan → no matches
+- **Remaining issues:** None in this group. `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" can fail on a heavily loaded host; it predates this work and is outside its scope.
