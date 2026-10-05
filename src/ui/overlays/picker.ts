@@ -14,6 +14,7 @@ import {
 } from "../../core/state/picker";
 import type {
   AppState,
+  MouseTarget,
   PickerItem,
   PickerState,
   TextFile,
@@ -58,6 +59,13 @@ const pickerOf = (s: AppState): PickerState | undefined =>
 export class PickerView extends Renderable {
   private s: AppState | undefined;
   private cursorAt: Cursor | undefined;
+  /**
+   * The painted item rows: screen columns `x` to `x + w`, rows `y` to
+   * `y + rows`, the first showing item `first`. Unset until the list paints.
+   */
+  private list:
+    | { x: number; y: number; w: number; rows: number; first: number }
+    | undefined;
   private readonly files = new WeakMap<TextFile, TextBuffer>();
 
   constructor(
@@ -74,6 +82,7 @@ export class PickerView extends Renderable {
     const p = pickerOf(s);
     this.visible = p !== undefined;
     this.cursorAt = undefined;
+    if (p === undefined) this.list = undefined;
     // The query line is hidden while a narrow preview replaces the list.
     if (p === undefined || narrowPreview(s, p)) return;
     const box = boxOf(s);
@@ -88,9 +97,27 @@ export class PickerView extends Renderable {
     return this.cursorAt;
   }
 
+  /** A painted item row, else `overlay` inside the float; `undefined` outside it. */
+  itemAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    if (s === undefined || !this.visible) return undefined;
+    const box = boxOf(s);
+    if (x < box.x || x >= box.x + box.w || y < box.y || y >= box.y + box.h)
+      return undefined;
+    const l = this.list;
+    return l !== undefined &&
+      x >= l.x &&
+      x < l.x + l.w &&
+      y >= l.y &&
+      y < l.y + l.rows
+      ? { kind: "overlayItem", index: l.first + y - l.y }
+      : { kind: "overlay" };
+  }
+
   protected renderSelf(buf: OptimizedBuffer): void {
     const s = this.s;
     const p = s && pickerOf(s);
+    this.list = undefined;
     if (s === undefined || p === undefined) return;
     const theme = themeOf(s);
     const source = pickerSources[p.source];
@@ -203,6 +230,13 @@ export class PickerView extends Renderable {
       0,
       Math.min(p.selected - room + 1, p.items.length - room),
     );
+    this.list = {
+      x: r.x,
+      y,
+      w: r.w,
+      rows: Math.min(room, rows, p.items.length - first),
+      first,
+    };
     for (let i = 0; i < Math.min(room, rows); i++) {
       const item = p.items[first + i];
       if (item === undefined) break;

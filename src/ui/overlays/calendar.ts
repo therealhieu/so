@@ -5,7 +5,11 @@ import {
   TextAttributes,
 } from "@opentui/core";
 import { calendarMarks } from "../../core/state/calendar";
-import type { AppState, CalendarState } from "../../core/state/types";
+import type {
+  AppState,
+  CalendarState,
+  MouseTarget,
+} from "../../core/state/types";
 import { formatDate } from "../../core/time/format";
 import { daysInMonth, mondayIndex } from "../../core/time/local";
 import type { Cursor, LayoutClass } from "../shell";
@@ -66,6 +70,32 @@ export class CalendarOverlay extends Renderable {
 
   cursor(): Cursor | undefined {
     return this.cursorAt;
+  }
+
+  /** A day's grid cell, else `overlay` inside the float; `undefined` outside it. */
+  itemAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    const cal = s && calendarOf(s);
+    if (s === undefined || cal === undefined) return undefined;
+    const box = centered(s, WIDTH, HEIGHT);
+    if (x < box.x || x >= box.x + box.w || y < box.y || y >= box.y + box.h)
+      return undefined;
+    // The inverse of the grid painted in renderSelf: day cells start at
+    // (box.x + 2, box.y + 2), CELL columns wide, one row per week.
+    const dx = x - (box.x + 2);
+    const row = y - (box.y + 2);
+    const col = Math.floor(dx / CELL);
+    const day = row * 7 + col - mondayIndex({ ...cal.month, day: 1 }) + 1;
+    const onDay =
+      dx >= 0 &&
+      col < 7 &&
+      row >= 0 &&
+      row < 6 &&
+      day >= 1 &&
+      day <= daysInMonth(cal.month.year, cal.month.month);
+    return onDay
+      ? { kind: "calendarDay", date: { ...cal.month, day } }
+      : { kind: "overlay" };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {

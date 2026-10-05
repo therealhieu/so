@@ -3,6 +3,7 @@ import { parseConfig } from "../../src/core/config/toml";
 import { baseWindow } from "../../src/core/state/base-model";
 import { activeBuffer } from "../../src/core/state/buffers";
 import { indexed, TASKS_BASE } from "../support/bases";
+import { indexFixture } from "../support/notes";
 import { type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
@@ -294,4 +295,100 @@ test("a click on an outline heading jumps there and the panel title only focuses
   const s = m.store.get();
   expect(s.panels.side.focused).toBe(true);
   expect(cursorOf(m)?.line).toBe(0);
+});
+
+test("a click on a picker row accepts it and clicks under a toast reach the window", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  indexFixture(m);
+  m.keys("<leader>e");
+  const lines = Array.from(
+    { length: 15 },
+    (_, i) => `${String(i).padStart(3, "0")} ${"abcdefghij".repeat(10)}`,
+  );
+  m.open("long.md", `${lines.join("\n")}\n`);
+  m.keys("G");
+
+  // While the picker is open the body gives no target: a press outside closes it.
+  m.keys("<leader>ff");
+  await m.frame();
+  await m.mouse.click(1, 2);
+  expect(m.store.get().overlay.kind).toBe("none");
+  expect(cursorOf(m)?.line).toBe(14);
+
+  m.keys("<leader>ff");
+  const o = m.store.get().overlay;
+  const label = o.kind === "picker" ? o.picker.items[2]?.label : undefined;
+  if (label === undefined) throw new Error("expected three picker rows");
+  const row = await find(m, `   ${label}`);
+  const from = m.effects.length;
+  await m.mouse.click(row.x + 4, row.y);
+  expect(m.store.get().overlay.kind).toBe("none");
+  expect(m.effects.slice(from)).toContainEqual({ kind: "read", path: label });
+
+  m.open("long.md", `${lines.join("\n")}\n`);
+  m.keys("G");
+  m.store.dispatch({
+    type: "fsResult",
+    op: { kind: "trash", from: "todo.md" },
+    ok: false,
+    reason: "permission denied",
+  });
+  const toast = await find(m, "✗ Move to Trash failed");
+  expect(toast.y).toBeGreaterThan(0);
+  await m.mouse.click(toast.x + 2, toast.y);
+  expect(cursorOf(m)?.line).toBe(toast.y - 1);
+});
+
+test("a click on a calendar day opens its note and the float's title only stays open", async () => {
+  m = await mountShell({ cols: 80, rows: 24 });
+  m.store.dispatch({
+    type: "indexBatch",
+    summaries: [],
+    files: ["daily/2026-10-01.md"],
+    done: 0,
+    total: 0,
+  });
+  m.store.dispatch({ type: "indexReady" });
+  m.keys("<leader>e");
+  m.open("notes/standup.md", "# Standup\n");
+  // Saturday 2026-10-03 in the local time zone.
+  const now = new Date(2026, 9, 3, 9, 5).getTime();
+  for (const key of [" ", "n", "p"])
+    m.store.dispatch({ type: "key", key, now });
+  const title = await find(m, "October 2026");
+  await m.mouse.click(title.x, title.y + 1);
+  expect(m.store.get().overlay.kind).toBe("calendar");
+
+  const day = await find(m, " 1•");
+  const from = m.effects.length;
+  await m.mouse.click(day.x + 1, day.y);
+  expect(m.store.get().overlay.kind).toBe("none");
+  expect(m.effects.slice(from)).toContainEqual({
+    kind: "read",
+    path: "daily/2026-10-01.md",
+  });
+});
+
+test("a click on a completion row accepts it and a click in the body closes it", async () => {
+  m = await mountShell({ cols: 120, rows: 30 });
+  indexFixture(m);
+  m.advance(3000);
+  m.keys("<leader>e");
+  m.open("scratch.md", "alpha\nbravo\n");
+  m.keys("Go[[");
+  const o = m.store.get().overlay;
+  const label = o.kind === "completion" ? o.completion.items[1]?.label : "";
+  if (!label) throw new Error("expected two completion rows");
+  const row = await find(m, `   ◇ ${label}`);
+  await m.mouse.click(row.x + 5, row.y);
+  expect(m.store.get().overlay.kind).toBe("none");
+  const b = activeBuffer(m.store.get());
+  expect(b?.text.line(2)).toStartWith(`[[${label}`);
+
+  m.keys("<Esc>o[[");
+  expect(m.store.get().overlay.kind).toBe("completion");
+  const alpha = await find(m, "alpha");
+  await m.mouse.click(alpha.x + 2, alpha.y);
+  expect(m.store.get().overlay.kind).toBe("none");
+  expect(cursorOf(m)).toEqual({ line: 0, col: 2 });
 });

@@ -160,6 +160,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       for (const v of views) renderer.root.add(v);
       // Mouse sources, top of the z-order first: the paint order reversed, without toasts.
       const sources: MouseSource[] = [
+        overlays,
         cmdline,
         statusline,
         side,

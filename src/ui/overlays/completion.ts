@@ -5,7 +5,11 @@ import {
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
 import { COMPLETION_ROWS } from "../../core/state/completion";
-import type { AppState, CompletionState } from "../../core/state/types";
+import type {
+  AppState,
+  CompletionState,
+  MouseTarget,
+} from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { drawFrame } from "./host";
@@ -33,6 +37,8 @@ function titleOf(c: CompletionState): string {
 export class CompletionView extends Renderable {
   private s: AppState | undefined;
   private box = { x: 0, y: 0, w: 0, h: 0 };
+  /** The item shown on the first list row. */
+  private first = 0;
 
   constructor(
     ctx: RenderContext,
@@ -66,6 +72,29 @@ export class CompletionView extends Renderable {
       below >= ABOVE_UNDER && below >= h ? at.y + 1 : Math.max(0, at.y - h);
     const x = Math.max(0, Math.min(cols - width, at.x - cells(typed) - 2));
     this.box = { x, y, w: width, h };
+    const room = h - 3;
+    this.first = Math.max(
+      0,
+      Math.min(c.selected - room + 1, c.items.length - room),
+    );
+  }
+
+  /** An item row, else `overlay` inside the popup; `undefined` outside it. */
+  itemAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    const b = this.box;
+    if (s?.overlay.kind !== "completion" || !this.visible) return undefined;
+    if (x < b.x || x >= b.x + b.w || y < b.y || y >= b.y + b.h)
+      return undefined;
+    const i = y - b.y - 1;
+    const index = this.first + i;
+    const onItem =
+      x > b.x &&
+      x < b.x + b.w - 1 &&
+      i >= 0 &&
+      i < b.h - 3 &&
+      index < s.overlay.completion.items.length;
+    return onItem ? { kind: "overlayItem", index } : { kind: "overlay" };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
@@ -92,10 +121,7 @@ export class CompletionView extends Renderable {
         "   No matches",
         inner,
       );
-    const first = Math.max(
-      0,
-      Math.min(c.selected - room + 1, c.items.length - room),
-    );
+    const first = this.first;
     for (let i = 0; i < room; i++) {
       const item = c.items[first + i];
       if (item === undefined) break;
