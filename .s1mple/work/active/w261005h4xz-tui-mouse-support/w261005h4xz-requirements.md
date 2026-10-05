@@ -30,7 +30,7 @@ Approved by the user on 2026-10-05: the user delegated every decision of this di
 4. [Standards and Constraints](#4-standards-and-constraints)
 5. [Current Requirements](#5-current-requirements)
    - [W261005H4XZ-REQ1@R1: Mouse maps to keyboard actions](#w261005h4xz-req1r1-mouse-maps-to-keyboard-actions)
-   - [W261005H4XZ-REQ2@R1: Wheel scrolls the surface under the pointer](#w261005h4xz-req2r1-wheel-scrolls-the-surface-under-the-pointer)
+   - [W261005H4XZ-REQ2@R2: Wheel scrolls the surface under the pointer](#w261005h4xz-req2r2-wheel-scrolls-the-surface-under-the-pointer)
    - [W261005H4XZ-REQ3@R1: Click focuses the surface under the pointer](#w261005h4xz-req3r1-click-focuses-the-surface-under-the-pointer)
    - [W261005H4XZ-REQ4@R1: Click places the editor cursor](#w261005h4xz-req4r1-click-places-the-editor-cursor)
    - [W261005H4XZ-REQ5@R1: Drag and multi-click select in Visual mode](#w261005h4xz-req5r1-drag-and-multi-click-select-in-visual-mode)
@@ -88,6 +88,7 @@ The UI keeps owning geometry; the core keeps owning behavior and receives only m
 ## Out of Scope
 
 - Hover effects and any-motion tracking (mode 1003) — no surface needs hover; it raises input volume. Future trigger: a hover-only feature such as link previews.
+- Horizontal wheel scrolling in editor windows — `so` has no horizontal view scroll or `zh`/`zl` command. Future trigger: a keyboard horizontal-scroll command.
 - Window resizing by dragging separators — `so` has no keyboard resize command, and REQ1 forbids mouse-only actions. Future trigger: a keyboard window-resize command.
 - Drag-and-drop of files, cards, or tabs — the parent UI design excludes it (`rm261003abzp-ui-design.md:2359`).
 - Right-click context menus and middle-click paste — no context-menu surface exists, and primary-selection paste is not portable to macOS.
@@ -166,19 +167,19 @@ None — standalone work.
 
 **Depends On:** None
 
-## W261005H4XZ-REQ2@R1: Wheel scrolls the surface under the pointer
+## W261005H4XZ-REQ2@R2: Wheel scrolls the surface under the pointer
 
 **Requirement ID:** `W261005H4XZ-REQ2`
 
-**Revision:** `R1`
+**Revision:** `R2`
 
-**Previous Revision:** None — initial revision
+**Previous Revision:** `W261005H4XZ-REQ2@R1`
 
 **Replaces:** None
 
 **Research Relationship:** None — not research-informed
 
-**Revision Summary:** None — initial revision
+**Revision Summary:** The horizontal wheel no longer scrolls editor windows. `so` has no horizontal view scroll or `zh`/`zl` command (the view derives its left column from the cursor), so that gesture would have no keyboard equivalent, which REQ1 forbids. Found in the system-design review.
 
 **Question:** What does the wheel do, and on which surface?
 
@@ -186,7 +187,7 @@ None — standalone work.
 
 | Surface under pointer | Vertical wheel | Horizontal wheel |
 |---|---|---|
-| Editor window (any, active or not) | Scrolls the view; the cursor stays where it is (current behavior) | Scrolls columns when the window does not wrap |
+| Editor window (any, active or not) | Scrolls the view; the cursor stays where it is (current behavior) | Nothing |
 | Explorer, side panel, picker list, completion list | Moves the selection by 3 items (as `j`/`k` ×3) | None |
 | Bases table | Moves the focused row by 3 (as `j`/`k` ×3) | Scrolls columns by 1 (as `H`/`L` on a table) |
 | Bases board | Moves the focused card by 3 within its lane (as `j`/`k` ×3) | Moves lane focus by 1 (as `h`/`l`; never `H`/`L`, which move cards) |
@@ -445,4 +446,42 @@ None — research was skipped
 
 # 7. Historical Requirement Revisions
 
-None — no requirement has been revised or replaced
+## W261005H4XZ-REQ2@R1: Wheel scrolls the surface under the pointer
+
+**Requirement ID:** `W261005H4XZ-REQ2`
+
+**Revision:** `R1`
+
+**Previous Revision:** None — initial revision
+
+**Replaces:** None
+
+**Status:** Revised by `W261005H4XZ-REQ2@R2`
+
+**Research Relationship:** None — not research-informed
+
+**Revision Summary:** None — initial revision
+
+**Question:** What does the wheel do, and on which surface?
+
+**Answer:** The wheel acts on the surface under the pointer, not the focused one, and never changes focus or mode. Each notch moves 3 lines or items:
+
+| Surface under pointer | Vertical wheel | Horizontal wheel |
+|---|---|---|
+| Editor window (any, active or not) | Scrolls the view; the cursor stays where it is (current behavior) | Scrolls columns when the window does not wrap |
+| Explorer, side panel, picker list, completion list | Moves the selection by 3 items (as `j`/`k` ×3) | None |
+| Bases table | Moves the focused row by 3 (as `j`/`k` ×3) | Scrolls columns by 1 (as `H`/`L` on a table) |
+| Bases board | Moves the focused card by 3 within its lane (as `j`/`k` ×3) | Moves lane focus by 1 (as `h`/`l`; never `H`/`L`, which move cards) |
+| Calendar | Moves the selected day by one week per notch (as `j`/`k`) | None |
+| Statusline, command line, bufferline, prompt, conflict, which-key, toast | Nothing | Nothing |
+
+**Rationale:** Scrolling under the pointer is the standard in Neovim, VS Code, and every GUI. Moving the selection in list surfaces matches fzf and Telescope and reuses existing key reducers without adding per-list scroll state. Keeping the editor cursor in place on wheel preserves the existing scroll behavior (`src/ui/editors/text-view.ts:319-323`).
+
+**Acceptance Criteria:**
+
+- [ ] With two split windows and the left one active, a wheel-down over the right window advances the right window's scroll by 3 and leaves the left window, `windows.active`, and the mode unchanged.
+- [ ] A wheel-down over the explorer moves its selection by 3 rows while an editor window stays focused.
+- [ ] A wheel over a Bases table in an inactive window moves that window's focused row without activating the window.
+- [ ] Scrolling clamps at the first and last line or item.
+
+**Depends On:** `W261005H4XZ-REQ1@R1`
