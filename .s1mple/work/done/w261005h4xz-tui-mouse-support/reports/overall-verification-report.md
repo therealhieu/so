@@ -2,10 +2,10 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
-- **Plan Index:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
-- **Plan Parts:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`, `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
+- **Goal:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
+- **Plan Index:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
+- **Plan Parts:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`, `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
 
 Verified range: `da4275e` → `5355398` (37 changed files under `src` and `test`; no `package.json`, `bun.lock`, workflow, or `src/preview` change).
 

@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
+- **Goal:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
 - **Group:** `P2-G2`
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -62,7 +62,7 @@ No unresolved implementation or verification issue remains.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md` (commit `a6bda04`, status `Failed`)
+- **Verification reports:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md` (commit `a6bda04`, status `Failed`)
 - **Status:** `Completed`
 
 The orchestrator kept the approved requirements as written and authorized `src/ui/overlays/whichkey.ts`, `src/ui/overlays/notify.ts`, `src/ui/mouse.ts`, and `src/ui/shell.ts` as a file-scope extension so the code meets REQ2 and REQ7.

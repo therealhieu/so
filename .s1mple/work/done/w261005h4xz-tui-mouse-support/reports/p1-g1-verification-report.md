@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` (report commit `b6710bb`)
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` (report commit `b6710bb`)
 
 Verified change range: `da4275e` → `23941de` (task commits `3ae1d38`, `93a1e08`, `b98c8ae`, `e139649`, `1957fde`, `fc01724`, `23941de`).
 

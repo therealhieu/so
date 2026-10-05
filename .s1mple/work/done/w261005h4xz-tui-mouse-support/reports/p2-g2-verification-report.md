@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G2`
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md`
 
 ## Status
 

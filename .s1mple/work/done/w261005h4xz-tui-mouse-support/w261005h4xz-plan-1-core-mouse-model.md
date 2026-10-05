@@ -17,11 +17,11 @@ The UI does not dispatch the new events yet. The old `EditorView.onMouseScroll` 
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
-- Plan context: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-context.md`
-- System design: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md`
+- Plan index: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
+- Plan context: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-context.md`
+- System design: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md`
 - UI design: Not applicable — no UI design for this work; the system design is the sole authority
-- System requirements: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md`
+- System requirements: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md`
 - UI requirements: Not applicable — no UI requirements document for this work
 
 ## Dependencies

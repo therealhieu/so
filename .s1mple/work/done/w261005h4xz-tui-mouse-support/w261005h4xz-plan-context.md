@@ -10,12 +10,12 @@
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline |
-| System design | `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md` | Technical authority (`Finalized System Design`) |
+| System design | `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md` | Technical authority (`Finalized System Design`) |
 | UI design | Not applicable — no UI design for this work; the system design is the sole authority | UI/UX authority when present |
-| System requirements | `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md` | Required system behavior (`Ready for System Design`) |
+| System requirements | `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md` | Required system behavior (`Ready for System Design`) |
 | UI requirements | Not applicable — no UI requirements document for this work | Required UI behavior when present |
 | Research | Not needed — research was skipped in requirements and design | Relevant research findings |
-| Discussion context | `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-discuss-context.md` | Work-specific findings and constraints |
+| Discussion context | `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-discuss-context.md` | Work-specific findings and constraints |
 | UI context | Not applicable — no UI discussion | Existing UI code and pattern evidence |
 | Roadmap sources | Not applicable | Standalone work; `rm261003abzp-*` sources are related context only, not a binding |
 | Additional project files | `.s1mple/docs/communication.md`, `.s1mple/docs/languages/typescript.md`, `src/ui/shell.ts`, `src/core/state/{types,update,completion,picker,calendar,explorer,side-panel,commands,base-commands,buffers}.ts`, `src/ui/editors/{text-view,registry,base-view}.ts`, `src/ui/views/{window-tree,bufferline}.ts`, `src/ui/overlays/{host,picker,calendar,completion}.ts`, `src/core/config/schema.ts`, `test/support/{ui,state}.ts`, `test/e2e/{pty,quit.test,restore.test}.ts` | Confirm design anchors and resolve mechanical gaps (Section 6) |

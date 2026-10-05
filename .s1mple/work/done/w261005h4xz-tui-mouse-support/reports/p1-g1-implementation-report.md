@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
+- **Goal:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -65,7 +65,7 @@ No unresolved implementation or verification issue remains.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` (commit `c3a7a3f`, status `Failed`, one finding)
+- **Verification reports:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` (commit `c3a7a3f`, status `Failed`, one finding)
 - **Status:** `Completed`
 
 ### Finding Closure

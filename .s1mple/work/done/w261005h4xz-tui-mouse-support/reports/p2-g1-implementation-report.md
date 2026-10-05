@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
+- **Goal:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -62,7 +62,7 @@ No unresolved implementation or verification issue remains. Chrome and overlay s
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g1-verification-report.md` (commit `9d642dd`, status `Failed`, one Minor finding)
+- **Verification reports:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g1-verification-report.md` (commit `9d642dd`, status `Failed`, one Minor finding)
 - **Status:** `Completed`
 
 ### Finding Closure

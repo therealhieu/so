@@ -459,7 +459,7 @@ Run after project documentation finalization. The orchestrator owns this stage.
 
 - **First push and CI:** pushed `f1302f3..1a63124` (no force); PR #8 checks `check`, `test (ubuntu-24.04)`, `test (macos-15)`, CodeRabbit all pass
 - **Conflict resolution:** none needed — `origin/main` (`d398ad7`) is an ancestor of the branch; PR #8 `MERGEABLE`
-- **Work-folder move commit:** `69e6587` (`git mv` to `.s1mple/work/done/w261005h4xz-tui-mouse-support/`; every `.s1mple/` reference updated, including `.s1mple/docs/project.md`; `rg 'active/w261005h4xz'` finds nothing)
+- **Work-folder move commit:** `69e6587` (`git mv` to `.s1mple/work/done/w261005h4xz-tui-mouse-support/`). The rewritten `.s1mple/` references (`.s1mple/docs/project.md`, plans, reports) were left unstaged by that commit and are committed in the follow-up `docs: update W261005H4XZ references to work/done`; afterwards `rg 'active/w261005h4xz'` finds nothing
 - **Final push and CI on head:** the commit recording this evidence is pushed as the final head; its PR #8 CI result is checked after the push and reported to the user (recording it here would need another commit and push)
 
 ## Implementation Evidence
