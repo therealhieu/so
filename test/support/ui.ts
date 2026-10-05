@@ -1,5 +1,5 @@
 import type { CapturedSpan } from "@opentui/core";
-import { createTestRenderer } from "@opentui/core/testing";
+import { createTestRenderer, TestRecorder } from "@opentui/core/testing";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { initialState } from "../../src/core/state/init";
@@ -120,11 +120,13 @@ export async function mountShell(o: MountOptions) {
       : Promise.resolve(bytes);
   };
   const capabilities = o.capabilities;
+  const writes: string[] = [];
   const shell = createShell(t.renderer, {
     reg,
     now: () => now,
     loadImage,
     rasterizeSvg: o.rasterizeSvg ?? rasterizeSvg,
+    write: (bytes) => writes.push(bytes),
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });
   shell.attach(store);
@@ -142,6 +144,14 @@ export async function mountShell(o: MountOptions) {
     effects,
     /** Every image reference the shell asked to load, in order. */
     loads,
+    /** Every byte string the shell wrote to the terminal outside the renderer. */
+    writes,
+    /** Start recording each frame the renderer writes from now on. */
+    record(): TestRecorder {
+      const r = new TestRecorder(t.renderer);
+      r.rec();
+      return r;
+    },
     now: () => now,
     /** Move the clock, firing every timer that falls due on the way. */
     advance(ms: number) {
