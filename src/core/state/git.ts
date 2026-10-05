@@ -1,7 +1,8 @@
+import type { BlameLine } from "../features/git/blame";
 import { diffLines, type Hunk } from "../features/git/diff";
 import type { IndexText } from "../features/git/index-text";
 import { hunkPatch } from "../features/git/patch";
-import { hunkAt } from "../features/git/signs";
+import { hunkAt, nextHunkLine, prevHunkLine } from "../features/git/signs";
 import type { FileStatus, RepoHead } from "../features/git/status";
 import type { Range } from "../kernel/text/pos";
 import {
@@ -9,11 +10,14 @@ import {
   activeWindow,
   applyBufferEdits,
   listedBuffers,
+  placeCursor,
+  saveText,
   setBuffer,
 } from "./buffers";
 import type { CommandContext } from "./commands";
 import { chain, clearMessage, message, none } from "./result";
 import { blocked, writeBuffer } from "./save";
+import type { StatusSegments } from "./status";
 import type {
   Action,
   AppState,
@@ -48,6 +52,12 @@ const openingTool = (saved: readonly string[], tool: string) =>
     ? `"${saved[0]}" written · opening ${tool}`
     : `${saved.length} files written · opening ${tool}`;
 const toolMissing = (tool: string) => `${tool} not found (git.tool)`;
+const hunkOf = (n: number, m: number) => `hunk ${n}/${m}`;
+const NO_NEXT = "no next hunk";
+const NO_PREVIOUS = "no previous hunk";
+const NOT_COMMITTED = "not committed yet";
+const blameText = (b: Extract<BlameLine, { committed: true }>, now: number) =>
+  `${b.author}, ${ago(now / 1000 - b.time)} · ${b.summary} (${b.sha.slice(0, 7)})`;
 const firstLine = (text: string) => text.split("\n", 1)[0] ?? "";
 
 /** No repository until discovery answers. */
@@ -246,17 +256,15 @@ export function onGitDiffTimer(s: AppState, id: BufferId): Result {
  */
 export function syncGitFiles(prev: AppState, r: Result): Result {
   if (prev.buffers === r.state.buffers && prev.git === r.state.git) return r;
-  const s = dropClosedPending(r.state);
+  const s = dropClosed(r.state);
   const repo = s.git.repo;
-  if (repo === null)
-    return Object.keys(s.git.files).length === 0
-      ? r
-      : { ...r, state: setGit(s, { files: {} }) };
-  const open = new Set(listedBuffers(s).map((b) => b.path));
+  const open = new Set(
+    repo === null ? [] : listedBuffers(s).map((b) => b.path),
+  );
   const reads: Effect[] = [];
   let files: GitState["files"] | undefined;
   for (const path of open)
-    if (s.git.files[path] === undefined) {
+    if (repo !== null && s.git.files[path] === undefined) {
       files ??= { ...s.git.files };
       files[path] = { hunks: [] };
       reads.push(readIndex(repo, path));
@@ -266,21 +274,27 @@ export function syncGitFiles(prev: AppState, r: Result): Result {
       files ??= { ...s.git.files };
       delete files[path];
     }
-  return files === undefined
-    ? s === r.state
-      ? r
-      : { ...r, state: s }
-    : { state: setGit(s, { files }), effects: [...r.effects, ...reads] };
+  const state = files === undefined ? s : setGit(s, { files });
+  return state === r.state ? r : { state, effects: [...r.effects, ...reads] };
 }
 
-/** A pending operation waiting on a buffer that was closed is cancelled. */
-function dropClosedPending(s: AppState): AppState {
+/**
+ * A closed buffer cancels the pending operation waiting on it and closes
+ * the hunk float showing it.
+ */
+function dropClosed(s: AppState): AppState {
+  const gone = (id: BufferId) => s.buffers[id] === undefined;
   const p = s.git.pending;
-  if (p === undefined) return s;
-  const ids = p.op === "stage" ? [p.bufferId, ...p.waiting] : p.waiting;
-  if (ids.every((id) => s.buffers[id] !== undefined)) return s;
-  const { pending: _, ...git } = s.git;
-  return { ...s, git };
+  const ids =
+    p === undefined
+      ? []
+      : p.op === "stage"
+        ? [p.bufferId, ...p.waiting]
+        : p.waiting;
+  const st = ids.some(gone) ? withoutPending(s) : s;
+  return st.overlay.kind === "gitHunk" && gone(st.overlay.bufferId)
+    ? { ...st, overlay: { kind: "none" } }
+    : st;
 }
 
 const withoutPending = (s: AppState): AppState => {
@@ -599,4 +613,122 @@ function hunksFor(entry: IndexEntry, b: BufferState): Hunk[] {
         oldLines: ix.lines.slice(h.old.start, h.old.start + h.old.count),
       }))
     : hunks;
+}
+
+/** The first line a hunk marks, where navigation puts the cursor. */
+const startOf = (h: Hunk): number | undefined => nextHunkLine([h], -1);
+
+/** `]h` and `[h`: move to the next or previous hunk's first line, stopping at the ends. */
+export function gotoHunk(ctx: CommandContext, dir: 1 | -1): Result {
+  const s = ctx.state;
+  if (s.git.repo === null) return message(s, NOT_A_REPO);
+  const at = atCursor(s);
+  const hunks = at === undefined ? [] : currentHunks(s, at.b);
+  const line = at?.line ?? 0;
+  const target =
+    dir > 0 ? nextHunkLine(hunks, line) : prevHunkLine(hunks, line);
+  if (target === undefined) return message(s, dir > 0 ? NO_NEXT : NO_PREVIOUS);
+  const n = hunks.findIndex((h) => startOf(h) === target) + 1;
+  return message(
+    placeCursor(s, { line: target, col: 0 }),
+    hunkOf(n, hunks.length),
+  );
+}
+
+/** `<leader>ghp`: show the hunk at the cursor in a float, with fresh hunks kept. */
+export function previewHunk(ctx: CommandContext): Result {
+  const s = ctx.state;
+  if (s.git.repo === null) return message(s, NOT_A_REPO);
+  const at = atCursor(s);
+  const f = at && s.git.files[at.b.path];
+  if (at === undefined || f === undefined) return message(s, NO_HUNK);
+  const hunks = currentHunks(s, at.b);
+  const hunk = hunkAt(hunks, at.line);
+  if (hunk === undefined) return message(s, NO_HUNK);
+  const st = setGit(s, {
+    files: { ...s.git.files, [at.b.path]: { ...f, hunks } },
+  });
+  return none({ ...st, overlay: { kind: "gitHunk", bufferId: at.b.id, hunk } });
+}
+
+/**
+ * `<leader>ghb`: who last changed the cursor line, blamed against the
+ * unsaved buffer. A file with no commit to blame answers without git.
+ */
+export function blameLine(ctx: CommandContext): Result {
+  const s = ctx.state;
+  const repo = s.git.repo;
+  if (repo === null) return message(s, NOT_A_REPO);
+  const at = atCursor(s);
+  if (at === undefined) return message(s, NOT_COMMITTED);
+  const entry = s.git.files[at.b.path]?.index;
+  if (
+    repo.head.kind === "unborn" ||
+    entry?.kind === "untracked" ||
+    entry?.kind === "ignored" ||
+    s.git.status?.files.get(at.b.path)?.index === "A"
+  )
+    return message(s, NOT_COMMITTED);
+  return {
+    state: s,
+    effects: [
+      {
+        kind: "gitBlame",
+        repo,
+        path: at.b.path,
+        repoPath: repo.prefix + at.b.path,
+        line: at.line,
+        contents: saveText(at.b),
+      },
+    ],
+  };
+}
+
+export function onGitBlamed(
+  s: AppState,
+  a: Extract<Action, { type: "gitBlamed" }>,
+): Result {
+  if (s.git.repo === null) return none(s);
+  const r = a.result;
+  if ("failed" in r) return message(s, firstLine(r.failed), "error");
+  return message(s, r.committed ? blameText(r, a.now) : NOT_COMMITTED);
+}
+
+const DAY = 86_400;
+
+/** How long ago, in the accepted buckets: just now, minutes, hours, days, months, years. */
+function ago(seconds: number): string {
+  const unit = (n: number, name: string) =>
+    `${n} ${name}${n === 1 ? "" : "s"} ago`;
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return unit(Math.floor(seconds / 60), "minute");
+  if (seconds < DAY) return unit(Math.floor(seconds / 3600), "hour");
+  const days = Math.floor(seconds / DAY);
+  if (days < 30) return unit(days, "day");
+  if (days < 365) return unit(Math.floor(days / 30), "month");
+  return unit(Math.floor(days / 365), "year");
+}
+
+/**
+ * The statusline's git fields for the active buffer: the ref, any
+ * operation in progress, and gitsigns' summary of its hunks. A file with no
+ * index base, untracked or in a repository with no commit yet, counts 0.
+ */
+export function gitSegment(s: AppState, b: BufferState): StatusSegments["git"] {
+  const repo = s.git.repo;
+  if (repo === null) return undefined;
+  const counts = { added: 0, changed: 0, removed: 0 };
+  if (repo.head.kind !== "unborn")
+    for (const h of s.git.files[b.path]?.hunks ?? []) {
+      if (h.kind === "untracked") continue;
+      const same = Math.min(h.old.count, h.new.count);
+      counts.changed += same;
+      counts.added += h.new.count - same;
+      counts.removed += h.old.count - same;
+    }
+  return {
+    ref: headRef(repo.head),
+    ...(repo.op === undefined ? {} : { op: repo.op }),
+    ...counts,
+  };
 }

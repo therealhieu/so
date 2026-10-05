@@ -716,3 +716,191 @@ test("after the tool exits buffers and git state are refreshed and the message i
     },
   ]);
 });
+
+/** Four hunks: changes on lines 1, 3, and 5, and an addition after line 7. */
+const fourHunks = (): AppState =>
+  inRepo(
+    NOTE,
+    "a\nB\nc\nD\ne\nF\ng\nh\nnew",
+    tracked("a\nb\nc\nd\ne\nf\ng\nh\n"),
+  );
+
+const cursor = (s: AppState) =>
+  s.windows.byId[s.windows.active]?.content.cursor;
+const msg = (r: Result) => r.state.notifications.message;
+
+test("navigation reports the hunk position and stops at the ends", () => {
+  const s = fourHunks();
+  const next = keys(s, "]", "h");
+  expect(cursor(next.state)).toEqual({ line: 1, col: 0 });
+  expect(msg(next)).toEqual({ text: "hunk 1/4", level: "info" });
+  const second = keys(next.state, "]", "h");
+  expect(cursor(second.state)?.line).toBe(3);
+  expect(msg(second)?.text).toBe("hunk 2/4");
+  const last = keys(s, "G");
+  const end = keys(last.state, "]", "h");
+  expect(msg(end)).toEqual({ text: "no next hunk", level: "info" });
+  expect(cursor(end.state)).toEqual(cursor(last.state));
+  const back = keys(last.state, "[", "h");
+  expect(cursor(back.state)?.line).toBe(5);
+  expect(msg(back)?.text).toBe("hunk 3/4");
+  const first = keys(next.state, "[", "h");
+  expect(msg(first)).toEqual({ text: "no previous hunk", level: "info" });
+  expect(cursor(first.state)).toEqual({ line: 1, col: 0 });
+});
+
+test("preview opens the hunk float and closes on escape, q, other keys, and outside presses", () => {
+  const s = keys(fourHunks(), "j").state;
+  const open = leader(s, "ghp");
+  expect(open.state.overlay).toEqual({
+    kind: "gitHunk",
+    bufferId: 1,
+    hunk: {
+      kind: "change",
+      old: { start: 1, count: 1 },
+      new: { start: 1, count: 1 },
+      oldLines: ["b"],
+    },
+  });
+  for (const key of ["<Esc>", "q"]) {
+    const closed = keys(open.state, key);
+    expect(closed.state.overlay).toEqual({ kind: "none" });
+    expect(cursor(closed.state)).toEqual({ line: 1, col: 0 });
+    expect(closed.state.vim.mode).toBe("normal");
+  }
+  const moved = keys(open.state, "j");
+  expect(moved.state.overlay).toEqual({ kind: "none" });
+  expect(cursor(moved.state)?.line).toBe(2);
+  const outside = update(open.state, {
+    type: "mouse",
+    event: {
+      kind: "press",
+      target: { kind: "outside" },
+      clicks: 1,
+      ctrl: false,
+    },
+    now: 0,
+  });
+  expect(outside.state.overlay).toEqual({ kind: "none" });
+  const inside = update(open.state, {
+    type: "mouse",
+    event: {
+      kind: "press",
+      target: { kind: "overlay" },
+      clicks: 1,
+      ctrl: false,
+    },
+    now: 0,
+  });
+  expect(inside.state.overlay.kind).toBe("gitHunk");
+  const clean = leader(keys(s, "j").state, "ghp");
+  expect(clean.state.overlay).toEqual({ kind: "none" });
+  expect(msg(clean)).toEqual({ text: "no hunk at cursor", level: "info" });
+});
+
+test("the hunk float closes with its buffer", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const closing = keys(s, "A", "x", "<Esc>", ":", "b", "d", "<CR>").state;
+  expect(closing.buffers[1]?.closing).toBe(true);
+  const open = leader(closing, "ghp").state;
+  expect(open.overlay.kind).toBe("gitHunk");
+  const r = update(open, { type: "saved", path: NOTE, stamp: stamp(2) });
+  expect(r.state.buffers[1]).toBeUndefined();
+  expect(r.state.overlay).toEqual({ kind: "none" });
+});
+
+const MIN = 60;
+const DAY = 24 * 60 * MIN;
+const NOW = 1_700_000_000;
+
+const blamed = (s: AppState, ago: number, author = "hieu"): Result =>
+  update(s, {
+    type: "gitBlamed",
+    path: NOTE,
+    line: 0,
+    result: {
+      committed: true,
+      sha: "a1b2c3d4e5f6",
+      author,
+      time: NOW - ago,
+      summary: "Add notes",
+    },
+    now: NOW * 1000,
+  });
+
+test("blame reads as author, relative date, summary, and short sha", () => {
+  const s = inRepo(NOTE, "a\nb");
+  const r = leader(keys(s, "j").state, "ghb");
+  expect(gitEffects(r)).toEqual([
+    {
+      kind: "gitBlame",
+      repo: REPO,
+      path: NOTE,
+      repoPath: "ws/notes/a.md",
+      line: 1,
+      contents: "a\nb\n",
+    },
+  ]);
+  const rows: [number, string][] = [
+    [30, "just now"],
+    [MIN, "1 minute ago"],
+    [5 * MIN, "5 minutes ago"],
+    [60 * MIN, "1 hour ago"],
+    [3 * 60 * MIN, "3 hours ago"],
+    [DAY, "1 day ago"],
+    [2 * DAY, "2 days ago"],
+    [40 * DAY, "1 month ago"],
+    [70 * DAY, "2 months ago"],
+    [400 * DAY, "1 year ago"],
+    [800 * DAY, "2 years ago"],
+  ];
+  for (const [ago, when] of rows)
+    expect(msg(blamed(s, ago))).toEqual({
+      text: `hieu, ${when} · Add notes (a1b2c3d)`,
+      level: "info",
+    });
+});
+
+test("blame of uncommitted lines says not committed yet without running git when it can", () => {
+  const notYet = { text: "not committed yet", level: "info" as const };
+  const s = inRepo(NOTE, "a");
+  expect(
+    msg(
+      update(s, {
+        type: "gitBlamed",
+        path: NOTE,
+        line: 0,
+        result: { committed: false },
+        now: 0,
+      }),
+    ),
+  ).toEqual(notYet);
+  const untracked = leader(inRepo(NOTE, "a", { kind: "untracked" }), "ghb");
+  expect(gitEffects(untracked)).toEqual([]);
+  expect(msg(untracked)).toEqual(notYet);
+  const unborn = run(fresh(), {
+    type: "gitDetected",
+    repo: { ...REPO, head: { kind: "unborn", name: "main" } },
+  }).state;
+  const r = leader(inRepo(NOTE, "a", tracked("a\n"), unborn), "ghb");
+  expect(gitEffects(r)).toEqual([]);
+  expect(msg(r)).toEqual(notYet);
+  const added = run(s, status({ [NOTE]: file({ index: "A", worktree: "." }) }));
+  expect(gitEffects(leader(added.state, "ghb"))).toEqual([]);
+  expect(msg(leader(added.state, "ghb"))).toEqual(notYet);
+  expect(
+    msg(
+      update(s, {
+        type: "gitBlamed",
+        path: NOTE,
+        line: 0,
+        result: { failed: "fatal: bad revision\nmore" },
+        now: 0,
+      }),
+    ),
+  ).toEqual({ text: "fatal: bad revision", level: "error" });
+  const outside = run(fresh(), load(NOTE, "a")).state;
+  for (const seq of ["ghb", "ghp"])
+    expect(msg(leader(outside, seq))?.text).toBe("not a git repository");
+  expect(msg(keys(outside, "]", "h"))?.text).toBe("not a git repository");
+});

@@ -14,6 +14,7 @@ import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import {
+  onGitBlamed,
   onGitDetected,
   onGitDiffTimer,
   onGitIndexRead,
@@ -214,7 +215,7 @@ export function createUpdate(reg: Registries): Update {
       case "gitStaged":
         return onGitStaged(state, action);
       case "gitBlamed":
-        return none(state);
+        return onGitBlamed(state, action);
     }
     const unhandled: never = action;
     return unhandled;
