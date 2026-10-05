@@ -96,6 +96,28 @@ async function until(
   }
 }
 
+/**
+ * Opens `:Diagnostics` until it lists `row`. The picker lists what is known
+ * when it opens, and the server publishes after `didOpen`, which follows
+ * the ready state, so an early picker can be empty.
+ */
+async function openDiagnosticsWith(p: PtyProcess, row: string): Promise<void> {
+  const until = performance.now() + 15_000;
+  for (;;) {
+    p.type(":Diagnostics\r");
+    await p.waitFor(() => p.screen().includes("─ Diagnostics ─"));
+    try {
+      await p.waitFor(() => p.screen().includes(row), 1000);
+      return;
+    } catch {
+      if (performance.now() > until)
+        throw new Error(`timed out waiting for "${row}":\n${p.screen()}`);
+    }
+    p.type(ESC);
+    await p.waitFor(() => !p.screen().includes("─ Diagnostics ─"));
+  }
+}
+
 /** Quit from Normal mode and wait for the process to exit. */
 async function quit(p: PtyProcess): Promise<void> {
   p.type(":q\r");
@@ -189,9 +211,9 @@ test(
       async script(p) {
         await ready(p);
         await until(p, "the server", () => statusRow(p).includes("◆ fake"));
-        p.type(":Diagnostics\r");
-        await until(p, "the lib.rs row", () =>
-          p.screen().includes("W lib.rs:1:8 function `helper` is never used"),
+        await openDiagnosticsWith(
+          p,
+          "W lib.rs:1:8 function `helper` is never used",
         );
         p.type("\r");
         await until(p, "lib.rs to open", () => statusRow(p).includes("lib.rs"));
