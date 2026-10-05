@@ -69,6 +69,8 @@ export type PtyProcess = {
   type(s: string): void;
   /** The emulator's visible screen as text. */
   screen(): string;
+  /** The terminal's current mouse tracking mode. */
+  mouse(): PtyRun["screen"]["mouse"];
   /** Resolve once `pred` holds, polling every 10 ms. */
   waitFor(pred: () => boolean, ms?: number): Promise<void>;
   /** Whether the process has exited. */
@@ -146,6 +148,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
     file: startFile(argv),
     type: (s) => proc.terminal?.write(s),
     screen: () => screenText(term),
+    mouse: () => term.modes.mouseTrackingMode,
     async waitFor(pred, ms = 5000) {
       const until = performance.now() + ms;
       while (!pred()) {
