@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
+import { indexed, TASKS_BASE } from "../../../test/support/bases";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import type { BaseWindowState } from "../features/bases/file-type";
 import { splitKeys } from "../kernel/vim/keys";
+import { baseViewModel } from "./base-model";
 import { fullText } from "./buffers";
 import type {
   AppState,
@@ -210,4 +213,198 @@ test("the core mouse contract carries no button", () => {
   // @ts-expect-error a button is not part of the core mouse contract
   const event: MouseEvent = { ...press(text(1, 0, 0)), button: 2 };
   expect(event.kind).toBe("press");
+});
+
+const wheel = (target: MouseTarget, dy: -1 | 0 | 1, dx: -1 | 0 | 1 = 0) =>
+  ({ kind: "wheel", target, dx, dy }) as const;
+
+const withActive = (s: AppState, active: WindowId): AppState => ({
+  ...s,
+  windows: { ...s.windows, active },
+});
+
+const MANY = `${Array.from({ length: 40 }, (_, i) => `line ${i}`).join("\n")}\n`;
+
+/** a.md and tasks.base side by side, with the note's window active. */
+function noteAndBase(): AppState {
+  const split = keys(open("a.md", MANY), "<C-w>v").state;
+  const other = split.windows.active;
+  const based = update(
+    update(split, {
+      type: "fileLoaded",
+      path: "tasks.base",
+      file: textFile(TASKS_BASE),
+    }).state,
+    indexed(),
+  ).state;
+  return withActive(based, other === 1 ? 2 : 1);
+}
+
+const baseWindowOf = (s: AppState) =>
+  Object.values(s.windows.byId).find((w) => w.content.editor === "base");
+const baseFocus = (s: AppState) =>
+  (baseWindowOf(s)?.content.kindState as BaseWindowState | undefined)?.focus;
+
+test("the wheel scrolls the window under the pointer, not the active one", () => {
+  const split = keys(open("a.md", MANY), "<C-w>v").state;
+  const other = split.windows.active === 1 ? 2 : 1;
+  const r = mouse(split, wheel(text(other, 0, 0), 1));
+  expect(r.state.windows.byId[other]?.content.scroll).toBe(3);
+  expect(r.state.windows.byId[other]?.content.cursor).toEqual(
+    split.windows.byId[other]?.content.cursor,
+  );
+  expect(r.state.windows.active).toBe(split.windows.active);
+  expect(r.state.vim.mode).toBe("normal");
+
+  const back = mouse(r.state, wheel(text(other, 0, 0), -1)).state;
+  expect(back.windows.byId[other]?.content.scroll).toBe(0);
+  const top = mouse(split, wheel(text(other, 0, 0), -1)).state;
+  expect(top.windows.byId[other]?.content.scroll).toBe(0);
+
+  const inserting = keys(split, "i").state;
+  const scrolled = mouse(inserting, wheel(text(other, 0, 0), 1)).state;
+  expect(scrolled.vim.mode).toBe("insert");
+  expect(scrolled.windows.active).toBe(split.windows.active);
+
+  const sideways = mouse(split, wheel(text(other, 0, 0), 0, 1));
+  expect(sideways.state).toEqual(split);
+  expect(sideways.effects).toEqual([]);
+});
+
+test("the wheel moves the explorer list without focusing it", () => {
+  const listed = update(open("a.md", MANY), {
+    type: "dirListed",
+    dir: "",
+    entries: ["a", "b", "c", "d", "e"].map((n) => ({
+      name: `${n}.md`,
+      kind: "file" as const,
+    })),
+  }).state;
+  const s: AppState = {
+    ...listed,
+    panels: {
+      ...listed.panels,
+      explorer: { ...listed.panels.explorer, open: true, cursor: "a.md" },
+    },
+  };
+  const down = mouse(s, wheel({ kind: "explorer", path: "b.md" }, 1)).state;
+  expect(down.panels.explorer.cursor).toBe("d.md");
+  expect(down.panels.explorer.focused).toBe(false);
+  const clamped = mouse(down, wheel({ kind: "explorer", path: "" }, 1)).state;
+  expect(clamped.panels.explorer.cursor).toBe("e.md");
+});
+
+test("the wheel moves the focus of an inactive Base without activating it", () => {
+  const s = noteAndBase();
+  const base = baseWindowOf(s);
+  if (base === undefined) throw new Error("expected a base window");
+  expect(baseFocus(s)?.index ?? 0).toBe(0);
+  const r = mouse(
+    s,
+    wheel({ kind: "window", window: base.id, spot: { kind: "base" } }, 1),
+  ).state;
+  expect(baseFocus(r)?.index).toBe(3);
+  expect(r.windows.active).toBe(s.windows.active);
+  expect(r.panels).toEqual(s.panels);
+});
+
+test("the wheel over a Base table scrolls its columns once per sideways notch", () => {
+  const s = noteAndBase();
+  const base = baseWindowOf(s);
+  if (base === undefined) throw new Error("expected a base window");
+  const target: MouseTarget = {
+    kind: "window",
+    window: base.id,
+    spot: { kind: "baseCell", row: 0, column: 0 },
+  };
+  const focused = withActive(s, base.id);
+  const right = mouse(s, wheel(target, 0, 1));
+  expectSame(
+    { ...right, state: withActive(right.state, base.id) },
+    keys(focused, "L"),
+  );
+  expect(right.state.windows.active).toBe(s.windows.active);
+  const model = baseViewModel(withActive(right.state, base.id), base.id, reg);
+  expect(model?.table).toBeDefined();
+});
+
+const OUTLINE = "# One\n## Two\n## Three\n# Four\n# Five\n# Six\n";
+
+function withOutline(): AppState {
+  const s = open("a.md", OUTLINE);
+  return {
+    ...s,
+    panels: {
+      ...s.panels,
+      side: { ...s.panels.side, kind: "outline", open: true },
+    },
+  };
+}
+
+test("the wheel over the side panel equals j without focusing it", () => {
+  const s = withOutline();
+  const r = mouse(s, wheel({ kind: "sidePanel", row: 0 }, 1));
+  expect(r.state.panels.side.cursor).toBe(3);
+  expect(r.state.panels.side.focused).toBe(false);
+  const side = (st: AppState, focused: boolean): AppState => ({
+    ...st,
+    panels: { ...st.panels, side: { ...st.panels.side, focused } },
+  });
+  const typed = keys(side(s, true), "jjj");
+  expectSame(r, { ...typed, state: side(typed.state, false) });
+});
+
+test.each<[string, () => AppState, MouseEvent, string]>([
+  [
+    "a picker",
+    () => keys(open("a.md", MANY), " sc").state,
+    wheel({ kind: "overlayItem", index: 0 }, 1),
+    "<C-n><C-n><C-n>",
+  ],
+  [
+    "a picker, upwards",
+    () => keys(open("a.md", MANY), " sc<C-n><C-n><C-n><C-n>").state,
+    wheel({ kind: "overlay" }, -1),
+    "<C-p><C-p><C-p>",
+  ],
+  [
+    "the calendar",
+    () => keys(open("a.md", MANY), " np").state,
+    wheel({ kind: "overlay" }, 1),
+    "j",
+  ],
+  [
+    "the calendar, upwards",
+    () => keys(open("a.md", MANY), " np").state,
+    wheel({ kind: "calendarDay", date: { year: 2026, month: 1, day: 1 } }, -1),
+    "k",
+  ],
+])("the wheel over %s equals its list keys", (_label, setup, event, seq) => {
+  const s = setup();
+  const r = mouse(s, event);
+  expectSame(r, keys(s, seq));
+  expect(r.state).not.toEqual(s);
+});
+
+function completing(): AppState {
+  const s = update(open("a.md", "x\n"), indexed()).state;
+  const r = keys(s, "o[[");
+  if (r.state.overlay.kind !== "completion")
+    throw new Error("expected completion");
+  return r.state;
+}
+
+test("the wheel stops at the last completion item instead of wrapping", () => {
+  const s = keys(completing(), "<C-n><C-n>").state;
+  if (s.overlay.kind !== "completion") throw new Error("expected completion");
+  const n = s.overlay.completion.items.length;
+  expect(n).toBe(4);
+  expect(s.overlay.completion.selected).toBe(2);
+  const down = mouse(s, wheel({ kind: "overlayItem", index: 0 }, 1));
+  expectSame(down, keys(s, "<C-n>"));
+  const again = mouse(down.state, wheel({ kind: "overlayItem", index: 0 }, 1));
+  expect(again.state).toEqual(down.state);
+  const up = mouse(s, wheel({ kind: "overlay" }, -1));
+  expectSame(up, keys(s, "<C-p><C-p>"));
+  expect(up.state.vim.mode).toBe("insert");
 });

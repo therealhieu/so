@@ -1,13 +1,17 @@
 import type { Pos } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
-import { activeBuffer, leaves, placeCursor } from "./buffers";
+import { baseViewModel } from "./base-model";
+import { activeBuffer, leaves, placeCursor, setWindow } from "./buffers";
 import { runCommand } from "./commands";
+import { moveCursor } from "./explorer";
 import { handleKeyAction } from "./keys";
 import { chain, clearMessage, none } from "./result";
 import type { AppState, MouseEvent, MouseTarget, Result } from "./types";
 import type { Registries } from "./update";
 
 const LINK_FOLLOW = "link.follow";
+/** Lines, rows, or items one vertical wheel notch moves. */
+const WHEEL_LINES = 3;
 
 /**
  * One mouse gesture, run as its keyboard equivalent: a press focuses what it
@@ -38,8 +42,148 @@ export function onMouse(
         : none(s);
     }
     case "wheel":
+      return wheel(s, e.target, e.dx, e.dy, a.now, reg);
+  }
+}
+
+const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
+
+/**
+ * One wheel notch over `t`, never moving focus or changing mode: a text
+ * window scrolls without moving its cursor; a Base moves its focus three
+ * rows, or for a sideways notch scrolls its columns (table) or moves to the
+ * next lane (board); the explorer and the side panel move their selection;
+ * an open list moves its selection, stopping at either end; the calendar
+ * moves a week.
+ */
+function wheel(
+  s: AppState,
+  t: MouseTarget,
+  dx: number,
+  dy: number,
+  now: number,
+  reg: Registries,
+): Result {
+  switch (t.kind) {
+    case "window":
+      return s.windows.byId[t.window]?.content.editor === "base"
+        ? withFocus(s, t, (f) => wheelBase(f, dx, dy, now, reg))
+        : scrollWindow(s, t.window, dy);
+    case "explorer":
+      return dy === 0 ? none(s) : moveCursor(s, dy * WHEEL_LINES);
+    case "sidePanel":
+      return dy === 0
+        ? none(s)
+        : withFocus(s, t, (f) =>
+            feedKeys(
+              none(f),
+              repeat(dy > 0 ? "j" : "k", WHEEL_LINES),
+              now,
+              reg,
+            ),
+          );
+    case "overlayItem":
+    case "overlay":
+    case "calendarDay":
+      return dy === 0 ? none(s) : wheelOverlay(s, dy, now, reg);
+    default:
       return none(s);
   }
+}
+
+/** Scroll window `id` by whole notches, keeping its last line on screen. */
+function scrollWindow(s: AppState, id: number, dy: number): Result {
+  const w = s.windows.byId[id];
+  const b = w && s.buffers[w.content.bufferId];
+  if (dy === 0 || w === undefined || b === undefined) return none(s);
+  const scroll = Math.max(
+    0,
+    Math.min(w.content.scroll + dy * WHEEL_LINES, b.text.lineCount - 1),
+  );
+  return scroll === w.content.scroll
+    ? none(s)
+    : none(setWindow(s, { ...w, content: { ...w.content, scroll } }));
+}
+
+/**
+ * The Base commands its keys run (`j`/`k`, then `L`/`H` on a table or
+ * `l`/`h` on a board), so a notch works whatever the mode is.
+ */
+function wheelBase(
+  s: AppState,
+  dx: number,
+  dy: number,
+  now: number,
+  reg: Registries,
+): Result {
+  if (dy !== 0)
+    return Array.from({ length: WHEEL_LINES }).reduce<Result>(
+      (r) =>
+        chain(r, (st) =>
+          runCommand(st, dy > 0 ? "base.down" : "base.up", now, reg),
+        ),
+      none(s),
+    );
+  if (dx === 0) return none(s);
+  const board = baseViewModel(s, s.windows.active, reg)?.board !== undefined;
+  const id = board
+    ? dx > 0
+      ? "base.right"
+      : "base.left"
+    : dx > 0
+      ? "base.moveRight"
+      : "base.moveLeft";
+  return runCommand(s, id, now, reg);
+}
+
+/** The open list or calendar under the wheel. */
+function wheelOverlay(
+  s: AppState,
+  dy: number,
+  now: number,
+  reg: Registries,
+): Result {
+  const key = dy > 0 ? "<Down>" : "<Up>";
+  switch (s.overlay.kind) {
+    case "picker":
+    case "palette":
+    case "help":
+      return feedKeys(none(s), repeat(key, WHEEL_LINES), now, reg);
+    case "completion": {
+      const { items, selected } = s.overlay.completion;
+      const room = dy > 0 ? items.length - 1 - selected : selected;
+      const steps = Math.max(0, Math.min(WHEEL_LINES, room));
+      return feedKeys(none(s), repeat(key, steps), now, reg);
+    }
+    case "calendar":
+      return feedKeys(none(s), [dy > 0 ? "j" : "k"], now, reg);
+    default:
+      return none(s);
+  }
+}
+
+/**
+ * Run `run` with keyboard focus on `target` and no pending keys, then put
+ * the previous focus and pending keys back.
+ */
+function withFocus(
+  s: AppState,
+  target: MouseTarget,
+  run: (s: AppState) => Result,
+): Result {
+  const r = run({ ...focusTarget(s, target), vim: { ...s.vim, pending: [] } });
+  const st = r.state;
+  return {
+    ...r,
+    state: {
+      ...setPanelFocus(
+        { ...st, windows: { ...st.windows, active: s.windows.active } },
+        s.panels.explorer.focused,
+        s.panels.side.focused,
+      ),
+      vim: { ...st.vim, pending: s.vim.pending },
+    },
+  };
 }
 
 /** A target naming a window that was closed since the frame was painted. */
