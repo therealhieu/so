@@ -14,6 +14,16 @@ import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
 import {
+  onGitDetected,
+  onGitDiffTimer,
+  onGitIndexRead,
+  onGitRefreshTimer,
+  onGitStatus,
+  onToolExited,
+  requestRefresh,
+  syncGitFiles,
+} from "./git";
+import {
   onIndexBatch,
   onIndexFailed,
   onIndexReady,
@@ -48,7 +58,7 @@ import {
   followShownNote,
   onMentionResults,
 } from "./side-panel";
-import type { Action, AppState, Effect, Result } from "./types";
+import type { Action, AppState, BufferId, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
 import { onZoomFill } from "./zoom";
@@ -191,12 +201,17 @@ export function createUpdate(reg: Registries): Update {
       case "frontmatterPatched":
         return onFrontmatterPatched(state, action);
       case "gitDetected":
+        return onGitDetected(state, action);
       case "gitStatus":
+        return onGitStatus(state, action);
       case "gitIndexRead":
-      case "gitStaged":
+        return onGitIndexRead(state, action);
       case "toolExited":
-      case "gitBlamed":
+        return onToolExited(state, action);
       case "gitDirChanged":
+        return requestRefresh(state);
+      case "gitStaged":
+      case "gitBlamed":
         return none(state);
     }
     const unhandled: never = action;
@@ -204,27 +219,66 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncEmbeds(
+      const r = syncGitFiles(
         state,
-        followShownNote(state, syncEditorKinds(step(state, action), reg)),
-        reg,
+        syncEmbeds(
+          state,
+          followShownNote(state, syncEditorKinds(step(state, action), reg)),
+          reg,
+        ),
       );
-      return action.type !== "stateLoaded" && sessionChanged(state, r.state)
-        ? {
-            state: r.state,
-            effects: [
-              ...r.effects,
-              { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
-            ],
-          }
-        : r;
+      const withSession =
+        action.type !== "stateLoaded" && sessionChanged(state, r.state)
+          ? {
+              state: r.state,
+              effects: [
+                ...r.effects,
+                {
+                  kind: "startTimer" as const,
+                  id: "saveState" as const,
+                  ms: SAVE_STATE_MS,
+                },
+              ],
+            }
+          : r;
+      return withGitDiffTimers(state, withSession);
     } catch (e) {
       return { state: notifyError(state, e), effects: [] };
     }
   };
 }
 
-/** A timer fired: which-key, grep, the session save, or a buffer or toast timer. */
+/** Quiet time after the last edit before a buffer is diffed against the index. */
+const GIT_DIFF_MS = 100;
+
+/**
+ * Every edit restarts its buffer's diff timer, wherever it came from (keys,
+ * buffer edits, reloads), so the diff runs once per quiet period. A buffer
+ * that just appeared is diffed when its index read answers.
+ */
+function withGitDiffTimers(prev: AppState, r: Result): Result {
+  const files = r.state.git.files;
+  if (r.state.git.repo === null || prev.buffers === r.state.buffers) return r;
+  const timers: Effect[] = [];
+  for (const b of Object.values(r.state.buffers)) {
+    const before = prev.buffers[b.id];
+    if (
+      before !== undefined &&
+      before.text.version !== b.text.version &&
+      files[b.path] !== undefined
+    )
+      timers.push({
+        kind: "startTimer",
+        id: `gitDiff:${b.id}`,
+        ms: GIT_DIFF_MS,
+      });
+  }
+  return timers.length === 0
+    ? r
+    : { state: r.state, effects: [...r.effects, ...timers] };
+}
+
+/** A timer fired: which-key, grep, the session save, git, or a buffer or toast timer. */
 function onTimerAction(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
@@ -237,6 +291,9 @@ function onTimerAction(
       state: s,
       effects: [{ kind: "saveState", state: snapshotSession(s) }],
     };
+  if (a.id === "gitRefresh") return onGitRefreshTimer(s);
+  if (a.id.startsWith("gitDiff:"))
+    return onGitDiffTimer(s, Number(a.id.slice("gitDiff:".length)) as BufferId);
   return onTimer(s, a);
 }
 

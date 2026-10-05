@@ -6,6 +6,7 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
+import { requestRefresh } from "./git";
 import { summarizeSaved } from "./index";
 import { chain, message, none } from "./result";
 import type {
@@ -156,14 +157,17 @@ export function onSaved(
   // follows the buffer. Without autosave, a pending `:q` or `:bd` writes now.
   const at = writing?.at ?? 0;
   const pending = s.terminal.quit !== undefined || b.closing === true;
-  if (dirty)
-    return chain(r, (st) =>
-      pending && !st.config.autosave.enabled
-        ? writeBuffer(st, b.id, at)
-        : scheduleAutosave(st, b.id, at),
-    );
-  const closed = b.closing ? chain(r, (st) => removeBuffer(st, b.id)) : r;
-  return chain(closed, (st) => advanceQuit(st, b.id));
+  const written = dirty
+    ? chain(r, (st) =>
+        pending && !st.config.autosave.enabled
+          ? writeBuffer(st, b.id, at)
+          : scheduleAutosave(st, b.id, at),
+      )
+    : chain(b.closing ? chain(r, (st) => removeBuffer(st, b.id)) : r, (st) =>
+        advanceQuit(st, b.id),
+      );
+  // A write changes the work tree, which the watcher does not report for so's own writes.
+  return chain(written, requestRefresh);
 }
 
 /** A saved buffer no longer holds up `:q`; the last one exits. */
