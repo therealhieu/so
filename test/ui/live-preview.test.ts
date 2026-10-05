@@ -475,7 +475,7 @@ test("without graphics the zoom float names the image", async () => {
   m.keys("2j<leader>z");
   expect(m.store.get().overlay.kind).toBe("zoom");
   const frame = await m.frame();
-  expect(frame).toContain("wheel +/- zoom · 0 fit · hjkl pan · q close");
+  expect(frame).toContain("wheel +/- zoom · 0 fit · drag hjkl pan · q close");
   expect(
     frame.split("\n").filter((l) => l.includes("[image: diagram.png]")).length,
   ).toBe(1);
@@ -584,4 +584,25 @@ test("a diagram the rasterizer cannot draw shows its text drawing in the zoom fl
   await m.frame();
   await Bun.sleep(0);
   expect(await m.frame()).toContain("│ Capture ├");
+});
+
+test("dragging inside the zoom float pans the zoomed image", async () => {
+  m = await mountImageNote({ capabilities: KITTY });
+  m.keys("<leader>m<leader>m2j<leader>z++++");
+  await m.frame();
+  await Bun.sleep(0);
+  const centre = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "zoom" && o.zoom.kind === "image"
+      ? { cx: o.zoom.cx, cy: o.zoom.cy }
+      : undefined;
+  };
+  expect(centre()).toEqual({ cx: 0.5, cy: 0.5 });
+  // Content is 88 columns wide at 2×: a 22-column drag left moves the
+  // view an eighth of the image right; the press on the image does not close it.
+  await m.mouse.drag(50, 20, 28, 20);
+  await m.frame();
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  expect(centre()?.cx).toBeCloseTo(0.625);
+  expect(centre()?.cy).toBeCloseTo(0.5);
 });

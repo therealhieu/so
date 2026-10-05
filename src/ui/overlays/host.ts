@@ -71,6 +71,7 @@ export function wrap(text: string, width: number): string[] {
  */
 type OverlayView = View & {
   itemAt?(x: number, y: number): MouseTarget | undefined;
+  dragAt?(x: number, y: number): MouseTarget | undefined;
 };
 
 /**
@@ -107,6 +108,16 @@ export class OverlayHost extends Renderable {
       if (t !== undefined) return t;
     }
     return this.open === "completion" ? undefined : { kind: "outside" };
+  }
+
+  /** What a drag that started in the open overlay is over, anywhere on screen. */
+  dragAt(x: number, y: number): MouseTarget | undefined {
+    if (this.open === "none") return undefined;
+    for (const v of this.views) {
+      const t = v.visible ? v.dragAt?.(x, y) : undefined;
+      if (t !== undefined) return t;
+    }
+    return undefined;
   }
 
   cursor(): Cursor | undefined {

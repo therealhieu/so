@@ -32,7 +32,7 @@ import type {
   WindowSpot,
 } from "./types";
 import type { Registries } from "./update";
-import { showZoom, zoomPans, zoomTargetAt } from "./zoom";
+import { dragZoom, grabZoom, showZoom, zoomPans, zoomTargetAt } from "./zoom";
 
 const LINK_FOLLOW = "link.follow";
 /** Lines, rows, or items one vertical wheel notch moves. */
@@ -41,7 +41,8 @@ const WHEEL_LINES = 3;
 /**
  * One mouse gesture, run as its keyboard equivalent: a press focuses what it
  * is over and then acts on it, a drag extends a charwise selection from the
- * press, and the wheel scrolls what it is over.
+ * press (or, in the zoom float, pans it), and the wheel scrolls what it is
+ * over.
  */
 export function onMouse(
   state: AppState,
@@ -58,6 +59,7 @@ export function onMouse(
       return press(s, e, a.now, reg);
     case "drag": {
       const t = e.target;
+      if (t.kind === "zoomPoint") return dragZoom(s, t);
       return t.kind === "window" &&
         t.spot.kind === "text" &&
         t.window === s.windows.active
@@ -107,7 +109,10 @@ function overlayGate(
 }
 
 const onOverlay = (t: MouseTarget): boolean =>
-  t.kind === "overlayItem" || t.kind === "calendarDay" || t.kind === "overlay";
+  t.kind === "overlayItem" ||
+  t.kind === "calendarDay" ||
+  t.kind === "overlay" ||
+  t.kind === "zoomPoint";
 
 const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
 
@@ -148,6 +153,7 @@ function wheel(
     case "overlayItem":
     case "overlay":
     case "calendarDay":
+    case "zoomPoint":
       if (s.overlay.kind === "zoom") return wheelZoom(s, dx, dy, now, reg);
       return dy === 0 ? none(s) : wheelOverlay(s, dy, now, reg);
     default:
@@ -506,6 +512,8 @@ function pressChrome(
     }
     case "overlayItem":
       return pressItem(r, t.index, now, reg);
+    case "zoomPoint":
+      return chain(r, (st) => grabZoom(st, t));
     case "calendarDay":
       return s.overlay.kind === "calendar"
         ? feedKeys(

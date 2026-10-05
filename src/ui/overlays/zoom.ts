@@ -14,8 +14,9 @@ type Box = { x: number; y: number; w: number; h: number };
 type ImageZoom = Extract<ZoomState, { kind: "image" }>;
 type DiagramZoom = Extract<ZoomState, { kind: "diagram" }>;
 
-const IMAGE_FOOTER = "wheel +/- zoom · 0 fit · hjkl pan · q close";
-const DIAGRAM_FOOTER = "+/- spacing · 0 reset · wheel hjkl scroll · q close";
+const IMAGE_FOOTER = "wheel +/- zoom · 0 fit · drag hjkl pan · q close";
+const DIAGRAM_FOOTER =
+  "+/- spacing · 0 reset · drag wheel hjkl scroll · q close";
 
 const zoomOf = (s: AppState): ZoomState | undefined =>
   s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
@@ -53,14 +54,36 @@ export class ZoomOverlay extends Renderable {
     return centered(s, w, h);
   }
 
-  /** `overlay` inside the float, `undefined` outside it. */
+  /**
+   * Inside the float's content the point as fractions of it, so a press can
+   * start a pan; `overlay` on its border; `undefined` outside it.
+   */
   itemAt(x: number, y: number): MouseTarget | undefined {
     const s = this.s;
     if (s === undefined || zoomOf(s) === undefined) return undefined;
     const b = this.box(s);
-    return x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h
-      ? { kind: "overlay" }
-      : undefined;
+    if (x < b.x || x >= b.x + b.w || y < b.y || y >= b.y + b.h)
+      return undefined;
+    const inside = x > b.x && x < b.x + b.w - 1 && y > b.y && y < b.y + b.h - 1;
+    return inside ? this.pointAt(x, y) : { kind: "overlay" };
+  }
+
+  /** A drag from the float: the point as fractions of its content, past its edges too. */
+  dragAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    return s === undefined || zoomOf(s) === undefined
+      ? undefined
+      : this.pointAt(x, y);
+  }
+
+  private pointAt(x: number, y: number): MouseTarget {
+    const s = this.s;
+    const b = s === undefined ? { x: 0, y: 0, w: 3, h: 3 } : this.box(s);
+    return {
+      kind: "zoomPoint",
+      fx: (x - b.x - 1 + 0.5) / Math.max(1, b.w - 2),
+      fy: (y - b.y - 1 + 0.5) / Math.max(1, b.h - 2),
+    };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {

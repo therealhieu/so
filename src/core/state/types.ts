@@ -226,6 +226,8 @@ export type ZoomState =
       cx: number;
       cy: number;
       fill: { x: number; y: number };
+      /** Where the last press in the float was, and the view's centre then. */
+      grab?: ZoomGrab;
       /** A diagram drawn as an image: its SVG, and its text drawing for when that cannot be drawn. */
       diagram?: { svg: MermaidSvg; lines: string[] };
     }
@@ -236,7 +238,12 @@ export type ZoomState =
       lines: string[];
       row: number;
       col: number;
+      /** Where the last press in the float was, and the first row and column then. */
+      grab?: ZoomGrab;
     };
+
+/** A press point in the zoom float and the view's position (`cx`/`cy` or `col`/`row`) at that press. */
+export type ZoomGrab = { fx: number; fy: number; x: number; y: number };
 
 /** One picker row; `matches` are the label's matched character positions. */
 export type PickerItem = {
@@ -354,6 +361,8 @@ export type MouseTarget =
   | { kind: "bufferTab"; bufferId: BufferId }
   | { kind: "overlayItem"; index: number }
   | { kind: "calendarDay"; date: LocalDate }
+  /** A point in the zoom float, as fractions of its inner area (outside it during a drag). */
+  | { kind: "zoomPoint"; fx: number; fy: number }
   | { kind: "overlay" }
   | { kind: "outside" }
   | { kind: "inert" };

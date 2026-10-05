@@ -40,8 +40,9 @@ const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   right: { dx: 1, dy: 0 },
 };
 
-const isWindowText = (t: MouseTarget) =>
-  t.kind === "window" && t.spot.kind === "text";
+/** Targets a drag can start on: window text (a selection) and the zoom float (a pan). */
+const draggable = (t: MouseTarget) =>
+  (t.kind === "window" && t.spot.kind === "text") || t.kind === "zoomPoint";
 
 /**
  * Turn OpenTUI mouse events into core mouse actions: drop everything while
@@ -126,7 +127,7 @@ export function createMouseRouter(o: {
         }
         case "drag": {
           if (e.button !== LEFT || origin === undefined) return;
-          if (!isWindowText(origin.target)) return;
+          if (!draggable(origin.target)) return;
           const target = origin.source.dragAt?.(e.x, e.y, origin.target);
           if (target === undefined) return;
           const key = JSON.stringify(target);

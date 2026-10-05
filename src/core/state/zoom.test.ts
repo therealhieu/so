@@ -7,7 +7,14 @@ import {
 import { splitKeys } from "../kernel/vim/keys";
 import type { Action, AppState, ZoomState } from "./types";
 import { createUpdate } from "./update";
-import { ZOOM_MAX, zoomPans, zoomSize, zoomTargetAt } from "./zoom";
+import {
+  dragZoom,
+  grabZoom,
+  ZOOM_MAX,
+  zoomPans,
+  zoomSize,
+  zoomTargetAt,
+} from "./zoom";
 
 const reg = testRegistries();
 const update = createUpdate(reg);
@@ -188,4 +195,37 @@ test("a measured fill stops panning on an axis the image does not outgrow", () =
     update(s, { type: "zoomFill", path: "b.png", fill: { x: 1, y: 1 } }).state,
   ).toBe(s);
   expect(fill(s, 1, 0.5)).toBe(s);
+});
+
+test("a drag from a press in the float moves the view with the pointer", () => {
+  const open = keys(note(), "2j<leader>z++++");
+  let s = update(open, {
+    type: "zoomFill",
+    path: "a.png",
+    fill: { x: 1, y: 0.5 },
+  }).state;
+  // At 2× the float spans half the image's width: dragging a quarter of the
+  // float to the left moves the centre an eighth of the image to the right.
+  s = grabZoom(s, { fx: 0.5, fy: 0.5 }).state;
+  s = dragZoom(s, { fx: 0.25, fy: 0.9 }).state;
+  expect(zoomOf(s)).toMatchObject({ cx: 0.625, cy: 0.5 });
+  // Far past the edge, the view stops at the image's edge.
+  s = dragZoom(s, { fx: -5, fy: 0.5 }).state;
+  expect(zoomOf(s)).toMatchObject({ cx: 0.75 });
+  // Without a press there is nothing to drag from.
+  expect(dragZoom(open, { fx: 0, fy: 0 }).state).toBe(open);
+});
+
+test("a drag scrolls a text diagram by the cells it covers", () => {
+  const flow = Array.from({ length: 14 }, (_, i) => `Step${i}`).join(" --> ");
+  let s = update(imagesOff(freshDefaults()), {
+    type: "fileLoaded",
+    path: "w.md",
+    file: textFile(`\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`),
+  }).state;
+  s = keys(s, "j<leader>z");
+  const { w } = zoomSize(s.terminal);
+  s = grabZoom(s, { fx: 0.5, fy: 0.5 }).state;
+  s = dragZoom(s, { fx: 0.5 - 10 / (w - 2), fy: 0.5 }).state;
+  expect(zoomOf(s)).toMatchObject({ col: 10, row: 0 });
 });

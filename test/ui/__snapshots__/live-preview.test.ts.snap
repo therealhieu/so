@@ -306,6 +306,6 @@ exports[`with images off the zoom float draws a diagram too wide for the note as
     │                                                                      │    
     │                                                                      │    
     │                                                                      │    
-    ╰─ +/- spacing · 0 reset · wheel hjkl scroll · q close ────────────────╯    
+    ╰─ +/- spacing · 0 reset · drag wheel hjkl scroll · q close ───────────╯    
  NORMAL  │ notes/flow.md                                                    4:1"
 `;

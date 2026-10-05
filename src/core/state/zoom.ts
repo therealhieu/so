@@ -156,6 +156,36 @@ function imageKey(z: ImageZoom, key: Key): ZoomState {
   }
 }
 
+/** A press at `p` in the float: later drags move the view from here. */
+export function grabZoom(s: AppState, p: { fx: number; fy: number }): Result {
+  const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
+  if (z === undefined) return none(s);
+  const at = z.kind === "image" ? { x: z.cx, y: z.cy } : { x: z.col, y: z.row };
+  return none(showZoom(s, { ...z, grab: { fx: p.fx, fy: p.fy, ...at } }));
+}
+
+/**
+ * A drag to `p` from the last press: the content follows the pointer, so a
+ * drag across the whole float moves the view by one float's width or height.
+ */
+export function dragZoom(s: AppState, p: { fx: number; fy: number }): Result {
+  const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
+  const g = z?.grab;
+  if (z === undefined || g === undefined) return none(s);
+  const dx = p.fx - g.fx;
+  const dy = p.fy - g.fy;
+  if (z.kind === "image") {
+    // The float spans 1 / (level × fill) of the image along each axis.
+    const cx = g.x - dx / (z.level * z.fill.x);
+    const cy = g.y - dy / (z.level * z.fill.y);
+    return none(showZoom(s, centred(z, z.level, cx, cy)));
+  }
+  const { w, h } = zoomSize(s.terminal);
+  const col = g.x - Math.round(dx * (w - 2));
+  const row = g.y - Math.round(dy * (h - 2));
+  return none(showZoom(s, scrolled(z, s.terminal, row, col)));
+}
+
 /** The UI measured how much of the float the zoomed image covers at fit. */
 export function onZoomFill(
   s: AppState,
