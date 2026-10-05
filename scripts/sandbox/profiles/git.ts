@@ -15,7 +15,7 @@ export const gitRepo: Profile = {
       title: "Change column and statusline",
       steps: ["Open tour.md and press <leader>m until the source view"],
       expect: [
-        "The change column marks line 9 changed, a deletion where the %% comment was, the added task under Lists and tasks, and the edited table row",
+        "The change column marks the Text can be line changed, a deletion where the %% comment was, the added task under Lists and tasks, and the edited table row",
         "Each kind has its own sign; line numbers keep their width",
         "The statusline shows main and the file's counts",
       ],
@@ -47,12 +47,12 @@ export const gitRepo: Profile = {
     {
       title: "Stage one of several hunks",
       steps: [
-        "On the line 9 hunk, press <leader>ghs",
+        "On the Text can be hunk, press <leader>ghs",
         `In another terminal: git -C ${REPO} diff --cached tour.md, then git -C ${REPO} diff tour.md`,
       ],
       expect: [
         "Toast: staged hunk 1/4; that hunk's sign disappears",
-        "diff --cached shows only line 9; diff shows the other three hunks",
+        "diff --cached shows only that line; diff shows the other three hunks",
       ],
     },
     {
