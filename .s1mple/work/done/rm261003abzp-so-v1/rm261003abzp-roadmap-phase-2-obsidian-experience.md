@@ -1,11 +1,11 @@
 # RM261003ABZP: Obsidian experience — Roadmap Phase
 
-- **Phase:** RM261003ABZP-PH2@R5
+- **Phase:** RM261003ABZP-PH2@R6
 - **Approval status:** Approved
 - **Index:** `rm261003abzp-roadmap-index.md`
 - **History:** `rm261003abzp-roadmap-phase-2-obsidian-experience-revisions.md`
 
-Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. DI3 is delivered by W261003S6BQ in PR #6; DI4 has no work, PR, or verification result yet.
+Phase Design separates inherited decisions from phase-specific refinements. Progress records describe delivery, not definition changes. DI3 is delivered by W261003S6BQ in PR #6 and DI4 by W26100423LX in PR #8, and PH2 is complete.
 
 ## Phase Definition
 
@@ -13,7 +13,7 @@ Phase Design separates inherited decisions from phase-specific refinements. Prog
   - Notes render in Obsidian-style live preview (reveal at the cursor, rich blocks, folds, embeds, and inline images), with source and reading modes.
   - `:Preview` mirrors the note read-only in the browser.
   - `:Today` and template insertion work in one or two keystrokes.
-  - `.base` files open as editable table and Kanban views and embed in notes.
+  - `.base` files open as editable table views and embed in notes. Kanban views open as a table with a notice until their Obsidian `type` is verified.
 
   Live preview is one decoration provider on the PH1 kernel, and Bases is one registered editor kind, so code files keep the PH1 source view unchanged.
 - **Rationale:** Both DIs build only on PH1's Doc, index, registry, pickers, and write path. They do not depend on each other, except that Base embeds use DI3's block-renderer registry. That makes two parallel, independently valuable PRs:
@@ -75,7 +75,7 @@ G1 is defined in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Cross-Wo
 ## Delivery Flow
 
 ```text
-RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZP-PH1@R3 exit)
+RM261003ABZP-PH2@R6 — Obsidian experience            (requires the RM261003ABZP-PH1@R3 exit)
 ├── RM261003ABZP-DI3@R4 — Live preview + browser preview      ◄─ G2 (DI2)
 │     Doc → livePreview provider (reveal, folds, widgets) → layoutText → EditorView + widgetPainters
 │     Doc → renderHtml → Bun.serve /render + SSE doc/stopped → read-only page
@@ -139,7 +139,7 @@ RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZ
   | `src/ui/overlays/calendar.ts` | Add (DI4) | `monthGrid` per UI design; marks from 42 `dailyPath` lookups in the NoteIndex | RM261003ABZP-UDES8@R1 |
   | `src/core/features/bases/{parser,evaluator,expression,yaml-patcher,types,views,table,kanban,embed-renderer,file-type}.ts` | Add (DI4). Port, view models, and the `base` file type | `KANBAN_TYPE` in `types.ts`, verified against an Obsidian 1.14+ fixture; `views.ts` registry (Code shapes below); `file-type.ts` registers `.base` with editor kind `base` | RM261003ABZP-DES12@R2, RM261003ABZP-DES17@R2 |
   | `src/ui/editors/{base-view,base-toolbar,base-table,base-kanban}.ts`, `src/ui/widgets/base.ts` | Add (DI4) | `editorViews.base`; keymap mode `base`; write toasts show the frontmatter diff; the `base` widget painter for embeds (after G4) | RM261003ABZP-DES10@R2, RM261003ABZP-DES12@R2, RM261003ABZP-UDES9@R1 |
-  | `test/fixtures/{tour.md,images/,bases/,templates/,generate.ts}`, `test/bench/{live-keystroke,source-keystroke,source-open,scroll}.bench.ts`, `scripts/bench-gate.ts` | Add / Modify | `tour.md` holds every element; Bases fixtures are ported from Alfred, plus an Obsidian-saved Kanban `.base`; `generate.ts` generates the 5,000-line note and TypeScript fixtures; the bench gate `TARGETS` hold the RM261003ABZP-REQ9@R3 targets | RM261003ABZP-V7@R2, RM261003ABZP-V10@R1, RM261003ABZP-V12@R3, RM261003ABZP-V16@R2 |
+  | `test/fixtures/{tour.md,images/,bases/,templates/,generate.ts}`, `test/bench/{live-keystroke,source-keystroke,source-open,scroll}.bench.ts`, `scripts/bench-gate.ts` | Add / Modify | `tour.md` holds every element; Bases fixtures are ported from Alfred, plus an Obsidian-saved Kanban `.base`; `generate.ts` generates the 5,000-line note and TypeScript fixtures; the bench gate `TARGETS` hold the RM261003ABZP-REQ9@R3 targets | RM261003ABZP-V7@R2, RM261003ABZP-V10@R2, RM261003ABZP-V12@R3, RM261003ABZP-V16@R2 |
 
 - **Runtime and failure flow**
   - **Design:** RM261003ABZP-DES9@R3, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R2; Design, Runtime Flows (Keystroke to frame, Open a file, Preview).
@@ -173,7 +173,7 @@ RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZ
     - RM261003ABZP-V7@R2 - layout goldens.
     - RM261003ABZP-V8@R1 - image tiers.
     - RM261003ABZP-V9@R1 - second `:Today` opens without change.
-    - RM261003ABZP-V10@R1 - YAML preserved, moves disabled, `cards` fallback.
+    - RM261003ABZP-V10@R2 - YAML preserved, moves disabled, `cards` fallback.
     - RM261003ABZP-V11@R3 - Host, containment, latency, and `stopped`.
     - RM261003ABZP-V12@R3 - keystroke p95 < 24 ms in live preview and < 16 ms in a 5,000-line TypeScript file.
 
@@ -201,7 +201,7 @@ RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZ
   - **Verification:**
     - RM261003ABZP-V7@R2 - reveal and fold rows.
     - RM261003ABZP-V16@R2 - block renderer registration.
-    - RM261003ABZP-V10@R1 - Base edits.
+    - RM261003ABZP-V10@R2 - Base edits.
     - RM261003ABZP-UV3@R2 - fold and embed rows.
 
 - **Code shapes and wiring**
@@ -289,16 +289,16 @@ RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZ
 
     - **Callers and wiring:** base windows (`editorViews.base`) and the `base` embed renderer call `buildView`. `ui/editors/base-*` paint `TableModel` and `KanbanModel`.
     - **Invariants:** the `KANBAN_TYPE` constant is the only place the Obsidian type string lives. A fallback view never writes.
-    - **Verification:** RM261003ABZP-V10@R1 - `cards` opens as a table with a notice; RM261003ABZP-UV8@R1 - a fallback view produces no write.
+    - **Verification:** RM261003ABZP-V10@R2 - `cards` opens as a table with a notice; RM261003ABZP-UV8@R1 - a fallback view produces no write.
 
 - **Migration and compatibility**
   - **Design:** RM261003ABZP-DES12@R2, RM261003ABZP-DES15@R4; Design, Cross-cutting and Evolution (Obsidian file compatibility, rollout).
   - **Phase refinement:**
     - There is no data migration. The PH1 state file (`"version": 1`) is unchanged, and fold state is not persisted (RM261003ABZP-UDES4@R1).
     - Bases writes patch only the edited frontmatter keys and preserve comments and key order. `.base` files themselves are never written in v1.
-    - Kanban ships only after `KANBAN_TYPE` matches an Obsidian 1.14+ saved file.
+    - Kanban ships only after `KANBAN_TYPE` matches an Obsidian 1.14.3 or later saved file; until then a Kanban view opens as a table with a notice.
   - **Transition:** PH1 exit → DI3 merged → DI4 merged (after G4) → PH2 exit with the release dry run → `v1.0.0` when the user asks. Rollback: revert the PR before release. After release, reinstall `v0.1.0` or a later binary. Notes stay valid Obsidian files throughout.
-  - **Verification:** RM261003ABZP-V10@R1 - YAML preservation and the Obsidian Kanban fixture. RM261003ABZP-V14@R2 - dry run re-run at the PH2 exit.
+  - **Verification:** RM261003ABZP-V10@R2 - YAML preservation and the Kanban table fallback. RM261003ABZP-V14@R2 - dry run re-run at the PH2 exit.
 
 - **UI realization:**
   - **DI3:**
@@ -465,10 +465,10 @@ RM261003ABZP-PH2@R5 — Obsidian experience            (requires the RM261003ABZ
   - **Cross-work gates:** Consumer of G3 and G4 (this phase, Cross-Work Dependency Gates).
   - **Success:**
     - RM261003ABZP-S6@R1 - daily notes and templates match Obsidian output.
-    - RM261003ABZP-S7@R1 - Bases evaluate and edit `.base` files.
+    - RM261003ABZP-S7@R2 - Bases evaluate and edit `.base` files.
   - **Verification:**
     - RM261003ABZP-V9@R1 - date formatting equals Moment.js, template expansion, daily paths, and a second `:Today` leaves the file unchanged.
-    - RM261003ABZP-V10@R1 - Alfred fixtures and the Obsidian Kanban file; cell edit; card move; `cards` fallback; formula grouping.
+    - RM261003ABZP-V10@R2 - Alfred fixtures; cell edit; card move on a test board; Kanban table fallback; `cards` fallback; formula grouping.
     - All definitions are owned by `rm261003abzp-design.md`.
   - **UI success and verification:**
     - RM261003ABZP-US6@R1 via RM261003ABZP-UV7@R1.
@@ -495,10 +495,10 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - **Definition:** `rm261003abzp-design.md`, Success and Verification
   - **Verification:**
     - **RM261003ABZP-V9@R1 — Date formatting and template expansion** — **Definition:** `rm261003abzp-design.md`
-- **RM261003ABZP-S7@R1 — Bases views evaluate and edit Obsidian `.base` files**
+- **RM261003ABZP-S7@R2 — Bases views evaluate and edit Obsidian `.base` files**
   - **Definition:** `rm261003abzp-design.md`, Success and Verification
   - **Verification:**
-    - **RM261003ABZP-V10@R1 — Bases evaluation, edit, and compatibility** — **Definition:** `rm261003abzp-design.md`
+    - **RM261003ABZP-V10@R2 — Bases evaluation, edit, and compatibility** — **Definition:** `rm261003abzp-design.md`
 - **RM261003ABZP-S8@R1 — Preview is live, read-only, and local-only**
   - **Definition:** `rm261003abzp-design.md`, Success and Verification
   - **Verification:**
@@ -538,7 +538,7 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
 - **Exit criteria:**
   - RM261003ABZP-S5@R1 - every RM261003ABZP-REQ5@R2 element renders, and reveal follows the cursor; verified by RM261003ABZP-V7@R2, RM261003ABZP-V8@R1
   - RM261003ABZP-S6@R1 - Moment-equal dates, correct expansion, no overwritten daily note; verified by RM261003ABZP-V9@R1
-  - RM261003ABZP-S7@R1 - correct rows, comment-preserving writes, safe fallbacks, verified Kanban type; verified by RM261003ABZP-V10@R1
+  - RM261003ABZP-S7@R2 - correct rows, comment-preserving writes, safe fallbacks including an unverified Kanban type; verified by RM261003ABZP-V10@R2
   - RM261003ABZP-S8@R1 - < 300 ms updates, 403/404 safety, `stopped` before close; verified by RM261003ABZP-V11@R3
   - RM261003ABZP-S9@R1 - all REQ9 targets, for notes in live preview and code in source view, gated at 2× in CI; verified by RM261003ABZP-V12@R3, RM261003ABZP-V13@R2
   - RM261003ABZP-S10@R2 - check < 30 s and CI < 3 min at full scope; the release dry-run binaries start; verified by RM261003ABZP-V14@R2
@@ -548,7 +548,6 @@ All records are reused. System records are owned by `rm261003abzp-design.md`, Su
   - Passing CI results for every listed V and UV record on merged DI3 and DI4.
   - RM261003ABZP-V12@R3 and RM261003ABZP-V13@R2 readings on the reference machine.
   - The RM261003ABZP-UV9@R2 manual checklist.
-  - The Obsidian 1.14+ Kanban fixture provenance.
   - A manual release dry run on `main` with the `dist` artifact (four binaries, `SHA256SUMS`), green smoke jobs, a skipped publish job, and no tag or GitHub Release.
 - **Cross-work integration verification:** RM261003ABZP-DI4@R2 owns integration because it merges last. Its CI on top of merged DI3 must re-pass RM261003ABZP-V7@R2, RM261003ABZP-V12@R3, and RM261003ABZP-V16@R2 with the `base` renderer registered, and RM261003ABZP-UV3@R2 with a Base embed in `tour.md`.
 
@@ -560,7 +559,7 @@ Completed child works do not establish phase completion without the required int
 |---|---|---|---|---|
 | RM261003ABZP-REQ5@R2 - live preview | RM261003ABZP-DES6@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES17@R2 | RM261003ABZP-DI3@R4 | RM261003ABZP-S5@R1 | RM261003ABZP-V7@R2, RM261003ABZP-V8@R1 |
 | RM261003ABZP-REQ6@R2 - daily notes, templates | RM261003ABZP-DES11@R1 | RM261003ABZP-DI4@R2 | RM261003ABZP-S6@R1 | RM261003ABZP-V9@R1 |
-| RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R2 | RM261003ABZP-DI4@R2 | RM261003ABZP-S7@R1 | RM261003ABZP-V10@R1 |
+| RM261003ABZP-REQ7@R2 - Bases | RM261003ABZP-DES12@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES17@R2 | RM261003ABZP-DI4@R2 | RM261003ABZP-S7@R2 | RM261003ABZP-V10@R2 |
 | RM261003ABZP-REQ8@R2 - browser preview | RM261003ABZP-DES13@R3, RM261003ABZP-DES6@R2 | RM261003ABZP-DI3@R4 | RM261003ABZP-S8@R1 | RM261003ABZP-V11@R3 |
 | RM261003ABZP-REQ9@R3 - performance (keystroke, open, scroll) | RM261003ABZP-DES16@R1 | RM261003ABZP-DI3@R4 | RM261003ABZP-S9@R1 | RM261003ABZP-V12@R3, RM261003ABZP-V13@R2 |
 | RM261003ABZP-REQ10@R4 - release re-check | RM261003ABZP-DES15@R4 | RM261003ABZP-DI3@R4, RM261003ABZP-DI4@R2 (keep budgets) | RM261003ABZP-S10@R2 | RM261003ABZP-V14@R2 |
@@ -581,27 +580,35 @@ Completed child works do not establish phase completion without the required int
 
 ## Progress
 
-- **Phase delivery status:** In progress
-- **Phase evidence:** DI3 merged to `main` as `e228bb5` (PR #6) with CI green. DI2 merged the G2 and G3 outputs (`9adb285`, PR #2); with the PH1 exit recorded (phase 1 file, Progress), G2 and G3 are met, and the DI3 merge meets G4. DI4 and the PH2 exit record (Release and Exit Criteria) are pending.
+- **Phase delivery status:** Completed
+- **Phase evidence:** DI3 merged to `main` (`e228bb5`, PR #6) and DI4 merged (`6862761`, PR #8), both with CI green. The exit record below covers each item under Completion evidence required. `v1.0.0` is released only when the user asks.
+
+**PH2 exit record** (2026-10-05, `main` at `6862761`)
+
+| Required evidence | Result |
+|---|---|
+| V and UV records pass in CI on merged DI3 and DI4 | PR #6 and PR #8 merged with `check` and `test` (ubuntu-24.04, macos-15) green; PR #8 head `bbd5290`. `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md` and `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/overall-verification-report.md` accepted every group. DI4 integration re-checks (V7, V12, V16 with the `base` renderer registered; UV3 with a Base embed in `tour.md`) pass in the DI4 overall verification |
+| RM261003ABZP-V12@R3 and RM261003ABZP-V13@R2 on the reference machine (Apple M1 Max, macOS) | `bun run bench` at PR #8 head `bbd5290`, median of 5: sourceKeystrokeP95 15.10 ms (< 16), liveKeystrokeP95 22.87 ms (< 24), openFile 41.20 ms (< 80), sourceOpenFile 16.06 ms (< 50), liveScrollFrameP95 6.60 ms (< 16.7), sourceScrollFrameP95 5.26 ms (< 16.7), firstFrame 201.25 ms (< 250), indexReady 1225.31 ms (< 3000), indexingKeystrokeP95 18.96 ms (< 30) |
+| RM261003ABZP-V14@R2 timings | `bun run check` 7.5 s on the reference machine (< 30 s); PR #8 CI jobs finished within 3 min |
+| RM261003ABZP-UV9@R2 manual checklist | Passed in the DI3 overall verification (V42 re-run with every non-loopback request aborted) |
+| Manual release dry run on `main` | Run 37297315148 at `6862761`: `build` and the four smoke jobs succeeded, `publish` skipped. The `dist` artifact holds four binaries and `SHA256SUMS`, every checksum verifies, and `so-darwin-arm64 --version` prints `so 0.0.0-dev+6862761`. No tag and no GitHub Release exist |
+
+Kanban lanes are follow-up work (RM261003ABZP-S7@R2): `KANBAN_TYPE` stays `undefined` until a `.base` file saved by core Obsidian 1.14.3 or later is added as `test/fixtures/bases/obsidian-kanban.base` (`test/fixtures/bases/README.md`). The reference machine runs Obsidian 1.13.7.
 
 | DI | Delivery status | Work | PR | Evidence / blocker |
 |---|---|---|---|---|
-| RM261003ABZP-DI3@R4 | Completed | W261003S6BQ | PR #6 | Merged 2026-10-04T05:41:17Z as `e228bb5` with CI green (`check`, `test` on ubuntu-24.04 and macos-15, head `fba33fe`); `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md` (all five groups accepted; finding OVR-VER1 fixed) and `w261003s6bq-goal.md` (Completion Summary). Delivered against RM261003ABZP-PH2@R4/RM261003ABZP-DI3@R3 with the relaxed live and startup targets approved by the user on 2026-10-04, which PH2@R5/DI3@R4 record. G4 outputs merged. Open, not blocking: the V43 terminal-image evidence is byte-level, not visual; the PH2 exit reads RM261003ABZP-V12@R3 and RM261003ABZP-V13@R2 on the reference machine. Next: DI4 |
-| RM261003ABZP-DI4@R2 | Not started | Pending | Pending | G3 met: outputs merged with DI2 (`9adb285`) and the PH1 exit recorded. G4 met: DI3 merged (`e228bb5`, PR #6) with `PreviewCtx`, `MarkdownViewInput`, `livePreview`, `BlockRenderer`, and `registerBlockRenderer` in `src/core/lang/markdown/live-preview.ts`, `registerWidgetPainter` in `src/ui/widgets/registry.ts`, and embed targets as unlisted buffers in `src/core/state/embeds.ts`; W261003S6BQ V4 (RM261003ABZP-V7@R2), V5, V38, and V41 (RM261003ABZP-V16@R2) passed. Next: the DI4 discussion, which confirms the Kanban `type` value |
-
-## Unresolved Items
-
-None. DI3 confirmed the OpenTUI image API at the pinned version (RM261003ABZP-V8@R1; W261003S6BQ V43 terminal spike). The Kanban `type` value is a DI4 discussion obligation with named verification (RM261003ABZP-V10@R1). Any change from the user's pending mockup review enters through the entry condition above.
+| RM261003ABZP-DI3@R4 | Completed | W261003S6BQ | PR #6 | Merged 2026-10-04T05:41:17Z as `e228bb5` with CI green (`check`, `test` on ubuntu-24.04 and macos-15, head `fba33fe`); `.s1mple/work/done/w261003s6bq-live-and-browser-preview/reports/overall-verification-report.md` (all five groups accepted; finding OVR-VER1 fixed). G4 outputs merged. Open, not blocking: the V43 terminal-image evidence is byte-level, not visual |
+| RM261003ABZP-DI4@R2 | Completed | W26100423LX | PR #8 | Merged 2026-10-05T10:33:07Z as `6862761` with CI green (`check`, `test` on ubuntu-24.04 and macos-15, head `bbd5290`); `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/reports/overall-verification-report.md` (Passed). PR #8 also carries mouse support (W261005H4XZ) and the image and diagram zoom float. Open, not blocking: Kanban lanes wait for the Obsidian fixture (W26100423LX V30) |
 
 ## Approval
 
-- **Approved phase:** RM261003ABZP-PH2@R5
+- **Approved phase:** RM261003ABZP-PH2@R6
 - **Approved delivery items:** RM261003ABZP-DI3@R4, RM261003ABZP-DI4@R2
 - **Approved phase design:** This document's Phase Design, from Architecture and boundaries through UI realization. Pinned upstream:
   - RM261003ABZP-DES1@R2, RM261003ABZP-DES2@R2, RM261003ABZP-DES5@R2, RM261003ABZP-DES6@R2, RM261003ABZP-DES8@R2, RM261003ABZP-DES9@R3, RM261003ABZP-DES10@R2, RM261003ABZP-DES11@R1, RM261003ABZP-DES12@R2, RM261003ABZP-DES13@R3, RM261003ABZP-DES14@R2, RM261003ABZP-DES15@R4, RM261003ABZP-DES16@R1, RM261003ABZP-DES17@R2;
   - RM261003ABZP-UDES1@R2, RM261003ABZP-UDES3@R2, RM261003ABZP-UDES4@R1, RM261003ABZP-UDES6@R1, RM261003ABZP-UDES8@R1, RM261003ABZP-UDES9@R1, RM261003ABZP-UDES10@R2, RM261003ABZP-UDES11@R1.
 - **Success and verification baseline:**
-  - Design-owned: RM261003ABZP-S5@R1 … RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R1, RM261003ABZP-V11@R3, RM261003ABZP-V12@R3, RM261003ABZP-V13@R2, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1.
+  - Design-owned: RM261003ABZP-S5@R1, RM261003ABZP-S6@R1, RM261003ABZP-S7@R2, RM261003ABZP-S8@R1, RM261003ABZP-S9@R1, RM261003ABZP-S10@R2, RM261003ABZP-S11@R1; RM261003ABZP-V7@R2, RM261003ABZP-V8@R1, RM261003ABZP-V9@R1, RM261003ABZP-V10@R2, RM261003ABZP-V11@R3, RM261003ABZP-V12@R3, RM261003ABZP-V13@R2, RM261003ABZP-V14@R2, RM261003ABZP-V15@R2, RM261003ABZP-V16@R2, RM261003ABZP-V17@R1.
   - UI-design-owned: RM261003ABZP-US1@R2, RM261003ABZP-US2@R2, RM261003ABZP-US6@R1 … RM261003ABZP-US9@R1; RM261003ABZP-UV1@R2, RM261003ABZP-UV3@R2, RM261003ABZP-UV7@R1, RM261003ABZP-UV8@R1, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1.
 - **Approval evidence:**
   - R1: the user delegated all decisions on 2026-10-03 ("you self-drive and decide all … don't raise any question to me"; "prevent many DIs and phases split"). Under that delegation the agent approved this phase and its two parallel DIs with gates G2–G4, the widened layout context, unlisted embed buffers and per-buffer Base state, the preview stop order, `createExclusive`, the Bases view-type registry, and the `v1.0.0` release at phase exit.
@@ -611,3 +618,4 @@ None. DI3 confirmed the OpenTUI image API at the pinned version (RM261003ABZP-V8
   - R3: on 2026-10-04 the user decided that releases are manual (a `v*` tag pushed only on request) and that phase exits run a non-publishing release dry run. PH2@R3 changes the outcome (release-ready instead of shipping `v1.0.0`), the PH1 entry condition (no `v0.1.0` release required), the release approach, the S10 exit criterion (RM261003ABZP-S10@R2, RM261003ABZP-V14@R2), and the completion evidence. DI3@R2 and DI4@R2 are retained.
   - R4: on 2026-10-04 the user decided that the browser preview serves KaTeX and Mermaid from the binary and loads web images, and that the terminal editor downloads web images (RM261003ABZP-DES13@R3). PH2@R4 drops the "no bundled KaTeX or Mermaid" exclusion; DI3@R3 changes the `renderHtml` scope to locally served KaTeX and Mermaid, adds web images and `note.enter`, and drops the bundling exclusion. The phase design records the DI3 system-design refinements: `PreviewCtx.folds`, `resolve`, and `embed().text`; folds through `PreviewCtx`; the `line` payload; `src/core/state/markdown-commands.ts`; `note.enter` replacing the `<CR>` binding; `buffers[].embeds`, the `starting` preview state, and the new actions and effects; `src/app/preview-host.ts`; `readImage` and `fetchImage`. DI4@R2 is retained. Approved by the user on 2026-10-04.
   - R5: DI3 delivery synchronization (W261003S6BQ, PR #6), approved by the user on 2026-10-04. RM261003ABZP-REQ9@R3 relaxes the live-view and startup targets (live keystroke p95 < 24 ms, live note open < 80 ms, first frame < 250 ms, keystroke p95 while indexing < 30 ms; source-view targets unchanged). PH2@R5 cites RM261003ABZP-V12@R3 and RM261003ABZP-V13@R2 in its phase design, exit criteria, and completion evidence; DI3@R4 states the new keystroke and open targets. The phase design records the delivered DI3 refinements: the `embed?: true` tag on `read`, `fileLoaded`, and `fileRefused`; `requested` kept until its read answers; window `editor: EditorKind` (RM261003ABZP-DES17@R2); and the generated bench fixtures and split benches. DI4@R2 is retained.
+  - R6: On 2026-10-05 the user decided to close v1 with Kanban lanes moved to follow-up work. PH2@R6 changes the outcome (Kanban views open as a table until their `type` is verified), the S7 exit criterion (RM261003ABZP-S7@R2, RM261003ABZP-V10@R2), and the completion evidence (no Kanban fixture). DI3@R4 and DI4@R2 are retained. Approved by the user on 2026-10-05.

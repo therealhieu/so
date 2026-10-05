@@ -27,9 +27,9 @@ Part 3 consumes the view model, layouts, and painters for base embeds.
 - Plan index: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-index.md`
 - Plan context: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
 - System design: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
-- UI design: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (parent, `Ready for Planning`) — Surface: Bases views (line 948), Component: Toast stack (1671), Base table (1828), Kanban board (1904), Theme (1978); accepted mockup RM261003ABZP-M6@R1
+- UI design: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (parent, `Ready for Planning`) — Surface: Bases views (line 948), Component: Toast stack (1671), Base table (1828), Kanban board (1904), Theme (1978); accepted mockup RM261003ABZP-M6@R1
 - System requirements: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
-- UI requirements: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (parent) — UREQ9@R1 (line 151), UREQ11@R1 (line 184)
+- UI requirements: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (parent) — UREQ9@R1 (line 151), UREQ11@R1 (line 184)
 - Port source: Alfred at `/Users/hieunguyen/git/hieu/projects/alfred`, commit `5fde89b0` — `packages/vault/src/domain/bases/{types,parser,expression,evaluator}.ts` and `__tests__/`, `packages/view-model/src/base/board.ts`
 
 ## Dependencies

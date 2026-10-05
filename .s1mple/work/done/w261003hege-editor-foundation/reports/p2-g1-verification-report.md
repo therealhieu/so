@@ -48,7 +48,7 @@ The implementer's flagged deviations are acceptable refinements; none is a findi
 | DEV1 — no work-process identifiers in code | `None` | No Work/REQ/DES/S/V/phase/goal/task IDs in `src/`, `test/`, `scripts/`, or workflow files | The scan `\b(REQ\|DES\|RF\|UREQ\|UDES\|US\|UV\|DEV)[0-9]+`, `\b[SV][0-9]+(\.[0-9]+)?\b`, `\bP[0-9]+-G[0-9]+`, `\bT[0-9]+\b`, `W26[0-9]`, `RM26`, `\bDI[0-9]`, `\bPH[0-9]\b`, `\bG[0-9]\b`, `VER[0-9]`, `\b(task\|goal\|roadmap\|phase)\b`, `w261003`, `rm261003` over `src test scripts` (`*.ts`) and `.github` found no match. Test names are behavioral | `Satisfied` |
 | Roadmap G1 (producer DI1, consumer DI2@R2) | `None` | `createUpdate`, `createStore`, and `Action`/`Effect` at parent shapes plus only the five additions; no G1 contract change; not due within this goal | Protocol compared above. The `MouseEvent` payload (`types.ts:112`) was left open by the parent and is now `{kind:"scroll"; delta}`, an open-detail refinement. Merge and CI evidence stay with P3-G1-T6/T7 | `Satisfied` |
 
-Roadmap baseline: `git log -- .s1mple/work/active/rm261003abzp-so-v1/` → only `d00d3a3`. `git diff --stat 4baa076..HEAD -- .s1mple` touches only the implementation report and the goal file. Parent synchronization stays pending with the main orchestrator, and this verification wrote no parent file.
+Roadmap baseline: `git log -- .s1mple/work/done/rm261003abzp-so-v1/` → only `d00d3a3`. `git diff --stat 4baa076..HEAD -- .s1mple` touches only the implementation report and the goal file. Parent synchronization stays pending with the main orchestrator, and this verification wrote no parent file.
 
 ## Technical Verification
 

@@ -6,12 +6,12 @@
 |---|---|
 | `.s1mple/S1MPLE.md` | Discuss behavior and required context |
 | `.s1mple/docs/project.md` | Reusable project baseline |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI4 definition (lines 407–484), PH2 phase design (98–321), gates G3/G4 (65–73), Delivery Flow (75–96), success and exit (485–559), progress (582–590), approval (596–613) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI4 assignment (Delivery Items line 134) and Work Progress row (line 145) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ6@R2 (169), REQ7@R2 (187), REQ11@R3 (274) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | AppConfig (420), S6/V9 (974–989), S7/V10 (991–1006), DES8@R2 (1192), DES9@R3 (1202), DES10@R2 (1212), DES11@R1 (1222), DES12@R2 (1232), DES14@R2 (1252), DES17@R2 (1282) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-research.md` | RF9 (485, Bases layouts, Kanban `type` unverified), RF10 (503, Moment tokens, `{{time:F}}`, subfolders) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | UREQ8/9/11, UDES8/9/11, US6/7/9, UV7/8/10, surfaces and components; accepted M5@R2 and M6@R1 |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI4 definition (lines 407–484), PH2 phase design (98–321), gates G3/G4 (65–73), Delivery Flow (75–96), success and exit (485–559), progress (582–590), approval (596–613) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI4 assignment (Delivery Items line 134) and Work Progress row (line 145) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ6@R2 (169), REQ7@R2 (187), REQ11@R3 (274) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` | AppConfig (420), S6/V9 (974–989), S7/V10 (991–1006), DES8@R2 (1192), DES9@R3 (1202), DES10@R2 (1212), DES11@R1 (1222), DES12@R2 (1232), DES14@R2 (1252), DES17@R2 (1282) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-research.md` | RF9 (485, Bases layouts, Kanban `type` unverified), RF10 (503, Moment tokens, `{{time:F}}`, subfolders) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | UREQ8/9/11, UDES8/9/11, US6/7/9, UV7/8/10, surfaces and components; accepted M5@R2 and M6@R1 |
 | `src/core/filetypes/registry.ts`, `src/ui/editors/registry.ts`, `src/ui/views/window-tree.ts`, `src/ui/editors/text-view.ts` | `EditorKindSpec`, `EditorKindRegistry`, `FileType`, `editorViews`, `EditorView` |
 | `src/core/state/{types,update,commands,keys,keymap,picker,embeds,view-context}.ts`, `src/core/state/markdown-commands.ts` | State shape, registries, command context and Ex aliases, key routing, picker sources, embed loading |
 | `src/core/config/schema.ts` | Current config keys (no `[daily]` or `[templates]`) |
@@ -23,7 +23,7 @@
 
 ## Roadmap Binding
 
-- **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
+- **Roadmap:** RM261003ABZP — `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
 - **Phase:** RM261003ABZP-PH2@R5 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–37)
 - **Delivery item:** RM261003ABZP-DI4@R2 — same file, Delivery Items (lines 407–484); index Delivery Items row (line 134)
 - **Accepted upstream baseline:**
@@ -60,10 +60,10 @@ None
 ### Parent Synchronization
 
 - **Registration or discussion update:** Pending parent synchronization. Proposed changes, evidence: this context document and the absence of any prior DI4 binding (see Accepted at):
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, Delivery Items, RM261003ABZP-DI4@R2 row (line 134): Work `Pending` → `W26100423LX`; PR stays `Pending`.
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, Delivery Items, RM261003ABZP-DI4@R2 row (line 134): Work `Pending` → `W26100423LX`; PR stays `Pending`.
   - Same file, Work Progress, RM261003ABZP-DI4@R2 row (line 145): Work stage `Not started` → `Discuss`; Next gate `None — G3 and G4 satisfied; next: W26100423LX requirements and system design, which confirm the Kanban type value`; Evidence `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-discuss-context.md`; Checked at 2026-10-04.
   - Same file, introductory paragraph (line 7): add that DI4 is in discussion as W26100423LX.
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Progress, RM261003ABZP-DI4@R2 row (line 590): Delivery status `Not started` → `In progress`; Work `Pending` → `W26100423LX`; PR stays `Pending`; Next `W26100423LX discussion`.
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Progress, RM261003ABZP-DI4@R2 row (line 590): Delivery status `Not started` → `In progress`; Work `Pending` → `W26100423LX`; PR stays `Pending`; Next `W26100423LX discussion`.
   - Same file, introductory paragraph (line 8): replace "DI4 has no work, PR, or verification result yet" with "DI4 is in discussion as W26100423LX; it has no PR or verification result yet".
 
 The main orchestrator owns this receipt. It does not replace parent W/PR assignments or the index's work-progress view; update the parent only with explicit authorization. Later stages record their synchronization receipts in their own artifacts.
@@ -130,7 +130,7 @@ The work must meet the assigned REQ/DES/S/V and UI obligations above and own the
 - `src/app/main.ts:113-134` — file types, commands, and view contexts registered at startup; `main.ts:242-246` registers editor views and widget painters.
 - `src/ui/views/window-tree.ts:96` — a window's view comes from `editorViews.get(kind) ?? editorViews.get("text")`.
 - `src/core/state/markdown-commands.ts:146-149` — bindings scoped to a file type (`{ mode: "normal", filetype: "markdown" }`), the pattern for `base`-scoped keys.
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md:131` — commands that read `AppState` live in `core/state` because lower core layers may not import it (DI3 put `markdown-commands.ts` there).
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md:131` — commands that read `AppState` live in `core/state` because lower core layers may not import it (DI3 put `markdown-commands.ts` there).
 - `src/core/state/commands.ts:41-47` — `CommandContext` carries `now`, the only clock a pure command sees; `commands.ts:52-79` — `EX_ALIASES` maps Ex names to command ids (DI3 added `Preview`, `PreviewStop`).
 - `src/core/kernel/commands/defaults.ts:46-51` — which-key group labels (`<leader>f` find, `<leader>s` search, …); `<leader>n` is unbound and unlabelled.
 - `src/core/lang/markdown/render-key.ts:15-22` — `embedOnly` returns the file extension for non-note, non-image embeds, so `![[tasks.base]]` already gets render key `"base"`.

@@ -64,7 +64,7 @@ All 61 SHAs above, including report commits, are ancestors of `HEAD` (`git merge
 ## Roadmap Contract Evidence
 
 - **Accepted baseline actually verified:** Binding `w26100423lx-discuss-context.md` Roadmap Binding — RM261003ABZP-PH2@R5, RM261003ABZP-DI4@R2; accepted baseline `main` `d398ad7` with parent UI design `Ready for Planning`. Checked now: `main` = `origin/main` = merge-base = `d398ad73781531100fe799894363a3d69ac50985`; `9adb285` (G3) and `e228bb5` (G4) are ancestors of `HEAD`.
-- **Current-source assessment:** `git diff d398ad7..HEAD -- .s1mple/work/active/rm261003abzp-so-v1` is empty (0 lines). Index line 134 (DI4 Work `Pending`), line 145 (DI4 `Not started`, `Aligned`), phase lines 70–71 (G3, G4), line 553 (re-check obligation), line 590 (DI4 Work `Pending`), and `rm261003abzp-ui-design.md:5` `Ready for Planning` are unchanged. No other W is bound to DI4, and no parent file references the work folder. Result: aligned with the accepted baseline.
+- **Current-source assessment:** `git diff d398ad7..HEAD -- .s1mple/work/done/rm261003abzp-so-v1` is empty (0 lines). Index line 134 (DI4 Work `Pending`), line 145 (DI4 `Not started`, `Aligned`), phase lines 70–71 (G3, G4), line 553 (re-check obligation), line 590 (DI4 Work `Pending`), and `rm261003abzp-ui-design.md:5` `Ready for Planning` are unchanged. No other W is bound to DI4, and no parent file references the work folder. Result: aligned with the accepted baseline.
 
 | Assigned parent obligation | Child coverage / owner | Actual implementation and verification evidence | Result |
 |---|---|---|---|

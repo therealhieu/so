@@ -12,19 +12,19 @@
 - Project document: `.s1mple/docs/project.md`
 - Plan index: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-index.md`
 - System design: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md`
-- UI design: `Not applicable at work level — parent .s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md (Ready for Planning) supplies visuals consumed through W261003HEGE-DES9 and verified by S14 → V14.1–V14.4`
+- UI design: `Not applicable at work level — parent .s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-design.md (Ready for Planning) supplies visuals consumed through W261003HEGE-DES9 and verified by S14 → V14.1–V14.4`
 - System requirements: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md`
 - UI requirements: `Not applicable — parent RM261003ABZP-UREQ1@R2, UREQ2@R1, UREQ3@R2 (non-Markdown), UREQ7@R2, UREQ11@R1 stay bound through W261003HEGE-REQ1@R3`
 - Plan context: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-plan-context.md`
 - Roadmap binding: `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md`, section Roadmap Binding (RM261003ABZP, PH1@R2, DI1@R2)
 - Current parent sources (read-only):
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (DI1 rows `:131`, `:142`)
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (G1 `:73`, DI1 `:323-424`)
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md`
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md`
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md`
-  - `.s1mple/work/active/rm261003abzp-so-v1/ui-mockups/manifest.md` (accepted M1@R1, M4@R1, AD4)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (DI1 rows `:131`, `:142`)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (G1 `:73`, DI1 `:323-424`)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md`
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md`
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-design.md`
+  - `.s1mple/work/done/rm261003abzp-so-v1/ui-mockups/manifest.md` (accepted M1@R1, M4@R1, AD4)
 - Project standards:
   - `.s1mple/docs/communication.md`
   - `.s1mple/docs/project.md`
@@ -95,7 +95,7 @@
 - Every delegated agent reads and follows `.s1mple/S1MPLE.md` and its required references (`.s1mple/docs/communication.md`, `.s1mple/docs/project.md`, `.s1mple/docs/languages/typescript.md`) before acting. Include this requirement in every assignment.
 - Subagents must not spawn or delegate to other subagents. Only the main orchestrator spawns subagents.
 - Do not set the `model` argument when spawning `s1mple-implementer`, `s1mple-verifier`, or `s1mple-consultant`.
-- Do not edit parent roadmap files (`.s1mple/work/active/rm261003abzp-so-v1/**`).
+- Do not edit parent roadmap files (`.s1mple/work/done/rm261003abzp-so-v1/**`).
 - The implementer commits task changes and remediation fixes.
 - The orchestrator checks commit evidence and commits the final documentation update.
 - Task commits do not mean group acceptance.
@@ -132,7 +132,7 @@ Before creating todos or editing code:
 7. Read every plan part completely in execution order.
 8. Confirm every applicable governing source and the plans agree. Mark the goal `Blocked` when a material conflict remains. For this roadmap-linked work:
    - Before starting or resuming affected execution, compare the accepted baseline with the current parent definitions and validate the DI/W assignment.
-   - Check that `git log -- .s1mple/work/active/rm261003abzp-so-v1/` shows no change since `d00d3a3` that is relevant to DI1, that index `:131` and `:142` still carry DI1@R2, and that no other W binds DI1.
+   - Check that `git log -- .s1mple/work/done/rm261003abzp-so-v1/` shows no change since `d00d3a3` that is relevant to DI1, that index `:131` and `:142` still carry DI1@R2, and that no other W binds DI1.
    - Assess any relevant change. Unrelated edits do not invalidate the work.
    - Record exact checked references and results under Roadmap Evidence.
    - Block affected work on unresolved material changes. Do not rewrite approved sources or silently adopt newer references.
@@ -463,10 +463,10 @@ Keep definitions in the accepted binding (`w261003hege-discuss-context.md`, Road
 
 | Boundary | Accepted references and current sources checked | Assessment and evidence |
 |---|---|---|
-| Execution start | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `deb9b96`); index `:131`, `:142`; W bindings under `.s1mple/work/` | Aligned — 0 parent commits since `d00d3a3`; `:131` and `:142` carry `RM261003ABZP-DI1@R2` (Work `Pending`, Not started); only `w261003hege-discuss-context.md` binds DI1. Tooling observed: local Bun 1.3.10, Neovim 0.12.4 — P1-G1-T1 installs Bun 1.4.2, P1-G2-T3 downloads Neovim v0.11.7 per plan context §7. |
+| Execution start | `git log --oneline d00d3a3..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` (HEAD `deb9b96`); index `:131`, `:142`; W bindings under `.s1mple/work/` | Aligned — 0 parent commits since `d00d3a3`; `:131` and `:142` carry `RM261003ABZP-DI1@R2` (Work `Pending`, Not started); only `w261003hege-discuss-context.md` binds DI1. Tooling observed: local Bun 1.3.10, Neovim 0.12.4 — P1-G1-T1 installs Bun 1.4.2, P1-G2-T3 downloads Neovim v0.11.7 per plan context §7. |
 | Each resume after interruption | P1-G2 implementer resumed after an API usage limit (same agent, same context) | No parent change at resume; no reassessment needed |
-| Before P3-G1-T7 delivery actions | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` (HEAD `37b9e73`+goal commit); `git tag` | Aligned — 0 parent commits since `d00d3a3`; no tags exist; DI1 binding unchanged |
-| Delivery acceptance | `git log --oneline d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/`; index `:131`, `:142`; W bindings | Aligned — 0 parent commits; DI1@R2 unchanged; only W261003HEGE binds DI1; also confirmed in `5e57bae` |
+| Before P3-G1-T7 delivery actions | `git log --oneline d00d3a3..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` (HEAD `37b9e73`+goal commit); `git tag` | Aligned — 0 parent commits since `d00d3a3`; no tags exist; DI1 binding unchanged |
+| Delivery acceptance | `git log --oneline d00d3a3..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/`; index `:131`, `:142`; W bindings | Aligned — 0 parent commits; DI1@R2 unchanged; only W261003HEGE binds DI1; also confirmed in `5e57bae` |
 
 Append checks as boundaries are reached. An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
 

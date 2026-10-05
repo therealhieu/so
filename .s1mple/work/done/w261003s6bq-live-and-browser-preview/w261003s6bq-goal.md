@@ -18,10 +18,10 @@
 - Plan context: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-plan-context.md`
 - Roadmap binding: `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md`, Roadmap Binding (RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3)
 - Current parent sources:
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Delivery Items `:133`, Work Progress `:144`)
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` (header `:3`, gates G2 `:69` and G4 `:71`, phase design contracts `:205-230`, DI3@R3 `:322-403`, Progress `:579-588`, Approval `:593-609`)
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` (RM261003ABZP-DES13@R3)
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1 `:2252-2262`)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Delivery Items `:133`, Work Progress `:144`)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` (header `:3`, gates G2 `:69` and G4 `:71`, phase design contracts `:205-230`, DI3@R3 `:322-403`, Progress `:579-588`, Approval `:593-609`)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` (RM261003ABZP-DES13@R3)
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (RM261003ABZP-UDES10@R2, RM261003ABZP-UV9@R2, RM261003ABZP-UV10@R1 `:2252-2262`)
 - Project standards:
   - `.s1mple/docs/communication.md`
   - `.s1mple/docs/project.md`
@@ -441,8 +441,8 @@ Keep definitions in the accepted binding, system design, and parent gate sources
 | Boundary | Accepted references and current sources checked | Assessment and evidence |
 |---|---|---|
 | Planning (reference, recorded by the reconciler) | PH2@R4 `:3`, DI3@R3 `:322-403`, G2/G4 `:69`/`:71`, index `:133`, `:144` at `ee33163` (plan index Roadmap Contract) | Aligned at planning; not a substitute for the execution-start check |
-| Execution start (2026-10-04, `HEAD` `0c111be`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`, DI3@R3 `:322`; index `:133` (DI3@R3 → W261003S6BQ, PR Pending), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `origin/main` has no commits ahead of `HEAD` | Aligned — no parent commit after the planning check at `ee33163`; DI3@R3 → W261003S6BQ unchanged; no other W binds DI3 (`work/done/` holds W261003HEGE, W261003FX70). Working tree clean at start |
-| Delivery (before Delivery Completion, 2026-10-04, `HEAD` `68fbfcf`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`; index `:133` (DI3@R3 Delivery Items row), `:144` (Work Progress); `git log -- .s1mple/work/active/rm261003abzp-so-v1/` last commit `ee33163`; `git fetch` then `origin/main` has 0 commits ahead of `HEAD` | Aligned — no parent commit since the execution-start check; DI3@R3 → W261003S6BQ unchanged; `work/done/` holds only W261003HEGE and W261003FX70 before this move |
+| Execution start (2026-10-04, `HEAD` `0c111be`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`, DI3@R3 `:322`; index `:133` (DI3@R3 → W261003S6BQ, PR Pending), `:144` (Work Progress); `git log -- .s1mple/work/done/rm261003abzp-so-v1/` last commit `ee33163`; `origin/main` has no commits ahead of `HEAD` | Aligned — no parent commit after the planning check at `ee33163`; DI3@R3 → W261003S6BQ unchanged; no other W binds DI3 (`work/done/` holds W261003HEGE, W261003FX70). Working tree clean at start |
+| Delivery (before Delivery Completion, 2026-10-04, `HEAD` `68fbfcf`) | Phase file header `:3` (`RM261003ABZP-PH2@R4`), G2 `:69`, G4 `:71`; index `:133` (DI3@R3 Delivery Items row), `:144` (Work Progress); `git log -- .s1mple/work/done/rm261003abzp-so-v1/` last commit `ee33163`; `git fetch` then `origin/main` has 0 commits ahead of `HEAD` | Aligned — no parent commit since the execution-start check; DI3@R3 → W261003S6BQ unchanged; `work/done/` holds only W261003HEGE and W261003FX70 before this move |
 
 Append checks as boundaries are reached (including any resume). An unresolved relevant change blocks affected work pending approved reconciliation; do not relabel earlier verification as proof of a newer baseline or rerun a prohibited verification pass. If new scope is approved, execution must use its reconciled plan and separately authorized verification scope.
 

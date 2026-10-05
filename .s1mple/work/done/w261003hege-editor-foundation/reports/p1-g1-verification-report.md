@@ -34,7 +34,7 @@ Every assigned task, chain, and verification case is met, and every group check 
 | DEV1 — no work-process identifiers in code | `None` | No Work/REQ/DES/S/V/phase/goal/task IDs in `src/`, `test/`, `scripts/`, `bin/`, workflows; tests named by behavior | Test names: `exact npm pins`, `SHA-pinned actions`, `CI runs on pull_request only`, `src respects LAYER_RULES`, `violation fixtures are reported`; identifier scan has no match | `Satisfied` |
 | Roadmap G1 (producer DI1, consumer DI2@R2) | `None` | P1-G1 produces the `bun run check` script and the CI definition; G1 is not due within this goal | `package.json` `scripts.check`; `.github/workflows/ci.yml`; V1.1, V1.2, and V15.1 pass locally. CI green on the merged DI1 PR stays with P3-G1 | `Satisfied` |
 
-Roadmap baseline: `git log -- .s1mple/work/active/rm261003abzp-so-v1/` → only `d00d3a3`, so the parent files are unchanged and still the accepted baseline. The G1 row at `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:73` lists `bun run check` and CI among its required outputs, due before DI2 execution. Parent synchronization stays pending with the main orchestrator; this verification wrote no parent file.
+Roadmap baseline: `git log -- .s1mple/work/done/rm261003abzp-so-v1/` → only `d00d3a3`, so the parent files are unchanged and still the accepted baseline. The G1 row at `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:73` lists `bun run check` and CI among its required outputs, due before DI2 execution. Parent synchronization stays pending with the main orchestrator; this verification wrote no parent file.
 
 ## Technical Verification
 

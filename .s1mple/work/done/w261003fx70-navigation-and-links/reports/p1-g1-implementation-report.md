@@ -95,7 +95,7 @@ All three findings are fixed and committed. VER2 first came back `Blocked`, beca
 ### Baseline and Gate Evidence
 
 - Remediation started at `51218a5` on `feat/rm261003abzp-di2-navigation-and-links`. The group range under review was `6986404..98ece8d`, and the implementation report diff matched it: the nine task commits plus `71ab312` (report) and `51218a5` (verification report).
-- Gate G1 still holds. `c98aa19` is an ancestor of `6986404` and of `HEAD`, as the verification report records. No parent source under `.s1mple/work/active/rm261003abzp-so-v1/` was edited, and the accepted baseline was not changed.
+- Gate G1 still holds. `c98aa19` is an ancestor of `6986404` and of `HEAD`, as the verification report records. No parent source under `.s1mple/work/done/rm261003abzp-so-v1/` was edited, and the accepted baseline was not changed.
 - The orchestrator's uncommitted edit to `w261003fx70-goal.md` was left untouched and never staged.
 
 ### Finding Closure

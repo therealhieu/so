@@ -35,7 +35,7 @@ Turn the empty repository into a pinned Bun/TypeScript 7 project whose repositor
 - Subagents do not spawn subagents. Do not use the native `Explore` subagent; inspect directly or use `s1mple-explore`.
 - Implementation is lean and simple (S1MPLE Implementation, 2026-10-03): no abstractions, files, symbols, or AppState fields beyond the system design; no later-DI files (`src/preview`, `src/ui/widgets`, `core/lang/markdown/{doc,blocks,syntax}.ts`, `core/features/**`, `workspace/{index-worker,config-file,state-file}.ts`).
 - The system design is the authority; previews below show only task-owned deltas. Where a preview and the design differ, the design wins and the difference is reported.
-- Do not edit parent roadmap files (`.s1mple/work/active/rm261003abzp-so-v1/**`); parent synchronization is pending and owned by the main orchestrator.
+- Do not edit parent roadmap files (`.s1mple/work/done/rm261003abzp-so-v1/**`); parent synchronization is pending and owned by the main orchestrator.
 - **Interim `knip` rule:** until P3-G1 wires `src/app/main.ts`, `knip` may report unused files or exports only for G1 symbols whose consumer is a later group per the plan index Cross-Part Coordination table. Record every such finding in the group report; any other finding fails the check. P3-G1 requires zero findings.
 
 ## Execution Flow

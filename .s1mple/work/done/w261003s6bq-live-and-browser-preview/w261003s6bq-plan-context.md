@@ -19,7 +19,7 @@ The finalized system design is the single governing design, the roadmap baseline
 | Research | Not needed — the design records `Research Source: None` | — |
 | Discussion context | `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-discuss-context.md` | Roadmap binding, constraints, existing patterns |
 | UI context | Not applicable — no W UI context artifact; current UI code evidence is in the discussion context sections 2–5 | — |
-| Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, `rm261003abzp-design.md`, `rm261003abzp-ui-design.md` | Validate the accepted binding, assigned scope, and gates |
+| Roadmap sources | `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, `rm261003abzp-design.md`, `rm261003abzp-ui-design.md` | Validate the accepted binding, assigned scope, and gates |
 | Additional project files | `.s1mple/docs/languages/typescript.md`, `.s1mple/docs/communication.md`, `src/ui/editors/text-view.ts`, `src/core/state/link-commands.ts`, `test/boundaries.test.ts`, `test/ui/theme.golden.test.ts`, `src/core/state/{session,config}.test.ts`, `package.json`; `../alfred/apps/tui/src/view/markdown/{math,mermaid}.ts`, `../alfred/apps/tui/src/view/editor/reveal-units.ts`; npm registry (`mermaid`, `katex`) | Anchor checks, port references, version pin |
 
 ## 2. Governing Design Handoff

@@ -106,7 +106,7 @@ All system IDs below carry the `W261003FX70-` prefix. The UI chains are not appl
 
 ## Roadmap Contract Evidence
 
-- **Accepted baseline actually verified:** RM261003ABZP-PH1@R2 and RM261003ABZP-DI2@R2, from the Roadmap Binding in `w261003fx70-discuss-context.md` (commit `3f01513`). The parent sources have been unchanged since `2f907fa`: `git log 2f907fa..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` and the matching `git diff --stat` are both empty at `9280285`. Assigned coverage is system design section 1, Assigned Parent Obligation Coverage (eight groups).
+- **Accepted baseline actually verified:** RM261003ABZP-PH1@R2 and RM261003ABZP-DI2@R2, from the Roadmap Binding in `w261003fx70-discuss-context.md` (commit `3f01513`). The parent sources have been unchanged since `2f907fa`: `git log 2f907fa..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` and the matching `git diff --stat` are both empty at `9280285`. Assigned coverage is system design section 1, Assigned Parent Obligation Coverage (eight groups).
 - **Current-source assessment:** I re-read these rows, and each is aligned:
   - `rm261003abzp-roadmap-index.md:132`, `:143`: DI2@R2 Work and stage are still `Pending` / `Not started`.
   - Phase 1 `:73` (G1), `:591` (the DI1 V1/V17/V18 re-pass) and `:627`.

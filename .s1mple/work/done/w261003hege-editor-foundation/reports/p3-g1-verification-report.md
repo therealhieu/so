@@ -7,7 +7,7 @@
 - **Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-verification-report.md`
 - **Implementation Report:** `.s1mple/work/done/w261003hege-editor-foundation/reports/p3-g1-implementation-report.md` (commit `d4f19de`)
 - **Baseline:** branch `feat/rm261003abzp-di1-editor-foundation`, HEAD `97d134e`; group range `563ef56..37b9e73` (tasks `8898bd9`, `eb4253a`, `1ba0f67`, `55d12a7`, `16d7a7a`, `989b725`, `a0b1a58`, `37b9e73`). No code changes after `37b9e73` (`git diff --stat 37b9e73..HEAD -- . ':!.s1mple'` is empty); `eac91dd`, `3b7714a`, `97d134e` touch only `.s1mple`. Bun `1.4.2`, macOS Darwin 23.4.0. Working tree clean before and after verification.
-- **Parent baseline:** `git log d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` is empty (no parent writes); `git tag` and `git ls-remote --tags origin` are empty (no tag, DEV5 respected).
+- **Parent baseline:** `git log d00d3a3..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` is empty (no parent writes); `git tag` and `git ls-remote --tags origin` are empty (no tag, DEV5 respected).
 
 ## Status
 

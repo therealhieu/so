@@ -702,7 +702,7 @@ daily "YYYY/MMMM/YYYY-MMM-DD" → "2026/October/2026-Oct-03"
 - `w26100423lx-requirements.md:433,457,469-474` — Supports `RF2` and `RF3` by establishing summaries "match the ported Alfred fixtures", distinct-value columns, and the move rules.
 - `w26100423lx-requirements.md:508-513` — Supports `RF5` by establishing REQ10's preservation and type criteria.
 - `w26100423lx-discuss-context.md:242` — Supports `RF1` by establishing that Alfred's `type: board` is Alfred-authored and the Kanban value is unknown.
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-research.md:485-500` — Supports `RF1` by establishing the parent RF9 evidence gap this pass re-checked.
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-research.md:485-500` — Supports `RF1` by establishing the parent RF9 evidence gap this pass re-checked.
 - `/Users/hieunguyen/git/hieu/projects/alfred/packages/vault/src/domain/bases/parser.ts:22-61,94-143` (at `5fde89b0`) — Supports `RF3` by establishing that only YAML errors fail, unknown view keys pass through, and `groupBy` is lenient.
 - `alfred/packages/vault/src/domain/bases/evaluator.ts:162-197,298-318,383-393,750-765` — Supports `RF2`, `RF3`, and `RF4` by establishing the supported view types, grouping without `groupOrder`, filter-diagnostic exclusion, and `note.`/bare property resolution.
 - `alfred/packages/vault/src/domain/bases/expression.ts:177-190,273-325` — Supports `RF4` by establishing file-only methods, exact `inFolder`, first-argument `hasTag`, and double-quote-only strings.
