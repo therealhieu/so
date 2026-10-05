@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G1 implementation`
+- **Current Position:** `P2-G1 implementation`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -175,63 +175,63 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 - **Plan:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
 - **Dependencies:** None
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P1-G1 — core-mouse-model
 
 - [x] Context and dependencies confirmed.
-- [ ] Implementation turn completed.
-- [ ] `P1-G1-T1` — Span source columns and cell mapping.
-- [ ] `P1-G1-T2` — Mouse config key.
-- [ ] `P1-G1-T3` — Mouse contract and text gestures.
-- [ ] `P1-G1-T4` — Wheel under the pointer.
-- [ ] `P1-G1-T5` — Chrome, Bases, and overlay item presses.
-- [ ] `P1-G1-T6` — Overlay and command-line gate.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementation turn completed.
+- [x] `P1-G1-T1` — Span source columns and cell mapping.
+- [x] `P1-G1-T2` — Mouse config key.
+- [x] `P1-G1-T3` — Mouse contract and text gestures.
+- [x] `P1-G1-T4` — Wheel under the pointer.
+- [x] `P1-G1-T5` — Chrome, Bases, and overlay item presses.
+- [x] `P1-G1-T6` — Overlay and command-line gate.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` — `Completed` (change range `da4275e` → `23941de`)
+- Initial implementation report commit: `b6710bb`
+- Verification: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` — `Failed` (one Major finding `P1-G1-VER1`; all group checks passed)
+- Verification report commit: `c3a7a3f`
+- Remediation: `Completed` by a fresh implementer; `sourceColAt` takes the source line length so past-end cells map to it
+- Final implementation report commit: `5dffdd9`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `P1-G1-VER1` (`P1-G1-T1`) → `a3d73ab`
+- Closure evidence: `hit.test.ts` 6 pass (was 5 pass / 1 fail `Expected: 20, Received: 18` before the fix); new reducer case for a click past a line ending in a link; `bun run check` exit 0 (1044 pass); V31 and work-ID scans clean; `test:ci` 191 pass; no orphans; working tree clean
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G1-T1` | `Pending implementation` |
-| `P1-G1-T2` | `Pending implementation` |
-| `P1-G1-T3` | `Pending implementation` |
-| `P1-G1-T4` | `Pending implementation` |
-| `P1-G1-T5` | `Pending implementation` |
-| `P1-G1-T6` | `Pending implementation` |
+| `P1-G1-T1` | `3ae1d38`; remediation `a3d73ab` |
+| `P1-G1-T2` | `93a1e08` |
+| `P1-G1-T3` | `b98c8ae`; press-order fix in `1957fde` |
+| `P1-G1-T4` | `e139649` |
+| `P1-G1-T5` | `1957fde`; test follow-up `23941de` |
+| `P1-G1-T6` | `fc01724` |
 
 ### Part 2 — ui-mouse-routing
 
 - **Plan:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
 - **Dependencies:** Part 1
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P2-G1 — router-shell-and-window-sources
 
-- [ ] Context and dependencies confirmed.
+- [x] Context and dependencies confirmed.
 - [ ] Implementation turn completed.
 - [ ] `P2-G1-T1` — Mouse router.
 - [ ] `P2-G1-T2` — Shell wiring and mouse-mode sync.
@@ -342,24 +342,24 @@ Canonical definitions: system design §8 "Test Suites and Cases". Ordered by own
 
 | Complete | Case | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | `V8` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | Concealed link alias click maps to the alias character's source column | `Pending implementation` |
-| [ ] | `V9` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | `"\tab"`, tabWidth 4: display cols 0–3 → 0, 4 → 1, past end → 3 | `Pending implementation` |
-| [ ] | `V10` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | `rowAt` returns the wrapped line with its wrap start, widget rows, and honors `skipRows` | `Pending implementation` |
-| [ ] | `V27` (`P1-G1-T2`) | `bun test src/core/config/schema.test.ts` | `{}` → `mouse` true; `mouse = "yes"` → error naming `mouse` | `Pending implementation` |
-| [ ] | `V7` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Press sets `windows.active` or the panel focus flag; winbar press leaves the cursor unchanged | `Pending implementation` |
-| [ ] | `V11` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Insert click keeps Insert; `u` undoes only text typed after the click | `Pending implementation` |
-| [ ] | `V12` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Press (2,3), drag (4,1) → Visual, anchor (2,3), cursor (4,1); `y` yanks that range | `Pending implementation` |
-| [ ] | `V14` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Clicks 2 and 3 equal keys `v i w` / `V` at that position | `Pending implementation` |
-| [ ] | `V15` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Ctrl press on a wikilink equals cursor there + `gd`; on plain text equals a plain press | `Pending implementation` |
-| [ ] | `V29` (`P1-G1-T3`) | `bun run check` (tsc) | `MouseEvent` has no button field; the `@ts-expect-error` stays required | `Pending implementation` |
+| [x] | `V8` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | Concealed link alias click maps to the alias character's source column | Pass — `hit.test.ts` (P1-G1 verifier) |
+| [x] | `V9` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | `"\tab"`, tabWidth 4: display cols 0–3 → 0, 4 → 1, past end → 3 | Pass — `hit.test.ts` (P1-G1 verifier) |
+| [x] | `V10` (`P1-G1-T1`) | `bun test src/core/kernel/view/hit.test.ts` | `rowAt` returns the wrapped line with its wrap start, widget rows, and honors `skipRows` | Pass — `hit.test.ts` (P1-G1 verifier) |
+| [x] | `V27` (`P1-G1-T2`) | `bun test src/core/config/schema.test.ts` | `{}` → `mouse` true; `mouse = "yes"` → error naming `mouse` | Pass — `schema.test.ts` (P1-G1 verifier) |
+| [x] | `V7` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Press sets `windows.active` or the panel focus flag; winbar press leaves the cursor unchanged | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V11` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Insert click keeps Insert; `u` undoes only text typed after the click | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V12` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Press (2,3), drag (4,1) → Visual, anchor (2,3), cursor (4,1); `y` yanks that range | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V14` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Clicks 2 and 3 equal keys `v i w` / `V` at that position | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V15` (`P1-G1-T3`) | `bun test src/core/state/mouse.test.ts` | Ctrl press on a wikilink equals cursor there + `gd`; on plain text equals a plain press | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V29` (`P1-G1-T3`) | `bun run check` (tsc) | `MouseEvent` has no button field; the `@ts-expect-error` stays required | Pass — tsc exit 0; `@ts-expect-error` still required (P1-G1 verifier) |
 | [ ] | `V31` (`P1-G1-T3`, `P2-G2-T2`) | `rg 'kind: "scroll"\|onMouseScroll' src` | No matches | `Pending implementation` |
 | [ ] | `V1` (`P1-G1-T4`, `P1-G1-T5`) | `bun test src/core/state/mouse.test.ts` | Each chrome target and list wheel equals the documented keys on state and effects | `Pending implementation` |
-| [ ] | `V4` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Wheel over the inactive split scrolls it +3; active and mode unchanged; horizontal wheel no-op | `Pending implementation` |
-| [ ] | `V5` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Explorer cursor moves 3 visible paths; `explorer.focused` stays false | `Pending implementation` |
-| [ ] | `V6` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Inactive Base focus index +3; `windows.active` unchanged | `Pending implementation` |
-| [ ] | `V17` (`P1-G1-T5`) | `bun test src/core/state/mouse.test.ts` | Bases single press focuses only; double equals focus + `<CR>` | `Pending implementation` |
-| [ ] | `V19` (`P1-G1-T6`) | `bun test src/core/state/mouse.test.ts` | With prompt or conflict open, every press and wheel leaves state unchanged with no effects | `Pending implementation` |
-| [ ] | `V24` (`P1-G1-T6`) | `bun test src/core/state/mouse.test.ts` | Outside press closes picker / `:` line without touching the window; completion closes and the cursor moves | `Pending implementation` |
+| [x] | `V4` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Wheel over the inactive split scrolls it +3; active and mode unchanged; horizontal wheel no-op | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V5` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Explorer cursor moves 3 visible paths; `explorer.focused` stays false | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V6` (`P1-G1-T4`) | `bun test src/core/state/mouse.test.ts` | Inactive Base focus index +3; `windows.active` unchanged | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V17` (`P1-G1-T5`) | `bun test src/core/state/mouse.test.ts` | Bases single press focuses only; double equals focus + `<CR>` | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V19` (`P1-G1-T6`) | `bun test src/core/state/mouse.test.ts` | With prompt or conflict open, every press and wheel leaves state unchanged with no effects | Pass — `mouse.test.ts` (P1-G1 verifier) |
+| [x] | `V24` (`P1-G1-T6`) | `bun test src/core/state/mouse.test.ts` | Outside press closes picker / `:` line without touching the window; completion closes and the cursor moves | Pass — `mouse.test.ts` (P1-G1 verifier) |
 | [ ] | `V2` (`P2-G1-T1`) | `bun test src/ui/mouse.test.ts` | Right/middle button and disabled mouse dispatch nothing | `Pending implementation` |
 | [ ] | `V3` (`P2-G1-T1`, `P2-G2-T2`) | `bun test src/ui/mouse.test.ts test/ui/mouse.test.ts` | The first source with a target wins; overlay before window; toast area not a source | `Pending implementation` |
 | [ ] | `V13` (`P2-G1-T1`) | `bun test src/ui/mouse.test.ts` | Clicks at 0, 300, 600 ms same cell → 1, 2, 3; another cell → 1; > 500 ms → 1 | `Pending implementation` |
