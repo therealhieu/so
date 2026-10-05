@@ -6,6 +6,7 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
+import { onCompletionTimer } from "./code-completion";
 import { summarizeSaved } from "./index";
 import { onFormatTimeout, onLspTimeout } from "./lsp";
 import { chain, message, none } from "./result";
@@ -123,6 +124,7 @@ export function onTimer(
         toasts: s.notifications.toasts.filter((t) => t.id !== id),
       },
     });
+  if (kind === "completion") return onCompletionTimer(s);
   if (kind === "lsp") return onLspTimeout(s, id);
   if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;

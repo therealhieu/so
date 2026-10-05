@@ -4,6 +4,7 @@ import type {
   DiagnosticSeverity,
 } from "../kernel/view/diagnostics";
 import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
+import { onCompletionResult } from "./code-completion";
 import { goTo, recordJump } from "./jumps";
 import { startCodeEdit } from "./lsp-edits";
 import type {
@@ -317,6 +318,7 @@ function applyResult(
     case "action":
       return runAction(s, { ...r.action, resolved: true }, p.key, 0, reg);
     case "completion":
+      return onCompletionResult(s, p, r);
     case "completionItem":
       return none(s);
   }

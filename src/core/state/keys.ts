@@ -22,7 +22,7 @@ import {
   executeEx,
   runCommand,
 } from "./commands";
-import { completionKey, maybeOpenCompletion } from "./completion";
+import { completionKey, maybeCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
@@ -59,8 +59,10 @@ export function handleKeyAction(
   // An open info float closes on <Esc>; the key still routes, so Esc also leaves Insert.
   const from = a.key === "<Esc>" ? withoutFloat(s) : s;
   const r = routeKey(from, a, reg);
-  return r.state.overlay.kind === "completion" || r.state.vim.mode === "insert"
-    ? { ...r, state: maybeOpenCompletion(r.state) }
+  return r.state.overlay.kind === "completion" ||
+    r.state.vim.mode === "insert" ||
+    from.vim.mode === "insert"
+    ? maybeCompletion(r, a.key)
     : r;
 }
 

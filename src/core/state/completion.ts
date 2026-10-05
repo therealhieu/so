@@ -4,6 +4,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
 import { activeBuffer, activeWindow } from "./buffers";
+import { codeCompletionStep } from "./code-completion";
 import { typeKeys } from "./keys";
 import { anchorsOf } from "./link-commands";
 import { none } from "./result";
@@ -179,7 +180,7 @@ function completionFor(
  * headings, "#^" blocks of the resolved target). It closes when the cursor
  * leaves the `[[…` span or Insert mode ends.
  */
-export function maybeOpenCompletion(s: AppState): AppState {
+function linkCompletion(s: AppState): AppState {
   const open =
     s.overlay.kind === "completion" ? s.overlay.completion : undefined;
   if (open === undefined && s.overlay.kind !== "none") return s;
@@ -193,6 +194,16 @@ export function maybeOpenCompletion(s: AppState): AppState {
       completion: completionFor(s, link.anchor, link.typed, open),
     },
   };
+}
+
+/**
+ * After a key that left the state in Insert mode, ended it, or met an open
+ * popup: notes complete links; code buffers complete through their server.
+ */
+export function maybeCompletion(r: Result, key: Key): Result {
+  return activeBuffer(r.state)?.fileType === "markdown"
+    ? { ...r, state: linkCompletion(r.state) }
+    : codeCompletionStep(r, key);
 }
 
 /** Replace the typed query with `text` through the Insert engine, so it stays one change. */
@@ -210,7 +221,7 @@ function insertItem(
     ...after,
   ];
   const r = typeKeys(s, keys, now, reg);
-  return { ...r, state: maybeOpenCompletion(r.state) };
+  return { ...r, state: linkCompletion(r.state) };
 }
 
 /** Whether "]]" already follows the cursor. */
@@ -258,7 +269,7 @@ export function completionKey(
       return move(-1);
     case "<CR>":
     case "<Tab>":
-      return item === undefined
+      return item === undefined || c.mode === "code"
         ? undefined
         : insertItem(s, c, item.insert, closed(s) ? [] : [..."]]"], a.now, reg);
     case "#": {
