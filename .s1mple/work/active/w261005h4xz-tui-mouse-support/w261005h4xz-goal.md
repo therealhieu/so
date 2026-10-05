@@ -2,9 +2,9 @@
 
 ## Status
 
-- **State:** `Ready`
-- **Current Position:** `Not started`
-- **Last Updated:** `Not started`
+- **State:** `In Progress`
+- **Current Position:** `P1-G1 implementation`
+- **Last Updated:** `2026-10-05`
 
 ## Sources
 
@@ -175,11 +175,11 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 - **Plan:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
 - **Dependencies:** None
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P1-G1 — core-mouse-model
 
-- [ ] Context and dependencies confirmed.
+- [x] Context and dependencies confirmed.
 - [ ] Implementation turn completed.
 - [ ] `P1-G1-T1` — Span source columns and cell mapping.
 - [ ] `P1-G1-T2` — Mouse config key.
