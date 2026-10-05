@@ -5,7 +5,7 @@ import {
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
 import { type SidePanelRow, sidePanelRows } from "../../core/state/side-panel";
-import type { AppState } from "../../core/state/types";
+import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
@@ -59,6 +59,7 @@ export class SidePanelView extends Renderable {
   private s: AppState | undefined;
   private lines: Line[] = [];
   private first = 0;
+  private x0 = 0;
   private h = 0;
   private cursorAt: Cursor | undefined;
 
@@ -73,7 +74,8 @@ export class SidePanelView extends Renderable {
     if (!this.visible) return;
     const w = Math.min(s.terminal.cols, SIDE_WIDTH + 1);
     this.h = Math.max(0, s.terminal.rows - 3);
-    this.left = s.terminal.cols - w;
+    this.x0 = s.terminal.cols - w;
+    this.left = this.x0;
     this.width = w;
     this.height = this.h;
     const rows = sidePanelRows(s);
@@ -87,7 +89,7 @@ export class SidePanelView extends Renderable {
     this.first = Math.max(0, Math.min(this.first, this.lines.length - room));
     if (side.focused && at >= 0)
       this.cursorAt = {
-        x: this.left + 2,
+        x: this.x0 + 2,
         y: 1 + 1 + at - this.first,
         style: "block",
       };
@@ -95,6 +97,19 @@ export class SidePanelView extends Renderable {
 
   cursor(): Cursor | undefined {
     return this.cursorAt;
+  }
+
+  /** A listed line's row; the title, separator, headings, and hints give -1 (focus only). */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const cols = this.s?.terminal.cols ?? 0;
+    if (!this.visible || x < this.x0 || x >= cols || y < 1 || y >= 1 + this.h)
+      return undefined;
+    const i = y - 2;
+    const line =
+      x > this.x0 && i >= 0 && i < this.listRows()
+        ? this.lines[this.first + i]
+        : undefined;
+    return { kind: "sidePanel", row: line?.row ?? -1 };
   }
 
   /** Lines between the title and the key hints. */

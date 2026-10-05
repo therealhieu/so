@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { parseConfig } from "../../src/core/config/toml";
 import { baseWindow } from "../../src/core/state/base-model";
+import { activeBuffer } from "../../src/core/state/buffers";
 import { indexed, TASKS_BASE } from "../support/bases";
 import { type Mounted, mountShell } from "../support/ui";
 
@@ -242,4 +243,55 @@ test("clicks on a Base switch views and focus table cells and cards", async () =
   expect(ws()?.focus.path).not.toBe("tasks/write-report.md");
   await m.mouse.click(card.x + 1, card.y);
   expect(ws()?.focus.path).toBe("tasks/write-report.md");
+});
+
+test("clicks on the bufferline and explorer switch, expand, and open", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.open("a.md", "alpha\n");
+  m.open("b.md", "bravo\n");
+  const shown = () => {
+    const s = m?.store.get();
+    return s && activeBuffer(s)?.path;
+  };
+  expect(shown()).toBe("b.md");
+  const tab = await find(m, " a.md ");
+  expect(tab.y).toBe(0);
+  await m.mouse.click(tab.x + 2, 0);
+  expect(shown()).toBe("a.md");
+  // The workspace root on the right of the bufferline takes no click.
+  const root = await find(m, "~/notes");
+  expect(root.y).toBe(0);
+  await m.mouse.click(root.x + 2, 0);
+  expect(shown()).toBe("a.md");
+
+  const folder = await find(m, "notes", 2);
+  await m.mouse.click(folder.x + 1, folder.y);
+  expect(m.store.get().panels.explorer.expanded).toContain("notes");
+  const file = await find(m, "plan.md", 2);
+  const from = m.effects.length;
+  await m.mouse.click(file.x + 1, file.y);
+  expect(m.effects.slice(from)).toContainEqual({
+    kind: "read",
+    path: "notes/plan.md",
+  });
+});
+
+test("a click on an outline heading jumps there and the panel title only focuses", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.keys("<leader>e");
+  m.open("plan.md", "# Plan\n\ntext\n\n## Goals\n\nmore\n");
+  m.keys("<leader>o");
+  const goals = await find(m, "Goals", 2);
+  // The editor shows the same heading; the panel is on the right.
+  const row = (await m.frame()).split("\n")[goals.y] ?? "";
+  const x = [...row.slice(0, row.lastIndexOf("Goals"))].length;
+  expect(x).toBeGreaterThan(80);
+  await m.mouse.click(x, goals.y);
+  expect(cursorOf(m)?.line).toBe(4);
+  m.keys("gg");
+  const title = await find(m, "OUTLINE");
+  await m.mouse.click(title.x, title.y);
+  const s = m.store.get();
+  expect(s.panels.side.focused).toBe(true);
+  expect(cursorOf(m)?.line).toBe(0);
 });

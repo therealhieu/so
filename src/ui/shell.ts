@@ -159,7 +159,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const focus: View[] = [overlays, cmdline, explorer, side, windows];
       for (const v of views) renderer.root.add(v);
       // Mouse sources, top of the z-order first: the paint order reversed, without toasts.
-      const sources: MouseSource[] = [windows];
+      const sources: MouseSource[] = [
+        cmdline,
+        statusline,
+        side,
+        explorer,
+        bufferline,
+        windows,
+      ];
       const layer = new MouseLayer(
         renderer,
         createMouseRouter({

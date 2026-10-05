@@ -7,6 +7,7 @@ import { isNote, visiblePaths } from "../../core/state/explorer";
 import type {
   AppState,
   ExplorerPrompt,
+  MouseTarget,
   PromptState,
 } from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
@@ -80,6 +81,8 @@ export class ExplorerView extends Renderable {
   private first = 0;
   private w = 0;
   private h = 0;
+  /** The listed rows' paths, "" for a name field or a note line. */
+  private paths: string[] = [];
   private cursorAt: Cursor | undefined;
 
   constructor(
@@ -100,6 +103,7 @@ export class ExplorerView extends Renderable {
     this.width = this.w;
     this.height = this.h;
     const rows = this.rows(s);
+    this.paths = rows.map((r) => r.path);
     const at = selectedRow(rows, ex.cursor);
     const room = this.listRows();
     if (at >= 0 && at < this.first) this.first = at;
@@ -125,6 +129,18 @@ export class ExplorerView extends Renderable {
 
   cursor(): Cursor | undefined {
     return this.cursorAt;
+  }
+
+  /** A listed row's path; the title, frame, and empty rows give "" (focus only). */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    if (!this.visible || x < 0 || x >= this.w || y < 1 || y >= 1 + this.h)
+      return undefined;
+    const box = this.inner();
+    const i = y - (1 + box.y + 1);
+    const listed =
+      x >= box.x && x < box.x + box.w && i >= 0 && i < this.listRows();
+    const path = listed ? (this.paths[this.first + i] ?? "") : "";
+    return { kind: "explorer", path };
   }
 
   /** The tree's area inside the float border, relative to this view. */
