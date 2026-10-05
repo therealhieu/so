@@ -32,6 +32,15 @@ const REFUSED = {
 
 const cells = (t: string) => [...t].length;
 
+/** `text` in pieces of at most `width` cells. */
+function chunks(text: string, width: number): string[] {
+  const c = [...text];
+  const out: string[] = [];
+  for (let i = 0; i < c.length; i += width)
+    out.push(c.slice(i, i + width).join(""));
+  return out;
+}
+
 /** The float: 80% × 70% of the terminal, at least 60 × 12 where it fits. */
 function boxOf(s: AppState): Rect {
   const { cols, rows } = s.terminal;
@@ -281,13 +290,14 @@ export class PickerView extends Renderable {
     });
     if (detail !== "") {
       const w = Math.min(cells(detail), r.w - 5 - label.length);
+      // A detail is often a path: cut in the middle, its end stays.
       if (w > 0)
         drawCells(
           buf,
           theme.style(selected ? "floatSel" : "floatDim"),
           r.x + r.w - w - 1,
           r.y,
-          detail,
+          middle(detail, w),
           w,
         );
     }
@@ -321,14 +331,21 @@ export class PickerView extends Renderable {
     if (target === undefined) {
       // Commands and help preview their description as text.
       const lines = [item.label, "", ...(item.detail ?? "").split("  ")];
-      lines.forEach((l, i) => {
+      // A line without spaces (a path) wraps so all of it shows; prose is cut at the end.
+      const room = Math.max(1, r.w - 1);
+      const rows = lines.flatMap((l, i) =>
+        /\s/.test(l) || cells(l) <= room
+          ? [{ text: l, title: i === 0 }]
+          : chunks(l, room).map((text) => ({ text, title: i === 0 })),
+      );
+      rows.forEach((row, i) => {
         if (i < r.h)
           drawCells(
             buf,
-            theme.style(i === 0 ? "floatTitle" : "float"),
+            theme.style(row.title ? "floatTitle" : "float"),
             r.x,
             r.y + i,
-            ` ${l}`,
+            ` ${row.text}`,
             r.w,
           );
       });

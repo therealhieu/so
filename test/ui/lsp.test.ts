@@ -193,3 +193,37 @@ test("code completion rows show kind, label, and detail", async () => {
   expect(frame).toMatch(/ {3}Struct Vec +alloc::vec/);
   expect(frame).toContain("─ fake ─");
 });
+
+test("the server list keeps the end of a long binary path", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.open("foo.rs", RUST);
+  const binary =
+    "/private/tmp/some/very/long/workspace/folder/name/that/keeps/going/node_modules/.bin/typescript-language-server";
+  m.store.dispatch({
+    type: "lspServer",
+    key: "typescript@/ws",
+    view: {
+      name: "typescript",
+      root: "/ws",
+      state: "ready",
+      binary,
+      features: [],
+      pullDiagnostics: false,
+      completionTriggers: [],
+      signatureTriggers: [],
+    },
+  });
+  m.keys(":LspInfo<CR>");
+  const frame = await m.frame();
+  // The list row cuts the path in the middle and keeps its end.
+  expect(frame).toMatch(/ready \/private\/tmp\/…[^│]*-server │/);
+  // The preview wraps the path, so all of it shows.
+  const preview = frame
+    .split("\n")
+    .map((l) => {
+      const cols = l.split("│");
+      return cols.length >= 4 ? (cols[cols.length - 2]?.trim() ?? "") : "";
+    })
+    .join("");
+  expect(preview).toContain(binary);
+});
