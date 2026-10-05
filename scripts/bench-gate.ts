@@ -15,6 +15,7 @@ export const TARGETS = {
   firstFrame: 250,
   indexReady: 3000,
   indexingKeystrokeP95: 30,
+  lspKeystrokeP95: 16,
 } as const;
 
 /** The bench file for each target, followed by its arguments. */
@@ -28,6 +29,7 @@ const BENCHES: Record<keyof typeof TARGETS, string> = {
   firstFrame: "test/bench/startup.bench.ts --metric firstFrame",
   indexReady: "test/bench/startup.bench.ts --metric indexReady",
   indexingKeystrokeP95: "test/bench/indexing-keystroke.bench.ts",
+  lspKeystrokeP95: "test/bench/lsp-keystroke.bench.ts",
 };
 const RUNS = 5;
 const root = join(import.meta.dir, "..");
