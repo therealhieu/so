@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P2-G1 — implementation`
+- **Current Position:** `P3-G1 — implementation`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -313,67 +313,67 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 - **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
 - **Dependencies:** Part 1
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P2-G1 — Client, host, and wiring
 
 - [x] Context and dependencies confirmed (Part 1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P2-G1-T1` — Protocol packages and converters.
-- [ ] `P2-G1-T2` — Incremental sync and project roots.
-- [ ] `P2-G1-T3` — Fake language server and test support.
-- [ ] `P2-G1-T4` — Client, host attach, and runner routing.
-- [ ] `P2-G1-T5` — Document sync and pull diagnostics.
-- [ ] `P2-G1-T6` — Crash window, progress, and messages.
-- [ ] `P2-G1-T7` — Watched files and edit writes.
-- [ ] `P2-G1-T8` — Lifecycle, main wiring, and the real-server check.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed; `pgrep -f fake-lsp` empty.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementation turn completed.
+- [x] `P2-G1-T1` — Protocol packages and converters.
+- [x] `P2-G1-T2` — Incremental sync and project roots.
+- [x] `P2-G1-T3` — Fake language server and test support.
+- [x] `P2-G1-T4` — Client, host attach, and runner routing.
+- [x] `P2-G1-T5` — Document sync and pull diagnostics.
+- [x] `P2-G1-T6` — Crash window, progress, and messages.
+- [x] `P2-G1-T7` — Watched files and edit writes.
+- [x] `P2-G1-T8` — Lifecycle, main wiring, and the real-server check.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed; `pgrep -f fake-lsp` empty.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md` — `Completed` (remediated)
+- Initial implementation report commit: `00b53a9`
+- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` — `Failed` (VER1 Major flaky order; VER2–VER3 Minor)
+- Verification report commit: `fa8dec1`
+- Remediation: `Completed` — fresh implementer; all three findings Fixed
+- Final implementation report commit: `a151ddf`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `P2-G1-VER1 → 508df8b (T4); P2-G1-VER2 → 11c0e0c (T3/T4 test support; cause: macOS first-exec latency of fresh tsc stub vs 2000 ms probe bound); P2-G1-VER3 → 80affa6 (T4)`
+- Closure evidence: `bun run check` 1203 pass; `bun run test:ci` 249 pass (rerun; one pre-existing out-of-scope timing flake in `test/ui/esc.test.ts` under load ~20); LSP integration suites 10 serial + 12 concurrent runs clean; lsp-real ran (rust-analyzer 1.96.0) and passed; pgrep fake-lsp empty; verification report unchanged; tree clean at a151ddf
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P2-G1-T1` | `Pending implementation` |
-| `P2-G1-T2` | `Pending implementation` |
-| `P2-G1-T3` | `Pending implementation` |
-| `P2-G1-T4` | `Pending implementation` |
-| `P2-G1-T5` | `Pending implementation` |
-| `P2-G1-T6` | `Pending implementation` |
-| `P2-G1-T7` | `Pending implementation` |
-| `P2-G1-T8` | `Pending implementation` |
+| `P2-G1-T1` | `fbf5cdb` |
+| `P2-G1-T2` | `3de75d7` |
+| `P2-G1-T3` | `d474288`, `11c0e0c` |
+| `P2-G1-T4` | `eb1fd79`, `508df8b`, `80affa6` |
+| `P2-G1-T5` | `d5f2cec` |
+| `P2-G1-T6` | `0f0b346` |
+| `P2-G1-T7` | `907e474` |
+| `P2-G1-T8` | `59f4f65` |
 
 ### Part 3 — ui-and-delivery
 
 - **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
 - **Dependencies:** Parts 1 and 2
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P3-G1 — UI, end-to-end, and delivery
 
-- [ ] Context and dependencies confirmed (Parts 1 and 2 accepted).
+- [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P3-G1-T1` — Diagnostic gutter and theme tokens.
 - [ ] `P3-G1-T2` — Info float overlay.
@@ -509,30 +509,30 @@ Expected evidence per case is defined in system design §8 Test Suites and Cases
 | [x] | `V21` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Auto-import in one undo step | pass (P1-G3, verified bf999c9; remediated 9759588) |
 | [x] | `V58` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Cursor at stop; `executeCommand` (auto) last | pass (P1-G3, verified bf999c9; remediated 9759588) |
 | [x] | `V59` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Exactly one apply; none after version change | pass (P1-G3, verified bf999c9; remediated 9759588) |
-| [ ] | `V33` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Versioned `CodeEdit`; outside counted; capabilities flags as designed | `Pending implementation` |
-| [ ] | `V45` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Markdown hover → plain lines, no fences | `Pending implementation` |
-| [ ] | `V57` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | `flattenSnippet` outputs as listed | `Pending implementation` |
-| [ ] | `V64` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | -32801/-32800 quiet; -32603 not | `Pending implementation` |
-| [ ] | `V27` | `bun test src/workspace/lsp/roots.test.ts` (P2-G1-T2) | `findRoot` table results | `Pending implementation` |
-| [ ] | `V28` | `bun test src/workspace/lsp/sync.test.ts` (P2-G1-T2) | 500 seeded sequences rebuild exactly | `Pending implementation` |
-| [ ] | `V2` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | No spawn while off; reload starts then stops | `Pending implementation` |
-| [ ] | `V30` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Process counts and `rootUri` values as designed | `Pending implementation` |
-| [ ] | `V31` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Both servers get `didOpen`; diagnostics merged | `Pending implementation` |
-| [ ] | `V34` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `stop()` ≤ 700 ms; pid gone; exit logged first | `Pending implementation` |
-| [ ] | `V51` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Local `tsc` spawned; gate picks one TS server | `Pending implementation` |
-| [ ] | `V52` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `[{x:1}, null]`; `didChangeConfiguration` after `initialized`; rust-analyzer `initOptions` | `Pending implementation` |
-| [ ] | `V53` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `unavailable` with stderr reason; no toast; spawn count 1; `lsp.unavailable` logged | `Pending implementation` |
-| [ ] | `V41` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | One `didChange` before `hover` | `Pending implementation` |
-| [ ] | `V54` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Pull after open and each change; `previousResultId` echoed | `Pending implementation` |
-| [ ] | `V55` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Refresh → one more pull per open file | `Pending implementation` |
-| [ ] | `V56` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Both kept; close leaves `{push:[…]}` | `Pending implementation` |
-| [ ] | `V7` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | ≤ 3 dispatches; 0 toasts; `lsp.message` logged | `Pending implementation` |
-| [ ] | `V29` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | Five `initialize`; `failed`; one toast; `lsp.crashed` logged without note text | `Pending implementation` |
-| [ ] | `V61` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | Spaced crashes keep restarting; close ones fail | `Pending implementation` |
-| [ ] | `V32` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T7) | One `didChangeWatchedFiles` for matching glob only | `Pending implementation` |
-| [ ] | `V48` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | Disk `b.ts` updated; `a.ts` buffer dirty; "2 files changed" | `Pending implementation` |
-| [ ] | `V63` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | `didChangeWatchedFiles {b.ts, Changed}` after write | `Pending implementation` |
-| [ ] | `V44` | `bun test test/integration/lsp-real.test.ts` (P2-G1-T8) | Ready + non-empty hover; skipped without rust-analyzer (record which) | `Pending implementation` |
+| [x] | `V33` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Versioned `CodeEdit`; outside counted; capabilities flags as designed | pass (convert.test.ts) |
+| [x] | `V45` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Markdown hover → plain lines, no fences | pass (convert.test.ts) |
+| [x] | `V57` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | `flattenSnippet` outputs as listed | pass (convert.test.ts) |
+| [x] | `V64` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | -32801/-32800 quiet; -32603 not | pass (convert.test.ts) |
+| [x] | `V27` | `bun test src/workspace/lsp/roots.test.ts` (P2-G1-T2) | `findRoot` table results | pass (roots.test.ts) |
+| [x] | `V28` | `bun test src/workspace/lsp/sync.test.ts` (P2-G1-T2) | 500 seeded sequences rebuild exactly | pass (sync.test.ts) |
+| [x] | `V2` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | No spawn while off; reload starts then stops | pass (lsp-host.test.ts) |
+| [x] | `V30` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Process counts and `rootUri` values as designed | pass (lsp-host.test.ts; order-independent after 508df8b) |
+| [x] | `V31` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Both servers get `didOpen`; diagnostics merged | pass (lsp-host.test.ts) |
+| [x] | `V34` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `stop()` ≤ 700 ms; pid gone; exit logged first | pass (lsp-host.test.ts; stop waits for all children after 80affa6) |
+| [x] | `V51` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | Local `tsc` spawned; gate picks one TS server | pass (lsp-host.test.ts; stub warmed after 11c0e0c) |
+| [x] | `V52` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `[{x:1}, null]`; `didChangeConfiguration` after `initialized`; rust-analyzer `initOptions` | pass (lsp-host.test.ts) |
+| [x] | `V53` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T4) | `unavailable` with stderr reason; no toast; spawn count 1; `lsp.unavailable` logged | pass (lsp-host.test.ts) |
+| [x] | `V41` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | One `didChange` before `hover` | pass (lsp-host.test.ts) |
+| [x] | `V54` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Pull after open and each change; `previousResultId` echoed | pass |
+| [x] | `V55` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Refresh → one more pull per open file | pass |
+| [x] | `V56` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T5) | Both kept; close leaves `{push:[…]}` | pass |
+| [x] | `V7` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | ≤ 3 dispatches; 0 toasts; `lsp.message` logged | pass (≤ 5 dispatches bound; accepted deviation) |
+| [x] | `V29` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | Five `initialize`; `failed`; one toast; `lsp.crashed` logged without note text | pass |
+| [x] | `V61` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T6) | Spaced crashes keep restarting; close ones fail | pass |
+| [x] | `V32` | `bun test test/integration/lsp-host.test.ts` (P2-G1-T7) | One `didChangeWatchedFiles` for matching glob only | pass |
+| [x] | `V48` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | Disk `b.ts` updated; `a.ts` buffer dirty; "2 files changed" | pass (lsp-edits.test.ts) |
+| [x] | `V63` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | `didChangeWatchedFiles {b.ts, Changed}` after write | pass (lsp-edits.test.ts) |
+| [x] | `V44` | `bun test test/integration/lsp-real.test.ts` (P2-G1-T8) | Ready + non-empty hover; skipped without rust-analyzer (record which) | ran locally with rust-analyzer 1.96.0 → pass; skipped on CI without the binary |
 | [ ] | `V46` | `bun run check` (every task; P2-G1-T1 boundary homes; P3-G1-T7 CI) | biome, tsc, knip zero findings, unit suites, boundaries pass | `Pending implementation` |
 | [ ] | `V47` | `bun test test/ui/lsp.test.ts` (P3-G1-T1) | Gutter sign cell `E` | `Pending implementation` |
 | [ ] | `V38` | `bun test src/ui/input.test.ts` (P3-G1-T4) | ctrl+space → `<C-Space>`; space → `" "` | `Pending implementation` |
@@ -620,12 +620,14 @@ Work: W261005GWLY — lsp-code-intelligence
 - **Subagent Replacements:** `Pending implementation`
 - **Changed Files:** `Pending implementation`
 - **Automated Verification:** `Pending implementation`
-- **Manual Evidence:** `Pending implementation` (P2-G1-T8 one-off `bun bin/so` start with no `[lsp]` and clean quit)
+- **Manual Evidence:** P2-G1-T8: `bun bin/so` in a PTY with no `[lsp]` — first frame at 229 ms, exit 0, no child processes (p2-g1-implementation-report.md); P2-G1 verifier drove `bin/so` with the fake server — `shutdown`/`exit` on `:q`, server gone
 
 ## Blockers and Deviations
 
 - **Deviation (accepted, P1-G2):** `src/core/state/lsp.ts` outside-only definition message is `definition is outside the workspace` without `: <path>`. DES18 text asks for the path, but the design's `LspResult.locations`/`CodeEdit.outside` contract carries only a count; no S/V case asserts the path. Impact: message lacks the path. Resolution: none required in this scope; changing the contract would change approved design.
 - **Deviation (accepted, P1-G3):** design-shape additions recorded in `p1-g3-implementation-report.md` (`startCodeEdit` without `then`, `RenamePrompt.rename.name`, `CodeAccept.key/window/cursor`, `lspResult.now` required, shared `applyBufferEdits` Insert-change merge/cursor shift/overlap refusal); verifier accepted them except those fixed by VER1.
+- **Deviation (accepted, P2-G1):** `LspClient.request(id, path, op)`, `createLspClient` `AbortSignal`, extra log events `lsp.stderr`/`lsp.dropped` (no document text), progress test bound ≤ 5 (design: ≤ 1 dispatch per 100 ms; implementation throttles at 100 ms), watcher Created reported as `Changed`.
+- **Observation (out of scope):** `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" (< 10 ms assertion, unchanged since c98aa19) failed once under load average ~20; passes in isolation. Watch on CI.
 - **Deviation (accepted, P1-G1):** `severityRank` omitted (listed in the design tree only, no shape, no caller; knip forbids unused exports).
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
