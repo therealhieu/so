@@ -7,14 +7,10 @@
   const G = (M.git = {});
 
   /* ---------- gutter signs: one cell, git sign wins over ▕ / ⚠ (DES10) ---------- */
-  // A = symbol style (system-design default); B = LazyVim-like bars (no Nerd Font: ▁ ▔ replace the triangles)
-  G.SIGNS = {
-    A: { add: "+", change: "~", delete: "_", topdelete: "‾", changedelete: "≃", untracked: "┆" },
-    B: { add: "▎", change: "▎", delete: "▁", topdelete: "▔", changedelete: "▎", untracked: "▎" },
-  };
+  // one distinct glyph per kind, so meaning survives NO_COLOR
+  G.SIGNS = { add: "+", change: "~", delete: "_", topdelete: "‾", changedelete: "≃", untracked: "┆" };
   G.KIND_LABEL = { add: "added", change: "changed", delete: "deleted below", topdelete: "deleted at top", changedelete: "changed + deleted", untracked: "untracked" };
-  G.variant = "A";
-  M.gitSign = (kind) => `<span class="gs-${kind}" title="${G.KIND_LABEL[kind]}">${esc(G.SIGNS[G.variant][kind])}</span>`;
+  M.gitSign = (kind) => `<span class="gs-${kind}" title="${G.KIND_LABEL[kind]}">${esc(G.SIGNS[kind])}</span>`;
 
   /* ---------- statusline segment: ⎇ ref [op] +a ~c -r (counts for the active file, zeros hidden) ---------- */
   M.gitSegment = (g) => {
@@ -27,13 +23,7 @@
 
   /* ---------- explorer markers: one cell, precedence conflict > deleted > untracked > modified > staged ---------- */
   G.MARKERS = { conflict: "U", deleted: "D", untracked: "?", modified: "M", staged: "S", contains: "•" };
-  G.markerAlign = "after";
-  M.gitMarker = (r, o) => {
-    const m = `<span class="gm-${r.git}" title="${r.git}">${G.MARKERS[r.git]}</span>`;
-    if (G.markerAlign !== "right") return " " + m;
-    const used = 1 + 2 * r.depth + 2 + r.name.length + (r.dirty ? 2 : 0);
-    return " ".repeat(Math.max(1, (o.width || 30) - used - 2)) + m;
-  };
+  M.gitMarker = (r) => ` <span class="gm-${r.git}" title="${r.git}">${G.MARKERS[r.git]}</span>`;
 
   /* ---------- diff model: base (index) text + edits → buffer lines, hunks, signs, counts ---------- */
   // edit: { at: "line prefix in base" | 0 (file start), del: n, add: [lines], staged?, id }
@@ -84,7 +74,7 @@
     const n = d.hunks.indexOf(h) + 1;
     const range = h.len > 1 ? `lines ${h.start + 1}–${h.start + h.len}` : h.len ? `line ${h.start + 1}` : `after line ${h.first + 1}`;
     const body = [];
-    body.push(`<div class="ln hk-head"> ${G.SIGNS.A[h.kind]} ${esc(G.KIND_LABEL[h.kind])} · ${range} · hunk ${n}/${d.hunks.length}</div>`);
+    body.push(`<div class="ln hk-head"> ${G.SIGNS[h.kind]} ${esc(G.KIND_LABEL[h.kind])} · ${range} · hunk ${n}/${d.hunks.length}</div>`);
     const diff = h.old.map((l) => ["del", l]).concat(h.add.map((l) => ["add", l]));
     const shown = diff.slice(0, maxBody);
     for (const [k, l] of shown) body.push(`<div class="ln hk-${k}">${k === "del" ? "-" : "+"} ${esc(M.pad(l, w - 4))}</div>`);
@@ -134,7 +124,7 @@
   G.linh = `# Linh\n\n<<<<<<< HEAD\nSensors: capacitive, read every 10 min.\n=======\nSensors: resistive, read hourly.\n>>>>>>> feat/garden\n\nSee [[garden-app]].`;
   G.ideas = `# Ideas\n\n- Terminal Kanban for tasks.base\n- Weekly review template\n- Sync attachments with rsync`;
 
-  // explorer tree with git markers; deleted rows are ghost rows kept at their old place
+  // explorer tree with git markers; it lists disk entries only, so a deleted file has no row and its folders show •
   G.tree = (o) => {
     o = o || {};
     const rm = o.roadmap || "modified";
@@ -142,7 +132,6 @@
       { depth: 0, kind: "dir", name: "daily", open: true, path: "daily", git: "contains" },
       { depth: 1, kind: "md", name: "2026-10-01.md", path: "daily/2026-10-01.md" },
       { depth: 1, kind: "md", name: "2026-10-02.md", path: "daily/2026-10-02.md", git: "staged" },
-      { depth: 1, kind: "md", name: "2026-10-03.md", path: "daily/2026-10-03.md", ghost: true, git: "deleted" },
       { depth: 0, kind: "dir", name: "projects", open: true, path: "projects", git: rm ? "contains" : undefined },
       { depth: 1, kind: "md", name: "so-roadmap.md", path: "projects/so-roadmap.md", git: rm || undefined },
       { depth: 1, kind: "md", name: "garden-app.md", path: "projects/garden-app.md" },
@@ -239,7 +228,7 @@
       if (r.path === "inbox.md") r.git = G.markerFor(app, "inbox.md") || undefined;
       if (r.path === app.path && app.dirty) r.dirty = true;
     }
-    if (!app.repo) return rows.filter((r) => !r.ghost).map((r) => Object.assign({}, r, { git: undefined }));
+    if (!app.repo) return rows.map((r) => Object.assign({}, r, { git: undefined }));
     if (app.treeOverride) return app.treeOverride(rows);
     return rows;
   })(G.tree);
@@ -249,7 +238,7 @@
   G.run = {
     tool: (a) => {
       if (!a.repo) { a.msg = G.msg.err("not a git repository"); return; }
-      if (a.busy) { a.msg = G.msg.err("busy"); return; }
+      if (a.busy) { a.msg = G.msg.err("git: another operation is running"); return; }
       if (a.saveFail) { a.msg = G.msg.err(`git tool not started: ${a.path} could not be saved`); return; }
       if (a.toolMissing) { a.msg = G.msg.err("lazygit not found (git.tool)"); return; }
       const go = () => { a.screen = "lazygit"; a.msg = ""; M.render(); };
@@ -331,7 +320,7 @@
       const rows = G.tree(app);
       if (k === "j" || k === "<Down>") { app.treeSel = Math.min(rows.length - 1, app.treeSel + 1); return true; }
       if (k === "k" || k === "<Up>") { app.treeSel = Math.max(0, app.treeSel - 1); return true; }
-      if (k === "<CR>" || k === "l") { const r = rows[app.treeSel]; if (r.kind === "dir") { if (r.path === "projects/ideas") app.ideasOpen = !(app.ideasOpen !== false); } else if (r.ghost) app.msg = G.msg.info(`${r.path} was deleted from disk; restore it in lazygit`); else G.open(app, r.path); return true; }
+      if (k === "<CR>" || k === "l") { const r = rows[app.treeSel]; if (r.kind === "dir") { if (r.path === "projects/ideas") app.ideasOpen = !(app.ideasOpen !== false); } else G.open(app, r.path); return true; }
       if (k === "<Esc>" || k === "q") { app.treeFocus = false; return true; }
       return k !== "<Space>";
     }
@@ -356,7 +345,7 @@
   G.onClick = (app, what) => {
     const [kind, v] = what.split(":");
     if (kind === "backdrop") { app.float = null; return; }
-    if (kind === "tree") { app.treeSel = Number(v); app.treeFocus = true; const r = G.tree(app)[app.treeSel]; if (r.kind !== "dir" && !r.ghost) G.open(app, r.path); }
+    if (kind === "tree") { app.treeSel = Number(v); app.treeFocus = true; const r = G.tree(app)[app.treeSel]; if (r.kind !== "dir") G.open(app, r.path); }
   };
 
   // create a mockup page on the shared workspace; states may set app fields, then call G.sync in apply
@@ -364,8 +353,6 @@
     init: () => { const a = G.init(); G.sync(a); return a; },
     render: G.render, onKey: G.onKey, onClick: G.onClick, leader: G.leaderMap,
     leaderAllowed: (app) => app.screen === "so" && !app.float && !app.treeFocus && !app.pending,
-    controls: [
-      { label: "Sign glyphs", options: [["A", "signs A + ~ _"], ["B", "signs B ▎"]], get: () => G.variant, set: (_, v) => (G.variant = v) },
-    ].concat(cfg.extraControls || []),
+    controls: cfg.extraControls || [],
   }, cfg));
 })();

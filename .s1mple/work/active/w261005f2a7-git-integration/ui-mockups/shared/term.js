@@ -319,7 +319,7 @@
       const ic = r.kind === "dir" ? (r.open ? ICON.diropen : ICON.dir) : ICON[r.kind] || ICON.md;
       const sel = i === o.sel ? " tree-sel" : "";
       const name = r.edit != null ? `<span class="cur-under">${esc(r.edit)}</span><span class="cur"> </span>` : esc(r.name);
-      out.push(`<div class="ln${sel}${r.ghost ? " git-ghost" : ""}" data-click="tree:${i}"> ${"  ".repeat(r.depth)}<span class="${ic[1]}">${ic[0]}</span>${r.kind === "dir" ? `<span class="ic-dir">${name}</span>` : name}${r.dirty ? ' <span class="dirty">●</span>' : ""}${r.git ? Mock.gitMarker(r, o) : ""}${r.note ? ` <span class="dim">${esc(r.note)}</span>` : ""}</div>`);
+      out.push(`<div class="ln${sel}" data-click="tree:${i}"> ${"  ".repeat(r.depth)}<span class="${ic[1]}">${ic[0]}</span>${r.kind === "dir" ? `<span class="ic-dir">${name}</span>` : name}${r.dirty ? ' <span class="dirty">●</span>' : ""}${r.git ? Mock.gitMarker(r, o) : ""}${r.note ? ` <span class="dim">${esc(r.note)}</span>` : ""}</div>`);
     });
     return `<div class="vcol${o.focus ? " tree-focus" : ""}" style="width:${o.width || 30}ch;flex:none;background:var(--bg-dark);overflow:hidden">${out.join("")}</div>`;
   };

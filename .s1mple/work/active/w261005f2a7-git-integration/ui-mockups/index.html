@@ -33,7 +33,7 @@
 </head>
 <body class="hub">
 <div class="wrap">
-  <div class="mid">W261005F2A7 · Git integration · UI mockups · shared R1 · status: In Review (initial set)</div>
+  <div class="mid">W261005F2A7 · Git integration · UI mockups · shared R2 · status: In Review (cycle 1)</div>
   <h1>so — Git awareness and lazygit hand-off</h1>
   <p class="lead">Three interactive mockups cover every surface this work touches: the editor gutter and statusline, the explorer, and the hunk preview float, which-key groups, message-line notices, and the full-screen lazygit hand-off. Everything else is the accepted v1 UI, unchanged.</p>
 
@@ -41,19 +41,19 @@
   <div class="how">
     <div><b>Click a state</b>Each state in the left list jumps to that screen, with a caption and what it traces to.</div>
     <div><b>Then use the keyboard</b>Click the terminal: <kbd>]</kbd><kbd>h</kbd> / <kbd>[</kbd><kbd>h</kbd> move between hunks; <kbd>Space</kbd> <kbd>g</kbd> opens the +git group.</div>
-    <div><b>Compare sign styles</b>The <b>Sign glyphs</b> control switches between symbol signs (A: <code>+ ~ _ ‾ ≃ ┆</code>) and LazyVim-like bars (B: <code>▎ ▁ ▔</code>). Check both in NO_COLOR.</div>
+    <div><b>Check NO_COLOR</b>Each sign kind has its own glyph (<code>+ ~ _ ‾ ≃ ┆</code>) and each explorer state its own marker, so switch the theme to NO_COLOR and every kind should stay distinct.</div>
     <div><b>Offline</b>No network requests. The sample notes folder is the v1 one, with Git changes added.</div>
   </div>
 
   <h2>Mockups</h2>
   <div class="grid">
-    <a class="card" href="m1-editor-git.html"><h3>M1 · Editor: signs, hunks, statusline</h3><div class="mid">W261005F2A7-M1 · R1 · Draft</div>
+    <a class="card" href="m1-editor-git.html"><h3>M1 · Editor: signs, hunks, statusline</h3><div class="mid">W261005F2A7-M1 · R2 · Draft</div>
       <p>Six sign kinds in the one-cell gutter, ]h / [h, stage and reset, the ⎇ statusline segment (branch, detached, rebasing, merging, unborn), narrow drop, and the no-repository baseline.</p>
       <div class="refs">REQ1@R2 · REQ4@R2 · REQ5@R2 · REQ7@R2 · REQ9@R1 · DES10 · DES11</div></a>
-    <a class="card" href="m2-explorer-git.html"><h3>M2 · Explorer: Git markers</h3><div class="mid">W261005F2A7-M2 · R1 · Draft</div>
-      <p>M S ? D U markers and • on folders, per-file untracked in a new folder, deleted ghost rows, marker position after the name or right-aligned.</p>
+    <a class="card" href="m2-explorer-git.html"><h3>M2 · Explorer: Git markers</h3><div class="mid">W261005F2A7-M2 · R2 · Draft</div>
+      <p>M S ? U markers right after the name and • on folders, per-file untracked in a new folder, and a deleted tracked file shown only by its folder's •.</p>
       <div class="refs">REQ4@R2 · DES10</div></a>
-    <a class="card" href="m3-git-floats-notices.html"><h3>M3 · Hunk preview, notices, lazygit</h3><div class="mid">W261005F2A7-M3 · R1 · Draft</div>
+    <a class="card" href="m3-git-floats-notices.html"><h3>M3 · Hunk preview, notices, lazygit</h3><div class="mid">W261005F2A7-M3 · R2 · Draft</div>
       <p>Hunk preview float (change, delete, long, narrow), which-key +git / +hunk, blame, every Git notice, and the save → lazygit → resume hand-off.</p>
       <div class="refs">REQ1@R2 · REQ2@R2 · REQ3@R1 · REQ4@R2 · REQ7@R2 · REQ8@R1 · DES9 · DES11</div></a>
   </div>

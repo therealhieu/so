@@ -29,9 +29,6 @@
 .gm-deleted { color: var(--git-delete); }
 .gm-conflict { color: var(--git-conflict); font-weight: bold; }
 .gm-contains { color: var(--fg-dim); }
-.git-ghost .ic-md, .git-ghost .ic-text { opacity: .55; }
-.git-ghost { text-decoration: line-through; text-decoration-color: var(--git-delete); }
-.git-ghost .gm-deleted { text-decoration: none; display: inline-block; }
 
 /* statusline git segment */
 .gseg .gref { color: var(--git-branch); }
@@ -51,4 +48,3 @@
 .lg-active { color: var(--ok); }
 
 .theme-nocolor .gm-conflict, .theme-nocolor .gseg .gop { text-decoration: underline; }
-.theme-nocolor .git-ghost { opacity: .62; }
