@@ -19,6 +19,8 @@ export type MouseSource = {
   targetAt(x: number, y: number): MouseTarget | undefined;
   /** Where a drag that started on this source at `from` is now, clamped to it. */
   dragAt?(x: number, y: number, from: MouseTarget): MouseTarget | undefined;
+  /** Answers only the wheel; presses pass through to the sources below. */
+  readonly wheelOnly?: boolean;
 };
 
 /** The parts of an OpenTUI mouse event the router reads. */
@@ -44,9 +46,9 @@ const isWindowText = (t: MouseTarget) =>
 /**
  * Turn OpenTUI mouse events into core mouse actions: drop everything while
  * `enabled()` is false and every button but the left one, ask `sources`
- * (top of the z-order first) for the target, count clicks on one cell, and
- * keep a drag with the source its press landed on, sending each new drag
- * target once.
+ * (top of the z-order first, skipping wheel-only ones for a press) for the
+ * target, count clicks on one cell, and keep a drag with the source its
+ * press landed on, sending each new drag target once.
  */
 export function createMouseRouter(o: {
   sources: readonly MouseSource[];
@@ -58,8 +60,9 @@ export function createMouseRouter(o: {
   let origin: { source: MouseSource; target: MouseTarget } | undefined;
   let lastDrag: string | undefined;
 
-  const resolve = (x: number, y: number) => {
+  const resolve = (x: number, y: number, wheel = false) => {
     for (const source of o.sources) {
+      if (source.wheelOnly && !wheel) continue;
       const target = source.targetAt(x, y);
       if (target !== undefined) return { source, target };
     }
@@ -74,7 +77,7 @@ export function createMouseRouter(o: {
       switch (e.type) {
         case "scroll": {
           const step = WHEEL[e.scroll?.direction ?? ""];
-          const hit = resolve(e.x, e.y);
+          const hit = resolve(e.x, e.y, true);
           if (step === undefined || hit === undefined) return;
           send({ kind: "wheel", target: hit.target, ...step });
           return;

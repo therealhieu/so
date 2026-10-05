@@ -139,6 +139,22 @@ test("the wheel dispatches one notch for the source under the pointer", () => {
   ]);
 });
 
+test("a wheel-only source answers the wheel and lets presses through", () => {
+  const toast: MouseSource = {
+    wheelOnly: true,
+    targetAt: (x) => (x < 5 ? { kind: "inert" } : undefined),
+  };
+  const r = setup([toast, editor]);
+  r.handle(ev("scroll", 2, 3, { scroll: { direction: "down", delta: 1 } }));
+  r.handle(ev("scroll", 7, 3, { scroll: { direction: "down", delta: 1 } }));
+  r.handle(ev("down", 2, 3));
+  expect(r.events()).toEqual([
+    { kind: "wheel", target: { kind: "inert" }, dx: 0, dy: 1 },
+    { kind: "wheel", target: text(3, 7), dx: 0, dy: 1 },
+    { kind: "press", target: text(3, 2), clicks: 1, ctrl: false },
+  ]);
+});
+
 test("clicks on the same cell within the click window count up and wrap", () => {
   const r = setup([editor]);
   const clicks = () =>

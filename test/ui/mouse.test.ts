@@ -422,3 +422,34 @@ test("clicks and the wheel inside which-key do nothing and a click outside close
   expect(m.store.get().overlay.kind).toBe("none");
   expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
 });
+
+test("the wheel over a toast does nothing and a click there reaches the window", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.keys("<leader>e");
+  const text = Array.from({ length: 60 }, (_, i) => `line ${i + 1}`).join("\n");
+  m.open("long.md", `${text}\n`);
+  m.store.dispatch({
+    type: "fsResult",
+    op: { kind: "trash", from: "todo.md" },
+    ok: false,
+    reason: "permission denied",
+  });
+  const toast = await find(m, "✗ Move to Trash failed");
+  expect(toast.y).toBeGreaterThan(0);
+  const scroll = () => {
+    const s = m?.store.get();
+    return s?.windows.byId[s.windows.active]?.content.scroll;
+  };
+
+  await m.mouse.scroll(toast.x + 2, toast.y, "down");
+  expect(scroll()).toBe(0);
+  // Beside the toast the wheel still scrolls the window.
+  await m.mouse.scroll(10, toast.y, "down");
+  expect(scroll()).toBe(3);
+
+  m.keys("gg");
+  await m.frame();
+  await m.mouse.click(toast.x + 2, toast.y);
+  expect(cursorOf(m)?.line).toBe(toast.y - 1);
+  expect(scroll()).toBe(0);
+});

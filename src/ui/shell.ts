@@ -145,6 +145,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       ]);
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);
+      const toasts = new ToastStack(renderer);
       const views: View[] = [
         bufferline,
         windows,
@@ -152,15 +153,16 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         side,
         statusline,
         cmdline,
-        new ToastStack(renderer),
+        toasts,
         overlays,
       ];
       // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
       const focus: View[] = [overlays, cmdline, explorer, side, windows];
       for (const v of views) renderer.root.add(v);
-      // Mouse sources, top of the z-order first: the paint order reversed, without toasts.
+      // Mouse sources, top of the z-order first: the paint order reversed.
       const sources: MouseSource[] = [
         overlays,
+        toasts,
         cmdline,
         statusline,
         side,
