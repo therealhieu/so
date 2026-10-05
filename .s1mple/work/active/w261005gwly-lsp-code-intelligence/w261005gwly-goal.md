@@ -2,9 +2,9 @@
 
 ## Status
 
-- **State:** `Ready`
-- **Current Position:** `Not started`
-- **Last Updated:** `Not started`
+- **State:** `In Progress`
+- **Current Position:** `P1-G1 — implementation`
+- **Last Updated:** `2026-10-05`
 
 ## Sources
 
@@ -181,11 +181,11 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 - **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
 - **Dependencies:** None
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P1-G1 — Contracts
 
-- [ ] Context and dependencies confirmed.
+- [x] Context and dependencies confirmed.
 - [ ] Implementation turn completed.
 - [ ] `P1-G1-T1` — `[lsp]` config schema and built-in table.
 - [ ] `P1-G1-T2` — Diagnostic decoration provider.
