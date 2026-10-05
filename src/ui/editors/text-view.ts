@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { hunkSigns } from "../../core/features/git/signs";
 import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
@@ -47,9 +48,12 @@ import type { WindowView } from "./registry";
 
 const NO_FOLDS: ReadonlySet<number> = new Set();
 
-/** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
-const gutterWidth = (lineCount: number) =>
-  Math.max(4, String(lineCount).length) + 2;
+/**
+ * A git change cell inside a repository, line numbers (room for the largest,
+ * at least 4 digits), a space, and the sign cell.
+ */
+const gutterWidth = (lineCount: number, change: boolean) =>
+  (change ? 1 : 0) + Math.max(4, String(lineCount).length) + 2;
 
 /**
  * The screen row where `line` starts in `lines`: its own text row, else the
@@ -288,6 +292,8 @@ export class EditorView extends Renderable implements WindowView {
   /** The rows `show` laid out for this frame, and the line after the last one laid out. */
   private lines: RenderLine[] = [];
   private laidTo = 0;
+  /** Whether this frame's gutter has the git change column: inside a repository. */
+  private change = false;
 
   constructor(
     ctx: RenderContext,
@@ -313,6 +319,7 @@ export class EditorView extends Renderable implements WindowView {
     this.cursorAt = undefined;
     this.skipRows = 0;
     this.lines = [];
+    this.change = s.git.repo !== null;
     const w = s.windows.byId[id];
     const b = w && s.buffers[w.content.bufferId];
     if (w === undefined || b === undefined) return;
@@ -332,7 +339,7 @@ export class EditorView extends Renderable implements WindowView {
       s.vim.mode === "insert"
         ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
         : cursorDisplayCol(text, col, tabWidth);
-    const gw = gutterWidth(b.text.lineCount);
+    const gw = gutterWidth(b.text.lineCount, this.change);
     const textW = Math.max(1, r.w - gw);
     let k = 0;
     let x = dc;
@@ -454,7 +461,7 @@ export class EditorView extends Renderable implements WindowView {
     const rows = this.textRows();
     if (s === undefined || b === undefined || rows <= 0) return undefined;
     const { tabWidth, wrap } = s.config.editor;
-    const gw = gutterWidth(b.text.lineCount);
+    const gw = gutterWidth(b.text.lineCount, this.change);
     const textX = this.rect.x + gw;
     const row = y - this.rect.y - (this.winbar ? 1 : 0);
     const shown = rowAt(this.lines, row, {
@@ -517,7 +524,8 @@ export class EditorView extends Renderable implements WindowView {
       y++;
     }
     const rows = this.textRows();
-    const gw = gutterWidth(b?.text.lineCount ?? 0);
+    const change = this.change;
+    const gw = gutterWidth(b?.text.lineCount ?? 0, change);
     const textW = Math.max(1, this.width - gw);
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
     const active = this.windowId === s.windows.active;
@@ -537,14 +545,31 @@ export class EditorView extends Renderable implements WindowView {
             : row.sourceLine + 1,
         );
       };
-      const gutter = (text: string, at: number, sign?: Sign) => {
+      // The change cell, then the number and sign cells; the change cell
+      // shows a git sign on a line's first screen row only.
+      const gutter = (
+        text: string,
+        at: number,
+        sign?: Sign,
+        changeSign?: Sign,
+      ) => {
+        if (change)
+          drawCells(
+            buf,
+            theme.style(changeSign?.style ?? "gutter"),
+            this.x,
+            y + at,
+            changeSign?.text ?? "",
+            1,
+          );
+        const nx = this.x + (change ? 1 : 0);
         drawCells(
           buf,
           theme.style(isCursor && text !== "" ? "gutterCursor" : "gutter"),
-          this.x,
+          nx,
           y + at,
-          `${text.padStart(gw - 2)} `,
-          gw - 1,
+          `${text.padStart(gw - (change ? 3 : 2))} `,
+          gw - (change ? 2 : 1),
         );
         drawCells(
           buf,
@@ -557,7 +582,7 @@ export class EditorView extends Renderable implements WindowView {
       };
       if (row.widget !== undefined && row.spans.length === 0) {
         const height = Math.min(Math.max(1, row.widget.rows), rows - i);
-        gutter(number(), i, row.sign);
+        gutter(number(), i, row.sign, row.changeSign);
         for (let r = 1; r < height; r++) gutter("", i + r);
         const paint = widgetPainters.get(row.widget.type) ?? paintMissing;
         paint(
@@ -581,7 +606,7 @@ export class EditorView extends Renderable implements WindowView {
       const skip = row.sourceLine === this.topLine ? this.skipRows : 0;
       for (let k = skip; k < starts.length && i < rows; k++, i++) {
         const start = starts[k] ?? 0;
-        if (k === 0) gutter(number(), i, row.sign);
+        if (k === 0) gutter(number(), i, row.sign, row.changeSign);
         else gutter("", i);
         const end = starts[k + 1];
         paintLine(
@@ -664,11 +689,15 @@ export class EditorView extends Renderable implements WindowView {
                 host,
               ),
             );
+      const git = this.change
+        ? [hunkSigns(s.git.files[b.path]?.hunks ?? [])]
+        : [];
       const providers = [
         highlightMarks(ft?.highlighter),
         ...(spec?.decorations ?? []),
         searchMarks(s.vim.search),
         selectionMarks(selection),
+        ...git,
       ];
       // Lines a view hides take no rows, so the visible lines grow by the
       // rows still empty, a few times at most: never more lines than rows.
