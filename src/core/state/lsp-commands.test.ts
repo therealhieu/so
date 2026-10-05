@@ -123,6 +123,51 @@ test("formatting options follow the buffer's indentation", () => {
   });
 });
 
+test("formatting options ignore doc comments and aligned continuation lines", () => {
+  const buffer = (text: string) =>
+    run(fresh(), {
+      type: "fileLoaded",
+      path: "a.ts",
+      file: textFile(text),
+    }).state.buffers[1] as BufferState;
+  const fourSpaces = [
+    "/**",
+    " * doc",
+    " */",
+    "function a() {",
+    "    b(c,",
+    "      d);",
+    "    if (e) {",
+    "        f();",
+    "    }",
+    "}",
+    "",
+  ].join("\n");
+  expect(formattingOptions(buffer(fourSpaces), 8)).toEqual({
+    tabSize: 4,
+    insertSpaces: true,
+  });
+  const twoSpaces = [
+    "function a() {",
+    "  if (b) {",
+    "    c();",
+    "  }",
+    "  return f(a,",
+    "           b);",
+    "}",
+    "",
+  ].join("\n");
+  expect(formattingOptions(buffer(twoSpaces), 8)).toEqual({
+    tabSize: 2,
+    insertSpaces: true,
+  });
+  const tabs = "/*\n * doc\n */\nfunc a() {\n\tb()\n}\n";
+  expect(formattingOptions(buffer(tabs), 8)).toEqual({
+    tabSize: 8,
+    insertSpaces: false,
+  });
+});
+
 test(":Format sends a formatting request with the buffer's options", () => {
   const s = run(withDiagnostics([], "fn a() {\n  b();\n}\n"), {
     type: "lspServer",

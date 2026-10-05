@@ -114,26 +114,40 @@ function rename(c: CommandContext): Result {
 
 /**
  * Indentation for the formatter: tabs when the first indented line starts
- * with one, else spaces as wide as the narrowest indent (`tabWidth` when
- * nothing is indented).
+ * with one, else spaces as wide as the most common indent step between
+ * consecutive lines (`tabWidth` when nothing is indented). Blank lines and
+ * block-comment continuations (` * text`) are skipped; a rare aligned
+ * continuation loses to the step most lines use, and a tie goes to the
+ * smaller step.
  */
 export function formattingOptions(
   b: BufferState,
   tabWidth: number,
 ): { tabSize: number; insertSpaces: boolean } {
-  let narrowest = Number.POSITIVE_INFINITY;
+  const steps = new Map<number, number>();
+  let previous = 0;
+  let indented = false;
   for (let i = 0; i < b.text.lineCount; i++) {
     const line = b.text.line(i);
-    if (line[0] === "\t" && narrowest === Number.POSITIVE_INFINITY)
-      return { tabSize: tabWidth, insertSpaces: false };
-    const n = line.length - line.trimStart().length;
-    if (n > 0 && n < line.length && line[0] === " ")
-      narrowest = Math.min(narrowest, n);
+    const text = line.trimStart();
+    if (text === "" || text.startsWith("*")) continue;
+    const indent = line.length - text.length;
+    if (indent > 0 && !indented) {
+      if (line[0] === "\t") return { tabSize: tabWidth, insertSpaces: false };
+      indented = true;
+    }
+    if (indent > previous && line[0] === " ")
+      steps.set(indent - previous, (steps.get(indent - previous) ?? 0) + 1);
+    previous = indent;
   }
-  return {
-    tabSize: Number.isFinite(narrowest) ? narrowest : tabWidth,
-    insertSpaces: true,
-  };
+  let tabSize = tabWidth;
+  let best = 0;
+  for (const [step, count] of steps)
+    if (count > best || (count === best && step < tabSize)) {
+      tabSize = step;
+      best = count;
+    }
+  return { tabSize, insertSpaces: true };
 }
 
 /** `:Format`: the Visual selection, or the whole buffer. */
