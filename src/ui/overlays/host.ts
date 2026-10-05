@@ -76,15 +76,21 @@ type OverlayView = View & {
 
 /**
  * Paints the one open overlay above the body. It holds one view per overlay
- * kind; each shows itself only while its kind is open.
+ * kind; each shows itself only while its kind is open. The non-modal `float`
+ * paints below them and shows whenever its own state is set.
  */
 export class OverlayHost extends Renderable {
   private readonly views: OverlayView[];
   private open: AppState["overlay"]["kind"] = "none";
 
-  constructor(ctx: RenderContext, views: OverlayView[] = []) {
+  constructor(
+    ctx: RenderContext,
+    views: OverlayView[] = [],
+    private readonly float?: View,
+  ) {
     super(ctx, { position: "absolute", left: 0, top: 0, zIndex: 50 });
     this.views = views;
+    if (float !== undefined) this.add(float);
     for (const v of views) this.add(v);
   }
 
@@ -92,21 +98,25 @@ export class OverlayHost extends Renderable {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
     this.open = s.overlay.kind;
-    this.visible = this.open !== "none";
+    this.float?.update(s, lc);
     for (const v of this.views) v.update(s, lc);
+    this.visible = this.open !== "none" || this.float?.visible === true;
   }
 
   /**
    * What the open overlay has under the cell. Outside its float the cell is
    * `outside`, so nothing below answers, except for completion, which leaves
    * the cell to the body. Overlays without `itemAt` are `outside` everywhere.
+   * With no overlay open, the non-modal float is the only answer.
    */
   targetAt(x: number, y: number): MouseTarget | undefined {
-    if (this.open === "none") return undefined;
+    const float = this.float?.targetAt?.(x, y);
+    if (this.open === "none") return float;
     for (const v of this.views) {
       const t = v.visible ? v.itemAt?.(x, y) : undefined;
       if (t !== undefined) return t;
     }
+    if (float !== undefined) return float;
     return this.open === "completion" ? undefined : { kind: "outside" };
   }
 
@@ -121,7 +131,7 @@ export class OverlayHost extends Renderable {
   }
 
   cursor(): Cursor | undefined {
-    if (!this.visible) return undefined;
+    if (this.open === "none") return undefined;
     return this.views.map((v) => v.cursor?.()).find((c) => c !== undefined);
   }
 

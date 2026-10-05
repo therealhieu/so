@@ -1,6 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 import { TextAttributes } from "@opentui/core";
 import type { Diagnostic } from "../../src/core/kernel/view/diagnostics";
+import type { LspResult } from "../../src/core/state/lsp-types";
+import type { Effect } from "../../src/core/state/types";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
@@ -58,4 +60,81 @@ test("a shown diagnostic underlines its range and nothing else", async () => {
   expect(underlined(x)).toBe(true);
   expect(underlined(x + 1)).toBe(false);
   expect(underlined(x - 2)).toBe(false);
+});
+
+/** foo.rs attached to a ready server, then `keys` and the answer to the request they send. */
+async function answered(keys: string, result: LspResult): Promise<Mounted> {
+  const x = await mountShell({ cols: 100, rows: 24 });
+  x.open("foo.rs", RUST);
+  x.store.dispatch({
+    type: "lspServer",
+    key: "fake@/ws",
+    view: {
+      name: "fake",
+      root: "/ws",
+      state: "ready",
+      features: ["hover", "signature"],
+      pullDiagnostics: false,
+      completionTriggers: [],
+      signatureTriggers: ["("],
+    },
+  });
+  x.store.dispatch({ type: "lspAttached", path: "foo.rs", keys: ["fake@/ws"] });
+  x.keys(keys);
+  const sent = x.effects.find(
+    (e): e is Extract<Effect, { kind: "lsp" }> => e.kind === "lsp",
+  );
+  if (sent === undefined) throw new Error("no request sent");
+  x.store.dispatch({ type: "lspResult", id: sent.id, result, now: x.now() });
+  return x;
+}
+
+/** The cursor on `z`, and a hover answered with `text`. */
+const withHover = (text: string) => answered("2j12lK", { kind: "hover", text });
+
+test("a hover float paints below the cursor and ignores a click", async () => {
+  m = await withHover("let z: i32\n\nThe answer.");
+  expect(m.store.get().lsp.float?.kind).toBe("hover");
+  const lines = (await m.frame()).split("\n");
+  const cursorRow = lines.findIndex((l) => l.includes("let y = z;"));
+  const below = lines.slice(cursorRow + 1, cursorRow + 6).join("\n");
+  expect(below).toContain("let z: i32");
+  expect(below).toContain("The answer.");
+  const y = lines.findIndex((l) => l.includes("let z: i32"));
+  const x = (lines[y] ?? "").indexOf("let z: i32");
+  const before = m.store.get();
+  await m.mouse.click(x + 2, y);
+  expect(m.store.get()).toBe(before);
+});
+
+test("a long hover is wrapped within 80 columns and 12 rows", async () => {
+  const long = Array.from({ length: 40 }, (_, i) => `word${i}`).join(" ");
+  m = await withHover(Array.from({ length: 20 }, () => long).join("\n"));
+  const lines = (await m.frame()).split("\n");
+  const top = lines.findIndex((l) => l.includes("╭"));
+  const bottom = lines.findIndex((l, i) => i > top && l.includes("╰"));
+  expect(top).toBeGreaterThan(0);
+  expect(bottom - top + 1).toBeLessThanOrEqual(12);
+  const row = lines[top] ?? "";
+  const width = row.lastIndexOf("╮") - row.indexOf("╭") + 1;
+  expect(width).toBeLessThanOrEqual(80);
+  expect(width).toBeGreaterThan(40);
+});
+
+test("signature help marks the active parameter", async () => {
+  const label = "add(a: i32, b: i32) -> i32";
+  m = await answered("2jA(", {
+    kind: "signature",
+    label,
+    active: { start: 12, end: 18 },
+  });
+  expect(m.store.get().lsp.float?.kind).toBe("signature");
+  const lines = (await m.frame()).split("\n");
+  const y = lines.findIndex((l) => l.includes(label));
+  const x = (lines[y] ?? "").indexOf(label);
+  const spans = m.t.captureSpans().lines;
+  const bg = (cx: number) => cellStyle(spans, cx, y)?.bg;
+  expect(bg(x + 12)).not.toBe(bg(x + 4));
+  expect(bg(x + 17)).toBe(bg(x + 12));
+  expect(bg(x + 18)).toBe(bg(x + 4));
 });

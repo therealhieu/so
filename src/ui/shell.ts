@@ -16,6 +16,7 @@ import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
+import { LspFloatView } from "./overlays/lsp-float";
 import { ToastStack } from "./overlays/notify";
 import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
@@ -139,15 +140,19 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const explorer = new ExplorerView(renderer);
       const cmdline = new CommandLine(renderer, ctx);
       const side = new SidePanelView(renderer);
-      const overlays = new OverlayHost(renderer, [
-        new PromptView(renderer),
-        new ConflictView(renderer),
-        new WhichKeyView(renderer, ctx),
-        new PickerView(renderer, ctx),
-        new CompletionView(renderer, () => windows.cursor()),
-        new CalendarOverlay(renderer),
-        new ZoomOverlay(renderer, ctx),
-      ]);
+      const overlays = new OverlayHost(
+        renderer,
+        [
+          new PromptView(renderer),
+          new ConflictView(renderer),
+          new WhichKeyView(renderer, ctx),
+          new PickerView(renderer, ctx),
+          new CompletionView(renderer, () => windows.cursor()),
+          new CalendarOverlay(renderer),
+          new ZoomOverlay(renderer, ctx),
+        ],
+        new LspFloatView(renderer, () => windows.cursor()),
+      );
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);
       const toasts = new ToastStack(renderer);
