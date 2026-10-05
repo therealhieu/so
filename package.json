@@ -13,7 +13,8 @@
     "test:ci": "bun test test/ui test/integration test/e2e",
     "bench": "bun scripts/bench-gate.ts",
     "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so",
-    "record:vim": "bun scripts/record-vim.ts"
+    "record:vim": "bun scripts/record-vim.ts",
+    "sandbox": "bun scripts/sandbox.ts"
   },
   "dependencies": {
     "@opentui/core": "0.5.14",
