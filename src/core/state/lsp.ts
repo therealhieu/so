@@ -100,12 +100,18 @@ export function request(
         : pickServer(s, b.path, feature);
   if (b === undefined || key === undefined) {
     if (auto) return none(s);
-    return keys.length === 0 || o.key !== undefined
-      ? message(s, `no language server for ${b?.fileType ?? "this window"}`)
-      : message(
-          s,
-          `${feature}: not supported by ${keys.map((k) => serverName(s, k)).join(", ")}`,
-        );
+    if (keys.length === 0 || o.key !== undefined)
+      return message(
+        s,
+        `no language server for ${b?.fileType ?? "this window"}`,
+      );
+    // A starting server's features are not known yet.
+    const starting = keys.filter((k) => s.lsp.servers[k]?.state === "starting");
+    const names = (ks: ServerKey[]) =>
+      ks.map((k) => serverName(s, k)).join(", ");
+    return starting.length === keys.length
+      ? message(s, `${feature}: ${names(starting)} is starting`)
+      : message(s, `${feature}: not supported by ${names(keys)}`);
   }
   const cleared =
     o.replace === true ? dropPending(s, (p) => p.feature === feature) : none(s);

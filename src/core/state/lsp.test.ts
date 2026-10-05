@@ -114,6 +114,12 @@ test("a server that is still starting is passed over", () => {
   expect(lspEffects(hover(s).effects)).toMatchObject([{ key: "b@/ws" }]);
 });
 
+test("a request while every server is still starting says so", () => {
+  const r = hover(attached([{ ...ready("a", []), state: "starting" }]));
+  expect(messageOf(r.state)).toBe("hover: a is starting");
+  expect(r.effects).toEqual([]);
+});
+
 test("a feature no attached server supports explains why", () => {
   const r = hover(attached([ready("a", ["definition"])]));
   expect(messageOf(r.state)).toBe("hover: not supported by a");
