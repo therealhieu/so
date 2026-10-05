@@ -10,6 +10,7 @@ import type { DecorationProvider } from "../../core/kernel/view/decorations";
 import {
   type Diagnostic,
   diagnosticMarks,
+  endOfLineDiagnosticMarks,
 } from "../../core/kernel/view/diagnostics";
 import {
   displayColAt,
@@ -699,6 +700,9 @@ export class EditorView extends Renderable implements WindowView {
         highlightMarks(ft?.highlighter),
         ...(spec?.decorations ?? []),
         diagnosticMarks(s.lsp.shown[b.path] ?? NO_DIAGNOSTICS),
+        ...(s.config.lsp.endOfLineDiagnostics
+          ? [endOfLineDiagnosticMarks(s.lsp.shown[b.path] ?? NO_DIAGNOSTICS)]
+          : []),
         searchMarks(s.vim.search),
         selectionMarks(selection),
       ];

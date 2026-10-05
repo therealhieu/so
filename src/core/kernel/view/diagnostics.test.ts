@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test";
 import { createTextBuffer } from "../text/text-buffer";
 import type { Decoration } from "./decorations";
-import { type Diagnostic, diagnosticMarks } from "./diagnostics";
+import {
+  type Diagnostic,
+  diagnosticMarks,
+  endOfLineDiagnosticMarks,
+} from "./diagnostics";
 import { layoutText } from "./text-view";
 import type { LineRange, TextView } from "./types";
 
@@ -132,4 +136,46 @@ test("only diagnostics starting on visible lines are drawn", () => {
   ])(view(source, { from: 5, to: 10 }), undefined);
   expect(lineDecos(decos).map((d) => d.kind === "line" && d.line)).toEqual([8]);
   expect(marks(decos)).toHaveLength(1);
+});
+
+test("the most severe diagnostic of a line follows it, with a count of the rest", () => {
+  const v = view(["let y = z;", "ok", "let w = q;"]);
+  const worst: Diagnostic = {
+    ...diag(1, [0, 8], [0, 9]),
+    message: "cannot find value `z`\nhelp: a local variable exists",
+  };
+  const rows = layoutText(
+    v,
+    [
+      endOfLineDiagnosticMarks([
+        diag(4, [0, 4], [0, 5]),
+        worst,
+        diag(2, [2, 8], [2, 9]),
+      ]),
+    ],
+    undefined,
+  );
+  const tail = (i: number) => rows[i]?.spans.at(-1);
+  expect(tail(0)).toEqual({
+    text: "  ● cannot find value `z` (+1)",
+    style: "diagnosticTextError",
+    virtual: "eol",
+    col: 10,
+    inserted: true,
+  });
+  expect(rows[1]?.spans).toEqual([{ text: "ok", style: "text", col: 0 }]);
+  expect(tail(2)?.style).toBe("diagnosticTextWarn");
+  // The line's own text is unchanged.
+  expect(rows[0]?.spans[0]).toEqual({
+    text: "let y = z;",
+    style: "text",
+    col: 0,
+  });
+});
+
+test("diagnostics outside the visible lines draw no end-of-line text", () => {
+  const v = view(["a", "b", "c"], { from: 1, to: 2 });
+  expect(
+    endOfLineDiagnosticMarks([diag(1, [0, 0], [0, 1])])(v, undefined),
+  ).toEqual([]);
 });

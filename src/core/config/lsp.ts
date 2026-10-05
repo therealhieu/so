@@ -162,6 +162,8 @@ export const LspConfigSchema = z
   .strictObject({
     enabled: z.boolean().default(false),
     formatOnSave: z.boolean().default(false),
+    inlayHints: z.boolean().default(true),
+    endOfLineDiagnostics: z.boolean().default(true),
     servers: z.record(z.string().min(1), ServerEntry).default({}),
   })
   .superRefine((c, ctx) => {

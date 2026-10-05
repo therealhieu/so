@@ -27,10 +27,20 @@ test("language servers are off when the config has no lsp section", () => {
   expect(parsed("").lsp).toEqual({
     enabled: false,
     formatOnSave: false,
+    inlayHints: true,
+    endOfLineDiagnostics: true,
     servers: {},
   });
   expect(defaults.lsp.enabled).toBe(false);
   expect(defaults.lsp.formatOnSave).toBe(false);
+});
+
+test("inlay hints and end-of-line diagnostics can be turned off", () => {
+  const lsp = parsed(
+    "[lsp]\ninlayHints = false\nendOfLineDiagnostics = false\n",
+  ).lsp;
+  expect(lsp.inlayHints).toBe(false);
+  expect(lsp.endOfLineDiagnostics).toBe(false);
 });
 
 test("without overrides the built-in servers resolve in table order", () => {

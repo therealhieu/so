@@ -237,6 +237,14 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   diagnosticWarn: ["warn", "bg", UNDERLINE, UNDERLINE],
   diagnosticInfo: ["info", "bg", UNDERLINE, UNDERLINE],
   diagnosticHint: ["fg-muted", "bg", UNDERLINE, UNDERLINE | DIM],
+  // A diagnostic's message after its line, prefixed by ●.
+  diagnosticTextError: ["error", "bg", 0, BOLD],
+  diagnosticTextWarn: ["warn", "bg", 0, 0],
+  diagnosticTextInfo: ["info", "bg", 0, DIM],
+  diagnosticTextHint: ["fg-muted", "bg", 0, DIM],
+  // Language-server hints between the characters, and uses of the symbol under the cursor.
+  inlayHint: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
+  lspReference: ["fg", "bg-hl", 0, UNDERLINE],
   imagePlaceholder: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
   // Bases views: the focused cell or card is reversed and marked with ▌;
   // lane dots carry their names, never colour alone.

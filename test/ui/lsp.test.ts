@@ -227,3 +227,37 @@ test("the server list keeps the end of a long binary path", async () => {
     .join("");
   expect(preview).toContain(binary);
 });
+
+test("a diagnostic's message follows its line, cut at the window edge", async () => {
+  m = await withError();
+  const row = (await m.frame())
+    .split("\n")
+    .find((l) => l.includes("let y = z;"));
+  expect(row).toContain("let y = z;  ● cannot find value `z` in this scope");
+  // The cursor still lands on the source character.
+  m.keys("2j$");
+  const lines = (await m.frame()).split("\n");
+  const y = lines.findIndex((l) => l.includes("let y = z;"));
+  const c = m.t.renderer.getCursorState();
+  expect({ x: c.x - 1, y: c.y - 1 }).toEqual({
+    x: (lines[y] ?? "").indexOf("z;") + 1,
+    y,
+  });
+});
+
+test("end-of-line diagnostics can be turned off", async () => {
+  m = await mountShell({
+    cols: 100,
+    rows: 24,
+    config: "[lsp]\nendOfLineDiagnostics = false\n",
+  });
+  m.open("foo.rs", RUST);
+  m.store.dispatch({
+    type: "lspDiagnostics",
+    key: "fake@/ws",
+    path: "foo.rs",
+    source: "push",
+    items: [error(2, 12, 13)],
+  });
+  expect(await m.frame()).not.toContain("●");
+});

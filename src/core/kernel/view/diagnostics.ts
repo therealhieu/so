@@ -85,3 +85,49 @@ export function diagnosticMarks(
     return [...signs, ...marks.map((m) => m.deco)];
   };
 }
+
+const TEXT_STYLE: Record<DiagnosticSeverity, string> = {
+  1: "diagnosticTextError",
+  2: "diagnosticTextWarn",
+  3: "diagnosticTextInfo",
+  4: "diagnosticTextHint",
+};
+
+/**
+ * The most severe diagnostic of each visible line, as `  ● message` after
+ * the line: its first message line, and `(+N)` for the others on the line.
+ */
+export function endOfLineDiagnosticMarks(
+  shown: readonly Diagnostic[],
+): DecorationProvider {
+  return (v) => {
+    const from = v.visible.from;
+    const last = Math.min(v.visible.to, v.buf.lineCount);
+    const byLine = new Map<number, Diagnostic[]>();
+    for (const d of shown) {
+      const line = d.range.start.line;
+      if (!(line >= from && line < last) || !Number.isInteger(line)) continue;
+      byLine.set(line, [...(byLine.get(line) ?? []), d]);
+    }
+    return [...byLine]
+      .sort(([a], [b]) => a - b)
+      .map(([line, ds]): Decoration => {
+        const worst = ds.reduce((a, b) => (b.severity < a.severity ? b : a));
+        const more = ds.length > 1 ? ` (+${ds.length - 1})` : "";
+        const message = worst.message.split("\n")[0] ?? "";
+        const end = { line, col: v.buf.line(line).length };
+        return {
+          kind: "replace",
+          range: { start: end, end },
+          block: false,
+          spans: [
+            {
+              text: `  ● ${message}${more}`,
+              style: TEXT_STYLE[worst.severity],
+              virtual: "eol",
+            },
+          ],
+        };
+      });
+  };
+}
