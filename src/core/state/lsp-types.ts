@@ -33,6 +33,8 @@ export type ServerView = {
   state: "missing" | "unavailable" | "starting" | "ready" | "failed";
   reason?: string;
   progress?: string;
+  /** The executable the server runs from; absent when none was found. */
+  binary?: string;
   features: readonly LspFeature[];
   /** The server answers diagnostic pulls. */
   pullDiagnostics: boolean;

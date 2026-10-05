@@ -81,22 +81,21 @@ function diagnosticRows(s: AppState): Row[] {
 }
 
 /** What `:LspInfo` says about a server's binary or state. */
-function serverDetail(v: ServerView, binary: string | undefined): string {
+function serverDetail(v: ServerView): string {
   if (v.state === "missing") return "not on PATH";
   if (v.state === "unavailable") return `unavailable: ${v.reason ?? ""}`;
   if (v.state === "failed" && v.reason !== undefined) return v.reason;
-  return v.progress ?? binary ?? "";
+  return v.progress ?? v.binary ?? "";
 }
 
 /** One row per server and root, then the configured servers nothing started. */
 function serverRows(s: AppState): Row[] {
   const specs = resolveServers(s.config.lsp);
-  const binary = new Map(specs.map((spec) => [spec.name, spec.command[0]]));
   const views = Object.entries(s.lsp.servers);
   const started = new Set(views.map(([, v]) => v.name));
   return [
     ...views.map(([key, v]) => {
-      const detail = serverDetail(v, binary.get(v.name));
+      const detail = serverDetail(v);
       return {
         key,
         text: `${v.name} · ${v.root ?? "(no project)"} · ${v.state}`,

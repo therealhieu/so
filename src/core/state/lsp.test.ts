@@ -575,7 +575,10 @@ test("the server list shows missing binaries and unavailable servers with their 
     {
       type: "lspServer",
       key: "clangd@",
-      view: (({ root: _, ...v }) => v)(ready("clangd", [])),
+      view: {
+        ...(({ root: _, ...v }) => v)(ready("clangd", [])),
+        binary: "/usr/bin/clangd",
+      },
     },
   );
   const items = pickerOf(
@@ -593,9 +596,27 @@ test("the server list shows missing binaries and unavailable servers with their 
   });
   expect(row("clangd")).toMatchObject({
     label: "clangd · (no project) · ready",
-    detail: "clangd",
+    detail: "/usr/bin/clangd",
   });
   expect(row("tsc")?.label).toBe("tsc · not started");
+});
+
+test("the server list shows the binary a started server runs, or its progress while it works", () => {
+  const local = "/ws/node_modules/.bin/tsc";
+  const s = attached([{ ...ready("tsc", []), binary: local }]);
+  const info = (st: AppState) =>
+    pickerOf(openPicker({ state: st, now: 0, reg }, "lspInfo").state)?.items;
+  expect(info(s)?.find((i) => i.label === "tsc · /ws · ready")?.detail).toBe(
+    local,
+  );
+  const busy = run(s, {
+    type: "lspServer",
+    key: "tsc@/ws",
+    view: { ...ready("tsc", []), binary: local, progress: "indexing" },
+  }).state;
+  expect(info(busy)?.find((i) => i.label === "tsc · /ws · ready")?.detail).toBe(
+    "indexing",
+  );
 });
 
 test("the diagnostics picker lists every diagnostic by severity, path, and position", () => {

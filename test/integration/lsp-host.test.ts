@@ -239,7 +239,11 @@ test("a project's own tsc is used and picks the TypeScript server by version", a
     await Bun.sleep(200);
     expect(readServerLog(unused)).toEqual([]);
     expect(attachedKeys()).toEqual([`${chosen}@${root}`]);
-    if (chosen === "tsc") expect(processes(tscLog)[0]?.argv?.at(-1)).toBe(stub);
+    if (chosen === "tsc") {
+      expect(stub).toBe(join(root, "node_modules/.bin/tsc"));
+      expect(processes(tscLog)[0]?.argv?.at(-1)).toBe(stub);
+      expect(app.store.get().lsp.servers[`tsc@${root}`]?.binary).toBe(stub);
+    }
     await app.stop();
     app = undefined;
   }

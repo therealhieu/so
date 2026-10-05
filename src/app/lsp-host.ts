@@ -190,12 +190,12 @@ const viewOf = (
   spec: ServerSpec,
   root: string | undefined,
   state: ServerView["state"],
-  reason?: string,
+  more: { reason?: string; binary?: string } = {},
 ): ServerView => ({
   name: spec.name,
   ...(root === undefined ? {} : { root }),
   state,
-  ...(reason === undefined ? {} : { reason }),
+  ...more,
   features: [],
   pullDiagnostics: false,
   completionTriggers: [],
@@ -420,14 +420,22 @@ export function createLspHost(d: {
       at,
     ];
     if (server.crashes.length < CRASH_LIMIT) {
-      server.view = viewOf(server.spec, server.root, "starting");
+      server.view = viewOf(server.spec, server.root, "starting", {
+        binary: server.binary,
+      });
       d.dispatch({ type: "lspServer", key: server.key, view: server.view });
       launch(server);
       return;
     }
     servers.delete(server.key);
     server.generation++;
-    record(server.key, viewOf(server.spec, server.root, "failed", reason));
+    record(
+      server.key,
+      viewOf(server.spec, server.root, "failed", {
+        reason,
+        binary: server.binary,
+      }),
+    );
     resync();
   }
 
@@ -530,8 +538,8 @@ export function createLspHost(d: {
         }
         server.abort = undefined;
         server.client = client;
-        server.view = client.view;
-        d.dispatch({ type: "lspServer", key: server.key, view: client.view });
+        server.view = { ...client.view, binary: server.binary };
+        d.dispatch({ type: "lspServer", key: server.key, view: server.view });
         for (const doc of server.docs.values()) open(server, doc);
       },
       (e: unknown) => {
@@ -541,7 +549,10 @@ export function createLspHost(d: {
         d.logger.error("lsp.unavailable", { server: server.spec.name, reason });
         record(
           server.key,
-          viewOf(server.spec, server.root, "unavailable", reason),
+          viewOf(server.spec, server.root, "unavailable", {
+            reason,
+            binary: server.binary,
+          }),
         );
         resync();
       },
@@ -563,7 +574,7 @@ export function createLspHost(d: {
       spec,
       ...(root === undefined ? {} : { root }),
       binary,
-      view: viewOf(spec, root, "starting"),
+      view: viewOf(spec, root, "starting", { binary }),
       generation: 0,
       docs: new Map(),
       inflight: new Set(),
