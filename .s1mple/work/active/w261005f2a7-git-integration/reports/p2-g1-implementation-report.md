@@ -67,12 +67,25 @@ Remaining issues: None. `runTool` stays a no-op until `P2-G2-T4`, as the plan sa
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** Not yet verified.
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g1-verification-report.md` (commit `8400e88`, status `Failed`, one finding)
+- **Status:** `Completed`
+
+The one finding is fixed. `stage` now reads the index entry before either path and returns `"stale"` when an untracked file has gained an entry. Both non-blocking coverage gaps are closed with tests in the existing suites. Remediation range: `8400e88..1f47793`.
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | **Change:** `src/workspace/git.ts` `stage` runs `ls-files -z -s --eol -- <path>` first, for both paths. `expectedOid: null` with a staged record → `"stale"`, and neither `add` nor `apply` runs. A tracked mismatch stays `"stale"` as before. The `Git.stage` doc comment now says `null` means the file has no entry. No new subcommand: `ls-files` was already allowed. Core already maps `"stale"` to "index changed; hunks refreshed" (`src/core/state/git.ts:432`). **Proof:** new case "an untracked file added elsewhere stages nothing" in `src/workspace/git.test.ts`: write `new.md`, run an external `git add`, then call `stage(expectedOid: null)` with the untracked patch. It asserts `"stale"`, `ls-files -s` unchanged, and `git show :new.md` equal to the file text once. RED before the fix: 9 pass, 1 fail (`Expected: "stale"`, `Received: "ok"`). GREEN: `bun test src/workspace/git.test.ts` → 10 pass, 0 fail, 650 expects. This includes `V36` (untracked intent-to-add still stages), `V37`, and `V62` (subcommand set unchanged). `bun run check` → exit 0, 1192 pass, 0 fail. **Completion checklist:** required resolution implemented; required proof passes; change evidence recorded; verification evidence recorded. | `4a69978` | `Fixed` |
+
+### Coverage Gaps and Unverified Items
+
+| Item | Action | Evidence | Commit |
+|---|---|---|---|
+| `status` reporting `op: "rebasing"` (non-blocking) | Extended "status is scoped to the workspace prefix and reads the operation": `merge --abort`, `checkout side`, then an interrupted `rebase main` → `op === "rebasing"`. The assertion fails if the rebase does not stop, because `op` would then be `undefined` | `bun test src/workspace/git.test.ts` → pass | `48c4adb` |
+| Watcher `error` event path (non-blocking) | New case "a watcher error is logged, silences that folder, and the next retarget watches it again" in `src/workspace/git-watcher.test.ts`, using the existing `watchFn` injection with an `EventEmitter` fake. It asserts one `git.watch.fail` for the dir, the watcher closed, no `onChange` from the closed watcher, and a fresh watch that notifies after `retarget` | Pass. Mutation check: with the `close(dir)` call in the `error` handler removed, the case fails (`Expected: true`, `Received: false` on `closed`). The source was restored with `git checkout` | `1f47793` |
+| Linux inotify for `V54`–`V56` | Owned by PR CI (`check` job on `ubuntu-24.04`; integration on `ubuntu-24.04` and `macos-15`). No Linux environment is available locally | Not run locally | None |
+| Git 2.31 itself | Unverifiable locally: only Git 2.51 is installed. The stubbed version gate (`V29`) covers the threshold logic | Not run | None |
 
 ## Final Status
 
@@ -80,8 +93,16 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed`: all five tasks are implemented, and the task-level and group-level checks pass.
+- **Final report status:** `Completed`: `P2-G1-VER1` is fixed and proven on real Git, both coverage gaps have tests, and every group check passes.
 - **Final report commit:** Returned to the orchestrator.
-- **Final commits:** `8b58699`, `6e83114`, `46c6d85`, `c7968a0`, `300d620`, `c2f2247`
-- **Final checks:** `bun run check` (exit 0, 1191 pass), `bun test test/integration` (61 pass), `bun test test/ui` (157 pass, 63 snapshots), `bun test test/e2e` (13 pass)
-- **Remaining issues:** None
+- **Final commits:** `8b58699`, `6e83114`, `46c6d85`, `c7968a0`, `300d620`, `c2f2247`; remediation `4a69978`, `48c4adb`, `1f47793`
+- **Final checks:**
+  - `bun test src/workspace/git.test.ts src/workspace/git-watcher.test.ts` → exit 0, 14 pass, 0 fail, 671 expects (`V28`, `V29`, `V36`–`V39`, `V54`, `V55`, `V62`).
+  - `bun test src/app/effects.test.ts` → exit 0, 21 pass (`V40`, `V41` gitWatch part).
+  - `bun test test/integration` → exit 0, 61 pass across 12 files (`V56`, `V57`).
+  - `bun run check` → exit 0, Biome 347 files with no fixes, tsc clean, knip zero, 1193 pass, 0 fail.
+  - `bun test test/ui` → exit 0, 157 pass, 63 snapshots, no snapshot file changed.
+  - `bun test test/e2e` → exit 0, 13 pass.
+  - The work-process id, `TODO`, `FIXME`, `console.`, `debugger`, and `.only(` grep over the added lines in `0497871..HEAD` (`src`, `test`) → no matches.
+  - Process hygiene → only pre-existing processes remain: sandbox PID 49530, plus three `ugrep` processes started on Sep 28 and Oct 4 whose command lines contain "git". No `so-git-*` or `so-gitwatch-*` temp dirs remain.
+- **Remaining issues:** One `bun run check` run failed in Part 1's `src/core/features/git/diff.test.ts:135` timing bound (82.9 ms against < 50 ms), with load average 24. The test passed 5 of 5 runs alone, and the next `bun run check` exited 0. This group did not change that file. It is recorded here and not changed.
