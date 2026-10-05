@@ -30,7 +30,7 @@
    - [W261005F2A7-REQ1@R2: Native Git writes are limited to hunk stage and reset](#w261005f2a7-req1r2-native-git-writes-are-limited-to-hunk-stage-and-reset)
    - [W261005F2A7-REQ2@R2: The Git tool runs full screen with so suspended](#w261005f2a7-req2r2-the-git-tool-runs-full-screen-with-so-suspended)
    - [W261005F2A7-REQ3@R1: The Git tool is configurable and fails with a clear notice](#w261005f2a7-req3r1-the-git-tool-is-configurable-and-fails-with-a-clear-notice)
-   - [W261005F2A7-REQ4@R2: Native Git display scope](#w261005f2a7-req4r2-native-git-display-scope)
+   - [W261005F2A7-REQ4@R3: Native Git display scope](#w261005f2a7-req4r3-native-git-display-scope)
    - [W261005F2A7-REQ5@R2: Gutter signs compare the live buffer against the index](#w261005f2a7-req5r2-gutter-signs-compare-the-live-buffer-against-the-index)
    - [W261005F2A7-REQ6@R2: Git state refreshes on events, including a narrow git-dir watch](#w261005f2a7-req6r2-git-state-refreshes-on-events-including-a-narrow-git-dir-watch)
    - [W261005F2A7-REQ7@R2: Git works for a workspace anywhere inside one repository](#w261005f2a7-req7r2-git-works-for-a-workspace-anywhere-inside-one-repository)
@@ -110,7 +110,7 @@ None — standalone work
 
 - User — new `<leader>g…` keys, `]h`/`[h`, and palette commands.
 - `src/core/state/types.ts` `Effect`/`Action` — new Git read, stage, launch, and result variants.
-- `src/core/kernel/view` `Sign` gutter cell — Git signs share the single cell with fold markers.
+- `src/core/kernel/view` render rows and the editor gutter — Git signs get their own gutter column inside a repository.
 - `src/core/state/status.ts` `StatusSegments` and `src/ui/views/statusline.ts` — new Git segment that competes for width.
 - `src/ui/views/explorer.ts` — status markers on rows.
 - `src/ui/shell.ts` renderer — `suspend()` / `resume()` around the Git tool.
@@ -154,7 +154,7 @@ None — standalone work
 
 ## Risks and Compatibility
 
-- **Gutter cell contention** — fold markers already use the one sign cell on headings (`src/core/lang/markdown/live-preview.ts:86-90`). System design must define precedence or a layout so neither signal is lost.
+- **Gutter cell contention** — fold markers and the reveal and error signs already use the one sign cell (`src/core/lang/markdown/live-preview.ts:86-141`). REQ4@R3 gives Git signs their own column, so neither signal is lost; the gutter is one cell wider inside a repository.
 - **Index feedback loops** — a plain `git status` rewrites `.git/index`. Every read uses `--no-optional-locks` (REQ6). Lock-free reads skip refreshing stale stat data, so status can stay slower (about 206 ms vs 47 ms on 20,000 files) until another tool refreshes the index. That cost is accepted (RF6).
 - **Interrupts during the hand-off** — so's `SIGINT` handler (`src/app/lifecycle.ts:66-67`) must not end so while the tool runs (REQ2, RF12).
 - **Terminal state after a killed tool** — verifying that foreign modes are cleared after `SIGKILL` needs a real-terminal test in Ghostty, kitty, and tmux. The research could not run it (RF11 open question).
@@ -281,54 +281,54 @@ everything else → <leader>gg → Git tool
 
 **Depends On:** None
 
-## W261005F2A7-REQ4@R2: Native Git display scope
+## W261005F2A7-REQ4@R3: Native Git display scope
 
 **Requirement ID:** `W261005F2A7-REQ4`
 
-**Revision:** `R2`
+**Revision:** `R3`
 
-**Previous Revision:** `W261005F2A7-REQ4@R1`
+**Previous Revision:** `W261005F2A7-REQ4@R2`
 
 **Replaces:** None
 
-**Research Relationship:** `RF1`, `RF8`, `RF9`, `RF13` evaluated `W261005F2A7-REQ4@R1` and informed this revision; `RF6` evaluated `W261005F2A7-REQ4@R1` with no impact
+**Research Relationship:** `RF1`, `RF8`, `RF9`, `RF13` evaluated `W261005F2A7-REQ4@R1` and informed `W261005F2A7-REQ4@R2`; `RF6` evaluated `W261005F2A7-REQ4@R1` with no impact. No finding evaluated this revision.
 
-**Revision Summary:** The changes follow LazyVim style:
+**Revision Summary:** The accepted UI mockups `W261005F2A7-M1@R3` and `W261005F2A7-M2@R3` (accepted by the user on 2026-10-05) change three display obligations:
 
-- **Gutter:** distinct untracked, top-delete, and change-delete signs (RF1, user decision).
-- **Explorer:** per-file untracked markers and a separate conflict marker (RF9, user decision).
-- **Statusline:** defined content for an unborn branch, a detached HEAD, and a rebase or merge in progress (RF8).
-- **Blame:** defined behaviour for unsaved buffers, untracked files, and a repository with no commits (RF13).
+- **Gutter:** Git signs get their own gutter column, so they never hide the other gutter signs on the same line.
+- **Statusline:** an untracked file or a repository with no commits shows the ref without counts.
+- **Explorer:** there is no deleted-file marker. A deleted file has no explorer row, so it only marks its folders as containing changes.
 
 **Question:** Which native Git features ship in this work?
 
 **Answer:** The native features are:
 
-- **Gutter:** hunk signs for added, changed, deleted, top-of-file-deleted, changed-and-deleted, and untracked lines.
+- **Gutter:** hunk signs for added, changed, deleted, top-of-file-deleted, changed-and-deleted, and untracked lines, in a Git column of their own that appears only inside a repository.
 - **Hunks:** next and previous navigation, preview, stage, and reset.
-- **Statusline:** a segment with the branch, a short commit for detached HEAD, the branch name for an unborn branch, a `rebasing` or `merging` suffix while one is in progress, and the active file's added/changed/deleted counts.
-- **Explorer:** markers on rows for modified, staged, untracked (per file, including inside new folders), deleted, and conflicted files. A folder shows that it contains changes.
+- **Statusline:** a segment with the branch, a short commit for detached HEAD, the branch name for an unborn branch, a `rebasing` or `merging` suffix while one is in progress, and the active file's added/changed/deleted counts. An untracked file and a repository with no commits show no counts.
+- **Explorer:** markers on rows for modified, staged, untracked (per file, including inside new folders), and conflicted files. A folder shows that it contains changes, including deleted tracked files below it.
 - **Blame:** on-demand blame for the cursor line, computed against the buffer text. It shows "not committed yet" for uncommitted lines, untracked files, and repositories with no commits.
 
-**Rationale:** The user chose gitsigns parity plus file-level visibility and line provenance, displayed the way LazyVim does. A separate conflict marker matters because porcelain v2 reports unmerged entries as their own type (RF9). Blame must use the buffer text (`--contents -`) so line numbers match unsaved edits. It must also recognise both the pre-2.41 and post-2.41 "not committed" markers (RF13).
+**Rationale:** The user chose gitsigns parity plus file-level visibility and line provenance, displayed the way LazyVim does. A separate conflict marker matters because porcelain v2 reports unmerged entries as their own type (RF9). Blame must use the buffer text (`--contents -`) so line numbers match unsaved edits. It must also recognise both the pre-2.41 and post-2.41 "not committed" markers (RF13). During mockup review the user found that a Git sign sharing the single sign cell touches the text and competes with the reveal and error signs, so Git signs take their own column. Counts for a file with no index base would only repeat its line count, so they are left out.
 
 ```text
 explorer          editor                                         statusline
- M inbox.md   │ 1 ▔                    ‾ deleted at top          NORMAL inbox.md  main +1 ~1 -1
- ? ideas.md   │ 3 ▎- [x] buy milk      ~ changed                 NORMAL inbox.md  a1b2c3d (rebasing) +1
- U plan.md    │ 4 ▎- [ ] call bank     + added
- ▸ new/  ?    │ 5 ▁                    _ deleted below
-   ? x.md     │ 6 ▎- [ ] email         ~_ changed + deleted
-              │   ↳ hieu, 2 days ago · daily note (a1b2)      ← blame on demand
+ M inbox.md   │ ‾   1  # Inbox             ‾ deleted at top       NORMAL inbox.md  ⎇ main +1 ~1 -1
+ ? ideas.md   │ ~   3 ▕- [x] buy milk      ~ changed              NORMAL inbox.md  ⎇ a1b2c3d rebasing +1
+ U plan.md    │ +   4  - [ ] call bank     + added                NORMAL ideas.md  ⎇ main   (untracked: no counts)
+ ▾ new/ •     │ _   5  - [ ] email         _ deleted below
+   ? x.md     │ ≃   6  - [ ] pay rent      ≃ changed + deleted
+ ▸ old/ •     │   (old/gone.md deleted: no row, its folder shows •)
 ```
 
 **Acceptance Criteria:**
 
 - [ ] Each sign type (added, changed, deleted, top-deleted, changed-and-deleted, untracked) appears on the right lines and is visually distinct.
+- [ ] A Git sign and another gutter sign on the same line are both visible. Outside a repository the gutter is unchanged.
 - [ ] Next and previous hunk navigation moves the cursor to the first line of the adjacent hunk and stops at the ends.
 - [ ] Hunk preview shows the index lines the hunk replaces.
-- [ ] The statusline shows the branch, a short commit when detached, the branch name in a repository with no commits, and a `rebasing`/`merging` suffix during those operations, plus the active file's counts. It yields on narrow terminals.
-- [ ] Explorer rows show modified, staged, untracked, deleted, and conflicted states with distinct markers. Files inside a new untracked folder each show the untracked marker, and a folder shows that it contains changes.
+- [ ] The statusline shows the branch, a short commit when detached, the branch name in a repository with no commits, and a `rebasing`/`merging` suffix during those operations, plus the active file's counts. An untracked file and a repository with no commits show no counts. It yields on narrow terminals.
+- [ ] Explorer rows show modified, staged, untracked, and conflicted states with distinct markers. Files inside a new untracked folder each show the untracked marker. A folder shows that it contains changes, including when the only change below it is a deleted tracked file.
 - [ ] Line blame on an unsaved buffer reports the line as it appears in the buffer. It shows author, relative date, and summary for committed lines and "not committed yet" otherwise, on Git 2.31 and later.
 - [ ] Blame in an untracked file or a repository with no commits shows "not committed yet" without an error.
 - [ ] Outside a repository, none of these surfaces render Git content.
@@ -539,10 +539,12 @@ dirty buffer → stage hunk → save ✓ → patch(saved text vs index) → git 
 
 The user approved every outcome on 2026-10-05, including the Q1–Q3 decisions on untracked and conflict display, minimum Git version, and watcher failure.
 
+`W261005F2A7-REQ4@R3` was revised later from the accepted UI mockups, not from research. The rows below keep the revision each finding informed and name the current revision in brackets.
+
 | Finding | Evaluated Revision | Assessment | Outcome | Current Requirement(s) | Rationale |
 |---|---|---|---|---|---|
 | `RF1` | `W261005F2A7-REQ5@R1` | Supports buffer-vs-index diff and blob caching; adds untracked-sign and large-file considerations | Revised | `W261005F2A7-REQ5@R2` | Untracked lines use the untracked sign by user decision. Size is bounded through the diff cap (RF14) rather than a line cut-off. |
-| `RF1` | `W261005F2A7-REQ4@R1` | Adds LazyVim's untracked, top-delete, and change-delete sign types | Revised | `W261005F2A7-REQ4@R2` | The user chose LazyVim-style signs. |
+| `RF1` | `W261005F2A7-REQ4@R1` | Adds LazyVim's untracked, top-delete, and change-delete sign types | Revised | `W261005F2A7-REQ4@R2` (now `W261005F2A7-REQ4@R3`) | The user chose LazyVim-style signs. |
 | `RF2` | `W261005F2A7-REQ1@R1` | Supports `git apply --cached --unidiff-zero`; untracked files need intent-to-add; conflicted files need handling | Revised | `W261005F2A7-REQ1@R2` | Without intent-to-add, untracked hunks cannot be staged. Refusing on conflicts keeps the write set small. |
 | `RF2` | `W261005F2A7-REQ9@R1` | Save-then-stage is a deliberate, coherent departure from gitsigns | Retained | `W261005F2A7-REQ9@R1` | The mechanism works on saved text. Keeping the index a subset of disk content was the user's choice. |
 | `RF2` | `W261005F2A7-REQ5@R1` | Untracked hunks are stageable only after intent-to-add | Revised | `W261005F2A7-REQ5@R2` | The stage step lives in REQ1@R2, and REQ5@R2 names the untracked sign. |
@@ -553,13 +555,13 @@ The user approved every outcome on 2026-10-05, including the Q1–Q3 decisions o
 | `RF4` | `W261005F2A7-REQ1@R1` | Patches must use the index's line-ending form; a CR-bearing patch fails on an LF index | Revised | `W261005F2A7-REQ1@R2` | A CRLF staging criterion was added. |
 | `RF5` | `W261005F2A7-REQ1@R1` | Supports reset as a buffer edit; adds restoring the end-of-file newline | Revised | `W261005F2A7-REQ1@R2` | Folded into the same REQ1 revision as RF2–RF4, with an EOF criterion added. |
 | `RF6` | `W261005F2A7-REQ6@R1` | Supports "no index writes"; every read, not only status, must be lock-free | Revised | `W261005F2A7-REQ6@R2` | Blame, `ls-files`, and blob reads also go through Git and must not write the index. |
-| `RF6` | `W261005F2A7-REQ4@R1` | Stale-stat files slow lock-free status until something refreshes the index | No impact | `W261005F2A7-REQ4@R2` | About 206 ms worst case on 20,000 files stays within the one-second refresh criterion. Recorded as an accepted risk. |
+| `RF6` | `W261005F2A7-REQ4@R1` | Stale-stat files slow lock-free status until something refreshes the index | No impact | `W261005F2A7-REQ4@R2` (now `W261005F2A7-REQ4@R3`) | About 206 ms worst case on 20,000 files stays within the one-second refresh criterion. Recorded as an accepted risk. |
 | `RF7` | `W261005F2A7-REQ6@R1` | Supports ~200 ms coalescing; a plain `refs/` watch misses nested branch names; lock files must be filtered; poll fallback exists in gitsigns | Revised | `W261005F2A7-REQ6@R2` | The trigger set was reworded to match gitsigns. On watcher failure, refresh falls back to the other triggers without polling, by user decision. Polling is deferred. |
 | `RF7` | `W261005F2A7-REQ7@R1` | Worktree HEAD/index live in the private git dir and refs in the common dir | Revised | `W261005F2A7-REQ7@R2` | Both directories must be watched. |
 | `RF8` | `W261005F2A7-REQ7@R1` | One rev-parse covers all layouts; unborn HEAD and the Git version need stating | Revised | `W261005F2A7-REQ7@R2` | No-commit repos are supported. Git ≥ 2.31 by user decision. |
-| `RF8` | `W261005F2A7-REQ4@R1` | Adds statusline cases for unborn, detached, and rebase/merge | Revised | `W261005F2A7-REQ4@R2` | The statusline content for each case is now defined. |
+| `RF8` | `W261005F2A7-REQ4@R1` | Adds statusline cases for unborn, detached, and rebase/merge | Revised | `W261005F2A7-REQ4@R2` (now `W261005F2A7-REQ4@R3`) | The statusline content for each case is now defined. |
 | `RF8` | `W261005F2A7-REQ3@R1` | Supports the "not a git repository" notice | Retained | `W261005F2A7-REQ3@R1` | Discovery failure maps directly to the notice. |
-| `RF9` | `W261005F2A7-REQ4@R1` | Supports the marker set; unmerged is its own type; the `-u` mode decides per-file untracked markers | Revised | `W261005F2A7-REQ4@R2` | Separate conflict marker and per-file untracked markers (`-uall`), by user decision. |
+| `RF9` | `W261005F2A7-REQ4@R1` | Supports the marker set; unmerged is its own type; the `-u` mode decides per-file untracked markers | Revised | `W261005F2A7-REQ4@R2` (now `W261005F2A7-REQ4@R3`) | Separate conflict marker and per-file untracked markers (`-uall`), by user decision. |
 | `RF9` | `W261005F2A7-REQ7@R1` | Supports pathspec scoping and single-entry submodules | Retained | `W261005F2A7-REQ7@R2` | No change from RF9. REQ7 was revised for RF7 and RF8. |
 | `RF9` | `W261005F2A7-REQ6@R1` | Supports one cheap status call per refresh (20–48 ms on 20,000 files) | Retained | `W261005F2A7-REQ6@R2` | No change from RF9. REQ6 was revised for RF6 and RF7. |
 | `RF10` | `W261005F2A7-REQ2@R1` | Supports the full-screen hand-off at the git root (Helix recipe, LazyVim cwd) | Retained | `W261005F2A7-REQ2@R2` | No change from RF10. REQ2 was revised for RF11 and RF12. |
@@ -567,7 +569,7 @@ The user approved every outcome on 2026-10-05, including the Q1–Q3 decisions o
 | `RF10` | `W261005F2A7-REQ8@R1` | Supports save-before-launch (Helix `:write-all`) | Retained | `W261005F2A7-REQ8@R1` | This matches established practice. |
 | `RF11` | `W261005F2A7-REQ2@R1` | Supports suspend/resume covering so's modes; a killed tool can leave foreign modes; images are deleted on suspend | Revised | `W261005F2A7-REQ2@R2` | Added a reset of foreign modes before resume and an image repaint criterion. |
 | `RF12` | `W261005F2A7-REQ2@R1` | Challenges "any exit": SIGINT reaches so's shutdown handler | Revised | `W261005F2A7-REQ2@R2` | so must survive an interrupt during the hand-off, as micro does. |
-| `RF13` | `W261005F2A7-REQ4@R1` | Supports on-demand blame; needs `--contents -`, both sentinels, untracked/unborn handling | Revised | `W261005F2A7-REQ4@R2` | Blame criteria now cover unsaved, untracked, and no-commit cases. `.git-blame-ignore-revs` is deferred. |
+| `RF13` | `W261005F2A7-REQ4@R1` | Supports on-demand blame; needs `--contents -`, both sentinels, untracked/unborn handling | Revised | `W261005F2A7-REQ4@R2` (now `W261005F2A7-REQ4@R3`) | Blame criteria now cover unsaved, untracked, and no-commit cases. `.git-blame-ignore-revs` is deferred. |
 | `RF14` | `W261005F2A7-REQ5@R1` | Supports in-process Myers for normal edits; the worst case is 0.3–5 s | Revised | `W261005F2A7-REQ5@R2` | A bounded-cost criterion was added. |
 
 # 7. Historical Requirement Revisions
@@ -644,6 +646,62 @@ everything else → <leader>gg → Git tool
 - [ ] Git signs, statusline, and explorer markers reflect the post-tool state after return.
 
 **Depends On:** `W261005F2A7-REQ3@R1`, `W261005F2A7-REQ8@R1`
+
+## W261005F2A7-REQ4@R2: Native Git display scope
+
+**Requirement ID:** `W261005F2A7-REQ4`
+
+**Revision:** `R2`
+
+**Previous Revision:** `W261005F2A7-REQ4@R1`
+
+**Replaces:** None
+
+**Status:** Revised by `W261005F2A7-REQ4@R3`
+
+**Research Relationship:** `RF1`, `RF8`, `RF9`, `RF13` evaluated `W261005F2A7-REQ4@R1` and informed this revision; `RF6` evaluated `W261005F2A7-REQ4@R1` with no impact
+
+**Revision Summary:** The changes follow LazyVim style:
+
+- **Gutter:** distinct untracked, top-delete, and change-delete signs (RF1, user decision).
+- **Explorer:** per-file untracked markers and a separate conflict marker (RF9, user decision).
+- **Statusline:** defined content for an unborn branch, a detached HEAD, and a rebase or merge in progress (RF8).
+- **Blame:** defined behaviour for unsaved buffers, untracked files, and a repository with no commits (RF13).
+
+**Question:** Which native Git features ship in this work?
+
+**Answer:** The native features are:
+
+- **Gutter:** hunk signs for added, changed, deleted, top-of-file-deleted, changed-and-deleted, and untracked lines.
+- **Hunks:** next and previous navigation, preview, stage, and reset.
+- **Statusline:** a segment with the branch, a short commit for detached HEAD, the branch name for an unborn branch, a `rebasing` or `merging` suffix while one is in progress, and the active file's added/changed/deleted counts.
+- **Explorer:** markers on rows for modified, staged, untracked (per file, including inside new folders), deleted, and conflicted files. A folder shows that it contains changes.
+- **Blame:** on-demand blame for the cursor line, computed against the buffer text. It shows "not committed yet" for uncommitted lines, untracked files, and repositories with no commits.
+
+**Rationale:** The user chose gitsigns parity plus file-level visibility and line provenance, displayed the way LazyVim does. A separate conflict marker matters because porcelain v2 reports unmerged entries as their own type (RF9). Blame must use the buffer text (`--contents -`) so line numbers match unsaved edits. It must also recognise both the pre-2.41 and post-2.41 "not committed" markers (RF13).
+
+```text
+explorer          editor                                         statusline
+ M inbox.md   │ 1 ▔                    ‾ deleted at top          NORMAL inbox.md  main +1 ~1 -1
+ ? ideas.md   │ 3 ▎- [x] buy milk      ~ changed                 NORMAL inbox.md  a1b2c3d (rebasing) +1
+ U plan.md    │ 4 ▎- [ ] call bank     + added
+ ▸ new/  ?    │ 5 ▁                    _ deleted below
+   ? x.md     │ 6 ▎- [ ] email         ~_ changed + deleted
+              │   ↳ hieu, 2 days ago · daily note (a1b2)      ← blame on demand
+```
+
+**Acceptance Criteria:**
+
+- [ ] Each sign type (added, changed, deleted, top-deleted, changed-and-deleted, untracked) appears on the right lines and is visually distinct.
+- [ ] Next and previous hunk navigation moves the cursor to the first line of the adjacent hunk and stops at the ends.
+- [ ] Hunk preview shows the index lines the hunk replaces.
+- [ ] The statusline shows the branch, a short commit when detached, the branch name in a repository with no commits, and a `rebasing`/`merging` suffix during those operations, plus the active file's counts. It yields on narrow terminals.
+- [ ] Explorer rows show modified, staged, untracked, deleted, and conflicted states with distinct markers. Files inside a new untracked folder each show the untracked marker, and a folder shows that it contains changes.
+- [ ] Line blame on an unsaved buffer reports the line as it appears in the buffer. It shows author, relative date, and summary for committed lines and "not committed yet" otherwise, on Git 2.31 and later.
+- [ ] Blame in an untracked file or a repository with no commits shows "not committed yet" without an error.
+- [ ] Outside a repository, none of these surfaces render Git content.
+
+**Depends On:** `W261005F2A7-REQ5@R2`, `W261005F2A7-REQ7@R2`
 
 ## W261005F2A7-REQ4@R1: Native Git display scope
 
