@@ -28,6 +28,7 @@ export const gitCommands: readonly AppCommand[] = [
 
 export const gitBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>gg", id: "git.tool" },
+  { scope: { mode: "explorer" }, seq: "<leader>gg", id: "git.tool" },
   { scope: { mode: "normal" }, seq: "<leader>ghs", id: "git.stageHunk" },
   { scope: { mode: "normal" }, seq: "<leader>ghr", id: "git.resetHunk" },
   { scope: { mode: "normal" }, seq: "<leader>ghp", id: "git.previewHunk" },

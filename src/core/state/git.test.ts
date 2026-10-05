@@ -651,6 +651,20 @@ test("with nothing to save the tool runs at once without a message", () => {
   ]);
 });
 
+test("the tool also opens from the explorer", () => {
+  const s = inRepo(NOTE, "a");
+  const focused: AppState = {
+    ...s,
+    panels: {
+      ...s.panels,
+      explorer: { ...s.panels.explorer, open: true, focused: true },
+    },
+  };
+  expect(runTools(leader(focused, "gg"))).toEqual([
+    { kind: "runTool", argv: ["lazygit"], cwd: "/repo" },
+  ]);
+});
+
 test("a failed or blocked save cancels the tool", () => {
   const notStarted = {
     text: "git tool not started: notes/a.md could not be saved",

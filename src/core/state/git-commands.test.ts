@@ -43,6 +43,7 @@ test("every git binding names a registered git command", () => {
   expect(gitBindings.filter((b) => !ids.has(b.id))).toEqual([]);
   expect(gitBindings.map((b) => b.seq).sort()).toEqual([
     "<leader>gg",
+    "<leader>gg",
     "<leader>ghb",
     "<leader>ghp",
     "<leader>ghr",
