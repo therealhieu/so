@@ -4,6 +4,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { PROBE_BOUND_MS } from "../../src/app/lsp-host";
 import type { FakeScript } from "../fixtures/fake-lsp";
 import {
   fakeServerConfig,
@@ -217,20 +218,32 @@ test("a project's own tsc is used and picks the TypeScript server by version", a
           cmd === "tsc" ? "/opt/global/bin/tsc" : Bun.which(cmd),
       },
     });
+    const opened = performance.now();
     await app.open("src/x.ts");
+    const attachedKeys = () => app?.store.get().lsp.attached["src/x.ts"] ?? [];
+    // The gate decides once the version probe answers: no key means the
+    // probe is still running, and `typescript` for a 7.x stub means it gave
+    // no version (failed or ran past PROBE_BOUND_MS).
+    await waitFor(() => attachedKeys().length > 0, 10_000).catch(() => {
+      throw new Error(
+        `tsc ${version}: no server attached ${Math.round(performance.now() - opened)} ms after open; the version probe has not answered`,
+      );
+    });
+    if (attachedKeys()[0] !== `${chosen}@${root}`)
+      throw new Error(
+        `tsc ${version}: expected ${chosen}, attached ${JSON.stringify(attachedKeys())} ${Math.round(performance.now() - opened)} ms after open; the version probe answered ${chosen === "tsc" ? "no version" : "7 or later"} (PROBE_BOUND_MS is ${PROBE_BOUND_MS} ms)`,
+      );
     const used = chosen === "tsc" ? tscLog : ts.log;
     const unused = chosen === "tsc" ? ts.log : tscLog;
     await waitForMessage(used, "textDocument/didOpen");
     await Bun.sleep(200);
     expect(readServerLog(unused)).toEqual([]);
-    expect(app.store.get().lsp.attached["src/x.ts"]).toEqual([
-      `${chosen}@${root}`,
-    ]);
+    expect(attachedKeys()).toEqual([`${chosen}@${root}`]);
     if (chosen === "tsc") expect(processes(tscLog)[0]?.argv?.at(-1)).toBe(stub);
     await app.stop();
     app = undefined;
   }
-});
+}, 15_000);
 
 test("settings reach servers by configuration requests and initialization options", async () => {
   const root = await tmpWorkspace({

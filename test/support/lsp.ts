@@ -84,6 +84,9 @@ export function lspConfig(enabled: boolean, ...servers: string[]): string {
 /**
  * A `node_modules/.bin/tsc` in `root` that prints `Version <version>` for
  * `--version` and otherwise runs the fake server, passing its own path last.
+ * It is run once here: macOS checks a new executable on its first run, one
+ * at a time across the system, which under parallel tests can take longer
+ * than the version probe's bound.
  */
 export function fakeTsc(
   root: string,
@@ -101,6 +104,7 @@ export function fakeTsc(
     `#!/bin/sh\nif [ "$1" = "--version" ]; then echo "Version ${version}"; exit 0; fi\nexec ${run} "$0"\n`,
   );
   chmodSync(path, 0o755);
+  Bun.spawnSync([path, "--version"], { stdout: "ignore", stderr: "ignore" });
   return path;
 }
 
