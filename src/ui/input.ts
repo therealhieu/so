@@ -40,6 +40,7 @@ function printable(s: string): string | undefined {
 /** An OpenTUI key event in Vim notation; undefined for keys the editor has no name for. */
 export function toKey(e: KeyInput): Key | undefined {
   if (e.ctrl && /^[a-z]$/.test(e.name)) return `<C-${e.name}>`;
+  if (e.ctrl && e.name === "space") return "<C-Space>";
   const named = NAMES[e.name];
   if (named !== undefined) return named;
   const seq =
