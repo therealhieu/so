@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `Project documentation finalization`
+- **Current Position:** `Delivery`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -436,8 +436,8 @@ After all groups and overall checks pass, the orchestrator must:
 
 Missing documents, unresolved conflicts, failed checks/commits, or unsafe change isolation block completion. Send implementation defects back to remediation, not into project guidance.
 
-- **Changes or No-change Reason:** `Pending implementation`
-- **Validation and Commit SHA:** `Pending implementation`
+- **Changes or No-change Reason:** `.s1mple/docs/project.md` — Last Modified 2026-10-05; Purpose mentions mouse support and the `mouse` setting and lists the mouse system design as a source; Architecture adds the mouse input flow (MouseLayer → router → source z-order → `onMouse`); Data and Contracts adds a Mouse row and the top-level `mouse` config key; Sources lists `src/core/state/mouse.ts` and `src/ui/mouse.ts`
+- **Validation and Commit SHA:** source order, `useMouse` sync, and exported symbols checked against `src/ui/shell.ts`, `src/ui/mouse.ts`, `src/core/state/mouse.ts`, `src/core/kernel/view/hit.ts`, `src/core/config/schema.ts`; unrelated guidance preserved — commit `4aefb4d`
 
 **Commit Message:**
 
