@@ -65,12 +65,60 @@ Remaining issues: None.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Pending verification`
+- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g1-verification-report.md` (commit `f38b422`, status `Failed`, one finding)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G1-VER1` — Stage patch fails for an empty index entry | See the closure detail below | `a4d613c` | `Fixed` |
+
+#### P1-G1-VER1 — Stage patch fails for an empty index entry
+
+**Change evidence.** The root cause was in the line model, not in the patch writer. Callers pass `index.lines` straight into `diffLines` (system design §5 flows: `diffLines(index.lines, buffer lines)`), and both a zero-byte entry (`""`) and a one-empty-line entry (`"\n"`) normalized to `[""]`. So `diffLines` could not tell "the file is empty" from "the file has one empty line", and it classified typed text as `change`. The fix gives a zero-byte entry no lines. That matches the design's `normalizeIndexText` sketch ("split; drop trailing `""`") and the existing untracked case, which already passes `[]`. With no lines on the old side, the existing whole-middle path in `diffLines` and the existing `range` rule in `hunkPatch` (`count 0 → start`) give an `add` hunk and an `@@ -0,0 +1,n @@` header without a `-` line. `patch.ts` needed no change. No signature changed.
+
+| Path and symbol | Change |
+|---|---|
+| `src/core/features/git/index-text.ts:normalizeIndexText` | `lines: text === "" ? [] : …`. A `"\n"` entry and a BOM-only entry keep `[""]`, because Git sees one line in each. The `IndexText` doc comment states the zero-byte rule. |
+| `src/core/features/git/diff.ts:diffLines` | `old.length === 0 && cur` is `[""]` returns `[]`. A buffer always has one line, so an empty buffer matches an empty entry. |
+| `src/core/features/git/diff.test.ts` | "text typed into a note committed empty is one add hunk": `[] → ["hello"]` and `[] → ["", "hello"]` are exact `add` hunks `old {0,0}`; `[] → [""]` is `[]`. |
+| `src/core/features/git/patch.test.ts` | "a note committed empty gains lines with an empty old side": exact `@@ -0,0 +1,1 @@\n+hello\n\\ No newline at end of file\n` without a final newline, and `@@ -0,0 +1,1 @@\n+hello\n` with one. |
+| `src/core/features/git/index-text.test.ts` | `""` → `[]`, `"\n"` → `[""]`, BOM-only → `[""]`; BOM-only added to the round-trip list. |
+
+**Verification evidence.**
+
+- RED: with the two source files restored to `HEAD` (`0c4d9f9` content) and the new tests in place, `bun test src/core/features/git` → 29 pass, 3 fail (the three cases above). GREEN after restoring the fix → 32 pass, 0 fail.
+- One-time real `git apply --cached --unidiff-zero -` (git 2.51.0) in a scratch repo per case. Each case commits `f.txt`, builds the patch with `normalizeIndexText`, `diffLines`, and `hunkPatch`, applies it, and compares `git show :f.txt` with the buffer text:
+
+  | Committed `f.txt` | Buffer | Kind | Header | Applied | Staged equals buffer |
+  |---|---|---|---|---|---|
+  | empty (0 bytes) | `hello` | `add` | `@@ -0,0 +1,1 @@` | yes | yes |
+  | empty (0 bytes) | `hello\n` | `add` | `@@ -0,0 +1,1 @@` | yes | yes |
+  | empty (0 bytes) | `\nhello\n` | `add` | `@@ -0,0 +1,2 @@` | yes | yes |
+  | `\n` (regression) | `hello\n` | `change` | `@@ -1,1 +1,1 @@` | yes | yes |
+  | BOM only (regression) | `hello` | `change` | `@@ -1,1 +1,1 @@` | yes | yes |
+
+  An empty buffer against an empty entry gave `[]`. The scratch script and temp repos were removed. No process is left running.
+- Signs: `linesOf` in `src/core/features/git/signs.ts` marks an `add` hunk's new lines `[new.start, new.start + count)`, so the typed lines show `+` (`GIT_SIGNS.add`).
+
+**Completion Checklist:**
+
+- [x] Required resolution is implemented — a zero-byte entry gives an `add` hunk and an `-0,0` patch with no `-` line that stages exactly the added lines; empty against empty gives no hunk; the code stays pure; the `Hunk`, `IndexText`, and `hunkPatch` signatures are unchanged.
+- [x] Required proof passes — new exact-string cases in `patch.test.ts` and `diff.test.ts` (one line with and without a final newline, empty against empty `[]`); real `git apply` on a committed empty file recorded above; `bun test src/core/features/git` and `bun run check` pass.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+**Note for later parts.** The design says `git.ts` (P1-G2) marks a final-newline difference by passing the last line with a sentinel suffix. Against a zero-byte entry there is no old last line. An empty buffer that ends in a newline (`"\n"`) therefore diffs as `[] → [""]`, which has no hunk unless that caller adds its sentinel to the buffer's line. This is caller behavior and is outside this group.
+
+### Remediation Group Verification
+
+- `bun test src/core/features/git src/core/kernel/view` → `Passed` — 62 pass, 0 fail, 9 files.
+- `bun test test/boundaries.test.ts` → `Passed` — 2 pass, 0 fail. The changed files add no imports apart from a sibling `./index-text` import in `diff.test.ts`.
+- `bun run check` → `Passed` — biome clean (337 files), tsc clean, knip zero findings, 1131 pass, 0 fail.
+- `bun test test/ui` → `Passed` — 157 pass, 0 fail, 63 snapshots unchanged; no `test/` file changed.
+- `grep -rnE "W261005F2A7|\b(REQ|DES|UDES|UV)[0-9]" src test` → `Passed` — no matches. An extra grep for `S`/`V`/`US`/`UREQ`/group/finding ids in the remediation diff also found none.
+- Self-review of `6e3eba5..a4d613c` → no new issue. `normalizeIndexText` has no caller outside `src/core/features/git` yet, so the zero-byte rule changes nothing elsewhere.
 
 ## Final Status
 
@@ -78,8 +126,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — the initial implementation is complete; verification is pending.
+- **Final report status:** `Completed` — every group task is complete and `P1-G1-VER1` is `Fixed`.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `9d0c701`, `2e8e0d0`, `568ec51`, `d40c9ea`, `7f4a5da`, `1cce9a3`, `0c4d9f9`
-- **Final checks:** `bun run check` → passed (1129 pass); `bun test src/core/features/git src/core/kernel/view` → 60 pass; `bun test test/boundaries.test.ts` → 2 pass; `bun test test/ui` → 157 pass, 63 snapshots unchanged; process-id grep → no matches.
-- **Remaining issues:** None
+- **Final commits:** `9d0c701`, `2e8e0d0`, `568ec51`, `d40c9ea`, `7f4a5da`, `1cce9a3`, `0c4d9f9`; remediation `a4d613c`.
+- **Final checks:** `bun run check` → passed (1131 pass); `bun test src/core/features/git src/core/kernel/view` → 62 pass; `bun test test/boundaries.test.ts` → 2 pass; `bun test test/ui` → 157 pass, 63 snapshots unchanged; process-id grep → no matches; real `git apply --cached --unidiff-zero` on a committed empty file → applied and staged exactly the buffer text.
+- **Remaining issues:** None. The unstaged `.gitignore` change (`.worktrees/`) does not belong to this group and was left untouched.
