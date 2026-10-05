@@ -87,6 +87,32 @@ The one finding is fixed. `stage` now reads the index entry before either path a
 | Linux inotify for `V54`–`V56` | Owned by PR CI (`check` job on `ubuntu-24.04`; integration on `ubuntu-24.04` and `macos-15`). No Linux environment is available locally | Not run locally | None |
 | Git 2.31 itself | Unverifiable locally: only Git 2.51 is installed. The stubbed version gate (`V29`) covers the threshold logic | Not run | None |
 
+### Overall Remediation
+
+- **Verification report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/overall-verification-report.md` (commit `f9c5b9b`, status `Failed`, one finding `OVR-VER1`, owner `P2-G1`)
+- **Status:** `Completed`
+
+`OVR-VER1` is fixed. `bunGitSpawn` decoded Git output with `Response.text()`, which drops a leading UTF-8 BOM, so `readIndex` handed BOM-free blob text to `normalizeIndexText` and `bom` was always `false`. Git stdout and stderr are now decoded with `new TextDecoder("utf-8", { ignoreBOM: true })`, the same choice as the file adapter (`src/workspace/fs.ts:76`). Remediation range: `f9c5b9b..ddfff98`.
+
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `OVR-VER1` | **Change:** `src/workspace/git.ts` adds a private `decode` (a shared BOM-keeping UTF-8 decoder over `Response.arrayBuffer()`) and uses it for stdout and stderr in `bunGitSpawn`. That covers every Git output path, including `cat-file blob` for `readIndex`. The input side was already symmetric: patch and blame contents go on stdin through `Buffer.from(string)`, which encodes U+FEFF as `EF BB BF`, and blame contents come from `saveText`, which puts the BOM back. `test/support/git-repo.ts` decodes stdout the same way, so `git show :a.md` returns the exact blob text. No contract, design, or subcommand change. **Proof:** new real-Git case "an index entry that starts with a BOM keeps it" in `src/workspace/git.test.ts`: a committed `﻿hello\nworld\n` reads as `{ lines: ["hello", "world"], finalNewline: true, bom: true, eol: "\n" }`, and blame of line 0 with BOM contents is committed. New case "a clean note with a BOM has no hunks and stages an edit" in `test/integration/git.test.ts`: after open there are zero hunks and the statusline counts are `0/0/0`; after `ggA there` and `<leader>ghs`, `gitStaged` is `ok` and `git show :a.md` is `﻿hello there\nworld\n`; after another line-0 edit, `<leader>ghr` restores the text and the buffer keeps `bom: true`. RED before the fix: the adapter case got `bom: false`, and the integration case got one `change` hunk on line 0. GREEN: `bun test src/workspace/git.test.ts test/integration/git.test.ts` → 15 pass, 0 fail. | `ddfff98` | `Fixed` |
+
+**Checks at `ddfff98`:**
+
+- `bun run check` → exit 0: Biome no fixes, tsc clean, knip zero, 1205 pass, 0 fail.
+- `bun run test:ci` → exit 0: 256 pass, 0 fail across 31 files; no `*.snap` file changed.
+- `bun test src/workspace/git.test.ts src/workspace/git-watcher.test.ts` → 15 pass, 0 fail.
+- `bun test src/app/effects.test.ts` → 22 pass, 0 fail.
+- `bun test test/integration` → 63 pass, 0 fail.
+- `bun test test/ui` → 179 pass, 0 fail; snapshots unchanged.
+- `bun test test/boundaries.test.ts` → 2 pass, 0 fail.
+- `grep -rnE "W261005F2A7|\b(REQ|DES|UDES|UV)[0-9]" src test scripts` → exit 1, no matches.
+- Orphan check before the bench showed only pre-existing PIDs 43089, 43090, and 49528–49530. `bun run bench` → exit 0; `gitDiffKeystrokeP95` median 7.27 ms (limit 48), every other target `ok`.
+- `bun run build` → exit 0; `./dist/so --version` prints `so 0.0.0`.
+- Process hygiene after the run: only the same pre-existing processes; no `so-git-*` temp dirs remain.
+- PR CI on the remediation head is not run here: nothing was pushed.
+
 ## Final Status
 
 `Completed`
