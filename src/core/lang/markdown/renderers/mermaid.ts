@@ -117,7 +117,10 @@ function draw(
       .map((line) => line.trimEnd());
     while (lines.at(-1) === "") lines.pop();
     const first = lines.findIndex((line) => line !== "");
-    return first === -1 ? undefined : lines.slice(first);
+    if (first === -1) return undefined;
+    // Equal widths, so the drawing's background is one rectangle.
+    const width = Math.max(...lines.map((line) => line.length));
+    return lines.slice(first).map((line) => line.padEnd(width));
   } catch {
     return undefined;
   }

@@ -27,6 +27,18 @@ test("a flowchart becomes box-drawing lines", () => {
   expect(r.lines.join("\n")).toMatch(/[┌┐└┘─►]/);
 });
 
+test("an edge leaves its box even when a sibling edge has a label", () => {
+  for (const spacing of ["loose", "tight"] as const) {
+    const drawn = mermaidLines(FLOWCHART, spacing)?.join("\n");
+    expect(drawn).toMatch(/Triage *├─+►│ *Plan/);
+  }
+});
+
+test("every line of a drawing has the same width", () => {
+  const lines = mermaidLines(FLOWCHART, "loose") ?? [];
+  expect(new Set(lines.map((l) => l.length)).size).toBe(1);
+});
+
 test("unsupported mermaid diagrams fall back to labelled source", () => {
   expect(mermaidText("gantt\n  title x", 80)).toEqual({
     kind: "source",
