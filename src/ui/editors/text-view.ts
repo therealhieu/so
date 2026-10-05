@@ -13,6 +13,7 @@ import {
 } from "../../core/kernel/view/diagnostics";
 import {
   displayColAt,
+  displayColOf,
   rowAt,
   sourceColAt,
   spanAt,
@@ -34,6 +35,7 @@ import {
   displayWidth,
   rowOf,
   wrapLine,
+  wrapText,
 } from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { panelFocused } from "../../core/state/side-panel";
@@ -79,7 +81,7 @@ function rowOfLine(
     covering = y;
     y += widget
       ? Math.max(1, row.widget?.rows ?? 1)
-      : height(row.spans.map((sp) => sp.text).join(""));
+      : height(wrapText(row.spans));
   }
   // Every row came before `line`: it is hidden at the end, or ran out of room.
   return y < rows ? (covering ?? missing) : missing;
@@ -238,7 +240,7 @@ export function paintPreview(
   }
   let y = 0;
   for (const row of lines) {
-    const text = row.spans.map((sp) => sp.text).join("");
+    const text = wrapText(row.spans);
     const starts = p.wrap ? wrapLine(text, r.w, p.tabWidth) : [0];
     for (let k = 0; k < starts.length && y < r.h; k++, y++) {
       const end = starts[k + 1];
@@ -333,35 +335,59 @@ export class EditorView extends Renderable implements WindowView {
       line >= this.topLine && line < this.topLine + coreRows;
     if (followsCursor) this.topLine = Math.max(this.topLine, line - rows + 1);
     const text = b.text.line(Math.min(line, b.text.lineCount - 1));
-    const dc =
-      s.vim.mode === "insert"
-        ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
-        : cursorDisplayCol(text, col, tabWidth);
+    const insert = s.vim.mode === "insert";
+    const rawCol = insert
+      ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
+      : cursorDisplayCol(text, col, tabWidth);
     const gw = gutterWidth(b.text.lineCount);
     const textW = Math.max(1, r.w - gw);
-    let k = 0;
-    let x = dc;
-    if (!wrap) {
-      this.leftCol = dc >= textW ? dc - textW + 1 : 0;
-      x = dc - this.leftCol;
-    } else {
-      this.leftCol = 0;
-      const starts = wrapLine(text, textW, tabWidth);
-      k = rowOf(starts, dc);
-      x = dc - (starts[k] ?? 0);
+    /**
+     * The cursor's wrap row and cell in `lines`. A row with virtual text
+     * places it among its spans; any other row uses the buffer line.
+     */
+    const place = (lines: readonly RenderLine[]) => {
+      const shown = lines.find(
+        (l) =>
+          l.sourceLine === line &&
+          !(l.widget !== undefined && l.spans.length === 0),
+      );
+      const virtual = shown?.spans.some((sp) => sp.virtual !== undefined);
+      const dc =
+        shown !== undefined && virtual === true
+          ? displayColOf(shown.spans, col, tabWidth, insert)
+          : rawCol;
+      if (!wrap) return { k: 0, x: dc, dc };
+      const starts = wrapLine(
+        shown !== undefined && virtual === true ? wrapText(shown.spans) : text,
+        textW,
+        tabWidth,
+      );
+      const k = rowOf(starts, dc);
+      const x = dc - (starts[k] ?? 0);
       // An Insert cursor just past a full row sits at the start of the next.
-      if (x >= textW) {
-        k++;
-        x = 0;
-      }
-    }
+      return x >= textW ? { k: k + 1, x: 0, dc } : { k, x, dc };
+    };
     const at = (lines: RenderLine[]) =>
       rowOfLine(lines, line, this.laidTo, rows, (t) =>
         wrap ? wrapLine(t, textW, tabWidth).length : 1,
       );
     this.lines = followsCursor
-      ? this.fitCursor(s, b, rows, textW, (lines) => at(lines) + k < rows)
+      ? this.fitCursor(
+          s,
+          b,
+          rows,
+          textW,
+          (lines) => at(lines) + place(lines).k < rows,
+        )
       : this.layoutFrame(s, b, this.topLine, rows, w.content.cursor, textW);
+    const placed = place(this.lines);
+    const k = placed.k;
+    let x = placed.x;
+    this.leftCol = 0;
+    if (!wrap) {
+      this.leftCol = placed.dc >= textW ? placed.dc - textW + 1 : 0;
+      x = placed.dc - this.leftCol;
+    }
     let row = at(this.lines);
     // A line taller than the window shows the rows holding the cursor.
     if (row === 0 && k >= rows) this.skipRows = k - rows + 1;
@@ -581,7 +607,7 @@ export class EditorView extends Renderable implements WindowView {
         i += height;
         continue;
       }
-      const text = row.spans.map((sp) => sp.text).join("");
+      const text = wrapText(row.spans);
       const starts = wrap ? wrapLine(text, textW, tabWidth) : [this.leftCol];
       const skip = row.sourceLine === this.topLine ? this.skipRows : 0;
       for (let k = skip; k < starts.length && i < rows; k++, i++) {
