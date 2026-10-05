@@ -262,7 +262,12 @@ test(":Format applies the server edits as one undo step", () => {
     formatting({ formatOnSave: false, autosave: false }),
     ":Format<CR>",
   );
-  const done = run(sent.state, { type: "lspResult", id: 1, result: indent });
+  const done = run(sent.state, {
+    type: "lspResult",
+    id: 1,
+    result: indent,
+    now: 0,
+  });
   expect(textOf(done.state)).toBe("fn a() {\n    b();\n}");
   expect(textOf(keys(done.state, "u").state)).toBe(UGLY);
 });
@@ -284,6 +289,7 @@ test("format on save formats :w only and never waits more than a second", () => 
 
   const formatted = run(saving.state, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: indent,
   });
@@ -304,7 +310,12 @@ test("format on save formats :w only and never waits more than a second", () => 
   expect(silent.state.notifications.toasts.map((t) => t.text)).toEqual([
     "format timed out; saved without formatting",
   ]);
-  const late = run(silent.state, { type: "lspResult", id: 1, result: indent });
+  const late = run(silent.state, {
+    type: "lspResult",
+    id: 1,
+    result: indent,
+    now: 0,
+  });
   expect(textOf(late.state)).toBe("n a() {\nb();\n}");
   expect(kinds(late.effects)).not.toContain("write");
 });
@@ -321,6 +332,31 @@ test("autosave never formats", () => {
   expect(kinds(fired.effects)).not.toContain("lsp");
 });
 
+test("a write after a format answer that then fails retries in the future", () => {
+  const saving = keys(
+    keys(formatting({ formatOnSave: true, autosave: false }), "x").state,
+    ":w<CR>",
+  );
+  const formatted = run(saving.state, {
+    type: "lspResult",
+    id: 1,
+    result: indent,
+    now: 2000,
+  });
+  const write = formatted.effects.find((e) => e.kind === "write");
+  const failed = run(formatted.state, {
+    type: "saveFailed",
+    path: write?.kind === "write" ? write.path : "",
+    reason: "EACCES",
+  });
+  const b = Object.values(failed.state.buffers).find(
+    (x) => x.save.kind === "failed",
+  );
+  expect(b?.save).toMatchObject({ kind: "failed", reason: "EACCES" });
+  const retryAt = b?.save.kind === "failed" ? b.save.retryAt : 0;
+  expect(retryAt).toBeGreaterThan(2000);
+});
+
 test("a failed format on save still saves, with a warning", () => {
   const saving = keys(
     keys(formatting({ formatOnSave: true, autosave: false }), "x").state,
@@ -328,6 +364,7 @@ test("a failed format on save still saves, with a warning", () => {
   );
   const failed = run(saving.state, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: { kind: "error", message: "syntax error" },
   });

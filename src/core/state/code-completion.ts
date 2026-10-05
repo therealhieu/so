@@ -324,6 +324,7 @@ export function onResolvedItem(
   s: AppState,
   id: number,
   resolved: CodeCompletionItem,
+  now: number,
   reg: Registries,
 ): Result {
   const a = s.lsp.accept;
@@ -333,13 +334,12 @@ export function onResolvedItem(
     effects: [{ kind: "cancelTimer", id: "lspResolve" }],
   };
   if (!stillAccepting(s, a)) return ended;
-  // The answer has no time, so the buffer's autosave is due now (0).
   return chain(ended, (st) =>
     applyCompletion(
       st,
       { ...a.item, ...resolved, resolved: true },
       a.key,
-      0,
+      now,
       reg,
     ),
   );

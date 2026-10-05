@@ -67,6 +67,7 @@ function attached(servers: ServerView[], path = "src/a.rs"): AppState {
 const at = (line: number, col: number): Pos => ({ line, col });
 const result = (id: number, r: LspResult): Action => ({
   type: "lspResult",
+  now: 0,
   id,
   result: r,
 });

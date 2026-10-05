@@ -98,6 +98,7 @@ test("an edit over an open and a closed file edits the buffer and queues the fil
   });
   const r = run(sent.state, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: {
       kind: "edit",
@@ -326,6 +327,7 @@ test("submitting the rename prompt sends the new name", () => {
   ]);
   const asked = run(s.state, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: { kind: "prepareRename", placeholder: "old" },
   }).state;
@@ -356,6 +358,7 @@ function actions(): AppState {
   const asked = keys(open([...ACTIONS]), "gra").state;
   return run(asked, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: {
       kind: "actions",
@@ -399,6 +402,7 @@ test("choosing a code action without an edit resolves it, applies it, then runs 
   ]);
   const resolved = run(chosen.state, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: {
       kind: "action",
@@ -433,6 +437,7 @@ test("a command-only code action sends its command at once", () => {
   ]);
   const done = run(chosen.state, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: { kind: "none" },
   });
@@ -443,6 +448,7 @@ test("a failed action resolve shows the server message", () => {
   const chosen = keys(actions(), "<CR>").state;
   const failed = run(chosen, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: { kind: "error", message: "cannot create files" },
   });

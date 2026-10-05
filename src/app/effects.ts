@@ -508,6 +508,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           type: "lspResult",
           id: e.id,
           result: { kind: "error", message: "language servers off" },
+          now: now(),
         });
         return;
       case "lspCancel":

@@ -569,7 +569,7 @@ export type Action =
       source: "push" | "pull";
       items: Diagnostic[];
     }
-  | { type: "lspResult"; id: number; result: LspResult }
+  | { type: "lspResult"; id: number; result: LspResult; now: number }
   | {
       type: "lspMessage";
       key: ServerKey;

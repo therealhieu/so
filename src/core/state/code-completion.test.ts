@@ -64,6 +64,7 @@ const item = (label: string, o: Partial<CodeCompletionItem> = {}) => ({
 });
 const answer = (id: number, labels: string[], incomplete = false): Action => ({
   type: "lspResult",
+  now: 0,
   id,
   result: {
     kind: "completion",
@@ -210,6 +211,7 @@ function offered(items: CodeCompletionItem[]): AppState {
   const asked = run(typed, { type: "timer", id: "completion", now: 200 });
   return run(asked.state, {
     type: "lspResult",
+    now: 0,
     id: 1,
     result: { kind: "completion", items, incomplete: false },
   }).state;
@@ -296,6 +298,7 @@ test("a slow resolve applies the item once without waiting", () => {
   expect(timedOut.state.lsp.accept).toBeUndefined();
   const late = run(timedOut.state, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: {
       kind: "completionItem",
@@ -310,6 +313,7 @@ test("a slow resolve applies the item once without waiting", () => {
 
   const resolved = run(accepted.state, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: {
       kind: "completionItem",
@@ -337,6 +341,7 @@ test("a slow resolve applies the item once without waiting", () => {
   const moved = keys(accepted.state, "x").state;
   const stale = run(moved, {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: { kind: "completionItem", item: { ...unresolved, resolved: true } },
   });
@@ -354,6 +359,7 @@ test("a key that moves the cursor during a resolve drops the accept", () => {
   const accepted = keys(offered([unresolved]), "<CR>").state;
   const resolvedItem: Action = {
     type: "lspResult",
+    now: 0,
     id: 2,
     result: {
       kind: "completionItem",

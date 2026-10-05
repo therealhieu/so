@@ -158,7 +158,7 @@ function takePending(
 /** A server answered request `id`; stale, unknown, and quiet answers change nothing. */
 export function onLspResult(
   s: AppState,
-  a: { id: number; result: LspResult },
+  a: { id: number; result: LspResult; now: number },
   reg: Registries,
 ): Result {
   const { state, p } = takePending(s, a.id);
@@ -171,9 +171,15 @@ export function onLspResult(
   const format = state.lsp.format;
   const fresh =
     format?.requestId === a.id
-      ? formattedSave(state, format, current ? a.result : { kind: "none" }, reg)
+      ? formattedSave(
+          state,
+          format,
+          current ? a.result : { kind: "none" },
+          a.now,
+          reg,
+        )
       : current
-        ? applyResult(state, a.id, p, a.result, reg)
+        ? applyResult(state, a.id, p, a.result, a.now, reg)
         : none(state);
   return { state: fresh.state, effects: [...ended, ...fresh.effects] };
 }
@@ -191,12 +197,12 @@ const save = (s: AppState, id: number, now: number): Result =>
 /**
  * The formatter answered a `:w`: apply its edits, then write. A failure
  * writes the buffer unformatted with a warning; a stale answer just writes.
- * The answer has no time, so the write is due now (0).
  */
 function formattedSave(
   s: AppState,
   f: { bufferId: number },
   r: LspResult,
+  now: number,
   reg: Registries,
 ): Result {
   const waited: Result = {
@@ -206,11 +212,12 @@ function formattedSave(
   return chain(waited, (st) => {
     if (r.kind === "edit")
       return chain(
-        startCodeEdit(st, r.edit, { title: "format" }, 0, reg),
-        (x) => save(x, f.bufferId, 0),
+        startCodeEdit(st, r.edit, { title: "format" }, now, reg),
+        (x) => save(x, f.bufferId, now),
       );
-    if (r.kind !== "error" || r.quiet === true) return save(st, f.bufferId, 0);
-    return chain(save(st, f.bufferId, 0), (x) =>
+    if (r.kind !== "error" || r.quiet === true)
+      return save(st, f.bufferId, now);
+    return chain(save(st, f.bufferId, now), (x) =>
       toast(
         x,
         "info",
@@ -240,6 +247,7 @@ function applyResult(
   id: number,
   p: PendingRequest,
   r: LspResult,
+  now: number,
   reg: Registries,
 ): Result {
   const pos = p.pos ?? { line: 0, col: 0 };
@@ -301,8 +309,7 @@ function applyResult(
         r.placeholder,
       );
     case "edit":
-      // The answer has no time, so the buffers' autosave is due now (0).
-      return startCodeEdit(s, r.edit, { title: p.feature }, 0, reg);
+      return startCodeEdit(s, r.edit, { title: p.feature }, now, reg);
     case "actions":
       return r.items.length === 0
         ? message(s, `${p.feature}: nothing found`)
@@ -317,11 +324,11 @@ function applyResult(
             "lspActions",
           );
     case "action":
-      return runAction(s, { ...r.action, resolved: true }, p.key, 0, reg);
+      return runAction(s, { ...r.action, resolved: true }, p.key, now, reg);
     case "completion":
       return onCompletionResult(s, p, r);
     case "completionItem":
-      return onResolvedItem(s, id, r.item, reg);
+      return onResolvedItem(s, id, r.item, now, reg);
   }
 }
 
