@@ -200,6 +200,7 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   floatMatch: ["fg", "match-bg", UNDERLINE, UNDERLINE],
   floatWarn: ["warn", "bg-float", 0, 0],
   floatError: ["error", "bg-float", BOLD, BOLD],
+  floatActive: ["fg", "bg-sel", BOLD, BOLD | UNDERLINE],
   calendarMark: ["tag", "bg-float", 0, 0],
   toastInfo: ["ok", "bg-float", 0, 0],
   toastError: ["error", "bg-float", BOLD, BOLD],
@@ -230,6 +231,12 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   mdProperty: ["fg-muted", "bg", 0, DIM],
   signReveal: ["h2", "bg", 0, BOLD],
   signError: ["error", "bg", BOLD, BOLD],
+  // Diagnostics: the gutter sign letter (E, W, I, H) carries the severity
+  // without colour; the underline marks the range.
+  diagnosticError: ["error", "bg", UNDERLINE, UNDERLINE],
+  diagnosticWarn: ["warn", "bg", UNDERLINE, UNDERLINE],
+  diagnosticInfo: ["info", "bg", UNDERLINE, UNDERLINE],
+  diagnosticHint: ["fg-muted", "bg", UNDERLINE, UNDERLINE | DIM],
   imagePlaceholder: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
   // Bases views: the focused cell or card is reversed and marked with ▌;
   // lane dots carry their names, never colour alone.

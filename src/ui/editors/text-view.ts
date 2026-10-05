@@ -8,6 +8,10 @@ import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
 import {
+  type Diagnostic,
+  diagnosticMarks,
+} from "../../core/kernel/view/diagnostics";
+import {
   displayColAt,
   rowAt,
   sourceColAt,
@@ -46,6 +50,7 @@ import { type WidgetPainter, widgetPainters } from "../widgets/registry";
 import type { WindowView } from "./registry";
 
 const NO_FOLDS: ReadonlySet<number> = new Set();
+const NO_DIAGNOSTICS: readonly Diagnostic[] = [];
 
 /** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
 const gutterWidth = (lineCount: number) =>
@@ -667,6 +672,7 @@ export class EditorView extends Renderable implements WindowView {
       const providers = [
         highlightMarks(ft?.highlighter),
         ...(spec?.decorations ?? []),
+        diagnosticMarks(s.lsp.shown[b.path] ?? NO_DIAGNOSTICS),
         searchMarks(s.vim.search),
         selectionMarks(selection),
       ];
