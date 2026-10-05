@@ -7,6 +7,7 @@ import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
 import { goTo, recordJump } from "./jumps";
 import { startCodeEdit } from "./lsp-edits";
 import type {
+  CodeAction,
   DiagnosticSlots,
   LspFeature,
   LspOp,
@@ -180,11 +181,15 @@ function applyResult(
   const pos = p.pos ?? { line: 0, col: 0 };
   switch (r.kind) {
     case "error":
-      return r.quiet === true || p.auto
-        ? none(s)
+      if (r.quiet === true || p.auto) return none(s);
+      // A code action that fails to resolve fails alone; the others still work.
+      return p.feature === "codeActionResolve"
+        ? message(s, `${serverName(s, p.key)}: ${r.message}`, "error")
         : message(s, `${p.feature}: ${r.message}`, "error");
     case "none":
-      return p.auto ? none(s) : message(s, `${p.feature}: nothing found`);
+      return p.auto || p.feature === "executeCommand"
+        ? none(s)
+        : message(s, `${p.feature}: nothing found`);
     case "hover": {
       const lines = r.text.split("\n");
       return lines.every((l) => l.trim() === "")
@@ -232,11 +237,65 @@ function applyResult(
       // The answer has no time, so the buffers' autosave is due now (0).
       return startCodeEdit(s, r.edit, { title: p.feature }, 0, reg);
     case "actions":
+      return r.items.length === 0
+        ? message(s, `${p.feature}: nothing found`)
+        : openPicker(
+            {
+              state: withLsp(s, {
+                actions: { key: p.key, path: p.path, items: r.items },
+              }),
+              now: 0,
+              reg,
+            },
+            "lspActions",
+          );
     case "action":
+      return runAction(s, { ...r.action, resolved: true }, p.key, 0, reg);
     case "completion":
     case "completionItem":
       return none(s);
   }
+}
+
+/**
+ * Run code action `action` of server `key`: apply its edit, then send its
+ * command. An action listed without its edit is resolved first, when the
+ * server can resolve it.
+ */
+export function runAction(
+  s: AppState,
+  action: CodeAction,
+  key: ServerKey,
+  now: number,
+  reg: Registries,
+): Result {
+  const command = (st: AppState): Result =>
+    action.command === undefined
+      ? none(st)
+      : request(
+          st,
+          "executeCommand",
+          { kind: "executeCommand", command: action.command },
+          { key },
+        );
+  if (action.edit !== undefined)
+    return chain(
+      startCodeEdit(s, action.edit, { title: "codeAction" }, now, reg),
+      command,
+    );
+  if (
+    !action.resolved &&
+    s.lsp.servers[key]?.features.includes("codeActionResolve") === true
+  )
+    return request(
+      s,
+      "codeActionResolve",
+      { kind: "resolveAction", action },
+      { key },
+    );
+  return action.command === undefined
+    ? message(s, `codeAction: ${action.title} has nothing to apply`)
+    : command(s);
 }
 
 /** A server asks for a workspace edit; it is answered once, applied or not. */
@@ -269,7 +328,7 @@ export function openRenamePrompt(
         title: "Rename symbol",
         value,
         invalid: "type a new name",
-        rename,
+        rename: { ...rename, name: value },
       },
     },
   });

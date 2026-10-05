@@ -182,9 +182,15 @@ type NewNotePrompt = PromptBase & {
   op?: never;
   rename?: never;
 };
-/** A new name for the symbol at `pos`, asked of the server `key`. */
+/** A new name for the symbol `name` at `pos`, asked of the server `key`. */
 type RenamePrompt = PromptBase & {
-  rename: { key: ServerKey; path: string; pos: Pos; version: number };
+  rename: {
+    key: ServerKey;
+    path: string;
+    pos: Pos;
+    version: number;
+    name: string;
+  };
   op?: never;
   newNote?: never;
 };

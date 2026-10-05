@@ -3,7 +3,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { DiagnosticSeverity } from "../kernel/view/diagnostics";
 import { goTo, recordJump } from "./jumps";
-import { mergedDiagnostics } from "./lsp";
+import { mergedDiagnostics, runAction } from "./lsp";
 import type { ServerView } from "./lsp-types";
 import type { PickerSource } from "./picker";
 import { none } from "./result";
@@ -160,6 +160,28 @@ export const lspPickerSources: Readonly<Record<string, PickerSource>> = {
     },
     accept: acceptLocation,
     preview: previewLocation,
+  },
+  lspActions: {
+    id: "lspActions",
+    title: "Code actions",
+    action: "apply",
+    items: (s, _r, q) =>
+      ranked(
+        (s.lsp.actions?.items ?? []).map((a, n) => ({
+          key: String(n),
+          text: a.title,
+          ...(a.kind === undefined ? {} : { detail: a.kind }),
+        })),
+        q,
+      ),
+    accept: (s, item, now, reg) => {
+      const actions = s.lsp.actions;
+      const action = actions?.items[Number(item.key)];
+      const closed: AppState = { ...s, overlay: { kind: "none" } };
+      return actions === undefined || action === undefined
+        ? none(closed)
+        : runAction(closed, action, actions.key, now, reg);
+    },
   },
   lspInfo: {
     id: "lspInfo",
