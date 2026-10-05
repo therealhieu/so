@@ -44,6 +44,11 @@ import {
   linkGroups,
 } from "../core/state/link-commands";
 import {
+  lspBindings,
+  lspCommands,
+  lspGroups,
+} from "../core/state/lsp-commands";
+import {
   markdownBindings,
   markdownCommands,
 } from "../core/state/markdown-commands";
@@ -87,6 +92,7 @@ import {
 } from "./effects";
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
+import { createLspHost } from "./lsp-host";
 import { createPreviewHost } from "./preview-host";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
@@ -141,6 +147,7 @@ function registries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of lspCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   const embedModels = new EmbedModelRegistry();
@@ -158,8 +165,9 @@ function registries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...lspBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...lspGroups },
     viewContexts,
     embedModels,
     layouts,
@@ -302,6 +310,11 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
+  const lspHost = createLspHost({
+    root: ws.root,
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
   // Trash, clipboard, and exit are bound once detected or constructed; the
   // runner reads them at call time.
   const deps: RunnerDeps = {
@@ -320,6 +333,7 @@ async function main(argv: string[]): Promise<void> {
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
     index: indexHost,
+    lsp: lspHost,
     preview: previewHost,
     openUrl: (url) => openUrl(url, process.platform),
   };
@@ -335,6 +349,7 @@ async function main(argv: string[]): Promise<void> {
     createUpdate(reg),
     runner.run,
   );
+  store.subscribe(lspHost.observe);
   const config = loadStartupConfig(configFile, logger);
   if (config !== undefined) store.dispatch(config);
   if (stateFile !== undefined)
@@ -352,6 +367,7 @@ async function main(argv: string[]): Promise<void> {
     runner,
     ...(saveSession === undefined ? {} : { saveSession }),
     stopPreview: previewHost.stop,
+    stopLsp: lspHost.stop,
   });
   deps.exit = lifecycle.exitNow;
 
@@ -363,6 +379,7 @@ async function main(argv: string[]): Promise<void> {
     watchWorkspace(ws.root, ownOps, matcher, (event) => {
       store.dispatch({ type: "fileChanged", event });
       indexHost.notify(event);
+      lspHost.notify(event);
     });
     indexHost.start(ws.root, []);
     runner.run({ kind: "readPropertyTypes" });
