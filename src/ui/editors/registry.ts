@@ -1,16 +1,20 @@
 import type { Renderable, RenderContext } from "@opentui/core";
-import type { AppState, WindowId } from "../../core/state/types";
+import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
 import type { Rect } from "./text-view";
 
 /**
  * What `WindowTree` needs from a window's view: place it in `r` and follow
- * window `id` (`split` when there are several windows), and say where the
- * hardware cursor goes while the window has focus. A view paints only inside `r`.
+ * window `id` (`split` when there are several windows), say where the
+ * hardware cursor goes while the window has focus, and say what is under a
+ * screen cell. A view paints only inside `r`; `dragAt` exists only where a
+ * drag selects.
  */
 export type WindowView = Renderable & {
   show(s: AppState, id: WindowId, r: Rect, split: boolean): void;
   cursor(): Cursor | undefined;
+  targetAt(x: number, y: number): MouseTarget | undefined;
+  dragAt?(x: number, y: number): MouseTarget | undefined;
 };
 
 /** Window content views by editor kind (`WindowState.content.editor`). */

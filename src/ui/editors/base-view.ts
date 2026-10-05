@@ -6,7 +6,7 @@ import {
 import type { BaseWindowState } from "../../core/features/bases/file-type";
 import { type BaseViewModel, baseWindow } from "../../core/state/base-model";
 import { panelFocused } from "../../core/state/side-panel";
-import type { AppState, WindowId } from "../../core/state/types";
+import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, type Theme, themeOf } from "../theme";
 import {
@@ -43,6 +43,7 @@ type Frame = {
  */
 export class BaseView extends Renderable implements WindowView {
   private s: AppState | undefined;
+  private windowId: WindowId = 0;
   private rect: Rect = { x: 0, y: 0, w: 0, h: 0 };
   private cursorAt: Cursor | undefined;
   /** What `show` derived for this frame; `renderSelf` paints it. */
@@ -63,6 +64,7 @@ export class BaseView extends Renderable implements WindowView {
    */
   show(s: AppState, id: WindowId, r: Rect, _split: boolean): void {
     this.s = s;
+    this.windowId = id;
     this.rect = r;
     this.left = r.x;
     this.top = r.y;
@@ -132,6 +134,14 @@ export class BaseView extends Renderable implements WindowView {
 
   cursor(): Cursor | undefined {
     return this.cursorAt;
+  }
+
+  /** Any cell of the window is the base. */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const r = this.rect;
+    if (x < r.x || x >= r.x + r.w || y < r.y || y >= r.y + r.h)
+      return undefined;
+    return { kind: "window", window: this.windowId, spot: { kind: "base" } };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {

@@ -4,7 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import type { WindowTree as Tree } from "../../core/kernel/editor/windows";
-import type { AppState, WindowId } from "../../core/state/types";
+import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import { editorViews, type WindowView } from "../editors/registry";
 import type { Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
@@ -56,6 +56,8 @@ export class WindowTree extends Renderable {
   /** The editor kind each window's view was created for. */
   private readonly kinds = new Map<WindowId, string>();
   private seps: Rect[] = [];
+  /** Each window's rect from the last `update`. */
+  private rects = new Map<WindowId, Rect>();
 
   constructor(
     ctx: RenderContext,
@@ -79,6 +81,7 @@ export class WindowTree extends Renderable {
     const rects = new Map<WindowId, Rect>();
     this.seps = [];
     place(s.windows.tree, body, rects, this.seps);
+    this.rects = rects;
     const kindOf = (id: WindowId) =>
       s.windows.byId[id]?.content.editor ?? "text";
     // A window whose editor kind changed gets a new view.
@@ -109,6 +112,21 @@ export class WindowTree extends Renderable {
     return s === undefined
       ? undefined
       : this.views.get(s.windows.active)?.cursor();
+  }
+
+  /** The target from the window whose rect holds the cell; separators have none. */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    for (const [id, r] of this.rects)
+      if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h)
+        return this.views.get(id)?.targetAt(x, y);
+    return undefined;
+  }
+
+  /** A drag stays with the window it started in. */
+  dragAt(x: number, y: number, from: MouseTarget): MouseTarget | undefined {
+    return from.kind === "window"
+      ? this.views.get(from.window)?.dragAt?.(x, y)
+      : undefined;
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {

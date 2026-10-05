@@ -7,6 +7,7 @@ import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
+import { rowAt, sourceColAt } from "../../core/kernel/view/hit";
 import {
   highlightMarks,
   searchMarks,
@@ -27,7 +28,12 @@ import {
 } from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { panelFocused } from "../../core/state/side-panel";
-import type { AppState, BufferState, WindowId } from "../../core/state/types";
+import type {
+  AppState,
+  BufferState,
+  MouseTarget,
+  WindowId,
+} from "../../core/state/types";
 import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
@@ -393,6 +399,82 @@ export class EditorView extends Renderable implements WindowView {
 
   private textRows(): number {
     return Math.max(0, this.rect.h - (this.winbar ? 1 : 0));
+  }
+
+  /**
+   * What is under (x, y) from this frame's layout: the winbar, else the
+   * source position shown there. The gutter gives the line's first column
+   * and the rows below the text the last line.
+   */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const r = this.rect;
+    if (x < r.x || x >= r.x + r.w || y < r.y || y >= r.y + r.h)
+      return undefined;
+    if (this.winbar && y === r.y)
+      return {
+        kind: "window",
+        window: this.windowId,
+        spot: { kind: "winbar" },
+      };
+    return this.textAt(x, y, 0);
+  }
+
+  /**
+   * Where a drag that started in this window's text is now: the cell is
+   * clamped into the text area, and `edge` says the pointer left it above
+   * (-1) or below (1).
+   */
+  dragAt(x: number, y: number): MouseTarget | undefined {
+    const r = this.rect;
+    const top = r.y + (this.winbar ? 1 : 0);
+    const bottom = top + this.textRows() - 1;
+    const edge = y < top ? -1 : y > bottom ? 1 : 0;
+    const cy = Math.max(top, Math.min(y, bottom));
+    return this.textAt(Math.max(r.x, Math.min(x, r.x + r.w - 1)), cy, edge);
+  }
+
+  /** The text position shown at screen cell (x, y), inside the text rows. */
+  private textAt(
+    x: number,
+    y: number,
+    edge: -1 | 0 | 1,
+  ): MouseTarget | undefined {
+    const s = this.s;
+    const w = s?.windows.byId[this.windowId];
+    const b = w && s?.buffers[w.content.bufferId];
+    const rows = this.textRows();
+    if (s === undefined || b === undefined || rows <= 0) return undefined;
+    const { tabWidth, wrap } = s.config.editor;
+    const gw = gutterWidth(b.text.lineCount);
+    const textX = this.rect.x + gw;
+    const row = y - this.rect.y - (this.winbar ? 1 : 0);
+    const shown = rowAt(this.lines, row, {
+      width: Math.max(1, this.rect.w - gw),
+      tabWidth,
+      wrap,
+      skipRows: this.skipRows,
+    });
+    const line = Math.min(
+      shown?.line.sourceLine ?? this.topLine,
+      b.text.lineCount - 1,
+    );
+    const length = b.text.line(line).length;
+    const widget =
+      shown?.line.widget !== undefined && shown.line.spans.length === 0;
+    const col =
+      shown === undefined || widget || x < textX
+        ? 0
+        : sourceColAt(
+            shown.line.spans,
+            shown.startCol + this.leftCol + x - textX,
+            tabWidth,
+            length,
+          );
+    return {
+      kind: "window",
+      window: this.windowId,
+      spot: { kind: "text", pos: { line, col: Math.min(col, length) }, edge },
+    };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
