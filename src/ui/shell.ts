@@ -133,7 +133,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           })),
       };
       const windows = new WindowTree(renderer, ctx);
-      const explorer = new ExplorerView(renderer, ctx);
+      const explorer = new ExplorerView(renderer);
       const cmdline = new CommandLine(renderer, ctx);
       const side = new SidePanelView(renderer);
       const overlays = new OverlayHost(renderer, [

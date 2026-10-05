@@ -3,15 +3,16 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { isNote, visiblePaths } from "../../core/state/explorer";
+import { visiblePaths } from "../../core/state/explorer";
 import type {
   AppState,
   ExplorerPrompt,
   MouseTarget,
   PromptState,
 } from "../../core/state/types";
+import { fileIcon, folderIcon } from "../icons";
 import { drawFrame } from "../overlays/host";
-import type { Cursor, LayoutClass, ViewDeps } from "../shell";
+import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 /** Columns of the tree, not counting its separator or float border. */
@@ -75,8 +76,9 @@ export function impactLine(
 
 /**
  * The file tree: docked on its configured edge with a `│` separator toward
- * the windows, or a rounded float on that edge on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
- * files `≡`; `●` marks a file with unsaved changes. Create and rename edit
+ * the windows, or a rounded float on that edge on narrow terminals. Each row starts with an
+ * icon for its folder state or file type (`explorer.icons` picks Nerd Font or
+ * plain symbols); `●` marks a file with unsaved changes. Create and rename edit
  * the name in the tree: a new row under the target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
@@ -92,10 +94,7 @@ export class ExplorerView extends Renderable {
   private paths: string[] = [];
   private cursorAt: Cursor | undefined;
 
-  constructor(
-    ctx: RenderContext,
-    private readonly deps: Pick<ViewDeps, "reg">,
-  ) {
+  constructor(ctx: RenderContext) {
     super(ctx, { position: "absolute", left: 0, top: 1, zIndex: 20 });
   }
 
@@ -277,13 +276,10 @@ export class ExplorerView extends Renderable {
           ? "treeSelFocus"
           : "treeSel"
         : "explorer";
+      const set = s.config.explorer.icons;
       const icon = row.dir
-        ? row.open
-          ? "▾ "
-          : "▸ "
-        : row.path === "" || isNote(this.deps.reg.fileTypes, row.path) // a new row shows as a note
-          ? "◇ "
-          : "≡ ";
+        ? { glyph: folderIcon(row.open, set), token: "explorerDir" }
+        : fileIcon(row.path === "" ? "new.md" : row.path, set); // a new row shows as a note
       const indent = ` ${"  ".repeat(row.depth)}`;
       drawCells(buf, theme.style(base), x0, y, "", box.w);
       let x = x0;
@@ -301,7 +297,7 @@ export class ExplorerView extends Renderable {
         x += [...text].length;
       };
       put(indent, "explorer");
-      put(icon, row.dir ? "explorerDir" : "explorerDim");
+      put(`${icon.glyph} `, icon.token);
       if (row.edit !== undefined) {
         const room = x0 + box.w - x;
         if (room > 0)

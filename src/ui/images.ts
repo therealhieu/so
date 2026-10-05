@@ -79,10 +79,18 @@ export class ImageCache {
     return this.o.cell?.();
   }
 
-  /** Cell width ÷ cell height: from the cell's pixels when known, else 0.5. */
-  cellAspect(): number {
+  /** A cell's size in pixels: the terminal's when it reports one, else 8×16. */
+  cellSize(): { width: number; height: number } {
     const c = this.cellPixels();
-    return c === undefined || c.height <= 0 ? 0.5 : c.width / c.height;
+    return c === undefined || c.width <= 0 || c.height <= 0
+      ? { width: 8, height: 16 }
+      : c;
+  }
+
+  /** Cell width ÷ cell height. */
+  cellAspect(): number {
+    const c = this.cellSize();
+    return c.width / c.height;
   }
 
   /** Bytes of decoded pixels held. */

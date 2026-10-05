@@ -4,7 +4,7 @@ import type { SearchHit } from "../../src/core/state/types";
 import { answerSearch, indexFixture, NOTES, SYNC_TS } from "../support/notes";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
-const RIGHT = '[explorer]\nposition = "right"\n';
+const RIGHT = '[explorer]\nposition = "right"\n[preview]\nmode = "live"\n';
 
 const IDEAS_MD =
   "# Ideas\n\nA terminal editor for notes.\n- keep files plain\n";
@@ -233,8 +233,8 @@ test("the explorer marks notes by their registered file type, in any case", asyn
     ],
   });
   const tree = (await m.frame()).split("\n").map((l) => l.slice(0, 30));
-  expect(tree).toContain(` ◇ NOTE.MD${" ".repeat(20)}`);
-  expect(tree).toContain(` ≡ config.yaml${" ".repeat(16)}`);
+  expect(tree).toContain(` \ue609 NOTE.MD${" ".repeat(20)}`);
+  expect(tree).toContain(` \ue6a8 config.yaml${" ".repeat(16)}`);
 });
 
 test("a split window's long title is cut in the middle and keeps the file name", async () => {

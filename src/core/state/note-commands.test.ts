@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   fresh,
+  freshDefaults,
   openBuffer,
   testRegistries,
   textFile,
@@ -168,6 +169,30 @@ test("a note created for insert opens in Insert mode at its end", () => {
   expect(fullText(activeBuffer(typed)?.text ?? (undefined as never))).toBe(
     "# Meeting\n\nnotes!",
   );
+});
+
+test("a daily note opens in live view, not the default reading view", () => {
+  const r = run(freshDefaults(), ...ex("Today"));
+  const effect = r.effects.find((e) => e.kind === "createNote");
+  if (effect?.kind !== "createNote") throw new Error("expected createNote");
+  const s = run(
+    r.state,
+    created(effect.path, { after: "firstTask", reason: "daily" }),
+    loaded(effect.path, "# Today\n\n- [ ] plan\n"),
+  ).state;
+  expect(activeBuffer(s)?.view).toBe("live");
+  expect(activeWindow(s)?.content.cursor).toEqual({ line: 2, col: 6 });
+});
+
+test("a note created for insert leaves the default reading view for live", () => {
+  const path = "Meeting.md";
+  const s = run(
+    freshDefaults(),
+    created(path, { after: "insert", reason: "new", template: "none" }),
+    loaded(path, "# Meeting\n\nnotes"),
+  ).state;
+  expect(activeBuffer(s)?.view).toBe("live");
+  expect(s.vim.mode).toBe("insert");
 });
 
 test("an unreadable template still opens the empty note and names the template", () => {

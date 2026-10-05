@@ -35,7 +35,12 @@ const model = m.reg.viewContexts.build(
   "markdown",
   m.store.get(),
   m.store.get().windows.active,
-  { width: 114, rows: 37, imageSize: () => undefined, cellAspect: 0.5 },
+  {
+    width: 114,
+    rows: 37,
+    imageSize: () => undefined,
+    cell: { width: 8, height: 16 },
+  },
 ) as PreviewCtx;
 const embedded = model.embedModel("tasks.base", "#All tasks");
 if (!isBaseEmbedModel(embedded) || embedded.table === undefined)

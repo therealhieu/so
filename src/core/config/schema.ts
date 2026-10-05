@@ -72,11 +72,13 @@ export const ConfigSchema = z.strictObject({
   explorer: z
     .strictObject({
       position: z.enum(["left", "right"]).default("left"),
+      /** Nerd Font file-type icons, or plain symbols for fonts without them. */
+      icons: z.enum(["nerd", "unicode"]).default("nerd"),
     })
     .prefault({}),
   preview: z
     .strictObject({
-      mode: z.enum(["live", "source", "reading"]).default("live"),
+      mode: z.enum(["reading", "live", "source"]).default("reading"),
       embedMaxRows: z.number().int().min(1).max(200).default(10),
       images: z.enum(["auto", "blocks", "off"]).default("auto"),
     })

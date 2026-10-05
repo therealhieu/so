@@ -219,9 +219,14 @@ test("a missing embed paints its title in the unresolved link style", async () =
   expect(lines.join("\n")).not.toContain("cannot read file");
 });
 
-const PNG = new Uint8Array(
-  readFileSync(new URL("../fixtures/images/diagram.png", import.meta.url)),
-);
+const fixture = (name: string) =>
+  new Uint8Array(
+    readFileSync(new URL(`../fixtures/images/${name}`, import.meta.url)),
+  );
+/** 1920×960: wider than any test window, so it fills the window width. */
+const PNG = fixture("wide.png");
+/** 240×120: narrower than the window. */
+const SMALL_PNG = fixture("diagram.png");
 const IMAGE_NOTE = `# Diagram\n\n![[diagram.png]]\n\n${Array.from(
   { length: 40 },
   (_, i) => `Line ${i + 5}`,
@@ -353,7 +358,7 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     const [, , y, , height, , , , , , sourceHeight] = draw.mock.calls[0] ?? [];
     expect(height).toBe(37 - ((y as number) - 1));
     expect(height).toBeLessThan(24);
-    expect(sourceHeight).toBe(Math.round((120 * (height as number)) / 24));
+    expect(sourceHeight).toBe(Math.round((960 * (height as number)) / 24));
 
     m.keys("G");
     expect(await drawn()).toBe(0);
@@ -370,6 +375,24 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     m.open("notes/other.md", "# Other\n\nPlain text.\n");
     expect(await drawn()).toBe(0);
     expect((await windowRows(m)).join("\n")).toContain("Plain text.");
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("an image narrower than the window keeps its natural size", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    m = await mountImageNote({
+      capabilities: KITTY,
+      files: { "images/diagram.png": SMALL_PNG },
+    });
+    draw.mockClear();
+    await m.frame();
+    // 240×120 px in 8×16 px cells: 8 rows, about 30 of the window's 94 columns.
+    const [, , , cols, rows] = draw.mock.calls[0] ?? [];
+    expect(rows).toBe(8);
+    expect(cols).toBeLessThanOrEqual(32);
   } finally {
     draw.mockRestore();
   }

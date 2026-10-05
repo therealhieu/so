@@ -12,6 +12,10 @@ beforeEach(async () => {
 });
 afterEach(() => m.destroy());
 
+/** The tree's Nerd Font icons: a closed folder, a note, a YAML file. */
+const DIR = "\uf07b";
+const NOTE = "\ue609";
+const YAML = "\ue6a8";
 const effectsOf = (kind: string) => m.effects.filter((e) => e.kind === kind);
 const select = (path: string) => {
   while (m.store.get().panels.explorer.cursor !== path) {
@@ -69,11 +73,11 @@ describe("explorer prompts", () => {
     let frame = await m.frame();
     expect(frame).not.toContain("New file or folder");
     expect(await tree()).toEqual([
-      "▸ notes",
-      "▸ scripts",
-      "≡ config.yaml",
-      "◇",
-      "◇ todo.md",
+      `${DIR} notes`,
+      `${DIR} scripts`,
+      `${YAML} config.yaml`,
+      NOTE,
+      `${NOTE} todo.md`,
     ]);
     m.keys("ide");
     expect(await cursorAt()).toEqual({ x: 6, y: 5 });
@@ -83,11 +87,11 @@ describe("explorer prompts", () => {
     frame = await m.frame();
     expect(frame).not.toContain("❯");
     expect(await tree()).toEqual([
-      "▸ notes",
-      "  ◇ draft",
-      "▸ scripts",
-      "≡ config.yaml",
-      "◇ todo.md",
+      `${DIR} notes`,
+      `  ${NOTE} draft`,
+      `${DIR} scripts`,
+      `${YAML} config.yaml`,
+      `${NOTE} todo.md`,
     ]);
   });
 
@@ -97,7 +101,7 @@ describe("explorer prompts", () => {
     const op = { kind: "create", from: "ideas", dir: true } as const;
     expect(effectsOf("create")).toEqual([{ kind: "create", op }]);
     complete(op, [{ name: "ideas", kind: "dir" }, ...(TREE[""] ?? [])]);
-    expect(await m.frame()).toContain("▸ ideas");
+    expect(await m.frame()).toContain(`${DIR} ideas`);
   });
 
   test("a name without an extension gets .md; one with an extension keeps it", () => {
@@ -117,15 +121,15 @@ describe("explorer prompts", () => {
     let frame = await m.frame();
     expect(frame).not.toContain("Rename");
     expect(await tree()).toEqual([
-      "▸ notes",
-      "▸ scripts",
-      "≡ config.yaml",
-      "◇ todo.md",
+      `${DIR} notes`,
+      `${DIR} scripts`,
+      `${YAML} config.yaml`,
+      `${NOTE} todo.md`,
       "  No links to update",
     ]);
     expect(await cursorAt()).toEqual({ x: 10, y: 5 });
     m.keys("<BS><BS>txt");
-    expect((await tree())[3]).toBe("◇ todo.txt");
+    expect((await tree())[3]).toBe(`${NOTE} todo.txt`);
     m.keys("<CR>");
     expect(effectsOf("rename")).toEqual([
       {

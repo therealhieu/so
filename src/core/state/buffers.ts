@@ -417,13 +417,24 @@ const OPEN_TASK = /^\s*[-*+] \[ \](?: |$)/;
 /**
  * Place the active window's cursor for `after`: on the first unchecked task
  * (else at the end of the file), or at the end in Insert mode, entered as
- * `A` would. A read-only view stays in Normal mode.
+ * `A` would. A note opened to write in (a new or daily note) leaves a
+ * read-only view for its file type's first editable one; with none, it stays
+ * in Normal mode.
  */
 export function placeAfterOpen(
-  s: AppState,
+  st: AppState,
   after: AfterOpen,
   reg: Registries,
 ): AppState {
+  const opened = activeBuffer(st);
+  if (opened === undefined) return st;
+  const editable = readOnlyView(reg, opened)
+    ? reg.fileTypes.get(opened.fileType)?.views.find((v) => !v.readOnly)
+    : undefined;
+  const s =
+    editable === undefined
+      ? st
+      : setBuffer(st, opened.id, { view: editable.id });
   const b = activeBuffer(s);
   if (b === undefined) return s;
   const last = b.text.lineCount - 1;

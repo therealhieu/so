@@ -133,7 +133,7 @@ test("a refused embed is not requested again and shows no error", () => {
     width: 80,
     rows: 20,
     imageSize: () => undefined,
-    cellAspect: 0.5,
+    cell: { width: 8, height: 16 },
   };
   const ctx = markdownViewContext(
     typed.state,
@@ -165,7 +165,7 @@ const viewHost = {
   width: 80,
   rows: 20,
   imageSize: () => undefined,
-  cellAspect: 0.5,
+  cell: { width: 8, height: 16 },
 };
 
 test("an embed target reads as loading until its read answers", () => {

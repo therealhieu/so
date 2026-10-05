@@ -9,7 +9,7 @@ const markdownViewContext = markdownViewContextFor(testRegistries());
 const host = (over: Partial<ViewHost> = {}): ViewHost => ({
   width: 80,
   rows: 40,
-  cellAspect: 0.5,
+  cell: { width: 8, height: 16 },
   imageSize: (p) =>
     p === "img/a.png" ? { width: 1600, height: 900 } : undefined,
   ...over,

@@ -100,11 +100,11 @@ test("leader comma maps ,ff to find files", () => {
   ).toEqual({ kind: "command", id: "file.find" });
 });
 
-test("preview options default to live view, ten embed rows, and automatic images", () => {
+test("preview options default to reading view, ten embed rows, and automatic images", () => {
   const result = parseConfig("");
   if (!result.ok) throw new Error("expected a parsed config");
   expect(result.config.preview).toEqual({
-    mode: "live",
+    mode: "reading",
     embedMaxRows: 10,
     images: "auto",
   });

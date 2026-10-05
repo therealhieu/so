@@ -93,8 +93,8 @@ test("a valid file parses with binding lines", () => {
       color: "never",
       mouse: true,
       editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
-      explorer: { position: "left" },
-      preview: { mode: "live", embedMaxRows: 10, images: "auto" },
+      explorer: { position: "left", icons: "nerd" },
+      preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
       daily: {
         folder: "daily",
         format: "YYYY-MM-DD",

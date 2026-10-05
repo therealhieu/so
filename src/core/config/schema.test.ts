@@ -97,8 +97,15 @@ test("mouse defaults to on and rejects a non-boolean", () => {
   expect(e?.message).toStartWith("mouse: ");
 });
 
+test("the explorer draws Nerd Font icons unless configured to plain symbols", () => {
+  const r = parseConfig(lines("[explorer]", 'icons = "unicode"'));
+  expect(r.ok && r.config.explorer.icons).toBe("unicode");
+  const [e] = errors(lines("[explorer]", 'icons = "emoji"'));
+  expect(e?.message).toStartWith("explorer.icons: ");
+});
+
 test("the explorer docks left unless configured right", () => {
-  expect(defaults.explorer).toEqual({ position: "left" });
+  expect(defaults.explorer).toEqual({ position: "left", icons: "nerd" });
   const r = parseConfig(lines("[explorer]", 'position = "right"'));
   expect(r.ok && r.config.explorer.position).toBe("right");
   const [e, ...rest] = errors(lines("[explorer]", 'position = "top"'));

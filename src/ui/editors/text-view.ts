@@ -650,7 +650,7 @@ export class EditorView extends Renderable implements WindowView {
         width,
         rows,
         imageSize: (path) => this.deps.images.size(path),
-        cellAspect: this.deps.images.cellAspect(),
+        cell: this.deps.images.cellSize(),
       };
       const input =
         spec?.input === undefined

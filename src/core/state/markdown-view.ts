@@ -5,12 +5,18 @@ import { bufferForPath } from "./buffers";
 import type { Registries } from "./update";
 import type { ViewContextBuilder, ViewHost } from "./view-context";
 
-/** Image rows that keep the aspect ratio at the window width, capped at 80% of the window rows. */
+/**
+ * Image rows at the image's natural size, shrunk to the window width when
+ * wider, keeping the aspect ratio; capped at 80% of the window rows.
+ */
 export function imageRows(
   px: { width: number; height: number },
   host: ViewHost,
 ): number {
-  const rows = Math.ceil((px.height / px.width) * host.width * host.cellAspect);
+  const cols = Math.min(host.width, px.width / host.cell.width);
+  const rows = Math.ceil(
+    (px.height / px.width) * cols * (host.cell.width / host.cell.height),
+  );
   return Math.max(1, Math.min(rows, Math.floor(host.rows * 0.8)));
 }
 

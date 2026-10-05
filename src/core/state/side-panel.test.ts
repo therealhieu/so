@@ -275,7 +275,10 @@ test("with the explorer on the right, the panel docks left: C-w h enters, C-w l 
   const base = opened();
   const s = {
     ...base,
-    config: { ...base.config, explorer: { position: "right" as const } },
+    config: {
+      ...base.config,
+      explorer: { ...base.config.explorer, position: "right" as const },
+    },
   };
   const r = runCommand(s, "link.backlinks", 0, reg);
   expect(r.state.panels.side.focused).toBe(true);

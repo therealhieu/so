@@ -296,7 +296,7 @@ describe("base embed", () => {
     m = await mountShell({
       cols: 80,
       rows: 24,
-      config: "[preview]\nembedMaxRows = 2\n",
+      config: '[preview]\nmode = "live"\nembedMaxRows = 2\n',
     });
     m.store.dispatch(indexed(TASK_NOTES, ["today.md", "tasks.base"]));
     m.keys("<leader>e");
@@ -337,7 +337,7 @@ describe("base embed", () => {
       cols: 80,
       rows: 24,
       color: "nocolor",
-      config: "[preview]\nembedMaxRows = 1\n",
+      config: '[preview]\nmode = "live"\nembedMaxRows = 1\n',
     });
     m.store.dispatch(indexed(TASK_NOTES, ["today.md", "board.base"]));
     m.keys("<leader>e");

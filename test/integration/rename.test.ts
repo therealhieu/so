@@ -24,7 +24,9 @@ beforeAll(async () => {
   // Autosave stays out of the way, so the open buffer's disk text is observable.
   app.store.dispatch({
     type: "configLoaded",
-    result: parseConfig("[autosave]\ndelayMs = 60000\n"),
+    result: parseConfig(
+      '[autosave]\ndelayMs = 60000\n[preview]\nmode = "live"\n',
+    ),
     reload: false,
   });
   await waitFor(() => app.store.get().index.status === "ready");

@@ -89,7 +89,7 @@ export class BaseView extends Renderable implements WindowView {
       width: r.w,
       rows: r.h,
       imageSize: () => undefined,
-      cellAspect: 0.5,
+      cell: { width: 8, height: 16 },
     }) as BaseViewModel | undefined;
     if (m === undefined || r.h <= 0) return;
     const ws = baseWindow(s, id);

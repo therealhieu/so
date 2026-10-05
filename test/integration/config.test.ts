@@ -26,7 +26,9 @@ import { clock, tmpWorkspace, waitFor } from "./helpers";
 
 const LONG = Array.from({ length: 40 }, (_, i) => `word${i}`).join(" ");
 
-const SAVE_ON_LEADER_W = `[keys.normal]
+const SAVE_ON_LEADER_W = `[preview]
+mode = "live"
+[keys.normal]
 "<leader>w" = "file.save"
 `;
 
@@ -207,6 +209,8 @@ test("reload applies bindings, escape timeout, theme, and wrap", async () => {
       'theme = "light"',
       "[editor]",
       "wrap = false",
+      "[preview]",
+      'mode = "live"',
       "[keys.normal]",
       '"<leader>v" = "window.vsplit"',
     ].join("\n"),

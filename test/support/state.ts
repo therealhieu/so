@@ -123,7 +123,16 @@ export const textFile = (text: string, n = 1): TextFile => ({
   stamp: stamp(n),
 });
 
-export const fresh = (): AppState => initialState(boot);
+/** `s` with notes opening in the editable `live` view, which most suites type into. */
+export const editingNotes = (s: AppState): AppState => ({
+  ...s,
+  config: { ...s.config, preview: { ...s.config.preview, mode: "live" } },
+});
+
+export const fresh = (): AppState => editingNotes(initialState(boot));
+
+/** A fresh state with the shipped config, where notes open in `reading`. */
+export const freshDefaults = (): AppState => initialState(boot);
 
 /**
  * Open `text` as a clean buffer saved with `stamp(1)` and show it in the

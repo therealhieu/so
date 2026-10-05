@@ -20,7 +20,7 @@ import { paintEmbed } from "../../src/ui/widgets/embed";
 import { paintImage } from "../../src/ui/widgets/image";
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
 import { paintRule } from "../../src/ui/widgets/rule";
-import { testRegistries, textFile } from "./state";
+import { editingNotes, testRegistries, textFile } from "./state";
 
 export type MountOptions = {
   cols: number;
@@ -83,9 +83,10 @@ export async function mountShell(o: MountOptions) {
     rows: o.rows,
     color: o.color ?? "color",
   });
+  const editing = editingNotes(base);
   const initial: AppState = {
-    ...base,
-    config: { ...base.config, theme: o.theme ?? "dark" },
+    ...editing,
+    config: { ...editing.config, theme: o.theme ?? "dark" },
   };
   const store = createStore(initial, createUpdate(reg), (e) => {
     effects.push(e);
