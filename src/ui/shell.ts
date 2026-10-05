@@ -5,6 +5,7 @@ import {
   type Renderable,
   type TerminalCapabilities,
 } from "@opentui/core";
+import { pressStops } from "../core/state/mouse";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import type { Registries } from "../core/state/update";
@@ -175,6 +176,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         createMouseRouter({
           sources,
           enabled: () => store.get().config.mouse,
+          stops: (t) => pressStops(store.get(), t),
           dispatch: (a) => store.dispatch(a),
           now: deps.now,
         }),

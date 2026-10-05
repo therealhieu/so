@@ -6,6 +6,7 @@ import { splitKeys } from "../kernel/vim/keys";
 import { addDays } from "../time/local";
 import { baseViewModel } from "./base-model";
 import { fullText } from "./buffers";
+import { pressStops } from "./mouse";
 import type {
   AppState,
   Effect,
@@ -718,6 +719,25 @@ test("a click outside an overlay or the command line closes it and goes no furth
     expect(cursorOf(r.state)).toEqual(cursorOf(s));
     expect(mouse(typing, press({ kind: "inert" })).state).toEqual(typing);
   }
+});
+
+test("a press stops at the gate exactly where the gate closes something", () => {
+  const s = open("a.md", LINES);
+  const onOverlay = ["overlayItem", "calendarDay", "overlay"];
+  const prompting = keys(open("a.md", "see [[b]] here\nmore\n"), "wwgd").state;
+  const cases: [AppState, (t: MouseTarget) => boolean][] = [
+    [s, () => false],
+    [keys(s, " sc").state, (t) => !onOverlay.includes(t.kind)],
+    [keys(s, ":ab").state, (t) => t.kind !== "inert"],
+    [completing(), () => false],
+    [prompting, () => true],
+  ];
+  for (const [start, stops] of cases)
+    for (const target of ALL_TARGETS)
+      expect([target.kind, pressStops(start, target)]).toEqual([
+        target.kind,
+        stops(target),
+      ]);
 });
 
 test("which-key ignores clicks and the wheel inside it and closes on a click outside", () => {

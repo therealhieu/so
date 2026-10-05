@@ -67,6 +67,20 @@ export function onMouse(
 }
 
 /**
+ * Whether a press on `t` stops at the gate without reaching `t`: any press
+ * while a prompt or conflict dialog is open, a press outside any other
+ * overlay but completion, and a press anywhere but the command line while
+ * it is open.
+ */
+export function pressStops(s: AppState, t: MouseTarget): boolean {
+  const open = s.overlay.kind;
+  if (open === "prompt" || open === "conflict") return true;
+  if (open === "completion") return false;
+  if (open !== "none") return !onOverlay(t);
+  return s.vim.mode === "cmdline" && t.kind !== "inert";
+}
+
+/**
  * Prompt and conflict dialogs take no mouse input. A press outside any
  * other overlay, or anywhere but the command line while it is open, closes
  * it like `<Esc>` and goes no further. Completion gives way to a press in
@@ -82,12 +96,11 @@ function overlayGate(
   if (open === "prompt" || open === "conflict") return { stop: none(s) };
   if (e.kind !== "press") return { go: s };
   const t = e.target;
-  const dismiss = () => ({ stop: feedKeys(none(s), ["<Esc>"], now, reg) });
   if (open === "completion")
     return { go: inBody(t) ? { ...s, overlay: { kind: "none" } } : s };
-  if (open !== "none") return onOverlay(t) ? { go: s } : dismiss();
-  if (s.vim.mode === "cmdline" && t.kind !== "inert") return dismiss();
-  return { go: s };
+  return pressStops(s, t)
+    ? { stop: feedKeys(none(s), ["<Esc>"], now, reg) }
+    : { go: s };
 }
 
 const onOverlay = (t: MouseTarget): boolean =>

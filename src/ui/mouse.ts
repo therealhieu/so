@@ -48,11 +48,14 @@ const isWindowText = (t: MouseTarget) =>
  * `enabled()` is false and every button but the left one, ask `sources`
  * (top of the z-order first, skipping wheel-only ones for a press) for the
  * target, count clicks on one cell, and keep a drag with the source its
- * press landed on, sending each new drag target once.
+ * press landed on, sending each new drag target once. A press that `stops`
+ * says only closes something starts no drag.
  */
 export function createMouseRouter(o: {
   sources: readonly MouseSource[];
   enabled: () => boolean;
+  /** Whether the core will stop a press on `target` before it acts there. */
+  stops: (target: MouseTarget) => boolean;
   dispatch: (a: Action) => void;
   now: () => number;
 }): MouseRouter {
@@ -97,7 +100,7 @@ export function createMouseRouter(o: {
           const clicks =
             again && last ? (((last.clicks % 3) + 1) as 1 | 2 | 3) : 1;
           last = { x: e.x, y: e.y, at: now, clicks };
-          origin = hit;
+          if (!o.stops(hit.target)) origin = hit;
           send(
             {
               kind: "press",

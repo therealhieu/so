@@ -36,12 +36,17 @@ const text = (
 });
 
 /** A router over `sources` with a recording dispatch and a settable clock. */
-function setup(sources: MouseSource[], enabled = () => true) {
+function setup(
+  sources: MouseSource[],
+  enabled = () => true,
+  stops: (t: MouseTarget) => boolean = () => false,
+) {
   const sent: Action[] = [];
   let clock = 0;
   const router = createMouseRouter({
     sources,
     enabled,
+    stops,
     dispatch: (a) => sent.push(a),
     now: () => clock,
   });
@@ -215,6 +220,25 @@ test("a drag stays with the window it started in and dispatches once per new tar
   empty.handle(ev("down", 1, 1));
   empty.handle(ev("drag", 2, 2));
   expect(empty.sent).toEqual([]);
+});
+
+test("a press the core stops is still sent but starts no drag", () => {
+  let closing = true;
+  const r = setup([editor], undefined, () => closing);
+  r.handle(ev("down", 2, 2));
+  r.handle(ev("drag", 4, 2));
+  expect(r.events()).toEqual([
+    { kind: "press", target: text(2, 2), clicks: 1, ctrl: false },
+  ]);
+  r.handle(ev("up", 4, 2));
+
+  closing = false;
+  r.handle(ev("down", 3, 2));
+  r.handle(ev("drag", 4, 2));
+  expect(r.events().slice(1)).toEqual([
+    { kind: "press", target: text(2, 3), clicks: 1, ctrl: false },
+    { kind: "drag", target: text(2, 4) },
+  ]);
 });
 
 test("hover and other events are ignored", () => {

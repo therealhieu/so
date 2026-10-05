@@ -514,6 +514,38 @@ test("with the command line open its row, the status row, and its completions ta
   expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
 });
 
+test("a drag after the press that closes the command line selects nothing", async () => {
+  m = await mountShell({ cols: 40, rows: 12 });
+  m.keys("<leader>e");
+  m.open("a.md", "alpha one\nbravo two\ncharlie three\n");
+  const at = await find(m, "charlie");
+  const vimOf = () => {
+    const s = m?.store.get();
+    return s && { mode: s.vim.mode, anchor: s.vim.visualAnchor };
+  };
+
+  m.keys("j:");
+  await m.frame();
+  await m.mouse.click(at.x + 6, at.y);
+  const clicked = { vim: vimOf(), cursor: cursorOf(m) };
+  expect(clicked).toEqual({
+    vim: { mode: "normal", anchor: undefined },
+    cursor: { line: 1, col: 0 },
+  });
+
+  m.keys(":");
+  await m.frame();
+  await m.mouse.drag(at.x + 6, at.y, at.x + 4, at.y);
+  expect({ vim: vimOf(), cursor: cursorOf(m) }).toEqual(clicked);
+
+  // With the command line closed, a drag selects from its press again. It
+  // starts on another cell, so it does not count as a third click.
+  await m.frame();
+  await m.mouse.drag(at.x + 5, at.y, at.x + 3, at.y);
+  expect(vimOf()).toEqual({ mode: "visual", anchor: { line: 2, col: 5 } });
+  expect(cursorOf(m)).toEqual({ line: 2, col: 3 });
+});
+
 test("the bufferline scroll markers take no click", async () => {
   m = await mountShell({ cols: 60, rows: 12 });
   for (let i = 1; i <= 8; i++) m.open(`note-number-${i}.md`, `${i}\n`);
