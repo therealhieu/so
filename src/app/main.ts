@@ -1,7 +1,5 @@
 import { readFileSync, realpathSync } from "node:fs";
-import { stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
 import { parseConfig } from "../core/config/toml";
@@ -94,6 +92,7 @@ import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 import { createLspHost } from "./lsp-host";
 import { createPreviewHost } from "./preview-host";
+import { resolveWorkspace } from "./workspace";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -120,18 +119,6 @@ function parseCli(argv: string[]): Cli {
     help: values.help === true,
     path: positionals[0],
   };
-}
-
-/** The workspace folder, and the file to open when `path` names one. */
-async function resolveWorkspace(
-  path: string,
-): Promise<{ root: string; file?: string } | undefined> {
-  const abs = resolve(path);
-  const st = await stat(abs).catch(() => undefined);
-  if (st === undefined) return undefined;
-  return st.isDirectory()
-    ? { root: abs }
-    : { root: dirname(abs), file: basename(abs) };
 }
 
 function registries(): Registries {
