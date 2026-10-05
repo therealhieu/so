@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G2 — implementation`
+- **Current Position:** `P1-G3 — implementation`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -225,45 +225,45 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 #### P1-G2 — Requests, diagnostics, and commands
 
-- [ ] Context and dependencies confirmed (P1-G1 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P1-G2-T1` — Request routing, results, and timeouts.
-- [ ] `P1-G2-T2` — Diagnostics, floats, and the cursor diagnostic.
-- [ ] `P1-G2-T3` — Diagnostics, locations, symbols, and server pickers.
-- [ ] `P1-G2-T4` — Commands and generated key bindings.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (P1-G1 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G2-T1` — Request routing, results, and timeouts.
+- [x] `P1-G2-T2` — Diagnostics, floats, and the cursor diagnostic.
+- [x] `P1-G2-T3` — Diagnostics, locations, symbols, and server pickers.
+- [x] `P1-G2-T4` — Commands and generated key bindings.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md` — `Completed` (remediated)
+- Initial implementation report commit: `e55372a`
+- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
+- Verification report commit: `ae9af3a`
+- Remediation: `Completed` — fresh implementer; all three findings Fixed
+- Final implementation report commit: `5bc6ff9`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `P1-G2-VER1 → f1aca30 (T4); P1-G2-VER2 → 32e625d (T2); P1-G2-VER3 → 8943d22 (T2)`
+- Closure evidence: `bun run check` passed (1157 pass, knip zero); `bun test src/core/state` 358 pass; verification report unchanged; tree clean at 5bc6ff9; pgrep fake-lsp empty
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G2-T1` | `Pending implementation` |
-| `P1-G2-T2` | `Pending implementation` |
-| `P1-G2-T3` | `Pending implementation` |
-| `P1-G2-T4` | `Pending implementation` |
+| `P1-G2-T1` | `814e6c7`, `ccea2bd` |
+| `P1-G2-T2` | `2514f0e`, `32e625d`, `8943d22` |
+| `P1-G2-T3` | `e392c2a` |
+| `P1-G2-T4` | `27d323c`, `f1aca30` |
 
 #### P1-G3 — Edits and completion
 
@@ -484,19 +484,19 @@ Expected evidence per case is defined in system design §8 Test Suites and Cases
 | [x] | `V50` | `bun test src/core/config/lsp.test.ts` (P1-G1-T1) | Exactly one TS gate passes per major | pass (lsp.test.ts) |
 | [x] | `V13` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | One `E` sign, two marks | pass (diagnostics.test.ts) |
 | [x] | `V14` | `bun test src/core/kernel/view/diagnostics.test.ts` (P1-G1-T2) | Clamped / skipped, no throw | pass (diagnostics.test.ts) |
-| [ ] | `V5` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T2) | `lsp` effect to `b`; both diagnostics shown | `Pending implementation` |
-| [ ] | `V8` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T3) | One toast; `lspInfo` rows `not on PATH` / `unavailable: <reason>` | `Pending implementation` |
-| [ ] | `V10` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | `hover: not supported by a` | `Pending implementation` |
-| [ ] | `V35` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Jump to target; `<C-o>` returns | `Pending implementation` |
-| [ ] | `V36` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T3) | `lspLocations` picker, 3 rows, "2 outside" | `Pending implementation` |
-| [ ] | `V40` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Stale hover → no float, pending cleared | `Pending implementation` |
-| [ ] | `V60` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Quiet error → no message, pending cleared | `Pending implementation` |
-| [ ] | `V15` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Insert freeze; updated after `<Esc>` | `Pending implementation` |
-| [ ] | `V16` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | `cursorDiagnostic` = `{severity:1, text:"srv: msg"}` | `Pending implementation` |
-| [ ] | `V37` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Float removed on cursor move / leaving insert | `Pending implementation` |
-| [ ] | `V49` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Normal-mode `<Esc>` closes float, cursor/mode unchanged | `Pending implementation` |
-| [ ] | `V9` | `bun test src/core/state/lsp.test.ts` (P1-G2-T4) | Command id → `op.kind` table matches | `Pending implementation` |
-| [ ] | `V39` | `bun test src/core/state/lsp.test.ts src/core/state/lsp-commands.test.ts` (P1-G2-T4) | No markdown binding; Markdown `gd` → `link.followOrTag` | `Pending implementation` |
+| [x] | `V5` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T2) | `lsp` effect to `b`; both diagnostics shown | pass (P1-G2, verified ae9af3a) |
+| [x] | `V8` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T3) | One toast; `lspInfo` rows `not on PATH` / `unavailable: <reason>` | pass (P1-G2, verified ae9af3a) |
+| [x] | `V10` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | `hover: not supported by a` | pass (P1-G2, verified ae9af3a) |
+| [x] | `V35` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Jump to target; `<C-o>` returns | pass (P1-G2, verified ae9af3a) |
+| [x] | `V36` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1, T3) | `lspLocations` picker, 3 rows, "2 outside" | pass (P1-G2, verified ae9af3a) |
+| [x] | `V40` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Stale hover → no float, pending cleared | pass (P1-G2, verified ae9af3a) |
+| [x] | `V60` | `bun test src/core/state/lsp.test.ts` (P1-G2-T1) | Quiet error → no message, pending cleared | pass (P1-G2, verified ae9af3a) |
+| [x] | `V15` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Insert freeze; updated after `<Esc>` | pass (P1-G2, verified ae9af3a) |
+| [x] | `V16` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | `cursorDiagnostic` = `{severity:1, text:"srv: msg"}` | pass (P1-G2, verified ae9af3a) |
+| [x] | `V37` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Float removed on cursor move / leaving insert | pass (P1-G2, verified ae9af3a) |
+| [x] | `V49` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Normal-mode `<Esc>` closes float, cursor/mode unchanged | pass (P1-G2, verified ae9af3a) |
+| [x] | `V9` | `bun test src/core/state/lsp.test.ts` (P1-G2-T4) | Command id → `op.kind` table matches | pass (P1-G2, verified ae9af3a) |
+| [x] | `V39` | `bun test src/core/state/lsp.test.ts src/core/state/lsp-commands.test.ts` (P1-G2-T4) | No markdown binding; Markdown `gd` → `link.followOrTag` | pass (P1-G2, verified ae9af3a) |
 | [ ] | `V22` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Buffer edited in one undo; `applyEdits` for closed file without `expected` | `Pending implementation` |
 | [ ] | `V23` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Version mismatch → nothing applied, `lspReply{applied:false}` | `Pending implementation` |
 | [ ] | `V24` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | One reply, only after `editsApplied` | `Pending implementation` |
@@ -624,7 +624,8 @@ Work: W261005GWLY — lsp-code-intelligence
 
 ## Blockers and Deviations
 
-`Pending implementation`
+- **Deviation (accepted, P1-G2):** `src/core/state/lsp.ts` outside-only definition message is `definition is outside the workspace` without `: <path>`. DES18 text asks for the path, but the design's `LspResult.locations`/`CodeEdit.outside` contract carries only a count; no S/V case asserts the path. Impact: message lacks the path. Resolution: none required in this scope; changing the contract would change approved design.
+- **Deviation (accepted, P1-G1):** `severityRank` omitted (listed in the design tree only, no shape, no caller; knip forbids unused exports).
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
 
