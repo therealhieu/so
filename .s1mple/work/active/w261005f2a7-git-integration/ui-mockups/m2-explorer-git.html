@@ -7,11 +7,11 @@
   const G = Mock.git;
   const focus = (a, sel) => { a.treeFocus = true; a.treeSel = sel; };
   G.mock({
-    id: "W261005F2A7-M2", rev: "R2", title: "M2 · Explorer: Git markers", path: "m2-explorer-git.html",
+    id: "W261005F2A7-M2", rev: "R3", title: "M2 · Explorer: Git markers", path: "m2-explorer-git.html",
     windowTitle: "so — ~/notes (git: main)",
     subtitle: "One-cell file markers for modified, staged, untracked, and conflicted files, plus folders that contain changes.",
     keys: [["j k", "move in the explorer"], ["Enter l", "open a file / fold projects/ideas"], ["Esc q", "back to the editor"], ["Ctrl-h", "focus the explorer from the editor"]],
-    notes: "Markers: <b>M</b> modified · <b>S</b> staged · <b>?</b> untracked · <b>U</b> conflict · <b>•</b> folder contains changes. The explorer lists disk entries only, so a deleted tracked file has no row; its folders show <b>•</b>. One marker per row by precedence conflict &gt; deleted &gt; untracked &gt; modified &gt; staged. Each is a distinct glyph, so NO_COLOR keeps every state; colour only adds emphasis. The marker sits right after the name, following the unsaved <code>●</code>.",
+    notes: "Markers: <b>M</b> modified · <b>S</b> staged · <b>?</b> untracked · <b>U</b> conflict · <b>•</b> folder contains changes. The explorer lists disk entries only, so a deleted tracked file has no row; its folders show <b>•</b>. One marker per row by precedence conflict &gt; untracked &gt; modified &gt; staged. Each is a distinct glyph, so NO_COLOR keeps every state; colour only adds emphasis. The marker sits right after the name, following the unsaved <code>●</code>.",
     states: [
       { id: "S1", group: "Markers", label: "Every marker kind", caption: "The tree shows each state once: <code>2026-10-02.md S</code> staged, <code>so-roadmap.md M</code> modified, <code>ideas.md ?</code> and <code>kanban.md ?</code> untracked inside a new folder, <code>linh.md U</code> conflicted, and <code>•</code> on every folder that contains a change.", refs: "REQ4@R2 (explorer), DES10",
         apply: (a) => { focus(a, 4); } },

@@ -1,4 +1,4 @@
-/* so mockups — Git tokens and marks (W261005F2A7 shared R1).
+/* so mockups — Git tokens and marks (W261005F2A7 shared R3).
  * Tokens mirror the proposed git* StyleTokens (W261005F2A7-DES10). NO_COLOR keeps every kind distinct by glyph;
  * weight and underline only add emphasis, they never carry the meaning alone. */
 
@@ -15,7 +15,7 @@
   --git-conflict: #d8d8d8; --git-staged: #d8d8d8; --git-branch: #d8d8d8; --git-op: #d8d8d8;
 }
 
-/* gutter sign cell (one cell, after the line number) */
+/* git column (one cell, before the line number) */
 .gs-add { color: var(--git-add); }
 .gs-change { color: var(--git-change); }
 .gs-delete, .gs-topdelete { color: var(--git-delete); }
@@ -26,7 +26,6 @@
 .gm-modified { color: var(--git-change); }
 .gm-staged { color: var(--git-staged); }
 .gm-untracked { color: var(--git-untracked); }
-.gm-deleted { color: var(--git-delete); }
 .gm-conflict { color: var(--git-conflict); font-weight: bold; }
 .gm-contains { color: var(--fg-dim); }
 

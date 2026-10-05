@@ -7,21 +7,21 @@
   const G = Mock.git;
   const at = (a, l, c) => { a.win.st.cur = { l, c: c || 0 }; };
   G.mock({
-    id: "W261005F2A7-M1", rev: "R2", title: "M1 · Editor: signs, hunks, statusline", path: "m1-editor-git.html",
+    id: "W261005F2A7-M1", rev: "R3", title: "M1 · Editor: signs, hunks, statusline", path: "m1-editor-git.html",
     windowTitle: "so — ~/notes (git: main)",
     subtitle: "Gutter signs for each hunk kind, hunk navigation, stage and reset, and the statusline Git segment, in a repository and outside one.",
     keys: [["j k gg G", "move the cursor"], ["] h", "next hunk (stops at the last)"], ["[ h", "previous hunk"], ["Space g h s", "stage hunk at cursor"], ["Space g h r", "reset hunk at cursor"], ["Space g h p", "preview hunk (Esc / q closes)"], ["Space g h b", "blame cursor line"], ["Space m", "cycle live → source → reading"], ["Ctrl-h", "focus explorer; Enter opens inbox.md / ideas.md"]],
-    notes: "Statusline: MODE │ view │ path ● │ <b>⎇ ref [op] +added ~changed -removed</b> │ … │ Ln:Col. The Git segment sits after the path, drops first under 100 columns, and is absent outside a repository. Counts are for the active file; zero counts are hidden. Each sign kind has its own glyph (<code>+ ~ _ ‾ ≃ ┆</code>), so NO_COLOR keeps every kind distinct.",
+    notes: "Statusline: MODE │ view │ path ● │ <b>⎇ ref [op] +added ~changed -removed</b> │ … │ Ln:Col. The Git segment sits after the path, drops first under 100 columns, and is absent outside a repository. Counts are for the active file; zero counts are hidden. Each sign kind has its own glyph (<code>+ ~ _ ‾ ≃ ┆</code>), so NO_COLOR keeps every kind distinct. Inside a repository the gutter reads <b>git sign │ line number │ ▕/⚠ cell │ text</b>: Git signs get their own leftmost column, and <code>▕</code>/<code>⚠</code> keep the cell next to the text.",
     states: [
-      { id: "S1", group: "Signs", label: "Four hunk kinds in a note", caption: "<code>so-roadmap.md</code> differs from the index in four hunks: <code>~</code> changed (frontmatter <code>status</code>), <code>+</code> added (two new tasks), <code>≃</code> changed + deleted (three Notes lines became one), and <code>_</code> deleted below (a Log line removed after <code>10-01</code>). The sign is the one cell after the line number; the text column does not move. The cursor sits on the Notes line so the lower hunks are in view; press <code>[h</code> to reach the upper ones. The statusline shows <code>⎇ main +2 ~2 -3</code>.", refs: "REQ4@R2, REQ5@R2, DES10",
+      { id: "S1", group: "Signs", label: "Four hunk kinds in a note", caption: "<code>so-roadmap.md</code> differs from the index in four hunks: <code>~</code> changed (frontmatter <code>status</code>), <code>+</code> added (two new tasks), <code>≃</code> changed + deleted (three Notes lines became one), and <code>_</code> deleted below (a Log line removed after <code>10-01</code>). The sign sits in its own column left of the line number (<code>+ 18  - [ ] …</code>), apart from the text. The cursor sits on the Notes line so the lower hunks are in view; press <code>[h</code> to reach the upper ones. The statusline shows <code>⎇ main +2 ~2 -3</code>.", refs: "REQ4@R2, REQ5@R2, DES10",
         apply: (a) => { at(a, 31); } },
-      { id: "S2", group: "Signs", label: "Git sign wins over the reveal mark", caption: "The cursor sits on the added task, so live preview reveals its raw syntax. Without Git the sign cell would show <code>▕</code>; a Git sign on the same line takes the cell instead (DES10 override). Lines without a Git sign still show <code>▕</code> when revealed.", refs: "DES10",
+      { id: "S2", group: "Signs", label: "Git sign beside the reveal mark", caption: "The cursor sits on the added task, so live preview reveals its raw syntax. The line shows both marks: <code>+</code> in the Git column left of the line number, and <code>▕</code> in its own cell next to the text. Neither replaces the other.", refs: "DES10",
         apply: (a) => { at(a, 17, 2); } },
       { id: "S3", group: "Signs", label: "Deleted at top (inbox.md)", caption: "The first two lines of <code>inbox.md</code> (<code># Inbox</code> and a blank line) were deleted. Line 1 shows <code>‾</code>: deleted above the first line. Counts: <code>-2</code>.", refs: "REQ4@R2 (top-delete)",
         apply: (a) => { a.path = "inbox.md"; a.treeSel = 13; G.sync(a); at(a, 1); } },
       { id: "S4", group: "Signs", label: "Untracked file", caption: "<code>projects/ideas/ideas.md</code> is untracked, so every line shows <code>┆</code>. No counts appear for an untracked file; the explorer shows <code>?</code>.", refs: "REQ4@R2 (untracked)",
         apply: (a) => { a.path = "projects/ideas/ideas.md"; a.treeSel = 7; G.sync(a); at(a, 2); } },
-      { id: "S5", group: "Signs", label: "Signs in source view", caption: "Signs stay in every view. In source view the whole note is raw, so <code>▕</code> never shows; only Git signs use the cell. Reading view (Space m again) also keeps them.", refs: "REQ4@R2, DES10",
+      { id: "S5", group: "Signs", label: "Signs in source view", caption: "Signs stay in every view. In source view the whole note is raw, so <code>▕</code> never shows; the Git column keeps its signs. Reading view (Space m again) also keeps them.", refs: "REQ4@R2, DES10",
         apply: (a) => { a.win.st.view = "source"; at(a, 10); } },
       { id: "S6", group: "Hunks", label: "Navigate with ]h / [h", caption: "Press <code>]h</code> and <code>[h</code>. The cursor jumps to the first line of the next or previous hunk and the message line shows <code>hunk 2/4</code>. At the last hunk <code>]h</code> stays put and says <code>no next hunk</code>.", refs: "REQ4@R2 (navigation), DES11",
         apply: (a) => { at(a, 17); a.msg = G.msg.info("hunk 2/4"); } },
@@ -39,9 +39,9 @@
         apply: (a) => { a.repo = { ref: "main", op: "merging" }; G.sync(a); at(a, 10); } },
       { id: "S13", group: "Statusline", label: "Unborn branch (no commits yet)", caption: "A fresh <code>git init</code> has no commits, so every file is untracked against an empty index: <code>┆</code> on every line and <code>⎇ main</code> with the unborn branch name and no counts.", refs: "REQ4@R2, REQ7@R2 (unborn)",
         apply: (a) => { a.repo = { ref: "main", unborn: true }; a.path = "projects/ideas/ideas.md"; a.treeSel = 7; G.sync(a); at(a, 2); } },
-      { id: "S14", group: "Responsive", label: "Narrow terminal 80×24", caption: "Under 100 columns the Git segment drops first, together with view / words / preview (v1 rule). The signs stay: the gutter width does not change.", refs: "REQ4@R2 (yields when narrow), DES10",
+      { id: "S14", group: "Responsive", label: "Narrow terminal 80×24", caption: "Under 100 columns the Git segment drops first, together with view / words / preview (v1 rule). The signs stay in their column.", refs: "REQ4@R2 (yields when narrow), DES10",
         apply: (a) => { a.cols = 80; a.rows = 24; a.explorer = false; at(a, 10); } },
-      { id: "S15", group: "No repository", label: "Outside a repository", caption: "The same note in a folder that is not inside a Git repository: no signs, no Git segment, no explorer markers. The screen matches v1 exactly, including <code>▕</code> on the revealed cursor line.", refs: "REQ4@R2, REQ7@R2, DES10 invariant",
+      { id: "S15", group: "No repository", label: "Outside a repository", caption: "The same note in a folder that is not inside a Git repository: no Git column, no Git segment, no explorer markers. The gutter starts with the line number and the screen matches v1 exactly, including <code>▕</code> on the revealed cursor line.", refs: "REQ4@R2, REQ7@R2, DES10 invariant",
         apply: (a) => { a.repo = null; G.sync(a); at(a, 17, 2); } },
     ],
   });

@@ -1,4 +1,4 @@
-/* so mockups — Git display helpers and sample repository (W261005F2A7 shared R1). Mockup data only.
+/* so mockups — Git display helpers and sample repository (W261005F2A7 shared R3). Mockup data only.
  * Renders the hooks added to term.js: st.signs (gutter), o.git (statusline), r.git (explorer). */
 (function () {
   "use strict";
@@ -6,7 +6,7 @@
   const esc = M.esc;
   const G = (M.git = {});
 
-  /* ---------- gutter signs: one cell, git sign wins over ▕ / ⚠ (DES10) ---------- */
+  /* ---------- gutter signs: a dedicated leftmost column before the line number; ▕ / ⚠ keep their own cell next to the text ---------- */
   // one distinct glyph per kind, so meaning survives NO_COLOR
   G.SIGNS = { add: "+", change: "~", delete: "_", topdelete: "‾", changedelete: "≃", untracked: "┆" };
   G.KIND_LABEL = { add: "added", change: "changed", delete: "deleted below", topdelete: "deleted at top", changedelete: "changed + deleted", untracked: "untracked" };
@@ -21,8 +21,8 @@
     return `<span class="seg-s gseg"><span class="gref">⎇ ${esc(g.ref)}</span>${g.op ? ` <span class="gop">${esc(g.op)}</span>` : ""}${c.length ? " " + c.join(" ") : ""}</span>`;
   };
 
-  /* ---------- explorer markers: one cell, precedence conflict > deleted > untracked > modified > staged ---------- */
-  G.MARKERS = { conflict: "U", deleted: "D", untracked: "?", modified: "M", staged: "S", contains: "•" };
+  /* ---------- explorer markers: one cell, precedence conflict > untracked > modified > staged; deleted files have no row and only mark ancestors with • ---------- */
+  G.MARKERS = { conflict: "U", untracked: "?", modified: "M", staged: "S", contains: "•" };
   M.gitMarker = (r) => ` <span class="gm-${r.git}" title="${r.git}">${G.MARKERS[r.git]}</span>`;
 
   /* ---------- diff model: base (index) text + edits → buffer lines, hunks, signs, counts ---------- */

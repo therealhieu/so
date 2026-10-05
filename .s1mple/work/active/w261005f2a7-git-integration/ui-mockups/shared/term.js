@@ -1,4 +1,4 @@
-/* so mockups — shared framework (W261005F2A7 shared R1, forked from RM261003ABZP shared R2; git hooks: st.signs, o.git, r.git — rendered by git.js) */
+/* so mockups — shared framework (W261005F2A7 shared R3, forked from RM261003ABZP shared R2; git hooks: st.signs, o.git, r.git — rendered by git.js) */
 /* so v1 mockups — shared framework (shared R2)
  * - Mock.create(cfg): builds the review page (sidebar with states, keys, viewport/theme controls) and a
  *   simulated terminal (or browser) frame; routes real key presses to cfg.onKey; provides leader + which-key.
@@ -703,14 +703,15 @@
         if (isCur && ri === 0) st.curRow = used; // screen row of the cursor, for popups anchored to it
         const num = st.numbers === false ? "" : ri > 0 ? "     " : isCur ? Mock.padL(i + 1, 4) + " " : Mock.padL(Math.abs(i - cl), 4) + " ";
         const sign = ri === 0 && r.src && st.view === "live" && !isCur ? '<span class="reveal-mark">▕</span>' : ri === 0 && r.src && st.view === "live" && isCur ? '<span class="reveal-mark">▕</span>' : " ";
+        // git column: its own leftmost cell, before the line number, present only inside a repository (st.signs !== null)
         const gs = ri === 0 && st.signs ? st.signs[i] : null;
-        const signHtml = gs ? Mock.gitSign(gs) : sign;
+        const gitCol = st.signs ? `<span class="git-col">${gs ? Mock.gitSign(gs) : " "}</span>` : "";
         const tall = r.tall ? ` style="height:calc(${r.tall}*var(--lh))"` : "";
-        out.push(`<div class="ln${isCur && st.focused !== false ? " cursorline" : ""}${r.cls ? " " + r.cls : ""}"${tall}><span class="gutter">${num}</span>${st.view === "live" || st.signs ? signHtml : ""}${r.h}</div>`);
+        out.push(`<div class="ln${isCur && st.focused !== false ? " cursorline" : ""}${r.cls ? " " + r.cls : ""}"${tall}>${gitCol}<span class="gutter">${num}</span>${st.view === "live" ? sign : ""}${r.h}</div>`);
         used += r.tall || 1;
       });
     }
-    while (used < st.height) { out.push(`<div class="ln"><span class="dim">${st.numbers === false ? "" : "     "}~</span></div>`); used++; }
+    while (used < st.height) { out.push(`<div class="ln">${st.signs ? '<span class="git-col"> </span>' : ""}<span class="dim">${st.numbers === false ? "" : "     "}~</span></div>`); used++; }
     return out.join("");
   };
   // cursor helpers for mockups
