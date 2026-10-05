@@ -14,7 +14,7 @@ import {
 } from "vscode-jsonrpc/node";
 
 export type FakeScript = {
-  /** The `initialize` result's capabilities; hover only by default. */
+  /** Merged over the default capabilities: incremental sync with saves, and hover. */
   capabilities?: Record<string, unknown>;
   /** Results by request method; `null` when absent. */
   responses?: Record<string, unknown>;
@@ -152,7 +152,11 @@ conn.onRequest((method, params) => {
         caps.capabilities?.textDocument?.completion?.completionItem
           ?.snippetSupport === true;
       return {
-        capabilities: script.capabilities ?? { hoverProvider: true },
+        capabilities: {
+          textDocumentSync: { openClose: true, change: 2, save: {} },
+          hoverProvider: true,
+          ...script.capabilities,
+        },
         serverInfo: { name: "fake" },
       };
     }

@@ -12,6 +12,7 @@ import {
 import type {
   ApplyWorkspaceEditParams,
   ConfigurationParams,
+  DocumentDiagnosticReport,
   InitializeParams,
   InitializeResult,
   PublishDiagnosticsParams,
@@ -53,6 +54,7 @@ import {
   toSymbols,
   uriToPath,
 } from "./convert";
+import type { LineChange } from "./sync";
 
 /** What a client reports to its host. */
 export type ClientEvents = {
@@ -60,7 +62,14 @@ export type ClientEvents = {
   diagnostics(path: string, items: Diagnostic[]): void;
   /** The server asks for a workspace edit, answered later by `reply`. */
   applyEdit(requestId: number | string, edit: CodeEdit): void;
+  /** The server asks for every open document's diagnostics to be pulled again. */
+  refreshDiagnostics(): void;
 };
+
+/** A pull's answer: new items, or the previous ones still hold. */
+export type PullResult =
+  | { kind: "full"; items: Diagnostic[] }
+  | { kind: "unchanged" };
 
 export type LspClient = {
   /** The server's features and triggers, as declared when it initialized. */
@@ -71,9 +80,14 @@ export type LspClient = {
     version: number,
     text: string,
   ): void;
+  didChange(path: string, version: number, change: LineChange): void;
+  didSave(path: string): void;
+  didClose(path: string): void;
   /** Sends `op` for document `path`; errors come back as `error` results. */
   request(id: number, path: string, op: LspOp): Promise<LspResult>;
   cancel(id: number): void;
+  /** Pulls `path`'s diagnostics with its last result id, cancelling an older pull of it. */
+  pullDiagnostics(path: string): Promise<PullResult>;
   reply(
     requestId: number | string,
     applied: boolean,
@@ -103,6 +117,9 @@ export function sectionValue(
   }
   return v;
 }
+
+const allText = (b: TextBuffer) =>
+  Array.from({ length: b.lineCount }, (_, i) => b.line(i)).join("\n");
 
 /** The word around `col` in `line`. */
 function wordAt(line: string, col: number): string {
@@ -147,6 +164,8 @@ export function createLspClient(o: {
   const tokens = new Map<number, CancellationTokenSource>();
   /** What the server holds for each open document. */
   const docs = new Map<string, TextBuffer>();
+  const pulls = new Map<string, CancellationTokenSource>();
+  const resultIds = new Map<string, string>();
   let stopped: Promise<void> | undefined;
   let onClosed = () => {};
   const closed = new Promise<void>((resolve) => {
@@ -199,6 +218,10 @@ export function createLspClient(o: {
     p.items.map((item) => sectionValue(settings, item.section) ?? null),
   );
   conn.onRequest("window/workDoneProgress/create", () => null);
+  conn.onRequest("workspace/diagnostic/refresh", () => {
+    o.events.refreshDiagnostics();
+    return null;
+  });
   conn.onRequest("workspace/workspaceFolders", () =>
     o.root === undefined
       ? null
@@ -230,6 +253,18 @@ export function createLspClient(o: {
   conn.listen();
 
   const textDocument = (path: string) => ({ uri: uri(path) });
+  /** How the server wants documents synced: change kind and save options. */
+  const syncOptions = (): {
+    change: number;
+    save?: { includeText?: boolean };
+  } => {
+    const t = caps.textDocumentSync;
+    if (typeof t === "number") return { change: t };
+    const change = typeof t?.change === "number" ? t.change : 0;
+    const save = t?.save;
+    if (save === undefined || save === false) return { change };
+    return { change, save: save === true ? {} : save };
+  };
   const position = (
     path: string,
     op: { pos: { line: number; col: number } },
@@ -374,6 +409,67 @@ export function createLspClient(o: {
       notify("textDocument/didOpen", {
         textDocument: { uri: uri(path), languageId, version, text },
       });
+    },
+    didChange(path, version, change) {
+      const prev = docs.get(path);
+      if (prev === undefined) return;
+      const next = prev.apply(change).buffer;
+      docs.set(path, next);
+      const sync = syncOptions();
+      if (sync.change === 0) return;
+      notify("textDocument/didChange", {
+        textDocument: { uri: uri(path), version },
+        contentChanges:
+          sync.change === 1
+            ? [{ text: allText(next) }]
+            : [{ range: toLspRange(change.range), text: change.text }],
+      });
+    },
+    didSave(path) {
+      const save = syncOptions().save;
+      const doc = docs.get(path);
+      if (save === undefined || doc === undefined) return;
+      notify("textDocument/didSave", {
+        textDocument: textDocument(path),
+        ...(save.includeText === true ? { text: allText(doc) } : {}),
+      });
+    },
+    didClose(path) {
+      if (!docs.delete(path)) return;
+      pulls.get(path)?.cancel();
+      pulls.delete(path);
+      resultIds.delete(path);
+      notify("textDocument/didClose", { textDocument: textDocument(path) });
+    },
+    async pullDiagnostics(path) {
+      pulls.get(path)?.cancel();
+      const source = new CancellationTokenSource();
+      pulls.set(path, source);
+      const previousResultId = resultIds.get(path);
+      try {
+        const r = await conn.sendRequest<DocumentDiagnosticReport>(
+          "textDocument/diagnostic",
+          {
+            textDocument: textDocument(path),
+            ...(previousResultId === undefined ? {} : { previousResultId }),
+          },
+          source.token,
+        );
+        // A newer pull or a close replaced this one.
+        if (pulls.get(path) !== source || !isObject(r))
+          return { kind: "unchanged" };
+        if (typeof r.resultId === "string") resultIds.set(path, r.resultId);
+        else resultIds.delete(path);
+        return r.kind === "full"
+          ? {
+              kind: "full",
+              items: diagnosticsOf("textDocument/diagnostic", r.items),
+            }
+          : { kind: "unchanged" };
+      } finally {
+        if (pulls.get(path) === source) pulls.delete(path);
+        source.dispose();
+      }
     },
     async request(id, path, op) {
       const source = new CancellationTokenSource();

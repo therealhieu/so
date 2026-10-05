@@ -317,3 +317,164 @@ test("stopping kills a server that ignores shutdown within the bound", async () 
   expect(methods).toContain("shutdown");
   expect(methods.at(-1)).toBe("exit");
 });
+
+const PULL_CAPS = {
+  hoverProvider: true,
+  diagnosticProvider: {
+    interFileDependencies: false,
+    workspaceDiagnostics: false,
+  },
+};
+const diagnostic = (line: number, message: string) => ({
+  range: { start: { line, character: 0 }, end: { line, character: 1 } },
+  severity: 1,
+  message,
+});
+/** The sync and pull messages the server received, in order. */
+const syncLog = (log: string) =>
+  readServerLog(log)
+    .map((m) => m.method)
+    .filter(
+      (m) =>
+        m === "textDocument/didOpen" ||
+        m === "textDocument/didChange" ||
+        m === "textDocument/diagnostic" ||
+        m === "textDocument/hover",
+    );
+
+test("keys typed within the debounce produce one change sent before the next request", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const rs = fake("rs", ["rust"], {});
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitForMessage(rs.log, "textDocument/didOpen");
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  const opened = messages(rs.log, "textDocument/didOpen")[0]?.params as {
+    textDocument: { version: number };
+  };
+  app.keys("i0123456789<Esc>K");
+  await waitForMessage(rs.log, "textDocument/hover");
+  await Bun.sleep(300);
+  expect(syncLog(rs.log)).toEqual([
+    "textDocument/didOpen",
+    "textDocument/didChange",
+    "textDocument/hover",
+  ]);
+  expect(messages(rs.log, "textDocument/didChange")[0]?.params).toEqual({
+    textDocument: {
+      uri: uri(join(root, "main.rs")),
+      version: opened.textDocument.version + 10,
+    },
+    contentChanges: [
+      {
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 12 },
+        },
+        text: "0123456789fn main() {}",
+      },
+    ],
+  });
+});
+
+test("a pull server is pulled after opening and after each sent change", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const rs = fake("rs", ["rust"], {
+    capabilities: PULL_CAPS,
+    pull: { items: [diagnostic(0, "pulled")] },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitForMessage(rs.log, "textDocument/diagnostic");
+  for (let n = 1; n <= 3; n++) {
+    app.keys(`ix<Esc>`);
+    await waitForMessage(rs.log, "textDocument/diagnostic", 5000, n + 1);
+  }
+  expect(syncLog(rs.log)).toEqual([
+    "textDocument/didOpen",
+    "textDocument/diagnostic",
+    "textDocument/didChange",
+    "textDocument/diagnostic",
+    "textDocument/didChange",
+    "textDocument/diagnostic",
+    "textDocument/didChange",
+    "textDocument/diagnostic",
+  ]);
+  const previous = messages(rs.log, "textDocument/diagnostic").map(
+    (m) => (m.params as { previousResultId?: string }).previousResultId,
+  );
+  expect(previous).toEqual([undefined, "r1", "r2", "r3"]);
+  await waitFor(() => app?.store.get().lsp.shown["main.rs"] !== undefined);
+  expect(app.store.get().lsp.shown["main.rs"]?.map((d) => d.message)).toEqual([
+    "pulled",
+  ]);
+});
+
+test("a refresh pulls every open document again", async () => {
+  const root = await tmpWorkspace({
+    "a.rs": "fn a() {}\n",
+    "b.rs": "fn b() {}\n",
+  });
+  const rs = fake("rs", ["rust"], {
+    capabilities: PULL_CAPS,
+    pull: { items: [] },
+    refreshOn: "textDocument/hover",
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("a.rs");
+  await app.open("b.rs");
+  await waitForMessage(rs.log, "textDocument/diagnostic", 5000, 2);
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  app.keys("K");
+  await waitForMessage(rs.log, "textDocument/diagnostic", 5000, 4);
+  await Bun.sleep(200);
+  const pulled = messages(rs.log, "textDocument/diagnostic").map(
+    (m) => (m.params as { textDocument: { uri: string } }).textDocument.uri,
+  );
+  expect(pulled.sort()).toEqual(
+    [
+      uri(join(root, "a.rs")),
+      uri(join(root, "a.rs")),
+      uri(join(root, "b.rs")),
+      uri(join(root, "b.rs")),
+    ].sort(),
+  );
+});
+
+test("pushed and pulled lists are both kept and closing clears only the pulled one", async () => {
+  const root = await tmpWorkspace({
+    "main.rs": "fn main() {}\n",
+    "other.rs": "",
+  });
+  const rs = fake("rs", ["rust"], {
+    capabilities: PULL_CAPS,
+    diagnostics: [diagnostic(0, "pushed")],
+    pull: { items: [diagnostic(0, "pulled")] },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.shown["main.rs"]?.length === 2);
+  expect(
+    app.store
+      .get()
+      .lsp.shown["main.rs"]?.map((d) => d.message)
+      .sort(),
+  ).toEqual(["pulled", "pushed"]);
+  await app.open("other.rs");
+  await app.open("main.rs");
+  app.keys(":bd<CR>");
+  await waitForMessage(rs.log, "textDocument/didClose");
+  await waitFor(
+    () =>
+      app?.store.get().lsp.diagnostics["main.rs"]?.["rs@"]?.pull === undefined,
+  );
+  expect(app.store.get().lsp.diagnostics["main.rs"]?.["rs@"]).toEqual({
+    push: [
+      {
+        range: { start: { line: 0, col: 0 }, end: { line: 0, col: 1 } },
+        severity: 1,
+        message: "pushed",
+      },
+    ],
+  });
+});

@@ -23,11 +23,15 @@ import {
   createLspClient,
   type LspClient,
 } from "../workspace/lsp/client";
+import { toErrorResult } from "../workspace/lsp/convert";
 import { languageIdFor } from "../workspace/lsp/language-id";
 import { findRoot } from "../workspace/lsp/roots";
+import { lineChange } from "../workspace/lsp/sync";
 
 /** The longest one server's stop takes before it is killed. */
 export const LSP_STOP_BOUND_MS = 500;
+/** Edits are sent this long after the last one (trailing debounce). */
+export const SYNC_DEBOUNCE_MS = 150;
 /** The longest a version probe runs before it counts as failed. */
 export const PROBE_BOUND_MS = 2000;
 
@@ -50,7 +54,13 @@ type Doc = {
   languageId: string;
   /** The buffer's text as last observed. */
   latest: TextBuffer;
+  /** What the server has; undefined until it is opened. */
+  sent?: TextBuffer | undefined;
+  /** The debounce of the next change. */
+  timer?: ReturnType<typeof setTimeout> | undefined;
   finalNewline: boolean;
+  /** The buffer's saved version as last observed. */
+  saved: number;
 };
 
 /** One server process for one root, across its restarts. */
@@ -70,6 +80,8 @@ type Server = {
   docs: Map<string, Doc>;
   /** Request ids sent and not answered yet. */
   inflight: Set<number>;
+  /** Paths whose pull failed, logged once each. */
+  pullFailed: Set<string>;
 };
 
 /** A command's binary: `<dir>/node_modules/.bin/<cmd>` first when `localBin`, then `PATH`. */
@@ -224,7 +236,6 @@ export function createLspHost(d: {
     if (observing) queueMicrotask(() => !stopped && d.dispatch(a));
     else d.dispatch(a);
   };
-  const later = (a: Action) => queueMicrotask(() => !stopped && d.dispatch(a));
 
   const trackedSpawn = ((cmd: string, args: string[], opts: object) => {
     const child = spawn(cmd, args, opts);
@@ -247,6 +258,7 @@ export function createLspHost(d: {
   function stopServer(server: Server): void {
     servers.delete(server.key);
     server.generation++;
+    for (const doc of server.docs.values()) clearTimeout(doc.timer);
     server.abort?.abort();
     const done = server.client?.stop(LSP_STOP_BOUND_MS) ?? server.starting;
     server.client = undefined;
@@ -319,12 +331,80 @@ export function createLspHost(d: {
             edit,
           });
       },
+      refreshDiagnostics: () => {
+        if (!live()) return;
+        for (const doc of server.docs.values())
+          if (doc.sent !== undefined) pull(server, doc.path);
+      },
     };
+  }
+
+  /** Pulls `path`'s diagnostics from a server that answers pulls. */
+  function pull(server: Server, path: string): void {
+    const client = server.client;
+    if (client === undefined || !server.view.pullDiagnostics) return;
+    const generation = server.generation;
+    client.pullDiagnostics(path).then(
+      (r) => {
+        if (stopped || server.generation !== generation || r.kind !== "full")
+          return;
+        d.dispatch({
+          type: "lspDiagnostics",
+          key: server.key,
+          path,
+          source: "pull",
+          items: r.items,
+        });
+      },
+      (e: unknown) => {
+        if (toErrorResult(e).quiet === true || server.pullFailed.has(path))
+          return;
+        server.pullFailed.add(path);
+        const code = (e as { code?: unknown }).code;
+        d.logger.error("lsp.pullFailed", {
+          server: server.spec.name,
+          method: "textDocument/diagnostic",
+          ...(typeof code === "number" ? { code } : {}),
+        });
+      },
+    );
   }
 
   function open(server: Server, doc: Doc): void {
     const text = fullText(doc.latest) + (doc.finalNewline ? "\n" : "");
+    doc.sent = doc.latest;
     server.client?.didOpen(doc.path, doc.languageId, doc.latest.version, text);
+    pull(server, doc.path);
+  }
+
+  /** Sends the document's pending edits as one change, then pulls. */
+  function flush(server: Server, doc: Doc): void {
+    clearTimeout(doc.timer);
+    doc.timer = undefined;
+    const client = server.client;
+    if (client === undefined || doc.sent === undefined) return;
+    const change = lineChange(doc.sent, doc.latest);
+    doc.sent = doc.latest;
+    if (change === undefined) return;
+    client.didChange(doc.path, doc.latest.version, change);
+    pull(server, doc.path);
+  }
+
+  function close(server: Server, doc: Doc): void {
+    clearTimeout(doc.timer);
+    server.docs.delete(doc.path);
+    server.pullFailed.delete(doc.path);
+    if (doc.sent === undefined || server.client === undefined) return;
+    server.client.didClose(doc.path);
+    // A pulled list describes an open document; pushed lists stay.
+    if (server.view.pullDiagnostics)
+      send({
+        type: "lspDiagnostics",
+        key: server.key,
+        path: doc.path,
+        source: "pull",
+        items: [],
+      });
   }
 
   function launch(server: Server): void {
@@ -393,6 +473,7 @@ export function createLspHost(d: {
       generation: 0,
       docs: new Map(),
       inflight: new Set(),
+      pullFailed: new Set(),
     };
     servers.set(key, server);
     send({ type: "lspServer", key, view: server.view });
@@ -457,21 +538,40 @@ export function createLspHost(d: {
     return start(key, spec, root, binary);
   }
 
-  /** Track buffer `b` in `server`, opening it once the server is ready. */
+  /**
+   * Track buffer `b` in `server`: open it once the server is ready, send
+   * edits after the debounce, and report saves.
+   */
   function track(server: Server, b: BufferState): void {
+    const languageId = languageIdFor(b.fileType, b.path);
     const doc = server.docs.get(b.path);
-    if (doc !== undefined) {
-      doc.latest = b.text;
+    if (doc === undefined || doc.languageId !== languageId) {
+      if (doc !== undefined) close(server, doc);
+      const added: Doc = {
+        path: b.path,
+        languageId,
+        latest: b.text,
+        finalNewline: b.finalNewline,
+        saved: b.savedVersion,
+      };
+      server.docs.set(b.path, added);
+      if (server.client !== undefined) open(server, added);
       return;
     }
-    const added: Doc = {
-      path: b.path,
-      languageId: languageIdFor(b.fileType, b.path),
-      latest: b.text,
-      finalNewline: b.finalNewline,
-    };
-    server.docs.set(b.path, added);
-    if (server.client !== undefined) open(server, added);
+    if (doc.latest !== b.text) {
+      doc.latest = b.text;
+      if (doc.sent !== undefined) {
+        clearTimeout(doc.timer);
+        doc.timer = setTimeout(() => flush(server, doc), SYNC_DEBOUNCE_MS);
+      }
+    }
+    if (doc.saved !== b.savedVersion) {
+      doc.saved = b.savedVersion;
+      if (doc.sent !== undefined) {
+        flush(server, doc);
+        server.client?.didSave(doc.path);
+      }
+    }
   }
 
   function report(path: string, keys: ServerKey[]): void {
@@ -484,6 +584,7 @@ export function createLspHost(d: {
 
   function sync(s: AppState): void {
     const seen = new Set<string>();
+    const tracked = new Set<Doc>();
     for (const b of Object.values(s.buffers)) {
       if (b.listed === false || !LSP_FILE_TYPES.includes(b.fileType)) continue;
       const keys: ServerKey[] = [];
@@ -493,12 +594,17 @@ export function createLspHost(d: {
         if (server === undefined) continue;
         keys.push(server.key);
         track(server, b);
+        const doc = server.docs.get(b.path);
+        if (doc !== undefined) tracked.add(doc);
       }
       seen.add(b.path);
       report(b.path, keys);
     }
     for (const path of [...attached.keys()])
       if (!seen.has(path)) report(path, []);
+    for (const server of servers.values())
+      for (const doc of [...server.docs.values()])
+        if (!tracked.has(doc)) close(server, doc);
   }
 
   function observe(s: AppState): void {
@@ -528,50 +634,59 @@ export function createLspHost(d: {
     resync();
   }
 
-  return {
-    observe,
-    run(e) {
-      switch (e.kind) {
-        case "lsp": {
-          const server = servers.get(e.key);
-          const client = server?.client;
-          if (server === undefined || client === undefined) {
-            later({
-              type: "lspResult",
-              id: e.id,
-              result: {
-                kind: "error",
-                message:
-                  server === undefined
-                    ? "server is not running"
-                    : "server is starting",
-              },
-              now: now(),
-            });
-            return;
-          }
-          server.inflight.add(e.id);
-          void client.request(e.id, e.path, e.op).then((result) => {
-            if (!server.inflight.delete(e.id) || stopped) return;
-            d.dispatch({ type: "lspResult", id: e.id, result, now: now() });
+  function handle(e: LspEffect): void {
+    if (stopped) return;
+    switch (e.kind) {
+      case "lsp": {
+        const server = servers.get(e.key);
+        const client = server?.client;
+        if (server === undefined || client === undefined) {
+          d.dispatch({
+            type: "lspResult",
+            id: e.id,
+            result: {
+              kind: "error",
+              message:
+                server === undefined
+                  ? "server is not running"
+                  : "server is starting",
+            },
+            now: now(),
           });
           return;
         }
-        case "lspCancel": {
-          const server = servers.get(e.key);
-          server?.inflight.delete(e.id);
-          server?.client?.cancel(e.id);
-          return;
-        }
-        case "lspReply":
-          servers
-            .get(e.key)
-            ?.client?.reply(e.requestId, e.applied, e.failureReason);
-          return;
-        case "lspRestart":
-          queueMicrotask(() => restart(e.keys));
-          return;
+        const doc = server.docs.get(e.path);
+        if (doc !== undefined) flush(server, doc);
+        server.inflight.add(e.id);
+        void client.request(e.id, e.path, e.op).then((result) => {
+          if (!server.inflight.delete(e.id) || stopped) return;
+          d.dispatch({ type: "lspResult", id: e.id, result, now: now() });
+        });
+        return;
       }
+      case "lspCancel": {
+        const server = servers.get(e.key);
+        server?.inflight.delete(e.id);
+        server?.client?.cancel(e.id);
+        return;
+      }
+      case "lspReply":
+        servers
+          .get(e.key)
+          ?.client?.reply(e.requestId, e.applied, e.failureReason);
+        return;
+      case "lspRestart":
+        restart(e.keys);
+        return;
+    }
+  }
+
+  return {
+    observe,
+    run(e) {
+      // After the dispatch that emitted `e` has reached `observe`, so a
+      // request sees the text of the same action.
+      queueMicrotask(() => handle(e));
     },
     async stop() {
       if (stopped) return;
