@@ -6,7 +6,7 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
-import { requestRefresh } from "./git";
+import { advanceGitPending, cancelGitPending, requestRefresh } from "./git";
 import { summarizeSaved } from "./index";
 import { chain, message, none } from "./result";
 import type {
@@ -30,7 +30,7 @@ const writable = (s: AppState, b: BufferState): boolean =>
   !isConflicted(s, b.id);
 
 /** A buffer that `:q` and `:bd` must not close: its edits cannot be written. */
-const blocked = (s: AppState, b: BufferState): boolean =>
+export const blocked = (s: AppState, b: BufferState): boolean =>
   isConflicted(s, b.id) || (b.dirty && b.disk === "deleted");
 
 const e37 = (s: AppState, b: BufferState): Result =>
@@ -167,7 +167,10 @@ export function onSaved(
         advanceQuit(st, b.id),
       );
   // A write changes the work tree, which the watcher does not report for so's own writes.
-  return chain(written, requestRefresh);
+  return chain(
+    chain(written, (st) => advanceGitPending(st, b.id, at)),
+    requestRefresh,
+  );
 }
 
 /** A saved buffer no longer holds up `:q`; the last one exits. */
@@ -202,29 +205,28 @@ export function onSaveFailed(
     terminal,
     buffers: { ...s.buffers, [b.id]: rest },
   };
-  if (a.reason === "conflict")
-    return chain(
-      {
-        state: setSave(cleared, b.id, { kind: "idle" }),
-        effects: [{ kind: "read", path: b.path }],
-      },
-      (st) => message(st, text, "error"),
+  const failed = (r: Result) =>
+    chain(
+      chain(r, (st) => message(st, text, "error")),
+      (st) => cancelGitPending(st, b.id),
     );
+  if (a.reason === "conflict")
+    return failed({
+      state: setSave(cleared, b.id, { kind: "idle" }),
+      effects: [{ kind: "read", path: b.path }],
+    });
   const writing = b.save.kind === "writing" ? b.save : undefined;
   const attempt = (writing?.attempt ?? 0) + 1;
   const ms = retryDelay(attempt);
-  return chain(
-    {
-      state: setSave(cleared, b.id, {
-        kind: "failed",
-        reason: a.reason,
-        attempt,
-        retryAt: (writing?.at ?? 0) + ms,
-      }),
-      effects: [{ kind: "startTimer", id: `retry:${b.id}`, ms }],
-    },
-    (st) => message(st, text, "error"),
-  );
+  return failed({
+    state: setSave(cleared, b.id, {
+      kind: "failed",
+      reason: a.reason,
+      attempt,
+      retryAt: (writing?.at ?? 0) + ms,
+    }),
+    effects: [{ kind: "startTimer", id: `retry:${b.id}`, ms }],
+  });
 }
 
 /**

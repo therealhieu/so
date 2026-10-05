@@ -70,6 +70,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "x", label: "Toggle task", group: false },
     { key: "z", label: "Zoom image or diagram", group: false },
     { key: "f", label: "+find", group: true },
+    { key: "g", label: "+…", group: true },
     { key: "l", label: "+links", group: true },
     { key: "n", label: "+notes", group: true },
     { key: "q", label: "+quit", group: true },

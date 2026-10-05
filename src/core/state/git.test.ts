@@ -27,11 +27,11 @@ const REPO: RepoInfo = {
   head: { kind: "branch", name: "main" },
 };
 
-const tracked = (text: string, oid = "o1"): IndexEntry => ({
+const tracked = (text: string, oid = "o1", conflicted = false): IndexEntry => ({
   kind: "tracked",
   oid,
   mode: "100644",
-  conflicted: false,
+  conflicted,
   text: normalizeIndexText(text, text.includes("\r\n") ? "crlf" : "lf"),
 });
 
@@ -289,4 +289,259 @@ test("closing a buffer drops its git entry in the same step", () => {
   const r = keys(s, ":", "b", "d", "<CR>");
   expect(r.state.buffers[1]).toBeUndefined();
   expect(r.state.git.files).toEqual({});
+});
+
+/** `<leader>` then `seq`, one key at a time. */
+const leader = (s: AppState, seq: string): Result =>
+  keys(s, " ", ...seq.split(""));
+
+const withoutAutosave = (s: AppState): AppState => ({
+  ...s,
+  config: { ...s.config, autosave: { ...s.config.autosave, enabled: false } },
+});
+
+const NOTE = "notes/a.md";
+const lines5 = "a\nb\nc\nd\ne\n";
+
+test("staging a clean tracked hunk sends its patch with the index oid", () => {
+  const s = inRepo(NOTE, "a\nB\nc\nD\ne", tracked(lines5, "oid1"));
+  const r = leader(keys(s, "j", "j", "j").state, "ghs");
+  expect(gitEffects(r)).toEqual([
+    {
+      kind: "gitStage",
+      repo: REPO,
+      path: NOTE,
+      repoPath: "ws/notes/a.md",
+      expectedOid: "oid1",
+      patch:
+        "diff --git a/ws/notes/a.md b/ws/notes/a.md\n" +
+        "index 0000000..0000000 100644\n" +
+        "--- a/ws/notes/a.md\n+++ b/ws/notes/a.md\n" +
+        "@@ -4,1 +4,1 @@\n-d\n+D\n",
+      report: { n: 2, m: 2, saved: false },
+    },
+  ]);
+  expect(r.state.git.pending).toBeUndefined();
+});
+
+test("staging an untracked file asks for intent-to-add", () => {
+  const s = inRepo(NOTE, "one\ntwo", { kind: "untracked" });
+  const [stage] = gitEffects(leader(s, "ghs"));
+  expect(stage).toMatchObject({
+    kind: "gitStage",
+    expectedOid: null,
+    report: { n: 1, m: 1, saved: false },
+  });
+  expect(stage?.kind === "gitStage" && stage.patch).toEndWith(
+    "@@ -0,0 +1,2 @@\n+one\n+two\n",
+  );
+});
+
+test("a stale index warns and refreshes", () => {
+  const s = inRepo(NOTE, "a");
+  const r = update(s, {
+    type: "gitStaged",
+    path: NOTE,
+    result: "stale",
+    report: { n: 1, m: 1, saved: false },
+  });
+  expect(r.state.notifications.message).toEqual({
+    text: "index changed; hunks refreshed",
+    level: "warn",
+  });
+  expect(r.effects).toEqual([
+    { kind: "gitReadIndex", repo: REPO, path: NOTE, repoPath: "ws/notes/a.md" },
+    { kind: "startTimer", id: "gitRefresh", ms: 200 },
+  ]);
+});
+
+test("a conflicted file is never staged", () => {
+  const r = leader(inRepo(NOTE, "b", tracked("a\n", "o1", true)), "ghs");
+  expect(gitEffects(r)).toEqual([]);
+  expect(r.state.notifications.message).toEqual({
+    text: "notes/a.md has conflicts; resolve them in lazygit",
+    level: "error",
+  });
+});
+
+test("a dirty buffer is saved before staging, and a failed save stages nothing", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const dirty = keys(s, "A", "x", "<Esc>").state;
+  const r = leader(dirty, "ghs");
+  expect(gitEffects(r)).toEqual([]);
+  expect(r.effects.filter((e) => e.kind === "write")).toEqual([
+    { kind: "write", path: NOTE, text: "ax\nb\n", expected: stamp(1) },
+  ]);
+  expect(r.state.git.pending).toEqual({
+    op: "stage",
+    bufferId: 1,
+    line: 0,
+    waiting: [1],
+  });
+  const saved = update(r.state, { type: "saved", path: NOTE, stamp: stamp(2) });
+  expect(saved.state.git.pending).toBeUndefined();
+  expect(gitEffects(saved)).toMatchObject([
+    {
+      kind: "gitStage",
+      expectedOid: "o1",
+      report: { n: 1, m: 1, saved: true },
+    },
+  ]);
+  const failed = update(r.state, {
+    type: "saveFailed",
+    path: NOTE,
+    reason: "EACCES",
+  });
+  expect(failed.state.git.pending).toBeUndefined();
+  expect(gitEffects(failed)).toEqual([]);
+  expect(failed.state.notifications.message).toEqual({
+    text: "not staged: notes/a.md could not be saved",
+    level: "error",
+  });
+});
+
+test("text typed while the stage save is written is saved before staging", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const r = leader(keys(s, "A", "x", "<Esc>").state, "ghs");
+  const again = keys(r.state, "A", "y", "<Esc>").state;
+  const first = update(again, { type: "saved", path: NOTE, stamp: stamp(2) });
+  expect(gitEffects(first)).toEqual([]);
+  expect(first.effects).toContainEqual({
+    kind: "write",
+    path: NOTE,
+    text: "axy\nb\n",
+    expected: stamp(2),
+  });
+  const second = update(first.state, {
+    type: "saved",
+    path: NOTE,
+    stamp: stamp(3),
+  });
+  expect(gitEffects(second)).toMatchObject([
+    { kind: "gitStage", report: { saved: true } },
+  ]);
+});
+
+test("a buffer that cannot be saved is not staged", () => {
+  const s = inRepo(NOTE, "a\nb", tracked("a\nb\n"));
+  const deleted = run(keys(s, "A", "x", "<Esc>").state, {
+    type: "fileChanged",
+    event: { kind: "removed", path: NOTE },
+  }).state;
+  const r = leader(deleted, "ghs");
+  expect(gitEffects(r)).toEqual([]);
+  expect(r.effects.some((e) => e.kind === "write")).toBe(false);
+  expect(r.state.notifications.message).toEqual({
+    text: "cannot save notes/a.md",
+    level: "error",
+  });
+});
+
+test("a second git operation while one is pending is refused", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const pending = leader(keys(s, "A", "x", "<Esc>").state, "ghs").state;
+  const r = leader(pending, "ghs");
+  expect(gitEffects(r)).toEqual([]);
+  expect(r.effects.some((e) => e.kind === "write")).toBe(false);
+  expect(r.state.notifications.message).toEqual({
+    text: "git: another operation is running",
+    level: "info",
+  });
+  expect(r.state.git.pending).toEqual(pending.git.pending);
+});
+
+test("closing the buffer a stage waits for cancels the stage", () => {
+  const s = withoutAutosave(inRepo(NOTE, "a\nb", tracked("a\nb\n")));
+  const pending = leader(keys(s, "A", "x", "<Esc>").state, "ghs").state;
+  const closed = keys(pending, ":", "b", "d", "!", "<CR>").state;
+  expect(closed.git.pending).toBeUndefined();
+});
+
+const textOf = (s: AppState, id = 1): string[] => {
+  const t = s.buffers[id]?.text;
+  return t === undefined
+    ? []
+    : Array.from({ length: t.lineCount }, (_, i) => t.line(i));
+};
+
+test("reset restores index lines in one undo step and the final-newline flag", () => {
+  const s = inRepo(NOTE, "a\nb\nX", tracked("a\nb\nc"));
+  expect(s.buffers[1]?.finalNewline).toBe(true);
+  const r = leader(keys(s, "G").state, "ghr");
+  expect(gitEffects(r)).toEqual([]);
+  expect(textOf(r.state)).toEqual(["a", "b", "c"]);
+  expect(r.state.buffers[1]?.finalNewline).toBe(false);
+  expect(r.state.buffers[1]?.dirty).toBe(true);
+  expect(r.state.notifications.message).toEqual({
+    text: "reset hunk 1/1 · buffer changed, autosave pending",
+    level: "info",
+  });
+  expect(textOf(keys(r.state, "u").state)).toEqual(["a", "b", "X"]);
+});
+
+test("reset puts deleted lines back and removes added ones", () => {
+  const deleted = inRepo(NOTE, "a\nc", tracked("a\nb\nc\n"));
+  expect(textOf(leader(deleted, "ghr").state)).toEqual(["a", "b", "c"]);
+  const top = inRepo(NOTE, "b\nc", tracked("a\nb\nc\n"));
+  expect(textOf(leader(top, "ghr").state)).toEqual(["a", "b", "c"]);
+  const end = inRepo(NOTE, "a\nb", tracked("a\nb\nc\n"));
+  expect(textOf(leader(keys(end, "G").state, "ghr").state)).toEqual([
+    "a",
+    "b",
+    "c",
+  ]);
+  const added = inRepo(NOTE, "a\nx\nb", tracked("a\nb\n"));
+  expect(textOf(leader(keys(added, "j").state, "ghr").state)).toEqual([
+    "a",
+    "b",
+  ]);
+  const tail = inRepo(NOTE, "a\nx\ny", tracked("a\n"));
+  expect(textOf(leader(keys(tail, "G").state, "ghr").state)).toEqual(["a"]);
+});
+
+test("reset and stage without a hunk or a repository say why", () => {
+  const clean = inRepo(NOTE, "a\nb");
+  for (const seq of ["ghs", "ghr"])
+    expect(leader(clean, seq).state.notifications.message).toEqual({
+      text: "no hunk at cursor",
+      level: "info",
+    });
+  const untracked = inRepo(NOTE, "a", { kind: "untracked" });
+  expect(leader(untracked, "ghr").state.notifications.message?.text).toBe(
+    "no hunk at cursor",
+  );
+  const outside = run(fresh(), load(NOTE, "a")).state;
+  for (const seq of ["ghs", "ghr"])
+    expect(leader(outside, seq).state.notifications.message).toEqual({
+      text: "not a git repository",
+      level: "info",
+    });
+});
+
+test("hunk action messages read as the accepted catalogue", () => {
+  const s = inRepo("projects/so-roadmap.md", "a");
+  const staged = (result: "ok" | { failed: string }, saved: boolean) =>
+    update(s, {
+      type: "gitStaged",
+      path: "projects/so-roadmap.md",
+      result,
+      report: { n: 2, m: 4, saved },
+    }).state.notifications.message;
+  expect(staged("ok", false)).toEqual({
+    text: "staged hunk 2/4",
+    level: "info",
+  });
+  expect(staged("ok", true)).toEqual({
+    text: '"projects/so-roadmap.md" written · staged hunk 2/4',
+    level: "info",
+  });
+  expect(
+    staged(
+      {
+        failed:
+          "error: patch failed: a.md:3\nerror: a.md: patch does not apply",
+      },
+      false,
+    ),
+  ).toEqual({ text: "error: patch failed: a.md:3", level: "error" });
 });

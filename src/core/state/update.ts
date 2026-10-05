@@ -18,6 +18,7 @@ import {
   onGitDiffTimer,
   onGitIndexRead,
   onGitRefreshTimer,
+  onGitStaged,
   onGitStatus,
   onToolExited,
   requestRefresh,
@@ -211,6 +212,7 @@ export function createUpdate(reg: Registries): Update {
       case "gitDirChanged":
         return requestRefresh(state);
       case "gitStaged":
+        return onGitStaged(state, action);
       case "gitBlamed":
         return none(state);
     }
