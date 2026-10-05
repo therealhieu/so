@@ -68,21 +68,37 @@ Written by the implementer after the initial implementation turn and before retu
 
 ## Remediation
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Pending verification`
+All three verifier findings are fixed, each with a failing test first and a separate commit. The outside-only definition message without `<path>` stays as an accepted deviation, as the orchestrator directed.
+
+- **Verification reports:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md` (commit `ae9af3a`, status `Failed`; left unchanged)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-Pending verification.
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G2-VER1` | `src/core/state/lsp-commands.ts:formattingOptions` now counts indent increases between consecutive lines and uses the most common step (a tie goes to the smaller step; `tabWidth` when nothing is indented). Blank lines and lines whose trimmed text starts with `*` are skipped, so JSDoc and block-comment continuations neither lower the step nor hide a tab-indented file. Test "formatting options ignore doc comments and aligned continuation lines" in `src/core/state/lsp-commands.test.ts`: a 4-space file with a JSDoc block and an aligned argument gives `{tabSize: 4, insertSpaces: true}`; a 2-space file with an aligned `return f(a,` continuation gives `{tabSize: 2, insertSpaces: true}`; a tab file that opens with a `/* … */` block gives `{tabSize: 8, insertSpaces: false}`. RED: `bun test src/core/state/lsp-commands.test.ts` → the new case failed. GREEN: same → 9 pass / 0 fail; the existing uniform-indent and `:Format` cases still pass. `bun run check` → Passed | `f1aca30270bf71330496167fcd10c8f5f2542fba` | `Fixed` |
+| `P1-G2-VER2` | `src/core/state/lsp.ts:covers` applies the empty-range rule only when `start` equals `end`; every other range excludes `end`. Test "a diagnostic ending at the start of a line does not cover that line" in `src/core/state/lsp.test.ts`: a `(0,0)–(1,0)` diagnostic gives `undefined` at `(1,0)`, and an empty `(1,2)–(1,2)` range still matches at `(1,2)`. RED: `bun test src/core/state/lsp.test.ts` → the new case failed. GREEN: same → 37 pass / 0 fail. `bun run check` → Passed | `32e625d8a061dfe7066e7e716e93348cfc422867` | `Fixed` |
+| `P1-G2-VER3` | `src/core/state/lsp.ts:syncFloat` also closes a `hover` or `diagnostics` float when `vim.mode` differs from the previous state. The existing `prev.lsp.float !== f` guard keeps the float in the action that set it, and signature behaviour is unchanged. Test "hover closes when the mode changes" in `src/core/state/lsp.test.ts`: a hover float followed by `i`, and one followed by `v`, both give `s.lsp.float === undefined`. RED: `bun test src/core/state/lsp.test.ts` → the new case failed. GREEN: same → 38 pass / 0 fail; "hover closes on cursor move and signature help on leaving insert mode" and the idle post-step identity case still pass. `bun run check` → Passed | `8943d220fa720ca686d153035797c44251b69355` | `Fixed` |
+
+Completion checklists from the verification report:
+
+| Finding | Required resolution implemented | Required proof passes | Change evidence recorded | Verification evidence recorded |
+|---|---|---|---|---|
+| `P1-G2-VER1` | [x] | [x] | [x] | [x] |
+| `P1-G2-VER2` | [x] | [x] | [x] | [x] |
+| `P1-G2-VER3` | [x] | [x] | [x] | [x] |
+
+The decision recorded in Initial Implementation item 8 for `formattingOptions` (narrowest indent), for `syncFloat` (no mode check on hover and diagnostics), and for `cursorDiagnostic` (the empty-range clause) are superseded by the rows above.
 
 ## Final Status
 
-`Pending verification`
+`Completed`
 
 ### Final Evidence
 
-- **Final report status:** `Pending verification` — initial implementation completed
-- **Final report commit:** `Pending verification`
-- **Final commits:** `814e6c7b2d05b13c9ce4212921d48227f4491b01`, `2514f0e9ad1c6f3dade71bad1dc89ce5f3a5b6d2`, `e392c2a0d0141db722671e58f53d6e4f8293d705`, `27d323c6953c7546ef232def9d2f3df2021be583`, `ccea2bdbade26e30f2c92e1f729f4a0e1d91b009`
-- **Final checks:** `bun run check` → Passed (1154 / 0); `bun test src/core/state` → Passed (354 / 0)
-- **Remaining issues:** None
+- **Final report status:** `Completed` — every verifier finding is fixed and every group check passes
+- **Final report commit:** Returned to the orchestrator; not written here because it would need a self-referential commit
+- **Final commits:** `814e6c7b2d05b13c9ce4212921d48227f4491b01`, `2514f0e9ad1c6f3dade71bad1dc89ce5f3a5b6d2`, `e392c2a0d0141db722671e58f53d6e4f8293d705`, `27d323c6953c7546ef232def9d2f3df2021be583`, `ccea2bdbade26e30f2c92e1f729f4a0e1d91b009`, `f1aca30270bf71330496167fcd10c8f5f2542fba`, `32e625d8a061dfe7066e7e716e93348cfc422867`, `8943d220fa720ca686d153035797c44251b69355`
+- **Final checks:** `bun run check` → Passed (biome clean on 335 files, tsc clean, knip zero findings, 1157 pass / 0 fail across 103 files); `bun test src/core/state` → Passed (358 pass / 0 fail across 31 files); `grep -nE "W261005GWLY|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P1-G"` over the 15 files changed in `32a520f..8943d22` → Passed (no matches); `pgrep -f fake-lsp` → Passed (empty; remediation started no processes)
+- **Remaining issues:** None. The verifier's coverage note on `dropPending` in `onLspServer` (no test for `lspCancel` plus `cancelTimer` when a server fails mid-request) was not a finding and is left as is
