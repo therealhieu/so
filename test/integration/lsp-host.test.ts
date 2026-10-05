@@ -642,7 +642,9 @@ test("progress is throttled and info messages do not toast", async () => {
   });
   await app.open("main.rs");
   await waitForMessage(rs.log, "response:window/workDoneProgress/create");
-  await Bun.sleep(400);
+  await waitFor(
+    () => app?.store.get().lsp.servers["rs@"]?.progress === "indexing 50/50",
+  );
   const progress = app.actions.filter(
     (a) => a.type === "lspServer" && a.view?.progress !== undefined,
   );
