@@ -6,6 +6,7 @@ import {
   splitFile,
 } from "./buffers";
 import { dirname, pruneTree, relist } from "./explorer";
+import { requestRefresh } from "./git";
 import { indexAfterFileEvent } from "./index";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
@@ -32,9 +33,14 @@ const cancelSaves = (id: BufferId): Effect[] => [
 /**
  * A watcher event. Removal marks open buffers deleted on disk; a change to an
  * open file reads it back (the read decides reload or conflict); anything else
- * relists the folders shown in the explorer.
+ * relists the folders shown in the explorer. Inside a repository each event
+ * also asks for a status refresh.
  */
 export function onFileChanged(prev: AppState, e: FileEvent): Result {
+  return chain(fileEvent(prev, e), requestRefresh);
+}
+
+function fileEvent(prev: AppState, e: FileEvent): Result {
   const s = indexAfterFileEvent(prev, e);
   if (e.kind === "removed") {
     const open = buffersUnder(s, e.path).filter((b) => b.disk === "present");

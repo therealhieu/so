@@ -23,7 +23,7 @@ import { createLogger } from "../../src/workspace/log";
 import { createSvgRasterizer } from "../../src/workspace/svg";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
-import { clock, tmpWorkspace, waitFor } from "./helpers";
+import { clock, gitOff, tmpWorkspace, waitFor } from "./helpers";
 
 const LONG = Array.from({ length: 40 }, (_, i) => `word${i}`).join(" ");
 
@@ -71,6 +71,7 @@ async function start(config?: string) {
     configPath: path,
     preview: { start: () => {}, stop: async () => {} },
     openUrl: async () => {},
+    ...gitOff(),
   });
   const store: Store = createStore(
     initialState({ root, cols: 80, rows: 24, color: "color" }),

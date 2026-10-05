@@ -113,3 +113,17 @@ test("the explorer docks left unless configured right", () => {
   expect(e?.line).toBe(2);
   expect(e?.message).toStartWith("explorer.position: ");
 });
+
+test("git.tool takes a non-empty list of strings and defaults to lazygit", () => {
+  const r = parseConfig('[git]\ntool = ["gitui"]\n');
+  if (!r.ok) throw new Error(JSON.stringify(r.errors));
+  expect(r.config.git.tool).toEqual(["gitui"]);
+  expect(errors("[git]\ntool = []\n")).toHaveLength(1);
+  expect(errors("[git]\ntool = [1]\n")).toHaveLength(1);
+  expect(errors('[git]\ntool = [""]\n')).toHaveLength(1);
+  expect(errors('[git]\ncommand = "lazygit"\n')).toHaveLength(1);
+  const empty = parseConfig("");
+  if (!empty.ok) throw new Error("expected a parsed config");
+  expect(empty.config.git.tool).toEqual(["lazygit"]);
+  expect(defaults.git.tool).toEqual(["lazygit"]);
+});

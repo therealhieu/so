@@ -126,7 +126,9 @@ const { BOLD, DIM, ITALIC, UNDERLINE, INVERSE, STRIKETHROUGH } = TextAttributes;
  * colour is the terminal default, so each state keeps a non-colour mark
  * (reverse, bold, underline, dim) or a glyph.
  */
-const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
+export const TOKENS: Readonly<
+  Record<string, [string, string, number, number]>
+> = {
   text: ["fg", "bg", 0, 0],
   dim: ["fg-dim", "bg", 0, DIM],
   gutter: ["fg-dim", "bg", 0, DIM],
@@ -249,6 +251,24 @@ const TOKENS: Readonly<Record<string, [string, string, number, number]>> = {
   baseLane1: ["warn", "bg", BOLD, BOLD],
   baseLane2: ["ok", "bg", BOLD, BOLD],
   baseLane3: ["fg-dim", "bg", BOLD, BOLD],
+  // Git: each sign kind and marker has its own glyph, so colour only adds emphasis.
+  gitAdd: ["ok", "bg", 0, 0],
+  gitChange: ["fn", "bg", 0, 0],
+  gitDelete: ["error", "bg", 0, 0],
+  gitTopDelete: ["error", "bg", 0, 0],
+  gitChangeDelete: ["fn", "bg", 0, 0],
+  gitUntracked: ["fg-muted", "bg", 0, 0],
+  statusGitRef: ["mode-visual", "bg-dark", 0, 0],
+  statusGitOp: ["warn", "bg-dark", BOLD, BOLD | UNDERLINE],
+  statusGitAdd: ["ok", "bg-dark", 0, 0],
+  statusGitChange: ["fn", "bg-dark", 0, 0],
+  statusGitDelete: ["error", "bg-dark", 0, 0],
+  explorerGitModified: ["fn", "bg-dark", 0, 0],
+  explorerGitStaged: ["ok", "bg-dark", 0, 0],
+  explorerGitUntracked: ["fg-muted", "bg-dark", 0, 0],
+  explorerGitConflict: ["error", "bg-dark", BOLD, BOLD | UNDERLINE],
+  explorerGitContains: ["fg-dim", "bg-dark", 0, DIM],
+  messageWarn: ["warn", "bg", 0, 0],
 };
 
 function colorTheme(name: "dark" | "light", p: Palette): Theme {

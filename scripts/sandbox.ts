@@ -128,13 +128,14 @@ async function main(): Promise<number> {
   if (args.reset) rmSync(paths.dir, { recursive: true, force: true });
   await ensureStaged(profile, paths);
 
+  const workspace = join(paths.vault, profile.open ?? "");
   const rel = (p: string) => relative(root, p);
   console.error(
-    `sandbox: ${profile.name} → ${rel(paths.vault)} · config ${rel(paths.config)}\n` +
+    `sandbox: ${profile.name} → ${rel(workspace)} · config ${rel(paths.config)}\n` +
       `  --journeys for the checks, --reset to restage`,
   );
   const proc = Bun.spawn(
-    [process.execPath, "src/app/main.ts", paths.vault, ...args.passthrough],
+    [process.execPath, "src/app/main.ts", workspace, ...args.passthrough],
     {
       cwd: root,
       stdio: ["inherit", "inherit", "inherit"],

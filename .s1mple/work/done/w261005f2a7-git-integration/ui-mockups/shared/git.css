@@ -1,0 +1,49 @@
+/* so mockups — Git tokens and marks (W261005F2A7 shared R3).
+ * Tokens mirror the proposed git* StyleTokens (W261005F2A7-DES10). NO_COLOR keeps every kind distinct by glyph;
+ * weight and underline only add emphasis, they never carry the meaning alone. */
+
+.theme-dark {
+  --git-add: #9ece6a; --git-change: #7aa2f7; --git-delete: #f7768e; --git-untracked: #737aa2;
+  --git-conflict: #f7768e; --git-staged: #9ece6a; --git-branch: #bb9af7; --git-op: #e0af68;
+}
+.theme-light {
+  --git-add: #587539; --git-change: #2e7de9; --git-delete: #c64343; --git-untracked: #6172b0;
+  --git-conflict: #c64343; --git-staged: #587539; --git-branch: #7847bd; --git-op: #8c6c3e;
+}
+.theme-nocolor {
+  --git-add: #d8d8d8; --git-change: #d8d8d8; --git-delete: #d8d8d8; --git-untracked: #d8d8d8;
+  --git-conflict: #d8d8d8; --git-staged: #d8d8d8; --git-branch: #d8d8d8; --git-op: #d8d8d8;
+}
+
+/* git column (one cell, before the line number) */
+.gs-add { color: var(--git-add); }
+.gs-change { color: var(--git-change); }
+.gs-delete, .gs-topdelete { color: var(--git-delete); }
+.gs-changedelete { color: var(--git-change); }
+.gs-untracked { color: var(--git-untracked); }
+
+/* explorer markers */
+.gm-modified { color: var(--git-change); }
+.gm-staged { color: var(--git-staged); }
+.gm-untracked { color: var(--git-untracked); }
+.gm-conflict { color: var(--git-conflict); font-weight: bold; }
+.gm-contains { color: var(--fg-dim); }
+
+/* statusline git segment */
+.gseg .gref { color: var(--git-branch); }
+.gseg .gop { color: var(--git-op); font-weight: bold; }
+.gseg .gca { color: var(--git-add); }
+.gseg .gcc { color: var(--git-change); }
+.gseg .gcr { color: var(--git-delete); }
+
+/* hunk preview float */
+.hk-del { background: var(--del-bg); color: var(--del-fg); }
+.hk-add { background: var(--add-bg); color: var(--add-fg); }
+.hk-head { color: var(--fg-muted); }
+
+/* lazygit stand-in screen */
+.lg-box { color: var(--fg); }
+.lg-title { color: var(--git-branch); font-weight: bold; }
+.lg-active { color: var(--ok); }
+
+.theme-nocolor .gm-conflict, .theme-nocolor .gseg .gop { text-decoration: underline; }

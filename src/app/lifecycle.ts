@@ -17,19 +17,22 @@ const PREVIEW_STOP_BOUND_MS = 250;
  * (bounded by `PREVIEW_STOP_BOUND_MS`), then restore the terminal once, then
  * name any file left unsaved on stderr. `exitNow` is the `exit`
  * effect after `:q`, which has already saved or was told to discard; it
- * still saves the session.
+ * still saves the session. `holdInterrupts` makes SIGINT do nothing until
+ * the returned release runs, while another program owns the terminal; holds
+ * nest, a second release does nothing, and SIGTERM and SIGHUP still shut down.
  */
 export function installLifecycle(d: {
   store: Store;
-  shell: Shell;
-  runner: EffectRunner;
+  shell: Pick<Shell, "destroy">;
+  runner: Pick<EffectRunner, "flush">;
   exit?: (code: number) => void;
   /** Saves the session synchronously; a failure must not stop the shutdown. */
   saveSession?: (s: AppState) => void;
   /** Tells connected preview pages the preview stopped, then closes the server. */
   stopPreview?: () => Promise<void>;
-}): { exitNow(code: number): void } {
+}): { exitNow(code: number): void; holdInterrupts(): () => void } {
   let done = false;
+  let held = 0;
   const shutdown = async (code: number, flush: boolean, error?: unknown) => {
     if (done) return;
     done = true;
@@ -64,8 +67,22 @@ export function installLifecycle(d: {
     (d.exit ?? process.exit)(code);
   };
   for (const signal of ["SIGTERM", "SIGHUP", "SIGINT"] as const)
-    process.on(signal, () => void shutdown(0, true));
+    process.on(signal, () => {
+      if (signal === "SIGINT" && held > 0) return;
+      void shutdown(0, true);
+    });
   process.on("uncaughtException", (e) => void shutdown(1, true, e));
   process.on("unhandledRejection", (e) => void shutdown(1, true, e));
-  return { exitNow: (code) => void shutdown(code, false) };
+  return {
+    exitNow: (code) => void shutdown(code, false),
+    holdInterrupts() {
+      held++;
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true;
+        held--;
+      };
+    },
+  };
 }

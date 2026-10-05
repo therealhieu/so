@@ -95,6 +95,12 @@ export const ConfigSchema = z.strictObject({
       folder: workspacePath({ root: "deny" }).default("templates"),
     })
     .prefault({}),
+  git: z
+    .strictObject({
+      /** The program and arguments `<leader>gg` runs full screen at the repository top. */
+      tool: z.array(z.string().min(1)).min(1).default(["lazygit"]),
+    })
+    .prefault({}),
   keys: KeyBindingsSchema.default({}),
   filetypes: z
     .record(

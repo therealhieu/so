@@ -1,6 +1,7 @@
 import { defaults } from "../config/schema";
 import { emptyIndex } from "../features/links/note-index";
 import { Registers } from "../kernel/editor/registers";
+import { initialGit } from "./git";
 import type { AppState, TerminalState } from "./types";
 
 /** Startup state: one empty window and the explorer focused on the root. */
@@ -52,5 +53,6 @@ export function initialState(boot: {
     jumps: { entries: [], at: 0 },
     recent: [],
     preview: { status: "off" },
+    git: initialGit,
   };
 }

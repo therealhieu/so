@@ -45,3 +45,6 @@ pnpm-debug.log*
 
 # Sandbox
 .sandbox/
+
+# Git worktrees
+.worktrees/

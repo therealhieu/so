@@ -36,6 +36,11 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { EmbedModelRegistry } from "../core/state/embed-models";
+import {
+  gitBindings,
+  gitCommands,
+  gitGroups,
+} from "../core/state/git-commands";
 import { initialState } from "../core/state/init";
 import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
@@ -68,6 +73,8 @@ import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
 import { paintRule } from "../ui/widgets/rule";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
+import { createGit } from "../workspace/git";
+import { watchGitDirs } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createImageLoader } from "../workspace/images";
 import { createLogger, type Logger } from "../workspace/log";
@@ -88,6 +95,7 @@ import {
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 import { createPreviewHost } from "./preview-host";
+import { createToolHost } from "./tool-host";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -141,6 +149,7 @@ function registries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   const embedModels = new EmbedModelRegistry();
@@ -158,8 +167,9 @@ function registries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...gitBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...gitGroups },
     viewContexts,
     embedModels,
     layouts,
@@ -302,8 +312,10 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
-  // Trash, clipboard, and exit are bound once detected or constructed; the
-  // runner reads them at call time.
+  // Constructing the adapter runs no git; discovery waits for the first frame.
+  const git = createGit({ which: (c) => Bun.which(c), logger });
+  // Trash, clipboard, exit, and the git tool are bound once detected or
+  // constructed; the runner reads them at call time.
   const deps: RunnerDeps = {
     root: ws.root,
     matcher,
@@ -322,6 +334,11 @@ async function main(argv: string[]): Promise<void> {
     index: indexHost,
     preview: previewHost,
     openUrl: (url) => openUrl(url, process.platform),
+    git,
+    watchGit: (dirs, onChange) => watchGitDirs(dirs, onChange, logger),
+    tool: {
+      run: async () => ({ kind: "failed", reason: "git tool not ready" }),
+    },
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -354,6 +371,12 @@ async function main(argv: string[]): Promise<void> {
     stopPreview: previewHost.stop,
   });
   deps.exit = lifecycle.exitNow;
+  deps.tool = createToolHost({
+    screen: shell,
+    holdInterrupts: lifecycle.holdInterrupts,
+    which: (c) => Bun.which(c),
+    logger,
+  });
 
   runner.run({ kind: "listDir", dir: "" });
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });
@@ -387,6 +410,9 @@ async function main(argv: string[]): Promise<void> {
     ).then((clipboard) => {
       deps.clipboard = clipboard;
     });
+    void git
+      .detect(ws.root)
+      .then((r) => store.dispatch({ type: "gitDetected", ...r }));
   });
 }
 
