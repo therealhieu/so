@@ -1,3 +1,4 @@
+import { writeSync } from "node:fs";
 import {
   type CliRenderer,
   type CliRendererConfig,
@@ -16,6 +17,7 @@ import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
+import { HunkView } from "./overlays/hunk";
 import { LspFloatView } from "./overlays/lsp-float";
 import { ToastStack } from "./overlays/notify";
 import { PickerView } from "./overlays/picker";
@@ -45,6 +47,16 @@ export const RENDERER_OPTIONS = {
   useKittyKeyboard: {},
 } as const satisfies CliRendererConfig;
 
+/**
+ * Turns off every mode another program may have left on: all mouse
+ * tracking and encodings, focus reporting, bracketed paste, up to 99 kitty
+ * keyboard flag entries, modifyOtherKeys, and text attributes; then shows the
+ * cursor. Written after that program exits and before the renderer resumes,
+ * which turns so's own modes back on.
+ */
+export const FOREIGN_MODES_RESET =
+  "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1004l\x1b[?2004l\x1b[<99u\x1b[>4;0m\x1b[0m\x1b[?25h";
+
 export const createRenderer = (): Promise<CliRenderer> =>
   createCliRenderer({ ...RENDERER_OPTIONS, exitSignals: [] });
 
@@ -65,6 +77,12 @@ export type ShellDeps = {
   rasterizeSvg: (r: SvgRaster) => Promise<RgbaImage>;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
+  /**
+   * Bytes for the terminal outside the renderer; otherwise written to
+   * standard output synchronously, so they land before the renderer's next
+   * native write.
+   */
+  write?: (bytes: string) => void;
 };
 
 /** What the terminal can draw images with. */
@@ -88,7 +106,15 @@ export type Shell = {
   attach(store: Store): void;
   /** OSC 52 copy for the clipboard provider chain. */
   copyOsc52(text: string): void;
-  /** Restore the terminal; later calls do nothing. */
+  /** Paint the latest state and resolve once that frame is written. */
+  flush(): Promise<void>;
+  /** Give the terminal away: nothing is painted until `resume`. */
+  suspend(): void;
+  /** Take the terminal back and paint the latest state, images included. */
+  resume(): void;
+  /** Write `FOREIGN_MODES_RESET`. */
+  resetForeignModes(): void;
+  /** Restore the terminal; later calls do nothing. Safe while suspended. */
   destroy(): void;
 };
 
@@ -109,6 +135,9 @@ export type View = Renderable & {
 
 export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
   let destroyed = false;
+  // While another program owns the terminal, no paint may run: a paint
+  // would turn mouse tracking back on under it.
+  let suspended = false;
   // A finished image load lays the views out again, so its rows are reserved.
   let repaint = () => renderer.requestRender();
   const images = new ImageCache({
@@ -150,6 +179,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           new CompletionView(renderer, () => windows.cursor()),
           new CalendarOverlay(renderer),
           new ZoomOverlay(renderer, ctx),
+          new HunkView(renderer, () => windows.anchor()),
         ],
         new LspFloatView(renderer, () => windows.cursor()),
       );
@@ -192,6 +222,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       );
       renderer.root.add(layer);
       const paint = (s: AppState) => {
+        if (suspended) return;
         const lc = layoutClass(s.terminal.cols);
         for (const v of views) v.update(s, lc);
         if (renderer.useMouse !== s.config.mouse)
@@ -222,6 +253,24 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     },
     copyOsc52(text) {
       renderer.copyToClipboardOSC52(text);
+    },
+    async flush() {
+      repaint();
+      await renderer.idle();
+    },
+    suspend() {
+      suspended = true;
+      renderer.suspend();
+    },
+    resume() {
+      // The renderer repaints every cell on its next frame, so each image
+      // still on screen is drawn again; the terminal dropped it on suspend.
+      renderer.resume();
+      suspended = false;
+      repaint();
+    },
+    resetForeignModes() {
+      (deps.write ?? ((b) => writeSync(1, b)))(FOREIGN_MODES_RESET);
     },
     destroy() {
       if (destroyed) return;

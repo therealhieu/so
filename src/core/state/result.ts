@@ -1,5 +1,8 @@
 import type { AppState, Result, Toast } from "./types";
 
+/** How serious a message-line notice is; `warn` sits between the two. */
+export type MessageLevel = "info" | "warn" | "error";
+
 export const none = (state: AppState): Result => ({ state, effects: [] });
 
 /** Run `f` on the result's state and append its effects. */
@@ -12,7 +15,7 @@ export function chain(r: Result, f: (s: AppState) => Result): Result {
 export function message(
   s: AppState,
   text: string,
-  level: "info" | "error" = "info",
+  level: MessageLevel = "info",
 ): Result {
   return none({
     ...s,

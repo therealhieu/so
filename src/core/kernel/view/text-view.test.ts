@@ -274,3 +274,65 @@ test("search and selection marks cover visible lines only", () => {
   ]);
   expect(selectionMarks(undefined)(v, undefined)).toEqual([]);
 });
+
+test("a block-replaced row carries the last change sign in its range", () => {
+  const widget = { type: "table", data: null, rows: 4 };
+  const reveal = { text: "▕", style: "revealSign" };
+  const add = { text: "+", style: "gitAdd" };
+  const change = { text: "~", style: "gitChange" };
+  const rows = layoutText(
+    view(["a", "b", "c", "| t |", "| - |", "| r |", "| s |", "d"]),
+    [
+      fixed({
+        kind: "replace",
+        range: { start: { line: 3, col: 0 }, end: { line: 6, col: 5 } },
+        block: true,
+        widget,
+      }),
+      fixed(
+        { kind: "line", line: 4, changeSign: add },
+        { kind: "line", line: 5, changeSign: change, sign: reveal },
+      ),
+    ],
+    undefined,
+  );
+  expect(rows[3]).toEqual({
+    sourceLine: 3,
+    spans: [],
+    widget,
+    changeSign: change,
+  });
+  expect(rows[0]).toEqual({
+    sourceLine: 0,
+    spans: [{ text: "a", style: "text", col: 0 }],
+  });
+  expect(rows[4]).toEqual({
+    sourceLine: 7,
+    spans: [{ text: "d", style: "text", col: 0 }],
+  });
+});
+
+test("sign and change sign merge independently, the later provider winning per channel", () => {
+  const reveal = { text: "▕", style: "revealSign" };
+  const change = { text: "~", style: "gitChange" };
+  const add = { text: "+", style: "gitAdd" };
+  const rows = layoutText(
+    view(["one", "two"]),
+    [
+      fixed({ kind: "line", line: 0, sign: reveal }),
+      fixed({ kind: "line", line: 0, changeSign: change }),
+      fixed({ kind: "line", line: 0, changeSign: add }),
+    ],
+    undefined,
+  );
+  expect(rows).toEqual([
+    {
+      sourceLine: 0,
+      spans: [{ text: "one", style: "text", col: 0 }],
+      sign: reveal,
+      changeSign: add,
+    },
+    { sourceLine: 1, spans: [{ text: "two", style: "text", col: 0 }] },
+  ]);
+  expect(Object.keys(rows[1] ?? {})).toEqual(["sourceLine", "spans"]);
+});

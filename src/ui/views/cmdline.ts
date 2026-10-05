@@ -5,6 +5,7 @@ import {
 } from "@opentui/core";
 import { cmdlineCompletions } from "../../core/state/keys";
 import { cursorDiagnostic } from "../../core/state/lsp";
+import type { MessageLevel } from "../../core/state/result";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
@@ -19,6 +20,13 @@ const SEVERITY: Readonly<Record<1 | 2 | 3 | 4, [string, string]>> = {
   4: ["H", "diagnosticHint"],
 };
 const cells = (text: string) => [...text].length;
+
+/** The message line's token for each message level. */
+const MESSAGE_TOKEN: Readonly<Record<MessageLevel, string>> = {
+  info: "message",
+  warn: "messageWarn",
+  error: "messageError",
+};
 
 /**
  * The last row: the `:`, `/`, or `?` line while typing (scrolled so the
@@ -115,7 +123,7 @@ export class CommandLine extends Renderable {
       else
         drawCells(
           buf,
-          theme.style(m?.level === "error" ? "messageError" : "message"),
+          theme.style(MESSAGE_TOKEN[m?.level ?? "info"]),
           0,
           y,
           m?.text ?? "",

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so Git integration · Mockups</title>
+<link rel="stylesheet" href="shared/terminal.css">
+<style>
+  body.hub { background: var(--page-bg); color: var(--page-fg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--page-dim); margin: 32px 0 10px; }
+  .mid { font: 12px var(--font); color: var(--page-dim); }
+  p.lead { color: var(--page-fg); max-width: 820px; }
+  .how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .how div { background: var(--page-card); border: 1px solid var(--page-border); border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+  .how b { display: block; color: var(--page-accent); margin-bottom: 4px; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--page-card); border: 1px solid var(--page-border); border-radius: 10px; padding: 16px 18px; transition: border-color .15s; }
+  a.card:hover, a.card:focus { border-color: var(--page-accent); outline: none; }
+  a.card h3 { margin: 0 0 2px; font-size: 16px; color: var(--page-fg); }
+  a.card .mid { margin-bottom: 8px; }
+  a.card p { margin: 0 0 10px; color: var(--page-dim); font-size: 13px; }
+  a.card ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
+  a.card .refs { margin-top: 10px; font: 11.5px var(--font); color: var(--page-dim); }
+  table.km { border-collapse: collapse; font-size: 13px; width: 100%; }
+  table.km td, table.km th { border-bottom: 1px solid var(--page-border); padding: 5px 10px 5px 0; text-align: left; vertical-align: top; }
+  table.km th { color: var(--page-dim); font-weight: 600; font-size: 12px; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 820px) { .cols2 { grid-template-columns: 1fr; } }
+  .open li { margin-bottom: 6px; }
+</style>
+</head>
+<body class="hub">
+<div class="wrap">
+  <div class="mid">W261005F2A7 · Git integration · UI mockups · shared R3 · status: In Review (cycle 2)</div>
+  <h1>so — Git awareness and lazygit hand-off</h1>
+  <p class="lead">Three interactive mockups cover every surface this work touches: the editor gutter and statusline, the explorer, and the hunk preview float, which-key groups, message-line notices, and the full-screen lazygit hand-off. Everything else is the accepted v1 UI, unchanged.</p>
+
+  <h2>How to review</h2>
+  <div class="how">
+    <div><b>Click a state</b>Each state in the left list jumps to that screen, with a caption and what it traces to.</div>
+    <div><b>Then use the keyboard</b>Click the terminal: <kbd>]</kbd><kbd>h</kbd> / <kbd>[</kbd><kbd>h</kbd> move between hunks; <kbd>Space</kbd> <kbd>g</kbd> opens the +git group.</div>
+    <div><b>Check NO_COLOR</b>Each sign kind has its own glyph (<code>+ ~ _ ‾ ≃ ┆</code>) and each explorer state its own marker, so switch the theme to NO_COLOR and every kind should stay distinct.</div>
+    <div><b>Offline</b>No network requests. The sample notes folder is the v1 one, with Git changes added.</div>
+  </div>
+
+  <h2>Mockups</h2>
+  <div class="grid">
+    <a class="card" href="m1-editor-git.html"><h3>M1 · Editor: signs, hunks, statusline</h3><div class="mid">W261005F2A7-M1 · R3 · Draft</div>
+      <p>Six sign kinds in a Git column left of the line numbers, ]h / [h, stage and reset, the ⎇ statusline segment (branch, detached, rebasing, merging, unborn), narrow drop, and the no-repository baseline.</p>
+      <div class="refs">REQ1@R2 · REQ4@R2 · REQ5@R2 · REQ7@R2 · REQ9@R1 · DES10 · DES11</div></a>
+    <a class="card" href="m2-explorer-git.html"><h3>M2 · Explorer: Git markers</h3><div class="mid">W261005F2A7-M2 · R3 · Draft</div>
+      <p>M S ? U markers right after the name and • on folders, per-file untracked in a new folder, and a deleted tracked file shown only by its folder's •.</p>
+      <div class="refs">REQ4@R2 · DES10</div></a>
+    <a class="card" href="m3-git-floats-notices.html"><h3>M3 · Hunk preview, notices, lazygit</h3><div class="mid">W261005F2A7-M3 · R3 · Draft</div>
+      <p>Hunk preview float (change, delete, long, narrow), which-key +git / +hunk, blame, every Git notice, and the save → lazygit → resume hand-off.</p>
+      <div class="refs">REQ1@R2 · REQ2@R2 · REQ3@R1 · REQ4@R2 · REQ7@R2 · REQ8@R1 · DES9 · DES11</div></a>
+  </div>
+
+  <h2>Glyphs at a glance</h2>
+  <table class="km">
+    <tr><th>Surface</th><th>State</th><th>Glyph</th></tr>
+    <tr><td>Gutter</td><td>added · changed · deleted below · deleted at top · changed + deleted · untracked</td><td><code>+ ~ _ ‾ ≃ ┆</code>, in a column left of the line number</td></tr>
+    <tr><td>Explorer</td><td>modified · staged · untracked · conflict · folder contains changes (a deleted file marks only its folders)</td><td><code>M S ? U •</code></td></tr>
+    <tr><td>Statusline</td><td>ref, operation, counts for the active file</td><td><code>⎇ main +2 ~2 -3</code>, <code>⎇ a1b2c3d rebasing</code></td></tr>
+  </table>
+</div>
+</body>
+</html>

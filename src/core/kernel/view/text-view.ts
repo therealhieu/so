@@ -14,7 +14,8 @@ const PLAIN: StyleToken = "text";
  * Lay out the visible lines with every provider's decorations. Later
  * providers win where marks overlap. A block widget goes above its line when
  * it sits at column 0 and below it otherwise. A block `replace` hides every
- * visible line it covers and shows its row once, at its first visible line.
+ * visible line it covers and shows its row once, at its first visible line,
+ * with the last change sign of the lines it covers.
  */
 export function layoutText(
   v: TextView,
@@ -43,10 +44,15 @@ export function layoutText(
         d.range.end.line >= line,
     );
     if (block?.kind === "replace") {
+      const changeSign = lastChangeSignIn(decos, line, block.range.end.line);
       if (block.spans !== undefined || block.widget !== undefined)
         emit(
           withWidget(
-            { sourceLine: line, spans: block.spans ?? [] },
+            {
+              sourceLine: line,
+              spans: block.spans ?? [],
+              ...(changeSign && { changeSign }),
+            },
             block.widget,
           ),
         );
@@ -65,6 +71,24 @@ export function layoutText(
       if (w.at.col > 0) emit({ sourceLine: line, spans: [], widget: w.widget });
   }
   return out;
+}
+
+/** The last change sign among line decorations on lines `from`..`to`. */
+function lastChangeSignIn(
+  decos: readonly Decoration[],
+  from: number,
+  to: number,
+): Sign | undefined {
+  let changeSign: Sign | undefined;
+  for (const d of decos)
+    if (
+      d.kind === "line" &&
+      d.line >= from &&
+      d.line <= to &&
+      d.changeSign !== undefined
+    )
+      changeSign = d.changeSign;
+  return changeSign;
 }
 
 const withWidget = (row: RenderLine, widget: Widget | undefined): RenderLine =>
@@ -93,11 +117,13 @@ function layoutLine(
   const text = v.buf.line(line);
   let base = PLAIN;
   let sign: Sign | undefined;
+  let changeSign: Sign | undefined;
   let widget: Widget | undefined;
   for (const d of decos)
     if (d.kind === "line" && d.line === line) {
       if (d.style !== undefined) base = d.style;
       if (d.sign !== undefined) sign = d.sign;
+      if (d.changeSign !== undefined) changeSign = d.changeSign;
     } else if (d.kind === "widget" && !d.block && d.at.line === line)
       widget = d.widget;
   const styles: StyleToken[] = Array.from({ length: text.length }, () => base);
@@ -120,7 +146,8 @@ function layoutLine(
   }
   const spans = spansOf(text, styles, hidden, inserts);
   const row: RenderLine = withWidget({ sourceLine: line, spans }, widget);
-  return sign === undefined ? row : { ...row, sign };
+  const signed = sign === undefined ? row : { ...row, sign };
+  return changeSign === undefined ? signed : { ...signed, changeSign };
 }
 
 function spansOf(

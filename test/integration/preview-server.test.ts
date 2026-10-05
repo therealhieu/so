@@ -13,7 +13,7 @@ import {
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { openUrl } from "../../src/workspace/system";
 import { createOwnOps } from "../../src/workspace/watcher";
-import { type App, startApp, tmpWorkspace } from "./helpers";
+import { type App, gitOff, startApp, tmpWorkspace } from "./helpers";
 
 const FILES = {
   "notes/plan.md": "# Plan\n\nFirst line.\n",
@@ -311,6 +311,7 @@ test("a failed browser launch is reported with its address and logged", async ()
     configPath: join(root, "none.toml"),
     preview: { start: () => {}, stop: async () => {} },
     openUrl: () => Promise.reject(new Error("xdg-open failed")),
+    ...gitOff(),
   });
   const url = "http://127.0.0.1:8731/notes/plan.md";
   runner.run({ kind: "openUrl", url });

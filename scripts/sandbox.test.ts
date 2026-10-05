@@ -123,17 +123,77 @@ test("broken-config writes its config file", async () => {
   );
 });
 
-test("git stages a repository with modified, staged, and untracked files", async () => {
+/** Git's output in `cwd`, ignoring the user's and the system's configuration. */
+function gitOut(cwd: string, args: string[]): string[] {
+  const env = {
+    ...process.env,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+  };
+  const out = Bun.spawnSync(["git", ...args], { cwd, env }).stdout.toString();
+  return out.split("\n").filter(Boolean);
+}
+
+const status = (cwd: string) => gitOut(cwd, ["status", "--porcelain"]).sort();
+
+test("every profile's open folder exists after staging", async () => {
+  for (const p of PROFILES.filter((x) => x.open !== undefined)) {
+    const { vault } = await staged(p.name);
+    expect(existsSync(join(vault, p.open as string))).toBe(true);
+  }
+});
+
+test("git stages every hunk kind, staged, untracked, and deleted files", async () => {
   const { vault } = await staged("git");
-  const run = (args: string[]) =>
-    Bun.spawnSync(["git", ...args], { cwd: vault }).stdout.toString();
-  expect(
-    run(["status", "--porcelain"]).split("\n").filter(Boolean).sort(),
-  ).toEqual([" M tour.md", "?? scratch.md", "M  notes/ideas.md"]);
-  expect(run(["log", "--format=%s"]).trim().split("\n")).toEqual([
+  expect(status(vault)).toEqual([
+    " D notes/todo.md",
+    " M tour.md",
+    "?? drafts/",
+    "?? scratch.md",
+    "M  notes/ideas.md",
+  ]);
+  expect(gitOut(vault, ["log", "--format=%s"])).toEqual([
     "Plan phases",
     "Import notes",
   ]);
+  const hunks = gitOut(vault, ["diff", "--unified=0", "tour.md"]).filter((l) =>
+    l.startsWith("@@"),
+  );
+  expect(hunks).toHaveLength(4);
+});
+
+test("git-conflict stops in a merge with one conflicted note", async () => {
+  const { vault } = await staged("git-conflict");
+  expect(status(vault)).toEqual(["M  tour.md", "UU notes/ideas.md"]);
+  expect(existsSync(join(vault, ".git/MERGE_HEAD"))).toBe(true);
+});
+
+test("git-unborn has no commit and notes/ staged", async () => {
+  const { vault } = await staged("git-unborn");
+  expect(gitOut(vault, ["rev-parse", "--verify", "--quiet", "HEAD"])).toEqual(
+    [],
+  );
+  expect(status(vault)).toContain("A  notes/ideas.md");
+  expect(status(vault)).toContain("?? tour.md");
+});
+
+test("git-subfolder changes files inside and outside the workspace", async () => {
+  const { vault } = await staged("git-subfolder");
+  expect(status(vault)).toEqual([" M notes/tour.md", " M site/index.html"]);
+});
+
+test("git-worktree opens a linked worktree on branch feature", async () => {
+  const { vault } = await staged("git-worktree");
+  const feature = join(vault, "feature");
+  expect(gitOut(feature, ["branch", "--show-current"])).toEqual(["feature"]);
+  expect(status(feature)).toEqual([" M tour.md"]);
+});
+
+test("git-eol keeps CRLF clean and changes only the BOM", async () => {
+  const { vault } = await staged("git-eol");
+  expect(status(vault)).toEqual([" M bom.md"]);
+  for (const name of ["crlf.md", "autocrlf.md"])
+    expect(await Bun.file(join(vault, name)).text()).toContain("\r\n");
 });
 
 test("bases and large stage their vaults", async () => {

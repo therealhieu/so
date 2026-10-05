@@ -7,6 +7,7 @@ import { markdownFileType } from "../lang/markdown/file-type";
 import { RenderCache } from "../lang/markdown/render-cache";
 import { baseWindow } from "./base-model";
 import { activeBuffer, activeWindow } from "./buffers";
+import { gitSegment } from "./git";
 import { jumpSegment } from "./jumps";
 import type { AppState, BufferState } from "./types";
 
@@ -32,6 +33,17 @@ export type StatusSegments = {
   preview: string;
   /** Language servers attached to the active buffer that are starting, ready, or failed. */
   lsp?: { text: string; state: "starting" | "ready" | "failed" }[];
+  /**
+   * Inside a repository: the branch, unborn branch, or short sha, the
+   * operation in progress, and the active file's line counts.
+   */
+  git?: {
+    ref: string;
+    op?: "rebasing" | "merging";
+    added: number;
+    changed: number;
+    removed: number;
+  };
 };
 
 function previewSegment(s: AppState): string {
@@ -106,6 +118,8 @@ export function statusSegments(s: AppState): StatusSegments {
     if (b.save.kind === "failed")
       seg.saveError = { reason: b.save.reason, retryAt: b.save.retryAt };
     if (b.disk === "deleted") seg.deletedOnDisk = true;
+    const git = gitSegment(s, b);
+    if (git !== undefined) seg.git = git;
   }
   if (index !== "idle") seg.index = index;
   if (index === "indexing")

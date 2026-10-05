@@ -7,6 +7,7 @@ import type { WindowTree as Tree } from "../../core/kernel/editor/windows";
 import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import { editorViews, type WindowView } from "../editors/registry";
 import type { Rect } from "../editors/text-view";
+import type { HunkAnchor } from "../overlays/hunk";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { EXPLORER_WIDTH, explorerDocked, explorerSide } from "./explorer";
@@ -113,6 +114,17 @@ export class WindowTree extends Renderable {
     return s === undefined
       ? undefined
       : this.views.get(s.windows.active)?.cursor();
+  }
+
+  /** The active window's text area and cursor row, while its cursor shows. */
+  anchor(): HunkAnchor | undefined {
+    const s = this.s;
+    const view = s && this.views.get(s.windows.active);
+    const text = view?.textArea?.();
+    const c = view?.cursor();
+    return text === undefined || c === undefined
+      ? undefined
+      : { text, cursorY: c.y };
   }
 
   /** The target from the window whose rect holds the cell; separators have none. */

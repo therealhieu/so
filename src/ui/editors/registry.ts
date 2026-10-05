@@ -13,6 +13,8 @@ import type { Rect } from "./text-view";
 export type WindowView = Renderable & {
   show(s: AppState, id: WindowId, r: Rect, split: boolean): void;
   cursor(): Cursor | undefined;
+  /** Where the view paints text, for floats anchored to it. */
+  textArea?(): Rect;
   targetAt(x: number, y: number): MouseTarget | undefined;
   dragAt?(x: number, y: number): MouseTarget | undefined;
 };

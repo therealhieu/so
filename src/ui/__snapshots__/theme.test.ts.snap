@@ -1,0 +1,1947 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`existing tokens keep their values 1`] = `
+{
+  "dark": {
+    "baseChip": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "255,158,100,255",
+    },
+    "baseEdit": {
+      "attrs": 8,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
+    },
+    "baseFocus": {
+      "attrs": 0,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "baseGroup": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "baseHeader": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "122,162,247,255",
+    },
+    "baseInfo": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "baseLane0": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "baseLane1": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "baseLane2": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "158,206,106,255",
+    },
+    "baseLane3": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "baseMarker": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "122,162,247,255",
+    },
+    "baseSuggest": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "115,122,162,255",
+    },
+    "baseTab": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "baseTabActive": {
+      "attrs": 1,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "baseTitle": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "baseWarn": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "bufferActive": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "bufferDirty": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "bufferline": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "115,122,162,255",
+    },
+    "calendarMark": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "255,158,100,255",
+    },
+    "codeAddition": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "158,206,106,255",
+    },
+    "codeAttribute": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "codeBuiltin": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "42,195,222,255",
+    },
+    "codeBullet": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "codeComment": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "codeDeletion": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "codeKeyword": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "187,154,247,255",
+    },
+    "codeLink": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "codeLiteral": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "255,158,100,255",
+    },
+    "codeMeta": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "codeNumber": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "255,158,100,255",
+    },
+    "codeParams": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "codeProperty": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "codeString": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "158,206,106,255",
+    },
+    "codeTag": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "187,154,247,255",
+    },
+    "codeTitle": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "122,162,247,255",
+    },
+    "codeType": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "42,195,222,255",
+    },
+    "codeVariable": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "cursorline": {
+      "attrs": 0,
+      "bg": "35,36,51,255",
+      "fg": "192,202,245,255",
+    },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "diagnosticHint": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "diagnosticTextError": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "diagnosticTextHint": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "diffAdd": {
+      "attrs": 0,
+      "bg": "32,48,59,255",
+      "fg": "158,206,106,255",
+    },
+    "diffDel": {
+      "attrs": 0,
+      "bg": "55,34,44,255",
+      "fg": "247,118,142,255",
+    },
+    "dim": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "explorer": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "192,202,245,255",
+    },
+    "explorerDim": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "86,95,137,255",
+    },
+    "explorerDir": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "122,162,247,255",
+    },
+    "explorerDirty": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "explorerError": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "247,118,142,255",
+    },
+    "explorerTitle": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "115,122,162,255",
+    },
+    "explorerWarn": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "float": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "192,202,245,255",
+    },
+    "floatActive": {
+      "attrs": 1,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "floatBorder": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "122,162,247,255",
+    },
+    "floatDim": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "86,95,137,255",
+    },
+    "floatError": {
+      "attrs": 1,
+      "bg": "31,35,53,255",
+      "fg": "247,118,142,255",
+    },
+    "floatGroup": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "122,162,247,255",
+    },
+    "floatKey": {
+      "attrs": 1,
+      "bg": "31,35,53,255",
+      "fg": "187,154,247,255",
+    },
+    "floatMatch": {
+      "attrs": 8,
+      "bg": "61,89,161,255",
+      "fg": "192,202,245,255",
+    },
+    "floatSel": {
+      "attrs": 0,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "floatTitle": {
+      "attrs": 1,
+      "bg": "31,35,53,255",
+      "fg": "122,162,247,255",
+    },
+    "floatWarn": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "224,175,104,255",
+    },
+    "gutter": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "gutterCursor": {
+      "attrs": 1,
+      "bg": "35,36,51,255",
+      "fg": "224,175,104,255",
+    },
+    "iconBase": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "26,188,156,255",
+    },
+    "iconCode": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "122,162,247,255",
+    },
+    "iconConfig": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "iconData": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "255,158,100,255",
+    },
+    "iconImage": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "187,154,247,255",
+    },
+    "iconNote": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "125,207,255,255",
+    },
+    "iconText": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "115,122,162,255",
+    },
+    "imagePlaceholder": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "inlayHint": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "linkUnresolved": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "lspReference": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
+    },
+    "mdBold": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "mdCalloutDanger": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "mdCalloutNote": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "122,162,247,255",
+    },
+    "mdCalloutTip": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "26,188,156,255",
+    },
+    "mdCalloutWarning": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "mdCode": {
+      "attrs": 0,
+      "bg": "32,34,47,255",
+      "fg": "158,206,106,255",
+    },
+    "mdFootnote": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "mdHeading1": {
+      "attrs": 1,
+      "bg": "35,40,74,255",
+      "fg": "122,162,247,255",
+    },
+    "mdHeading2": {
+      "attrs": 1,
+      "bg": "46,42,45,255",
+      "fg": "224,175,104,255",
+    },
+    "mdHeading3": {
+      "attrs": 1,
+      "bg": "37,48,42,255",
+      "fg": "158,206,106,255",
+    },
+    "mdHeading4": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "mdHighlight": {
+      "attrs": 0,
+      "bg": "74,63,26,255",
+      "fg": "255,217,138,255",
+    },
+    "mdItalic": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "mdLink": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "mdMarker": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
+    "mdProperty": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "mdQuote": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "mdRule": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "59,66,97,255",
+    },
+    "mdStrike": {
+      "attrs": 128,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "mdTag": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "255,158,100,255",
+    },
+    "message": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "messageError": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "modeCmd": {
+      "attrs": 1,
+      "bg": "224,175,104,255",
+      "fg": "21,22,30,255",
+    },
+    "modeInsert": {
+      "attrs": 1,
+      "bg": "158,206,106,255",
+      "fg": "21,22,30,255",
+    },
+    "modeNormal": {
+      "attrs": 1,
+      "bg": "122,162,247,255",
+      "fg": "21,22,30,255",
+    },
+    "modeVisual": {
+      "attrs": 1,
+      "bg": "187,154,247,255",
+      "fg": "21,22,30,255",
+    },
+    "panelHeading": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "122,162,247,255",
+    },
+    "panelHeadingAlt": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "panelHit": {
+      "attrs": 0,
+      "bg": "61,89,161,255",
+      "fg": "192,202,245,255",
+    },
+    "panelLink": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "125,207,255,255",
+    },
+    "panelMuted": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "115,122,162,255",
+    },
+    "searchMatch": {
+      "attrs": 0,
+      "bg": "61,89,161,255",
+      "fg": "192,202,245,255",
+    },
+    "selection": {
+      "attrs": 0,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "separator": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "59,66,97,255",
+    },
+    "signError": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "signReveal": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "statusDim": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "86,95,137,255",
+    },
+    "statusDirty": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
+    "statusError": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "247,118,142,255",
+    },
+    "statusline": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "192,202,245,255",
+    },
+    "text": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "192,202,245,255",
+    },
+    "toastError": {
+      "attrs": 1,
+      "bg": "31,35,53,255",
+      "fg": "247,118,142,255",
+    },
+    "toastInfo": {
+      "attrs": 0,
+      "bg": "31,35,53,255",
+      "fg": "158,206,106,255",
+    },
+    "treeField": {
+      "attrs": 8,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "treeSel": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
+    },
+    "treeSelFocus": {
+      "attrs": 0,
+      "bg": "45,63,118,255",
+      "fg": "192,202,245,255",
+    },
+    "winbar": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "86,95,137,255",
+    },
+    "winbarActive": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "192,202,245,255",
+    },
+  },
+  "light": {
+    "baseChip": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "177,92,0,255",
+    },
+    "baseEdit": {
+      "attrs": 8,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
+    },
+    "baseFocus": {
+      "attrs": 0,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "baseGroup": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "baseHeader": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "46,125,233,255",
+    },
+    "baseInfo": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "baseLane0": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "baseLane1": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "baseLane2": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "88,117,57,255",
+    },
+    "baseLane3": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "baseMarker": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "46,125,233,255",
+    },
+    "baseSuggest": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "97,114,176,255",
+    },
+    "baseTab": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "baseTabActive": {
+      "attrs": 1,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "baseTitle": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "baseWarn": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "bufferActive": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "bufferDirty": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "bufferline": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "97,114,176,255",
+    },
+    "calendarMark": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "177,92,0,255",
+    },
+    "codeAddition": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "45,90,26,255",
+    },
+    "codeAttribute": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "codeBuiltin": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "17,140,116,255",
+    },
+    "codeBullet": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "codeComment": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "132,140,181,255",
+    },
+    "codeDeletion": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "138,31,31,255",
+    },
+    "codeKeyword": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "120,71,189,255",
+    },
+    "codeLink": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "codeLiteral": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "177,92,0,255",
+    },
+    "codeMeta": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "codeNumber": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "177,92,0,255",
+    },
+    "codeParams": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "codeProperty": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "codeString": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "88,117,57,255",
+    },
+    "codeTag": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "120,71,189,255",
+    },
+    "codeTitle": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "46,125,233,255",
+    },
+    "codeType": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "17,140,116,255",
+    },
+    "codeVariable": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "cursorline": {
+      "attrs": 0,
+      "bg": "213,215,225,255",
+      "fg": "55,96,191,255",
+    },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "diagnosticHint": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "diagnosticTextError": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "diagnosticTextHint": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "diffAdd": {
+      "attrs": 0,
+      "bg": "207,227,197,255",
+      "fg": "45,90,26,255",
+    },
+    "diffDel": {
+      "attrs": 0,
+      "bg": "240,204,204,255",
+      "fg": "138,31,31,255",
+    },
+    "dim": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "explorer": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "55,96,191,255",
+    },
+    "explorerDim": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "137,144,179,255",
+    },
+    "explorerDir": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "46,125,233,255",
+    },
+    "explorerDirty": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "explorerError": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "198,67,67,255",
+    },
+    "explorerTitle": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "97,114,176,255",
+    },
+    "explorerWarn": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "float": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "55,96,191,255",
+    },
+    "floatActive": {
+      "attrs": 1,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "floatBorder": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "46,125,233,255",
+    },
+    "floatDim": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "137,144,179,255",
+    },
+    "floatError": {
+      "attrs": 1,
+      "bg": "214,216,226,255",
+      "fg": "198,67,67,255",
+    },
+    "floatGroup": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "46,125,233,255",
+    },
+    "floatKey": {
+      "attrs": 1,
+      "bg": "214,216,226,255",
+      "fg": "120,71,189,255",
+    },
+    "floatMatch": {
+      "attrs": 8,
+      "bg": "168,192,245,255",
+      "fg": "55,96,191,255",
+    },
+    "floatSel": {
+      "attrs": 0,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "floatTitle": {
+      "attrs": 1,
+      "bg": "214,216,226,255",
+      "fg": "46,125,233,255",
+    },
+    "floatWarn": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "140,108,62,255",
+    },
+    "gutter": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "gutterCursor": {
+      "attrs": 1,
+      "bg": "213,215,225,255",
+      "fg": "140,108,62,255",
+    },
+    "iconBase": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "17,140,116,255",
+    },
+    "iconCode": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "46,125,233,255",
+    },
+    "iconConfig": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "iconData": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "177,92,0,255",
+    },
+    "iconImage": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "120,71,189,255",
+    },
+    "iconNote": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "0,113,151,255",
+    },
+    "iconText": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "97,114,176,255",
+    },
+    "imagePlaceholder": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "inlayHint": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "linkUnresolved": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "lspReference": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
+    },
+    "mdBold": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "mdCalloutDanger": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "mdCalloutNote": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "46,125,233,255",
+    },
+    "mdCalloutTip": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "17,140,116,255",
+    },
+    "mdCalloutWarning": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "mdCode": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "88,117,57,255",
+    },
+    "mdFootnote": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "mdHeading1": {
+      "attrs": 1,
+      "bg": "205,214,242,255",
+      "fg": "46,125,233,255",
+    },
+    "mdHeading2": {
+      "attrs": 1,
+      "bg": "227,220,203,255",
+      "fg": "140,108,62,255",
+    },
+    "mdHeading3": {
+      "attrs": 1,
+      "bg": "211,223,203,255",
+      "fg": "88,117,57,255",
+    },
+    "mdHeading4": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "mdHighlight": {
+      "attrs": 0,
+      "bg": "243,227,168,255",
+      "fg": "92,74,0,255",
+    },
+    "mdItalic": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "mdLink": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "mdMarker": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
+    "mdProperty": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "mdQuote": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "mdRule": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "168,174,203,255",
+    },
+    "mdStrike": {
+      "attrs": 128,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "mdTag": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "177,92,0,255",
+    },
+    "message": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "messageError": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "modeCmd": {
+      "attrs": 1,
+      "bg": "140,108,62,255",
+      "fg": "233,233,237,255",
+    },
+    "modeInsert": {
+      "attrs": 1,
+      "bg": "88,117,57,255",
+      "fg": "233,233,237,255",
+    },
+    "modeNormal": {
+      "attrs": 1,
+      "bg": "46,125,233,255",
+      "fg": "233,233,237,255",
+    },
+    "modeVisual": {
+      "attrs": 1,
+      "bg": "120,71,189,255",
+      "fg": "233,233,237,255",
+    },
+    "panelHeading": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "46,125,233,255",
+    },
+    "panelHeadingAlt": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "panelHit": {
+      "attrs": 0,
+      "bg": "168,192,245,255",
+      "fg": "55,96,191,255",
+    },
+    "panelLink": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "0,113,151,255",
+    },
+    "panelMuted": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "97,114,176,255",
+    },
+    "searchMatch": {
+      "attrs": 0,
+      "bg": "168,192,245,255",
+      "fg": "55,96,191,255",
+    },
+    "selection": {
+      "attrs": 0,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "separator": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "168,174,203,255",
+    },
+    "signError": {
+      "attrs": 1,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "signReveal": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "statusDim": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "137,144,179,255",
+    },
+    "statusDirty": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
+    "statusError": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "198,67,67,255",
+    },
+    "statusline": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "55,96,191,255",
+    },
+    "text": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "55,96,191,255",
+    },
+    "toastError": {
+      "attrs": 1,
+      "bg": "214,216,226,255",
+      "fg": "198,67,67,255",
+    },
+    "toastInfo": {
+      "attrs": 0,
+      "bg": "214,216,226,255",
+      "fg": "88,117,57,255",
+    },
+    "treeField": {
+      "attrs": 8,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "treeSel": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
+    },
+    "treeSelFocus": {
+      "attrs": 0,
+      "bg": "183,197,240,255",
+      "fg": "55,96,191,255",
+    },
+    "winbar": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "137,144,179,255",
+    },
+    "winbarActive": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "55,96,191,255",
+    },
+  },
+  "nocolor": {
+    "baseChip": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseEdit": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseFocus": {
+      "attrs": 32,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseGroup": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseHeader": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseInfo": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseLane0": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseLane1": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseLane2": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseLane3": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseMarker": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseSuggest": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseTab": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseTabActive": {
+      "attrs": 33,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseTitle": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "baseWarn": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "bufferActive": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "bufferDirty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "bufferline": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "calendarMark": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeAddition": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeAttribute": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeBuiltin": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeBullet": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeComment": {
+      "attrs": 6,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeDeletion": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeKeyword": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeLink": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeLiteral": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeMeta": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeNumber": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeParams": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeProperty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeString": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeTag": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeTitle": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeType": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "codeVariable": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "cursorline": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticHint": {
+      "attrs": 10,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextHint": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diffAdd": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diffDel": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "dim": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorer": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerDim": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerDir": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerDirty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerTitle": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "explorerWarn": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "float": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatActive": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatBorder": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatDim": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatGroup": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatKey": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatMatch": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatSel": {
+      "attrs": 32,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatTitle": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatWarn": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "gutter": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "gutterCursor": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconBase": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconCode": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconConfig": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconData": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconImage": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconNote": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "iconText": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "imagePlaceholder": {
+      "attrs": 6,
+      "bg": "default",
+      "fg": "default",
+    },
+    "inlayHint": {
+      "attrs": 6,
+      "bg": "default",
+      "fg": "default",
+    },
+    "linkUnresolved": {
+      "attrs": 10,
+      "bg": "default",
+      "fg": "default",
+    },
+    "lspReference": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdBold": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdCalloutDanger": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdCalloutNote": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdCalloutTip": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdCalloutWarning": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdCode": {
+      "attrs": 32,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdFootnote": {
+      "attrs": 10,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdHeading1": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdHeading2": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdHeading3": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdHeading4": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdHighlight": {
+      "attrs": 9,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdItalic": {
+      "attrs": 4,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdLink": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdMarker": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdProperty": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdQuote": {
+      "attrs": 4,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdRule": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdStrike": {
+      "attrs": 128,
+      "bg": "default",
+      "fg": "default",
+    },
+    "mdTag": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "message": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "messageError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "modeCmd": {
+      "attrs": 33,
+      "bg": "default",
+      "fg": "default",
+    },
+    "modeInsert": {
+      "attrs": 33,
+      "bg": "default",
+      "fg": "default",
+    },
+    "modeNormal": {
+      "attrs": 33,
+      "bg": "default",
+      "fg": "default",
+    },
+    "modeVisual": {
+      "attrs": 33,
+      "bg": "default",
+      "fg": "default",
+    },
+    "panelHeading": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "panelHeadingAlt": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "panelHit": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "panelLink": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "panelMuted": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "searchMatch": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "selection": {
+      "attrs": 32,
+      "bg": "default",
+      "fg": "default",
+    },
+    "separator": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "signError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "signReveal": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusDim": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusDirty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusline": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "text": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "toastError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "toastInfo": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "treeField": {
+      "attrs": 40,
+      "bg": "default",
+      "fg": "default",
+    },
+    "treeSel": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "treeSelFocus": {
+      "attrs": 32,
+      "bg": "default",
+      "fg": "default",
+    },
+    "winbar": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "winbarActive": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+  },
+}
+`;

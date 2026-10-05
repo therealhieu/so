@@ -5,11 +5,12 @@ import {
   testRegistries,
   textFile,
 } from "../../../test/support/state";
+import { normalizeIndexText } from "../features/git/index-text";
 import { summarize } from "../features/links/summarize";
 import { scanDoc } from "../lang/markdown/scan";
 import type { ServerView } from "./lsp-types";
 import { statusSegments } from "./status";
-import type { Action, AppState } from "./types";
+import type { Action, AppState, RepoInfo } from "./types";
 import { createUpdate } from "./update";
 
 const update = createUpdate(testRegistries());
@@ -228,4 +229,94 @@ test("a server that failed for good stays on the statusline of the files it serv
     file: textFile("# x\n"),
   }).state;
   expect(statusSegments(s).lsp).toBeUndefined();
+});
+
+const REPO: RepoInfo = {
+  top: "/repo",
+  gitDir: "/repo/.git",
+  commonDir: "/repo/.git",
+  prefix: "",
+  head: { kind: "branch", name: "main" },
+};
+
+/** `text` open inside the repository with its index read as `index`. */
+function gitOpen(
+  text: string,
+  index: { kind: "untracked" } | string,
+  head: RepoInfo["head"] = REPO.head,
+): AppState {
+  const s = update(fresh(), {
+    type: "gitDetected",
+    repo: { ...REPO, head },
+  }).state;
+  const loaded = update(s, {
+    type: "fileLoaded",
+    path: "a.md",
+    file: textFile(text),
+  }).state;
+  return update(loaded, {
+    type: "gitIndexRead",
+    path: "a.md",
+    entry:
+      typeof index === "string"
+        ? {
+            kind: "tracked",
+            oid: "o1",
+            mode: "100644",
+            conflicted: false,
+            text: normalizeIndexText(index, "lf"),
+          }
+        : index,
+  }).state;
+}
+
+test("git segment counts follow the gitsigns summary and stay zero without a base", () => {
+  const changed = gitOpen("a\nX\ne\n", "a\nb\nc\nd\ne\n");
+  expect(statusSegments(changed).git).toEqual({
+    ref: "main",
+    added: 0,
+    changed: 1,
+    removed: 2,
+  });
+  const mixed = gitOpen("new\na\nB\nC\nD\ne\n", "a\nb\nc\ne\n");
+  expect(statusSegments(mixed).git).toEqual({
+    ref: "main",
+    added: 2,
+    changed: 2,
+    removed: 0,
+  });
+  expect(statusSegments(gitOpen("a\nb\n", { kind: "untracked" })).git).toEqual({
+    ref: "main",
+    added: 0,
+    changed: 0,
+    removed: 0,
+  });
+  expect(
+    statusSegments(
+      gitOpen("a\nX\n", "a\nb\n", { kind: "unborn", name: "trunk" }),
+    ).git,
+  ).toEqual({ ref: "trunk", added: 0, changed: 0, removed: 0 });
+  expect(statusSegments(open("a.md", "a\n")).git).toBeUndefined();
+});
+
+test("git segment shows a detached head by short sha and the operation in progress", () => {
+  const s = gitOpen("a\n", "a\n", { kind: "detached", short: "a1b2c3d" });
+  const rebasing = update(s, {
+    type: "gitStatus",
+    result: {
+      ok: true,
+      status: {
+        head: { kind: "detached", short: "a1b2c3d" },
+        op: "rebasing",
+        files: new Map(),
+      },
+    },
+  }).state;
+  expect(statusSegments(rebasing).git).toEqual({
+    ref: "a1b2c3d",
+    op: "rebasing",
+    added: 0,
+    changed: 0,
+    removed: 0,
+  });
 });

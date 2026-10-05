@@ -90,6 +90,13 @@ function routeKey(
       return calendarKey(s, a, reg);
     case "zoom":
       return zoomKey(s, a);
+    case "gitHunk": {
+      // Esc and q only close the float; any other key closes it and runs.
+      const closed: AppState = { ...s, overlay: { kind: "none" } };
+      return a.key === "<Esc>" || a.key === "q"
+        ? none(closed)
+        : routeKey(closed, a, reg);
+    }
   }
   if (editingCell(s)) return cellEditKey(s, a, reg);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))

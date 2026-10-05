@@ -53,6 +53,8 @@ export type RenderLine = {
   spans: Span[];
   widget?: Widget;
   sign?: Sign;
+  /** The sign in the change column, left of the line number. */
+  changeSign?: Sign;
 };
 
 /** Syntax highlighting for a line range: one span list per line. */
