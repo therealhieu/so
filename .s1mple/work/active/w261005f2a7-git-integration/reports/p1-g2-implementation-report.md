@@ -73,12 +73,41 @@ Remaining issues: None.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** Pending verification.
-- **Status:** `Not required` until verification reports findings.
+- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g2-verification-report.md` (commit `1f8de61`, status `Failed`, one finding)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G2-VER1` | **Change:** `src/core/state/git.ts:onGitDirChanged` (158) sets `git.dirChanged` and restarts `gitRefresh`; nothing outside a repository. `onGitStatus` (186–194) re-reads every tracked file's index once when the mark is set, then clears it; otherwise the per-entry rule is unchanged. A failed status read returns before the mark is consumed, so the next read still re-reads. `gitDetected` resets the git state, which drops the mark. `src/core/state/types.ts:GitState.dirChanged` (385, doc comment 376); `src/core/state/update.ts:214` routes `gitDirChanged` to `onGitDirChanged`. **Proof:** `src/core/state/git.test.ts` "a git-dir change re-reads every open file's index once" (217): clean tracked `a.md` with no status entry, two `gitDirChanged`, the `gitRefresh` timer (exactly one `gitStatus`), then a `gitStatus` with head `feature` and no entry → exactly one `gitReadIndex` for `a.md` with the new head; a further status with no git-dir change → none. "a failed status read keeps a git-dir change for the next one" (241). RED before the fix: `bun test src/core/state/git.test.ts` → 38 pass, 2 fail. GREEN: 40 pass. `bun test src/core/state src/core/config` → 372 pass, 0 fail, 33 files; V26 ("a head change retargets the watch and an index change re-reads only that file") still passes. | `0c6946b` | `Fixed` |
+
+**`P1-G2-VER1` Completion Checklist:**
+
+- [x] Required resolution is implemented — every tracked open file's index entry is read again after a `gitDirChanged`, once per refresh burst, when its `gitStatus` result arrives (system design §5 Refresh step 1). No git runs per keystroke and no polling path was added.
+- [x] Required proof passes — the new reducer case above, `bun test src/core/state src/core/config` (372 pass), and `bun run check` (1176 pass).
+- [x] Change evidence is recorded — this table, commit `0c6946b`.
+- [x] Verification evidence is recorded — Remediation Group Verification below.
+
+**Remediation decision a later remediator must keep:** the mark is consumed on the status result rather than on the timer, because the reads are emitted only after the git-dir event already happened on disk, and the result carries the new head for `readIndex`. The app's own index writes (stage) also raise `gitDirChanged`, so a stage re-reads every open file once; that costs one `ls-files` per open file per burst and is bounded by the 200 ms coalescing.
+
+### Remediation Group Verification
+
+- `bun test src/core/state src/core/config` → `Passed` — 372 pass, 0 fail, 33 files.
+- `bun run check` → `Passed` — biome clean (341 files), tsc clean, knip zero findings, 1176 pass, 0 fail.
+- `bun test test/ui test/integration` → `Passed` — 216 pass, 0 fail, 63 snapshots; no snapshot file changed.
+- `bun test test/boundaries.test.ts` → `Passed` — 2 pass.
+- `grep -n 'case "gitStatus"' src/app/effects.ts` → `Passed` — one match (line 500).
+- `grep -rnE "W261005F2A7|\b(REQ|DES|UDES|UV|UREQ|US)[0-9]|\bV[0-9]+\b|\bS[0-9]+\b|P[0-9]-G[0-9]" src test` → `Passed` — no matches.
+- Self-review of `41dad6b..0c6946b` (`src`, `test`) → `Passed` — no `TODO`, `FIXME`, `console.`, `debugger`, or `.only(` added; the fix touches only `git.ts`, `git.test.ts`, `types.ts`, and `update.ts`.
+- Process hygiene → `Passed` — only `bun test` and `bun run check` runs were started, and all exited; no temp directories were created.
+
+### Unverified Items Owned Elsewhere
+
+These were recorded by the verifier and stay with their owners:
+
+- Real Git behaviour of the untracked intent-to-add patch (`V36`), the 0-based blame line mapped to `-L line+1,+1`, and `gitBlamed.now` set by the runner — Part 2.
+- Production `registries()` merge of `gitCommands`, `gitBindings`, and `gitGroups` (`UV11` beyond `testRegistries()`) — `P3-G1`.
 
 ## Final Status
 
@@ -86,8 +115,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — every group task is implemented, committed, and verified.
+- **Final report status:** `Completed` — every group task is implemented, committed, and verified, and `P1-G2-VER1` is fixed.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `78cbd38`, `9950bdc`, `19729b3`, `d34e0ed`, `cfed4d6`, `f24ece6`; follow-up `a75e377` (`P1-G2-T2`).
-- **Final checks:** `bun run check` → 1174 pass, knip zero; `bun test src/core/state src/core/config` → 370 pass; `bun test test/ui test/integration` → 216 pass, 63 snapshots unchanged; `bun test test/boundaries.test.ts` → 2 pass; effects no-op group grep → 1 match; process-id grep → no matches.
+- **Final commits:** `78cbd38`, `9950bdc`, `19729b3`, `d34e0ed`, `cfed4d6`, `f24ece6`; follow-up `a75e377` (`P1-G2-T2`); remediation `0c6946b` (`P1-G2-T2`, `P1-G2-VER1`).
+- **Final checks:** `bun run check` → 1176 pass, knip zero; `bun test src/core/state src/core/config` → 372 pass; `bun test test/ui test/integration` → 216 pass, 63 snapshots unchanged; `bun test test/boundaries.test.ts` → 2 pass; effects no-op group grep → 1 match; process-id grep → no matches.
 - **Remaining issues:** None. The unstaged `.gitignore` change (`.worktrees/`) does not belong to this group and was left untouched.
