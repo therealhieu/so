@@ -62,12 +62,14 @@ No unresolved implementation or verification issue remains. Chrome and overlay s
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** Pending
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g1-verification-report.md` (commit `9d642dd`, status `Failed`, one Minor finding)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P2-G1-VER1` | `test/ui/mouse.test.ts` adds "a drag past the text rows of a long buffer moves one line beyond the window". The shell is 40×12 with a 60-line buffer. Case 1: press on line 2, drag through the text, then drag to the cmdline row (y 11). It asserts `visual`, anchor `{1,0}`, and a cursor line one past the last visible line. Case 2: from line 40 (`40G`), drag up to the bufferline (y 0). It asserts a top visible line above 0 and a cursor line one before it. The test sends events with `pressDown` + `emitMouseEvent("drag")` + `release` and reads the visible lines just before the edge event. The mock `drag` sends five in-between events, and those move the view's `topLine` (a cursor that moves back inside the rows from `40G` lets the top return to the stored scroll), so a frame read before the drag starts would be stale. Proof: `bun test test/ui/mouse.test.ts` → 6 pass, 0 fail, 36 expect() calls. With `edge` temporarily forced to `0` in `EditorView.dragAt` → 1 fail (`Expected: 9, Received: 8`). With only the upward edge forced to `0` → 1 fail (`Expected: 29, Received: 30`). `git checkout -- src/ui/editors/text-view.ts` restored the file both times, and `git status` showed only the test file changed | `b32c9c5` | `Fixed` |
 
 ## Final Status
 
@@ -75,8 +77,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all five tasks implemented, committed, and verified
+- **Final report status:** `Completed`. All five tasks are implemented and verified, and `P2-G1-VER1` is fixed
 - **Final report commit:** Returned to the orchestrator; not self-referenced
-- **Final commits:** `7e4fa01`, `cbaf500`, `15cb104`, `8d4bc80`, `18f9966`
-- **Final checks:** `bun run check` → exit 0 (1050 pass); `bun run test:ci` → exit 0 (198 pass); work-ID scan, `@opentui` core scan, and V31 scan → no matches; no orphan processes
+- **Final commits:** `7e4fa01`, `cbaf500`, `15cb104`, `8d4bc80`, `18f9966`, `b32c9c5`
+- **Final checks:** `bun test test/ui/mouse.test.ts` → 6 pass, 0 fail. `bun run check` → exit 0 (biome 313 files clean, tsc clean, knip clean, 1050 pass, 0 fail). `bun run test:ci` → exit 0 (199 pass, 0 fail, 58 snapshots). Work-ID scan over code files changed since `184d3bc` (`.s1mple/` excluded) → no matches (exit 1). `pgrep -fl 'src/app/main.ts|bun run dev'` before and after → no processes (exit 1)
 - **Remaining issues:** None
