@@ -6,15 +6,22 @@ import {
 import type { BaseWindowState } from "../../core/features/bases/file-type";
 import { type BaseViewModel, baseWindow } from "../../core/state/base-model";
 import { panelFocused } from "../../core/state/side-panel";
-import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
+import type {
+  AppState,
+  MouseTarget,
+  WindowId,
+  WindowSpot,
+} from "../../core/state/types";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, type Theme, themeOf } from "../theme";
 import {
+  type BoardLayout,
   layoutBaseBoard,
   layoutBaseTable,
   paintBaseBoard,
   paintBaseTable,
   type TableFocus,
+  type TableLayout,
 } from "../widgets/base";
 import type { WindowView } from "./registry";
 import type { Rect } from "./text-view";
@@ -25,7 +32,8 @@ const cells = (t: string) => [...t].length;
 const shortName = (property: string) =>
   property.replace(/^(file|formula|note)\./, "");
 
-type Part = { text: string; token: string };
+/** Toolbar text; `view` marks a view tab. */
+type Part = { text: string; token: string; view?: number };
 
 type Frame = {
   m: BaseViewModel;
@@ -33,6 +41,9 @@ type Frame = {
   notices: Part[];
   body: Rect;
   focus?: TableFocus;
+  /** Where the table or the board went in `body`. */
+  table?: TableLayout;
+  board?: BoardLayout;
 };
 
 /**
@@ -50,6 +61,8 @@ export class BaseView extends Renderable implements WindowView {
   private frame: Frame | undefined;
   /** The first table line shown, kept so moving the focus scrolls only as needed. */
   private rowTop = 0;
+  /** The view tabs as the toolbar last painted them: screen columns and view index. */
+  private tabs: { x0: number; x1: number; view: number }[] = [];
 
   constructor(
     ctx: RenderContext,
@@ -116,12 +129,15 @@ export class BaseView extends Renderable implements WindowView {
         col: ws?.scroll.col ?? 0,
       });
       this.rowTop = l.top;
+      frame.table = l;
       at = l.cursor;
-    } else if (m.status === "ok" && m.board !== undefined)
-      at = layoutBaseBoard(body, m.board, {
+    } else if (m.status === "ok" && m.board !== undefined) {
+      frame.board = layoutBaseBoard(body, m.board, {
         lane: m.focus.lane,
         card: m.focus.card,
-      }).cursor;
+      });
+      at = frame.board.cursor;
+    }
     this.frame = frame;
     const focused =
       id === s.windows.active && !s.panels.explorer.focused && !panelFocused(s);
@@ -136,12 +152,33 @@ export class BaseView extends Renderable implements WindowView {
     return this.cursorAt;
   }
 
-  /** Any cell of the window is the base. */
+  /**
+   * A view tab on the toolbar, a table cell, or a board card under (x, y);
+   * any other cell of the window is the base itself.
+   */
   targetAt(x: number, y: number): MouseTarget | undefined {
     const r = this.rect;
     if (x < r.x || x >= r.x + r.w || y < r.y || y >= r.y + r.h)
       return undefined;
-    return { kind: "window", window: this.windowId, spot: { kind: "base" } };
+    const at = (spot: WindowSpot): MouseTarget => ({
+      kind: "window",
+      window: this.windowId,
+      spot,
+    });
+    if (y === r.y) {
+      const tab = this.tabs.find((t) => x >= t.x0 && x < t.x1);
+      return at(tab ? { kind: "baseTab", view: tab.view } : { kind: "base" });
+    }
+    const f = this.frame;
+    const spot =
+      f === undefined
+        ? undefined
+        : f.table !== undefined
+          ? cellAt(f.body, f.table, x, y)
+          : f.board !== undefined
+            ? cardAt(f.body, f.board, x, y)
+            : undefined;
+    return at(spot ?? { kind: "base" });
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
@@ -200,10 +237,12 @@ export class BaseView extends Renderable implements WindowView {
     const r = this.rect;
     const at = m.views.findIndex((v) => v.name === m.selected);
     const left: Part[] = [{ text: ` ▦ ${m.title}  `, token: "baseTitle" }];
+    this.tabs = [];
     if (m.views.length > 0) {
       const full = m.views.map((v, i) => ({
         text: ` ${i + 1} ${v.name} `,
         token: i === at ? "baseTabActive" : "baseTab",
+        view: i,
       }));
       const width = full.reduce((n, p) => n + cells(p.text), 0);
       if (!narrow || cells(left[0]?.text ?? "") + width <= r.w / 2)
@@ -218,14 +257,10 @@ export class BaseView extends Renderable implements WindowView {
     let x = 0;
     for (const p of left) {
       if (x >= r.w) break;
-      drawCells(
-        buf,
-        theme.style(p.token),
-        r.x + x,
-        r.y,
-        p.text,
-        Math.min(cells(p.text), r.w - x),
-      );
+      const w = Math.min(cells(p.text), r.w - x);
+      drawCells(buf, theme.style(p.token), r.x + x, r.y, p.text, w);
+      if (p.view !== undefined)
+        this.tabs.push({ x0: r.x + x, x1: r.x + x + w, view: p.view });
       x += cells(p.text);
     }
     const width = (ps: Part[]) => ps.reduce((n, p) => n + cells(p.text), 0);
@@ -248,6 +283,42 @@ export class BaseView extends Renderable implements WindowView {
       rx += cells(p.text);
     }
   }
+}
+
+/** The table cell at screen cell (x, y), from the layout painted in `body`. */
+function cellAt(
+  body: Rect,
+  l: TableLayout,
+  x: number,
+  y: number,
+): WindowSpot | undefined {
+  const i = y - body.y - 2;
+  if (i < 0 || i >= l.bodyRows) return undefined;
+  const line = l.lines[l.top + i];
+  const col = l.cols.find((c) => x >= body.x + c.x && x < body.x + c.x + c.w);
+  return line?.kind === "row" && col !== undefined
+    ? { kind: "baseCell", row: line.row, column: col.index }
+    : undefined;
+}
+
+/** The board card at screen cell (x, y), from the layout painted in `body`. */
+function cardAt(
+  body: Rect,
+  l: BoardLayout,
+  x: number,
+  y: number,
+): WindowSpot | undefined {
+  const lane = l.lanes.find(
+    (ln) => x >= body.x + ln.x && x < body.x + ln.x + l.laneW,
+  );
+  const slot = lane && l.shown.get(lane.index);
+  const k = Math.floor((y - body.y - 1) / l.cardRows);
+  return lane !== undefined &&
+    slot !== undefined &&
+    y > body.y &&
+    k < slot.count
+    ? { kind: "baseCard", lane: lane.index, card: slot.first + k }
+    : undefined;
 }
 
 /** Toolbar cells the filter expression may take before it is cut. */

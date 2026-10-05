@@ -1,5 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { parseConfig } from "../../src/core/config/toml";
+import { baseWindow } from "../../src/core/state/base-model";
+import { indexed, TASKS_BASE } from "../support/bases";
 import { type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
@@ -134,4 +136,62 @@ test("a drag from the text selects to the pointer and clamps at the window edge"
   await m.mouse.drag(x + 6, y + 2, x + 1, 0);
   expect(m.store.get().vim.visualAnchor).toEqual({ line: 2, col: 6 });
   expect(cursorOf(m)).toEqual({ line: 0, col: 1 });
+});
+
+/** Screen cell of the first `text` at or below row `from`. */
+async function find(x: Mounted, text: string, from = 0) {
+  const lines = (await x.frame()).split("\n");
+  const y = lines.findIndex((l, i) => i >= from && l.includes(text));
+  const line = lines[y] ?? "";
+  return { x: [...line.slice(0, line.indexOf(text))].length, y };
+}
+
+const BOARD = `filters:
+  and:
+    - file.inFolder("tasks")
+views:
+  - type: kanban-test
+    name: Board
+    order: [file.name]
+    groupBy:
+      property: status
+      direction: ASC
+`;
+
+test("clicks on a Base switch views and focus table cells and cards", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.store.dispatch(indexed());
+  m.keys("<leader>e");
+  m.open("tasks.base", TASKS_BASE);
+  const ws = () => {
+    const s = m?.store.get();
+    return s && baseWindow(s, s.windows.active);
+  };
+  const tab = await find(m, "2 By status");
+  await m.mouse.click(tab.x + 3, tab.y);
+  expect(ws()?.view).toBe("By status");
+  const back = await find(m, "1 All tasks");
+  await m.mouse.click(back.x, back.y);
+  expect(ws()?.view).toBe("All tasks");
+
+  const cell = await find(m, "doing");
+  await m.mouse.click(cell.x + 2, cell.y);
+  expect(ws()?.focus.column).toBe(1);
+  expect(ws()?.focus.path).toBe("tasks/review-pr.md");
+  await m.frame();
+  const c = m.t.renderer.getCursorState();
+  expect({ x: c.x - 1, y: c.y - 1 }).toEqual({ x: cell.x, y: cell.y });
+  // The separator between cells and the toolbar's title are the base itself.
+  await m.mouse.click(cell.x - 2, cell.y);
+  expect(ws()?.focus.column).toBe(1);
+  m.destroy();
+
+  m = await mountShell({ cols: 120, rows: 20 });
+  m.store.dispatch(indexed());
+  m.keys("<leader>e");
+  m.open("board.base", BOARD);
+  const card = await find(m, "write-report", 3);
+  expect(ws()?.focus.path).not.toBe("tasks/write-report.md");
+  await m.mouse.click(card.x + 1, card.y);
+  expect(ws()?.focus.path).toBe("tasks/write-report.md");
 });
