@@ -495,10 +495,12 @@ export function syncFloat(prev: AppState, r: Result): Result {
 /** Whether `range` covers the cell at `line`/`col`; an empty range covers its start. */
 function covers(range: Range, line: number, col: number): boolean {
   const { start, end } = range;
+  if (start.line === end.line && start.col === end.col)
+    return line === start.line && col === start.col;
   if (line < start.line || line > end.line) return false;
   const from = line === start.line ? start.col : 0;
   const to = line === end.line ? end.col : Number.POSITIVE_INFINITY;
-  return col >= from && (col < to || (to <= from && col === from));
+  return col >= from && col < to;
 }
 
 /** The shown diagnostic under the active window's cursor, the most severe first. */

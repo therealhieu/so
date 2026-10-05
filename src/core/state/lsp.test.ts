@@ -444,6 +444,22 @@ test("the command line diagnostic is the one under the cursor", () => {
   expect(cursorDiagnostic(away)).toBeUndefined();
 });
 
+test("a diagnostic ending at the start of a line does not cover that line", () => {
+  const s = keys(attached([ready("a", [])]), "j").state;
+  const range = (sl: number, sc: number, el: number, ec: number) => ({
+    range: { start: at(sl, sc), end: at(el, ec) },
+    severity: 1 as const,
+    message: "m",
+  });
+  const wholeLine = run(s, publish("a@/ws", [range(0, 0, 1, 0)])).state;
+  expect(cursorDiagnostic(wholeLine)).toBeUndefined();
+  const empty = run(
+    keys(s, "2l").state,
+    publish("a@/ws", [range(1, 2, 1, 2)]),
+  ).state;
+  expect(cursorDiagnostic(empty)).toEqual({ severity: 1, text: "m" });
+});
+
 test("hover closes on cursor move and signature help on leaving insert mode", () => {
   const sent = hover(attached([ready("a", ["hover", "signature"])]));
   const shown = run(
