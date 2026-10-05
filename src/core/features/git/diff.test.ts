@@ -116,22 +116,24 @@ test("scattered edits keep their own hunks and revert to the old text", () => {
 
 test("diffs with nothing in common or too many edits fall back to one change hunk quickly", () => {
   const old = lines(5000);
-  const disjoint = lines(5000, "x");
-  let t = performance.now();
-  expect(diffLines(old, disjoint)).toEqual([
+  const whole: Hunk[] = [
     {
       kind: "change",
       old: { start: 0, count: 5000 },
       new: { start: 0, count: 5000 },
       oldLines: old,
     },
-  ]);
+  ];
+  const disjoint = lines(5000, "x");
+  let t = performance.now();
+  let hunks = diffLines(old, disjoint);
   expect(performance.now() - t).toBeLessThan(50);
+  expect(hunks).toEqual(whole);
 
   // Every odd line edited: about 5,000 edits, well past the cap.
   const scattered = old.map((l, i) => (i % 2 === 1 ? `x${i}` : l));
   t = performance.now();
-  const hunks = diffLines(old, scattered);
+  hunks = diffLines(old, scattered);
   expect(performance.now() - t).toBeLessThan(50);
   expect(MAX_EDIT).toBe(2000);
   expect(hunks).toEqual([
@@ -142,6 +144,14 @@ test("diffs with nothing in common or too many edits fall back to one change hun
       oldLines: old.slice(1),
     },
   ]);
+
+  // Same lines in reverse order: no edit count shows up front, so the edit
+  // search runs until the cap. Uncapped, this takes about 200 ms on an idle laptop.
+  const reversed = [...old].reverse();
+  t = performance.now();
+  hunks = diffLines(old, reversed);
+  expect(performance.now() - t).toBeLessThan(150);
+  expect(hunks).toEqual(whole);
 });
 
 test("text typed into a note committed empty is one add hunk", () => {

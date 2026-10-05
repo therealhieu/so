@@ -56,7 +56,9 @@ export function diffLines(
   const b = cur.slice(pre, cur.length - suf);
   if (a.length === 0 && b.length === 0) return [];
   const whole = () => [hunk(old, pre, a.length, pre, b.length)];
-  if (a.length === 0 || b.length === 0 || !shareLine(a, b)) return whole();
+  // No line in common (the floor is every line) or provably too many edits.
+  const floor = editFloor(a, b);
+  if (floor === a.length + b.length || floor > MAX_EDIT) return whole();
   const edits = editScript(a, b);
   if (edits === undefined) return whole();
   const out: Hunk[] = [];
@@ -104,9 +106,18 @@ function kindOf(oldCount: number, newStart: number, newCount: number) {
   return oldCount > newCount ? "changedelete" : "change";
 }
 
-function shareLine(a: readonly string[], b: readonly string[]): boolean {
-  const seen = new Set(a);
-  return b.some((l) => seen.has(l));
+/**
+ * A lower bound on the edits turning `a` into `b`: every surplus copy of a
+ * line on either side must be deleted or inserted. It equals
+ * `a.length + b.length` exactly when the sides share no line.
+ */
+function editFloor(a: readonly string[], b: readonly string[]): number {
+  const surplus = new Map<string, number>();
+  for (const l of a) surplus.set(l, (surplus.get(l) ?? 0) + 1);
+  for (const l of b) surplus.set(l, (surplus.get(l) ?? 0) - 1);
+  let floor = 0;
+  for (const n of surplus.values()) floor += Math.abs(n);
+  return floor;
 }
 
 /**
