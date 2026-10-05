@@ -12,12 +12,12 @@ The finalized system design is the single governing design. It covers all fiftee
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline |
-| System design | `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md` | Technical authority (`Finalized System Design`, DES1–DES20, S1–S40, V1–V64) |
+| System design | `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md` | Technical authority (`Finalized System Design`, DES1–DES20, S1–S40, V1–V64) |
 | UI design | Not applicable — no UI design was authored; the system design covers the UI surfaces technically and reuses existing tokens and overlays | Technical authority when present |
-| System requirements | `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md` | Required system behavior (`REQ1`–`REQ15`, current revisions listed in section 4) |
+| System requirements | `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md` | Required system behavior (`REQ1`–`REQ15`, current revisions listed in section 4) |
 | UI requirements | Not applicable — none authored | Required UI behavior when present |
-| Research | `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-research.md` | Findings `RF1`–`RF15`, reconciled in requirements section 6 |
-| Discussion context | `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-discuss-context.md` | Work-specific findings and constraints; Roadmap Binding: None — standalone work |
+| Research | `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-research.md` | Findings `RF1`–`RF15`, reconciled in requirements section 6 |
+| Discussion context | `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-discuss-context.md` | Work-specific findings and constraints; Roadmap Binding: None — standalone work |
 | UI context | Not applicable — none authored | Existing UI code and pattern evidence |
 | Roadmap sources | Not applicable | Standalone work |
 | Additional project files | `package.json`, `.github/workflows/ci.yml`, `test/boundaries.test.ts`, `scripts/bench-gate.ts`, `src/core/state/types.ts`, `src/core/state/completion.ts`, `src/core/state/keys.ts`, `src/core/features/links/rename.ts`, `src/app/effects.ts`, `src/app/main.ts`, `src/app/lifecycle.ts`, `src/ui/editors/text-view.ts`, `src/ui/input.ts`, `test/integration/helpers.ts`, `test/support/*.ts`, `test/ui/editor-options.test.ts`, `test/e2e/pty.ts` | Spot-check the design's current-shape references and resolve test-placement gaps |

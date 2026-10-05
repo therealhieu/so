@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1`
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` (status `Completed`; change range `dc4e631..024d68a`, task commits `21af6c9`, `0de3c35`, `024d68a`)
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` (status `Completed`; change range `dc4e631..024d68a`, task commits `21af6c9`, `0de3c35`, `024d68a`)
 
 ## Status
 

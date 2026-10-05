@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2` — Requests, diagnostics, and commands
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md`
 
 Verified range: `32a520f..ccea2bd` (task commits `814e6c7`, `2514f0e`, `e392c2a`, `27d323c`, follow-up `ccea2bd`), 15 files.
 

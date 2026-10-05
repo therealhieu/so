@@ -15,11 +15,11 @@
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
-- Plan context: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
-- System design: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
+- Plan index: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
+- Plan context: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
+- System design: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
 - UI design: Not applicable — no UI design was authored; the system design covers the UI surfaces with existing tokens and overlays
-- System requirements: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
+- System requirements: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
 - UI requirements: Not applicable — none authored
 
 ## Dependencies

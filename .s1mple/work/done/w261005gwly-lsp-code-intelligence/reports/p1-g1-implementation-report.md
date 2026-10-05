@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
+- **Goal:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
 - **Group:** `P1-G1` — Contracts
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 

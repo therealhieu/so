@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
+- **Goal:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`, `P2-G1-T6`, `P2-G1-T7`, `P2-G1-T8`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -102,7 +102,7 @@ Remaining issues: None.
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` (status `Failed`; findings `P2-G1-VER1`, `P2-G1-VER2`, `P2-G1-VER3`)
+- **Verification reports:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` (status `Failed`; findings `P2-G1-VER1`, `P2-G1-VER2`, `P2-G1-VER3`)
 - **Status:** `Completed`
 
 Every finding was reproduced before its fix and is closed by its own commit. The verification report is unchanged.

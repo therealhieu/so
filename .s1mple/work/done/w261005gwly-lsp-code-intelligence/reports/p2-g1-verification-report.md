@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`, `P2-G1-T6`, `P2-G1-T7`, `P2-G1-T8`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md`
 
 Verified range: `git diff 1b3511e..59f4f65` (22 files, +4065/−6). Every assigned chain is implemented as designed. The group fails because `bun run test:ci` failed in this pass: `test/integration/lsp-host.test.ts` asserts the order of log lines written by two separate fake-server processes, and that order is not deterministic (VER1). A second test timed out once (VER2). `stop()` also resolves a few milliseconds before probe children and still-starting servers are reaped, which breaks a stated design invariant (VER3).
 

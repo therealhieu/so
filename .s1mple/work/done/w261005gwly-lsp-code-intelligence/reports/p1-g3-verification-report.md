@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G3`
 - **Tasks:** `P1-G3-T1`, `P1-G3-T2`, `P1-G3-T3`, `P1-G3-T4`, `P1-G3-T5`
-- **Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md`
 
 ## Status
 

@@ -10,12 +10,12 @@
 
 - s1mple instructions: `.s1mple/S1MPLE.md`
 - Project document: `.s1mple/docs/project.md`
-- Plan index: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
-- System design: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
+- Plan index: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
+- System design: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
 - UI design: Not applicable — no UI design was authored; the system design covers the UI surfaces with existing tokens and overlays
-- System requirements: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
+- System requirements: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
 - UI requirements: Not applicable — none authored
-- Plan context: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
+- Plan context: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
 - Roadmap binding: Not applicable — standalone work (`w261005gwly-discuss-context.md` § Roadmap Binding: None)
 - Current parent sources: Not applicable
 - Project standards:
@@ -23,9 +23,9 @@
   - `.s1mple/docs/communication.md`
   - `.s1mple/docs/languages/typescript.md`
 - Plan parts:
-  1. `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
-  2. `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
-  3. `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
+  1. `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
+  2. `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
+  3. `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
 
 **Work-folder move:** P3-G1-T7 moves the work folder to `.s1mple/work/done/w261005gwly-lsp-code-intelligence/`. From that commit on, every path above and every report path below resolves under `work/done/` (this goal included: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-goal.md`). A `/goal` that names the `work/active/` path goes stale after the move; the user must clear it.
 
@@ -51,7 +51,7 @@
 - **Assigned parent coverage:** Not applicable
 - **Cross-work gates:** None
 - **Parent synchronization authorization:** Not applicable
-- **Reports Directory:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/` (`.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/` after P3-G1-T7)
+- **Reports Directory:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/` (`.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/` after P3-G1-T7)
 - **Implementation Report Naming:** `p<part-number>-g<group-number>-implementation-report.md` — lowercase prefix, e.g. `p1-g1-implementation-report.md`.
 - **Verification Report Naming:** `p<part-number>-g<group-number>-verification-report.md` — lowercase prefix, e.g. `p1-g1-verification-report.md`.
 - **Reports:** Each group has exactly these two reports.
@@ -179,7 +179,7 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 ### Part 1 — core
 
-- **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
+- **Plan:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
 - **Dependencies:** None
 - **Status:** `Completed`
 
@@ -206,9 +206,9 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` — `Completed`
+- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g1-implementation-report.md` — `Completed`
 - Initial implementation report commit: `41e7430`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md` — `Passed`, no findings
+- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g1-verification-report.md` — `Passed`, no findings
 - Verification report commit: `f3aee3a`
 - Remediation: `Not required — Passed report with no outstanding items`
 - Final implementation report commit: `41e7430` (initial report is final)
@@ -247,9 +247,9 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md` — `Completed` (remediated)
+- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g2-implementation-report.md` — `Completed` (remediated)
 - Initial implementation report commit: `e55372a`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
+- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g2-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
 - Verification report commit: `ae9af3a`
 - Remediation: `Completed` — fresh implementer; all three findings Fixed
 - Final implementation report commit: `5bc6ff9`
@@ -290,9 +290,9 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md` — `Completed` (remediated)
+- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md` — `Completed` (remediated)
 - Initial implementation report commit: `a256c44`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
+- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
 - Verification report commit: `bf999c9`
 - Remediation: `Completed` — fresh implementer; all three findings Fixed
 - Final implementation report commit: `9759588`
@@ -311,7 +311,7 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 ### Part 2 — host
 
-- **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
+- **Plan:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
 - **Dependencies:** Part 1
 - **Status:** `Completed`
 
@@ -343,9 +343,9 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md` — `Completed` (remediated)
+- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-implementation-report.md` — `Completed` (remediated)
 - Initial implementation report commit: `00b53a9`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` — `Failed` (VER1 Major flaky order; VER2–VER3 Minor)
+- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p2-g1-verification-report.md` — `Failed` (VER1 Major flaky order; VER2–VER3 Minor)
 - Verification report commit: `fa8dec1`
 - Remediation: `Completed` — fresh implementer; all three findings Fixed
 - Final implementation report commit: `a151ddf`
@@ -367,7 +367,7 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 ### Part 3 — ui-and-delivery
 
-- **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
+- **Plan:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
 - **Dependencies:** Parts 1 and 2
 - **Status:** `In Progress`
 

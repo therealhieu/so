@@ -15,11 +15,11 @@ The user sees LSP state in the running app: gutter signs and underlines, the hov
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
-- Plan context: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
-- System design: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
+- Plan index: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-index.md`
+- Plan context: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-context.md`
+- System design: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md`
 - UI design: Not applicable — no UI design was authored; the system design covers the UI surfaces with existing tokens and overlays
-- System requirements: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
+- System requirements: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md`
 - UI requirements: Not applicable — none authored
 
 ## Dependencies
@@ -453,7 +453,7 @@ None
 - **System Design:** `REQ15@R1; DES17; S32; V46`
 - **UI Design:** `None`
 - **Canonical Shapes:** `.s1mple/S1MPLE.md` §3 Delivery; plan context §3 Binding Constraints
-- **Files:** `.s1mple/docs/project.md` (Purpose and Scope, Technology Stack pins, Boundaries `PACKAGE_HOMES`, Data and Contracts rows for `[lsp]`, `LspState`, LSP host and client, Benchmarks `lspKeystrokeP95`), `.s1mple/work/active/w261005gwly-lsp-code-intelligence/` → `.s1mple/work/done/w261005gwly-lsp-code-intelligence/`
+- **Files:** `.s1mple/docs/project.md` (Purpose and Scope, Technology Stack pins, Boundaries `PACKAGE_HOMES`, Data and Contracts rows for `[lsp]`, `LspState`, LSP host and client, Benchmarks `lspKeystrokeP95`), `.s1mple/work/done/w261005gwly-lsp-code-intelligence/` → `.s1mple/work/done/w261005gwly-lsp-code-intelligence/`
 - **Execution Approach:** `Direct verification — delivery steps are checked by CI and repository state, not tests`
 
 **Steps:**
@@ -468,7 +468,7 @@ None
    git push -u origin feat/w261005gwly-lsp-code-intelligence
    gh pr create --base main --title "feat: LSP code intelligence (W261005GWLY)" --body <summary + test evidence>
    gh pr checks --watch   → every job green; resolve conflicts with main by merging main into the branch (no rebase, no force-push)
-   git mv .s1mple/work/active/w261005gwly-lsp-code-intelligence .s1mple/work/done/
+   git mv .s1mple/work/done/w261005gwly-lsp-code-intelligence .s1mple/work/done/
    update .s1mple/ references to the moved folder → commit → git push
    gh pr checks --watch   → every job green on the new head
    ```
@@ -484,7 +484,7 @@ None
    └── Expect: check, test (ubuntu-24.04, macos-15), and bench jobs pass on the final head; folder present in work/done; no stale active-path references
    ```
 
-   - Run `rg "work/active/w261005gwly" .s1mple` and confirm no matches.
+   - Run `rg "work/done/w261005gwly" .s1mple` and confirm no matches.
 
 3. **COMMIT:** Run all task verification checks and self-review before committing this task.
 

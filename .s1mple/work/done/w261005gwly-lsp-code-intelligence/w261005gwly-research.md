@@ -775,9 +775,9 @@ t=150                        → Neovim: second didChange           trailing: on
 
 - `.s1mple/docs/project.md:18` — Supports `RF1` by establishing that `so` pins `typescript` `7.0.2`.
 - `.s1mple/docs/project.md:147` — Supports `RF13` by establishing that vim behaviour is recorded from Neovim 0.11.x.
-- `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-discuss-context.md:48-50` — Supports `RF2`, `RF5`, `RF15` by establishing that CI has no servers, only rust-analyzer 1.96.0 is installed locally, and the Bun spike result.
-- `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md:144-151` — Supports `RF5` by establishing the accepted protocol-stack assumption and pinned dependencies.
-- `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md:222` — Supports `RF3` by establishing the example rust-analyzer `settings` override.
+- `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-discuss-context.md:48-50` — Supports `RF2`, `RF5`, `RF15` by establishing that CI has no servers, only rust-analyzer 1.96.0 is installed locally, and the Bun spike result.
+- `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md:144-151` — Supports `RF5` by establishing the accepted protocol-stack assumption and pinned dependencies.
+- `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-requirements.md:222` — Supports `RF3` by establishing the example rust-analyzer `settings` override.
 - `package.json:4` — Supports `RF5` by establishing `"type": "module"` with no `sideEffects` field.
 - `src/workspace/watcher.ts:61-87` — Supports `RF10` by establishing that the watcher drops excluded paths and `so`'s own operations.
 - `src/workspace/ignore.ts:12-14`, `:37` — Supports `RF10` by establishing that any path with a dot segment or `node_modules` is excluded.
