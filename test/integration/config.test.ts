@@ -20,6 +20,7 @@ import {
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createImageLoader } from "../../src/workspace/images";
 import { createLogger } from "../../src/workspace/log";
+import { createSvgRasterizer } from "../../src/workspace/svg";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
 import { clock, tmpWorkspace, waitFor } from "./helpers";
@@ -87,6 +88,7 @@ async function start(config?: string) {
     reg,
     now: clock,
     loadImage: createImageLoader(root),
+    rasterizeSvg: createSvgRasterizer(),
   });
   shell.attach(store);
 

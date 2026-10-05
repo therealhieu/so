@@ -51,8 +51,14 @@ export class ImageCache {
     this.retryMs = o.retryMs ?? 60_000;
   }
 
-  /** The decoded image, a failure, or undefined while it loads (the first call starts the load). */
-  get(ref: string): { image: NativeImage } | { failed: true } | undefined {
+  /**
+   * The decoded image, a failure, or undefined while it loads (the first
+   * call starts the load, with `load` in place of the workspace loader).
+   */
+  get(
+    ref: string,
+    load: (ref: string) => Promise<Uint8Array> = this.o.load,
+  ): { image: NativeImage } | { failed: true } | undefined {
     const e = this.entries.get(ref);
     if (e?.kind === "image") {
       this.entries.delete(ref);
@@ -62,8 +68,14 @@ export class ImageCache {
     if (e?.kind === "loading") return undefined;
     if (e?.kind === "failed" && this.o.now() - e.at < this.retryMs)
       return { failed: true };
-    this.start(ref);
+    this.start(ref, load);
     return undefined;
+  }
+
+  /** The decoded image if it is held; never starts a load. */
+  peek(ref: string): NativeImage | undefined {
+    const e = this.entries.get(ref);
+    return e?.kind === "image" ? e.image : undefined;
   }
 
   /** The pixel size of a decoded image. */
@@ -106,11 +118,10 @@ export class ImageCache {
     this.total = 0;
   }
 
-  private start(ref: string): void {
+  private start(ref: string, load: (ref: string) => Promise<Uint8Array>): void {
     const loading: Entry = { kind: "loading" };
     this.entries.set(ref, loading);
-    this.o
-      .load(ref)
+    load(ref)
       .then((bytes) => this.decode(bytes))
       .then(
         (decoded) => this.store(ref, loading, decoded),

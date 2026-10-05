@@ -284,7 +284,7 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
  NORMAL  │ live │ tour.md │ 252 words │ preview off                                             1:1"
 `;
 
-exports[`the zoom float draws a diagram too wide for the note 1`] = `
+exports[`with images off the zoom float draws a diagram too wide for the note as text 1`] = `
 " flow.md                                                                        
    3╭─ mermaid · 165×5 ────────────────────────────────────────────────────╮    
    2│                                                                      │    

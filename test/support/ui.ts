@@ -14,10 +14,19 @@ import { createUpdate, type Registries } from "../../src/core/state/update";
 import { BaseView } from "../../src/ui/editors/base-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
-import { createShell, type GraphicsSupport } from "../../src/ui/shell";
+import {
+  createShell,
+  type GraphicsSupport,
+  type ShellDeps,
+} from "../../src/ui/shell";
 import { paintBaseEmbed } from "../../src/ui/widgets/base";
 import { paintEmbed } from "../../src/ui/widgets/embed";
 import { paintImage } from "../../src/ui/widgets/image";
+import { createSvgRasterizer } from "../../src/workspace/svg";
+
+/** One rasterizer for every mount: it starts WebAssembly once. */
+const rasterizeSvg = createSvgRasterizer();
+
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
 import { paintRule } from "../../src/ui/widgets/rule";
 import { editingNotes, testRegistries, textFile } from "./state";
@@ -34,6 +43,8 @@ export type MountOptions = {
   capabilities?: GraphicsSupport;
   /** Image bytes by workspace path or URL; any other image fails to load. */
   files?: Record<string, Uint8Array>;
+  /** Draws SVG in place of the real rasterizer. */
+  rasterizeSvg?: ShellDeps["rasterizeSvg"];
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
@@ -113,6 +124,7 @@ export async function mountShell(o: MountOptions) {
     reg,
     now: () => now,
     loadImage,
+    rasterizeSvg: o.rasterizeSvg ?? rasterizeSvg,
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });
   shell.attach(store);

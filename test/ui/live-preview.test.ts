@@ -4,6 +4,7 @@ import { OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import { themes } from "../../src/ui/theme";
+import { createSvgRasterizer } from "../../src/workspace/svg";
 import { noteSummary, TASK_NOTES, TASKS_BASE } from "../support/bases";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
@@ -480,12 +481,12 @@ test("without graphics the zoom float names the image", async () => {
   ).toBe(1);
 });
 
-test("the zoom float draws a diagram too wide for the note", async () => {
+test("with images off the zoom float draws a diagram too wide for the note as text", async () => {
   const flow = Array.from({ length: 12 }, (_, i) => `Step${i}`).join(" --> ");
   m = await mountShell({
     cols: 80,
     rows: 24,
-    config: '[preview]\nmode = "reading"\n',
+    config: '[preview]\nmode = "reading"\nimages = "off"\n',
   });
   openNote(
     m,
@@ -517,4 +518,70 @@ test("the wheel over the zoom float zooms the image in and out", async () => {
   for (let i = 0; i < 2; i++) await m.mouse.scroll(50, 20, "down");
   expect(await m.frame()).toContain("· 0.75×");
   expect(level()).toBe(0.75);
+});
+
+test("the zoom float draws a diagram as a sharp image of the part in view", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  const rasters: { crop: { w: number }; width: number }[] = [];
+  const real = createSvgRasterizer();
+  try {
+    m = await mountShell({
+      cols: 100,
+      rows: 40,
+      capabilities: KITTY,
+      config: '[preview]\nmode = "reading"\n',
+      rasterizeSvg: (r) => {
+        rasters.push(r);
+        return real(r);
+      },
+    });
+    openNote(
+      m,
+      "notes/flow.md",
+      "```mermaid\nflowchart LR\n  Capture --> Triage --> Ship\n```\n",
+    );
+    m.keys("j<leader>z");
+    expect(await m.frame()).toContain("◌ mermaid");
+    await Bun.sleep(50);
+    draw.mockClear();
+    expect(await m.frame()).toContain("mermaid · 1×");
+    expect(draw).toHaveBeenCalledTimes(1);
+    const fit = rasters.at(-1);
+    if (fit === undefined) throw new Error("expected a raster");
+    // At fit the whole diagram is drawn, at the float's width in pixels.
+    expect(fit.width).toBe(88 * 8);
+
+    m.keys("++++");
+    // The last raster stays up while the 2× view renders.
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(1);
+    await Bun.sleep(50);
+    expect(await m.frame()).toContain("mermaid · 2×");
+    const zoomed = rasters.at(-1);
+    expect(zoomed?.crop.w).toBeCloseTo(fit.crop.w / 2);
+    expect(zoomed?.width).toBe(fit.width);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("a diagram the rasterizer cannot draw shows its text drawing in the zoom float", async () => {
+  m = await mountShell({
+    cols: 100,
+    rows: 40,
+    capabilities: KITTY,
+    config: '[preview]\nmode = "reading"\n',
+    rasterizeSvg: () =>
+      Promise.reject(new Error("no system font for diagrams")),
+  });
+  openNote(
+    m,
+    "notes/flow.md",
+    "```mermaid\nflowchart LR\n  Capture --> Ship\n```\n",
+  );
+  m.keys("j<leader>z");
+  await m.frame();
+  await Bun.sleep(0);
+  expect(await m.frame()).toContain("│ Capture ├");
 });

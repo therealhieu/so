@@ -3,6 +3,7 @@ import { fenceBody, wholeBlock } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
 import { labelAbove, textWidget } from "./rows";
+import { inlineCssVars } from "./svg-css";
 
 /** A Mermaid fence as box-drawing lines, or why it shows as source. */
 export type MermaidResult =
@@ -74,6 +75,24 @@ const SPACINGS: readonly Spacing[] = [
 let library: typeof BeautifulMermaid | undefined;
 const mermaid = (): typeof BeautifulMermaid =>
   (library ??= require("beautiful-mermaid") as typeof BeautifulMermaid);
+
+/**
+ * Run `f` with no global `window`. The library's SVG layout (elkjs) binds to
+ * `window` when one exists and to the runtime's `global` otherwise; the
+ * terminal renderer defines a bare `window` for `requestAnimationFrame`,
+ * which breaks that layout.
+ */
+function withoutWindow<T>(f: () => T): T {
+  const g = globalThis as { window?: unknown };
+  if (!("window" in g)) return f();
+  const window = g.window;
+  delete g.window;
+  try {
+    return f();
+  } finally {
+    g.window = window;
+  }
+}
 
 const INVALID: MermaidResult = {
   kind: "source",
@@ -147,6 +166,51 @@ export function mermaidLines(
   if (!TEXT_LAYOUT.has(p.type)) return undefined;
   const chosen = SPACINGS[spacing === "loose" ? 0 : 1];
   return chosen && draw(p.source, GRAPHS.has(p.type), chosen);
+}
+
+/** A diagram as self-contained SVG: its size in user units and its background colour. */
+export type MermaidSvg = {
+  svg: string;
+  width: number;
+  height: number;
+  background: string;
+};
+
+/**
+ * A diagram as SVG that a plain SVG rasterizer draws as the browser would:
+ * Tokyo Night colours (`light` picks the light variant) written out in
+ * place of CSS variables, web font imports dropped, and font lists reduced
+ * to `sans-serif` or `monospace`. Undefined when it cannot be drawn.
+ */
+export function mermaidSvg(
+  source: string,
+  theme: "dark" | "light",
+): MermaidSvg | undefined {
+  const p = prepare(source);
+  if (!TEXT_LAYOUT.has(p.type)) return undefined;
+  try {
+    if (GRAPHS.has(p.type) && mermaid().parseMermaid(p.source).nodes.size === 0)
+      return undefined;
+    const colors =
+      mermaid().THEMES[theme === "dark" ? "tokyo-night" : "tokyo-night-light"];
+    const drawn = withoutWindow(() =>
+      mermaid().renderMermaidSVG(p.source, colors),
+    );
+    const svg = inlineCssVars(drawn)
+      .replace(/@import[^;]*;/g, "")
+      .replace(
+        /font-family\s*:\s*([^;"}]+)/g,
+        (_, list: string) =>
+          `font-family: ${/monospace/.test(list) ? "monospace" : "sans-serif"}`,
+      );
+    const box = /viewBox="[\d.-]+ [\d.-]+ ([\d.]+) ([\d.]+)"/.exec(svg);
+    const width = Number(box?.[1]);
+    const height = Number(box?.[2]);
+    if (!(width > 0 && height > 0)) return undefined;
+    return { svg, width, height, background: colors?.bg ?? "#000000" };
+  } catch {
+    return undefined;
+  }
 }
 
 const drawings = new RenderCache<MermaidResult>();

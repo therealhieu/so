@@ -7,7 +7,12 @@ import {
 } from "../../../../../test/support/markdown";
 import { parseDoc } from "../doc";
 import { registerBlockRenderer } from "../live-preview";
-import { mermaidLines, mermaidRenderer, mermaidText } from "./mermaid";
+import {
+  mermaidLines,
+  mermaidRenderer,
+  mermaidSvg,
+  mermaidText,
+} from "./mermaid";
 
 const FLOWCHART = [
   "flowchart LR",
@@ -76,4 +81,17 @@ test("a diagram drawn at any width is wider with the default spacing than the ti
   expect(
     mermaidLines("flowchart SIDEWAYS\n  A --> B", "loose"),
   ).toBeUndefined();
+});
+
+test("a diagram as SVG carries plain colours and generic fonts a rasterizer can draw", () => {
+  const dark = mermaidSvg(FLOWCHART, "dark");
+  if (dark === undefined) throw new Error("expected an SVG");
+  expect(dark.svg).toContain(">Capture</text>");
+  expect(dark.svg).not.toMatch(/var\(|color-mix\(|@import/);
+  expect(dark.svg).toContain("font-family: sans-serif");
+  expect(dark.width).toBeGreaterThan(dark.height);
+  expect(dark.background).toBe("#1a1b26");
+  expect(mermaidSvg(FLOWCHART, "light")?.background).not.toBe(dark.background);
+  expect(mermaidSvg("gantt\n  title x", "dark")).toBeUndefined();
+  expect(mermaidSvg("flowchart SIDEWAYS\n  A --> B", "dark")).toBeUndefined();
 });

@@ -76,6 +76,7 @@ import {
   saveStateFileSync,
   statePath,
 } from "../workspace/state-file";
+import { createSvgRasterizer } from "../workspace/svg";
 import { detectClipboard, openUrl } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
@@ -286,6 +287,7 @@ async function main(argv: string[]): Promise<void> {
     reg,
     now: clock,
     loadImage: createImageLoader(ws.root),
+    rasterizeSvg: createSvgRasterizer(),
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();

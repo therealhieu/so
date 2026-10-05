@@ -686,11 +686,11 @@ test("a side panel hidden on a narrow terminal does not catch clicks", async () 
   expect(cursorOf(m)).toEqual({ line: 3, col: 90 - first.x });
 });
 
-test("the wheel inside the zoom float scrolls a wide diagram", async () => {
+test("the wheel inside the zoom float scrolls a wide text diagram", async () => {
   m = await mountShell({
     cols: 80,
     rows: 24,
-    config: '[preview]\nmode = "reading"\n',
+    config: '[preview]\nmode = "reading"\nimages = "off"\n',
   });
   const flow = Array.from({ length: 12 }, (_, i) => `Step${i}`).join(" --> ");
   m.open("flow.md", `\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`);

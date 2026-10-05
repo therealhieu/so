@@ -53,6 +53,12 @@ function note(): AppState {
     .state;
 }
 
+/** `s` with `[preview] images = "off"`, where diagrams zoom as text. */
+const imagesOff = (s: AppState): AppState => ({
+  ...s,
+  config: { ...s.config, preview: { ...s.config.preview, images: "off" } },
+});
+
 const zoomOf = (s: AppState): ZoomState | undefined =>
   s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
 const message = (s: AppState) => s.notifications.message?.text;
@@ -73,10 +79,18 @@ test("a zoom shows the image or drawable diagram on a line of the reading view",
     path: "https://example.com/b.png?x=1",
     name: "b.png",
   });
-  const diagram = zoomTargetAt(s, 10);
-  expect(diagram?.kind).toBe("diagram");
-  if (diagram?.kind === "diagram")
-    expect(diagram.lines.join("\n")).toContain("│ Capture ├");
+  const drawn = zoomTargetAt(s, 10);
+  if (drawn?.kind !== "image" || drawn.diagram === undefined)
+    throw new Error("expected a diagram drawn as an image");
+  expect(drawn).toMatchObject({ name: "mermaid", level: 1 });
+  expect(drawn.path).toStartWith("mermaid:");
+  expect(drawn.diagram.svg.width).toBeGreaterThan(0);
+  expect(drawn.diagram.svg.svg).not.toContain("var(");
+  expect(drawn.diagram.lines.join("\n")).toContain("│ Capture ├");
+  const text = zoomTargetAt(imagesOff(s), 10);
+  expect(text?.kind).toBe("diagram");
+  if (text?.kind === "diagram")
+    expect(text.lines.join("\n")).toContain("│ Capture ├");
   expect(zoomTargetAt(s, 14)).toBeUndefined();
   expect(zoomTargetAt(s, 18)).toBeUndefined();
   expect(zoomTargetAt(keys(s, "<leader>m"), 2)).toBeUndefined();
@@ -125,7 +139,7 @@ test("zoom keys step the level, pan inside the image, reset, and close", () => {
 });
 
 test("a diagram scrolls within its lines and switches to the tight layout", () => {
-  let s = keys(note(), "10j<leader>z");
+  let s = keys(imagesOff(note()), "10j<leader>z");
   const loose = zoomOf(s);
   if (loose?.kind !== "diagram") throw new Error("expected a diagram");
   const { w } = zoomSize(s.terminal);

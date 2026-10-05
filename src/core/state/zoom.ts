@@ -5,7 +5,7 @@ import type { Doc } from "../lang/markdown/doc";
 import { blocksIn } from "../lang/markdown/live-preview";
 import { renderKey } from "../lang/markdown/render-key";
 import { baseName, isWebUrl } from "../lang/markdown/renderers/image";
-import { mermaidLines } from "../lang/markdown/renderers/mermaid";
+import { mermaidLines, mermaidSvg } from "../lang/markdown/renderers/mermaid";
 import { activeBuffer, activeWindow } from "./buffers";
 import type { CommandContext } from "./commands";
 import { message, none } from "./result";
@@ -55,6 +55,21 @@ export function zoomTargetAt(s: AppState, line: number): ZoomState | undefined {
     case "mermaid": {
       const source = fenceBody(b.text, block).join("\n");
       const lines = mermaidLines(source, "loose");
+      const svg =
+        s.config.preview.images === "off"
+          ? undefined
+          : mermaidSvg(source, s.config.theme);
+      if (svg !== undefined)
+        return {
+          kind: "image",
+          path: `mermaid:${block.hash}`,
+          name: "mermaid",
+          level: 1,
+          cx: 0.5,
+          cy: 0.5,
+          fill: { x: 1, y: 1 },
+          diagram: { svg, lines: lines ?? [] },
+        };
       return lines === undefined
         ? undefined
         : { kind: "diagram", source, spacing: "loose", lines, row: 0, col: 0 };

@@ -886,6 +886,11 @@ test("a vertical notch pans sideways when only that axis of the zoom float can m
     `\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`,
     freshDefaults(),
   );
+  // With images off a diagram zooms as text.
+  s = {
+    ...s,
+    config: { ...s.config, preview: { ...s.config.preview, images: "off" } },
+  };
   s = keys(s, "j<leader>z").state;
   expect(s.overlay.kind).toBe("zoom");
   const down = mouse(s, wheel({ kind: "overlay" }, 1)).state;

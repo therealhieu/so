@@ -18,6 +18,7 @@ import type {
   FrontmatterPatch,
   FrontmatterValue,
 } from "../lang/markdown/frontmatter-patch";
+import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
 
 export type BufferId = number;
@@ -206,6 +207,16 @@ export type Overlay =
  * float it covers at fit per axis (the UI measures it; 1 until then); a
  * diagram keeps its drawn lines and the first row and column on screen.
  */
+/** Part of an SVG drawn into a `width`×`height` pixel PNG over `background`. */
+export type SvgRaster = {
+  svg: string;
+  background: string;
+  /** The region of the SVG's user space to draw. */
+  crop: { x: number; y: number; w: number; h: number };
+  width: number;
+  height: number;
+};
+
 export type ZoomState =
   | {
       kind: "image";
@@ -215,6 +226,8 @@ export type ZoomState =
       cx: number;
       cy: number;
       fill: { x: number; y: number };
+      /** A diagram drawn as an image: its SVG, and its text drawing for when that cannot be drawn. */
+      diagram?: { svg: MermaidSvg; lines: string[] };
     }
   | {
       kind: "diagram";

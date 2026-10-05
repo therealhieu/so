@@ -53,6 +53,7 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   katex: ["src/preview/"],
   mermaid: ["src/preview/"],
   "toml-eslint-parser": ["src/core/config/"],
+  "@resvg/resvg-wasm": ["src/workspace/"],
 };
 
 const transpiler = new Bun.Transpiler({ loader: "ts" });
