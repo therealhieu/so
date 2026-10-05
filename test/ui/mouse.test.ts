@@ -2,8 +2,10 @@ import { afterEach, expect, test } from "bun:test";
 import { parseConfig } from "../../src/core/config/toml";
 import { baseWindow } from "../../src/core/state/base-model";
 import { activeBuffer } from "../../src/core/state/buffers";
+import { CommandLine } from "../../src/ui/views/cmdline";
 import { indexed, TASKS_BASE } from "../support/bases";
 import { indexFixture } from "../support/notes";
+import { testRegistries } from "../support/state";
 import { type Mounted, mountShell } from "../support/ui";
 
 let m: Mounted | undefined;
@@ -452,4 +454,81 @@ test("the wheel over a toast does nothing and a click there reaches the window",
   await m.mouse.click(toast.x + 2, toast.y);
   expect(cursorOf(m)?.line).toBe(toast.y - 1);
   expect(scroll()).toBe(0);
+});
+
+test("with the command line open its row, the status row, and its completions take no click", async () => {
+  const reg = testRegistries();
+  m = await mountShell({ cols: 120, rows: 24, reg });
+  m.keys("<leader>e");
+  m.open("a.md", "alpha\nbravo\ncharlie\n");
+  m.keys(":wr");
+  const typing = () => {
+    const s = m?.store.get();
+    return s && { mode: s.vim.mode, line: s.vim.cmdline };
+  };
+  const before = typing();
+  expect(before?.mode).toBe("cmdline");
+  const item = await find(m, ":write");
+  expect(item.y).toBeGreaterThan(0);
+  expect(item.y).toBeLessThan(22);
+
+  for (const [x, y] of [
+    [10, 23],
+    [60, 22],
+    [item.x + 2, item.y],
+  ] as const) {
+    await m.mouse.click(x, y);
+    expect(typing()).toEqual(before);
+  }
+  // Nothing lies under the command row, so ask the view itself: its row and
+  // float are inert, and a cell beside the float is left to the body.
+  const line = new CommandLine(m.t.renderer, { reg });
+  line.update(m.store.get(), "wide");
+  expect(line.targetAt(10, 23)).toEqual({ kind: "inert" });
+  expect(line.targetAt(item.x + 2, item.y)).toEqual({ kind: "inert" });
+  expect(line.targetAt(119, item.y)).toBeUndefined();
+  const bravo = await find(m, "bravo");
+  await m.mouse.click(bravo.x + 1, bravo.y);
+  expect(typing()?.mode).toBe("normal");
+  expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
+});
+
+test("the bufferline scroll markers take no click", async () => {
+  m = await mountShell({ cols: 60, rows: 12 });
+  for (let i = 1; i <= 8; i++) m.open(`note-number-${i}.md`, `${i}\n`);
+  m.keys(":bp<CR>:bp<CR>:bp<CR>:bp<CR>");
+  const shown = () => {
+    const s = m?.store.get();
+    return s && activeBuffer(s)?.path;
+  };
+  const active = shown();
+  const row = (await m.frame()).split("\n")[0] ?? "";
+  expect(row.startsWith("‹")).toBe(true);
+  const right = [...row].indexOf("›");
+  expect(right).toBeGreaterThan(0);
+  await m.mouse.click(0, 0);
+  expect(shown()).toBe(active);
+  await m.mouse.click(right, 0);
+  expect(shown()).toBe(active);
+});
+
+test("a side panel hidden on a narrow terminal does not catch clicks", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.keys("<leader>e");
+  const line = "x".repeat(90);
+  m.open("plan.md", `# Plan\n\n${line}\n${line}\n${line}\n`);
+  m.keys("<leader>o");
+  expect(m.store.get().panels.side).toMatchObject({
+    open: true,
+    focused: true,
+  });
+  // 99 columns is narrow; the panel docked at 120 sat from column 83.
+  m.t.resize(99, 16);
+  m.store.dispatch({ type: "resize", cols: 99, rows: 16 });
+  const first = await find(m, line, 1);
+  expect(first.y).toBeGreaterThan(0);
+  await m.mouse.click(90, first.y + 1);
+  const after = m.store.get();
+  expect(after.panels.side).toMatchObject({ open: true, focused: false });
+  expect(cursorOf(m)).toEqual({ line: 3, col: 90 - first.x });
 });
