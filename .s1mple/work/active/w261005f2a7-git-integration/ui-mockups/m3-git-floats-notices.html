@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M3 Hunk preview, notices and lazygit</title>
+<link rel="stylesheet" href="shared/terminal.css"><link rel="stylesheet" href="shared/git.css">
+<script src="shared/term.js"></script><script src="shared/content.js"></script><script src="shared/git.js"></script></head>
+<body><script>
+(function () {
+  const G = Mock.git;
+  const at = (a, l) => { a.win.st.cur = { l, c: 0 }; };
+  const wk = (a, path) => { a.leader = { path }; a.wk = true; };
+  G.mock({
+    id: "W261005F2A7-M3", rev: "R1", title: "M3 · Hunk preview, notices, lazygit", path: "m3-git-floats-notices.html",
+    windowTitle: "so — ~/notes (git: main)",
+    subtitle: "The hunk preview float, the +git / +hunk which-key groups, blame and every Git notice on the message line, and the full-screen lazygit hand-off.",
+    keys: [["Space g", "which-key +git"], ["Space g g", "save, then lazygit full screen (q returns)"], ["Space g h p", "preview hunk"], ["Esc q", "close the preview (or click outside it)"], ["Space g h b", "blame cursor line"], ["] h [ h", "next / previous hunk"]],
+    notes: "Notices use the existing one-row message line: dim for information, red (plain in NO_COLOR) for errors, cleared by the next key. Wording follows the system design. The preview float opens under the cursor line, shows the index lines it replaces as <code>-</code> and the buffer lines as <code>+</code>, and caps long hunks.",
+    states: [
+      { id: "S1", group: "Hunk preview", label: "Changed + deleted hunk", caption: "Space g h p on the Notes line: the float lists the three index lines (<code>-</code>, red background) and the one buffer line (<code>+</code>, green background). The header names the kind, the buffer range, and <code>hunk 3/4</code>. The <code>-</code>/<code>+</code> prefixes carry the meaning in NO_COLOR.", refs: "REQ4@R2 (preview), DES11",
+        apply: (a) => { at(a, 31); G.run.preview(a); } },
+      { id: "S2", group: "Hunk preview", label: "Pure delete hunk", caption: "On the <code>_</code> line, the preview shows only the removed index line and <code>after line 35</code> as its position.", refs: "REQ4@R2, DES11",
+        apply: (a) => { at(a, 34); G.run.preview(a); } },
+      { id: "S3", group: "Hunk preview", label: "Long hunk (capped)", caption: "A 22-line added hunk: the float shows the first 12 diff lines and <code>… 10 more lines (0 removed, 22 added)</code>. Height never exceeds the editor area; at 80×24 the cap is 8.", refs: "REQ4@R2, DES11; UI context unknown: size limit",
+        apply: (a) => { a.edits["projects/so-roadmap.md"] = G.longEdits(); G.sync(a); at(a, a.d.hunks[0].first); G.run.preview(a); } },
+      { id: "S4", group: "Hunk preview", label: "Preview at 80×24", caption: "Narrow terminal: the float spans the editor width and caps at 8 lines.", refs: "DES11",
+        apply: (a) => { a.cols = 80; a.rows = 24; a.explorer = false; at(a, 31); G.run.preview(a); } },
+      { id: "S5", group: "Keys", label: "Which-key: Space g", caption: "Space g opens the <code>+git</code> group: <code>g</code> Lazygit and the <code>+hunk</code> subgroup.", refs: "DES11 (gitGroups)",
+        apply: (a) => wk(a, ["g"]) },
+      { id: "S6", group: "Keys", label: "Which-key: Space g h", caption: "<code>+hunk</code>: s stage, r reset, p preview, b blame. <code>]h</code> / <code>[h</code> are plain Normal-mode keys and not in the leader tree.", refs: "DES11 (gitBindings)",
+        apply: (a) => wk(a, ["g", "h"]) },
+      { id: "S7", group: "Blame", label: "Blame a committed line", caption: "Space g h b on an unchanged line: <code>hieu, 2 days ago · plan the git integration (3f2a9c1)</code> on the message line. Nothing is added inline, so the layout does not move.", refs: "REQ4@R2 (blame), DES11",
+        apply: (a) => { at(a, 13); G.run.blame(a); } },
+      { id: "S8", group: "Blame", label: "Blame an uncommitted line", caption: "On an added line (or anywhere in an untracked file, or a repository with no commits): <code>not committed yet</code>, without an error.", refs: "REQ4@R2 (not committed yet), RF13",
+        apply: (a) => { at(a, 17); G.run.blame(a); } },
+      { id: "S9", group: "Notices", label: "Tool not found", caption: "Space g g when <code>lazygit</code> is not on PATH: <code>lazygit not found (git.tool)</code>. so is not suspended and the screen does not flicker.", refs: "REQ3@R1, DES9",
+        apply: (a) => { a.toolMissing = true; G.run.tool(a); } },
+      { id: "S10", group: "Notices", label: "Not a git repository", caption: "Any Git command outside a repository: <code>not a git repository</code>. No signs, segment, or markers are shown in this state.", refs: "REQ3@R1, REQ7@R2",
+        apply: (a) => { a.repo = null; G.sync(a); G.run.tool(a); } },
+      { id: "S11", group: "Notices", label: "Stage refused in a conflicted file", caption: "In <code>people/linh.md</code> (conflict markers in the text, <code>U</code> in the explorer), Space g h s shows <code>people/linh.md has conflicts; resolve them in lazygit</code>. Stage never touches an unmerged file.", refs: "REQ1@R2 (conflict refusal)",
+        apply: (a) => { a.path = "people/linh.md"; a.treeSel = 11; G.sync(a); at(a, 3); G.run.stage(a); } },
+      { id: "S12", group: "Notices", label: "Index changed under so", caption: "Another tool changed the index between refresh and stage, so the oid check fails: <code>index changed; hunks refreshed</code> (yellow; plain in NO_COLOR). The user re-stages.", refs: "REQ1@R2 (oid guard)",
+        apply: (a) => { a.stale = true; at(a, 17); G.run.stage(a); } },
+      { id: "S13", group: "Notices", label: "Save failed before lazygit", caption: "A dirty buffer could not be written, so lazygit is not started: <code>git tool not started: projects/so-roadmap.md could not be saved</code>.", refs: "REQ8@R1",
+        apply: (a) => { a.dirty = true; a.saveFail = true; G.run.tool(a); } },
+      { id: "S14", group: "Notices", label: "Git older than 2.31", caption: "Shown once at startup: <code>git 2.20.1 is older than 2.31; git features off</code>. All Git UI stays off for the session.", refs: "REQ7@R2, DES8",
+        apply: (a) => { a.repo = null; G.sync(a); a.msg = G.msg.warn("git 2.20.1 is older than 2.31; git features off"); } },
+      { id: "S15", group: "Notices", label: "Busy", caption: "A second Git command while one is pending: <code>busy</code>.", refs: "DES9 (one pending operation)",
+        apply: (a) => { a.busy = true; G.run.tool(a); } },
+      { id: "S16", group: "Hand-off", label: "Space g g with unsaved edits", caption: "Step 1: the dirty buffer is written first (<code>\"…\" written · opening lazygit</code>), then so suspends. Wait a moment and lazygit takes the screen.", refs: "REQ8@R1, REQ2@R2",
+        apply: (a) => { a.dirty = true; at(a, 17); setTimeout(() => { if (Mock.app().stateId === "S16") { G.run.tool(Mock.app()); Mock.render(); } }, 400); } },
+      { id: "S17", group: "Hand-off", label: "lazygit full screen", caption: "so is suspended: lazygit owns the whole terminal (stand-in drawing; the real program looks like itself). so paints nothing until lazygit exits. Press <code>q</code> to return.", refs: "REQ2@R2, DES9",
+        apply: (a) => { a.screen = "lazygit"; } },
+      { id: "S18", group: "Hand-off", label: "Back in so", caption: "After <code>q</code>, so resumes on the same screen: same buffer, cursor, and layout. Git state refreshes, so changes made in lazygit (here: the frontmatter hunk was staged) show at once.", refs: "REQ2@R2, REQ6@R2",
+        apply: (a) => { a.edits["projects/so-roadmap.md"][0].staged = true; G.sync(a); at(a, 17); } },
+    ],
+  });
+})();
+</script></body></html>

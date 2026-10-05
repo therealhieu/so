@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>so · M2 Explorer Git markers</title>
+<link rel="stylesheet" href="shared/terminal.css"><link rel="stylesheet" href="shared/git.css">
+<script src="shared/term.js"></script><script src="shared/content.js"></script><script src="shared/git.js"></script></head>
+<body><script>
+(function () {
+  const G = Mock.git;
+  const focus = (a, sel) => { a.treeFocus = true; a.treeSel = sel; };
+  G.mock({
+    id: "W261005F2A7-M2", rev: "R1", title: "M2 · Explorer: Git markers", path: "m2-explorer-git.html",
+    windowTitle: "so — ~/notes (git: main)",
+    subtitle: "One-cell file markers for modified, staged, untracked, deleted, and conflicted files, plus folders that contain changes.",
+    extraControls: [{ label: "Marker position", options: [["after", "after name"], ["right", "right-aligned"]], get: () => G.markerAlign, set: (_, v) => (G.markerAlign = v) }],
+    keys: [["j k", "move in the explorer"], ["Enter l", "open a file / fold projects/ideas"], ["Esc q", "back to the editor"], ["Ctrl-h", "focus the explorer from the editor"]],
+    notes: "Markers: <b>M</b> modified · <b>S</b> staged · <b>?</b> untracked · <b>D</b> deleted · <b>U</b> conflict · <b>•</b> folder contains changes. One marker per row by precedence conflict &gt; deleted &gt; untracked &gt; modified &gt; staged. Each is a distinct glyph, so NO_COLOR keeps every state; colour only adds emphasis. The marker follows the unsaved <code>●</code>. Try the <b>Marker position</b> control.",
+    states: [
+      { id: "S1", group: "Markers", label: "Every marker kind", caption: "The tree shows each state once: <code>2026-10-02.md S</code> staged, <code>2026-10-03.md D</code> deleted (a struck-through ghost row kept where the file was), <code>so-roadmap.md M</code> modified, <code>ideas.md ?</code> and <code>kanban.md ?</code> untracked inside a new folder, <code>linh.md U</code> conflicted, and <code>•</code> on every folder that contains a change.", refs: "REQ4@R2 (explorer), DES10",
+        apply: (a) => { focus(a, 5); } },
+      { id: "S2", group: "Markers", label: "Right-aligned markers", caption: "The same tree with markers in a right-hand column. Easier to scan down; costs nothing in width because the explorer is fixed at 30 columns. Compare with S1 (marker right after the name).", refs: "UI context unknown: marker position",
+        apply: (a) => { focus(a, 5); G.markerAlign = "right"; } },
+      { id: "S3", group: "Markers", label: "Collapsed new folder", caption: "With <code>projects/ideas</code> collapsed, its untracked files are hidden and the folder shows only <code>•</code>. Press Enter on it to expand: each file then shows its own <code>?</code> (per-file untracked, not one folder-level mark).", refs: "REQ4@R2 (untracked per file in new folders), RF9",
+        apply: (a) => { a.ideasOpen = false; focus(a, 7); } },
+      { id: "S4", group: "Markers", label: "Unsaved and modified", caption: "<code>so-roadmap.md ● M</code>: the dirty dot (unsaved in so) and the Git marker (differs from the index on disk) are separate facts and both show, dot first.", refs: "REQ4@R2, DES10",
+        apply: (a) => { a.dirty = true; focus(a, 5); } },
+      { id: "S5", group: "Markers", label: "Selected conflict row", caption: "The selection reverses the row (inverted in NO_COLOR); <code>U</code> stays readable inside it. Enter opens the file; stage is refused there (see M3 S11).", refs: "REQ1@R2 (conflict refusal), REQ4@R2",
+        apply: (a) => { focus(a, 11); } },
+      { id: "S6", group: "Markers", label: "Deleted file row", caption: "<code>2026-10-03.md</code> was deleted from disk but is still tracked. It stays as a dim struck-through row with <code>D</code> so the deletion is visible; Enter only explains it. Open question: whether the explorer should list such ghost rows at all, or only mark the folder.", refs: "REQ4@R2 (deleted)",
+        apply: (a) => { focus(a, 3); } },
+      { id: "S7", group: "Responsive", label: "Narrow 80×24 (floating explorer)", caption: "At 80 columns the explorer floats over the editor (v1 rule). Markers render the same way inside the float.", refs: "REQ4@R2, v1 responsive rule",
+        apply: (a) => { a.cols = 80; a.rows = 24; focus(a, 5); } },
+      { id: "S8", group: "No repository", label: "Outside a repository", caption: "No markers and no ghost rows: the tree matches v1.", refs: "REQ4@R2, DES10 invariant",
+        apply: (a) => { a.repo = null; G.sync(a); focus(a, 5); } },
+    ],
+  });
+  // marker position is a view control; states other than S2 start from "after name"
+  const go = Mock.go;
+  Mock.go = (id) => { if (id !== "S2") G.markerAlign = "after"; go(id); };
+})();
+</script></body></html>
