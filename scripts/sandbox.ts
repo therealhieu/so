@@ -1,92 +1,156 @@
-// Launches so on a demo vault staged from the test fixtures, with config and
-// state isolated under .sandbox/. The vault persists between runs; `--reset`
-// restages it. Other arguments go to so.
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+// Launches so on a sandbox profile: a named demo vault staged under
+// .sandbox/<profile>/, with its own config and state. A vault persists between
+// runs; `--reset` restages it. `--list` names the profiles, `--journeys` prints
+// a profile's manual checks. Other arguments go to so.
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import type { Profile } from "./sandbox/profile";
+import { DEFAULT_PROFILE, PROFILES } from "./sandbox/profiles";
 
-const root = join(import.meta.dir, "..");
-const sandbox = join(root, ".sandbox");
-const vault = join(sandbox, "vault");
-const fixtures = join(root, "test/fixtures");
-const SKIP = new Set([
-  "node_modules",
-  "build",
-  "nul-at-100.bin",
-  "invalid-utf8.txt",
-]);
+type SandboxArgs = {
+  profile: string;
+  reset: boolean;
+  list: boolean;
+  journeys: boolean;
+  /** Arguments for so, in their original order. */
+  passthrough: string[];
+};
 
-const ROADMAP = `---
-title: so roadmap
-tags: [so, planning]
----
-# so roadmap
-
-## Goals
-
-- Fast, vim-modal Markdown notes in the terminal
-- Obsidian-compatible links, daily notes, templates, Bases
-- A read-only browser preview
-
-## Phases
-
-1. Daily-usable editor — see [[tour]]
-2. Obsidian experience — [[tasks/inbox]]
-`;
-
-/** Local `YYYY-MM-DD` for `daysAgo` days before today. */
-function localDay(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function stage(): void {
-  cpSync(join(fixtures, "workspace"), vault, {
-    recursive: true,
-    filter: (src) => !SKIP.has(basename(src)),
-  });
-  cpSync(join(fixtures, "tour.md"), join(vault, "tour.md"));
-  for (const png of new Bun.Glob("*.png").scanSync(join(fixtures, "images")))
-    cpSync(join(fixtures, "images", png), join(vault, png));
-  writeFileSync(join(vault, "so-roadmap.md"), ROADMAP);
-  // Today is left out so `:daily` can create it from the template.
-  mkdirSync(join(vault, "daily"), { recursive: true });
-  for (const daysAgo of [1, 2, 5]) {
-    const day = localDay(daysAgo);
-    writeFileSync(
-      join(vault, "daily", `${day}.md`),
-      `# ${day}\n\n- [ ] Review the [[tour]]\n`,
-    );
+/** Sandbox flags out of `argv`; everything else is left for so. Throws on a bad flag. */
+export function parseSandboxArgs(argv: readonly string[]): SandboxArgs {
+  const args: SandboxArgs = {
+    profile: DEFAULT_PROFILE,
+    reset: false,
+    list: false,
+    journeys: false,
+    passthrough: [],
+  };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i] as string;
+    // A `--` separator is dropped, as `bun run` does.
+    if (a === "--") continue;
+    if (a === "--reset") args.reset = true;
+    else if (a === "--list") args.list = true;
+    else if (a === "--journeys") args.journeys = true;
+    else if (a.startsWith("--profile=")) args.profile = a.slice(10);
+    else if (a === "--profile") {
+      const name = argv[++i];
+      if (name === undefined || name.startsWith("-"))
+        throw new Error("--profile needs a name");
+      args.profile = name;
+    } else args.passthrough.push(a);
   }
+  if (args.profile === "") throw new Error("--profile needs a name");
+  return args;
 }
 
-// `bun run` drops a `--` separator, so every argument except `--reset` goes to so.
-const argv = process.argv.slice(2).filter((a) => a !== "--");
-const reset = argv.includes("--reset");
-const passthrough = argv.filter((a) => a !== "--reset");
+/** Where a profile lives: the vault, so's config and state, and the staged marker. */
+export function profilePaths(sandbox: string, name: string) {
+  const dir = join(sandbox, name);
+  return {
+    dir,
+    vault: join(dir, "vault"),
+    xdgConfig: join(dir, "xdg/config"),
+    xdgState: join(dir, "xdg/state"),
+    config: join(dir, "xdg/config/so/config.toml"),
+    staged: join(dir, ".staged"),
+  };
+}
 
-if (reset) rmSync(sandbox, { recursive: true, force: true });
-if (!existsSync(vault)) stage();
-const xdgConfig = join(sandbox, "xdg/config");
-const xdgState = join(sandbox, "xdg/state");
-mkdirSync(xdgConfig, { recursive: true });
-mkdirSync(xdgState, { recursive: true });
+/**
+ * Stage `profile` unless a complete stage exists. The marker is written last,
+ * so an interrupted stage is redone from scratch on the next run.
+ */
+export async function ensureStaged(
+  profile: Profile,
+  paths: ReturnType<typeof profilePaths>,
+): Promise<void> {
+  if (existsSync(paths.staged)) return;
+  rmSync(paths.dir, { recursive: true, force: true });
+  mkdirSync(paths.vault, { recursive: true });
+  mkdirSync(join(paths.xdgConfig, "so"), { recursive: true });
+  mkdirSync(paths.xdgState, { recursive: true });
+  await profile.stage(paths.vault);
+  if (profile.config !== undefined) writeFileSync(paths.config, profile.config);
+  writeFileSync(paths.staged, "");
+}
 
-console.error("sandbox: .sandbox/vault (--reset to restage)");
-const proc = Bun.spawn(
-  [process.execPath, "src/app/main.ts", vault, ...passthrough],
-  {
-    cwd: root,
-    stdio: ["inherit", "inherit", "inherit"],
-    env: {
-      ...process.env,
-      XDG_CONFIG_HOME: xdgConfig,
-      XDG_STATE_HOME: xdgState,
+function formatList(): string {
+  const width = Math.max(...PROFILES.map((p) => p.name.length));
+  return PROFILES.map(
+    (p) =>
+      `  ${p.name.padEnd(width)}  ${p.summary}${p.name === DEFAULT_PROFILE ? " (default)" : ""}`,
+  ).join("\n");
+}
+
+function formatJourneys(profile: Profile): string {
+  return profile.journeys
+    .map((j, n) =>
+      [
+        `${n + 1}. ${j.title}`,
+        ...j.steps.map((s) => `   - ${s}`),
+        ...j.expect.map((e) => `   ✓ ${e}`),
+      ].join("\n"),
+    )
+    .join("\n\n");
+}
+
+async function main(): Promise<number> {
+  let args: SandboxArgs;
+  try {
+    args = parseSandboxArgs(process.argv.slice(2));
+  } catch (e) {
+    console.error(
+      `sandbox: ${(e as Error).message}\nprofiles:\n${formatList()}`,
+    );
+    return 2;
+  }
+  if (args.list) {
+    console.log(formatList());
+    return 0;
+  }
+  const profile = PROFILES.find((p) => p.name === args.profile);
+  if (profile === undefined) {
+    console.error(
+      `sandbox: unknown profile "${args.profile}"\nprofiles:\n${formatList()}`,
+    );
+    return 2;
+  }
+  if (args.journeys) {
+    console.log(
+      `${profile.name} — ${profile.summary}\n\n${formatJourneys(profile)}`,
+    );
+    return 0;
+  }
+
+  const root = join(import.meta.dir, "..");
+  const paths = profilePaths(join(root, ".sandbox"), profile.name);
+  if (args.reset) rmSync(paths.dir, { recursive: true, force: true });
+  await ensureStaged(profile, paths);
+
+  const rel = (p: string) => relative(root, p);
+  console.error(
+    `sandbox: ${profile.name} → ${rel(paths.vault)} · config ${rel(paths.config)}\n` +
+      `  --journeys for the checks, --reset to restage`,
+  );
+  const proc = Bun.spawn(
+    [process.execPath, "src/app/main.ts", paths.vault, ...args.passthrough],
+    {
+      cwd: root,
+      stdio: ["inherit", "inherit", "inherit"],
+      env: {
+        ...process.env,
+        XDG_CONFIG_HOME: paths.xdgConfig,
+        XDG_STATE_HOME: paths.xdgState,
+        // Git stops at the profile folder instead of finding this repository.
+        GIT_CEILING_DIRECTORIES: paths.dir,
+      },
     },
-  },
-);
-// so is a grandchild of the terminal; pass on signals the wrapper receives.
-for (const signal of ["SIGHUP", "SIGTERM"] as const)
-  process.on(signal, () => proc.kill(signal));
-process.exit(await proc.exited);
+  );
+  // so is a grandchild of the terminal; pass on signals the wrapper receives.
+  for (const signal of ["SIGHUP", "SIGTERM"] as const)
+    process.on(signal, () => proc.kill(signal));
+  return await proc.exited;
+}
+
+if (import.meta.main) process.exit(await main());
