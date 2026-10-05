@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`
+- **Goal:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -67,7 +67,7 @@ Remaining issues: None. `runTool` stays a no-op until `P2-G2-T4`, as the plan sa
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g1-verification-report.md` (commit `8400e88`, status `Failed`, one finding)
+- **Verification reports:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g1-verification-report.md` (commit `8400e88`, status `Failed`, one finding)
 - **Status:** `Completed`
 
 The one finding is fixed. `stage` now reads the index entry before either path and returns `"stale"` when an untracked file has gained an entry. Both non-blocking coverage gaps are closed with tests in the existing suites. Remediation range: `8400e88..1f47793`.
@@ -89,7 +89,7 @@ The one finding is fixed. `stage` now reads the index entry before either path a
 
 ### Overall Remediation
 
-- **Verification report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/overall-verification-report.md` (commit `f9c5b9b`, status `Failed`, one finding `OVR-VER1`, owner `P2-G1`)
+- **Verification report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/overall-verification-report.md` (commit `f9c5b9b`, status `Failed`, one finding `OVR-VER1`, owner `P2-G1`)
 - **Status:** `Completed`
 
 `OVR-VER1` is fixed. `bunGitSpawn` decoded Git output with `Response.text()`, which drops a leading UTF-8 BOM, so `readIndex` handed BOM-free blob text to `normalizeIndexText` and `bom` was always `false`. Git stdout and stderr are now decoded with `new TextDecoder("utf-8", { ignoreBOM: true })`, the same choice as the file adapter (`src/workspace/fs.ts:76`). Remediation range: `f9c5b9b..ddfff98`.

@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G1`
 - **Tasks:** `P2-G1-T1`, `P2-G1-T2`, `P2-G1-T3`, `P2-G1-T4`, `P2-G1-T5`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g1-implementation-report.md` (report commit `c3467b4`; change range `0497871..c2f2247`, 12 files)
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g1-implementation-report.md` (report commit `c3467b4`; change range `0497871..c2f2247`, 12 files)
 
 ## Status
 

@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-3-ui-and-delivery.md`
+- **Goal:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-3-ui-and-delivery.md`
 - **Group:** `P3-G1`
 - **Tasks:** `P3-G1-T1`, `P3-G1-T2`, `P3-G1-T3`, `P3-G1-T4`, `P3-G1-T5`, `P3-G1-T6`, `P3-G1-T7` (`P3-G1-T8` not assigned)
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p3-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p3-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -83,7 +83,7 @@ All checks used a throwaway repo in the session scratchpad (`note.md` with an em
 
 ## Remediation
 
-- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p3-g1-verification-report.md` (commit `9c65aa0`, status `Failed`, one Minor finding)
+- **Verification reports:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p3-g1-verification-report.md` (commit `9c65aa0`, status `Failed`, one Minor finding)
 - **Status:** `Completed`
 
 ### Finding Closure

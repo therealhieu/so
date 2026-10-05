@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`
+- **Goal:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`
 - **Group:** `P2-G2`
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g2-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -65,7 +65,7 @@ Remaining issues: None. PTY e2e `V50` and the manual image check `V61` belong to
 
 The one verifier finding, `P2-G2-VER1`, is fixed in `1858b88`. Every restore step in the tool host now runs on its own, so a throw from the foreign-mode write or from `resume` cannot leave so suspended with interrupts held.
 
-- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g2-verification-report.md` (commit `1695ded`, status `Failed`, one Minor finding). That report and its verdict are unchanged.
+- **Verification reports:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g2-verification-report.md` (commit `1695ded`, status `Failed`, one Minor finding). That report and its verdict are unchanged.
 - **Status:** `Completed`
 
 ### Finding Closure

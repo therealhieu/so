@@ -2,11 +2,11 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-goal.md`
-- **Plan Part:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-1-core.md`
+- **Goal:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-goal.md`
+- **Plan Part:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-1-core.md`
 - **Group:** `P1-G1` — git algorithms and change-sign channel
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`, `P1-G1-T7`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g1-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g1-implementation-report.md`
 
 Report commit SHAs are returned to the orchestrator and recorded in the execution goal; they are not written into this file because doing so would require a self-referential follow-up commit.
 
@@ -65,7 +65,7 @@ Remaining issues: None.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g1-verification-report.md` (commit `f38b422`, status `Failed`, one finding)
+- **Verification reports:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g1-verification-report.md` (commit `f38b422`, status `Failed`, one finding)
 - **Status:** `Completed`
 
 ### Finding Closure

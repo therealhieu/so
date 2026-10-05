@@ -6,14 +6,14 @@
 
 ## Sources
 
-- Plan context: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
-- System design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-system-design.md`
-- UI design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (mockups `ui-mockups/`, manifest `Accepted`)
-- System requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-requirements.md`
-- UI requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
-- Research: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-research.md`
-- Discussion context: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-discuss-context.md`
-- UI context: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-context.md`
+- Plan context: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
+- System design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-system-design.md`
+- UI design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (mockups `ui-mockups/`, manifest `Accepted`)
+- System requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-requirements.md`
+- UI requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
+- Research: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-research.md`
+- Discussion context: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-discuss-context.md`
+- UI context: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-context.md`
 
 ## Roadmap Contract
 

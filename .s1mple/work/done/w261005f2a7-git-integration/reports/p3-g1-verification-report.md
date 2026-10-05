@@ -4,8 +4,8 @@
 
 - **Group:** `P3-G1`
 - **Tasks:** `P3-G1-T1`, `P3-G1-T2`, `P3-G1-T3`, `P3-G1-T4`, `P3-G1-T5`, `P3-G1-T6`, `P3-G1-T7` (`P3-G1-T8` is not part of this verification; see Unverified Items)
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p3-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p3-g1-implementation-report.md` (commits `8dc0816`, `0020d5d`); change range `4b8834f..e1d4b23`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p3-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p3-g1-implementation-report.md` (commits `8dc0816`, `0020d5d`); change range `4b8834f..e1d4b23`
 
 ## Status
 

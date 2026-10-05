@@ -15,12 +15,12 @@ Every Git decision exists in pure core and is proven by unit tests: hunks, index
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
-- Plan context: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
-- System design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-system-design.md`
-- UI design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-design.md`
-- System requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-requirements.md`
-- UI requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
+- Plan index: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
+- Plan context: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
+- System design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-system-design.md`
+- UI design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-design.md`
+- System requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-requirements.md`
+- UI requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
 
 ## Dependencies
 

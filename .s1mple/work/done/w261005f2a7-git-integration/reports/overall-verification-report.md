@@ -2,10 +2,10 @@
 
 ## Scope
 
-- **Goal:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-goal.md`
-- **Plan Index:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
-- **Plan Parts:** `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-1-core.md`, `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`, `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-3-ui-and-delivery.md`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/overall-verification-report.md`
+- **Goal:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-goal.md`
+- **Plan Index:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
+- **Plan Parts:** `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-1-core.md`, `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-2-adapters-and-handoff.md`, `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-3-ui-and-delivery.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/overall-verification-report.md`
 
 Verified at local HEAD `3caacd9` (branch `feat/w261005f2a7-git-integration`; the pushed PR head is `d5378b8`, and `3caacd9` adds only a goal-document commit). Change range `6e3eba5..3caacd9`.
 

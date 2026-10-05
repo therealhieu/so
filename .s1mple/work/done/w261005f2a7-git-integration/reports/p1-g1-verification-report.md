@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G1` — git algorithms and change-sign channel
 - **Tasks:** `P1-G1-T1`, `P1-G1-T2`, `P1-G1-T3`, `P1-G1-T4`, `P1-G1-T5`, `P1-G1-T6`, `P1-G1-T7`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g1-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g1-implementation-report.md` (report commit `1445ceb`; change range `6e3eba5..0c4d9f9`, commits `9d0c701`, `2e8e0d0`, `568ec51`, `d40c9ea`, `7f4a5da`, `1cce9a3`, `0c4d9f9`)
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g1-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g1-implementation-report.md` (report commit `1445ceb`; change range `6e3eba5..0c4d9f9`, commits `9d0c701`, `2e8e0d0`, `568ec51`, `d40c9ea`, `7f4a5da`, `1cce9a3`, `0c4d9f9`)
 
 ## Status
 

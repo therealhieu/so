@@ -4,8 +4,8 @@
 
 - **Group:** `P2-G2`
 - **Tasks:** `P2-G2-T1`, `P2-G2-T2`, `P2-G2-T3`, `P2-G2-T4`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g2-implementation-report.md`
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p2-g2-implementation-report.md`
 
 Verified range: `ac457af..03f421d` (commits `20d68f2`, `5f94619`, `a56003b`, `03f421d`; 12 files). Verified at HEAD `8e90b6a`.
 

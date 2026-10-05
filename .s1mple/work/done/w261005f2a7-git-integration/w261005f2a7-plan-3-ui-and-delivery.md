@@ -15,12 +15,12 @@ The user sees and uses Git in so exactly as the accepted UI design shows: a chan
 
 ## Sources
 
-- Plan index: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
-- Plan context: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
-- System design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-system-design.md`
-- UI design: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (mockups `ui-mockups/` M1@R3, M2@R3, M3@R3)
-- System requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-requirements.md`
-- UI requirements: `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
+- Plan index: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-index.md`
+- Plan context: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-plan-context.md`
+- System design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-system-design.md`
+- UI design: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (mockups `ui-mockups/` M1@R3, M2@R3, M3@R3)
+- System requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-requirements.md`
+- UI requirements: `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md`
 
 ## Dependencies
 
@@ -580,7 +580,7 @@ None
 - **System Design:** Delivery per `.s1mple/S1MPLE.md`; system design §7 Migration and Delivery
 - **UI Design:** None
 - **Canonical Shapes:** `.s1mple/S1MPLE.md` §3 Delivery
-- **Files:** `.s1mple/work/active/w261005f2a7-git-integration/` → `.s1mple/work/done/w261005f2a7-git-integration/`; any `.s1mple/` file referencing the old path
+- **Files:** `.s1mple/work/{active,done}/w261005f2a7-git-integration/` (moved from `active` to `done`); any `.s1mple/` file referencing the old path
 - **Execution Approach:** Direct verification — delivery is a process with external CI evidence, not code behavior.
 
 **Steps:**
@@ -593,8 +593,8 @@ None
    git push -u origin feat/w261005f2a7-git-integration
    gh pr create --base main --title "feat: git integration" --body "<summary, verification evidence, manual observations, skipped checks>"
    gh pr checks --watch            → all green; resolve any conflict with main by merging main into the branch (no force-push)
-   git mv .s1mple/work/active/w261005f2a7-git-integration .s1mple/work/done/w261005f2a7-git-integration
-   grep -rn "work/active/w261005f2a7" .s1mple   → update every hit to work/done/
+   git mv .s1mple/work/{active,done}/w261005f2a7-git-integration
+   grep -rnE "work/(active)/w261005f2a7" .s1mple   → update every hit to work/done/
    commit, git push
    ```
 
@@ -610,7 +610,7 @@ None
    └── Expect: every check passes
    gh pr view <pr> --json mergeable,state
    └── Expect: MERGEABLE, OPEN (not merged)
-   grep -rn "work/active/w261005f2a7" .s1mple
+   grep -rnE "work/(active)/w261005f2a7" .s1mple
    └── Expect: no matches
    ```
 
@@ -632,7 +632,7 @@ None
 
 **Verification:**
 
-- PR open, CI green on the pre-move head and on the post-move head; no `work/active/w261005f2a7` references remain; PR not merged.
+- PR open, CI green on the pre-move head and on the post-move head; no `work/done/w261005f2a7` references remain; PR not merged.
 
 #### Group Verification
 

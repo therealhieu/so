@@ -4,8 +4,8 @@
 
 - **Group:** `P1-G2` — git state, reducers, and commands
 - **Tasks:** `P1-G2-T1`, `P1-G2-T2`, `P1-G2-T3`, `P1-G2-T4`, `P1-G2-T5`, `P1-G2-T6`
-- **Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g2-verification-report.md`
-- **Implementation Report:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p1-g2-implementation-report.md` (report commit `7638c2a`; change range `41dad6b..a75e377`)
+- **Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g2-verification-report.md`
+- **Implementation Report:** `.s1mple/work/done/w261005f2a7-git-integration/reports/p1-g2-implementation-report.md` (report commit `7638c2a`; change range `41dad6b..a75e377`)
 
 ## Status
 

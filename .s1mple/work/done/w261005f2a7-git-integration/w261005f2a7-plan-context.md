@@ -10,13 +10,13 @@
 |---|---|---|
 | s1mple instructions | `.s1mple/S1MPLE.md` | Workflow behavior and required context |
 | Project document | `.s1mple/docs/project.md` | Reusable project baseline |
-| System design | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-system-design.md` (`Finalized System Design`) | Technical authority |
-| UI design | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (`Ready for Planning`); mockups `ui-mockups/` (`manifest.md` `Accepted`, `M1@R3`, `M2@R3`, `M3@R3`) | UI/UX authority |
-| System requirements | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-requirements.md` (`Ready for System Design`) | Required system behavior |
-| UI requirements | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md` (`Ready for UI Design`) | Required UI behavior |
-| Research | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-research.md` (`RF1`–`RF14`) | Relevant research findings |
-| Discussion context | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-discuss-context.md` | Work-specific findings and constraints |
-| UI context | `.s1mple/work/active/w261005f2a7-git-integration/w261005f2a7-ui-context.md` | Existing UI code and pattern evidence |
+| System design | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-system-design.md` (`Finalized System Design`) | Technical authority |
+| UI design | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-design.md` (`Ready for Planning`); mockups `ui-mockups/` (`manifest.md` `Accepted`, `M1@R3`, `M2@R3`, `M3@R3`) | UI/UX authority |
+| System requirements | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-requirements.md` (`Ready for System Design`) | Required system behavior |
+| UI requirements | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-requirements.md` (`Ready for UI Design`) | Required UI behavior |
+| Research | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-research.md` (`RF1`–`RF14`) | Relevant research findings |
+| Discussion context | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-discuss-context.md` | Work-specific findings and constraints |
+| UI context | `.s1mple/work/done/w261005f2a7-git-integration/w261005f2a7-ui-context.md` | Existing UI code and pattern evidence |
 | Roadmap sources | Not applicable — standalone work (`w261005f2a7-discuss-context.md` §Roadmap Binding: `None — standalone work`) | — |
 | Additional project files | `.s1mple/docs/languages/typescript.md`, `.s1mple/docs/communication.md`, `test/boundaries.test.ts`, `knip.json`, `test/support/{state,ui}.ts`, `test/integration/helpers.ts`, `test/e2e/pty.ts`, `scripts/bench-gate.ts`, `src/core/state/{types,save,result,commands,buffers,mouse,keys,status,whichkey,disk}.ts`, `src/core/kernel/view/{types,decorations,text-view}.ts`, `src/ui/{shell,theme}.ts`, `src/ui/editors/text-view.ts`, `src/ui/views/{cmdline,statusline}.ts`, `src/ui/overlays/host.ts`, `src/app/{main,effects,lifecycle}.ts`, `node_modules/@opentui/core/renderer.d.ts` | Confirm cited current shapes and test infrastructure |
 
