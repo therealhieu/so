@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import type { Pos } from "../kernel/text/pos";
+import type { Diagnostic } from "../kernel/view/diagnostics";
 import { splitKeys } from "../kernel/vim/keys";
-import { request } from "./lsp";
+import { cursorDiagnostic, request } from "./lsp";
 import type { LspFeature, LspResult, ServerView } from "./lsp-types";
 import type { Action, AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
@@ -333,4 +334,146 @@ test("a user request that times out reports it and cancels", () => {
   expect(r.state.lsp.pending).toEqual({});
   const late = run(r.state, result(1, { kind: "hover", text: "late" }));
   expect(late.state.lsp.float).toBeUndefined();
+});
+
+const diag = (
+  line: number,
+  col: number,
+  severity: Diagnostic["severity"],
+  message: string,
+  source?: string,
+): Diagnostic => ({
+  range: { start: at(line, col), end: at(line, col + 6) },
+  severity,
+  message,
+  ...(source === undefined ? {} : { source }),
+});
+const publish = (
+  key: string,
+  items: Diagnostic[],
+  source: "push" | "pull" = "push",
+  path = "src/a.rs",
+): Action => ({ type: "lspDiagnostics", key, path, source, items });
+
+test("diagnostics from two servers are both shown", () => {
+  const s = attached([ready("a", []), ready("b", [])]);
+  const r = run(
+    s,
+    publish("a@/ws", [diag(1, 4, 1, "mismatched types")]),
+    publish("b@/ws", [diag(0, 3, 2, "unused")]),
+  );
+  expect(r.state.lsp.shown["src/a.rs"]).toHaveLength(2);
+  expect(r.effects).toEqual([]);
+});
+
+test("one server's pushed and pulled lists are kept apart", () => {
+  const s = attached([ready("a", [])]);
+  const both = run(
+    s,
+    publish("a@/ws", [diag(1, 4, 2, "cargo check")]),
+    publish("a@/ws", [diag(0, 3, 1, "native")], "pull"),
+  ).state;
+  expect(both.lsp.shown["src/a.rs"]?.map((d) => d.message)).toEqual([
+    "cargo check",
+    "native",
+  ]);
+  const cleared = run(both, publish("a@/ws", [], "pull")).state;
+  expect(cleared.lsp.diagnostics["src/a.rs"]).toEqual({
+    "a@/ws": { push: [diag(1, 4, 2, "cargo check")] },
+  });
+  const gone = run(cleared, publish("a@/ws", [])).state;
+  expect(gone.lsp.diagnostics).toEqual({});
+  expect(gone.lsp.shown).toEqual({});
+});
+
+test("diagnostics published in insert mode show after leaving insert mode", () => {
+  const s = attached([ready("a", [])]);
+  const before = run(s, publish("a@/ws", [diag(1, 4, 1, "old")])).state;
+  const typing = keys(before, "i").state;
+  const published = run(typing, publish("a@/ws", [diag(1, 4, 1, "new")])).state;
+  expect(published.lsp.shown["src/a.rs"]?.map((d) => d.message)).toEqual([
+    "old",
+  ]);
+  const left = keys(published, "<Esc>").state;
+  expect(left.lsp.shown["src/a.rs"]?.map((d) => d.message)).toEqual(["new"]);
+});
+
+test("diagnostics of another file still show while inserting", () => {
+  const typing = keys(attached([ready("a", [])]), "i").state;
+  const r = run(
+    typing,
+    publish("a@/ws", [diag(0, 0, 1, "elsewhere")], "push", "src/b.rs"),
+  ).state;
+  expect(r.lsp.shown["src/b.rs"]).toHaveLength(1);
+});
+
+test("the command line diagnostic is the one under the cursor", () => {
+  const s = keys(attached([ready("a", [])]), "j4l").state;
+  const r = run(
+    s,
+    publish("a@/ws", [
+      diag(1, 2, 2, "unused", "lint"),
+      diag(1, 4, 1, "msg\nmore detail", "srv"),
+      diag(0, 0, 1, "other line"),
+    ]),
+  ).state;
+  expect(cursorDiagnostic(r)).toEqual({ severity: 1, text: "srv: msg" });
+  const away = keys(r, "j").state;
+  expect(cursorDiagnostic(away)).toBeUndefined();
+});
+
+test("hover closes on cursor move and signature help on leaving insert mode", () => {
+  const sent = hover(attached([ready("a", ["hover", "signature"])]));
+  const shown = run(
+    sent.state,
+    result(1, { kind: "hover", text: "doc" }),
+  ).state;
+  expect(shown.lsp.float?.kind).toBe("hover");
+  expect(keys(shown, "l").state.lsp.float).toBeUndefined();
+
+  const typing = keys(shown, "i").state;
+  const asked = request(
+    typing,
+    "signature",
+    { kind: "signature", pos: at(0, 0) },
+    { auto: true },
+  );
+  const signature = run(
+    asked.state,
+    result(2, {
+      kind: "signature",
+      label: "fn helper(a: u8)",
+      active: { start: 10, end: 15 },
+    }),
+  ).state;
+  expect(signature.lsp.float).toMatchObject({
+    kind: "signature",
+    active: { line: 0, start: 10, end: 15 },
+  });
+  const typed = keys(signature, "x").state;
+  expect(typed.lsp.float?.kind).toBe("signature");
+  expect(keys(typed, "<Esc>").state.lsp.float).toBeUndefined();
+});
+
+test("<Esc> in normal mode closes a hover float without moving", () => {
+  const s = keys(attached([ready("a", ["hover"])]), "j4l").state;
+  const sent = hover(s);
+  const shown = run(
+    sent.state,
+    result(1, { kind: "hover", text: "doc" }),
+  ).state;
+  expect(shown.lsp.float).toBeDefined();
+  const r = keys(shown, "<Esc>").state;
+  expect(r.lsp.float).toBeUndefined();
+  expect(cursorOf(r)).toEqual(cursorOf(shown));
+  expect(r.vim.mode).toBe(shown.vim.mode);
+});
+
+test("an action that touches neither diagnostics nor floats keeps the language state", () => {
+  const s = run(
+    attached([ready("a", [])]),
+    publish("a@/ws", [diag(1, 4, 1, "msg")]),
+  ).state;
+  expect(keys(s, "j").state.lsp).toBe(s.lsp);
+  expect(run(s, { type: "resize", cols: 120, rows: 40 }).state.lsp).toBe(s.lsp);
 });

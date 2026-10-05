@@ -21,7 +21,15 @@ import {
 } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
-import { onLspAttached, onLspMessage, onLspResult, onLspServer } from "./lsp";
+import {
+  onLspAttached,
+  onLspDiagnostics,
+  onLspMessage,
+  onLspResult,
+  onLspServer,
+  syncDiagnostics,
+  syncFloat,
+} from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
 import {
@@ -195,6 +203,8 @@ export function createUpdate(reg: Registries): Update {
         return onLspServer(state, action);
       case "lspAttached":
         return onLspAttached(state, action);
+      case "lspDiagnostics":
+        return onLspDiagnostics(state, action);
       case "lspResult":
         return onLspResult(state, action, reg);
       case "lspMessage":
@@ -205,10 +215,16 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncEmbeds(
+      const r = syncFloat(
         state,
-        followShownNote(state, syncEditorKinds(step(state, action), reg)),
-        reg,
+        syncDiagnostics(
+          state,
+          syncEmbeds(
+            state,
+            followShownNote(state, syncEditorKinds(step(state, action), reg)),
+            reg,
+          ),
+        ),
       );
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {

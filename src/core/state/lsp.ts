@@ -1,7 +1,12 @@
-import type { Pos } from "../kernel/text/pos";
-import { activeBuffer, bufferForPath } from "./buffers";
+import type { Pos, Range } from "../kernel/text/pos";
+import type {
+  Diagnostic,
+  DiagnosticSeverity,
+} from "../kernel/view/diagnostics";
+import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
 import { goTo, recordJump } from "./jumps";
 import type {
+  DiagnosticSlots,
   LspFeature,
   LspOp,
   LspResult,
@@ -382,4 +387,133 @@ export function onLspMessage(
     a.level === "error" ? "error" : "info",
     `${serverName(s, a.key)}: ${a.text}`,
   );
+}
+
+/**
+ * Server `key`'s pushed or pulled list for `path` replaced; empty lists,
+ * servers, and paths are pruned. Other servers and the other slot are kept.
+ */
+export function onLspDiagnostics(
+  s: AppState,
+  a: Extract<Action, { type: "lspDiagnostics" }>,
+): Result {
+  const byKey = { ...s.lsp.diagnostics[a.path] };
+  const slots: DiagnosticSlots = { ...byKey[a.key] };
+  if (a.items.length === 0) delete slots[a.source];
+  else slots[a.source] = a.items;
+  if (slots.push === undefined && slots.pull === undefined) delete byKey[a.key];
+  else byKey[a.key] = slots;
+  const diagnostics = { ...s.lsp.diagnostics };
+  if (Object.keys(byKey).length === 0) delete diagnostics[a.path];
+  else diagnostics[a.path] = byKey;
+  return none(withLsp(s, { diagnostics }));
+}
+
+/** Every server's pushed then pulled diagnostics for one path. */
+export function mergedDiagnostics(
+  byKey: Readonly<Record<ServerKey, DiagnosticSlots>> | undefined,
+): Diagnostic[] {
+  return Object.values(byKey ?? {}).flatMap((slots) => [
+    ...(slots.push ?? []),
+    ...(slots.pull ?? []),
+  ]);
+}
+
+/** The path whose shown diagnostics stay as they are: the one being typed into. */
+const frozenPath = (s: AppState): string | undefined =>
+  s.vim.mode === "insert" ? activeBuffer(s)?.path : undefined;
+
+const sameItems = (a: readonly Diagnostic[], b: readonly Diagnostic[]) =>
+  a.length === b.length && a.every((d, i) => d === b[i]);
+
+/**
+ * Post-step: `shown` follows the merged diagnostics of every path, except the
+ * path the active window is in Insert mode on, which keeps its list until
+ * Insert ends.
+ */
+export function syncDiagnostics(prev: AppState, r: Result): Result {
+  const s = r.state;
+  const frozen = frozenPath(s);
+  if (s.lsp.diagnostics === prev.lsp.diagnostics && frozen === frozenPath(prev))
+    return r;
+  let shown: LspState["shown"] | undefined;
+  const paths = new Set([
+    ...Object.keys(s.lsp.diagnostics),
+    ...Object.keys(s.lsp.shown),
+  ]);
+  for (const path of paths) {
+    if (path === frozen) continue;
+    const want = mergedDiagnostics(s.lsp.diagnostics[path]);
+    if (sameItems(s.lsp.shown[path] ?? [], want)) continue;
+    shown ??= { ...s.lsp.shown };
+    if (want.length === 0) delete shown[path];
+    else shown[path] = want;
+  }
+  return shown === undefined
+    ? r
+    : { state: withLsp(s, { shown }), effects: r.effects };
+}
+
+/** `s` without the info float. */
+export function withoutFloat(s: AppState): AppState {
+  if (s.lsp.float === undefined) return s;
+  const { float: _, ...lsp } = s.lsp;
+  return { ...s, lsp };
+}
+
+/**
+ * Post-step: the float closes when its window is no longer active or shows
+ * another buffer. Signature help lives only in Insert mode; a hover or
+ * diagnostic float also closes when the text or the cursor changes.
+ */
+export function syncFloat(prev: AppState, r: Result): Result {
+  const s = r.state;
+  const f = s.lsp.float;
+  if (f === undefined) return r;
+  const close = (): Result => ({ state: withoutFloat(s), effects: r.effects });
+  const w = s.windows.byId[f.window];
+  if (w === undefined || s.windows.active !== f.window) return close();
+  if (f.kind === "signature") return s.vim.mode === "insert" ? r : close();
+  if (prev.lsp.float !== f) return r;
+  const was = prev.windows.byId[f.window];
+  const b = s.buffers[w.content.bufferId];
+  const changed =
+    was === undefined ||
+    was.content.bufferId !== w.content.bufferId ||
+    prev.buffers[was.content.bufferId]?.text.version !== b?.text.version ||
+    was.content.cursor.line !== w.content.cursor.line ||
+    was.content.cursor.col !== w.content.cursor.col;
+  return changed ? close() : r;
+}
+
+/** Whether `range` covers the cell at `line`/`col`; an empty range covers its start. */
+function covers(range: Range, line: number, col: number): boolean {
+  const { start, end } = range;
+  if (line < start.line || line > end.line) return false;
+  const from = line === start.line ? start.col : 0;
+  const to = line === end.line ? end.col : Number.POSITIVE_INFINITY;
+  return col >= from && (col < to || (to <= from && col === from));
+}
+
+/** The shown diagnostic under the active window's cursor, the most severe first. */
+export function cursorDiagnostic(
+  s: AppState,
+): { severity: DiagnosticSeverity; text: string } | undefined {
+  const w = activeWindow(s);
+  const b = activeBuffer(s);
+  if (w === undefined || b === undefined) return undefined;
+  const { line, col } = w.content.cursor;
+  let best: Diagnostic | undefined;
+  for (const d of s.lsp.shown[b.path] ?? [])
+    if (
+      covers(d.range, line, col) &&
+      (best === undefined || d.severity < best.severity)
+    )
+      best = d;
+  if (best === undefined) return undefined;
+  const text = best.message.split("\n", 1)[0] ?? "";
+  return {
+    severity: best.severity,
+    text: best.source === undefined ? text : `${best.source}: ${text}`,
+  };
 }

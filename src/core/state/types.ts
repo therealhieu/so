@@ -12,6 +12,7 @@ import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
+import type { Diagnostic } from "../kernel/view/diagnostics";
 import type { Key } from "../kernel/vim/keys";
 import type { VimState } from "../kernel/vim/types";
 import type {
@@ -553,6 +554,14 @@ export type Action =
   | { type: "lspServer"; key: ServerKey; view: ServerView | undefined }
   /** The servers attached to `path`, in routing order. */
   | { type: "lspAttached"; path: string; keys: ServerKey[] }
+  /** Server `key`'s pushed or pulled diagnostics for `path`, replacing that list. */
+  | {
+      type: "lspDiagnostics";
+      key: ServerKey;
+      path: string;
+      source: "push" | "pull";
+      items: Diagnostic[];
+    }
   | { type: "lspResult"; id: number; result: LspResult }
   | {
       type: "lspMessage";

@@ -27,6 +27,7 @@ import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
 import { keymapFor, keyScope } from "./keymap";
+import { withoutFloat } from "./lsp";
 import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -55,7 +56,9 @@ export function handleKeyAction(
     const r = completionKey(s, a, reg);
     if (r !== undefined) return r;
   }
-  const r = routeKey(s, a, reg);
+  // An open info float closes on <Esc>; the key still routes, so Esc also leaves Insert.
+  const from = a.key === "<Esc>" ? withoutFloat(s) : s;
+  const r = routeKey(from, a, reg);
   return r.state.overlay.kind === "completion" || r.state.vim.mode === "insert"
     ? { ...r, state: maybeOpenCompletion(r.state) }
     : r;
