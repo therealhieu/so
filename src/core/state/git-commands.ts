@@ -35,3 +35,5 @@ export const gitBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "]h", id: "git.nextHunk" },
   { scope: { mode: "normal" }, seq: "[h", id: "git.prevHunk" },
 ];
+
+export const gitGroups = { "<leader>g": "git", "<leader>gh": "hunk" } as const;
