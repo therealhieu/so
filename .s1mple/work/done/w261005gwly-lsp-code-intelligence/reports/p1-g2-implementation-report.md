@@ -91,6 +91,26 @@ Completion checklists from the verification report:
 
 The decision recorded in Initial Implementation item 8 for `formattingOptions` (narrowest indent), for `syncFloat` (no mode check on hover and diagnostics), and for `cursorDiagnostic` (the empty-range clause) are superseded by the rows above.
 
+### Overall Remediation
+
+- **Verification report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/overall-verification-report.md` (commit `26fc65d`, status `Failed`; finding `OVR-VER1`, Cross-group with P2-G1; left unchanged)
+- **Status:** `Completed`
+
+`:LspInfo` now shows the path each started server runs from, which the host resolves and puts on the server view. This group owns the `lspInfo` side; the P2-G1 report records the host side of the same commit.
+
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `OVR-VER1` — `:LspInfo` shows the configured command, not the resolved binary path | `src/core/state/lsp-types.ts`: `ServerView.binary?` (absent when no binary was found, so `missing` views omit it under `exactOptionalPropertyTypes`). `src/core/state/lsp-pickers.ts:serverDetail` returns `v.progress ?? v.binary ?? ""`; the `spec.command[0]` map for started views is removed. `missing` still shows `not on PATH`, `unavailable` still shows `unavailable: <reason>`, and rows for servers nothing started still show the configured command. New test "the server list shows the binary a started server runs, or its progress while it works" in `src/core/state/lsp.test.ts`: a ready `tsc` view with `binary: "/ws/node_modules/.bin/tsc"` gives that row detail, and the same view with `progress: "indexing"` gives `indexing`. The existing "missing binaries and unavailable servers" case now gives its `clangd` view `binary: "/usr/bin/clangd"` and expects that detail instead of `clangd`. RED: `bun test src/core/state/lsp.test.ts` → 2 fail (`Expected: "/ws/node_modules/.bin/tsc"`, `Received: "tsc"`). GREEN: same → 39 pass, 0 fail | `6591b03f5ed11995ba7e81c1b353f33708b4bb32` | `Fixed` |
+
+**Checks after the overall remediation (head `6591b03`):**
+
+- `bun run check` → `Passed`: Biome clean on 358 files, tsc clean, knip zero findings; 1207 pass, 0 fail across 108 files.
+- `bun run test:ci` → `Passed`: 262 pass, 0 fail across 33 files.
+- `bun test test/integration/lsp-host.test.ts` → `Passed` 17 of 18 runs (17 pass each). The first run after the edit had 1 failure whose output was not captured; the next 17 runs, including 14 kept for inspection, passed with no failure, so the failing case is unidentified.
+- `rg "maybeOpenCompletion" src test` → `Passed`: no matches.
+- `rg "W261005GWLY|REQ[0-9]|DES[0-9]" src test scripts` → `Passed`: no matches.
+- `pgrep -f fake-lsp` → `Passed`: empty after every suite. The only `main.ts` processes running are the pre-existing `.sandbox/vault` and `apps/tui/src/main.ts` ones.
+
 ## Final Status
 
 `Completed`
@@ -99,6 +119,6 @@ The decision recorded in Initial Implementation item 8 for `formattingOptions` (
 
 - **Final report status:** `Completed` — every verifier finding is fixed and every group check passes
 - **Final report commit:** Returned to the orchestrator; not written here because it would need a self-referential commit
-- **Final commits:** `814e6c7b2d05b13c9ce4212921d48227f4491b01`, `2514f0e9ad1c6f3dade71bad1dc89ce5f3a5b6d2`, `e392c2a0d0141db722671e58f53d6e4f8293d705`, `27d323c6953c7546ef232def9d2f3df2021be583`, `ccea2bdbade26e30f2c92e1f729f4a0e1d91b009`, `f1aca30270bf71330496167fcd10c8f5f2542fba`, `32e625d8a061dfe7066e7e716e93348cfc422867`, `8943d220fa720ca686d153035797c44251b69355`
+- **Final commits:** `814e6c7b2d05b13c9ce4212921d48227f4491b01`, `2514f0e9ad1c6f3dade71bad1dc89ce5f3a5b6d2`, `e392c2a0d0141db722671e58f53d6e4f8293d705`, `27d323c6953c7546ef232def9d2f3df2021be583`, `ccea2bdbade26e30f2c92e1f729f4a0e1d91b009`, `f1aca30270bf71330496167fcd10c8f5f2542fba`, `32e625d8a061dfe7066e7e716e93348cfc422867`, `8943d220fa720ca686d153035797c44251b69355`, `6591b03f5ed11995ba7e81c1b353f33708b4bb32`
 - **Final checks:** `bun run check` → Passed (biome clean on 335 files, tsc clean, knip zero findings, 1157 pass / 0 fail across 103 files); `bun test src/core/state` → Passed (358 pass / 0 fail across 31 files); `grep -nE "W261005GWLY|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P1-G"` over the 15 files changed in `32a520f..8943d22` → Passed (no matches); `pgrep -f fake-lsp` → Passed (empty; remediation started no processes)
 - **Remaining issues:** None. The verifier's coverage note on `dropPending` in `onLspServer` (no test for `lspCancel` plus `cancelTimer` when a server fails mid-request) was not a finding and is left as is
