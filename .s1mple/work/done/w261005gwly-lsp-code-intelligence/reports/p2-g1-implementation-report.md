@@ -131,6 +131,26 @@ Every finding was reproduced before its fix and is closed by its own commit. The
 1. A timed-out version probe still attaches `typescript` (designed fallback). The test warms the stub instead of raising `PROBE_BOUND_MS`.
 2. `createLspClient` rejects an aborted start with `stopped` only after the process closed or `KILL_WAIT_MS` passed; the host relies on this through `server.starting`.
 
+### Overall Remediation
+
+- **Verification report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/overall-verification-report.md` (commit `26fc65d`, status `Failed`; finding `OVR-VER1`, Cross-group with P1-G2; left unchanged)
+- **Status:** `Completed`
+
+The host already resolved each server's binary but never reported it. It now puts the resolved path on every view of a server it starts. The P1-G2 report records the `lspInfo` side of the same commit.
+
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `OVR-VER1` — `:LspInfo` shows the configured command, not the resolved binary path | `src/app/lsp-host.ts`: `viewOf` takes `{ reason?, binary? }`, and every view of a started server carries `server.binary`: `starting` (first start and crash restart), `ready` (`{ ...client.view, binary: server.binary }`), `failed`, and `unavailable`. `missing` views, which resolved no binary, get none. The progress throttle spreads `server.view`, so it keeps the path. The local-tsc case in `test/integration/lsp-host.test.ts` ("a project's own tsc is used…") now also asserts that the stub is `<root>/node_modules/.bin/tsc` and that `lsp.servers["tsc@<root>"].binary` equals it. RED: `bun test test/integration/lsp-host.test.ts -t "own tsc"` → 1 fail (`Expected: "…/so-it-YINVxZ/node_modules/.bin/tsc"`, `Received: undefined`). GREEN: the full file → 17 pass, 0 fail | `6591b03f5ed11995ba7e81c1b353f33708b4bb32` | `Fixed` |
+
+**Checks after the overall remediation (head `6591b03`):**
+
+- `bun run check` → `Passed`: Biome clean on 358 files, tsc clean, knip zero findings; 1207 pass, 0 fail across 108 files.
+- `bun run test:ci` → `Passed`: 262 pass, 0 fail across 33 files.
+- `bun test test/integration/lsp-host.test.ts` → `Passed` 17 of 18 runs (17 pass each). The first run after the edit had 1 failure whose output was not captured; the next 17 runs, including 14 kept for inspection, passed with no failure, so the failing case is unidentified.
+- `rg "maybeOpenCompletion" src test` → `Passed`: no matches.
+- `rg "W261005GWLY|REQ[0-9]|DES[0-9]" src test scripts` → `Passed`: no matches.
+- `pgrep -f fake-lsp` → `Passed`: empty after every suite. The only `main.ts` processes running are the pre-existing `.sandbox/vault` and `apps/tui/src/main.ts` ones.
+
 ## Final Status
 
 `Completed`
@@ -139,6 +159,6 @@ Every finding was reproduced before its fix and is closed by its own commit. The
 
 - **Final report status:** `Completed`: every task was implemented, committed, and verified, and all three verification findings are fixed and verified.
 - **Final report commit:** returned to the orchestrator
-- **Final commits:** `fbf5cdb0218e4be372eaac74bb07297b1b239ad0`, `3de75d7034058efa95cf465d377bcbdc690d5a2b`, `d474288210a8c5fb916e7d025a10424b16dcc946`, `eb1fd79d6bce22c9343b3fa691f8dd70a21bd1d1`, `d5f2cec28e20e507180bf3f64e39a9c12fdbcb43`, `0f0b3462c5fc6e84ce14600884d2c6e79ba72866`, `907e474e353159c02d0a7758ed8c29759a6c1f39`, `59f4f65f0b1a6558a4eda89ea8e6ad25a00698f4`, `508df8b50cd04561022a1c9fba4cef2b979d128b`, `11c0e0cffac89325e36449120073b69dee12f0e3`, `80affa6e6e36673633994f7837462707d48bd067`
+- **Final commits:** `fbf5cdb0218e4be372eaac74bb07297b1b239ad0`, `3de75d7034058efa95cf465d377bcbdc690d5a2b`, `d474288210a8c5fb916e7d025a10424b16dcc946`, `eb1fd79d6bce22c9343b3fa691f8dd70a21bd1d1`, `d5f2cec28e20e507180bf3f64e39a9c12fdbcb43`, `0f0b3462c5fc6e84ce14600884d2c6e79ba72866`, `907e474e353159c02d0a7758ed8c29759a6c1f39`, `59f4f65f0b1a6558a4eda89ea8e6ad25a00698f4`, `508df8b50cd04561022a1c9fba4cef2b979d128b`, `11c0e0cffac89325e36449120073b69dee12f0e3`, `80affa6e6e36673633994f7837462707d48bd067`, `6591b03f5ed11995ba7e81c1b353f33708b4bb32`
 - **Final checks:** `bun run check` → 1203 pass; `bun run test:ci` → 249 pass (rerun; first run hit the unrelated `esc.test.ts` latency flake); LSP suites → 22 runs (10 serial, 12 concurrent) all pass; `lsp-real.test.ts` → 1 pass; `pgrep -f fake-lsp` → empty; id scan → no matches
 - **Remaining issues:** None in this group. `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" can fail on a heavily loaded host; it predates this work and is outside its scope.
