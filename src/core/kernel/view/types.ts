@@ -4,7 +4,15 @@ import type { TextBuffer } from "../text/text-buffer";
 /** A theme token name ("codeKeyword", "searchMatch", …), never a colour. Unstyled text is "text". */
 export type StyleToken = string;
 
-export type Span = { text: string; style: StyleToken; link?: string };
+export type Span = {
+  text: string;
+  style: StyleToken;
+  link?: string;
+  /** Source column of the first character. */
+  col?: number;
+  /** Replacement text: every cell maps to `col`. */
+  inserted?: true;
+};
 
 export type Sign = { text: string; style: StyleToken };
 
