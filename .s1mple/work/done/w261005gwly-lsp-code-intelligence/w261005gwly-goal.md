@@ -3,8 +3,8 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P3-G1 — implementation`
-- **Last Updated:** `2026-10-05`
+- **Current Position:** `Overall verification`
+- **Last Updated:** `2026-10-06`
 
 ## Sources
 
@@ -369,56 +369,56 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 - **Plan:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-plan-3-ui-and-delivery.md`
 - **Dependencies:** Parts 1 and 2
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P3-G1 — UI, end-to-end, and delivery
 
 - [x] Context and dependencies confirmed (Parts 1 and 2 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P3-G1-T1` — Diagnostic gutter and theme tokens.
-- [ ] `P3-G1-T2` — Info float overlay.
-- [ ] `P3-G1-T3` — Statusline segment, cursor diagnostic, and completion rows.
-- [ ] `P3-G1-T4` — `<C-Space>` key.
-- [ ] `P3-G1-T5` — End-to-end language server suite.
-- [ ] `P3-G1-T6` — Keystroke benchmark with a server attached.
-- [ ] `P3-G1-T7` — Delivery (PR open, CI green, folder moved to `work/done/`, pushed, CI green again).
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed; `pgrep -f fake-lsp` empty.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Implementation turn completed.
+- [x] `P3-G1-T1` — Diagnostic gutter and theme tokens.
+- [x] `P3-G1-T2` — Info float overlay.
+- [x] `P3-G1-T3` — Statusline segment, cursor diagnostic, and completion rows.
+- [x] `P3-G1-T4` — `<C-Space>` key.
+- [x] `P3-G1-T5` — End-to-end language server suite.
+- [x] `P3-G1-T6` — Keystroke benchmark with a server attached.
+- [x] `P3-G1-T7` — Delivery (PR open, CI green, folder moved to `work/done/`, pushed, CI green again).
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed; `pgrep -f fake-lsp` empty.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p3-g1-implementation-report.md` (written after the T7 move) — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p3-g1-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
-- PR URL: `Pending implementation`
+- Implementation: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p3-g1-implementation-report.md` (written after the T7 move) — `Completed`
+- Initial implementation report commit: `d4b894a` (pushed; CI run 37359755482 green)
+- Verification: `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/p3-g1-verification-report.md` — `Passed`, no findings
+- Verification report commit: `15b1e7d` (pushed; CI run 37362102380 green: check, test ubuntu-24.04 + bench, test macos-15)
+- Remediation: `Not required — Passed report with no outstanding items`
+- Final implementation report commit: `d4b894a` (initial report is final)
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `None — no findings`
+- Closure evidence: `bun run check` 1206 pass, knip zero; `bun run test:ci` 262 pass; e2e 17/17 local runs (12 concurrent); `bun run bench` all ok, `lspKeystrokeP95` 5.08 ms local / 8.10 ms Linux CI (gate 32); pgrep fake-lsp empty; no work-process ids; no stale active-path references; delivery CI failures on `ae081ea` (rust-analyzer stub on runners → `5b859df`) and `129e62b` (macOS e2e race → `4f8f849`) fixed and green
+- PR URL: https://github.com/therealhieu/so/pull/11
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P3-G1-T1` | `Pending implementation` |
-| `P3-G1-T2` | `Pending implementation` |
-| `P3-G1-T3` | `Pending implementation` |
-| `P3-G1-T4` | `Pending implementation` |
-| `P3-G1-T5` | `Pending implementation` |
-| `P3-G1-T6` | `Pending implementation` |
-| `P3-G1-T7` | `Pending implementation` |
+| `P3-G1-T1` | `029d572` |
+| `P3-G1-T2` | `da300ca`, `6f00675` |
+| `P3-G1-T3` | `78bfbdf` |
+| `P3-G1-T4` | `9127e81` |
+| `P3-G1-T5` | `fbfe600`, `4f8f849` |
+| `P3-G1-T6` | `deb0500` |
+| `P3-G1-T7` | `ae081ea`, `5b859df`, `129e62b` |
 
 ## Roadmap Evidence
 
@@ -533,14 +533,14 @@ Expected evidence per case is defined in system design §8 Test Suites and Cases
 | [x] | `V48` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | Disk `b.ts` updated; `a.ts` buffer dirty; "2 files changed" | pass (lsp-edits.test.ts) |
 | [x] | `V63` | `bun test test/integration/lsp-edits.test.ts` (P2-G1-T7) | `didChangeWatchedFiles {b.ts, Changed}` after write | pass (lsp-edits.test.ts) |
 | [x] | `V44` | `bun test test/integration/lsp-real.test.ts` (P2-G1-T8) | Ready + non-empty hover; skipped without rust-analyzer (record which) | ran locally with rust-analyzer 1.96.0 → pass; skipped on CI without the binary |
-| [ ] | `V46` | `bun run check` (every task; P2-G1-T1 boundary homes; P3-G1-T7 CI) | biome, tsc, knip zero findings, unit suites, boundaries pass | `Pending implementation` |
-| [ ] | `V47` | `bun test test/ui/lsp.test.ts` (P3-G1-T1) | Gutter sign cell `E` | `Pending implementation` |
-| [ ] | `V38` | `bun test src/ui/input.test.ts` (P3-G1-T4) | ctrl+space → `<C-Space>`; space → `" "` | `Pending implementation` |
-| [ ] | `V6` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | Screen shows `◆ fake` within 5 s | `Pending implementation` |
-| [ ] | `V12` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | Gutter `E`; `]d` moves; `:Diagnostics` row | `Pending implementation` |
-| [ ] | `V17` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | `Enter` opens the unopened file | `Pending implementation` |
-| [ ] | `V43` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | No fake-lsp process after quit | `Pending implementation` |
-| [ ] | `V42` | `bun run bench` (P3-G1-T6) | `lspKeystrokeP95` ≤ 32 ms gate (non-blocking: speedups, then relaxed threshold recorded) | `Pending implementation` |
+| [x] | `V46` | `bun run check` (every task; P2-G1-T1 boundary homes; P3-G1-T7 CI) | biome, tsc, knip zero findings, unit suites, boundaries pass | pass — `bun run check` every group; CI green on PR #11 heads 5b859df, 4f8f849, d4b894a, 15b1e7d |
+| [x] | `V47` | `bun test test/ui/lsp.test.ts` (P3-G1-T1) | Gutter sign cell `E` | pass (test/ui/lsp.test.ts) |
+| [x] | `V38` | `bun test src/ui/input.test.ts` (P3-G1-T4) | ctrl+space → `<C-Space>`; space → `" "` | pass (src/ui/input.test.ts) |
+| [x] | `V6` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | Screen shows `◆ fake` within 5 s | pass (test/e2e/lsp.test.ts) |
+| [x] | `V12` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | Gutter `E`; `]d` moves; `:Diagnostics` row | pass (test/e2e/lsp.test.ts) |
+| [x] | `V17` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | `Enter` opens the unopened file | pass (test/e2e/lsp.test.ts; reopen-until-row after 4f8f849) |
+| [x] | `V43` | `bun test test/e2e/lsp.test.ts` (P3-G1-T5) | No fake-lsp process after quit | pass (test/e2e/lsp.test.ts) |
+| [x] | `V42` | `bun run bench` (P3-G1-T6) | `lspKeystrokeP95` ≤ 32 ms gate (non-blocking: speedups, then relaxed threshold recorded) | lspKeystrokeP95 median 5.08 ms local, 8.10 ms Linux CI ≤ 32 ms gate |
 
 ## Overall Verification
 
@@ -628,6 +628,7 @@ Work: W261005GWLY — lsp-code-intelligence
 - **Deviation (accepted, P1-G3):** design-shape additions recorded in `p1-g3-implementation-report.md` (`startCodeEdit` without `then`, `RenamePrompt.rename.name`, `CodeAccept.key/window/cursor`, `lspResult.now` required, shared `applyBufferEdits` Insert-change merge/cursor shift/overlap refusal); verifier accepted them except those fixed by VER1.
 - **Deviation (accepted, P2-G1):** `LspClient.request(id, path, op)`, `createLspClient` `AbortSignal`, extra log events `lsp.stderr`/`lsp.dropped` (no document text), progress test bound ≤ 5 (design: ≤ 1 dispatch per 100 ms; implementation throttles at 100 ms), watcher Created reported as `Changed`.
 - **Observation (out of scope):** `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" (< 10 ms assertion, unchanged since c98aa19) failed once under load average ~20; passes in isolation. Watch on CI.
+- **Deviation (accepted, P3-G1):** statusline `✗` also lists failed servers covering the buffer (core detaches failed servers); `src/ui/shell.ts` builds the float (import cycle); fake-server `otherDiagnostics`; real-server test guarded by `rust-analyzer --version`; e2e reopens `:Diagnostics` because an open picker does not refresh (existing behaviour). Logged: shared severity tokens underline cmdline/gutter text (UI discussion); `129e62b` mechanically rewrote three historical lines in plan-3 to `work/done/`.
 - **Deviation (accepted, P1-G1):** `severityRank` omitted (listed in the design tree only, no shape, no caller; knip forbids unused exports).
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
