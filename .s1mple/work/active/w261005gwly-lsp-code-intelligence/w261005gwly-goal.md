@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `P1-G3 — implementation`
+- **Current Position:** `P2-G1 — implementation`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -181,7 +181,7 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 - **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-1-core.md`
 - **Dependencies:** None
-- **Status:** `In Progress`
+- **Status:** `Completed`
 
 #### P1-G1 — Contracts
 
@@ -267,57 +267,57 @@ Part 1: core → Part 2: host → Part 3: ui-and-delivery
 
 #### P1-G3 — Edits and completion
 
-- [ ] Context and dependencies confirmed (P1-G2 accepted).
-- [ ] Implementation turn completed.
-- [ ] `P1-G3-T1` — One workspace-edit path.
-- [ ] `P1-G3-T2` — Rename prompt and code actions.
-- [ ] `P1-G3-T3` — Format results and format on save.
-- [ ] `P1-G3-T4` — Code completion trigger and ranking.
-- [ ] `P1-G3-T5` — Completion accept, resolve, and signature help.
-- [ ] Every task has commit SHA(s) or justified no-change evidence.
-- [ ] Task-level and group-level checks passed.
-- [ ] Initial implementation report persisted and separately committed.
-- [ ] Initial implementation report commit SHA recorded.
-- [ ] Verification report persisted and separately committed.
-- [ ] Verification report commit SHA recorded.
-- [ ] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
-- [ ] Implementer completed the remediation checklist or no remediation was required.
-- [ ] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
-- [ ] Final implementation report commit SHA recorded.
-- [ ] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
-- [ ] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
-- [ ] Group acceptance criteria satisfied.
+- [x] Context and dependencies confirmed (P1-G2 accepted).
+- [x] Implementation turn completed.
+- [x] `P1-G3-T1` — One workspace-edit path.
+- [x] `P1-G3-T2` — Rename prompt and code actions.
+- [x] `P1-G3-T3` — Format results and format on save.
+- [x] `P1-G3-T4` — Code completion trigger and ranking.
+- [x] `P1-G3-T5` — Completion accept, resolve, and signature help.
+- [x] Every task has commit SHA(s) or justified no-change evidence.
+- [x] Task-level and group-level checks passed.
+- [x] Initial implementation report persisted and separately committed.
+- [x] Initial implementation report commit SHA recorded.
+- [x] Verification report persisted and separately committed.
+- [x] Verification report commit SHA recorded.
+- [x] Report status checked and remediation assigned to a fresh implementer, or remediation not required.
+- [x] Implementer completed the remediation checklist or no remediation was required.
+- [x] Finalized implementation report separately committed, or initial report commit remains final because remediation was not required.
+- [x] Final implementation report commit SHA recorded.
+- [x] Remediation has follow-up SHA(s) mapped to findings/tasks, justified no-change evidence, or was not required.
+- [x] Orchestrator validated report commits, closure evidence, and commit evidence; no group implementation changes remain uncommitted.
+- [x] Group acceptance criteria satisfied.
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md` — `Pending implementation`
-- Initial implementation report commit: `Pending implementation`
-- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md` — `Pending implementation`
-- Verification report commit: `Pending implementation`
-- Remediation: `Pending implementation`
-- Final implementation report commit: `Pending implementation`
-- Remediation commits (finding/task → SHA(s) or justified no-change result): `Pending implementation`
-- Closure evidence: `Pending implementation`
+- Implementation: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-implementation-report.md` — `Completed` (remediated)
+- Initial implementation report commit: `a256c44`
+- Verification: `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md` — `Failed` (VER1 Major, VER2–VER3 Minor)
+- Verification report commit: `bf999c9`
+- Remediation: `Completed` — fresh implementer; all three findings Fixed
+- Final implementation report commit: `9759588`
+- Remediation commits (finding/task → SHA(s) or justified no-change result): `P1-G3-VER1 → a2776a0 (T5); P1-G3-VER2 → c77186c (T3); P1-G3-VER3 → e482a73 (T1, tests only)`
+- Closure evidence: `bun run check` 1189 pass, knip zero; `bun test src/core` 763 pass; `bun run test:ci` 229 pass; `rg maybeOpenCompletion` none; verification report unchanged; tree clean at 9759588. Carry-over to P2: `lspResult` action now requires `now` (host must set it); `CodeAccept` gained `window`/`cursor`
 
 **Task Commit Evidence:**
 
 | Task | SHA(s) or justified no-change evidence |
 |---|---|
-| `P1-G3-T1` | `Pending implementation` |
-| `P1-G3-T2` | `Pending implementation` |
-| `P1-G3-T3` | `Pending implementation` |
-| `P1-G3-T4` | `Pending implementation` |
-| `P1-G3-T5` | `Pending implementation` |
+| `P1-G3-T1` | `05b4b60`, `e482a73` |
+| `P1-G3-T2` | `9258d59` |
+| `P1-G3-T3` | `9ccf340`, `c77186c` |
+| `P1-G3-T4` | `d14872c` |
+| `P1-G3-T5` | `b3d1ccb`, `a2776a0` |
 
 ### Part 2 — host
 
 - **Plan:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/w261005gwly-plan-2-host.md`
 - **Dependencies:** Part 1
-- **Status:** `Pending`
+- **Status:** `In Progress`
 
 #### P2-G1 — Client, host, and wiring
 
-- [ ] Context and dependencies confirmed (Part 1 accepted).
+- [x] Context and dependencies confirmed (Part 1 accepted).
 - [ ] Implementation turn completed.
 - [ ] `P2-G1-T1` — Protocol packages and converters.
 - [ ] `P2-G1-T2` — Incremental sync and project roots.
@@ -497,18 +497,18 @@ Expected evidence per case is defined in system design §8 Test Suites and Cases
 | [x] | `V49` | `bun test src/core/state/lsp.test.ts` (P1-G2-T2) | Normal-mode `<Esc>` closes float, cursor/mode unchanged | pass (P1-G2, verified ae9af3a) |
 | [x] | `V9` | `bun test src/core/state/lsp.test.ts` (P1-G2-T4) | Command id → `op.kind` table matches | pass (P1-G2, verified ae9af3a) |
 | [x] | `V39` | `bun test src/core/state/lsp.test.ts src/core/state/lsp-commands.test.ts` (P1-G2-T4) | No markdown binding; Markdown `gd` → `link.followOrTag` | pass (P1-G2, verified ae9af3a) |
-| [ ] | `V22` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Buffer edited in one undo; `applyEdits` for closed file without `expected` | `Pending implementation` |
-| [ ] | `V23` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Version mismatch → nothing applied, `lspReply{applied:false}` | `Pending implementation` |
-| [ ] | `V24` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | One reply, only after `editsApplied` | `Pending implementation` |
-| [ ] | `V62` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | `failureReason` names skipped `b.ts` | `Pending implementation` |
-| [ ] | `V25` | `bun test src/core/state/lsp-commands.test.ts` (P1-G3-T3) | Formatted; `u` restores | `Pending implementation` |
-| [ ] | `V26` | `bun test src/core/state/lsp-commands.test.ts` (P1-G3-T3) | `:w` formats first; autosave never formats; timeout writes + warns | `Pending implementation` |
-| [ ] | `V18` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | `.` requests; identifier starts 150 ms timer | `Pending implementation` |
-| [ ] | `V19` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | No request when complete; one when incomplete | `Pending implementation` |
-| [ ] | `V20` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | Stale → overlay none; `[[` → notes mode | `Pending implementation` |
-| [ ] | `V21` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Auto-import in one undo step | `Pending implementation` |
-| [ ] | `V58` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Cursor at stop; `executeCommand` (auto) last | `Pending implementation` |
-| [ ] | `V59` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Exactly one apply; none after version change | `Pending implementation` |
+| [x] | `V22` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Buffer edited in one undo; `applyEdits` for closed file without `expected` | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V23` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | Version mismatch → nothing applied, `lspReply{applied:false}` | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V24` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | One reply, only after `editsApplied` | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V62` | `bun test src/core/state/lsp-edits.test.ts` (P1-G3-T1) | `failureReason` names skipped `b.ts` | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V25` | `bun test src/core/state/lsp-commands.test.ts` (P1-G3-T3) | Formatted; `u` restores | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V26` | `bun test src/core/state/lsp-commands.test.ts` (P1-G3-T3) | `:w` formats first; autosave never formats; timeout writes + warns | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V18` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | `.` requests; identifier starts 150 ms timer | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V19` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | No request when complete; one when incomplete | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V20` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T4) | Stale → overlay none; `[[` → notes mode | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V21` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Auto-import in one undo step | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V58` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Cursor at stop; `executeCommand` (auto) last | pass (P1-G3, verified bf999c9; remediated 9759588) |
+| [x] | `V59` | `bun test src/core/state/code-completion.test.ts` (P1-G3-T5) | Exactly one apply; none after version change | pass (P1-G3, verified bf999c9; remediated 9759588) |
 | [ ] | `V33` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Versioned `CodeEdit`; outside counted; capabilities flags as designed | `Pending implementation` |
 | [ ] | `V45` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | Markdown hover → plain lines, no fences | `Pending implementation` |
 | [ ] | `V57` | `bun test src/workspace/lsp/convert.test.ts` (P2-G1-T1) | `flattenSnippet` outputs as listed | `Pending implementation` |
@@ -625,6 +625,7 @@ Work: W261005GWLY — lsp-code-intelligence
 ## Blockers and Deviations
 
 - **Deviation (accepted, P1-G2):** `src/core/state/lsp.ts` outside-only definition message is `definition is outside the workspace` without `: <path>`. DES18 text asks for the path, but the design's `LspResult.locations`/`CodeEdit.outside` contract carries only a count; no S/V case asserts the path. Impact: message lacks the path. Resolution: none required in this scope; changing the contract would change approved design.
+- **Deviation (accepted, P1-G3):** design-shape additions recorded in `p1-g3-implementation-report.md` (`startCodeEdit` without `then`, `RenamePrompt.rename.name`, `CodeAccept.key/window/cursor`, `lspResult.now` required, shared `applyBufferEdits` Insert-change merge/cursor shift/overlap refusal); verifier accepted them except those fixed by VER1.
 - **Deviation (accepted, P1-G1):** `severityRank` omitted (listed in the design tree only, no shape, no caller; knip forbids unused exports).
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
