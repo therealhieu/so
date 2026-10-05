@@ -12,7 +12,7 @@ import { message, none } from "./result";
 import type { AppState, Result, TerminalState, ZoomState } from "./types";
 
 /** Image zoom levels, as multiples of the size that fits the float. */
-export const ZOOM_LEVELS = [1, 1.5, 2, 3, 4, 6, 8] as const;
+export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8] as const;
 
 /** The zoom float: 90% of the terminal, at least 60×12, clipped to it below the bufferline. */
 export function zoomSize(t: TerminalState): { w: number; h: number } {
@@ -41,7 +41,15 @@ export function zoomTargetAt(s: AppState, line: number): ZoomState | undefined {
         : resolveLink(s.index.ix, b.path, { target });
       if (!("path" in r)) return undefined;
       const name = alt ?? baseName(target);
-      return { kind: "image", path: r.path, name, level: 1, cx: 0.5, cy: 0.5 };
+      return {
+        kind: "image",
+        path: r.path,
+        name,
+        level: 1,
+        cx: 0.5,
+        cy: 0.5,
+        fill: { x: 1, y: 1 },
+      };
     }
     case "mermaid": {
       const source = fenceBody(b.text, block).join("\n");
@@ -88,32 +96,37 @@ const PAN: Readonly<Record<string, [number, number]>> = {
   "<Up>": [0, -1],
 };
 
-/** The image view's centre kept where the view stays on the image at `level`. */
+type ImageZoom = Extract<ZoomState, { kind: "image" }>;
+type DiagramZoom = Extract<ZoomState, { kind: "diagram" }>;
+
+/** The fraction of the image the view shows along an axis: all of it until it outgrows the float. */
+const shown = (level: number, fill: number) => Math.min(1, 1 / (level * fill));
+
+/** The image at `level` with its view's centre kept on the image. */
 function centred(
-  z: Extract<ZoomState, { kind: "image" }>,
+  z: ImageZoom,
   level: number,
   cx: number,
   cy: number,
-): ZoomState {
-  const half = 1 / (2 * level);
+): ImageZoom {
+  const hx = shown(level, z.fill.x) / 2;
+  const hy = shown(level, z.fill.y) / 2;
   return {
     ...z,
     level,
-    cx: clamp(cx, half, 1 - half),
-    cy: clamp(cy, half, 1 - half),
+    cx: clamp(cx, hx, 1 - hx),
+    cy: clamp(cy, hy, 1 - hy),
   };
 }
 
-function imageKey(
-  z: Extract<ZoomState, { kind: "image" }>,
-  key: Key,
-): ZoomState {
+function imageKey(z: ImageZoom, key: Key): ZoomState {
   const at = ZOOM_LEVELS.indexOf(z.level as (typeof ZOOM_LEVELS)[number]);
   const pan = PAN[key];
   if (pan !== undefined) {
     // A quarter of the view per step.
-    const step = 0.25 / z.level;
-    return centred(z, z.level, z.cx + pan[0] * step, z.cy + pan[1] * step);
+    const sx = shown(z.level, z.fill.x) / 4;
+    const sy = shown(z.level, z.fill.y) / 4;
+    return centred(z, z.level, z.cx + pan[0] * sx, z.cy + pan[1] * sy);
   }
   switch (key) {
     case "+":
@@ -128,27 +141,58 @@ function imageKey(
   }
 }
 
+/** The UI measured how much of the float the zoomed image covers at fit. */
+export function onZoomFill(
+  s: AppState,
+  a: { path: string; fill: { x: number; y: number } },
+): Result {
+  const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
+  if (
+    z?.kind !== "image" ||
+    z.path !== a.path ||
+    (z.fill.x === a.fill.x && z.fill.y === a.fill.y)
+  )
+    return none(s);
+  return none(
+    showZoom(s, centred({ ...z, fill: a.fill }, z.level, z.cx, z.cy)),
+  );
+}
+
+/** Diagram rows and columns past the float's inner size, per axis. */
+function diagramExcess(z: DiagramZoom, t: TerminalState) {
+  const { w, h } = zoomSize(t);
+  const widest = Math.max(0, ...z.lines.map((l) => [...l].length));
+  return {
+    x: Math.max(0, widest - (w - 2)),
+    y: Math.max(0, z.lines.length - (h - 2)),
+  };
+}
+
+/** Which axes of the open zoom float can pan: the content is larger than the view there. */
+export function zoomPans(s: AppState): { x: boolean; y: boolean } {
+  const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
+  if (z === undefined) return { x: false, y: false };
+  if (z.kind === "image")
+    return {
+      x: shown(z.level, z.fill.x) < 1,
+      y: shown(z.level, z.fill.y) < 1,
+    };
+  const e = diagramExcess(z, s.terminal);
+  return { x: e.x > 0, y: e.y > 0 };
+}
+
 /** The diagram's first row and column kept so the float stays filled where it can. */
 function scrolled(
-  z: Extract<ZoomState, { kind: "diagram" }>,
+  z: DiagramZoom,
   t: TerminalState,
   row: number,
   col: number,
 ): ZoomState {
-  const { w, h } = zoomSize(t);
-  const widest = Math.max(0, ...z.lines.map((l) => [...l].length));
-  return {
-    ...z,
-    row: clamp(row, 0, Math.max(0, z.lines.length - (h - 2))),
-    col: clamp(col, 0, Math.max(0, widest - (w - 2))),
-  };
+  const e = diagramExcess(z, t);
+  return { ...z, row: clamp(row, 0, e.y), col: clamp(col, 0, e.x) };
 }
 
-function diagramKey(
-  z: Extract<ZoomState, { kind: "diagram" }>,
-  key: Key,
-  t: TerminalState,
-): ZoomState {
+function diagramKey(z: DiagramZoom, key: Key, t: TerminalState): ZoomState {
   const pan = PAN[key];
   if (pan !== undefined) {
     const { w, h } = zoomSize(t);

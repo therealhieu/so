@@ -306,6 +306,6 @@ exports[`the zoom float draws a diagram too wide for the note 1`] = `
     │                                                                      │    
     │                                                                      │    
     │                                                                      │    
-    ╰─ +/- zoom · 0 fit · hjkl pan · q close ──────────────────────────────╯    
+    ╰─ +/- spacing · 0 reset · wheel hjkl scroll · q close ────────────────╯    
  NORMAL  │ notes/flow.md                                                    4:1"
 `;

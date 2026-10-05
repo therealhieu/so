@@ -7,7 +7,7 @@ import {
 import { splitKeys } from "../kernel/vim/keys";
 import type { Action, AppState, ZoomState } from "./types";
 import { createUpdate } from "./update";
-import { ZOOM_LEVELS, zoomSize, zoomTargetAt } from "./zoom";
+import { ZOOM_LEVELS, zoomPans, zoomSize, zoomTargetAt } from "./zoom";
 
 const reg = testRegistries();
 const update = createUpdate(reg);
@@ -66,6 +66,7 @@ test("a zoom shows the image or drawable diagram on a line of the reading view",
     level: 1,
     cx: 0.5,
     cy: 0.5,
+    fill: { x: 1, y: 1 },
   });
   expect(zoomTargetAt(s, 4)).toMatchObject({ path: "a.png", name: "Chart" });
   expect(zoomTargetAt(s, 6)).toMatchObject({
@@ -111,8 +112,12 @@ test("zoom keys step the level, pan inside the image, reset, and close", () => {
   expect(zoomOf(s)).toMatchObject({ level: ZOOM_LEVELS.at(-1) });
   s = keys(s, "0");
   expect(zoomOf(s)).toMatchObject({ level: 1, cx: 0.5, cy: 0.5 });
+  // Below fit the whole image shows, centred, so there is nothing to pan.
   s = keys(s, "-");
-  expect(zoomOf(s)).toMatchObject({ level: 1 });
+  expect(zoomOf(s)).toMatchObject({ level: 0.75 });
+  s = keys(s, "----ll");
+  expect(zoomOf(s)).toMatchObject({ level: 0.25, cx: 0.5, cy: 0.5 });
+  expect(zoomPans(s)).toEqual({ x: false, y: false });
   expect(keys(s, "q").overlay.kind).toBe("none");
   expect(keys(s, "<Esc>").overlay.kind).toBe("none");
 });
@@ -140,4 +145,31 @@ test("the zoom float is 90% of the terminal, at least 60×12, within it", () => 
   expect(zoomSize(t)).toEqual({ w: 180, h: 45 });
   expect(zoomSize({ ...t, cols: 64, rows: 20 })).toEqual({ w: 60, h: 18 });
   expect(zoomSize({ ...t, cols: 40, rows: 10 })).toEqual({ w: 40, h: 8 });
+});
+
+test("a measured fill stops panning on an axis the image does not outgrow", () => {
+  const open = keys(note(), "2j<leader>z++");
+  const fill = (s: AppState, x: number, y: number) =>
+    update(s, { type: "zoomFill", path: "a.png", fill: { x, y } }).state;
+  // A wide image fills the float's width but only half its height: at 2×
+  // the view shows half its width and all its height.
+  let s = fill(keys(open, "jj"), 1, 0.5);
+  expect(zoomOf(s)).toMatchObject({
+    level: 2,
+    cy: 0.5,
+    fill: { x: 1, y: 0.5 },
+  });
+  expect(zoomPans(s)).toEqual({ x: true, y: false });
+  expect(zoomOf(keys(s, "j"))).toMatchObject({ cy: 0.5 });
+  expect(zoomOf(keys(s, "l"))).toMatchObject({ cx: 0.625 });
+  s = keys(s, "+");
+  expect(zoomPans(s)).toEqual({ x: true, y: true });
+  // At 3× the view shows 2/3 of the height: a step is 1/6, and the centre stops at 2/3.
+  const down = zoomOf(keys(s, "jj"));
+  expect(down?.kind === "image" ? down.cy : 0).toBeCloseTo(2 / 3);
+  // A fill for another image, or the same fill again, changes nothing.
+  expect(
+    update(s, { type: "zoomFill", path: "b.png", fill: { x: 1, y: 1 } }).state,
+  ).toBe(s);
+  expect(fill(s, 1, 0.5)).toBe(s);
 });

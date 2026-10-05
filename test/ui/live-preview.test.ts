@@ -441,6 +441,20 @@ test("the zoom float draws the image fitted, crops it when zoomed, and hides the
     expect(zoomed.slice(3, 5)).toEqual([88, 34]);
     expect(zoomed.slice(7, 11)).toEqual([480, 109, 960, 742]);
 
+    // The float reports that the fitted image covers 22 of its 34 rows.
+    await Bun.sleep(0);
+    const zoom = m.store.get().overlay;
+    expect(zoom.kind === "zoom" && zoom.zoom).toMatchObject({
+      fill: { x: 1, y: 0.647 },
+    });
+
+    m.keys("0--");
+    draw.mockClear();
+    expect(await m.frame()).toContain("· 0.5×");
+    const half = draw.mock.calls[0] ?? [];
+    expect(half.slice(1, 5)).toEqual([28, 13, 44, 11]);
+    expect(half.slice(7, 11)).toEqual([0, 0, 1920, 960]);
+
     m.keys("q");
     draw.mockClear();
     await m.frame();
@@ -460,7 +474,7 @@ test("without graphics the zoom float names the image", async () => {
   m.keys("2j<leader>z");
   expect(m.store.get().overlay.kind).toBe("zoom");
   const frame = await m.frame();
-  expect(frame).toContain("+/- zoom · 0 fit · hjkl pan · q close");
+  expect(frame).toContain("wheel +/- zoom · 0 fit · hjkl pan · q close");
   expect(
     frame.split("\n").filter((l) => l.includes("[image: diagram.png]")).length,
   ).toBe(1);
@@ -486,4 +500,22 @@ test("the zoom float draws a diagram too wide for the note", async () => {
   expect(frame.trimEnd()).toMatchSnapshot();
   m.keys("-");
   expect(await m.frame()).toContain("· tight");
+});
+
+test("the wheel over the zoom float zooms the image in and out", async () => {
+  m = await mountImageNote({ capabilities: KITTY });
+  m.keys("<leader>m<leader>m2j<leader>z");
+  await m.frame();
+  const level = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "zoom" && o.zoom.kind === "image" ? o.zoom.level : -1;
+  };
+  expect(level()).toBe(1);
+  await m.mouse.scroll(50, 20, "up");
+  // One notch is one zoom step.
+  expect(await m.frame()).toContain("· 1.5×");
+  await m.mouse.scroll(50, 20, "down");
+  await m.mouse.scroll(50, 20, "down");
+  expect(await m.frame()).toContain("· 0.75×");
+  expect(level()).toBe(0.75);
 });

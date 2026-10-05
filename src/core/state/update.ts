@@ -51,6 +51,7 @@ import {
 import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
+import { onZoomFill } from "./zoom";
 
 export type Update = (
   state: AppState,
@@ -152,6 +153,8 @@ export function createUpdate(reg: Registries): Update {
         return onSaveFailed(state, action);
       case "resize":
         return onResize(state, action);
+      case "zoomFill":
+        return onZoomFill(state, action);
       case "mouse":
         return onMouse(state, action, reg);
       case "configLoaded":

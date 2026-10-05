@@ -867,11 +867,30 @@ test("a double click on an image zooms it in reading, as <leader>z does", () => 
   expect(live.vim.mode).toBe("visual");
 });
 
-test("the wheel pans the zoom float and a press outside closes it", () => {
+test("the wheel zooms an image in the float and a press outside closes it", () => {
   const s = keys(pictureNote("reading"), "2j<leader>z++").state;
   const panned = mouse(s, wheel({ kind: "overlay" }, 0, 1)).state;
   expect(panned.overlay).toEqual(keys(s, "l").state.overlay);
   const down = mouse(s, wheel({ kind: "overlay" }, 1)).state;
-  expect(down.overlay).toEqual(keys(s, "j").state.overlay);
+  expect(down.overlay).toEqual(keys(s, "-").state.overlay);
+  const up = mouse(s, wheel({ kind: "overlay" }, -1)).state;
+  expect(up.overlay).toEqual(keys(s, "+").state.overlay);
+  expect(up.overlay).not.toEqual(s.overlay);
   expect(mouse(s, press({ kind: "outside" })).state.overlay.kind).toBe("none");
+});
+
+test("a vertical notch pans sideways when only that axis of the zoom float can move", () => {
+  const flow = Array.from({ length: 12 }, (_, i) => `S${i}`).join(" --> ");
+  let s = open(
+    "n.md",
+    `\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`,
+    freshDefaults(),
+  );
+  s = keys(s, "j<leader>z").state;
+  expect(s.overlay.kind).toBe("zoom");
+  const down = mouse(s, wheel({ kind: "overlay" }, 1)).state;
+  expect(down.overlay).toEqual(keys(s, "l").state.overlay);
+  expect(down.overlay).not.toEqual(s.overlay);
+  const up = mouse(down, wheel({ kind: "overlay" }, -1)).state;
+  expect(up.overlay).toEqual(s.overlay);
 });

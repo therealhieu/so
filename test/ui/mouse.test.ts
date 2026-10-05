@@ -685,3 +685,23 @@ test("a side panel hidden on a narrow terminal does not catch clicks", async () 
   expect(after.panels.side).toMatchObject({ open: true, focused: false });
   expect(cursorOf(m)).toEqual({ line: 3, col: 90 - first.x });
 });
+
+test("the wheel inside the zoom float scrolls a wide diagram", async () => {
+  m = await mountShell({
+    cols: 80,
+    rows: 24,
+    config: '[preview]\nmode = "reading"\n',
+  });
+  const flow = Array.from({ length: 12 }, (_, i) => `Step${i}`).join(" --> ");
+  m.open("flow.md", `\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`);
+  m.keys("j<leader>z");
+  await m.frame();
+  const col = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "zoom" && o.zoom.kind === "diagram" ? o.zoom.col : -1;
+  };
+  expect(col()).toBe(0);
+  await m.mouse.scroll(40, 12, "down");
+  await m.frame();
+  expect(col()).toBeGreaterThan(0);
+});

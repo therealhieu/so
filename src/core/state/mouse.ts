@@ -32,7 +32,7 @@ import type {
   WindowSpot,
 } from "./types";
 import type { Registries } from "./update";
-import { showZoom, zoomTargetAt } from "./zoom";
+import { showZoom, zoomPans, zoomTargetAt } from "./zoom";
 
 const LINK_FOLLOW = "link.follow";
 /** Lines, rows, or items one vertical wheel notch moves. */
@@ -117,7 +117,7 @@ const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
  * rows, or for a sideways notch scrolls its columns (table) or moves to the
  * next lane (board); the explorer and the side panel move their selection;
  * an open list moves its selection, stopping at either end; the calendar
- * moves a week; the zoom float pans.
+ * moves a week; the zoom float zooms an image or scrolls a diagram.
  */
 function wheel(
   s: AppState,
@@ -200,7 +200,11 @@ function wheelBase(
   return runCommand(s, id, now, reg);
 }
 
-/** The zoom float pans one step per notch, as `hjkl` do. */
+/**
+ * The wheel over the zoom float: over an image a vertical notch zooms in
+ * (up) or out (down), as `+`/`-` do; over a diagram it scrolls, sideways
+ * when only that axis can move. A sideways notch pans, as `h`/`l` do.
+ */
 function wheelZoom(
   s: AppState,
   dx: number,
@@ -208,9 +212,13 @@ function wheelZoom(
   now: number,
   reg: Registries,
 ): Result {
+  const image = s.overlay.kind === "zoom" && s.overlay.zoom.kind === "image";
+  const pans = zoomPans(s);
   const keys: Key[] = [];
   if (dx !== 0) keys.push(dx > 0 ? "l" : "h");
-  if (dy !== 0) keys.push(dy > 0 ? "j" : "k");
+  else if (image) keys.push(dy < 0 ? "+" : "-");
+  else if (!pans.y && pans.x) keys.push(dy > 0 ? "l" : "h");
+  else keys.push(dy > 0 ? "j" : "k");
   return feedKeys(none(s), keys, now, reg);
 }
 

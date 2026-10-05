@@ -201,9 +201,10 @@ export type Overlay =
   | { kind: "zoom"; zoom: ZoomState };
 
 /**
- * The zoom float. An image keeps its zoom `level` (times the fitted size)
- * and the centre of the view as fractions of the image; a diagram keeps its
- * drawn lines and the first row and column on screen.
+ * The zoom float. An image keeps its zoom `level` (times the fitted size),
+ * the centre of the view as fractions of the image, and how much of the
+ * float it covers at fit per axis (the UI measures it; 1 until then); a
+ * diagram keeps its drawn lines and the first row and column on screen.
  */
 export type ZoomState =
   | {
@@ -213,6 +214,7 @@ export type ZoomState =
       level: number;
       cx: number;
       cy: number;
+      fill: { x: number; y: number };
     }
   | {
       kind: "diagram";
@@ -403,6 +405,8 @@ export type AppState = {
 export type Action =
   | { type: "key"; key: Key; now: number }
   | { type: "resize"; cols: number; rows: number }
+  /** How much of the zoom float the shown image covers at fit, per axis (0..1]. */
+  | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
   /** `embed` answers a read a note's embed sent (see the `read` effect). */
   | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
   | {

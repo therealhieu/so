@@ -14,7 +14,8 @@ type Box = { x: number; y: number; w: number; h: number };
 type ImageZoom = Extract<ZoomState, { kind: "image" }>;
 type DiagramZoom = Extract<ZoomState, { kind: "diagram" }>;
 
-const FOOTER = "+/- zoom · 0 fit · hjkl pan · q close";
+const IMAGE_FOOTER = "wheel +/- zoom · 0 fit · hjkl pan · q close";
+const DIAGRAM_FOOTER = "+/- spacing · 0 reset · wheel hjkl scroll · q close";
 
 const zoomOf = (s: AppState): ZoomState | undefined =>
   s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
@@ -73,6 +74,22 @@ export class ZoomOverlay extends Renderable {
     else paintDiagram(buf, theme, box, inner, z);
   }
 
+  /**
+   * Tell the core how much of the float the fitted image covers, so its
+   * panning stops where the drawn view does. Sent after this frame, and only
+   * when it changed.
+   */
+  private reportFill(z: ImageZoom, raw: { x: number; y: number }): void {
+    const fill = {
+      x: Math.round(raw.x * 1000) / 1000,
+      y: Math.round(raw.y * 1000) / 1000,
+    };
+    if (fill.x === z.fill.x && fill.y === z.fill.y) return;
+    queueMicrotask(() =>
+      this.deps.dispatch({ type: "zoomFill", path: z.path, fill }),
+    );
+  }
+
   private paintImage(
     buf: OptimizedBuffer,
     theme: Theme,
@@ -91,7 +108,7 @@ export class ZoomOverlay extends Renderable {
       border: "floatBorder",
       fill: "float",
       title: `${z.name}${size ?? ""} · ${times(z.level)}`,
-      footer: FOOTER,
+      footer: IMAGE_FOOTER,
     });
     if (image === undefined || tier === "placeholder") {
       const loading = tier !== "placeholder" && got === undefined;
@@ -110,9 +127,15 @@ export class ZoomOverlay extends Renderable {
     const iw = image.width;
     const ih = image.height;
     // Screen pixels per image pixel: the fitted scale times the level.
-    const scale =
-      Math.min((inner.w * cell.width) / iw, (inner.h * cell.height) / ih) *
-      z.level;
+    const fit = Math.min(
+      (inner.w * cell.width) / iw,
+      (inner.h * cell.height) / ih,
+    );
+    this.reportFill(z, {
+      x: (iw * fit) / (inner.w * cell.width),
+      y: (ih * fit) / (inner.h * cell.height),
+    });
+    const scale = fit * z.level;
     const sw = Math.min(iw, Math.round((inner.w * cell.width) / scale));
     const sh = Math.min(ih, Math.round((inner.h * cell.height) / scale));
     const sx = Math.round(clamp(z.cx * iw - sw / 2, 0, iw - sw));
@@ -149,7 +172,7 @@ function paintDiagram(
     border: "floatBorder",
     fill: "float",
     title: `mermaid · ${widest}×${z.lines.length}${z.spacing === "tight" ? " · tight" : ""}`,
-    footer: FOOTER,
+    footer: DIAGRAM_FOOTER,
   });
   const x = inner.x + Math.max(0, Math.floor((inner.w - widest) / 2));
   const y = inner.y + Math.max(0, Math.floor((inner.h - z.lines.length) / 2));
