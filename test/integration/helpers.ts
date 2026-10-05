@@ -203,6 +203,7 @@ export async function startApp(
   const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {
     store.dispatch({ type: "fileChanged", event });
     index?.notify(event);
+    lsp?.notify(event);
   });
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
-import { basename } from "node:path";
-import { pathToFileURL } from "node:url";
+import { basename, isAbsolute, join, relative } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   type CancellationToken,
   CancellationTokenSource,
@@ -13,9 +13,11 @@ import type {
   ApplyWorkspaceEditParams,
   ConfigurationParams,
   DocumentDiagnosticReport,
+  FileSystemWatcher,
   InitializeParams,
   InitializeResult,
   PublishDiagnosticsParams,
+  RegistrationParams,
   ServerCapabilities,
 } from "vscode-languageserver-protocol";
 import type { ServerSpec } from "../../core/config/lsp";
@@ -31,6 +33,7 @@ import type {
   LspResult,
   ServerView,
 } from "../../core/state/lsp-types";
+import type { FileEvent } from "../../core/state/types";
 import type { Logger } from "../log";
 import { clientCapabilities } from "./capabilities";
 import {
@@ -105,6 +108,8 @@ export type LspClient = {
     applied: boolean,
     failureReason?: string,
   ): void;
+  /** Reports the events matching a registered watcher, debounced. */
+  watched(events: FileEvent[]): void;
   configure(settings: Record<string, unknown>): void;
   /** `shutdown`, then `exit` after the reply or at `boundMs - 100`; killed at `boundMs`. */
   stop(boundMs: number): Promise<void>;
@@ -112,6 +117,20 @@ export type LspClient = {
 
 /** Server stderr lines written to the debug log per client, at most. */
 const STDERR_LINES = 200;
+/** Watched-file events are sent this long after the last one. */
+const WATCH_DEBOUNCE_MS = 100;
+
+/**
+ * One registered watcher: a glob matched against paths relative to `base`,
+ * or against absolute paths without one, for the `kinds` it asked for.
+ */
+type Watcher = { glob: Bun.Glob; base?: string; kinds: number };
+
+/** `didChangeWatchedFiles` change types and the matching watch-kind bits. */
+const CHANGED = 2;
+const DELETED = 3;
+const WATCH_CHANGE = 2;
+const WATCH_DELETE = 4;
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -179,6 +198,11 @@ export function createLspClient(o: {
   /** What the server holds for each open document. */
   const docs = new Map<string, TextBuffer>();
   const pulls = new Map<string, CancellationTokenSource>();
+  /** Watchers per registration id. */
+  const watchers = new Map<string, Watcher[]>();
+  /** Changes waiting for the debounce, by URI. */
+  const changes = new Map<string, number>();
+  let watchTimer: ReturnType<typeof setTimeout> | undefined;
   const resultIds = new Map<string, string>();
   let stopped: Promise<void> | undefined;
   let onClosed = () => {};
@@ -232,6 +256,52 @@ export function createLspClient(o: {
     p.items.map((item) => sectionValue(settings, item.section) ?? null),
   );
   conn.onRequest("window/workDoneProgress/create", () => null);
+  const base = o.root ?? o.workspaceRoot;
+  const toWatcher = (w: FileSystemWatcher): Watcher | undefined => {
+    const kinds = typeof w.kind === "number" ? w.kind : 7;
+    const g: unknown = w.globPattern;
+    if (typeof g === "string")
+      return isAbsolute(g)
+        ? { glob: new Bun.Glob(g), kinds }
+        : { glob: new Bun.Glob(g), base, kinds };
+    if (!isObject(g) || typeof g.pattern !== "string") return undefined;
+    const b = g.baseUri;
+    const uri = typeof b === "string" ? b : isObject(b) ? b.uri : undefined;
+    if (typeof uri !== "string" || !uri.startsWith("file:")) return undefined;
+    return {
+      glob: new Bun.Glob(g.pattern),
+      base: fileURLToPath(uri),
+      kinds,
+    };
+  };
+  conn.onRequest("client/registerCapability", (p: RegistrationParams) => {
+    for (const r of p.registrations ?? []) {
+      if (r.method !== "workspace/didChangeWatchedFiles") continue;
+      const opts: unknown = r.registerOptions;
+      const list =
+        isObject(opts) && Array.isArray(opts.watchers) ? opts.watchers : [];
+      watchers.set(
+        r.id,
+        list.flatMap((w: FileSystemWatcher) => toWatcher(w) ?? []),
+      );
+    }
+    return null;
+  });
+  conn.onRequest(
+    "client/unregisterCapability",
+    (p: { unregisterations?: { id: string }[] }) => {
+      for (const u of p.unregisterations ?? []) watchers.delete(u.id);
+      return null;
+    },
+  );
+  const flushWatched = () => {
+    watchTimer = undefined;
+    if (changes.size === 0) return;
+    notify("workspace/didChangeWatchedFiles", {
+      changes: [...changes].map(([uri, type]) => ({ uri, type })),
+    });
+    changes.clear();
+  };
   /** The latest report per progress token, in begin order. */
   const work = new Map<string | number, { title: string; text: string }>();
   conn.onUnhandledProgress(({ token, value }) => {
@@ -541,12 +611,31 @@ export function createLspClient(o: {
         failureReason === undefined ? { applied } : { applied, failureReason },
       );
     },
+    watched(events) {
+      for (const e of events) {
+        const abs = join(o.workspaceRoot, e.path);
+        const bit = e.kind === "removed" ? WATCH_DELETE : WATCH_CHANGE;
+        const matches = [...watchers.values()].flat().some((w) => {
+          if ((w.kinds & bit) === 0) return false;
+          if (w.base === undefined) return w.glob.match(abs);
+          const rel = relative(w.base, abs);
+          return !rel.startsWith("..") && !isAbsolute(rel) && w.glob.match(rel);
+        });
+        if (matches)
+          changes.set(uri(e.path), e.kind === "removed" ? DELETED : CHANGED);
+      }
+      if (changes.size === 0 || exited) return;
+      clearTimeout(watchTimer);
+      watchTimer = setTimeout(flushWatched, WATCH_DEBOUNCE_MS);
+    },
     configure(next) {
       settings = next;
       notify("workspace/didChangeConfiguration", { settings });
     },
     stop(boundMs) {
       stopping = true;
+      clearTimeout(watchTimer);
+      watchTimer = undefined;
       stopped ??= (async () => {
         if (exited) return;
         const started = performance.now();
@@ -582,6 +671,7 @@ export function createLspClient(o: {
     });
     child.on("close", (code, signal) => {
       exited = true;
+      clearTimeout(watchTimer);
       onClosed();
       conn.dispose();
       const reason =

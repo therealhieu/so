@@ -606,3 +606,18 @@ test("a request still waiting when the server crashes fails as restarted", async
   await waitForMessage(rs.log, "textDocument/didOpen", 5000, 2);
   expect(processes(rs.log)).toHaveLength(2);
 }, 15_000);
+
+test("a watched file change reaches a server only when it matches a registered glob", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const rs = fake("rs", ["rust"], { registerWatchers: { globs: ["**/*.rs"] } });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitForMessage(rs.log, "response:client/registerCapability");
+  await writeFile(join(root, "lib.rs"), "pub fn lib() {}\n");
+  await writeFile(join(root, "notes.md"), "# notes\n");
+  await waitForMessage(rs.log, "workspace/didChangeWatchedFiles");
+  await Bun.sleep(300);
+  expect(
+    messages(rs.log, "workspace/didChangeWatchedFiles").map((m) => m.params),
+  ).toEqual([{ changes: [{ uri: uri(join(root, "lib.rs")), type: 2 }] }]);
+});

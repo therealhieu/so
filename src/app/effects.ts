@@ -57,7 +57,7 @@ export type RunnerDeps = {
    */
   index?: Pick<IndexHost, "search" | "notify">;
   /** Runs language-server effects; without one, every request fails at once. */
-  lsp?: Pick<LspHost, "run">;
+  lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
   preview: Pick<PreviewHost, "start" | "stop">;
   /** Opens an address in the user's browser; rejects when no browser could be launched. */
@@ -283,6 +283,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             const stamp = await write(path, restoreFile(cur, text), cur.stamp);
             d.ownOps.noteWrite(path, stamp);
             d.index?.notify({ kind: "changed", path, isDir: false });
+            d.lsp?.notify({ kind: "changed", path, isDir: false });
             d.logger.info("links.edited", { path, links: edit.edits.length });
             d.dispatch({
               type: "editsApplied",

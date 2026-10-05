@@ -16,6 +16,7 @@ import type {
   AppState,
   BufferState,
   Effect,
+  FileEvent,
 } from "../core/state/types";
 import type { Logger } from "../workspace/log";
 import {
@@ -49,6 +50,8 @@ export type LspHost = {
   /** Reconcile servers and documents with the state; subscribed to the store. */
   observe(s: AppState): void;
   run(e: LspEffect): void;
+  /** A file changed or was removed on disk; reported to servers watching it. */
+  notify(e: FileEvent): void;
   /** Stops every server and version probe; resolves once none is left. */
   stop(): Promise<void>;
 };
@@ -772,6 +775,10 @@ export function createLspHost(d: {
       // After the dispatch that emitted `e` has reached `observe`, so a
       // request sees the text of the same action.
       queueMicrotask(() => handle(e));
+    },
+    notify(e) {
+      if (stopped) return;
+      for (const server of servers.values()) server.client?.watched([e]);
     },
     async stop() {
       if (stopped) return;
