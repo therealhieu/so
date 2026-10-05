@@ -542,7 +542,9 @@ test("the zoom float draws a diagram as a sharp image of the part in view", asyn
     );
     m.keys("j<leader>z");
     expect(await m.frame()).toContain("◌ mermaid");
-    await Bun.sleep(50);
+    // The first raster also loads the rasterizer, so how long it takes varies.
+    for (let i = 0; i < 200 && (await m.frame()).includes("◌ mermaid"); i++)
+      await Bun.sleep(10);
     draw.mockClear();
     expect(await m.frame()).toContain("mermaid · 1×");
     expect(draw).toHaveBeenCalledTimes(1);
