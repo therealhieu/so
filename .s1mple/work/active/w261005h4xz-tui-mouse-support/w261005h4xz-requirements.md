@@ -135,7 +135,7 @@ None — standalone work.
 - **Full-screen overlay and toast hit areas** — they capture clicks over cells they do not paint; the design must route those clicks correctly.
 - **Accidental destructive choices** — clicks must never answer the prompt or conflict dialogs.
 - **Terminal restore** — mouse tracking must stay off after every exit path (`test/e2e/quit.test.ts:130`, `test/e2e/restore.test.ts:33`).
-- **Insert-mode undo** — moving the cursor by click in Insert mode must split undo and `.` repeat the same way a keyboard cursor move does, so one undo never spans two places.
+- **Insert-mode undo** — moving the cursor by click in Insert mode must split undo and `.` repeat (as `<Esc>`, move, `i`), so one undo never spans two places.
 
 # 5. Current Requirements
 
@@ -253,7 +253,7 @@ None — standalone work.
 - Wrapped rows, horizontal scroll, tabs, and wide characters map to the source column displayed at that cell.
 - Concealed live-preview text maps to the source column of the visible character under the pointer; a click on a widget row (image, embed, Mermaid, Base embed) lands at the start of the widget's source line.
 - A click in the gutter lands at column 0 of that row's source line; a click past the end of a line lands on its last character (Normal) or after it (Insert); a click below the last line lands on the last line.
-- Mode: Normal stays Normal; Insert stays Insert with the cursor moved and undo and `.` split as for a keyboard cursor move; Visual and VisualLine return to Normal; a pending operator, count, or register is cancelled.
+- Mode: Normal stays Normal; Insert stays Insert with the cursor moved, as `<Esc>`, the move, then `i`, so undo and `.` split at the click; Visual and VisualLine return to Normal; a pending operator, count, or register is cancelled.
 
 **Rationale:** This is the behavior Vim and Neovim users expect, and clicking concealed text must not misplace the cursor, because the next edit would land in the wrong place.
 
