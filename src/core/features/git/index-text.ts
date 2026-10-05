@@ -1,6 +1,7 @@
 /**
  * The index side of a file in the buffer's line model ("\n"-split, no BOM,
- * final newline split off), with the form needed to write it back.
+ * final newline split off), with the form needed to write it back. A
+ * zero-byte entry has no lines, so a buffer's text against it is all added.
  */
 export type IndexText = {
   lines: string[];
@@ -24,7 +25,7 @@ export function normalizeIndexText(
   const lf = (bom ? text.slice(BOM.length) : text).replaceAll("\r\n", "\n");
   const finalNewline = lf.endsWith("\n");
   return {
-    lines: (finalNewline ? lf.slice(0, -1) : lf).split("\n"),
+    lines: text === "" ? [] : (finalNewline ? lf.slice(0, -1) : lf).split("\n"),
     finalNewline,
     bom,
     eol: eolAttr === "crlf" ? "\r\n" : "\n",

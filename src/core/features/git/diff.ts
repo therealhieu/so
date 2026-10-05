@@ -41,6 +41,8 @@ export function diffLines(
         oldLines: [],
       },
     ];
+  // A buffer always has a line, so an empty one matches an empty index entry.
+  if (old.length === 0 && cur.length === 1 && cur[0] === "") return [];
   const shorter = Math.min(old.length, cur.length);
   let pre = 0;
   while (pre < shorter && old[pre] === cur[pre]) pre++;

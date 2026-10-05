@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { diffLines, type Hunk, MAX_EDIT } from "./diff";
+import { normalizeIndexText } from "./index-text";
 
 const lines = (n: number, tag = "l") =>
   Array.from({ length: n }, (_, i) => `${tag}${i}`);
@@ -141,4 +142,25 @@ test("diffs with nothing in common or too many edits fall back to one change hun
       oldLines: old.slice(1),
     },
   ]);
+});
+
+test("text typed into a note committed empty is one add hunk", () => {
+  const empty = normalizeIndexText("", "lf").lines;
+  expect(diffLines(empty, ["hello"])).toEqual([
+    {
+      kind: "add",
+      old: { start: 0, count: 0 },
+      new: { start: 0, count: 1 },
+      oldLines: [],
+    },
+  ]);
+  expect(diffLines(empty, ["", "hello"])).toEqual([
+    {
+      kind: "add",
+      old: { start: 0, count: 0 },
+      new: { start: 0, count: 2 },
+      oldLines: [],
+    },
+  ]);
+  expect(diffLines(empty, [""])).toEqual([]);
 });

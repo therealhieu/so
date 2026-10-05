@@ -29,12 +29,16 @@ test("index text round-trips CRLF, a missing final newline, and a BOM", () => {
     bom: true,
     eol: "\n",
   });
+  expect(normalizeIndexText("", "lf").lines).toEqual([]);
+  expect(normalizeIndexText("\n", "lf").lines).toEqual([""]);
+  expect(normalizeIndexText(BOM, "lf").lines).toEqual([""]);
   for (const [text, eol] of [
     [crlf, "crlf"],
     [noFinal, "lf"],
     [bom, "lf"],
     ["", "lf"],
     ["\n", "lf"],
+    [BOM, "lf"],
   ] as const)
     expect(rejoin(normalizeIndexText(text, eol))).toBe(text);
 });

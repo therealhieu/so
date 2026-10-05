@@ -74,3 +74,16 @@ test("an untracked file adds every line to an empty index entry", () => {
     `${HEADER}@@ -0,0 +1,2 @@\n+a\n+b\n`,
   );
 });
+
+test("a note committed empty gains lines with an empty old side", () => {
+  const index = normalizeIndexText("", "lf");
+  const bare = cur(["hello"], false);
+  const [h] = diffLines(index.lines, bare.lines);
+  if (h === undefined) throw new Error("no hunk");
+  expect(hunkPatch("notes/a.md", "100644", h, index, bare)).toBe(
+    `${HEADER}@@ -0,0 +1,1 @@\n+hello\n\\ No newline at end of file\n`,
+  );
+  expect(hunkPatch("notes/a.md", "100644", h, index, cur(["hello"]))).toBe(
+    `${HEADER}@@ -0,0 +1,1 @@\n+hello\n`,
+  );
+});
