@@ -22,8 +22,12 @@ const cells = (t: string) => [...t].length;
 const basename = (path: string) =>
   path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");
 
-function titleOf(c: CompletionState): string {
+function titleOf(s: AppState, c: CompletionState): string {
   if (c.mode === "notes") return "notes & aliases";
+  if (c.mode === "code")
+    return c.code === undefined
+      ? "completion"
+      : (s.lsp.servers[c.code.key]?.name ?? "completion");
   const note = basename(c.target ?? "");
   return `${c.mode === "headings" ? "headings" : "blocks"} · ${note}`;
 }
@@ -107,7 +111,7 @@ export class CompletionView extends Renderable {
     drawFrame(buf, theme, box, {
       border: "floatBorder",
       fill: "float",
-      title: titleOf(c),
+      title: titleOf(s, c),
     });
     const inner = box.w - 2;
     const room = box.h - 3;
@@ -127,7 +131,12 @@ export class CompletionView extends Renderable {
       if (item === undefined) break;
       const selected = first + i === c.selected;
       const y = box.y + 1 + i;
-      const icon = c.mode === "notes" ? "◇ " : "";
+      const kind =
+        item.source === undefined
+          ? undefined
+          : c.code?.items[item.source]?.kind;
+      const icon =
+        c.mode === "notes" ? "◇ " : kind === undefined ? "" : `${kind} `;
       const head = `${selected ? " ▸ " : "   "}${icon}${item.label}`;
       drawCells(
         buf,

@@ -1,3 +1,4 @@
+import { resolveServers } from "../config/lsp";
 import { backlinksOf } from "../features/links/note-index";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
@@ -7,7 +8,7 @@ import { RenderCache } from "../lang/markdown/render-cache";
 import { baseWindow } from "./base-model";
 import { activeBuffer, activeWindow } from "./buffers";
 import { jumpSegment } from "./jumps";
-import type { AppState } from "./types";
+import type { AppState, BufferState } from "./types";
 
 export type StatusSegments = {
   mode: string;
@@ -29,6 +30,8 @@ export type StatusSegments = {
   jump?: string;
   /** The browser preview: "preview :<port>", "preview …" while it starts, or "preview off". */
   preview: string;
+  /** Language servers attached to the active buffer that are starting, ready, or failed. */
+  lsp?: { text: string; state: "starting" | "ready" | "failed" }[];
 };
 
 function previewSegment(s: AppState): string {
@@ -109,5 +112,41 @@ export function statusSegments(s: AppState): StatusSegments {
     seg.indexProgress = { done: s.index.done, total: s.index.total };
   const jump = jumpSegment(s.jumps);
   if (jump !== undefined) seg.jump = jump;
+  const lsp = b === undefined ? undefined : lspSegments(s, b);
+  if (lsp !== undefined) seg.lsp = lsp;
   return seg;
+}
+
+/**
+ * The servers attached to the active buffer, starting or ready, with their
+ * progress; then failed ones that served its file type under a root holding
+ * it (a failed server is no longer attached). Missing and unavailable
+ * servers stay silent.
+ */
+function lspSegments(s: AppState, b: BufferState): StatusSegments["lsp"] {
+  const out: NonNullable<StatusSegments["lsp"]> = [];
+  for (const key of s.lsp.attached[b.path] ?? []) {
+    const v = s.lsp.servers[key];
+    if (v?.state !== "starting" && v?.state !== "ready") continue;
+    const text = v.progress === undefined ? v.name : `${v.name} ${v.progress}`;
+    out.push({ text, state: v.state });
+  }
+  const failed = Object.values(s.lsp.servers).filter(
+    (v) => v.state === "failed",
+  );
+  if (failed.length > 0) {
+    const file = `${s.workspace.root}/${b.path}`;
+    const served = new Set(
+      resolveServers(s.config.lsp)
+        .filter((spec) => spec.fileTypes.includes(b.fileType))
+        .map((spec) => spec.name),
+    );
+    for (const v of failed)
+      if (
+        served.has(v.name) &&
+        (v.root === undefined || file.startsWith(`${v.root}/`))
+      )
+        out.push({ text: v.name, state: "failed" });
+  }
+  return out.length === 0 ? undefined : out;
 }

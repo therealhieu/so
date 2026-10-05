@@ -63,8 +63,12 @@ test("a shown diagnostic underlines its range and nothing else", async () => {
 });
 
 /** foo.rs attached to a ready server, then `keys` and the answer to the request they send. */
-async function answered(keys: string, result: LspResult): Promise<Mounted> {
-  const x = await mountShell({ cols: 100, rows: 24 });
+async function answered(
+  keys: string,
+  result: LspResult,
+  cols = 100,
+): Promise<Mounted> {
+  const x = await mountShell({ cols, rows: 24 });
   x.open("foo.rs", RUST);
   x.store.dispatch({
     type: "lspServer",
@@ -73,7 +77,7 @@ async function answered(keys: string, result: LspResult): Promise<Mounted> {
       name: "fake",
       root: "/ws",
       state: "ready",
-      features: ["hover", "signature"],
+      features: ["hover", "signature", "completion"],
       pullDiagnostics: false,
       completionTriggers: [],
       signatureTriggers: ["("],
@@ -90,7 +94,8 @@ async function answered(keys: string, result: LspResult): Promise<Mounted> {
 }
 
 /** The cursor on `z`, and a hover answered with `text`. */
-const withHover = (text: string) => answered("2j12lK", { kind: "hover", text });
+const withHover = (text: string, cols?: number) =>
+  answered("2j12lK", { kind: "hover", text }, cols);
 
 test("a hover float paints below the cursor and ignores a click", async () => {
   m = await withHover("let z: i32\n\nThe answer.");
@@ -137,4 +142,54 @@ test("signature help marks the active parameter", async () => {
   expect(bg(x + 12)).not.toBe(bg(x + 4));
   expect(bg(x + 17)).toBe(bg(x + 12));
   expect(bg(x + 18)).toBe(bg(x + 4));
+});
+
+test("the statusline shows a ready server attached to the buffer", async () => {
+  m = await withHover("x");
+  expect(await m.row(-2)).toContain("│ ◆ fake");
+});
+
+test("a narrow terminal drops the server segment", async () => {
+  m = await withHover("x", 80);
+  const row = await m.row(-2);
+  expect(row).toContain("foo.rs");
+  expect(row).not.toContain("fake");
+});
+
+test("the command line shows the cursor diagnostic in Normal mode only", async () => {
+  m = await withError();
+  m.keys("2j12l");
+  expect((await m.row(-1)).trim()).toBe(
+    "E rustc: cannot find value `z` in this scope",
+  );
+  m.keys("i");
+  expect(await m.row(-1)).not.toContain("cannot find");
+  m.keys("<Esc>:");
+  expect((await m.row(-1)).trim()).toBe(":");
+});
+
+test("code completion rows show kind, label, and detail", async () => {
+  const item = (label: string, kind: string, detail: string) => ({
+    label,
+    kind,
+    detail,
+    filterText: label,
+    sortText: kind,
+    additional: [],
+    resolved: true,
+    data: undefined,
+  });
+  m = await answered("2jA<C-Space>", {
+    kind: "completion",
+    items: [
+      item("len", "Method", "fn(&self) -> usize"),
+      item("Vec", "Struct", "alloc::vec"),
+    ],
+    incomplete: false,
+  });
+  expect(m.store.get().overlay.kind).toBe("completion");
+  const frame = await m.frame();
+  expect(frame).toMatch(/▸ Method len +fn\(&self\) -> usize/);
+  expect(frame).toMatch(/ {3}Struct Vec +alloc::vec/);
+  expect(frame).toContain("─ fake ─");
 });

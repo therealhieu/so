@@ -4,18 +4,27 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { cmdlineCompletions } from "../../core/state/keys";
+import { cursorDiagnostic } from "../../core/state/lsp";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 const MAX_ITEMS = 8;
+/** The cursor diagnostic's letter and token by severity. */
+const SEVERITY: Readonly<Record<1 | 2 | 3 | 4, [string, string]>> = {
+  1: ["E", "diagnosticError"],
+  2: ["W", "diagnosticWarn"],
+  3: ["I", "diagnosticInfo"],
+  4: ["H", "diagnosticHint"],
+};
 const cells = (text: string) => [...text].length;
 
 /**
  * The last row: the `:`, `/`, or `?` line while typing (scrolled so the
  * cursor stays visible) with up to 8 completions in a float above the
- * statusline, or else the latest message. Pending keys show on the right.
+ * statusline, or else the latest message. In Normal mode with no message it
+ * shows the diagnostic under the cursor. Pending keys show on the right.
  */
 export class CommandLine extends Renderable {
   private s: AppState | undefined;
@@ -90,14 +99,28 @@ export class CommandLine extends Renderable {
       drawCells(buf, theme.style("message"), 0, y, shown, cols);
     } else {
       const m = s.notifications.message;
-      drawCells(
-        buf,
-        theme.style(m?.level === "error" ? "messageError" : "message"),
-        0,
-        y,
-        m?.text ?? "",
-        cols,
-      );
+      const d =
+        m === undefined && s.vim.mode === "normal"
+          ? cursorDiagnostic(s)
+          : undefined;
+      if (d !== undefined)
+        drawCells(
+          buf,
+          theme.style(SEVERITY[d.severity][1]),
+          0,
+          y,
+          `${SEVERITY[d.severity][0]} ${d.text}`,
+          cols,
+        );
+      else
+        drawCells(
+          buf,
+          theme.style(m?.level === "error" ? "messageError" : "message"),
+          0,
+          y,
+          m?.text ?? "",
+          cols,
+        );
       const pending = s.vim.pending.join("");
       if (pending !== "")
         drawCells(

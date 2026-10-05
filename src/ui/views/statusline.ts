@@ -39,13 +39,20 @@ function indexSegment(seg: StatusSegments): Seg {
   };
 }
 
+function lspSegment(l: NonNullable<StatusSegments["lsp"]>[number]): Seg {
+  if (l.state === "ready") return { text: `◆ ${l.text}`, token: "statusDim" };
+  if (l.state === "failed")
+    return { text: `✗ ${l.text}`, token: "statusError" };
+  return { text: `◌ ${l.text}`, token: "statusDim" };
+}
+
 const cells = (text: string) => [...text].length;
 
 /**
- * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index`
- * on the left and `Ln:Col` on the right. Narrow terminals drop the view, word, and preview
- * segments; a row too long for the full path drops preview, then words, then view, and the
- * path is cut in the middle when the row is still too long.
+ * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index │ servers`
+ * on the left and `Ln:Col` on the right. Narrow terminals drop the server, view, word, and
+ * preview segments; a row too long for the full path drops servers and preview, then words,
+ * then view, and the path is cut in the middle when the row is still too long.
  */
 export class Statusline extends Renderable {
   private s: AppState | undefined;
@@ -121,6 +128,8 @@ export class Statusline extends Renderable {
     if (words !== undefined) segs.push(words);
     segs.push(preview);
     if (seg.index !== undefined) segs.push(indexSegment(seg));
+    const servers = (seg.lsp ?? []).map(lspSegment);
+    segs.push(...servers);
     const right =
       seg.position === undefined
         ? ""
@@ -132,7 +141,7 @@ export class Statusline extends Renderable {
       cells(right) +
       cells(dirty) +
       segs.reduce((n, x) => n + 3 + (x === path ? 0 : cells(x.text)), 0);
-    for (const optional of [preview, words, view]) {
+    for (const optional of [...servers, preview, words, view]) {
       if (optional === undefined) continue;
       if (narrow || fixedWidth() + cells(path.text) > cols)
         segs = segs.filter((x) => x !== optional);
