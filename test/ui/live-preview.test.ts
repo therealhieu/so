@@ -552,11 +552,16 @@ test("the zoom float draws a diagram as a sharp image of the part in view", asyn
     expect(fit.width).toBe(88 * 8);
 
     m.keys("++++");
-    // The last raster stays up while the 2× view renders.
+    // Zoom steps redraw at once from the last raster, stretched; the sharp
+    // raster starts only when the steps stop.
+    const before = rasters.length;
     draw.mockClear();
-    await m.frame();
+    expect(await m.frame()).toContain("mermaid · 2×");
     expect(draw).toHaveBeenCalledTimes(1);
-    await Bun.sleep(50);
+    expect(rasters.length).toBe(before);
+    await Bun.sleep(150);
+    await m.frame();
+    await Bun.sleep(20);
     expect(await m.frame()).toContain("mermaid · 2×");
     const zoomed = rasters.at(-1);
     if (zoomed === undefined) throw new Error("expected a raster");

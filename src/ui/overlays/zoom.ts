@@ -218,9 +218,10 @@ export class ZoomOverlay extends Renderable {
   /**
    * A diagram drawn from its SVG. A raster covers the view plus a margin at
    * the float's pixel density, so a pan within the margin only moves the
-   * placement. While the view moves past the raster, the part it still
-   * covers is drawn, and a new raster starts once the view rests for
-   * `RASTER_IDLE_MS`, so a drag never waits on rasterizing. Without
+   * placement. When the view moves past it or the level changes, the last
+   * raster is drawn moved or stretched, and a new one starts once the view
+   * rests for `RASTER_IDLE_MS`, so neither a drag nor a zoom waits on
+   * rasterizing. Without
    * graphics, or when the SVG cannot be drawn (no font), the text drawing
    * shows instead.
    */
@@ -257,9 +258,10 @@ export class ZoomOverlay extends Renderable {
       usable(r) && r !== undefined && contains(r.crop, view);
     if (!covers(this.wanted)) {
       const fresh = rasterFor(owner, view, scale, d.svg);
-      // A pan past the last raster waits for the view to rest; the first
-      // raster, or one after a zoom, starts at once.
-      if (usable(this.shown)) this.restartTimer(fresh);
+      // Once a raster is up, the next waits for the view to rest, so a pan
+      // or a run of zoom steps redraws at once from the last raster (moved,
+      // or stretched to the new level); only the first starts at once.
+      if (this.shown?.owner === owner) this.restartTimer(fresh);
       else this.wanted = fresh;
     }
     const want = this.wanted;

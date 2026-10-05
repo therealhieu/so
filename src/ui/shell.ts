@@ -7,7 +7,7 @@ import {
 } from "@opentui/core";
 import { pressStops } from "../core/state/mouse";
 import type { Store } from "../core/state/store";
-import type { AppState, SvgRaster } from "../core/state/types";
+import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
 import type { Registries } from "../core/state/update";
 import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
@@ -60,8 +60,8 @@ export type ShellDeps = {
   now: () => number;
   /** Bytes for a workspace path or an http(s) URL. */
   loadImage: (ref: string) => Promise<Uint8Array>;
-  /** PNG bytes of part of an SVG; the zoom float draws diagrams with it. */
-  rasterizeSvg: (r: SvgRaster) => Promise<Uint8Array>;
+  /** Pixels of part of an SVG; the zoom float draws diagrams with it. */
+  rasterizeSvg: (r: SvgRaster) => Promise<RgbaImage>;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
 };

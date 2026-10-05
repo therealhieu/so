@@ -4,6 +4,7 @@ import {
   resolveImageRenderProtocol,
   type TerminalCapabilities,
 } from "@opentui/core";
+import type { RgbaImage } from "../core/state/types";
 
 /** How an image is drawn: a graphics protocol, block characters, or its name. */
 export type ImageTier = "kitty" | "sixel" | "blocks" | "placeholder";
@@ -57,7 +58,7 @@ export class ImageCache {
    */
   get(
     ref: string,
-    load: (ref: string) => Promise<Uint8Array> = this.o.load,
+    load: (ref: string) => Promise<Uint8Array | RgbaImage> = this.o.load,
   ): { image: NativeImage } | { failed: true } | undefined {
     const e = this.entries.get(ref);
     if (e?.kind === "image") {
@@ -118,7 +119,10 @@ export class ImageCache {
     this.total = 0;
   }
 
-  private start(ref: string, load: (ref: string) => Promise<Uint8Array>): void {
+  private start(
+    ref: string,
+    load: (ref: string) => Promise<Uint8Array | RgbaImage>,
+  ): void {
     const loading: Entry = { kind: "loading" };
     this.entries.set(ref, loading);
     load(ref)
@@ -129,7 +133,15 @@ export class ImageCache {
       );
   }
 
-  private decode(bytes: Uint8Array): Entry {
+  /** Decode file bytes, or take pixels as they are. */
+  private decode(bytes: Uint8Array | RgbaImage): Entry {
+    if (!(bytes instanceof Uint8Array)) {
+      const { rgba, width, height } = bytes;
+      if (width * height * 4 > this.limitBytes)
+        throw new Error("image too large");
+      const image = NativeImage.fromRgba(rgba, width, height);
+      return { kind: "image", image, bytes: width * height * 4 };
+    }
     // The header gives the size, so an image too large to keep is never decoded.
     const info = imageInfo(bytes);
     if (info.width * info.height * 4 > this.limitBytes)

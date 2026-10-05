@@ -17,10 +17,15 @@ test("a crop of an SVG is drawn at the asked pixel size over its background", as
       height: 30,
     });
   const right = await draw(100);
-  // PNG: the IHDR chunk holds the width and height at bytes 16 and 20.
-  const view = new DataView(right.buffer, right.byteOffset);
-  expect([view.getUint32(16), view.getUint32(20)]).toEqual([40, 30]);
-  expect(Buffer.from(await draw(0)).equals(Buffer.from(right))).toBe(false);
+  expect([right.width, right.height, right.rgba.length]).toEqual([
+    40,
+    30,
+    40 * 30 * 4,
+  ]);
+  // The right half of the SVG is the red square, edge to edge.
+  expect([...right.rgba.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
+  const left = await draw(0);
+  expect([...left.rgba.subarray(0, 4)]).toEqual([0, 0, 0, 255]);
 });
 
 test("without a sans-serif font every call fails", async () => {

@@ -207,7 +207,10 @@ export type Overlay =
  * float it covers at fit per axis (the UI measures it; 1 until then); a
  * diagram keeps its drawn lines and the first row and column on screen.
  */
-/** Part of an SVG drawn into a `width`×`height` pixel PNG over `background`. */
+/** Decoded pixels: `width`×`height` RGBA, four bytes per pixel, rows top to bottom. */
+export type RgbaImage = { rgba: Uint8Array; width: number; height: number };
+
+/** Part of an SVG drawn into `width`×`height` pixels over `background`. */
 export type SvgRaster = {
   svg: string;
   background: string;

@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { initWasm, Resvg } from "@resvg/resvg-wasm";
 import wasmPath from "@resvg/resvg-wasm/index_bg.wasm" with { type: "file" };
-import type { SvgRaster } from "../core/state/types";
+import type { RgbaImage, SvgRaster } from "../core/state/types";
 
 /** Sans-serif, then monospace font files tried in order; the first readable one of each is used. */
 const FONT_PATHS = {
@@ -47,7 +47,7 @@ function firstFont(paths: readonly string[]): Uint8Array | undefined {
  */
 export function createSvgRasterizer(
   fontPaths: { sans: readonly string[]; mono: readonly string[] } = FONT_PATHS,
-): (r: SvgRaster) => Promise<Uint8Array> {
+): (r: SvgRaster) => Promise<RgbaImage> {
   let ready: Promise<Uint8Array[]> | undefined;
   const start = async () => {
     const sans = firstFont(fontPaths.sans);
@@ -76,7 +76,8 @@ export function createSvgRasterizer(
     try {
       const image = resvg.render();
       try {
-        return image.asPng();
+        // Raw pixels: a PNG round trip costs about 20 times the drawing.
+        return { rgba: image.pixels, width: image.width, height: image.height };
       } finally {
         image.free();
       }
