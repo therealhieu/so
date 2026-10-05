@@ -63,14 +63,50 @@ Remaining issues: None. PTY e2e `V50` and the manual image check `V61` belong to
 
 ## Remediation
 
-Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
+The one verifier finding, `P2-G2-VER1`, is fixed in `1858b88`. Every restore step in the tool host now runs on its own, so a throw from the foreign-mode write or from `resume` cannot leave so suspended with interrupts held.
 
-- **Verification reports:** Not yet verified.
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005f2a7-git-integration/reports/p2-g2-verification-report.md` (commit `1695ded`, status `Failed`, one Minor finding). That report and its verdict are unchanged.
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+#### P2-G2-VER1 — A throwing restore step leaves so suspended with interrupts held — `Fixed`
+
+- **Inspection:** The finding is confirmed. Before the fix, `src/app/tool-host.ts:64-68` ran `resetForeignModes(); resume(); release();` one after another in a single `finally`. The new test made `resetForeignModes` throw and recorded calls ending `suspend, spawn lazygit @ /repo, reset`, with no `resume` and no `release`.
+- **Change evidence:** In `src/app/tool-host.ts`, `finally` now calls `restore(release)`. Each step sits in nested `try/finally` blocks (reset → resume → release), so a throw from one step still lets the later steps run, and each runs exactly once. An outer `catch` logs `git.tool.restore` with `{ reason }` (the error message only, no note text) and rethrows. `run` then rejects, and the existing `runTool` case turns that rejection into exactly one `toolExited { failed, reason }`. The happy path, the spawn-failure path, the order, and the `git.tool.exit` logging are unchanged. `src/app/tool-host.test.ts` adds a `failing` option to the screen double and the test `a failing restore step still resumes and releases once`.
+- **Verification evidence:**
+  - RED: before the fix, `bun test src/app/tool-host.test.ts` → 4 pass, 1 fail. The received calls ended `[…, "reset"]`, not `reset, resume, release`.
+  - GREEN: `bun test src/app/tool-host.test.ts` → 5 pass, 0 fail, 31 expects. With `resetForeignModes` throwing `EAGAIN: write`, and again with `resume` throwing `renderer gone`, the test checks three things. `run` rejects with that error. The last three calls are `reset, resume, release`, and each appears exactly once. `git.tool.restore { reason }` is logged.
+  - `bun run check` → exit 0. Biome checked 351 files with no fixes. tsc and knip are clean. 1202 pass, 0 fail.
+- **Commit evidence:** `1858b88` `fix(app): restore the terminal even when a restore step throws` (task `P2-G2-T3`). It contains only `src/app/tool-host.ts` and `src/app/tool-host.test.ts`.
+
+**Completion Checklist:**
+
+- [x] Required resolution is implemented.
+- [x] Required proof passes.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Remediation Group Verification
+
+| Check | Command or method | Result |
+|---|---|---|
+| App units | `bun test src/app` | `Passed`: exit 0, 31 pass, 0 fail |
+| Shell | `bun test test/ui`; `git status --short -- '*.snap'` | `Passed`: exit 0, 160 pass, 0 fail, 63 snapshots. No snapshot changed. |
+| Integration | `bun test test/integration` | `Passed`: exit 0, 62 pass, 0 fail |
+| Static and unit gate | `bun run check` | `Passed`: exit 0, 1202 pass, 0 fail. Boundaries are included. |
+| `test:ci` | `bun run test:ci` | `Passed`: exit 0, 235 pass, 0 fail, 63 snapshots |
+| No temporary runner cases | `grep -nE 'case "(gitStatus\|gitReadIndex\|gitStage\|gitBlame\|gitWatch\|runTool)"' src/app/effects.ts` | `Passed`: 6 cases, each with a real body |
+| No work-process IDs | `grep` over the added `src` lines for work, requirement, design, verification, and group ids, plus `TODO`, `FIXME`, `console.`, `.only(` | `Passed`: no matches |
+| Process hygiene | `pgrep -fl "bun .*so\|git \|lazygit"` before and after | `Passed`: only PID 49530 (the pre-existing sandbox) and `ugrep` processes from other sessions |
+| Temp-dir hygiene | Compare `$TMPDIR` listings from before and after the runs | `Passed`: the integration, e2e, and quit suites created `so-it-*`, `so-e2e-*`, and `so-quit-*` dirs during this run. All of them were removed, and no new entries remain. |
+| Self-review | `git diff ac457af..1858b88` | `Passed`: the fix changes only how restore runs. The hand-off order, the escape-byte location, `deps.tool` late binding, and the lifecycle and shell changes are as originally reported. |
+
+### Blockers and Unverified Checks
+
+- Blockers: none.
+- `V50` (real-PTY hand-off) and `V61` (manual image check after resume) belong to Part 3, as planned.
+- A real `EAGAIN` or `EIO` from a non-blocking tty was not reproduced. The failure was simulated with a throwing screen double.
 
 ## Final Status
 
@@ -78,8 +114,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — all four tasks are implemented and committed, and every task and group check passes.
+- **Final report status:** `Completed`. All four tasks are implemented and committed, `P2-G2-VER1` is fixed, and every task and group check passes.
 - **Final report commit:** Returned to the orchestrator after this report is committed.
-- **Final commits:** `20d68f2`, `5f94619`, `a56003b`, `03f421d`
-- **Final checks:** `bun run check` → exit 0, 1201 pass; `bun run test:ci` → exit 0, 235 pass; `bun test src/app` → 30 pass; `bun test test/ui` → 160 pass, snapshots unchanged; `bun test test/integration` → 62 pass.
-- **Remaining issues:** None
+- **Final commits:** `20d68f2`, `5f94619`, `a56003b`, `03f421d`, `1858b88`
+- **Final checks:** `bun run check` → exit 0, 1202 pass; `bun run test:ci` → exit 0, 235 pass; `bun test src/app` → 31 pass; `bun test test/ui` → 160 pass, snapshots unchanged; `bun test test/integration` → 62 pass.
+- **Remaining issues:** None in this group. `V50` and `V61` belong to Part 3.
