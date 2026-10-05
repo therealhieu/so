@@ -5,6 +5,7 @@ import type {
 } from "../kernel/view/diagnostics";
 import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
 import { goTo, recordJump } from "./jumps";
+import { startCodeEdit } from "./lsp-edits";
 import type {
   DiagnosticSlots,
   LspFeature,
@@ -228,12 +229,29 @@ function applyResult(
         r.placeholder,
       );
     case "edit":
+      // The answer has no time, so the buffers' autosave is due now (0).
+      return startCodeEdit(s, r.edit, { title: p.feature }, 0, reg);
     case "actions":
     case "action":
     case "completion":
     case "completionItem":
       return none(s);
   }
+}
+
+/** A server asks for a workspace edit; it is answered once, applied or not. */
+export function onLspApplyEdit(
+  s: AppState,
+  a: Extract<Action, { type: "lspApplyEdit" }>,
+  reg: Registries,
+): Result {
+  return startCodeEdit(
+    s,
+    a.edit,
+    { title: "edit", reply: { key: a.key, requestId: a.requestId } },
+    0,
+    reg,
+  );
 }
 
 /** Ask for a new name for the symbol at `rename.pos`, starting from `value`. */

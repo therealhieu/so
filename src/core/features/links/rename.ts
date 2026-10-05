@@ -5,7 +5,8 @@ import { movePaths, type NoteIndex } from "./note-index";
 import { linkText, nameKey, resolvePath } from "./resolve";
 
 export type PathMove = { from: string; to: string };
-export type SpanEdit = { range: Range; expected: string; text: string };
+/** `expected` is the text the span must still hold; without it only the bounds are checked. */
+export type SpanEdit = { range: Range; expected?: string; text: string };
 export type FileEdit = { path: string; edits: SpanEdit[] };
 
 type Link = {
@@ -126,8 +127,10 @@ export function renameImpact(plan: readonly FileEdit[]): {
 }
 
 /**
- * `text` with `edits` applied from last to first, or `null` when any span no
- * longer holds its expected text. Lines may end in "\r"; spans never cover it.
+ * `text` with `edits` applied from last to first, or `null` when any span is
+ * out of range, overlaps another, or no longer holds its expected text.
+ * Inserts at one position keep their order. Lines may end in "\r"; spans
+ * never cover it.
  */
 export function applySpanEdits(
   text: string,
@@ -136,22 +139,33 @@ export function applySpanEdits(
   const starts = [0];
   for (let i = text.indexOf("\n"); i >= 0; i = text.indexOf("\n", i + 1))
     starts.push(i + 1);
+  /** The offset of `line`/`col`, or -1 past the line's end ("\r" excluded). */
   const offset = (line: number, col: number) => {
     const start = starts[line];
-    return start === undefined ? -1 : start + col;
+    if (start === undefined || col < 0) return -1;
+    const next = starts[line + 1];
+    const end =
+      next === undefined
+        ? text.length
+        : text[next - 2] === "\r"
+          ? next - 2
+          : next - 1;
+    return start + col > end ? -1 : start + col;
   };
   const spans = edits
-    .map((e) => ({
+    .map((e, i) => ({
       from: offset(e.range.start.line, e.range.start.col),
       to: offset(e.range.end.line, e.range.end.col),
       e,
+      i,
     }))
-    .sort((a, b) => b.from - a.from);
+    .sort((a, b) => b.from - a.from || b.i - a.i);
   let out = text;
   let limit = text.length;
   for (const { from, to, e } of spans) {
     if (from < 0 || to < from || to > limit) return null;
-    if (text.slice(from, to) !== e.expected) return null;
+    if (e.expected !== undefined && text.slice(from, to) !== e.expected)
+      return null;
     out = out.slice(0, from) + e.text + out.slice(to);
     limit = from;
   }

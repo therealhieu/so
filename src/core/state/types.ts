@@ -23,6 +23,7 @@ import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
 import type {
   CodeCompletionItem,
+  CodeEdit,
   LspOp,
   LspResult,
   LspState,
@@ -568,6 +569,13 @@ export type Action =
       key: ServerKey;
       level: "error" | "warning";
       text: string;
+    }
+  /** Server `key` asks for `edit`; answered once by `lspReply` with `requestId`. */
+  | {
+      type: "lspApplyEdit";
+      key: ServerKey;
+      requestId: number | string;
+      edit: CodeEdit;
     };
 
 export type Effect =

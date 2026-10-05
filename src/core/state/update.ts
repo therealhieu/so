@@ -22,6 +22,7 @@ import {
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
 import {
+  onLspApplyEdit,
   onLspAttached,
   onLspDiagnostics,
   onLspMessage,
@@ -209,6 +210,8 @@ export function createUpdate(reg: Registries): Update {
         return onLspResult(state, action, reg);
       case "lspMessage":
         return onLspMessage(state, action);
+      case "lspApplyEdit":
+        return onLspApplyEdit(state, action, reg);
     }
     const unhandled: never = action;
     return unhandled;

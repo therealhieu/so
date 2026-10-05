@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { type DocScan, scanDoc } from "../../lang/markdown/scan";
 import { applySummaries, emptyIndex, type NoteIndex } from "./note-index";
 import {
+  applySpanEdits,
   type FileEdit,
   type PathMove,
   planRename,
@@ -34,7 +35,7 @@ function applyEdits(text: string, edit: FileEdit): string {
     const { start, end } = e.range;
     expect(start.line).toBe(end.line);
     const line = lines[start.line] ?? "";
-    expect(line.slice(start.col, end.col)).toBe(e.expected);
+    expect(e.expected).toBe(line.slice(start.col, end.col));
     lines[start.line] = line.slice(0, start.col) + e.text + line.slice(end.col);
   }
   return lines.join("\n");
@@ -279,4 +280,22 @@ test("every resolved link keeps its file after random moves", () => {
       );
     }
   }
+});
+
+test("span edits without expected text check only their bounds", () => {
+  const span = (line: number, from: number, to: number, text: string) => ({
+    range: { start: { line, col: from }, end: { line, col: to } },
+    text,
+  });
+  expect(applySpanEdits("ab\r\ncd\n", [span(1, 0, 2, "xy")])).toBe(
+    "ab\r\nxy\n",
+  );
+  expect(applySpanEdits("ab\r\ncd\n", [span(0, 0, 3, "x")])).toBeNull();
+  expect(applySpanEdits("ab\ncd", [span(5, 0, 0, "x")])).toBeNull();
+  expect(applySpanEdits("ab", [span(0, 1, 1, "1"), span(0, 1, 1, "2")])).toBe(
+    "a12b",
+  );
+  expect(
+    applySpanEdits("abc", [span(0, 0, 2, "x"), span(0, 1, 3, "y")]),
+  ).toBeNull();
 });
