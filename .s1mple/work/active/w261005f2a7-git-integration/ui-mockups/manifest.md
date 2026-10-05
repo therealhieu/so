@@ -2,7 +2,7 @@
 
 ## Status
 
-`In Review`
+`Accepted`
 
 ## Shared Files
 
@@ -19,9 +19,9 @@
 
 | ID | Parent | Revision | Surface | State | Viewport | Source Evidence | Shared Revision | Status | Path |
 |---|---|---|---|---|---|---|---|---|---|
-| W261005F2A7-M1 | None | R3 | Editor gutter Git column; statusline Git segment | S1–S5 sign kinds and views; S6–S10 navigate, stage, reset; S11–S13 detached, rebasing, merging, unborn; S14 narrow; S15 no repository | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ1@R2`, `REQ4@R2`, `REQ5@R2`, `REQ7@R2`, `REQ9@R1`; `DES10`, `DES11`; UI context | R3 | Draft | `m1-editor-git.html` |
-| W261005F2A7-M2 | None | R3 | Explorer rows | S1–S5 marker kinds, collapsed new folder, dirty + modified, conflict selection, deleted tracked file (no row, folder `•`); S6 narrow float; S7 no repository | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ4@R2`; `DES10`; `RF9`; UI context | R3 | Draft | `m2-explorer-git.html` |
-| W261005F2A7-M3 | None | R3 | Hunk preview float; which-key `+git`/`+hunk`; message-line blame and notices; lazygit hand-off | S1–S4 preview (change + delete, delete, long, narrow); S5–S6 which-key; S7–S8 blame; S9–S15 notices; S16–S18 save → lazygit → resume | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ1@R2`, `REQ2@R2`, `REQ3@R1`, `REQ4@R2`, `REQ7@R2`, `REQ8@R1`; `DES8`, `DES9`, `DES11`; `RF13` | R3 | Draft | `m3-git-floats-notices.html` |
+| W261005F2A7-M1 | None | R3 | Editor gutter Git column; statusline Git segment | S1–S5 sign kinds and views; S6–S10 navigate, stage, reset; S11–S13 detached, rebasing, merging, unborn; S14 narrow; S15 no repository | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ1@R2`, `REQ4@R2`, `REQ5@R2`, `REQ7@R2`, `REQ9@R1`; `DES10`, `DES11`; UI context | R3 | Accepted | `m1-editor-git.html` |
+| W261005F2A7-M2 | None | R3 | Explorer rows | S1–S5 marker kinds, collapsed new folder, dirty + modified, conflict selection, deleted tracked file (no row, folder `•`); S6 narrow float; S7 no repository | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ4@R2`; `DES10`; `RF9`; UI context | R3 | Accepted | `m2-explorer-git.html` |
+| W261005F2A7-M3 | None | R3 | Hunk preview float; which-key `+git`/`+hunk`; message-line blame and notices; lazygit hand-off | S1–S4 preview (change + delete, delete, long, narrow); S5–S6 which-key; S7–S8 blame; S9–S15 notices; S16–S18 save → lazygit → resume | 120×36, 80×24; dark, light, NO_COLOR | `W261005F2A7-REQ1@R2`, `REQ2@R2`, `REQ3@R1`, `REQ4@R2`, `REQ7@R2`, `REQ8@R1`; `DES8`, `DES9`, `DES11`; `RF13` | R3 | Accepted | `m3-git-floats-notices.html` |
 
 ## Accepted Decisions
 
@@ -52,8 +52,8 @@
 
 ## Acceptance
 
-- **Accepted revisions:** None
-- **Evidence:** None
+- **Accepted revisions:** `W261005F2A7-M1@R3`, `W261005F2A7-M2@R3`, `W261005F2A7-M3@R3`
+- **Evidence:** Accepted by the user on 2026-10-05.
 
 ## Open Items
 
