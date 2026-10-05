@@ -1,6 +1,10 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
 import type { PropertyTypes } from "../features/bases/property-types";
+import type { BlameLine } from "../features/git/blame";
+import type { Hunk } from "../features/git/diff";
+import type { IndexText } from "../features/git/index-text";
+import type { RepoHead, RepoStatus } from "../features/git/status";
 import type { FileFacts, NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
@@ -20,6 +24,7 @@ import type {
 } from "../lang/markdown/frontmatter-patch";
 import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
+import type { MessageLevel } from "./result";
 
 export type BufferId = number;
 export type WindowId = number;
@@ -62,7 +67,9 @@ export type TimerId =
   | `toast:${number}`
   | "whichKey"
   | "saveState"
-  | "search";
+  | "search"
+  | `gitDiff:${BufferId}`
+  | "gitRefresh";
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -199,7 +206,8 @@ export type Overlay =
   | { kind: "picker" | "palette" | "help"; picker: PickerState }
   | { kind: "completion"; completion: CompletionState }
   | { kind: "calendar"; calendar: CalendarState }
-  | { kind: "zoom"; zoom: ZoomState };
+  | { kind: "zoom"; zoom: ZoomState }
+  | { kind: "gitHunk"; bufferId: BufferId; hunk: Hunk };
 
 /**
  * The zoom float. An image keeps its zoom `level` (times the fitted size),
@@ -328,6 +336,57 @@ export type LinkRewrite = {
   skipped: { path: string; reason: string }[];
 };
 
+/** The repository holding the workspace. Paths are absolute. */
+export type RepoInfo = {
+  top: string;
+  gitDir: string;
+  commonDir: string;
+  /** The workspace's repo-relative folder: "" at the top, else ending in "/". */
+  prefix: string;
+  head: RepoHead;
+  op?: "rebasing" | "merging";
+};
+
+/** What the index holds for one path. */
+export type IndexEntry =
+  | {
+      kind: "tracked";
+      oid: string;
+      mode: string;
+      conflicted: boolean;
+      text: IndexText;
+    }
+  | { kind: "untracked" }
+  | { kind: "ignored" };
+
+/**
+ * A git operation waiting for buffer writes, like `:q` waits in
+ * `terminal.quit`. `saved` names the files the tool launch wrote.
+ */
+export type GitPending =
+  | { op: "tool"; waiting: BufferId[]; saved: string[] }
+  | { op: "stage"; bufferId: BufferId; line: number; waiting: BufferId[] };
+
+/** The staged hunk's 1-based position `n` of `m`, and whether a save came first. */
+export type StageReport = { n: number; m: number; saved: boolean };
+
+/**
+ * Git state, never persisted. `files` holds the open buffers' index entries
+ * and hunks by workspace-relative path; `repo` is null outside a repository.
+ */
+export type GitState = {
+  repo: RepoInfo | null;
+  status: RepoStatus | null;
+  files: Record<string, { index?: IndexEntry; hunks: Hunk[] }>;
+  pending?: GitPending;
+};
+
+/** How the full-screen git tool ended. */
+export type ToolResult =
+  | { kind: "exited"; code: number; signal?: string }
+  | { kind: "missing"; tool: string }
+  | { kind: "failed"; reason: string };
+
 export type Toast = { id: number; level: "info" | "error"; text: string };
 
 /** The browser preview server: off, starting, or listening on a loopback port. Never persisted. */
@@ -416,7 +475,7 @@ export type AppState = {
   overlay: Overlay;
   notifications: {
     toasts: Toast[];
-    message?: { text: string; level: "info" | "error" };
+    message?: { text: string; level: MessageLevel };
   };
   config: AppConfig;
   terminal: TerminalState;
@@ -425,6 +484,7 @@ export type AppState = {
   /** Workspace paths, most recently opened first. */
   recent: string[];
   preview: PreviewState;
+  git: GitState;
 };
 
 export type Action =
@@ -513,7 +573,34 @@ export type Action =
       removed: string[];
       added: string[];
       reason?: string;
-    };
+    }
+  | { type: "gitDetected"; repo: RepoInfo | null; notice?: string }
+  | {
+      type: "gitStatus";
+      result: { ok: true; status: RepoStatus } | { ok: false; reason: string };
+    }
+  | {
+      type: "gitIndexRead";
+      path: string;
+      entry: IndexEntry | { kind: "failed"; reason: string };
+    }
+  /** `report` echoes the `gitStage` effect's. */
+  | {
+      type: "gitStaged";
+      path: string;
+      result: "ok" | "stale" | { failed: string };
+      report: StageReport;
+    }
+  | { type: "toolExited"; result: ToolResult }
+  /** `line` is 0-based; `now` is when the answer arrived, for its relative date. */
+  | {
+      type: "gitBlamed";
+      path: string;
+      line: number;
+      result: BlameLine | { failed: string };
+      now: number;
+    }
+  | { type: "gitDirChanged" };
 
 export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
@@ -568,7 +655,38 @@ export type Effect =
       path: string;
       patch: FrontmatterPatch;
       expected: FrontmatterValue | undefined;
-    };
+    }
+  /** Read the status of the workspace's part of the repository; answered by `gitStatus`. */
+  | { kind: "gitStatus"; repo: RepoInfo; prefix: string }
+  /** Read the index entry of `path` (`repoPath` from the top); answered by `gitIndexRead`. */
+  | { kind: "gitReadIndex"; repo: RepoInfo; path: string; repoPath: string }
+  /**
+   * Apply `patch` to the index entry, only while its oid is `expectedOid`;
+   * `null` marks an untracked file to add with intent-to-add first.
+   * Answered by `gitStaged`, which echoes `report`.
+   */
+  | {
+      kind: "gitStage";
+      repo: RepoInfo;
+      path: string;
+      repoPath: string;
+      expectedOid: string | null;
+      patch: string;
+      report: StageReport;
+    }
+  /** Blame 0-based `line` of `contents` (the unsaved buffer); answered by `gitBlamed`. */
+  | {
+      kind: "gitBlame";
+      repo: RepoInfo;
+      path: string;
+      repoPath: string;
+      line: number;
+      contents: string;
+    }
+  /** Watch the first level of these folders; a change answers `gitDirChanged`. */
+  | { kind: "gitWatch"; dirs: string[] }
+  /** Hand the terminal to `argv` in `cwd`; answered by `toolExited`. */
+  | { kind: "runTool"; argv: string[]; cwd: string };
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };

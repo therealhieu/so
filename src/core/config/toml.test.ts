@@ -101,6 +101,7 @@ test("a valid file parses with binding lines", () => {
         template: "templates/daily.md",
       },
       templates: { folder: "templates" },
+      git: { tool: ["lazygit"] },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },

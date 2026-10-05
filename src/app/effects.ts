@@ -496,6 +496,14 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         void d.preview.stop();
         d.dispatch({ type: "previewStopped" });
         return;
+      // The git adapter and tool host are not wired yet, so these do nothing.
+      case "gitStatus":
+      case "gitReadIndex":
+      case "gitStage":
+      case "gitBlame":
+      case "gitWatch":
+      case "runTool":
+        return;
       case "openUrl":
         void d.openUrl(e.url).catch((x) => {
           d.logger.error("browser.openFailed", { reason: msg(x) });

@@ -190,6 +190,14 @@ export function createUpdate(reg: Registries): Update {
         return onPropertyTypesLoaded(state, action);
       case "frontmatterPatched":
         return onFrontmatterPatched(state, action);
+      case "gitDetected":
+      case "gitStatus":
+      case "gitIndexRead":
+      case "gitStaged":
+      case "toolExited":
+      case "gitBlamed":
+      case "gitDirChanged":
+        return none(state);
     }
     const unhandled: never = action;
     return unhandled;
