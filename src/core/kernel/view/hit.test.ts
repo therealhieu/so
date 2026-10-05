@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createTextBuffer } from "../text/text-buffer";
 import type { Decoration } from "./decorations";
-import { rowAt, sourceColAt } from "./hit";
+import { displayColAt, rowAt, sourceColAt } from "./hit";
 import { layoutText } from "./text-view";
 import type { RenderLine, TextView } from "./types";
 import { displayWidth, wrapLine } from "./wrap";
@@ -128,10 +128,12 @@ test("rowAt follows wrapped lines, widget rows, and skipped rows like the painte
   expect(rowAt(lines, 0, o)).toEqual({
     line: lines[0] as RenderLine,
     startCol: 0,
+    endCol: starts[1] ?? -1,
   });
   expect(rowAt(lines, 1, o)).toEqual({
     line: lines[0] as RenderLine,
     startCol: starts[1] ?? -1,
+    endCol: starts[2] ?? -1,
   });
   const afterWrap = starts.length;
   expect(rowAt(lines, afterWrap, o)?.line.widget?.type).toBe("image");
@@ -152,4 +154,28 @@ test("rowAt follows wrapped lines, widget rows, and skipped rows like the painte
   const unwrapped = rowAt(lines, 1, { ...o, wrap: false });
   expect(unwrapped?.line.widget?.type).toBe("image");
   expect(rowAt([], 0, o)).toBeUndefined();
+});
+
+test("a cell right of a word-wrapped row maps to that row's last character", () => {
+  const text = "alpha bravo charlie";
+  const lines = layout([text]);
+  const o = { width: 8, tabWidth: 4, wrap: true, skipRows: 0 };
+  expect(wrapLine(text, 8, 4)).toEqual([0, 6, 12]);
+  const at = (y: number, x: number) => {
+    const row = rowAt(lines, y, o);
+    if (row === undefined) throw new Error("expected a screen row");
+    return sourceColAt(row.line.spans, displayColAt(row, x), 4, text.length);
+  };
+
+  // Row 0 shows "alpha " and leaves two blank cells.
+  expect(at(0, 4)).toBe(4);
+  for (const x of [5, 6, 7]) expect(at(0, x)).toBe(5);
+  for (const x of [5, 6, 7]) expect(at(1, x)).toBe(11);
+  // The last row keeps the past-end rule.
+  expect(at(2, 6)).toBe(18);
+  expect(at(2, 7)).toBe(text.length);
+  // Without wrapping every cell keeps its column.
+  const flat = rowAt(lines, 0, { ...o, wrap: false });
+  if (flat === undefined) throw new Error("expected a screen row");
+  expect(displayColAt(flat, 12)).toBe(12);
 });

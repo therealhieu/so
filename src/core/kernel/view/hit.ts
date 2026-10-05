@@ -1,14 +1,17 @@
 import type { RenderLine, Span } from "./types";
 import { cellWidth, wrapLine } from "./wrap";
 
-/** One screen row of text: the rendered line and the display column it starts at. */
-export type ScreenRow = { line: RenderLine; startCol: number };
+/**
+ * One screen row of text: the rendered line, the display column it starts
+ * at, and, on a wrap row followed by another, the column the next row starts at.
+ */
+export type ScreenRow = { line: RenderLine; startCol: number; endCol?: number };
 
 const isWidgetRow = (r: RenderLine) =>
   r.widget !== undefined && r.spans.length === 0;
 
 /**
- * The rendered line and wrap-row start shown on text row `y` (0-based), or
+ * The rendered line and wrap-row bounds shown on text row `y` (0-based), or
  * the last row past the end. Rows are counted like the painter counts them:
  * a widget row takes its widget's rows, a wrapped line one row per wrap
  * start, and `skipRows` drops the first rows of the top line.
@@ -32,11 +35,24 @@ export function rowAt(
     const starts = o.wrap ? wrapLine(text, o.width, o.tabWidth) : [0];
     const skip = line.sourceLine === lines[0]?.sourceLine ? o.skipRows : 0;
     for (let k = skip; k < starts.length; k++, row++) {
-      last = { line, startCol: starts[k] ?? 0 };
+      const startCol = starts[k] ?? 0;
+      const endCol = starts[k + 1];
+      last =
+        endCol === undefined ? { line, startCol } : { line, startCol, endCol };
       if (y === row) return last;
     }
   }
   return last;
+}
+
+/**
+ * Display column, from the line start, shown at cell `x` of `row`, with `x`
+ * counted from the row's first text cell. A word-wrapped row can end before
+ * the window edge, so a cell past its last character maps to that character.
+ */
+export function displayColAt(row: ScreenRow, x: number): number {
+  const dc = row.startCol + x;
+  return row.endCol === undefined ? dc : Math.min(dc, row.endCol - 1);
 }
 
 /**

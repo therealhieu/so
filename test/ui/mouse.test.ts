@@ -121,6 +121,27 @@ test("a click on a wrapped row or the gutter lands on the shown source column", 
   expect(cursorOf(m)?.line).toBe(2);
 });
 
+test("a click right of a word-wrapped row stays on that row", async () => {
+  m = await mountShell({ cols: 40, rows: 12 });
+  m.keys("<leader>e");
+  const first = "the quick brown fox jumps over ";
+  m.open("wrap.md", `top\n${first}the lazy dog and keeps running far\n`);
+  const frame = (await m.frame()).split("\n");
+  const y = frame.findIndex((r) => r.trimEnd().endsWith("jumps over"));
+  expect(y).toBeGreaterThan(0);
+  expect(frame[y + 1]).toContain("the lazy dog");
+  await m.mouse.click(38, y);
+  expect(cursorOf(m)).toEqual({ line: 1, col: first.length - 1 });
+
+  // Insert lands on the same character instead of appending past it. A
+  // different cell keeps the second click from counting as a double click.
+  m.keys("ggi");
+  await m.frame();
+  await m.mouse.click(37, y);
+  expect(m.store.get().vim.mode).toBe("insert");
+  expect(cursorOf(m)).toEqual({ line: 1, col: first.length - 1 });
+});
+
 test("a drag from the text selects to the pointer and clamps at the window edge", async () => {
   m = await mountShell({ cols: 40, rows: 12 });
   m.keys("<leader>e");

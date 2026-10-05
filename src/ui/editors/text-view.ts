@@ -7,7 +7,7 @@ import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
-import { rowAt, sourceColAt } from "../../core/kernel/view/hit";
+import { displayColAt, rowAt, sourceColAt } from "../../core/kernel/view/hit";
 import {
   highlightMarks,
   searchMarks,
@@ -466,7 +466,7 @@ export class EditorView extends Renderable implements WindowView {
         ? 0
         : sourceColAt(
             shown.line.spans,
-            shown.startCol + this.leftCol + x - textX,
+            displayColAt(shown, this.leftCol + x - textX),
             tabWidth,
             length,
           );
