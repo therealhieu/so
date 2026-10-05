@@ -10,6 +10,7 @@ import type { AppState } from "../core/state/types";
 import type { Registries } from "../core/state/update";
 import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
+import { createMouseRouter, MouseLayer, type MouseSource } from "./mouse";
 import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
@@ -28,12 +29,14 @@ import { WindowTree } from "./views/window-tree";
 /**
  * Every OpenTUI process handler is off (`src/app/lifecycle.ts` owns signals,
  * exceptions, and exit), and any-motion mouse tracking is not requested.
+ * Mouse tracking starts off; the first paint turns it on from the config, so
+ * `mouse = false` never enables it for a frame.
  */
 export const RENDERER_OPTIONS = {
   exitOnCtrlC: false,
   exitSignals: [],
   openConsoleOnError: false,
-  useMouse: true,
+  useMouse: false,
   enableMouseMovement: false,
   screenMode: "alternate-screen",
   useKittyKeyboard: {},
@@ -89,11 +92,14 @@ export type Cursor = { x: number; y: number; style: "block" | "line" };
 
 /**
  * A region repainted from the state on every store change. `cursor` is
- * defined only while the view owns focus.
+ * defined only while the view owns focus; `targetAt` and `dragAt` make the
+ * view a mouse source.
  */
 export type View = Renderable & {
   update(s: AppState, lc: LayoutClass): void;
   cursor?(): Cursor | undefined;
+  targetAt?: MouseSource["targetAt"];
+  dragAt?: MouseSource["dragAt"];
 };
 
 export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
@@ -137,12 +143,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new CompletionView(renderer, () => windows.cursor()),
         new CalendarOverlay(renderer),
       ]);
+      const bufferline = new Bufferline(renderer);
+      const statusline = new Statusline(renderer, ctx);
       const views: View[] = [
-        new Bufferline(renderer),
+        bufferline,
         windows,
         explorer,
         side,
-        new Statusline(renderer, ctx),
+        statusline,
         cmdline,
         new ToastStack(renderer),
         overlays,
@@ -150,9 +158,24 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
       const focus: View[] = [overlays, cmdline, explorer, side, windows];
       for (const v of views) renderer.root.add(v);
+      // Mouse sources, top of the z-order first: the paint order reversed, without toasts.
+      const sources: MouseSource[] = [];
+      const layer = new MouseLayer(
+        renderer,
+        createMouseRouter({
+          sources,
+          enabled: () => store.get().config.mouse,
+          dispatch: (a) => store.dispatch(a),
+          now: deps.now,
+        }),
+      );
+      renderer.root.add(layer);
       const paint = (s: AppState) => {
         const lc = layoutClass(s.terminal.cols);
         for (const v of views) v.update(s, lc);
+        if (renderer.useMouse !== s.config.mouse)
+          renderer.useMouse = s.config.mouse;
+        layer.update(s);
         const c = focus.map((v) => v.cursor?.()).find((x) => x !== undefined);
         if (c === undefined) renderer.setCursorPosition(0, 0, false);
         else {

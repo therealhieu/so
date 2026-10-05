@@ -1,5 +1,14 @@
-import type { MouseEvent as OpenTuiMouseEvent } from "@opentui/core";
-import type { Action, MouseEvent, MouseTarget } from "../core/state/types";
+import {
+  type MouseEvent as OpenTuiMouseEvent,
+  Renderable,
+  type RenderContext,
+} from "@opentui/core";
+import type {
+  Action,
+  AppState,
+  MouseEvent,
+  MouseTarget,
+} from "../core/state/types";
 
 /** Presses on the same cell this close together count as one multi-click. */
 export const CLICK_MS = 500;
@@ -116,4 +125,29 @@ export function createMouseRouter(o: {
       }
     },
   };
+}
+
+/**
+ * A full-screen layer above every view that paints nothing and sends every
+ * mouse event to the router. It is hidden while the mouse is off, which takes
+ * it out of the hit grid.
+ */
+export class MouseLayer extends Renderable {
+  constructor(ctx: RenderContext, router: MouseRouter) {
+    super(ctx, {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      zIndex: 1000,
+      onMouse: (e) => router.handle(e),
+    });
+  }
+
+  update(s: AppState): void {
+    this.width = s.terminal.cols;
+    this.height = s.terminal.rows;
+    this.visible = s.config.mouse;
+  }
+
+  protected renderSelf(): void {}
 }

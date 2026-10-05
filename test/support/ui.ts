@@ -120,6 +120,8 @@ export async function mountShell(o: MountOptions) {
 
   return {
     t,
+    /** OpenTUI's mock mouse, driving the renderer's real hit grid and mouse layer. */
+    mouse: t.mockMouse,
     store,
     shell,
     /** The registries `update` and the views read; register test file types here. */
