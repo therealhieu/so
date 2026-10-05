@@ -347,6 +347,32 @@ test("a changed index entry stages nothing", async () => {
   expect(await r.run(["ls-files", "-s"])).toBe(before);
 });
 
+test("an untracked file added elsewhere stages nothing", async () => {
+  const r = await repo({ "a.md": TEN });
+  const info = await detected(r);
+  const g = gitIn(r);
+  const text = "first\nsecond\n";
+  await r.write("new.md", text);
+  const cur = bufferOf(text);
+  const [whole] = diffLines([], cur.lines, { untracked: true });
+  if (whole === undefined) throw new Error("no hunk");
+  const empty: IndexText = {
+    lines: [],
+    finalNewline: false,
+    bom: false,
+    eol: "\n",
+  };
+  const patch = hunkPatch("new.md", "100644", whole, empty, cur);
+  // Another writer adds the file before the stage runs.
+  await r.run(["add", "new.md"]);
+  const before = await r.run(["ls-files", "-s"]);
+  expect(
+    await g.stage(info, { repoPath: "new.md", expectedOid: null, patch }),
+  ).toBe("stale");
+  expect(await r.run(["ls-files", "-s"])).toBe(before);
+  expect(await r.run(["show", ":new.md"])).toBe(text);
+});
+
 const ALLOWED = new Set([
   "--version",
   "rev-parse",

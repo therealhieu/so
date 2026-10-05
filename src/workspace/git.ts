@@ -27,7 +27,7 @@ export type Git = {
   readIndex(repo: RepoInfo, repoPath: string): Promise<IndexEntry>;
   /**
    * Apply `patch` to the index while the entry's oid is `expectedOid`;
-   * `null` adds an untracked file with intent-to-add first.
+   * `null` means the file has no entry, and adds it with intent-to-add first.
    */
   stage(
     repo: RepoInfo,
@@ -258,12 +258,16 @@ export function createGit(d: {
     },
 
     stage: async (repo, e) => {
+      const [entry] = await listed(repo, e.repoPath, false);
+      const indexed = entry?.staged === true;
+      // An untracked file must still have no entry; a tracked one the same oid.
+      const stale =
+        e.expectedOid === null
+          ? indexed
+          : !indexed || entry.oid !== e.expectedOid;
+      if (stale) return "stale";
       if (e.expectedOid === null)
         await run(repo.top, ["add", "--intent-to-add", "--", e.repoPath]);
-      else {
-        const [entry] = await listed(repo, e.repoPath, false);
-        if (!entry?.staged || entry.oid !== e.expectedOid) return "stale";
-      }
       await run(
         repo.top,
         ["apply", "--cached", "--unidiff-zero", "--whitespace=nowarn", "-"],
