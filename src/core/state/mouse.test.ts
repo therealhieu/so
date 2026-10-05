@@ -720,6 +720,28 @@ test("a click outside an overlay or the command line closes it and goes no furth
   }
 });
 
+test("which-key ignores clicks and the wheel inside it and closes on a click outside", () => {
+  const armed = keys(open("a.md", MANY), " ").state;
+  const s = update(armed, { type: "timer", id: "whichKey", now: NOW }).state;
+  expect(s.overlay.kind).toBe("whichKey");
+  for (const event of [
+    press({ kind: "overlay" }),
+    press({ kind: "overlay" }, 2),
+    wheel({ kind: "overlay" }, 1),
+    wheel({ kind: "overlay" }, -1),
+    wheel({ kind: "overlay" }, 0, 1),
+  ]) {
+    const r = mouse(s, event);
+    expect(r.state).toEqual(s);
+    expect(r.effects).toEqual([]);
+  }
+  for (const target of [{ kind: "outside" }, text(1, 2, 2)] as MouseTarget[]) {
+    const r = mouse(s, press(target));
+    expectSame(r, keys(s, "<Esc>"));
+    expect(r.state.overlay.kind).toBe("none");
+  }
+});
+
 test("a click on the text closes completion and still moves the cursor", () => {
   const s = completing();
   const r = mouse(s, press(text(1, 0, 0)));

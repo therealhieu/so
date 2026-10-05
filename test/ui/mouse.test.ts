@@ -392,3 +392,33 @@ test("a click on a completion row accepts it and a click in the body closes it",
   expect(m.store.get().overlay.kind).toBe("none");
   expect(cursorOf(m)).toEqual({ line: 0, col: 2 });
 });
+
+test("clicks and the wheel inside which-key do nothing and a click outside closes it", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.keys("<leader>e");
+  const text = Array.from({ length: 60 }, (_, i) => `line ${i + 1}`).join("\n");
+  m.open("long.md", `${text}\n`);
+  m.keys(" ");
+  m.advance(300);
+  expect(m.store.get().overlay.kind).toBe("whichKey");
+  const entry = await find(m, "e → ");
+  expect(entry.y).toBeGreaterThan(0);
+  const before = m.store.get();
+  const scroll = () => {
+    const s = m?.store.get();
+    return s?.windows.byId[s.windows.active]?.content.scroll;
+  };
+
+  await m.mouse.click(entry.x + 4, entry.y);
+  await m.mouse.scroll(entry.x + 4, entry.y, "down");
+  const after = m.store.get();
+  expect(after.overlay).toEqual(before.overlay);
+  expect(after.vim.pending).toEqual(before.vim.pending);
+  expect(after.panels.explorer.open).toBe(before.panels.explorer.open);
+  expect(scroll()).toBe(0);
+  expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
+
+  await m.mouse.click(10, 3);
+  expect(m.store.get().overlay.kind).toBe("none");
+  expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
+});
