@@ -2,8 +2,8 @@
 
 ## Status
 
-- **State:** `Blocked`
-- **Current Position:** `All work complete; only the PR #11 "check" CI job is blocked on GitHub runner acquisition`
+- **State:** `Completed`
+- **Current Position:** `Complete — PR #11 open, awaiting the user's review and merge decision`
 - **Last Updated:** `2026-10-06`
 
 ## Sources
@@ -604,7 +604,7 @@ Missing documents, unresolved conflicts, failed checks/commits, or unsafe change
 
 - **Changes or No-change Reason:** `project.md` updated for facts changed after P3-G1-T7: `stop()` resolves only after every server and version probe exits (P2-G1-VER3 fix), `:LspInfo` shows each started server's resolved binary (`ServerView.binary`, OVR-VER1), and the real rust-analyzer test runs only where `rust-analyzer --version` succeeds (`5b859df`). Last Modified already 2026-10-06
 - **Validation and Commit SHA:** each claim checked against `src/app/lsp-host.ts` (`probesExited`, `LSP_STOP_BOUND_MS`), `src/core/state/lsp-pickers.ts` (`serverDetail`), `test/integration/lsp-real.test.ts` (`--version` guard); commit `66e1986` (`docs(project): describe LSP code intelligence`)
-- **Final head and CI result:** `0cc814e` (run 37369858446): `test (ubuntu-24.04)` + bench and `test (macos-15)` green; `check` cancelled with zero steps on the run and its rerun ("The job was not acquired by Runner of type hosted even after multiple attempts"). Same on `66e1986` (twice). `bun run check` at `0cc814e` passes locally (1207 pass, 0 fail). `check` last ran green on `16ff305`; only `.s1mple/docs/project.md` and this goal changed since. Not merged.
+- **Final head and CI result:** `8f9ff64` (run 37373088773, after one rerun of its failed jobs): `check`, `test (ubuntu-24.04)` + bench, and `test (macos-15)` all green. Earlier heads `66e1986`/`0cc814e` had `check` unacquired by a hosted runner (zero steps) and passed their test jobs; `8f9ff64`'s first attempt also had `test (macos-15)` miss the unchanged `test/ui/esc.test.ts` 60 ms Esc-timeout median by ~4 ms (63.9 ms), green on rerun. This record commit's own CI is confirmed by the orchestrator in chat. Not merged.
 
 **Commit Message:**
 
@@ -624,11 +624,11 @@ Work: W261005GWLY — lsp-code-intelligence
 
 ## Blockers and Deviations
 
-- **Blocker (external, 2026-10-06):** PR #11 `check` job not acquired by a GitHub-hosted runner on `66e1986` and `0cc814e` (4 attempts, zero steps run); the `test` jobs on the same heads ran and passed. Evidence: run 37366497877, run 37369858446, annotation "The job was not acquired by Runner of type hosted even after multiple attempts". Impact: the final-head CI is not fully green. Required resolution: re-run `check` on PR #11 when runners are available (`gh run rerun <run> --failed`), or the user checks Actions billing/limits (needs `gh auth refresh -s user`). Code-level evidence: `bun run check` passes locally at `0cc814e`; `check` was green on `16ff305`, and only `.s1mple` documents changed since.
+- **Resolved blocker (external, 2026-10-06):** cleared on `8f9ff64`, where `check` was acquired on rerun and passed. Original entry: PR #11 `check` job not acquired by a GitHub-hosted runner on `66e1986` and `0cc814e` (4 attempts, zero steps run); the `test` jobs on the same heads ran and passed. Evidence: run 37366497877, run 37369858446, annotation "The job was not acquired by Runner of type hosted even after multiple attempts". Impact: the final-head CI is not fully green. Required resolution: re-run `check` on PR #11 when runners are available (`gh run rerun <run> --failed`), or the user checks Actions billing/limits (needs `gh auth refresh -s user`). Code-level evidence: `bun run check` passes locally at `0cc814e`; `check` was green on `16ff305`, and only `.s1mple` documents changed since.
 - **Deviation (accepted, P1-G2):** `src/core/state/lsp.ts` outside-only definition message is `definition is outside the workspace` without `: <path>`. DES18 text asks for the path, but the design's `LspResult.locations`/`CodeEdit.outside` contract carries only a count; no S/V case asserts the path. Impact: message lacks the path. Resolution: none required in this scope; changing the contract would change approved design.
 - **Deviation (accepted, P1-G3):** design-shape additions recorded in `p1-g3-implementation-report.md` (`startCodeEdit` without `then`, `RenamePrompt.rename.name`, `CodeAccept.key/window/cursor`, `lspResult.now` required, shared `applyBufferEdits` Insert-change merge/cursor shift/overlap refusal); verifier accepted them except those fixed by VER1.
 - **Deviation (accepted, P2-G1):** `LspClient.request(id, path, op)`, `createLspClient` `AbortSignal`, extra log events `lsp.stderr`/`lsp.dropped` (no document text), progress test bound ≤ 5 (design: ≤ 1 dispatch per 100 ms; implementation throttles at 100 ms), watcher Created reported as `Changed`.
-- **Observation (out of scope):** `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" (< 10 ms assertion, unchanged since c98aa19) failed once under load average ~20; passes in isolation. Watch on CI.
+- **Observation (out of scope):** also missed on macOS CI once (`8f9ff64` first attempt, 63.9 ms vs 60 ms median for the legacy-Esc case), green on rerun; candidate for a separate timing-tolerance fix. `test/ui/esc.test.ts` "an arrow key's escape sequence reaches the store at once" (< 10 ms assertion, unchanged since c98aa19) failed once under load average ~20; passes in isolation. Watch on CI.
 - **Deviation (accepted, P3-G1):** statusline `✗` also lists failed servers covering the buffer (core detaches failed servers); `src/ui/shell.ts` builds the float (import cycle); fake-server `otherDiagnostics`; real-server test guarded by `rust-analyzer --version`; e2e reopens `:Diagnostics` because an open picker does not refresh (existing behaviour). Logged: shared severity tokens underline cmdline/gutter text (UI discussion); `129e62b` mechanically rewrote three historical lines in plan-3 to `work/done/`.
 - **Deviation (accepted, P1-G1):** `severityRank` omitted (listed in the design tree only, no shape, no caller; knip forbids unused exports).
 
@@ -652,7 +652,7 @@ Replace with `None` or entries containing location, evidence, impact, and requir
 - [x] The overall-verification report path and commit SHA are recorded.
 - [x] Project documentation matches the completed implementation and its validation passes.
 - [x] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
-- [ ] The PR is open and every CI job is green on the final pushed head; nothing was merged, force-pushed, tagged, or released. — Blocked externally: GitHub does not assign a runner to the `check` job (4 attempts); nothing was merged, force-pushed, tagged, or released.
+- [x] The PR is open and every CI job is green on the final pushed head; nothing was merged, force-pushed, tagged, or released.
 - [x] No fake-lsp or other started process remains (`pgrep -f fake-lsp` empty).
 - [x] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved.
 - [x] Final changes match the complete approved plan.
