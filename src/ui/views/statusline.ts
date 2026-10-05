@@ -23,7 +23,12 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
 const badgeOf = (mode: string): [string, string] =>
   BADGES[mode] ?? [mode.toUpperCase(), "modeNormal"];
 
-type Seg = { text: string; token: string };
+/** One segment; `parts` paint it in several tokens, and `text` gives its width. */
+type Seg = {
+  text: string;
+  token: string;
+  parts?: readonly { text: string; token: string }[];
+};
 
 const count = (n: number) => n.toLocaleString("en-US");
 
@@ -41,11 +46,28 @@ function indexSegment(seg: StatusSegments): Seg {
 
 const cells = (text: string) => [...text].length;
 
+/** `⎇ <ref> [op] [+added] [~changed] [-removed]`, each count only when it is not 0. */
+function gitSegment(g: NonNullable<StatusSegments["git"]>): Seg {
+  const parts = [{ text: `⎇ ${g.ref}`, token: "statusGitRef" }];
+  if (g.op !== undefined)
+    parts.push({ text: ` ${g.op}`, token: "statusGitOp" });
+  if (g.added > 0) parts.push({ text: ` +${g.added}`, token: "statusGitAdd" });
+  if (g.changed > 0)
+    parts.push({ text: ` ~${g.changed}`, token: "statusGitChange" });
+  if (g.removed > 0)
+    parts.push({ text: ` -${g.removed}`, token: "statusGitDelete" });
+  return {
+    text: parts.map((p) => p.text).join(""),
+    token: "statusline",
+    parts,
+  };
+}
+
 /**
- * Row h−2: `MODE │ view │ path ● │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index`
- * on the left and `Ln:Col` on the right. Narrow terminals drop the view, word, and preview
- * segments; a row too long for the full path drops preview, then words, then view, and the
- * path is cut in the middle when the row is still too long.
+ * Row h−2: `MODE │ view │ path ● │ ⎇ ref │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index`
+ * on the left and `Ln:Col` on the right. Narrow terminals drop the git, view, word, and
+ * preview segments; a row too long for the full path drops git, then preview, then words,
+ * then view, and the path is cut in the middle when the row is still too long.
  */
 export class Statusline extends Renderable {
   private s: AppState | undefined;
@@ -99,6 +121,8 @@ export class Statusline extends Renderable {
     if (view !== undefined) segs.push(view);
     const path: Seg = { text: seg.path ?? "[No Name]", token: "statusline" };
     segs.push(path);
+    const git = seg.git === undefined ? undefined : gitSegment(seg.git);
+    if (git !== undefined) segs.push(git);
     if (seg.saveError !== undefined) {
       const secs = Math.max(
         0,
@@ -132,7 +156,7 @@ export class Statusline extends Renderable {
       cells(right) +
       cells(dirty) +
       segs.reduce((n, x) => n + 3 + (x === path ? 0 : cells(x.text)), 0);
-    for (const optional of [preview, words, view]) {
+    for (const optional of [git, preview, words, view]) {
       if (optional === undefined) continue;
       if (narrow || fixedWidth() + cells(path.text) > cols)
         segs = segs.filter((x) => x !== optional);
@@ -155,7 +179,8 @@ export class Statusline extends Renderable {
     put(` ${badge} `, badgeToken);
     for (const g of segs) {
       put(" │ ", "statusDim");
-      put(g.text, g.token);
+      if (g.parts === undefined) put(g.text, g.token);
+      else for (const p of g.parts) put(p.text, p.token);
       if (g === path && dirty !== "") put(dirty, "statusDirty");
     }
     if (right !== "" && x + cells(right) <= cols)

@@ -1,0 +1,45 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`warnings and errors use their own message styles 1`] = `
+{
+  "color": "auto",
+  "error": {
+    "style": {
+      "attrs": 1,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "text": "notes/plan.md has conflicts; resolve them in lazygit",
+  },
+  "warn": {
+    "style": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "text": "index changed; hunks refreshed",
+  },
+}
+`;
+
+exports[`warnings and errors use their own message styles 2`] = `
+{
+  "color": "never",
+  "error": {
+    "style": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "text": "notes/plan.md has conflicts; resolve them in lazygit",
+  },
+  "warn": {
+    "style": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "text": "index changed; hunks refreshed",
+  },
+}
+`;

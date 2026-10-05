@@ -1,8 +1,9 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { OptimizedBuffer } from "@opentui/core";
+import { OptimizedBuffer, TextAttributes } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { normalizeIndexText } from "../../src/core/features/git/index-text";
+import { parseStatus } from "../../src/core/features/git/status";
 import type { IndexEntry, RepoInfo } from "../../src/core/state/types";
 import { FOREIGN_MODES_RESET } from "../../src/ui/shell";
 import { type Theme, themes } from "../../src/ui/theme";
@@ -30,23 +31,34 @@ const REPO: RepoInfo = {
 
 const OPENING = '"notes/plan.md" written · opening lazygit';
 
+/** config.toml with `color`; notes keep opening in the editable live view. */
+const colorConfig = (color: string) =>
+  `color = "${color}"\n[preview]\nmode = "live"\n`;
+const NO_COLOR_CONFIG = colorConfig("never");
+
 /** Let any scheduled frame render. */
 const settle = () => Bun.sleep(20);
 
 /** An index entry holding `text`, as `git ls-files` and `cat-file` read it. */
-const tracked = (text: string): IndexEntry => ({
+const tracked = (text: string, conflicted = false): IndexEntry => ({
   kind: "tracked",
   oid: "a".repeat(40),
   mode: "100644",
-  conflicted: false,
+  conflicted,
   text: normalizeIndexText(text, "lf"),
 });
 
-/** The shell inside a repository, with the explorer closed so windows start at x = 0. */
-async function inRepo(o: MountOptions): Promise<Mounted> {
-  const x = await mountShell(o);
-  x.store.dispatch({ type: "gitDetected", repo: REPO });
-  x.keys("<leader>e");
+/**
+ * The shell inside `repo`, with the explorer closed so windows start at
+ * x = 0 unless `explorer` keeps it open.
+ */
+async function inRepo(
+  o: MountOptions & { repo?: RepoInfo; explorer?: boolean },
+): Promise<Mounted> {
+  const { repo = REPO, explorer = false, ...mount } = o;
+  const x = await mountShell(mount);
+  x.store.dispatch({ type: "gitDetected", repo });
+  if (!explorer) x.keys("<leader>e");
   return x;
 }
 
@@ -239,7 +251,7 @@ test("changed lines show their git sign left of the line number", async () => {
 for (const [name, o] of [
   ["dark", { theme: "dark" }],
   ["light", { theme: "light" }],
-  ["no colour", { config: 'color = "never"\n' }],
+  ["no colour", { config: NO_COLOR_CONFIG }],
 ] as const)
   test(`every sign kind shows its glyph in every view (${name})`, async () => {
     m = await inRepo({ cols: 120, rows: 36, ...o });
@@ -399,4 +411,338 @@ test("clicks and the cursor land on the painted text with the change column", as
   await m.frame();
   c = m.t.renderer.getCursorState();
   expect({ x: c.x - 1, y: c.y - 1 }).toEqual({ x: cx, y });
+});
+
+/** Index and buffer lines whose hunks count 2 added, 2 changed, and 3 removed lines. */
+const COUNT_INDEX = Array.from({ length: 12 }, (_, i) => `l${i + 1}`);
+const COUNT_BUFFER = [
+  "l1",
+  "n1",
+  "n2",
+  "l2",
+  "l3",
+  "l4",
+  "C5",
+  "C6",
+  "l7",
+  "l11",
+  "l12",
+];
+
+const statusRowOf = async (x: Mounted) =>
+  (await rowsOf(x))[x.store.get().terminal.rows - 2] ?? "";
+
+/** The statusline for `path` in `repo`, with `index` against the counting buffer. */
+async function statusFor(o: {
+  repo?: RepoInfo;
+  index: readonly string[] | null;
+  cols?: number;
+  path?: string;
+  color?: string;
+}): Promise<string> {
+  m?.destroy();
+  m = await inRepo({
+    cols: o.cols ?? 120,
+    rows: 36,
+    ...(o.repo === undefined ? {} : { repo: o.repo }),
+    ...(o.color === undefined ? {} : { config: colorConfig(o.color) }),
+  });
+  openWithIndex(
+    m,
+    o.path ?? "notes/plan.md",
+    textOf(COUNT_BUFFER),
+    o.index === null ? null : textOf(o.index),
+  );
+  return statusRowOf(m);
+}
+
+test("the statusline git segment reads its variants and drops first", async () => {
+  const after = "notes/plan.md │ ";
+  expect(await statusFor({ index: COUNT_INDEX })).toContain(
+    `${after}⎇ main +2 ~2 -3 │`,
+  );
+  expect(await statusFor({ index: COUNT_BUFFER })).toContain(
+    `${after}⎇ main │`,
+  );
+  const rebasing: RepoInfo = {
+    ...REPO,
+    head: { kind: "detached", short: "a1b2c3d" },
+    op: "rebasing",
+  };
+  expect(await statusFor({ repo: rebasing, index: COUNT_INDEX })).toContain(
+    `${after}⎇ a1b2c3d rebasing +2 ~2 -3 │`,
+  );
+  expect(
+    await statusFor({ repo: { ...REPO, op: "merging" }, index: COUNT_BUFFER }),
+  ).toContain(`${after}⎇ main merging │`);
+  const unborn: RepoInfo = { ...REPO, head: { kind: "unborn", name: "main" } };
+  expect(await statusFor({ repo: unborn, index: COUNT_INDEX })).toContain(
+    `${after}⎇ main │`,
+  );
+  expect(await statusFor({ index: null })).toContain(`${after}⎇ main │`);
+
+  // A dirty buffer keeps its dot right after the path, before the segment.
+  m?.keys("ggAx<Esc>");
+  expect(await statusRowOf(m as Mounted)).toContain(
+    "notes/plan.md ● │ ⎇ main │",
+  );
+
+  // Narrow terminals drop the segment with the other optional ones.
+  expect(await statusFor({ index: COUNT_INDEX, cols: 80 })).not.toContain("⎇");
+  // A row too long for the path drops the segment before the preview.
+  const long = "notes/a-very-long-folder-name/plan.md";
+  const row = await statusFor({ index: COUNT_INDEX, cols: 100, path: long });
+  expect(row).not.toContain("⎇");
+  expect(row).toContain("preview off");
+  expect(row).toContain("plan.md");
+});
+
+test("the statusline git segment colours each part", async () => {
+  for (const [color, theme] of [
+    ["auto", themes.dark],
+    ["never", themes.nocolor],
+  ] as const) {
+    const rebasing: RepoInfo = {
+      ...REPO,
+      head: { kind: "detached", short: "a1b2c3d" },
+      op: "rebasing",
+    };
+    const row = await statusFor({ repo: rebasing, index: COUNT_INDEX, color });
+    const x = m as Mounted;
+    const y = x.store.get().terminal.rows - 2;
+    const spans = x.t.captureSpans().lines;
+    /** The style of the first cell of `text` on the status row. */
+    const at = (text: string) =>
+      cellStyle(spans, [...row.slice(0, row.indexOf(text))].length, y);
+    expect(at("⎇")).toEqual(styleOf(theme, "statusGitRef"));
+    expect(at("rebasing")).toEqual(styleOf(theme, "statusGitOp"));
+    expect(at("+2")).toEqual(styleOf(theme, "statusGitAdd"));
+    expect(at("~2")).toEqual(styleOf(theme, "statusGitChange"));
+    expect(at("-3")).toEqual(styleOf(theme, "statusGitDelete"));
+  }
+  expect(styleOf(themes.nocolor, "statusGitOp").attrs).toBe(
+    TextAttributes.BOLD | TextAttributes.UNDERLINE,
+  );
+});
+
+/** One record per change, as `git status --porcelain=v2 -z --branch` prints them. */
+const MARKER_STATUS = parseStatus(
+  [
+    "# branch.oid 0123456789abcdef0123456789abcdef01234567",
+    "# branch.head main",
+    `1 M. N... 100644 100644 100644 ${"1".repeat(40)} ${"2".repeat(40)} daily/2026-10-02.md`,
+    `1 .D N... 100644 100644 000000 ${"3".repeat(40)} ${"3".repeat(40)} daily/2026-10-03.md`,
+    `1 .M N... 100644 100644 100644 ${"4".repeat(40)} ${"4".repeat(40)} projects/so-roadmap.md`,
+    "? projects/ideas/ideas.md",
+    "? projects/ideas/kanban.md",
+    `u UU N... 100644 100644 100644 100644 ${"5".repeat(40)} ${"6".repeat(40)} ${"7".repeat(40)} people/linh.md`,
+    "",
+  ].join("\0"),
+  "",
+);
+
+const MARKER_TREE: Record<string, [string, "file" | "dir"][]> = {
+  "": [
+    ["daily", "dir"],
+    ["people", "dir"],
+    ["projects", "dir"],
+  ],
+  daily: [
+    ["2026-10-01.md", "file"],
+    ["2026-10-02.md", "file"],
+  ],
+  people: [["linh.md", "file"]],
+  projects: [
+    ["garden-app.md", "file"],
+    ["ideas", "dir"],
+    ["so-roadmap.md", "file"],
+  ],
+  "projects/ideas": [
+    ["ideas.md", "file"],
+    ["kanban.md", "file"],
+  ],
+};
+
+/**
+ * The marker tree with every folder open, `projects/so-roadmap.md` unsaved
+ * in a window, and the explorer focused on `people/linh.md`.
+ */
+async function markerTree(o: MountOptions): Promise<Mounted> {
+  const x = await inRepo({ ...o, explorer: true });
+  for (const [dir, entries] of Object.entries(MARKER_TREE))
+    x.store.dispatch({
+      type: "dirListed",
+      dir,
+      entries: entries.map(([name, kind]) => ({ name, kind })),
+    });
+  x.store.dispatch({
+    type: "gitStatus",
+    result: { ok: true, status: MARKER_STATUS },
+  });
+  x.open("projects/so-roadmap.md", "# Roadmap\n");
+  x.keys("Ax<Esc><leader>e");
+  const select = (path: string) => {
+    // From the top row down; `k` past the top stays there.
+    for (let i = 0; i < 40; i++) x.keys("k");
+    for (let i = 0; x.store.get().panels.explorer.cursor !== path; i++) {
+      if (i > 40) throw new Error(`no row ${path}`);
+      x.keys("j");
+    }
+  };
+  for (const dir of ["daily", "people", "projects", "projects/ideas"]) {
+    select(dir);
+    if (!x.store.get().panels.explorer.expanded.includes(dir)) x.keys("l");
+  }
+  select("people/linh.md");
+  return x;
+}
+
+/** The explorer's rows: each tree row with its marker, without the frame. */
+async function treeRows(x: Mounted): Promise<string[]> {
+  return (await rowsOf(x))
+    .map((r) => r.replace(/^[│ ]+|[│ ]+$/g, ""))
+    .filter((r) => r !== "");
+}
+
+const rowEnding = (rows: readonly string[], end: string) =>
+  rows.find((r) => r.split("│")[0]?.trimEnd().endsWith(end));
+
+test("explorer rows show git markers after the name", async () => {
+  m = await markerTree({ cols: 120, rows: 36 });
+  let rows = await treeRows(m);
+  for (const end of [
+    "2026-10-02.md S",
+    "so-roadmap.md ● M",
+    "ideas.md ?",
+    "kanban.md ?",
+    "linh.md U",
+    "daily •",
+    "people •",
+    "projects •",
+    "ideas •",
+  ])
+    expect(rowEnding(rows, end)).toBeDefined();
+  for (const plain of ["2026-10-01.md", "garden-app.md"])
+    expect(rowEnding(rows, plain)).toBeDefined();
+  expect(rows.join("\n")).not.toContain("2026-10-03.md");
+  expect(rows.some((r) => r.split("│")[0]?.trimEnd().endsWith(" D"))).toBe(
+    false,
+  );
+
+  // The selected row paints its marker in the row's own style.
+  const frame = (await rowsOf(m)).map((r) => [...r]);
+  const spans = m.t.captureSpans().lines;
+  const cellOf = (text: string) => {
+    const y = frame.findIndex((r) => r.join("").includes(text));
+    return { x: (frame[y] ?? []).join("").indexOf(text) + text.length - 1, y };
+  };
+  const u = cellOf("linh.md U");
+  expect(cellStyle(spans, u.x, u.y)).toEqual(
+    styleOf(themes.dark, "treeSelFocus"),
+  );
+  const mod = cellOf("so-roadmap.md ● M");
+  expect(cellStyle(spans, mod.x, mod.y)).toEqual(
+    styleOf(themes.dark, "explorerGitModified"),
+  );
+  const s = cellOf("2026-10-02.md S");
+  expect(cellStyle(spans, s.x, s.y)).toEqual(
+    styleOf(themes.dark, "explorerGitStaged"),
+  );
+
+  // A collapsed new folder shows only its own mark.
+  m.keys("k");
+  for (
+    let i = 0;
+    m.store.get().panels.explorer.cursor !== "projects/ideas";
+    i++
+  ) {
+    if (i > 40) throw new Error("no ideas row");
+    m.keys("j");
+  }
+  m.keys("h");
+  rows = await treeRows(m);
+  expect(rowEnding(rows, "ideas •")).toBeDefined();
+  expect(rows.join("\n")).not.toContain("ideas.md");
+});
+
+test("the floating explorer shows the same markers, also without colour", async () => {
+  for (const o of [
+    { cols: 80, rows: 24 },
+    { cols: 120, rows: 36, config: NO_COLOR_CONFIG },
+  ]) {
+    m?.destroy();
+    m = await markerTree(o);
+    const rows = await treeRows(m);
+    for (const end of [
+      "2026-10-02.md S",
+      "so-roadmap.md ● M",
+      "ideas.md ?",
+      "linh.md U",
+      "daily •",
+    ])
+      expect(rowEnding(rows, end)).toBeDefined();
+  }
+});
+
+test("outside a repository the explorer and statusline show no git state", async () => {
+  m = await mountShell({ cols: 120, rows: 36 });
+  m.store.dispatch({
+    type: "gitStatus",
+    result: { ok: true, status: MARKER_STATUS },
+  });
+  m.open("notes/plan.md", textOf(COUNT_BUFFER));
+  const frame = await m.frame();
+  expect(frame).not.toContain("⎇");
+  expect(frame).not.toMatch(/ [MSU?•]\s*│/);
+});
+
+test("warnings and errors use their own message styles", async () => {
+  for (const [color, theme] of [
+    ["auto", themes.dark],
+    ["never", themes.nocolor],
+  ] as const) {
+    m?.destroy();
+    m = await inRepo({
+      cols: 120,
+      rows: 36,
+      config: colorConfig(color),
+    });
+    const x = m;
+    const messageRow = async () => {
+      const rows = await rowsOf(x);
+      const y = x.store.get().terminal.rows - 1;
+      return {
+        text: (rows[y] ?? "").trimEnd(),
+        style: cellStyle(x.t.captureSpans().lines, 0, y),
+      };
+    };
+    x.store.dispatch({
+      type: "gitStaged",
+      path: "notes/plan.md",
+      result: "stale",
+      report: { n: 1, m: 1, saved: false },
+    });
+    const warn = await messageRow();
+    expect(warn).toEqual({
+      text: "index changed; hunks refreshed",
+      style: styleOf(theme, "messageWarn"),
+    });
+
+    x.open("notes/plan.md", textOf(COUNT_BUFFER));
+    x.store.dispatch({
+      type: "gitIndexRead",
+      path: "notes/plan.md",
+      entry: tracked(textOf(COUNT_INDEX), true),
+    });
+    x.keys("2G<leader>ghs");
+    const error = await messageRow();
+    expect(error).toEqual({
+      text: "notes/plan.md has conflicts; resolve them in lazygit",
+      style: styleOf(theme, "messageError"),
+    });
+    expect({ color, warn, error }).toMatchSnapshot();
+  }
+  expect(styleOf(themes.nocolor, "messageError").attrs).toBe(
+    TextAttributes.BOLD,
+  );
 });

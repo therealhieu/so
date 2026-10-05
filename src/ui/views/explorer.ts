@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { explorerMarkers, type Marker } from "../../core/features/git/status";
 import { visiblePaths } from "../../core/state/explorer";
 import type {
   AppState,
@@ -58,6 +59,15 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
 }
 
 const cells = (text: string) => [...text].length;
+
+/** The git marker glyph after a row's name, and its token. */
+const GIT_MARKERS: Readonly<Record<Marker, readonly [string, string]>> = {
+  modified: ["M", "explorerGitModified"],
+  staged: ["S", "explorerGitStaged"],
+  untracked: ["?", "explorerGitUntracked"],
+  conflict: ["U", "explorerGitConflict"],
+  contains: ["•", "explorerGitContains"],
+};
 
 /**
  * A rename or move prompt's consequence line in the given tokens: why Enter
@@ -243,6 +253,8 @@ export class ExplorerView extends Renderable {
         .filter((b) => b.dirty)
         .map((b) => b.path),
     );
+    const markers =
+      s.git.status === null ? undefined : explorerMarkers(s.git.status);
     const sel = selectedRow(rows, ex.cursor);
     for (let i = 0; i < this.listRows(); i++) {
       const y = y0 + 1 + i;
@@ -313,6 +325,11 @@ export class ExplorerView extends Renderable {
       }
       put(basename(row.path), row.dir ? "explorerDir" : "explorer");
       if (dirty.has(row.path)) put(" ●", "explorerDirty");
+      const marker = markers?.get(row.path);
+      if (marker !== undefined) {
+        const [glyph, token] = GIT_MARKERS[marker];
+        put(` ${glyph}`, token);
+      }
     }
   }
 }
