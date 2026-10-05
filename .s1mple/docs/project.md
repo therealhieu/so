@@ -98,10 +98,10 @@ Language servers follow the same one-way flow. The core holds `LspState` and emi
 store change → lspHost.observe: attach (spec by file type, root by markers) → spawn or reuse client → didOpen / didChange (150 ms debounce) / didClose
 key (K, gd, grn, …) → core request → lsp effect → runner → lspHost.run → client request → lspResult → float, jump, picker, or workspace edit
 server → publishDiagnostics | $/progress | showMessage → lspDiagnostics | lspServer (100 ms throttle) | lspMessage → state → views
-exit → lspHost.stop(): shutdown → exit → SIGKILL survivors at 500 ms
+exit → lspHost.stop(): shutdown → exit → SIGKILL survivors at 500 ms; resolves only after every server and version probe has exited
 ```
 
-A crash restarts the server and resends open documents; the fifth crash within 3 minutes leaves it `failed`. A server that exits before `initialize` completes is `unavailable` and stays silent; a missing binary is `missing`; both show only in `:LspInfo`.
+A crash restarts the server and resends open documents; the fifth crash within 3 minutes leaves it `failed`. A server that exits before `initialize` completes is `unavailable` and stays silent; a missing binary is `missing`; both show only in `:LspInfo`, which lists every wanted server with its state and, once started, the binary it runs from (`ServerView.binary`, e.g. a project's own `node_modules/.bin/tsc`).
 
 Notes are created only through the `createNote` effect, whose adapter expands the template and calls `createExclusive` (temp file + `link()`, `wx` fallback), so an existing path is never replaced:
 
@@ -206,7 +206,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | End-to-end (PTY) | `test/e2e` | `test:ci` |
   | Benchmark | `test/bench` | `bench` (Linux CI only) |
 
-  Language-server suites run against `test/fixtures/fake-lsp.ts`, whose command line carries a unique `fake-lsp-<log>` tag; every suite stops its servers, so `pgrep -f fake-lsp` is empty after a run. `test/integration/lsp-real.test.ts` runs only where `rust-analyzer` is installed, so CI skips it.
+  Language-server suites run against `test/fixtures/fake-lsp.ts`, whose command line carries a unique `fake-lsp-<log>` tag; every suite stops its servers, so `pgrep -f fake-lsp` is empty after a run. `test/integration/lsp-real.test.ts` runs only where `rust-analyzer --version` succeeds; GitHub runners have only rustup's proxy without the component, so CI skips it.
 
 - **Worker entrypoint:** every `bun build --compile` (the `build` script and both loops in `release.yml`) lists `src/workspace/index-worker.ts` after `src/app/main.ts`, which `test/repo.test.ts` enforces; `knip.json` lists the worker as an entry.
 - **Benchmarks:** `TARGETS` in `scripts/bench-gate.ts`, in milliseconds. The gate fails when a median exceeds twice its target and writes the runs to `.so-bench/results.json`. `makeNoteWorkspace`, `make5000LineNote`, and `make5000LineTs` in `test/fixtures/generate.ts` generate the fixtures. The live and startup targets are relaxed from the initiative's REQ9 values (16 ms keystroke, 50 ms open, 200 ms first frame) by user decision on 2026-10-04; source targets keep them.
