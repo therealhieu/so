@@ -68,6 +68,8 @@ import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
 import { paintRule } from "../ui/widgets/rule";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
+import { createGit } from "../workspace/git";
+import { watchGitDirs } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createImageLoader } from "../workspace/images";
 import { createLogger, type Logger } from "../workspace/log";
@@ -302,6 +304,8 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
+  // Constructing the adapter runs no git; discovery waits for the first frame.
+  const git = createGit({ which: (c) => Bun.which(c), logger });
   // Trash, clipboard, and exit are bound once detected or constructed; the
   // runner reads them at call time.
   const deps: RunnerDeps = {
@@ -322,6 +326,8 @@ async function main(argv: string[]): Promise<void> {
     index: indexHost,
     preview: previewHost,
     openUrl: (url) => openUrl(url, process.platform),
+    git,
+    watchGit: (dirs, onChange) => watchGitDirs(dirs, onChange, logger),
   };
   const runner = slowWrites(createEffectRunner(deps));
   const noColor = (process.env.NO_COLOR ?? "") !== "";
@@ -387,6 +393,9 @@ async function main(argv: string[]): Promise<void> {
     ).then((clipboard) => {
       deps.clipboard = clipboard;
     });
+    void git
+      .detect(ws.root)
+      .then((r) => store.dispatch({ type: "gitDetected", ...r }));
   });
 }
 

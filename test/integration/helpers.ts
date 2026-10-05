@@ -11,6 +11,8 @@ import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
 import type { Action, BufferState, Effect } from "../../src/core/state/types";
 import { createUpdate } from "../../src/core/state/update";
+import { bunGitSpawn, createGit } from "../../src/workspace/git";
+import { type GitWatcher, watchGitDirs } from "../../src/workspace/git-watcher";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createLogger } from "../../src/workspace/log";
 import {
@@ -34,6 +36,12 @@ export async function waitFor(pred: () => boolean, ms = 5000): Promise<void> {
     await Bun.sleep(5);
   }
 }
+
+/** Runner deps for a test that never discovers a repository. */
+export const gitOff = () => ({
+  git: createGit({ which: () => null, logger: createLogger({}, "/") }),
+  watchGit: (): GitWatcher => ({ retarget() {}, stop() {} }),
+});
 
 /** A fresh temp folder holding `files` (workspace-relative path → text). */
 export async function tmpWorkspace(
@@ -97,6 +105,11 @@ export async function startApp(
      * `stop` save it, as the lifecycle does on every shutdown path.
      */
     state?: { path: string; restore: boolean };
+    /**
+     * Discover the repository holding `root` once started, as `main` does
+     * after the first frame, running git with `env`.
+     */
+    git?: { env: Record<string, string> };
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -110,6 +123,12 @@ export async function startApp(
   });
   const ownOps = createOwnOps();
   const logger = createLogger(opts.env ?? {}, root);
+  const git = createGit({
+    spawn: bunGitSpawn(opts.git?.env),
+    which: (c) => Bun.which(c),
+    logger,
+  });
+  const gitWatchers: GitWatcher[] = [];
   const runner = createEffectRunner({
     root,
     matcher,
@@ -125,6 +144,12 @@ export async function startApp(
     configPath: join(root, ".no-config.toml"),
     preview: { start: () => {}, stop: async () => {} },
     openUrl: async () => {},
+    git,
+    watchGit: (dirs, onChange) => {
+      const w = watchGitDirs(dirs, onChange, logger);
+      gitWatchers.push(w);
+      return w;
+    },
     ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
     ...(opts.index === undefined
       ? {}
@@ -187,6 +212,8 @@ export async function startApp(
   else index.start(root, []);
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
   await settle();
+  if (opts.git !== undefined)
+    store.dispatch({ type: "gitDetected", ...(await git.detect(root)) });
 
   return {
     root,
@@ -225,6 +252,7 @@ export async function startApp(
     ...(index === undefined ? {} : { index }),
     stop() {
       stopWatch();
+      for (const w of gitWatchers) w.stop();
       index?.stop();
       saveSession();
     },

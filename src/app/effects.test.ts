@@ -2,8 +2,10 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Action } from "../core/state/types";
+import type { Action, Effect, RepoInfo } from "../core/state/types";
 import { atomicWrite } from "../workspace/fs";
+import type { Git } from "../workspace/git";
+import type { GitWatcher } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createLogger } from "../workspace/log";
 import type { ClipboardProvider } from "../workspace/system";
@@ -31,6 +33,15 @@ const memoryClipboard: ClipboardProvider = {
   paste: async () => "from clipboard",
 };
 
+const unused = () => Promise.reject(new Error("git is not used here"));
+const noGit: Git = {
+  detect: async () => ({ repo: null }),
+  status: unused,
+  readIndex: unused,
+  stage: unused,
+  blame: unused,
+};
+
 /** A runner over `root` that records every dispatched action. */
 function runner(patch: Partial<RunnerDeps> = {}) {
   const actions: Action[] = [];
@@ -47,6 +58,8 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     configPath: join(root, "no-such-config.toml"),
     preview: { start: () => {}, stop: async () => {} },
     openUrl: async () => {},
+    git: noGit,
+    watchGit: () => ({ retarget() {}, stop() {} }),
     ...patch,
   };
   return { ...createEffectRunner(deps), deps, actions, exits };
@@ -434,4 +447,187 @@ test("a frontmatter patch is written only while the property still holds the sho
     reason: "changed on disk",
   });
   expect(await readFile(join(root, "task.md"), "utf8")).toBe(written);
+});
+
+const REPO: RepoInfo = {
+  top: "/repo",
+  gitDir: "/repo/.git",
+  commonDir: "/repo/.git",
+  prefix: "notes/",
+  head: { kind: "branch", name: "main" },
+};
+
+test("a stage waits for the write queued before it", async () => {
+  await writeFile(join(root, "held.md"), "h\n");
+  let release = () => {};
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  const order: string[] = [];
+  const r = runner({
+    trash: { available: true, move: () => gate },
+    dispatch: (a) => order.push(a.type),
+    git: {
+      ...noGit,
+      stage: async (repo, e) => {
+        order.push(`stage ${repo.top} ${e.repoPath} ${e.expectedOid}`);
+        return "ok";
+      },
+    },
+  });
+  const report = { n: 1, m: 2, saved: true };
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "held.md" },
+  });
+  r.run({ kind: "write", path: "staged.md", text: "typed\n" });
+  r.run({
+    kind: "gitStage",
+    repo: REPO,
+    path: "staged.md",
+    repoPath: "notes/staged.md",
+    expectedOid: "abc",
+    patch: "diff",
+    report,
+  });
+  await Bun.sleep(30);
+  expect(order).toEqual([]);
+  release();
+  await waitFor(() => order.length === 4);
+  expect(order).toEqual([
+    "fsResult",
+    "saved",
+    "stage /repo notes/staged.md abc",
+    "gitStaged",
+  ]);
+
+  const staged: Action[] = [];
+  const failing = runner({
+    dispatch: (a) => staged.push(a),
+    git: { ...noGit, stage: () => Promise.reject(new Error("patch failed")) },
+  });
+  failing.run({
+    kind: "gitStage",
+    repo: REPO,
+    path: "staged.md",
+    repoPath: "notes/staged.md",
+    expectedOid: null,
+    patch: "diff",
+    report,
+  });
+  await waitFor(() => staged.length > 0);
+  expect(staged).toEqual([
+    {
+      type: "gitStaged",
+      path: "staged.md",
+      result: { failed: "patch failed" },
+      report,
+    },
+  ]);
+});
+
+test("status, index, and blame reads answer once each, failures included", async () => {
+  const status = { head: REPO.head, files: new Map() };
+  const blamed = { committed: false } as const;
+  const ok = runner({
+    now: () => 1234,
+    git: {
+      ...noGit,
+      status: async (repo) => (repo === REPO ? status : Promise.reject()),
+      readIndex: async (_repo, repoPath) =>
+        repoPath === "notes/a.md" ? { kind: "untracked" } : { kind: "ignored" },
+      blame: async (_repo, repoPath, line, contents) =>
+        repoPath === "notes/a.md" && line === 2 && contents === "x\n"
+          ? blamed
+          : Promise.reject(new Error("wrong call")),
+    },
+  });
+  const reads: Effect[] = [
+    { kind: "gitStatus", repo: REPO, prefix: "notes/" },
+    { kind: "gitReadIndex", repo: REPO, path: "a.md", repoPath: "notes/a.md" },
+    {
+      kind: "gitBlame",
+      repo: REPO,
+      path: "a.md",
+      repoPath: "notes/a.md",
+      line: 2,
+      contents: "x\n",
+    },
+  ];
+  for (const e of reads) ok.run(e);
+  await waitFor(() => ok.actions.length === 3);
+  await Bun.sleep(20);
+  expect(ok.actions).toContainEqual({
+    type: "gitStatus",
+    result: { ok: true, status },
+  });
+  expect(ok.actions).toContainEqual({
+    type: "gitIndexRead",
+    path: "a.md",
+    entry: { kind: "untracked" },
+  });
+  expect(ok.actions).toContainEqual({
+    type: "gitBlamed",
+    path: "a.md",
+    line: 2,
+    result: blamed,
+    now: 1234,
+  });
+  expect(ok.actions).toHaveLength(3);
+
+  const down = new Error("fatal: not a git repository");
+  const bad = runner({
+    now: () => 99,
+    git: {
+      ...noGit,
+      status: () => Promise.reject(down),
+      readIndex: () => Promise.reject(down),
+      blame: () => Promise.reject(down),
+    },
+  });
+  for (const e of reads) bad.run(e);
+  await waitFor(() => bad.actions.length === 3);
+  await Bun.sleep(20);
+  const reason = "fatal: not a git repository";
+  expect(bad.actions).toContainEqual({
+    type: "gitStatus",
+    result: { ok: false, reason },
+  });
+  expect(bad.actions).toContainEqual({
+    type: "gitIndexRead",
+    path: "a.md",
+    entry: { kind: "failed", reason },
+  });
+  expect(bad.actions).toContainEqual({
+    type: "gitBlamed",
+    path: "a.md",
+    line: 2,
+    result: { failed: reason },
+    now: 99,
+  });
+  expect(bad.actions).toHaveLength(3);
+});
+
+test("git-dir watching reuses one watcher and retargets it", () => {
+  const made: { dirs: string[]; onChange: () => void }[] = [];
+  const retargets: string[][] = [];
+  const watcher: GitWatcher = {
+    retarget: (dirs) => retargets.push(dirs),
+    stop() {},
+  };
+  const r = runner({
+    watchGit: (dirs, onChange) => {
+      made.push({ dirs, onChange });
+      return watcher;
+    },
+  });
+  r.run({ kind: "gitWatch", dirs: ["/repo/.git"] });
+  r.run({ kind: "gitWatch", dirs: ["/repo/.git", "/repo/.git/refs/heads/f"] });
+  expect(made.map((m) => m.dirs)).toEqual([["/repo/.git"]]);
+  expect(retargets).toEqual([
+    ["/repo/.git"],
+    ["/repo/.git", "/repo/.git/refs/heads/f"],
+  ]);
+  made[0]?.onChange();
+  expect(r.actions).toEqual([{ type: "gitDirChanged" }]);
 });

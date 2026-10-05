@@ -21,6 +21,8 @@ import {
   removeEntry,
   sameStamp,
 } from "../workspace/fs";
+import type { Git } from "../workspace/git";
+import type { GitWatcher } from "../workspace/git-watcher";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
 import { readPropertyTypes } from "../workspace/property-types";
@@ -59,6 +61,10 @@ export type RunnerDeps = {
   preview: Pick<PreviewHost, "start" | "stop">;
   /** Opens an address in the user's browser; rejects when no browser could be launched. */
   openUrl: (url: string) => Promise<void>;
+  /** Every Git call; the effects carry the repository, so the runner keeps no git state. */
+  git: Git;
+  /** Starts the one git-dir watcher, on the first `gitWatch`. */
+  watchGit: (dirs: string[], onChange: () => void) => GitWatcher;
 };
 
 export type EffectRunner = {
@@ -113,6 +119,8 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     tail = next.catch(() => {});
     return next;
   };
+
+  let gitWatcher: GitWatcher | undefined;
 
   const timers = new Map<TimerId, Timer>();
   const startTimer = (id: TimerId, due: number) => {
@@ -496,12 +504,74 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         void d.preview.stop();
         d.dispatch({ type: "previewStopped" });
         return;
-      // The git adapter and tool host are not wired yet, so these do nothing.
       case "gitStatus":
+        void d.git.status(e.repo).then(
+          (status) =>
+            d.dispatch({ type: "gitStatus", result: { ok: true, status } }),
+          (x) =>
+            d.dispatch({
+              type: "gitStatus",
+              result: { ok: false, reason: msg(x) },
+            }),
+        );
+        return;
       case "gitReadIndex":
+        void d.git.readIndex(e.repo, e.repoPath).then(
+          (entry) => d.dispatch({ type: "gitIndexRead", path: e.path, entry }),
+          (x) =>
+            d.dispatch({
+              type: "gitIndexRead",
+              path: e.path,
+              entry: { kind: "failed", reason: msg(x) },
+            }),
+        );
+        return;
+      // A stage joins the write queue: it lands after the save it follows.
       case "gitStage":
+        void serial(() => d.git.stage(e.repo, e)).then(
+          (result) =>
+            d.dispatch({
+              type: "gitStaged",
+              path: e.path,
+              result,
+              report: e.report,
+            }),
+          (x) =>
+            d.dispatch({
+              type: "gitStaged",
+              path: e.path,
+              result: { failed: msg(x) },
+              report: e.report,
+            }),
+        );
+        return;
       case "gitBlame":
+        void d.git.blame(e.repo, e.repoPath, e.line, e.contents).then(
+          (result) =>
+            d.dispatch({
+              type: "gitBlamed",
+              path: e.path,
+              line: e.line,
+              result,
+              now: now(),
+            }),
+          (x) =>
+            d.dispatch({
+              type: "gitBlamed",
+              path: e.path,
+              line: e.line,
+              result: { failed: msg(x) },
+              now: now(),
+            }),
+        );
+        return;
       case "gitWatch":
+        gitWatcher ??= d.watchGit(e.dirs, () =>
+          d.dispatch({ type: "gitDirChanged" }),
+        );
+        gitWatcher.retarget(e.dirs);
+        return;
+      // The tool host is not wired yet, so this does nothing.
       case "runTool":
         return;
       case "openUrl":
