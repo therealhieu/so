@@ -38,6 +38,7 @@ import type {
   LspFeature,
   LspResult,
   ServerView,
+  WorkspaceSymbol,
 } from "../../core/state/lsp-types";
 
 const NONE: LspResult = { kind: "none" };
@@ -247,6 +248,26 @@ export function toInlayHints(r: unknown): InlayHint[] {
     out.push({ pos, label });
   }
   return out;
+}
+
+/** Workspace symbols with a range inside the workspace; others are dropped. */
+export function toWorkspaceSymbols(root: string, r: unknown): LspResult {
+  const items: WorkspaceSymbol[] = [];
+  for (const s of Array.isArray(r) ? r : []) {
+    if (!isObject(s) || typeof s.name !== "string" || !isObject(s.location))
+      continue;
+    const { uri } = s.location;
+    const range = toRange(s.location.range);
+    const path = typeof uri === "string" ? uriToPath(root, uri) : undefined;
+    if (path === undefined || range === undefined) continue;
+    items.push({
+      name: s.name,
+      kind: kindName(SYMBOL_KINDS, s.kind) ?? "Symbol",
+      path,
+      range,
+    });
+  }
+  return { kind: "workspaceSymbols", items };
 }
 
 const COMPLETION_KINDS = [
@@ -603,6 +624,9 @@ export function toServerView(
   };
   add("hover", has(caps.hoverProvider));
   add("definition", has(caps.definitionProvider));
+  add("declaration", has(caps.declarationProvider));
+  add("typeDefinition", has(caps.typeDefinitionProvider));
+  add("workspaceSymbols", has(caps.workspaceSymbolProvider));
   add("implementation", has(caps.implementationProvider));
   add("references", has(caps.referencesProvider));
   add("symbols", has(caps.documentSymbolProvider));

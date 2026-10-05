@@ -58,6 +58,7 @@ import {
   toServerView,
   toSignature,
   toSymbols,
+  toWorkspaceSymbols,
   uriToPath,
 } from "./convert";
 import type { LineChange } from "./sync";
@@ -420,6 +421,8 @@ export function createLspClient(o: {
       case "hover":
         return toHover(await ask("textDocument/hover", position(path, op)));
       case "definition":
+      case "declaration":
+      case "typeDefinition":
       case "implementation":
         return toLocations(
           root,
@@ -445,6 +448,11 @@ export function createLspClient(o: {
         return toPrepareRename(
           await ask("textDocument/prepareRename", position(path, op)),
           (range) => textOf(path, range, op.pos),
+        );
+      case "workspaceSymbols":
+        return toWorkspaceSymbols(
+          root,
+          await ask("workspace/symbol", { query: op.query }),
         );
       case "symbols":
         return toSymbols(

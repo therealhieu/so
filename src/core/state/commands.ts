@@ -84,6 +84,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   Tomorrow: "note.tomorrow",
   Format: "lsp.format",
   Diagnostics: "diag.list",
+  WorkspaceSymbols: "lsp.workspaceSymbols",
   LspInfo: "lsp.info",
   LspRestart: "lsp.restart",
 };

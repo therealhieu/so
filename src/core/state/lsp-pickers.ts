@@ -3,7 +3,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { DiagnosticSeverity } from "../kernel/view/diagnostics";
 import { goTo, recordJump } from "./jumps";
-import { mergedDiagnostics, runAction } from "./lsp";
+import { mergedDiagnostics, request, runAction } from "./lsp";
 import type { ServerView } from "./lsp-types";
 import type { PickerSource } from "./picker";
 import { none } from "./result";
@@ -181,6 +181,32 @@ export const lspPickerSources: Readonly<Record<string, PickerSource>> = {
         ? none(closed)
         : runAction(closed, action, actions.key, now, reg);
     },
+  },
+  lspWorkspaceSymbols: {
+    id: "lspWorkspaceSymbols",
+    title: "Workspace symbols",
+    // The server matches the query; its order is kept.
+    items: (s) =>
+      ranked(
+        (s.lsp.workspaceSymbols ?? []).map((sym, n) => ({
+          key: locationKey(sym.path, sym.range.start, n),
+          text: sym.name,
+          detail: `${sym.kind} ${sym.path}:${at(sym.range.start)}`,
+          path: sym.path,
+          line: sym.range.start.line,
+        })),
+        "",
+      ),
+    accept: acceptLocation,
+    preview: previewLocation,
+    search: (s, query) =>
+      request(
+        s,
+        "workspaceSymbols",
+        { kind: "workspaceSymbols", query },
+        { auto: true, replace: true },
+      ),
+    empty: () => "type to search symbols",
   },
   lspInfo: {
     id: "lspInfo",

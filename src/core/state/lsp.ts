@@ -17,7 +17,7 @@ import type {
   PendingRequest,
   ServerKey,
 } from "./lsp-types";
-import { openPicker } from "./picker";
+import { openPicker, refreshPicker } from "./picker";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type { Action, AppState, Effect, Result } from "./types";
@@ -28,6 +28,8 @@ const REQUEST_MS = 5000;
 
 const LOCATION_TITLES: Partial<Record<LspFeature, string>> = {
   definition: "Definitions",
+  declaration: "Declarations",
+  typeDefinition: "Type definitions",
   implementation: "Implementations",
   references: "References",
 };
@@ -275,6 +277,12 @@ function applyResult(
             }),
           );
     }
+    case "workspaceSymbols":
+      return refreshPicker(
+        withLsp(s, { workspaceSymbols: r.items }),
+        reg,
+        "lspWorkspaceSymbols",
+      );
     case "highlights":
       return none(
         withLsp(s, {

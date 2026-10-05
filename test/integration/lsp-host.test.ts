@@ -781,3 +781,41 @@ test("a resting cursor shows the uses a server reports", async () => {
   await waitFor(() => app?.store.get().lsp.highlights !== undefined);
   expect(app.store.get().lsp.highlights?.ranges).toHaveLength(2);
 });
+
+test("the workspace symbol picker lists what the server finds for the query", async () => {
+  const root = await tmpWorkspace({
+    "main.rs": "fn main() {}\n",
+    "geo.rs": "pub struct Point;\n",
+  });
+  const rs = fake("rs", ["rust"], {
+    capabilities: { workspaceSymbolProvider: true },
+    responses: {
+      "workspace/symbol": [
+        {
+          name: "Point",
+          kind: 23,
+          location: {
+            uri: uri(join(root, "geo.rs")),
+            range: {
+              start: { line: 0, character: 11 },
+              end: { line: 0, character: 16 },
+            },
+          },
+        },
+      ],
+    },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
+  app.keys(":WorkspaceSymbols<CR>");
+  app.keys("Poi");
+  await waitForMessage(rs.log, "workspace/symbol");
+  expect(messages(rs.log, "workspace/symbol")[0]?.params).toEqual({
+    query: "Poi",
+  });
+  await waitFor(() => {
+    const o = app?.store.get().overlay;
+    return o?.kind === "picker" && o.picker.items[0]?.label === "Point";
+  });
+});

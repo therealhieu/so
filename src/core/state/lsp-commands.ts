@@ -26,7 +26,14 @@ const cursorOf = (s: AppState): Pos =>
 /** Ask for `feature` at the cursor; hover and signature replace an older one. */
 function atCursor(
   c: CommandContext,
-  kind: "hover" | "definition" | "implementation" | "references" | "signature",
+  kind:
+    | "hover"
+    | "definition"
+    | "declaration"
+    | "typeDefinition"
+    | "implementation"
+    | "references"
+    | "signature",
 ): Result {
   return request(
     c.state,
@@ -271,6 +278,25 @@ function restartAttached(c: CommandContext): Result {
     : { state: s, effects: [{ kind: "lspRestart", keys }] };
 }
 
+/** The workspace symbol picker, when a server attached to the buffer searches symbols. */
+function workspaceSymbols(c: CommandContext): Result {
+  const b = activeBuffer(c.state);
+  if (b === undefined || (c.state.lsp.attached[b.path] ?? []).length === 0)
+    return message(
+      c.state,
+      `no language server for ${b?.fileType ?? "this window"}`,
+    );
+  if (pickServer(c.state, b.path, "workspaceSymbols") === undefined)
+    return message(c.state, "workspaceSymbols: not supported");
+  return openPicker(
+    {
+      ...c,
+      state: { ...c.state, lsp: { ...c.state.lsp, workspaceSymbols: [] } },
+    },
+    "lspWorkspaceSymbols",
+  );
+}
+
 const code = (
   id: string,
   title: string,
@@ -280,6 +306,13 @@ const code = (
 export const lspCommands: readonly AppCommand[] = [
   code("lsp.hover", "Hover", (c) => atCursor(c, "hover")),
   code("lsp.definition", "Go to definition", (c) => atCursor(c, "definition")),
+  code("lsp.declaration", "Go to declaration", (c) =>
+    atCursor(c, "declaration"),
+  ),
+  code("lsp.typeDefinition", "Go to type definition", (c) =>
+    atCursor(c, "typeDefinition"),
+  ),
+  code("lsp.workspaceSymbols", "Workspace symbols", workspaceSymbols),
   code("lsp.implementation", "Go to implementation", (c) =>
     atCursor(c, "implementation"),
   ),
@@ -319,6 +352,8 @@ export const lspCommands: readonly AppCommand[] = [
 const KEYS: readonly [Mode, string, string][] = [
   ["normal", "K", "lsp.hover"],
   ["normal", "gd", "lsp.definition"],
+  ["normal", "gD", "lsp.declaration"],
+  ["normal", "grt", "lsp.typeDefinition"],
   ["normal", "grr", "lsp.references"],
   ["normal", "gri", "lsp.implementation"],
   ["normal", "gO", "lsp.symbols"],
@@ -331,6 +366,7 @@ const KEYS: readonly [Mode, string, string][] = [
   ["insert", "<C-s>", "lsp.signature"],
   ["insert", "<C-Space>", "lsp.complete"],
   ["normal", "<leader>xd", "diag.list"],
+  ["normal", "<leader>xs", "lsp.workspaceSymbols"],
 ];
 
 /** The language keys for every code file type; notes, bases, and text get none. */
@@ -339,4 +375,4 @@ export const lspBindings: readonly Binding[] = LSP_FILE_TYPES.flatMap(
     KEYS.map(([mode, seq, id]) => ({ scope: { mode, filetype }, seq, id })),
 );
 
-export const lspGroups = { "<leader>x": "diagnostics" } as const;
+export const lspGroups = { "<leader>x": "code" } as const;

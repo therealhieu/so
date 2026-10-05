@@ -24,6 +24,7 @@ import {
   toServerView,
   toSignature,
   toSymbols,
+  toWorkspaceSymbols,
   uriToPath,
 } from "./convert";
 
@@ -445,4 +446,35 @@ test("document highlights become ranges, and none when there are no uses", () =>
   });
   expect(toHighlights([])).toEqual({ kind: "none" });
   expect(toHighlights(null)).toEqual({ kind: "none" });
+});
+
+test("workspace symbols keep those inside the workspace with a range", () => {
+  expect(
+    toWorkspaceSymbols(root, [
+      {
+        name: "Point",
+        kind: 23,
+        location: {
+          uri: pathToUri(root, "src/geo.rs"),
+          range: range(2, 11, 16),
+        },
+      },
+      {
+        name: "Vec",
+        kind: 23,
+        location: { uri: "file:///rust/vec.rs", range: range(0, 0, 3) },
+      },
+      { name: "NoRange", kind: 12, location: { uri: pathToUri(root, "a.rs") } },
+    ]),
+  ).toEqual({
+    kind: "workspaceSymbols",
+    items: [
+      {
+        name: "Point",
+        kind: "Struct",
+        path: "src/geo.rs",
+        range: { start: { line: 2, col: 11 }, end: { line: 2, col: 16 } },
+      },
+    ],
+  });
 });

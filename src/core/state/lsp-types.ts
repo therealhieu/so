@@ -22,7 +22,10 @@ export type LspFeature =
   | "rangeFormat"
   | "executeCommand"
   | "inlayHints"
-  | "documentHighlight";
+  | "documentHighlight"
+  | "declaration"
+  | "typeDefinition"
+  | "workspaceSymbols";
 
 /**
  * One server for one root. `missing`: its binary resolved nowhere;
@@ -53,6 +56,8 @@ export type CodeSymbol = {
   range: Range;
   depth: number;
 };
+/** A symbol found across the workspace, at a workspace-relative location. */
+export type WorkspaceSymbol = CodeLocation & { name: string; kind: string };
 export type CodeTextEdit = { range: Range; text: string };
 /** Edits per file, with the document version they apply to; `outside` counts refused files outside the workspace. */
 export type CodeEdit = {
@@ -93,6 +98,8 @@ export type LspOp =
       kind:
         | "hover"
         | "definition"
+        | "declaration"
+        | "typeDefinition"
         | "implementation"
         | "references"
         | "signature"
@@ -101,6 +108,7 @@ export type LspOp =
       pos: Pos;
     }
   | { kind: "symbols" }
+  | { kind: "workspaceSymbols"; query: string }
   | { kind: "completion"; pos: Pos; trigger?: string }
   | { kind: "resolveCompletion"; item: CodeCompletionItem }
   | { kind: "rename"; pos: Pos; newName: string }
@@ -127,6 +135,7 @@ export type LspResult =
     }
   | { kind: "prepareRename"; placeholder: string }
   | { kind: "highlights"; ranges: Range[] }
+  | { kind: "workspaceSymbols"; items: WorkspaceSymbol[] }
   | { kind: "edit"; edit: CodeEdit }
   | { kind: "actions"; items: CodeAction[] }
   | { kind: "action"; action: CodeAction }
@@ -190,6 +199,8 @@ export type LspState = {
   float?: LspFloat;
   list?: { title: string; items: CodeLocation[] };
   symbols?: { path: string; items: CodeSymbol[] };
+  /** The latest workspace symbol search's answer. */
+  workspaceSymbols?: WorkspaceSymbol[];
   actions?: { key: ServerKey; path: string; items: CodeAction[] };
   edit?: CodeEditBatch;
   format?: { bufferId: number; requestId: number };

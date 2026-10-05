@@ -650,6 +650,8 @@ test("each language feature command sends its operation", () => {
   const all: LspFeature[] = [
     "hover",
     "definition",
+    "declaration",
+    "typeDefinition",
     "implementation",
     "references",
     "symbols",
@@ -664,6 +666,8 @@ test("each language feature command sends its operation", () => {
   const table: [string, string][] = [
     ["lsp.hover", "hover"],
     ["lsp.definition", "definition"],
+    ["lsp.declaration", "declaration"],
+    ["lsp.typeDefinition", "typeDefinition"],
     ["lsp.implementation", "implementation"],
     ["lsp.references", "references"],
     ["lsp.symbols", "symbols"],
@@ -846,4 +850,62 @@ test("no highlight is asked for without a capable server or outside Normal mode"
     kind: "cancelTimer",
     id: "lspHighlight",
   });
+});
+
+test("gD, grt, and <leader>xs are code keys", () => {
+  const km = keymapFor(reg, fresh().config);
+  const rust = (mode: "normal", seq: string) =>
+    km.lookup({ mode, filetype: "rust" }, splitKeys(seq));
+  expect(rust("normal", "gD")).toEqual({
+    kind: "command",
+    id: "lsp.declaration",
+  });
+  expect(rust("normal", "grt")).toEqual({
+    kind: "command",
+    id: "lsp.typeDefinition",
+  });
+  expect(rust("normal", "<leader>xs")).toEqual({
+    kind: "command",
+    id: "lsp.workspaceSymbols",
+  });
+});
+
+test("the workspace symbol picker searches the settled query and lists the answer", () => {
+  const s = attached([ready("ra", ["workspaceSymbols"])]);
+  const opened = runCommand(s, "lsp.workspaceSymbols", 0, reg);
+  expect(opened.state.overlay).toMatchObject({
+    kind: "picker",
+    picker: { source: "lspWorkspaceSymbols", items: [] },
+  });
+  const typed = keys(opened.state, "Poi");
+  expect(lspEffects(typed.effects)).toEqual([]);
+  const settled = run(typed.state, { type: "timer", id: "search", now: 6 });
+  const [sent] = lspEffects(settled.effects);
+  expect(sent?.op).toEqual({ kind: "workspaceSymbols", query: "Poi" });
+  const answered = run(
+    settled.state,
+    result(sent?.id ?? -1, {
+      kind: "workspaceSymbols",
+      items: [
+        {
+          name: "Point",
+          kind: "Struct",
+          path: "src/geo.rs",
+          range: { start: at(2, 11), end: at(2, 16) },
+        },
+      ],
+    }),
+  );
+  const overlay = answered.state.overlay;
+  const items = overlay.kind === "picker" ? overlay.picker.items : [];
+  expect(items.map((i) => [i.label, i.detail])).toEqual([
+    ["Point", "Struct src/geo.rs:3:12"],
+  ]);
+});
+
+test("the workspace symbol picker explains a server that cannot search", () => {
+  const s = attached([ready("ra", ["hover"])]);
+  const r = runCommand(s, "lsp.workspaceSymbols", 0, reg);
+  expect(r.state.overlay.kind).toBe("none");
+  expect(messageOf(r.state)).toBe("workspaceSymbols: not supported");
 });
