@@ -136,10 +136,13 @@ test("one process serves a Cargo workspace and marker-less files share one witho
   await waitForMessage(rs.log, "textDocument/didOpen", 5000, 3);
   await waitForMessage(py.log, "textDocument/didOpen", 5000, 2);
 
-  const rsInit = messages(rs.log, "initialize").map(
-    (m) => (m.params as { rootUri: string | null }).rootUri,
+  // Both rs processes write to one log, in whichever order they start.
+  const rsInit = messages(rs.log, "initialize")
+    .map((m) => (m.params as { rootUri: string | null }).rootUri)
+    .sort();
+  expect(rsInit).toEqual(
+    [uri(join(root, "repo")), uri(join(root, "other"))].sort(),
   );
-  expect(rsInit).toEqual([uri(join(root, "repo")), uri(join(root, "other"))]);
   expect(processes(rs.log)).toHaveLength(2);
   const pyInit = messages(py.log, "initialize").map((m) => m.params) as {
     rootUri: string | null;
