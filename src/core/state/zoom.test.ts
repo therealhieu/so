@@ -7,7 +7,7 @@ import {
 import { splitKeys } from "../kernel/vim/keys";
 import type { Action, AppState, ZoomState } from "./types";
 import { createUpdate } from "./update";
-import { ZOOM_LEVELS, zoomPans, zoomSize, zoomTargetAt } from "./zoom";
+import { ZOOM_MAX, zoomPans, zoomSize, zoomTargetAt } from "./zoom";
 
 const reg = testRegistries();
 const update = createUpdate(reg);
@@ -95,21 +95,23 @@ test("zoom keys step the level, pan inside the image, reset, and close", () => {
   let s = keys(note(), "2j<leader>z");
   s = keys(s, "l");
   expect(zoomOf(s)).toMatchObject({ level: 1, cx: 0.5, cy: 0.5 });
-  s = keys(s, "++");
+  s = keys(s, "+");
+  expect(zoomOf(s)).toMatchObject({ level: 1.25 });
+  s = keys(s, "+++");
   expect(zoomOf(s)).toMatchObject({ level: 2 });
   s = keys(s, "lll");
   // At 2× the view is half the image wide, so its centre stops at 3/4.
   expect(zoomOf(s)).toMatchObject({ cx: 0.75, cy: 0.5 });
   s = keys(s, "kk");
   expect(zoomOf(s)).toMatchObject({ cy: 0.25 });
-  s = keys(s, "-");
+  s = keys(s, "--");
   const out = zoomOf(s);
   if (out?.kind !== "image") throw new Error("expected an image");
   expect(out.level).toBe(1.5);
   expect(out.cx).toBeCloseTo(2 / 3);
   expect(out.cy).toBeCloseTo(1 / 3);
-  s = keys(s, "=".repeat(10));
-  expect(zoomOf(s)).toMatchObject({ level: ZOOM_LEVELS.at(-1) });
+  s = keys(s, "=".repeat(40));
+  expect(zoomOf(s)).toMatchObject({ level: ZOOM_MAX });
   s = keys(s, "0");
   expect(zoomOf(s)).toMatchObject({ level: 1, cx: 0.5, cy: 0.5 });
   // Below fit the whole image shows, centred, so there is nothing to pan.
@@ -148,7 +150,7 @@ test("the zoom float is 90% of the terminal, at least 60×12, within it", () => 
 });
 
 test("a measured fill stops panning on an axis the image does not outgrow", () => {
-  const open = keys(note(), "2j<leader>z++");
+  const open = keys(note(), "2j<leader>z++++");
   const fill = (s: AppState, x: number, y: number) =>
     update(s, { type: "zoomFill", path: "a.png", fill: { x, y } }).state;
   // A wide image fills the float's width but only half its height: at 2×
@@ -162,7 +164,7 @@ test("a measured fill stops panning on an axis the image does not outgrow", () =
   expect(zoomPans(s)).toEqual({ x: true, y: false });
   expect(zoomOf(keys(s, "j"))).toMatchObject({ cy: 0.5 });
   expect(zoomOf(keys(s, "l"))).toMatchObject({ cx: 0.625 });
-  s = keys(s, "+");
+  s = keys(s, "++++");
   expect(zoomPans(s)).toEqual({ x: true, y: true });
   // At 3× the view shows 2/3 of the height: a step is 1/6, and the centre stops at 2/3.
   const down = zoomOf(keys(s, "jj"));

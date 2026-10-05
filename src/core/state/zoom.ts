@@ -11,8 +11,9 @@ import type { CommandContext } from "./commands";
 import { message, none } from "./result";
 import type { AppState, Result, TerminalState, ZoomState } from "./types";
 
-/** Image zoom levels, as multiples of the size that fits the float. */
-export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8] as const;
+/** Image zoom, as a multiple of the size that fits the float: 0.25× to 8× in 0.25 steps. */
+export const ZOOM_STEP = 0.25;
+export const ZOOM_MAX = 8;
 
 /** The zoom float: 90% of the terminal, at least 60×12, clipped to it below the bufferline. */
 export function zoomSize(t: TerminalState): { w: number; h: number } {
@@ -120,7 +121,6 @@ function centred(
 }
 
 function imageKey(z: ImageZoom, key: Key): ZoomState {
-  const at = ZOOM_LEVELS.indexOf(z.level as (typeof ZOOM_LEVELS)[number]);
   const pan = PAN[key];
   if (pan !== undefined) {
     // A quarter of the view per step.
@@ -131,9 +131,9 @@ function imageKey(z: ImageZoom, key: Key): ZoomState {
   switch (key) {
     case "+":
     case "=":
-      return centred(z, ZOOM_LEVELS[at + 1] ?? z.level, z.cx, z.cy);
+      return centred(z, Math.min(ZOOM_MAX, z.level + ZOOM_STEP), z.cx, z.cy);
     case "-":
-      return centred(z, ZOOM_LEVELS[at - 1] ?? z.level, z.cx, z.cy);
+      return centred(z, Math.max(ZOOM_STEP, z.level - ZOOM_STEP), z.cx, z.cy);
     case "0":
       return centred(z, 1, 0.5, 0.5);
     default:

@@ -434,7 +434,7 @@ test("the zoom float draws the image fitted, crops it when zoomed, and hides the
     const [, , , cols, rows, , , sx, sy, sw, sh] = draw.mock.calls[0] ?? [];
     expect([cols, rows, sx, sy, sw, sh]).toEqual([88, 22, 0, 0, 1920, 960]);
 
-    m.keys("++");
+    m.keys("++++");
     draw.mockClear();
     expect(await m.frame()).toContain("· 2×");
     const zoomed = draw.mock.calls[0] ?? [];
@@ -513,9 +513,8 @@ test("the wheel over the zoom float zooms the image in and out", async () => {
   expect(level()).toBe(1);
   await m.mouse.scroll(50, 20, "up");
   // One notch is one zoom step.
-  expect(await m.frame()).toContain("· 1.5×");
-  await m.mouse.scroll(50, 20, "down");
-  await m.mouse.scroll(50, 20, "down");
+  expect(await m.frame()).toContain("· 1.25×");
+  for (let i = 0; i < 2; i++) await m.mouse.scroll(50, 20, "down");
   expect(await m.frame()).toContain("· 0.75×");
   expect(level()).toBe(0.75);
 });
