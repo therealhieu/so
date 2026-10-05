@@ -1,12 +1,12 @@
 # so
 
-- **Last Modified:** 2026-10-05
+- **Last Modified:** 2026-10-06
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
 ## Purpose and Scope
 
-`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in a read-only `reading` view by default, and `<leader>m` cycles to an Obsidian-style `live` view (rendered blocks, with source shown on the cursor's lines) and a `source` view; a note opened to write in (a new note or a daily note) opens in `live`; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Daily notes (`:Today`, `:Yesterday`, `:Tomorrow`, a calendar picker) and templates are created from Obsidian-compatible templates and never overwrite a file; Obsidian `.base` files open as read-only table and Kanban views whose cell edits and card moves write one frontmatter key back to the note, and `![[x.base#View]]` embeds render inline. The mouse (wheel, click, double- and triple-click, drag, Ctrl+click) works on every TUI surface and always runs the same path as a keyboard action; the `mouse` setting turns terminal mouse reporting off. Sources: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview), `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (daily notes, templates, and Bases), `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md` (mouse support).
+`so` is a terminal editor for a folder of Markdown notes, run as `so [path]`. It is one Bun process with a pure TypeScript core: a language-neutral editor kernel (text, vim, commands, view) plus registered file types, driven by one-way state flow, thin I/O adapters, and an OpenTUI shell that draws only visible lines. A worker thread scans the workspace into a link index (NoteIndex), so links, backlinks, link-safe renames, pickers, and search work without blocking typing. Markdown notes open in a read-only `reading` view by default, and `<leader>m` cycles to an Obsidian-style `live` view (rendered blocks, with source shown on the cursor's lines) and a `source` view; a note opened to write in (a new note or a daily note) opens in `live`; images, note embeds, math, and Mermaid draw in the terminal. `:Preview` mirrors the active note in a read-only browser page served on `127.0.0.1`. Daily notes (`:Today`, `:Yesterday`, `:Tomorrow`, a calendar picker) and templates are created from Obsidian-compatible templates and never overwrite a file; Obsidian `.base` files open as read-only table and Kanban views whose cell edits and card moves write one frontmatter key back to the note, and `![[x.base#View]]` embeds render inline. The mouse (wheel, click, double- and triple-click, drag, Ctrl+click) works on every TUI surface and always runs the same path as a keyboard action; the `mouse` setting turns terminal mouse reporting off. Code files get language-server features when `[lsp] enabled` is on (default off): diagnostics as gutter signs and underlines, hover and signature floats, go-to and reference pickers, rename and code actions through one workspace-edit path, formatting (optionally on save), and code completion; one process runs per server and project root, servers are found on `PATH` (the TypeScript and JSON servers first in the root's `node_modules/.bin`), and every server stops when `so` exits. Sources: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` (initiative design), `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` (editor foundation), `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-system-design.md` (navigation and links), `.s1mple/work/done/w261003s6bq-live-and-browser-preview/w261003s6bq-system-design.md` (live and browser preview), `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md` (daily notes, templates, and Bases), `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md` (mouse support), `.s1mple/work/done/w261005gwly-lsp-code-intelligence/w261005gwly-system-design.md` (LSP code intelligence).
 
 ## Technology Stack
 
@@ -27,6 +27,7 @@ Versions are exact pins from `package.json`; `bunfig.toml` sets `[install] exact
 | `beautiful-mermaid` | Mermaid diagrams as terminal text, loaded on the first diagram (`src/core/lang/markdown`) | `1.1.3` |
 | `katex`, `mermaid` | Math and diagrams in the browser preview, embedded into the binary (`src/preview`) | `0.16.47`, `12.1.0` |
 | `ignore` | `.gitignore`-style exclusion (`src/workspace`) | `7.0.12` |
+| `vscode-jsonrpc`, `vscode-languageserver-protocol` | Language-server transport and protocol types (`src/workspace/lsp` only) | `9.0.3`, `3.18.4` |
 | `@types/bun` | Bun type definitions | `1.4.2` (dev) |
 | `@biomejs/biome` | Formatter and linter | `2.5.15` (dev) — `biome.json` |
 | `knip` | Unused files, exports, and dependencies | `6.39.0` (dev) — `knip.json` |
@@ -39,9 +40,9 @@ Default branch: `main`. One package, no monorepo.
 | Path | Role |
 |---|---|
 | `bin/so` | Executable entry: `#!/usr/bin/env bun` → `src/app/main.ts` |
-| `src/app` | Composition root: wiring, effect runner, index host, process lifecycle |
+| `src/app` | Composition root: wiring, effect runner, index host, language-server host (`lsp-host.ts`), process lifecycle |
 | `src/ui` | OpenTUI shell, input normalization, views, overlays, widget painters (`widgets/`), terminal image tiers and cache (`images.ts`) |
-| `src/workspace` | File-system, watcher, trash, clipboard, config-file, state-file, log, and image-loading (`images.ts`) adapters; the index worker (`index-worker.ts`) |
+| `src/workspace` | File-system, watcher, trash, clipboard, config-file, state-file, log, and image-loading (`images.ts`) adapters; the index worker (`index-worker.ts`); the language-server client (`lsp/`) |
 | `src/preview` | Browser preview server (`server.ts`) and the page, KaTeX, and Mermaid files embedded into the binary (`assets.ts`) |
 | `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (`links`, `notes`, `bases`), `time` (local calendar fields and a Moment-compatible formatter), `state`, `config` |
 | `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`) |
@@ -91,6 +92,17 @@ Live preview is a decoration provider over the kernel's `layoutText`: the Markdo
 
 The server answers GET only, rejects a foreign `Host`, serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
 
+Language servers follow the same one-way flow. The core holds `LspState` and emits `lsp` effects; the host observes the store to start servers and sync documents, and answers with actions:
+
+```text
+store change → lspHost.observe: attach (spec by file type, root by markers) → spawn or reuse client → didOpen / didChange (150 ms debounce) / didClose
+key (K, gd, grn, …) → core request → lsp effect → runner → lspHost.run → client request → lspResult → float, jump, picker, or workspace edit
+server → publishDiagnostics | $/progress | showMessage → lspDiagnostics | lspServer (100 ms throttle) | lspMessage → state → views
+exit → lspHost.stop(): shutdown → exit → SIGKILL survivors at 500 ms
+```
+
+A crash restarts the server and resends open documents; the fifth crash within 3 minutes leaves it `failed`. A server that exits before `initialize` completes is `unavailable` and stays silent; a missing binary is `missing`; both show only in `:LspInfo`.
+
 Notes are created only through the `createNote` effect, whose adapter expands the template and calls `createExclusive` (temp file + `link()`, `wx` fallback), so an existing path is never replaced:
 
 ```text
@@ -120,7 +132,7 @@ core/state, core/config → any core module; nothing else in core imports them
 only src/ui imports @opentui/*
 ```
 
-Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name): the five Markdown tree packages and `beautiful-mermaid` are imported only from `src/core/lang/markdown/`; `yaml` only from `src/core/lang/markdown/` and `src/core/features/bases/`; `katex` and `mermaid` only from `src/preview/`; and `toml-eslint-parser` only from `src/core/config/`.
+Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name): the five Markdown tree packages and `beautiful-mermaid` are imported only from `src/core/lang/markdown/`; `yaml` only from `src/core/lang/markdown/` and `src/core/features/bases/`; `katex` and `mermaid` only from `src/preview/`; `toml-eslint-parser` only from `src/core/config/`; and `vscode-jsonrpc` and `vscode-languageserver-protocol` only from `src/workspace/lsp/`, so the core stays protocol-free.
 
 ## Data and Contracts
 
@@ -144,6 +156,9 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 | Embed models | `src/core/state/embed-models.ts` (`EmbedModelRegistry` by file type; `PreviewCtx.embedModel`); `base` registers `baseEmbedModel` |
 | Session state | `PersistedState` in `src/core/state/types.ts` (`"version": 1`); `snapshotSession`/`parsePersisted` in `src/core/state/session.ts` |
 | Mouse | `MouseEvent`, `MouseTarget`, `WindowSpot` in `src/core/state/types.ts` (model values only, no screen coordinates or buttons); `onMouse` and `pressStops` in `src/core/state/mouse.ts`; `rowAt`, `displayColAt`, `sourceColAt` in `src/core/kernel/view/hit.ts` (screen row and display column → source column, using `Span.col`/`Span.inserted` set by `spansOf`); `createMouseRouter`, `MouseSource`, `MouseLayer`, `CLICK_MS` in `src/ui/mouse.ts`; each view's `targetAt`/`dragAt`/`itemAt`. Prompt and conflict dialogs ignore the mouse; toasts pass clicks through |
+| `[lsp]` config | `src/core/config/lsp.ts` — `LspConfigSchema` (`enabled` default `false`, `formatOnSave` default `false`, `servers.<name>` overrides a built-in or defines a new server with `command` and `fileTypes`; also `enabled`, `rootMarkers`, `rootSearch` `nearest`/`topmost`, `settings`, `initOptions`, `snippets`), `BUILTIN_SERVERS` (`tsc` gated on version ≥ 7, `typescript`, `pyright`, `gopls`, `rust-analyzer`, `clangd`, `json`), `resolveServers`, `gateAllows` |
+| LSP state | `src/core/state/lsp-types.ts` — `LspState` (`servers`, `attached`, `diagnostics` per server with push and pull slots, `shown` (frozen for the buffer being typed into), `pending`, `float`, `list`, `symbols`, `actions`, `edit`, `format`), `ServerView`, `LspOp`, `LspResult`, `CodeEdit`, `CodeCompletionItem`; reducers in `src/core/state/lsp.ts` (`request`, `onLspResult`, `syncDiagnostics`, `syncFloat`, `cursorDiagnostic`), `lsp-commands.ts` (`lspCommands`, `lspBindings` per code file type: `K`, `gd`, `grr`, `gri`, `gO`, `grn`, `gra`, `]d`/`[d`, `<C-w>d`, `<leader>xd`, Insert `<C-s>` and `<C-Space>`; `:Format`, `:Diagnostics`, `:LspInfo`, `:LspRestart`), `lsp-edits.ts`, `code-completion.ts`, `lsp-pickers.ts`; diagnostics drawn by `diagnosticMarks` in `src/core/kernel/view/diagnostics.ts` |
+| LSP host and client | `src/app/lsp-host.ts` — `createLspHost` (`observe`, `run`, `notify`, `stop`), `LSP_STOP_BOUND_MS` 500, `SYNC_DEBOUNCE_MS` 150, `PROBE_BOUND_MS` 2000, `CRASH_LIMIT` 5 in `CRASH_WINDOW_MS` 180000; `src/workspace/lsp/client.ts` — `createLspClient` (one process per server and root, `ClientEvents`, watched-file registrations); `convert.ts` (protocol ↔ core values), `capabilities.ts`, `sync.ts`, `roots.ts` (`findRoot`), `language-id.ts`; UI in `src/ui/overlays/lsp-float.ts` (`LspFloatView`, non-modal, mouse-inert), the statusline server segment, the command line's cursor diagnostic, and code completion rows; `test/fixtures/fake-lsp.ts` is the scripted test server |
 | Vim behaviour | `test/vim/expected.json`, recorded from Neovim 0.11.x over RPC by `bun run record:vim` |
 
 ## Engineering Standards and Patterns
@@ -191,6 +206,8 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | End-to-end (PTY) | `test/e2e` | `test:ci` |
   | Benchmark | `test/bench` | `bench` (Linux CI only) |
 
+  Language-server suites run against `test/fixtures/fake-lsp.ts`, whose command line carries a unique `fake-lsp-<log>` tag; every suite stops its servers, so `pgrep -f fake-lsp` is empty after a run. `test/integration/lsp-real.test.ts` runs only where `rust-analyzer` is installed, so CI skips it.
+
 - **Worker entrypoint:** every `bun build --compile` (the `build` script and both loops in `release.yml`) lists `src/workspace/index-worker.ts` after `src/app/main.ts`, which `test/repo.test.ts` enforces; `knip.json` lists the worker as an entry.
 - **Benchmarks:** `TARGETS` in `scripts/bench-gate.ts`, in milliseconds. The gate fails when a median exceeds twice its target and writes the runs to `.so-bench/results.json`. `makeNoteWorkspace`, `make5000LineNote`, and `make5000LineTs` in `test/fixtures/generate.ts` generate the fixtures. The live and startup targets are relaxed from the initiative's REQ9 values (16 ms keystroke, 50 ms open, 200 ms first frame) by user decision on 2026-10-04; source targets keep them.
 
@@ -205,11 +222,12 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `firstFrame` | 250 | `startup.bench.ts --metric firstFrame` — spawn to the first statusline, 10,000 notes, in a PTY |
   | `indexReady` | 3000 | `startup.bench.ts --metric indexReady` — spawn to `◆ index ready` |
   | `indexingKeystrokeP95` | 30 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 10,000 notes |
+  | `lspKeystrokeP95` | 16 | `lsp-keystroke.bench.ts` — the source key mix in a 5,000-line TypeScript file with the real host attached to the fake server, which publishes 200 diagnostics on every change |
 
 - **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `main` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
 - **Release:** Nothing is released automatically; a release happens only when the user asks. A pushed `v*` tag runs `release.yml`, which builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes a GitHub Release with generated notes only after every smoke job passes. Tags containing `-` publish as prereleases. A manual run (`gh workflow run release.yml`) is a dry run: the same build and smoke tests with version `0.0.0-dev+<short sha>`, publish skipped. Phase exits use the dry run.
 
 ## Sources and Open Questions
 
-- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`, `src/core/state/types.ts`, `src/app/{main,effects,index-host}.ts`, `src/workspace/{config-file,state-file,log,index-worker,images}.ts`, `src/core/config/schema.ts`, `src/core/state/mouse.ts`, `src/ui/mouse.ts`, `src/core/lang/markdown/live-preview.ts`, `src/preview/{server,assets}.ts`, `src/app/preview-host.ts`, `scripts/bench-gate.ts`; initiative design `rm261003abzp-design.md`.
+- **Sources:** `package.json`, `bunfig.toml`, `tsconfig.json`, `biome.json`, `knip.json`, `.github/workflows/*`, `test/repo.test.ts`, `test/boundaries.test.ts`, `src/core/state/types.ts`, `src/app/{main,effects,index-host,lsp-host}.ts`, `src/workspace/lsp/*`, `src/core/config/lsp.ts`, `src/core/state/lsp*.ts`, `src/workspace/{config-file,state-file,log,index-worker,images}.ts`, `src/core/config/schema.ts`, `src/core/state/mouse.ts`, `src/ui/mouse.ts`, `src/core/lang/markdown/live-preview.ts`, `src/preview/{server,assets}.ts`, `src/app/preview-host.ts`, `scripts/bench-gate.ts`; initiative design `rm261003abzp-design.md`.
 - **Open Questions:** None.
