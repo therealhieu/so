@@ -68,6 +68,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "m", label: "Cycle live / source / reading", group: false },
     { key: "o", label: "Toggle outline", group: false },
     { key: "x", label: "Toggle task", group: false },
+    { key: "z", label: "Zoom image or diagram", group: false },
     { key: "f", label: "+find", group: true },
     { key: "l", label: "+links", group: true },
     { key: "n", label: "+notes", group: true },
@@ -102,13 +103,13 @@ test("a key in the overlay runs its command and closes it", () => {
 
 test("an unmapped key closes with a notice", () => {
   const open = update(keys(opened(), " ").state, TIMER).state;
-  const s = keys(open, "z").state;
+  const s = keys(open, "y").state;
   expect(s.overlay.kind).toBe("none");
   expect(s.vim.pending).toEqual([]);
-  expect(s.notifications.message?.text).toBe("no mapping for <leader>z");
+  expect(s.notifications.message?.text).toBe("no mapping for <leader>y");
 
-  const early = keys(opened(), " z").state;
-  expect(early.notifications.message?.text).toBe("no mapping for <leader>z");
+  const early = keys(opened(), " y").state;
+  expect(early.notifications.message?.text).toBe("no mapping for <leader>y");
   expect(early.vim.mode).toBe("normal");
   expect(early.vim.pending).toEqual([]);
 });

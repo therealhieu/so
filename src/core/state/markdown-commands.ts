@@ -19,6 +19,7 @@ import { followLink } from "./link-commands";
 import { startPreview, stopPreview } from "./preview";
 import { message, none } from "./result";
 import type { Result } from "./types";
+import { openZoom } from "./zoom";
 
 type AppCommand = Command<CommandContext, CommandResult>;
 
@@ -136,6 +137,12 @@ export const markdownCommands: readonly AppCommand[] = [
     run: startPreview,
   },
   { id: "preview.stop", title: "Stop browser preview", run: stopPreview },
+  {
+    id: "image.zoom",
+    title: "Zoom image or diagram",
+    filetypes: ["markdown"],
+    run: openZoom,
+  },
 ];
 
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
@@ -145,4 +152,5 @@ export const markdownBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "<leader>x", id: "task.toggle" },
   { scope: md("normal"), seq: "za", id: "fold.toggle" },
   { scope: md("normal"), seq: "<CR>", id: "note.enter" },
+  { scope: md("normal"), seq: "<leader>z", id: "image.zoom" },
 ];

@@ -7,7 +7,7 @@ import {
 } from "../../../../../test/support/markdown";
 import { parseDoc } from "../doc";
 import { registerBlockRenderer } from "../live-preview";
-import { mermaidRenderer, mermaidText } from "./mermaid";
+import { mermaidLines, mermaidRenderer, mermaidText } from "./mermaid";
 
 const FLOWCHART = [
   "flowchart LR",
@@ -62,4 +62,18 @@ test("typing outside a diagram does not lay it out again", () => {
   }
   expect(calls).toHaveBeenCalledTimes(1);
   calls.mockRestore();
+});
+
+test("a diagram drawn at any width is wider with the default spacing than the tight one", () => {
+  const widest = (lines: string[] | undefined) =>
+    Math.max(...(lines ?? []).map((l) => l.length));
+  const loose = mermaidLines(FLOWCHART, "loose");
+  expect(loose?.join("\n")).toContain("│ Capture ├");
+  expect(widest(loose)).toBeGreaterThan(
+    widest(mermaidLines(FLOWCHART, "tight")),
+  );
+  expect(mermaidLines("gantt\n  title x", "loose")).toBeUndefined();
+  expect(
+    mermaidLines("flowchart SIDEWAYS\n  A --> B", "loose"),
+  ).toBeUndefined();
 });

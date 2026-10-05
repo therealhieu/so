@@ -24,12 +24,14 @@ function paintText(t: PaintTarget, text: string): void {
  * the left edge. A window bottom that cuts the widget draws only the rows on
  * screen. OpenTUI removes a placement on the first frame that does not draw
  * it, so scrolling it away or switching view or buffer needs no clearing here.
+ * The zoom float hides it, since a terminal image draws over the float's cells.
  */
 export const paintImage: WidgetPainter = (t, w) => {
   const { path, name } = w.data as ImageData;
   const { caps, hasResolution } = t.deps.capabilities();
   const tier = imageTier(t.state.config.preview.images, caps, hasResolution);
   if (tier === "placeholder") return paintText(t, `[image: ${name}]`);
+  if (t.state.overlay.kind === "zoom") return paintText(t, "");
   const got = t.deps.images.get(path);
   if (got === undefined) return paintText(t, `◌ ${name}`);
   if ("failed" in got) return paintText(t, `[image: ${name}]`);

@@ -4,7 +4,7 @@ import type { BlockRenderer } from "../live-preview";
 /** An `http(s)` image reference, loaded by URL rather than resolved in the workspace. */
 export const isWebUrl = (target: string) => /^https?:\/\//i.test(target);
 
-const baseName = (target: string) =>
+export const baseName = (target: string) =>
   target.split(/[?#]/, 1)[0]?.split("/").pop() || target;
 
 /**

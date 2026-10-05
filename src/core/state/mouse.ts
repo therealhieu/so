@@ -32,6 +32,7 @@ import type {
   WindowSpot,
 } from "./types";
 import type { Registries } from "./update";
+import { showZoom, zoomTargetAt } from "./zoom";
 
 const LINK_FOLLOW = "link.follow";
 /** Lines, rows, or items one vertical wheel notch moves. */
@@ -116,7 +117,7 @@ const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
  * rows, or for a sideways notch scrolls its columns (table) or moves to the
  * next lane (board); the explorer and the side panel move their selection;
  * an open list moves its selection, stopping at either end; the calendar
- * moves a week.
+ * moves a week; the zoom float pans.
  */
 function wheel(
   s: AppState,
@@ -147,6 +148,7 @@ function wheel(
     case "overlayItem":
     case "overlay":
     case "calendarDay":
+      if (s.overlay.kind === "zoom") return wheelZoom(s, dx, dy, now, reg);
       return dy === 0 ? none(s) : wheelOverlay(s, dy, now, reg);
     default:
       return none(s);
@@ -196,6 +198,20 @@ function wheelBase(
       ? "base.moveRight"
       : "base.moveLeft";
   return runCommand(s, id, now, reg);
+}
+
+/** The zoom float pans one step per notch, as `hjkl` do. */
+function wheelZoom(
+  s: AppState,
+  dx: number,
+  dy: number,
+  now: number,
+  reg: Registries,
+): Result {
+  const keys: Key[] = [];
+  if (dx !== 0) keys.push(dx > 0 ? "l" : "h");
+  if (dy !== 0) keys.push(dy > 0 ? "j" : "k");
+  return feedKeys(none(s), keys, now, reg);
 }
 
 /** The open list or calendar under the wheel. */
@@ -339,7 +355,8 @@ function press(
 /**
  * A press on text, after Insert and Visual have ended. A single click in
  * Insert enters it again at the click, so the typing after it is a new undo
- * step, and appends past the line end; a double click selects the word
+ * step, and appends past the line end; a double click zooms the image or
+ * diagram under it in the reading view (`<leader>z`), else selects the word
  * (`viw`) or, on a tag, lists the notes with it, a triple click the line
  * (`V`), and Ctrl follows the link under the click.
  */
@@ -366,6 +383,9 @@ function pressText(
       ? chain(placed, (s) => runCommand(s, LINK_FOLLOW, now, reg))
       : placed;
   if (clicks === 2) {
+    const zoom = zoomTargetAt(placed.state, pos.line);
+    if (zoom !== undefined)
+      return { ...placed, state: showZoom(placed.state, zoom) };
     const tag = spot.tag ?? tagUnderCursor(placed.state);
     return tag === undefined
       ? feedKeys(placed, ["v", "i", "w"], now, reg)

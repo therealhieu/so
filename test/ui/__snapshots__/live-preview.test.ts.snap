@@ -283,3 +283,29 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
     ~                                                                                               
  NORMAL  │ live │ tour.md │ 252 words │ preview off                                             1:1"
 `;
+
+exports[`the zoom float draws a diagram too wide for the note 1`] = `
+" flow.md                                                                        
+   3╭─ mermaid · 165×5 ────────────────────────────────────────────────────╮    
+   2│                                                                      │    
+   1│                                                                      │    
+    │                                                                      │    
+   4│                                                                      │    
+   1│                                                                      │>   
+    │                                                                      │    
+   2│                                                                      │    
+    │┌───────┐     ┌───────┐     ┌───────┐     ┌───────┐     ┌───────┐     │    
+    ││       │     │       │     │       │     │       │     │       │     │    
+    ││ Step0 ├────►│ Step1 ├────►│ Step2 ├────►│ Step3 ├────►│ Step4 ├────►│    
+    ││       │     │       │     │       │     │       │     │       │     │    
+    │└───────┘     └───────┘     └───────┘     └───────┘     └───────┘     │    
+    │                                                                      │    
+    │                                                                      │    
+    │                                                                      │    
+    │                                                                      │    
+    │                                                                      │    
+    │                                                                      │    
+    │                                                                      │    
+    ╰─ +/- zoom · 0 fit · hjkl pan · q close ──────────────────────────────╯    
+ NORMAL  │ notes/flow.md                                                    4:1"
+`;

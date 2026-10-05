@@ -20,6 +20,7 @@ import { ToastStack } from "./overlays/notify";
 import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
 import { WhichKeyView } from "./overlays/whichkey";
+import { ZoomOverlay } from "./overlays/zoom";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -143,6 +144,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new PickerView(renderer, ctx),
         new CompletionView(renderer, () => windows.cursor()),
         new CalendarOverlay(renderer),
+        new ZoomOverlay(renderer, ctx),
       ]);
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);

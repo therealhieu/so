@@ -417,3 +417,73 @@ test("the cursor stays on screen below a tall image", async () => {
     m.keys("j");
   }
 });
+
+test("the zoom float draws the image fitted, crops it when zoomed, and hides the note's image", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    m = await mountImageNote({ capabilities: KITTY });
+    m.keys("<leader>m<leader>m");
+    expect(activeBuffer(m.store.get())?.view).toBe("reading");
+    m.keys("2j<leader>z");
+    draw.mockClear();
+    const frame = await m.frame();
+    expect(frame).toContain("diagram.png · 1920×960 · 1×");
+    // One image: the float's. A 90×36 float on 100×40 leaves 88×34 cells of
+    // 8×16 px, so the 1920×960 image fits 88 columns by 22 rows.
+    expect(draw).toHaveBeenCalledTimes(1);
+    const [, , , cols, rows, , , sx, sy, sw, sh] = draw.mock.calls[0] ?? [];
+    expect([cols, rows, sx, sy, sw, sh]).toEqual([88, 22, 0, 0, 1920, 960]);
+
+    m.keys("++");
+    draw.mockClear();
+    expect(await m.frame()).toContain("· 2×");
+    const zoomed = draw.mock.calls[0] ?? [];
+    expect(zoomed.slice(3, 5)).toEqual([88, 34]);
+    expect(zoomed.slice(7, 11)).toEqual([480, 109, 960, 742]);
+
+    m.keys("q");
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(draw.mock.calls[0]?.[7]).toBe(0);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("without graphics the zoom float names the image", async () => {
+  m = await mountImageNote({
+    capabilities: KITTY,
+    config: '[preview]\nimages = "off"\n',
+  });
+  expect(activeBuffer(m.store.get())?.view).toBe("reading");
+  m.keys("2j<leader>z");
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  const frame = await m.frame();
+  expect(frame).toContain("+/- zoom · 0 fit · hjkl pan · q close");
+  expect(
+    frame.split("\n").filter((l) => l.includes("[image: diagram.png]")).length,
+  ).toBe(1);
+});
+
+test("the zoom float draws a diagram too wide for the note", async () => {
+  const flow = Array.from({ length: 12 }, (_, i) => `Step${i}`).join(" --> ");
+  m = await mountShell({
+    cols: 80,
+    rows: 24,
+    config: '[preview]\nmode = "reading"\n',
+  });
+  openNote(
+    m,
+    "notes/flow.md",
+    `# Flow\n\n\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`,
+  );
+  expect(await m.frame()).toContain("mermaid: wider than");
+  m.keys("3j<leader>z");
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  const frame = await m.frame();
+  expect(frame).toContain("│ Step0 ├");
+  expect(frame.trimEnd()).toMatchSnapshot();
+  m.keys("-");
+  expect(await m.frame()).toContain("· tight");
+});

@@ -1,0 +1,143 @@
+import { expect, test } from "bun:test";
+import {
+  freshDefaults,
+  testRegistries,
+  textFile,
+} from "../../../test/support/state";
+import { splitKeys } from "../kernel/vim/keys";
+import type { Action, AppState, ZoomState } from "./types";
+import { createUpdate } from "./update";
+import { ZOOM_LEVELS, zoomSize, zoomTargetAt } from "./zoom";
+
+const reg = testRegistries();
+const update = createUpdate(reg);
+
+const NOTE = [
+  "# Pictures", // 0
+  "", // 1
+  "![[a.png]]", // 2
+  "", // 3
+  "![Chart](a.png)", // 4
+  "", // 5
+  "![](https://example.com/b.png?x=1)", // 6
+  "", // 7
+  "```mermaid", // 8
+  "flowchart LR", // 9
+  "  Capture --> Triage --> Plan --> Ship", // 10
+  "```", // 11
+  "", // 12
+  "```mermaid", // 13
+  "gantt", // 14
+  "  title x", // 15
+  "```", // 16
+  "", // 17
+  "Plain text.", // 18
+].join("\n");
+
+function keys(s: AppState, seq: string): AppState {
+  for (const key of splitKeys(seq))
+    s = update(s, { type: "key", key, now: 0 }).state;
+  return s;
+}
+
+/** The note open in `reading`, with `a.png` in the index. */
+function note(): AppState {
+  const s = update(freshDefaults(), {
+    type: "indexBatch",
+    summaries: [],
+    files: ["n.md", "a.png"],
+    done: 0,
+    total: 0,
+  } satisfies Action).state;
+  return update(s, { type: "fileLoaded", path: "n.md", file: textFile(NOTE) })
+    .state;
+}
+
+const zoomOf = (s: AppState): ZoomState | undefined =>
+  s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
+const message = (s: AppState) => s.notifications.message?.text;
+
+test("a zoom shows the image or drawable diagram on a line of the reading view", () => {
+  const s = note();
+  expect(zoomTargetAt(s, 2)).toEqual({
+    kind: "image",
+    path: "a.png",
+    name: "a.png",
+    level: 1,
+    cx: 0.5,
+    cy: 0.5,
+  });
+  expect(zoomTargetAt(s, 4)).toMatchObject({ path: "a.png", name: "Chart" });
+  expect(zoomTargetAt(s, 6)).toMatchObject({
+    path: "https://example.com/b.png?x=1",
+    name: "b.png",
+  });
+  const diagram = zoomTargetAt(s, 10);
+  expect(diagram?.kind).toBe("diagram");
+  if (diagram?.kind === "diagram")
+    expect(diagram.lines.join("\n")).toContain("│ Capture ├");
+  expect(zoomTargetAt(s, 14)).toBeUndefined();
+  expect(zoomTargetAt(s, 18)).toBeUndefined();
+  expect(zoomTargetAt(keys(s, "<leader>m"), 2)).toBeUndefined();
+});
+
+test("<leader>z zooms the cursor's block in reading and explains elsewhere", () => {
+  const s = note();
+  expect(zoomOf(keys(s, "2j<leader>z"))?.kind).toBe("image");
+  expect(message(keys(s, "<leader>z"))).toBe("nothing to zoom here");
+  expect(message(keys(s, "<leader>m2j<leader>z"))).toBe(
+    "zoom works in reading view",
+  );
+});
+
+test("zoom keys step the level, pan inside the image, reset, and close", () => {
+  let s = keys(note(), "2j<leader>z");
+  s = keys(s, "l");
+  expect(zoomOf(s)).toMatchObject({ level: 1, cx: 0.5, cy: 0.5 });
+  s = keys(s, "++");
+  expect(zoomOf(s)).toMatchObject({ level: 2 });
+  s = keys(s, "lll");
+  // At 2× the view is half the image wide, so its centre stops at 3/4.
+  expect(zoomOf(s)).toMatchObject({ cx: 0.75, cy: 0.5 });
+  s = keys(s, "kk");
+  expect(zoomOf(s)).toMatchObject({ cy: 0.25 });
+  s = keys(s, "-");
+  const out = zoomOf(s);
+  if (out?.kind !== "image") throw new Error("expected an image");
+  expect(out.level).toBe(1.5);
+  expect(out.cx).toBeCloseTo(2 / 3);
+  expect(out.cy).toBeCloseTo(1 / 3);
+  s = keys(s, "=".repeat(10));
+  expect(zoomOf(s)).toMatchObject({ level: ZOOM_LEVELS.at(-1) });
+  s = keys(s, "0");
+  expect(zoomOf(s)).toMatchObject({ level: 1, cx: 0.5, cy: 0.5 });
+  s = keys(s, "-");
+  expect(zoomOf(s)).toMatchObject({ level: 1 });
+  expect(keys(s, "q").overlay.kind).toBe("none");
+  expect(keys(s, "<Esc>").overlay.kind).toBe("none");
+});
+
+test("a diagram scrolls within its lines and switches to the tight layout", () => {
+  let s = keys(note(), "10j<leader>z");
+  const loose = zoomOf(s);
+  if (loose?.kind !== "diagram") throw new Error("expected a diagram");
+  const { w } = zoomSize(s.terminal);
+  const widest = Math.max(...loose.lines.map((l) => [...l].length));
+  s = keys(s, "llllllll");
+  expect(zoomOf(s)).toMatchObject({ col: Math.max(0, widest - (w - 2)) });
+  s = keys(s, "jjjj");
+  expect(zoomOf(s)).toMatchObject({ row: 0 });
+  s = keys(s, "-");
+  const tight = zoomOf(s);
+  expect(tight).toMatchObject({ spacing: "tight", row: 0, col: 0 });
+  if (tight?.kind === "diagram")
+    expect(tight.lines.length).toBeLessThan(loose.lines.length);
+  expect(zoomOf(keys(s, "0"))).toMatchObject({ spacing: "loose", col: 0 });
+});
+
+test("the zoom float is 90% of the terminal, at least 60×12, within it", () => {
+  const t = { cols: 200, rows: 50, color: "color" } as const;
+  expect(zoomSize(t)).toEqual({ w: 180, h: 45 });
+  expect(zoomSize({ ...t, cols: 64, rows: 20 })).toEqual({ w: 60, h: 18 });
+  expect(zoomSize({ ...t, cols: 40, rows: 10 })).toEqual({ w: 40, h: 8 });
+});

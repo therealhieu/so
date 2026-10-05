@@ -197,7 +197,31 @@ export type Overlay =
   | { kind: "whichKey"; whichKey: WhichKeyState }
   | { kind: "picker" | "palette" | "help"; picker: PickerState }
   | { kind: "completion"; completion: CompletionState }
-  | { kind: "calendar"; calendar: CalendarState };
+  | { kind: "calendar"; calendar: CalendarState }
+  | { kind: "zoom"; zoom: ZoomState };
+
+/**
+ * The zoom float. An image keeps its zoom `level` (times the fitted size)
+ * and the centre of the view as fractions of the image; a diagram keeps its
+ * drawn lines and the first row and column on screen.
+ */
+export type ZoomState =
+  | {
+      kind: "image";
+      path: string;
+      name: string;
+      level: number;
+      cx: number;
+      cy: number;
+    }
+  | {
+      kind: "diagram";
+      source: string;
+      spacing: "loose" | "tight";
+      lines: string[];
+      row: number;
+      col: number;
+    };
 
 /** One picker row; `matches` are the label's matched character positions. */
 export type PickerItem = {

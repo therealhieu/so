@@ -1,6 +1,11 @@
 import { expect, test } from "bun:test";
 import { indexed, TASKS_BASE } from "../../../test/support/bases";
-import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import {
+  fresh,
+  freshDefaults,
+  testRegistries,
+  textFile,
+} from "../../../test/support/state";
 import type { BaseWindowState } from "../features/bases/file-type";
 import { splitKeys } from "../kernel/vim/keys";
 import { addDays } from "../time/local";
@@ -832,4 +837,41 @@ test("a click on a board card focuses it, a double click opens it, and a sideway
     spot: { kind: "baseCard", lane: 9, card: 0 },
   };
   expect(mouse(s, press(missing)).state).toEqual(s);
+});
+
+const PICTURE = "# Pictures\n\n![[a.png]]\n";
+
+/** A note with an image, open in the given view, with `a.png` in the index. */
+function pictureNote(view: "reading" | "live"): AppState {
+  const s = update(freshDefaults(), {
+    type: "indexBatch",
+    summaries: [],
+    files: ["n.md", "a.png"],
+    done: 0,
+    total: 0,
+  }).state;
+  const opened = open("n.md", PICTURE, s);
+  return view === "reading" ? opened : keys(opened, "<leader>m").state;
+}
+
+test("a double click on an image zooms it in reading, as <leader>z does", () => {
+  const s = pictureNote("reading");
+  const clicked = mouse(s, press(text(1, 2, 0), 2)).state;
+  const typed = keys(s, "2j<leader>z").state;
+  expect(clicked.overlay.kind).toBe("zoom");
+  expect(clicked.overlay).toEqual(typed.overlay);
+  expect(cursorOf(clicked)).toEqual(cursorOf(typed));
+
+  const live = mouse(pictureNote("live"), press(text(1, 2, 0), 2)).state;
+  expect(live.overlay.kind).toBe("none");
+  expect(live.vim.mode).toBe("visual");
+});
+
+test("the wheel pans the zoom float and a press outside closes it", () => {
+  const s = keys(pictureNote("reading"), "2j<leader>z++").state;
+  const panned = mouse(s, wheel({ kind: "overlay" }, 0, 1)).state;
+  expect(panned.overlay).toEqual(keys(s, "l").state.overlay);
+  const down = mouse(s, wheel({ kind: "overlay" }, 1)).state;
+  expect(down.overlay).toEqual(keys(s, "j").state.overlay);
+  expect(mouse(s, press({ kind: "outside" })).state.overlay.kind).toBe("none");
 });

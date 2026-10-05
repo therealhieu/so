@@ -104,22 +104,30 @@ function draw(
   }
 }
 
-/** Box-drawing lines no wider than `width`, or a label saying why the source is shown. */
-export function mermaidText(source: string, width: number): MermaidResult {
+/**
+ * The diagram type and the source the library accepts, which rejects the
+ * `graph TD;` header form that Mermaid accepts.
+ */
+function prepare(source: string): { type: string; source: string } {
   const lines = source.split("\n");
   const at = lines.findIndex(
     (l) => l.trim() !== "" && !l.trim().startsWith("%%"),
   );
   const header = lines[at]?.trim() ?? "";
   const type = header.split(/[\s;]/, 1)[0] ?? "";
-  if (!TEXT_LAYOUT.has(type))
-    return SOURCE_ONLY.has(type)
-      ? { kind: "source", label: `mermaid: ${type} shown as source` }
+  if (at !== -1) lines[at] = header.replace(/;+$/, "");
+  return { type, source: lines.join("\n") };
+}
+
+/** Box-drawing lines no wider than `width`, or a label saying why the source is shown. */
+export function mermaidText(source: string, width: number): MermaidResult {
+  const p = prepare(source);
+  if (!TEXT_LAYOUT.has(p.type))
+    return SOURCE_ONLY.has(p.type)
+      ? { kind: "source", label: `mermaid: ${p.type} shown as source` }
       : INVALID;
-  // The library rejects the `graph TD;` header form that Mermaid accepts.
-  lines[at] = header.replace(/;+$/, "");
   for (const spacing of SPACINGS) {
-    const drawn = draw(lines.join("\n"), GRAPHS.has(type), spacing);
+    const drawn = draw(p.source, GRAPHS.has(p.type), spacing);
     if (drawn === undefined) return INVALID;
     if (Math.max(...drawn.map((l) => l.length)) <= width)
       return { kind: "text", lines: drawn };
@@ -128,6 +136,17 @@ export function mermaidText(source: string, width: number): MermaidResult {
     kind: "source",
     label: `mermaid: wider than ${width} columns, shown as source`,
   };
+}
+
+/** Box-drawing lines at any width, with the default or the tightest spacing; undefined when it cannot be drawn. */
+export function mermaidLines(
+  source: string,
+  spacing: "loose" | "tight",
+): string[] | undefined {
+  const p = prepare(source);
+  if (!TEXT_LAYOUT.has(p.type)) return undefined;
+  const chosen = SPACINGS[spacing === "loose" ? 0 : 1];
+  return chosen && draw(p.source, GRAPHS.has(p.type), chosen);
 }
 
 const drawings = new RenderCache<MermaidResult>();

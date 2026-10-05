@@ -34,6 +34,7 @@ import { panelFocused, sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
+import { zoomKey } from "./zoom";
 
 const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
   ...s,
@@ -81,6 +82,8 @@ function routeKey(
       return pickerKey(s, a, reg);
     case "calendar":
       return calendarKey(s, a, reg);
+    case "zoom":
+      return zoomKey(s, a);
   }
   if (editingCell(s)) return cellEditKey(s, a, reg);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
