@@ -103,7 +103,7 @@ exports[`template picker shows source then the expansion at 120 columns 1`] = `
     ~       │                                                        │ - [ ]                               │            
     ~       │                                                        │                                     │            
     ~       │                                                        │                                     │            
-    ~       ╰─ ↑↓ move · Enter insert · Esc close ─────────────────────────────────────────────────────────╯            
+    ~       ╰─ C-j/C-k move · Enter insert · Esc close ────────────────────────────────────────────────────╯            
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -131,7 +131,7 @@ exports[`template picker hides the preview at 90 columns until Tab 1`] = `
     ~    │                                                                      │         
     ~    │                                                                      │         
     ~    │                                                                      │         
-    ~    ╰─ ↑↓ move · Enter insert · Tab preview · Esc close ───────────────────╯         
+    ~    ╰─ C-j/C-k move · Enter insert · Tab preview · Esc close ──────────────╯         
     ~                                                                                     
     ~                                                                                     
     ~                                                                                     
@@ -159,7 +159,7 @@ exports[`template picker hides the preview at 90 columns until Tab 2`] = `
     ~    │ - [ ]                                                                │         
     ~    │                                                                      │         
     ~    │                                                                      │         
-    ~    ╰─ ↑↓ move · Enter insert · Tab preview · Esc close ───────────────────╯         
+    ~    ╰─ C-j/C-k move · Enter insert · Tab preview · Esc close ──────────────╯         
     ~                                                                                     
     ~                                                                                     
     ~                                                                                     
@@ -271,4 +271,52 @@ exports[`calendar styles paints the selected, today, and marked days in the ligh
     "fg": "55,96,191,255",
   },
 }
+`;
+
+exports[`tags picker previews the selected tag's notes 1`] = `
+"                                                                                                                ~/notes 
+    ~                                                                          ╭──────────────────────────────────────╮ 
+    ~       ╭─ Tags ───────────────────────────────────────────────────────────────────────────────────────╮          │ 
+    ~       │ ❯                                                  3/3 │ #daily                              │──────────╯ 
+    ~       │ ────────────────────────────────────────────────────── │ 1 note                              │            
+    ~       │ ▸ #daily                                        1 note │                                     │            
+    ~       │   #so                                          2 notes │ daily/2026-10-01.md                 │            
+    ~       │   #so/ui                                        1 note │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       ╰─ C-j/C-k move · Enter open · C-l notes · Esc close ──────────────────────────────────────────╯            
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ [No Name] │ preview off │ ◆ index ready                                                                      
+                                                                                                                        
+"
+`;
+
+exports[`tags picker previews the selected tag's notes 2`] = `
+"                                                                                                                ~/notes 
+    ~                                                                          ╭──────────────────────────────────────╮ 
+    ~       ╭─ Tags ───────────────────────────────────────────────────────────────────────────────────────╮          │ 
+    ~       │ ❯ so                                               2/3 │ #so                                 │──────────╯ 
+    ~       │ ────────────────────────────────────────────────────── │ 2 notes                             │            
+    ~       │ ▸ #so                                          2 notes │                                     │            
+    ~       │   #so/ui                                        1 note │   notes/ideas.md                    │            
+    ~       │                                                        │ ▸ projects/so.md                    │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       │                                                        │                                     │            
+    ~       ╰─ C-j/C-k move · Enter open · C-h back · Esc close ───────────────────────────────────────────╯            
+    ~                                                                                                                   
+    ~                                                                                                                   
+ NORMAL  │ [No Name] │ preview off │ ◆ index ready                                                                      
+                                                                                                                        
+"
 `;

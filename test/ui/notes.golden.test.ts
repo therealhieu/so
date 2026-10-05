@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { TextAttributes } from "@opentui/core";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
+import { indexed } from "../support/bases";
 import { textFile } from "../support/state";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
@@ -213,5 +214,38 @@ describe("new note prompt", () => {
     const p = await find(m, "❯ ../x");
     const field = cellStyle(m.t.captureSpans().lines, p.x, p.y);
     expect(reason?.fg).not.toEqual(field?.fg);
+  });
+});
+
+describe("tags picker", () => {
+  test("previews the selected tag's notes", async () => {
+    m = await mountShell({ cols: 120, rows: 20 });
+    m.keys("<leader>e");
+    m.store.dispatch(
+      indexed({
+        "daily/2026-10-01.md": "---\ntags: [daily]\n---\n",
+        "notes/ideas.md": "#so/ui idea\n",
+        "projects/so.md": "---\ntags: [so]\n---\n# So\n",
+      }),
+    );
+    m.store.dispatch({ type: "indexReady" });
+    m.keys("<leader>st");
+    let frame = await m.frame();
+    expect(frame).toMatchSnapshot();
+    expect(frame).toContain("1 note ");
+    m.keys("so");
+    frame = await m.frame();
+    expect(frame).toContain("#so");
+    expect(frame).toContain("2 notes");
+    expect(frame).toContain("notes/ideas.md");
+    expect(frame).toContain("projects/so.md");
+
+    m.keys("<C-l><C-j>");
+    frame = await m.frame();
+    expect(frame).toMatchSnapshot();
+    expect(frame).toContain("▸ projects/so.md");
+    expect(frame).toContain("C-h back");
+    m.keys("<C-h>");
+    expect(await m.frame()).toContain("C-l notes");
   });
 });

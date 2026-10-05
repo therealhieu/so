@@ -8,6 +8,7 @@ import {
   activeBuffer,
   activeWindow,
   applyBufferEdits,
+  flipFold,
   readOnlyHint,
   readOnlyView,
   setBuffer,
@@ -81,18 +82,15 @@ function toggleFold(c: CommandContext): Result {
   const key = block && renderKey(block, doc, b.text);
   // Ids of blocks that no longer exist are dropped on every toggle.
   const ids = new Set(doc.blocks.map((x) => x.id));
-  const kept = (w.content.folds ?? []).filter((id) => ids.has(id));
-  const withFolds = (folds: number[]) =>
-    setWindow(s, { ...w, content: { ...w.content, folds } });
-  if (block === undefined || (key !== "callout" && key !== "embed"))
-    return message(withFolds(kept), "nothing to fold here");
-  return none(
-    withFolds(
-      kept.includes(block.id)
-        ? kept.filter((id) => id !== block.id)
-        : [...kept, block.id],
-    ),
-  );
+  const live = (id: number) => ids.has(id);
+  if (block === undefined || (key !== "callout" && key !== "embed")) {
+    const folds = (w.content.folds ?? []).filter(live);
+    return message(
+      setWindow(s, { ...w, content: { ...w.content, folds } }),
+      "nothing to fold here",
+    );
+  }
+  return none(flipFold(s, w, block.id, live));
 }
 
 /** `Enter`: toggle the task on the cursor line, or follow the link under the cursor. */

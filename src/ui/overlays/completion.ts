@@ -17,7 +17,7 @@ import { drawFrame } from "./host";
 const WIDTH = 48;
 /** Rows below the cursor line under which the popup opens above it. */
 const ABOVE_UNDER = 10;
-const FOOTER = " C-n/C-p · ⏎/Tab accept · esc";
+const FOOTER = " C-j/C-k · ⏎/Tab accept · esc";
 const cells = (t: string) => [...t].length;
 const basename = (path: string) =>
   path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");

@@ -5,6 +5,8 @@ import type { Binding } from "../kernel/commands/defaults";
 import type { Mode } from "../kernel/commands/keymap";
 import type { Command } from "../kernel/commands/registry";
 import type { Doc } from "../lang/markdown/doc";
+import { markdownFileType } from "../lang/markdown/file-type";
+import { tagAt } from "../lang/markdown/tag-at";
 import { activeBuffer, activeWindow } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { createTarget } from "./explorer";
@@ -105,6 +107,30 @@ export function followLink(c: CommandContext): Result {
   return goTo(recordJump(s), target.path, pos, c.now, subpath);
 }
 
+/** The tag under the active window's cursor in a Markdown note: inline, or in the frontmatter `tags`. */
+export function tagUnderCursor(s: AppState): string | undefined {
+  const b = activeBuffer(s);
+  const w = activeWindow(s);
+  if (b?.fileType !== markdownFileType.id || w === undefined) return undefined;
+  const doc = b.analysis as Doc | undefined;
+  return doc && tagAt(doc, b.text, w.content.cursor);
+}
+
+/** `gd`: follow the link under the cursor, else list the notes with the tag under it. */
+function followLinkOrTag(c: CommandContext): Result {
+  const b = activeBuffer(c.state);
+  const w = activeWindow(c.state);
+  const doc = b?.analysis as Doc | undefined;
+  if (
+    doc !== undefined &&
+    w !== undefined &&
+    linkAt(doc.scan, w.content.cursor)
+  )
+    return followLink(c);
+  const tag = tagUnderCursor(c.state);
+  return tag === undefined ? none(c.state) : openPicker(c, "tagNotes", tag);
+}
+
 /** The file a rename or move is about: the explorer selection while it has focus, else the open file. */
 const focusedPath = (s: AppState): string =>
   s.panels.explorer.focused
@@ -117,6 +143,12 @@ export const linkCommands: readonly AppCommand[] = [
     title: "Follow link",
     filetypes: ["markdown"],
     run: followLink,
+  },
+  {
+    id: "link.followOrTag",
+    title: "Follow link, or list the notes with this tag",
+    filetypes: ["markdown"],
+    run: followLinkOrTag,
   },
   {
     id: "link.backlinks",
@@ -164,7 +196,7 @@ export const linkCommands: readonly AppCommand[] = [
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
 
 export const linkBindings: readonly Binding[] = [
-  { scope: md("normal"), seq: "gd", id: "link.follow" },
+  { scope: md("normal"), seq: "gd", id: "link.followOrTag" },
   { scope: md("normal"), seq: "<leader>lb", id: "link.backlinks" },
   { scope: md("normal"), seq: "<leader>lr", id: "file.rename" },
   { scope: md("normal"), seq: "<leader>o", id: "view.outline" },

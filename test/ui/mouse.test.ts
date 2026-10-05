@@ -320,6 +320,106 @@ test("a click on an outline heading jumps there and the panel title only focuses
   expect(cursorOf(m)?.line).toBe(0);
 });
 
+test("with the explorer on the right, clicks reach the explorer, the left panel, and the window", async () => {
+  m = await mountShell({
+    cols: 120,
+    rows: 16,
+    config: '[explorer]\nposition = "right"\n',
+  });
+  m.open("plan.md", "# Plan\n\ntext\n\n## Goals\n\nmore\n");
+  m.keys("<leader>o");
+  const goals = await find(m, "Goals", 2);
+  expect(goals.x).toBeLessThan(36);
+  await m.mouse.click(goals.x + 2, goals.y);
+  expect(cursorOf(m)?.line).toBe(4);
+
+  const folder = await find(m, "notes", 2);
+  expect(folder.x).toBeGreaterThan(88);
+  await m.mouse.click(folder.x + 1, folder.y);
+  const s = m.store.get();
+  expect(s.panels.explorer.expanded).toContain("notes");
+  expect(s.panels.explorer.focused).toBe(true);
+
+  await m.mouse.click(50, 1);
+  expect(m.store.get().panels.explorer.focused).toBe(false);
+  expect(cursorOf(m)?.line).toBe(0);
+});
+
+test("a click on a callout's fold marker flips the fold and leaves the cursor", async () => {
+  m = await mountShell({ cols: 80, rows: 14 });
+  m.keys("<leader>e");
+  m.open(
+    "a.md",
+    "intro\n\n> [!tip]- Folded tip\n> Hidden body.\n\n> [!note] Plain\n> Body.\n",
+  );
+  const marker = await find(m, "▸", 1);
+  await m.mouse.click(marker.x, marker.y);
+  let frame = await m.frame();
+  expect(frame).toContain("★ Folded tip ▾");
+  expect(frame).toContain("▎ Hidden body.");
+  expect(frame).not.toContain("[!tip]");
+  expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
+
+  // The space before the marker is part of it.
+  const open = await find(m, "▾", 1);
+  await m.mouse.click(open.x - 1, open.y);
+  frame = await m.frame();
+  expect(frame).toContain("★ Folded tip ▸");
+  expect(frame).not.toContain("Hidden body.");
+  expect(cursorOf(m)).toEqual({ line: 0, col: 0 });
+
+  // The title text places the cursor and shows the source, as before.
+  const title = await find(m, "Folded tip", 1);
+  await m.mouse.click(title.x + 2, title.y);
+  expect(cursorOf(m)?.line).toBe(2);
+  expect(await m.frame()).toContain("> [!tip]- Folded tip");
+});
+
+test("a callout without a fold sign has no marker to click", async () => {
+  m = await mountShell({ cols: 80, rows: 14 });
+  m.keys("<leader>e");
+  m.open("a.md", "intro\n\n> [!note] Plain\n> Body.\n");
+  const title = await find(m, "● Plain", 1);
+  await m.mouse.click(title.x + 8, title.y);
+  expect(cursorOf(m)?.line).toBe(2);
+  expect(
+    m.store.get().windows.byId[m.store.get().windows.active]?.content.folds ??
+      [],
+  ).toEqual([]);
+});
+
+test("a double click on a tag lists its notes, even when the first click reveals source", async () => {
+  m = await mountShell({ cols: 80, rows: 14 });
+  m.keys("<leader>e");
+  m.open(
+    "a.md",
+    "---\ntags: [so, planning]\n---\nintro\n\nsee [[tour]] #so/ui and more words\n",
+  );
+  const picked = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "picker"
+      ? { source: o.picker.source, arg: o.picker.arg }
+      : o?.kind;
+  };
+  // The cursor line shows "[[tour]]", which moves the tag 4 cells right.
+  const inline = await find(m, "#so/ui", 1);
+  await m.mouse.doubleClick(inline.x + 1, inline.y);
+  expect(picked()).toEqual({ source: "tagNotes", arg: "so/ui" });
+  expect(await m.frame()).toContain("─ Notes with #so/ui ─");
+  m.keys("<Esc>G");
+
+  // A chip: the first click reveals the frontmatter source under the pointer.
+  const chip = await find(m, "#planning", 1);
+  await m.mouse.doubleClick(chip.x + 2, chip.y);
+  expect(picked()).toEqual({ source: "tagNotes", arg: "planning" });
+  m.keys("<Esc>");
+
+  const word = await find(m, "words", 1);
+  await m.mouse.doubleClick(word.x + 1, word.y);
+  expect(m.store.get().vim.mode).toBe("visual");
+  expect(picked()).toBe("none");
+});
+
 test("a click on a picker row accepts it and clicks under a toast reach the window", async () => {
   m = await mountShell({ cols: 120, rows: 24 });
   indexFixture(m);

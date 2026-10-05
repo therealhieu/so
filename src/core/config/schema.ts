@@ -68,6 +68,12 @@ export const ConfigSchema = z.strictObject({
       relativeNumbers: z.boolean().default(true),
     })
     .prefault({}),
+  /** The docked explorer's edge; the side panel docks on the other one. */
+  explorer: z
+    .strictObject({
+      position: z.enum(["left", "right"]).default("left"),
+    })
+    .prefault({}),
   preview: z
     .strictObject({
       mode: z.enum(["live", "source", "reading"]).default("live"),

@@ -47,9 +47,10 @@ const isWindowText = (t: MouseTarget) =>
  * Turn OpenTUI mouse events into core mouse actions: drop everything while
  * `enabled()` is false and every button but the left one, ask `sources`
  * (top of the z-order first, skipping wheel-only ones for a press) for the
- * target, count clicks on one cell, and keep a drag with the source its
- * press landed on, sending each new drag target once. A press that `stops`
- * says only closes something starts no drag.
+ * target, count clicks on one cell (a repeated click keeps the first one's
+ * target), and keep a drag with the source its press landed on, sending
+ * each new drag target once. A press that `stops` says only closes
+ * something starts no drag.
  */
 export function createMouseRouter(o: {
   sources: readonly MouseSource[];
@@ -59,7 +60,15 @@ export function createMouseRouter(o: {
   dispatch: (a: Action) => void;
   now: () => number;
 }): MouseRouter {
-  let last: { x: number; y: number; at: number; clicks: 1 | 2 | 3 } | undefined;
+  let last:
+    | {
+        x: number;
+        y: number;
+        at: number;
+        clicks: 1 | 2 | 3;
+        target: MouseTarget;
+      }
+    | undefined;
   let origin: { source: MouseSource; target: MouseTarget } | undefined;
   let lastDrag: string | undefined;
 
@@ -99,12 +108,15 @@ export function createMouseRouter(o: {
             now - last.at <= CLICK_MS;
           const clicks =
             again && last ? (((last.clicks % 3) + 1) as 1 | 2 | 3) : 1;
-          last = { x: e.x, y: e.y, at: now, clicks };
-          if (!o.stops(hit.target)) origin = hit;
+          // A repeated click acts on what the first one hit: that click may
+          // have revealed source and moved the text under the pointer.
+          const target = again && last ? last.target : hit.target;
+          last = { x: e.x, y: e.y, at: now, clicks, target };
+          if (!o.stops(target)) origin = { source: hit.source, target };
           send(
             {
               kind: "press",
-              target: hit.target,
+              target,
               clicks,
               ctrl: e.modifiers.ctrl,
             },

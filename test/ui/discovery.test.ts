@@ -164,9 +164,11 @@ describe("in a note", () => {
     expect(items.find((i) => i.label === "<leader>w  Save file")?.detail).toBe(
       "file.save  ●",
     );
-    expect(items.find((i) => i.label === "gd  Follow link")?.detail).toBe(
-      "link.follow  markdown",
-    );
+    expect(
+      items.find(
+        (i) => i.label === "gd  Follow link, or list the notes with this tag",
+      )?.detail,
+    ).toBe("link.followOrTag  markdown");
   });
 
   test("a picker resized to 80×24 drops its preview pane", async () => {

@@ -120,6 +120,20 @@ export function setWindow(s: AppState, w: WindowState): AppState {
   };
 }
 
+/** Flip block `id` from its default fold in window `w`, keeping only the folds `keep` accepts. */
+export function flipFold(
+  s: AppState,
+  w: WindowState,
+  id: number,
+  keep: (id: number) => boolean = () => true,
+): AppState {
+  const kept = (w.content.folds ?? []).filter(keep);
+  const folds = kept.includes(id)
+    ? kept.filter((x) => x !== id)
+    : [...kept, id];
+  return setWindow(s, { ...w, content: { ...w.content, folds } });
+}
+
 /**
  * Put the active window's cursor at `pos`, clamped to its buffer, and scroll
  * just enough to show it.

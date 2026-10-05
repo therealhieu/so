@@ -248,3 +248,22 @@ test("hover and other events are ignored", () => {
   r.handle(ev("up", 1, 1));
   expect(r.sent).toEqual([]);
 });
+
+test("a repeated click acts on what the first click hit", () => {
+  let shifted = false;
+  const moving: MouseSource = {
+    targetAt: (x, y) => text(y, shifted ? x + 4 : x),
+  };
+  const r = setup([moving]);
+  r.handle(ev("down", 3, 3));
+  shifted = true;
+  r.at(100);
+  r.handle(ev("down", 3, 3));
+  r.at(1000);
+  r.handle(ev("down", 3, 3));
+  expect(r.events()).toEqual([
+    { kind: "press", target: text(3, 3), clicks: 1, ctrl: false },
+    { kind: "press", target: text(3, 3), clicks: 2, ctrl: false },
+    { kind: "press", target: text(3, 7), clicks: 1, ctrl: false },
+  ]);
+});

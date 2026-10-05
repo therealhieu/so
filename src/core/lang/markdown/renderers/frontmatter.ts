@@ -23,8 +23,9 @@ const items = (value: string): string[] => {
 const valueSpans = (key: string, values: string[]): Span[] =>
   values.flatMap((value, i) => {
     const sep: Span[] = i === 0 ? [] : [{ text: "  ", style: "text" }];
+    const tag = value.replace(/^#/, "");
     return key === "tags" && value !== ""
-      ? [...sep, { text: `#${value.replace(/^#/, "")}`, style: "mdTag" }]
+      ? [...sep, { text: `#${tag}`, style: "mdTag", tag }]
       : [...sep, { text: value, style: "text" }];
   });
 

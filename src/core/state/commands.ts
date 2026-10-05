@@ -35,7 +35,7 @@ import {
   scheduleAutosave,
   writeBuffer,
 } from "./save";
-import { panelDocked, panelFocused } from "./side-panel";
+import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
 
@@ -285,8 +285,8 @@ function split(s: AppState, dir: "row" | "column"): Result {
 }
 
 /**
- * Move focus between windows; the docked side panel sits right of them:
- * `l` past the last window enters it, `h` leaves it.
+ * Move focus between windows; the docked side panel sits beside them:
+ * moving toward its edge past the last window enters it, moving back leaves it.
  */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
   const side = s.panels.side;
@@ -294,10 +294,11 @@ function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
     ...s,
     panels: { ...s.panels, side: { ...side, focused } },
   });
-  if (panelFocused(s)) return none(dir === "h" ? setSide(false) : s);
+  const [enter, leave] = panelSide(s) === "left" ? ["h", "l"] : ["l", "h"];
+  if (panelFocused(s)) return none(dir === leave ? setSide(false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
   if (target === undefined)
-    return none(dir === "l" && panelDocked(s) ? setSide(true) : s);
+    return none(dir === enter && panelDocked(s) ? setSide(true) : s);
   return none({ ...s, windows: { ...s.windows, active: target } });
 }
 

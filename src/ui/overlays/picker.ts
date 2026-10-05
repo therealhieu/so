@@ -130,8 +130,14 @@ export class PickerView extends Renderable {
     drawFrame(buf, theme, box, {
       border: "floatBorder",
       fill: "float",
-      title: source?.title ?? p.source,
-      footer: `↑↓ move · ${accept}${tab} · Esc close`,
+      title:
+        p.arg !== undefined && source?.titleFor !== undefined
+          ? source.titleFor(p.arg)
+          : (source?.title ?? p.source),
+      footer:
+        p.browse !== undefined
+          ? "C-j/C-k move · Enter open · C-h back · Esc close"
+          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${tab} · Esc close`,
     });
     if (narrowPreview(s, p)) {
       this.paintPreviewPane(
@@ -298,6 +304,20 @@ export class PickerView extends Renderable {
     const dim = theme.style("floatDim");
     if (item === undefined) return;
     const target = p.preview;
+    const describe = pickerSources[p.source]?.describe;
+    if (target === undefined && describe !== undefined) {
+      const lines = describe(s, item, p.browse);
+      // Scroll just enough to keep the selected note in view.
+      const at = lines.findIndex((l) => l.selected === true);
+      const first = Math.max(0, at - r.h + 1);
+      paintLines(
+        buf,
+        theme,
+        { ...r, x: r.x + 1, w: r.w - 1 },
+        lines.slice(first),
+      );
+      return;
+    }
     if (target === undefined) {
       // Commands and help preview their description as text.
       const lines = [item.label, "", ...(item.detail ?? "").split("  ")];

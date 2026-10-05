@@ -270,3 +270,18 @@ test("an undocked panel takes no keys and no focus", () => {
   expect(keys(small, "<C-w>l").state.panels.side.focused).toBe(false);
   expect(keys(left, "<C-w>l").state.panels.side.focused).toBe(true);
 });
+
+test("with the explorer on the right, the panel docks left: C-w h enters, C-w l leaves", () => {
+  const base = opened();
+  const s = {
+    ...base,
+    config: { ...base.config, explorer: { position: "right" as const } },
+  };
+  const r = runCommand(s, "link.backlinks", 0, reg);
+  expect(r.state.panels.side.focused).toBe(true);
+  expect(keys(r.state, "<C-w>h").state.panels.side.focused).toBe(true);
+  const left = keys(r.state, "<C-w>l").state;
+  expect(left.panels.side.focused).toBe(false);
+  expect(keys(left, "<C-w>l").state.panels.side.focused).toBe(false);
+  expect(keys(left, "<C-w>h").state.panels.side.focused).toBe(true);
+});

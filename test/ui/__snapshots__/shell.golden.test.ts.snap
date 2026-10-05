@@ -408,6 +408,34 @@ exports[`shell at 80×24 a code file shows the source view and no word count 1`]
 "
 `;
 
+exports[`on a narrow terminal the explorer floats on its configured edge 1`] = `
+"                                                                                
+    ~                                           ╭──────────────────────────────╮
+    ~                                           │ NOTES  ~/notes               │
+    ~                                           │ ▸ notes                      │
+    ~                                           │ ▸ scripts                    │
+    ~                                           │ ≡ config.yaml                │
+    ~                                           │ ◇ todo.md                    │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           │                              │
+    ~                                           ╰──────────────────────────────╯
+ EXPLORER  │ [No Name]                                                          
+                                                                                
+"
+`;
+
 exports[`themes dark: badges, selection, cursorline, dirty marker, error toast 1`] = `
 {
   "cursorline": {
@@ -629,6 +657,46 @@ exports[`index and panels at 120×36 the outline panel marks the current heading
     ~                                                                              │                                    
     ~                                                                              │ ⏎ jump · q close                   
  NORMAL  │ live │ notes/plan.md │ jump 2/2 │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                5:1 
+                                                                                                                        
+"
+`;
+
+exports[`index and panels at 120×36 with the explorer on the right, the backlinks panel docks left 1`] = `
+" plan.md                                                                                                        ~/notes 
+ BACKLINKS · plan                   │   1 ▕# Plan                                        │ NOTES  ~/notes               
+▾ Linked mentions (31)              │   1                                                │ ▸ notes                      
+ ◇ log/day-01:3                     │   2  Why this exists.                              │ ▸ scripts                    
+   - [[plan]] today                 │   3                                                │ ≡ config.yaml                
+ ◇ log/day-01:4                     │   4  ▊ Goals                                       │ ◇ todo.md                    
+   - [[plan#Goals]] today           │   5                                                │                              
+ ◇ log/day-01:5                     │   6  Ship the editor. ^ship                        │                              
+   - [[plan|the plan]] today        │   7                                                │                              
+ ◇ log/day-02:3                     │   8  ▊ Risks                                       │                              
+   - [[plan]] today                 │   9                                                │                              
+ ◇ log/day-02:4                     │  10  Scope.                                        │                              
+   - [[plan#Goals]] today           │    ~                                               │                              
+ ◇ log/day-02:5                     │    ~                                               │                              
+   - [[plan|the plan]] today        │    ~                                               │                              
+ ◇ log/day-03:3                     │    ~                                               │                              
+   - [[plan]] today                 │    ~                                               │                              
+ ◇ log/day-03:4                     │    ~                                               │                              
+   - [[plan#Goals]] today           │    ~                                               │                              
+ ◇ log/day-03:5                     │    ~                                               │                              
+   - [[plan|the plan]] today        │    ~                                               │                              
+ ◇ log/day-04:3                     │    ~                                               │                              
+   - [[plan]] today                 │    ~                                               │                              
+ ◇ log/day-04:4                     │    ~                                               │                              
+   - [[plan#Goals]] today           │    ~                                               │                              
+ ◇ log/day-04:5                     │    ~                                               │                              
+   - [[plan|the plan]] today        │    ~                                               │                              
+ ◇ log/day-05:3                     │    ~                                               │                              
+   - [[plan]] today                 │    ~                                               │                              
+ ◇ log/day-05:4                     │    ~                                               │                              
+   - [[plan#Goals]] today           │    ~                                               │                              
+ ◇ log/day-05:5                     │    ~                                               │                              
+ j/k move · ⏎ open · l link it      │    ~                                               │                              
+ C-w l back to the editor           │    ~                                               │                              
+ NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
                                                                                                                         
 "
 `;

@@ -55,6 +55,21 @@ export function displayColAt(row: ScreenRow, x: number): number {
   return row.endCol === undefined ? dc : Math.min(dc, row.endCol - 1);
 }
 
+/** The span shown at display column `dc`, counted from the line start. */
+export function spanAt(
+  spans: readonly Span[],
+  dc: number,
+  tabWidth: number,
+): Span | undefined {
+  let v = 0;
+  for (const span of spans)
+    for (const ch of span.text) {
+      v += cellWidth(ch, v, tabWidth);
+      if (dc < v) return span;
+    }
+  return undefined;
+}
+
 /**
  * Source column shown at display column `dc`, counted from the line start.
  * Verbatim text maps cell by cell, replacement text maps to the start of the

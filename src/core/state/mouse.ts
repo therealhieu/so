@@ -9,6 +9,7 @@ import {
 import { baseViewModel } from "./base-model";
 import {
   activeBuffer,
+  flipFold,
   leaves,
   placeCursor,
   setWindow,
@@ -18,7 +19,8 @@ import { selectCalendarDay } from "./calendar";
 import { runCommand } from "./commands";
 import { moveCursor, visiblePaths } from "./explorer";
 import { handleKeyAction } from "./keys";
-import { selectPickerItem } from "./picker";
+import { tagUnderCursor } from "./link-commands";
+import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
 import { autosaveNow } from "./save";
 import { sidePanelRows } from "./side-panel";
@@ -330,7 +332,7 @@ function press(
   const left = idle ? none(s) : feedKeys(none(s), ["<Esc>"], now, reg);
   const focused = { ...left, state: focusTarget(left.state, t) };
   return t.kind === "window" && t.spot.kind === "text"
-    ? pressText(focused, t.spot.pos, e.clicks, e.ctrl, reinsert, now, reg)
+    ? pressText(focused, t.spot, e.clicks, e.ctrl, reinsert, now, reg)
     : pressChrome(focused, t, e.clicks, now, reg);
 }
 
@@ -338,18 +340,19 @@ function press(
  * A press on text, after Insert and Visual have ended. A single click in
  * Insert enters it again at the click, so the typing after it is a new undo
  * step, and appends past the line end; a double click selects the word
- * (`viw`), a triple click the line (`V`), and Ctrl follows the link under
- * the click (`gd`).
+ * (`viw`) or, on a tag, lists the notes with it, a triple click the line
+ * (`V`), and Ctrl follows the link under the click.
  */
 function pressText(
   r: Result,
-  pos: Pos,
+  spot: { pos: Pos; tag?: string },
   clicks: 1 | 2 | 3,
   ctrl: boolean,
   reinsert: boolean,
   now: number,
   reg: Registries,
 ): Result {
+  const { pos } = spot;
   const placed = placeAt(r, pos);
   if (reinsert) {
     const length = activeBuffer(placed.state)?.text.line(
@@ -362,7 +365,14 @@ function pressText(
     return followsLinks(placed.state, reg)
       ? chain(placed, (s) => runCommand(s, LINK_FOLLOW, now, reg))
       : placed;
-  if (clicks === 2) return feedKeys(placed, ["v", "i", "w"], now, reg);
+  if (clicks === 2) {
+    const tag = spot.tag ?? tagUnderCursor(placed.state);
+    return tag === undefined
+      ? feedKeys(placed, ["v", "i", "w"], now, reg)
+      : chain(placed, (st) =>
+          openPicker({ state: st, now, reg }, "tagNotes", tag),
+        );
+  }
   if (clicks === 3) return feedKeys(placed, ["V"], now, reg);
   return placed;
 }
@@ -405,8 +415,8 @@ function dragText(
  * A press on anything but text, after focus moved: a buffer tab shows its
  * buffer (`:bn`), an explorer or side-panel row is selected and opened
  * (`<CR>`), a Bases tab shows its view, a cell or card is focused and opened
- * on a double click, and an overlay row or calendar day is selected and
- * accepted. Panel frames, winbars, and inert chrome only take focus.
+ * on a double click, a fold marker flips its fold without moving the
+ * cursor, and an overlay row or calendar day is selected and accepted. Panel frames, winbars, and inert chrome only take focus.
  */
 function pressChrome(
   r: Result,
@@ -458,8 +468,14 @@ function pressChrome(
         now,
         reg,
       );
-    case "window":
+    case "window": {
+      const w = s.windows.byId[t.window];
+      if (t.spot.kind === "fold")
+        return w === undefined
+          ? r
+          : { ...r, state: flipFold(s, w, t.spot.block) };
       return pressBase(r, t.spot, clicks, now, reg);
+    }
     case "overlayItem":
       return pressItem(r, t.index, now, reg);
     case "calendarDay":

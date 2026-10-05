@@ -437,6 +437,17 @@ function completing(): AppState {
   return r.state;
 }
 
+test("C-j and C-k move a completion like C-n and C-p", () => {
+  const c = completing();
+  expect(keys(c, "<C-j><C-j><C-k>").state).toEqual(
+    keys(c, "<C-n><C-n><C-p>").state,
+  );
+  const s = keys(c, "<C-j>").state;
+  expect(s.overlay.kind === "completion" && s.overlay.completion.selected).toBe(
+    1,
+  );
+});
+
 test("the wheel stops at the last completion item instead of wrapping", () => {
   const s = keys(completing(), "<C-n><C-n>").state;
   if (s.overlay.kind !== "completion") throw new Error("expected completion");

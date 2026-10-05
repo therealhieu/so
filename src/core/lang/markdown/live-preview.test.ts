@@ -278,6 +278,7 @@ test("frontmatter tags render as tag chips", () => {
   expect(block.find((r) => r.sourceLine === 2)?.spans).toContainEqual({
     text: "#daily",
     style: "mdTag",
+    tag: "daily",
   });
 });
 

@@ -9,7 +9,7 @@ import { editorViews, type WindowView } from "../editors/registry";
 import type { Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
-import { EXPLORER_WIDTH, explorerDocked } from "./explorer";
+import { EXPLORER_WIDTH, explorerDocked, explorerSide } from "./explorer";
 import { SIDE_WIDTH, sideDocked } from "./side-panel";
 
 /**
@@ -70,8 +70,9 @@ export class WindowTree extends Renderable {
     this.s = s;
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
-    const x = explorerDocked(s, lc) ? EXPLORER_WIDTH + 1 : 0;
-    const right = sideDocked(s, lc) ? SIDE_WIDTH + 1 : 0;
+    const ex = explorerDocked(s, lc) ? EXPLORER_WIDTH + 1 : 0;
+    const side = sideDocked(s, lc) ? SIDE_WIDTH + 1 : 0;
+    const [x, right] = explorerSide(s) === "right" ? [side, ex] : [ex, side];
     const body = {
       x,
       y: 1,

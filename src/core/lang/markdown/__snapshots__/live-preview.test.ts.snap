@@ -30,7 +30,7 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -129,7 +129,7 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -228,7 +228,7 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -327,7 +327,7 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -426,7 +426,7 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -527,7 +527,7 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -626,7 +626,7 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -721,7 +721,7 @@ exports[`tour note at width 60 in reading view 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -903,7 +903,7 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1010,7 +1010,7 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1117,7 +1117,7 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1224,7 +1224,7 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1331,7 +1331,7 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1440,7 +1440,7 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1547,7 +1547,7 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1642,7 +1642,7 @@ exports[`tour note at width 100 in reading view 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧

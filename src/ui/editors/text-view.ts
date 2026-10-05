@@ -7,7 +7,12 @@ import type { FileType } from "../../core/filetypes/registry";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
-import { displayColAt, rowAt, sourceColAt } from "../../core/kernel/view/hit";
+import {
+  displayColAt,
+  rowAt,
+  sourceColAt,
+  spanAt,
+} from "../../core/kernel/view/hit";
 import {
   highlightMarks,
   searchMarks,
@@ -402,8 +407,8 @@ export class EditorView extends Renderable implements WindowView {
   }
 
   /**
-   * What is under (x, y) from this frame's layout: the winbar, else the
-   * source position shown there. The gutter gives the line's first column
+   * What is under (x, y) from this frame's layout: the winbar, a fold
+   * marker, else the source position shown there, with the tag drawn there. The gutter gives the line's first column
    * and the rows below the text the last line.
    */
   targetAt(x: number, y: number): MouseTarget | undefined {
@@ -416,7 +421,7 @@ export class EditorView extends Renderable implements WindowView {
         window: this.windowId,
         spot: { kind: "winbar" },
       };
-    return this.textAt(x, y, 0);
+    return this.textAt(x, y, 0, true);
   }
 
   /**
@@ -433,11 +438,15 @@ export class EditorView extends Renderable implements WindowView {
     return this.textAt(Math.max(r.x, Math.min(x, r.x + r.w - 1)), cy, edge);
   }
 
-  /** The text position shown at screen cell (x, y), inside the text rows. */
+  /**
+   * The text position shown at screen cell (x, y), inside the text rows, or
+   * the fold marker there and the tag drawn there when `markers` is set.
+   */
   private textAt(
     x: number,
     y: number,
     edge: -1 | 0 | 1,
+    markers = false,
   ): MouseTarget | undefined {
     const s = this.s;
     const w = s?.windows.byId[this.windowId];
@@ -461,6 +470,21 @@ export class EditorView extends Renderable implements WindowView {
     const length = b.text.line(line).length;
     const widget =
       shown?.line.widget !== undefined && shown.line.spans.length === 0;
+    const span =
+      markers && shown !== undefined && !widget && x >= textX
+        ? spanAt(
+            shown.line.spans,
+            displayColAt(shown, this.leftCol + x - textX),
+            tabWidth,
+          )
+        : undefined;
+    const block = span?.fold;
+    if (block !== undefined)
+      return {
+        kind: "window",
+        window: this.windowId,
+        spot: { kind: "fold", block },
+      };
     const col =
       shown === undefined || widget || x < textX
         ? 0
@@ -470,10 +494,14 @@ export class EditorView extends Renderable implements WindowView {
             tabWidth,
             length,
           );
+    const pos = { line, col: Math.min(col, length) };
     return {
       kind: "window",
       window: this.windowId,
-      spot: { kind: "text", pos: { line, col: Math.min(col, length) }, edge },
+      spot:
+        span?.tag === undefined
+          ? { kind: "text", pos, edge }
+          : { kind: "text", pos, edge, tag: span.tag },
     };
   }
 

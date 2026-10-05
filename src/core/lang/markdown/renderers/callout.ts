@@ -26,7 +26,7 @@ const PREFIX = /^(?: {0,3}>[ \t]?)+/;
 /**
  * A callout's title row (icon, title, and `▸`/`▾` when foldable) and its body
  * behind a `▎` bar, or the body hidden when folded; `[!x]-` starts folded and
- * a block id in `folds` flips that. Plain quotes get the bar only.
+ * a block id in `folds` flips that. A click on the marker flips it too. Plain quotes get the bar only.
  */
 export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
   const first = contentStart(v.buf, block);
@@ -42,7 +42,10 @@ export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
     const name = title[3]?.trim() || type[0]?.toUpperCase() + type.slice(1);
     const marker = fold === "" && !folded ? "" : folded ? " ▸" : " ▾";
     out.push(
-      replaceLine(v.buf, first, [{ text: `${icon} ${name}${marker}`, style }]),
+      replaceLine(v.buf, first, [
+        { text: `${icon} ${name}`, style },
+        ...(marker === "" ? [] : [{ text: marker, style, fold: block.id }]),
+      ]),
     );
     body = first + 1;
     if (folded) {

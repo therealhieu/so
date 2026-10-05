@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createTextBuffer } from "../text/text-buffer";
 import type { Decoration } from "./decorations";
-import { displayColAt, rowAt, sourceColAt } from "./hit";
+import { displayColAt, rowAt, sourceColAt, spanAt } from "./hit";
 import { layoutText } from "./text-view";
 import type { RenderLine, TextView } from "./types";
 import { displayWidth, wrapLine } from "./wrap";
@@ -178,4 +178,16 @@ test("a cell right of a word-wrapped row maps to that row's last character", () 
   const flat = rowAt(lines, 0, { ...o, wrap: false });
   if (flat === undefined) throw new Error("expected a screen row");
   expect(displayColAt(flat, 12)).toBe(12);
+});
+
+test("spanAt finds the span under a display column, counting tabs as cells", () => {
+  const spans = [
+    { text: "\tab", style: "text" },
+    { text: " ▸", style: "text", fold: 7 },
+  ];
+  expect(spanAt(spans, 0, 4)?.text).toBe("\tab");
+  expect(spanAt(spans, 5, 4)?.text).toBe("\tab");
+  expect(spanAt(spans, 6, 4)?.fold).toBe(7);
+  expect(spanAt(spans, 7, 4)?.fold).toBe(7);
+  expect(spanAt(spans, 8, 4)).toBeUndefined();
 });

@@ -21,6 +21,10 @@ export const EXPLORER_WIDTH = 30;
 export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
   s.panels.explorer.open && lc !== "narrow";
 
+/** The terminal edge the explorer sits on, docked or floating. */
+export const explorerSide = (s: AppState): "left" | "right" =>
+  s.config.explorer.position;
+
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const depthOf = (path: string) => path.split("/").length - 1;
 
@@ -70,14 +74,17 @@ export function impactLine(
 }
 
 /**
- * The file tree: docked left with a `│` separator, or a rounded float over
- * the windows on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
+ * The file tree: docked on its configured edge with a `│` separator toward
+ * the windows, or a rounded float on that edge on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
  * files `≡`; `●` marks a file with unsaved changes. Create and rename edit
  * the name in the tree: a new row under the target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
   private float = false;
+  private onRight = false;
+  /** The view's first column on the terminal. */
+  private x0 = 0;
   private first = 0;
   private w = 0;
   private h = 0;
@@ -100,6 +107,9 @@ export class ExplorerView extends Renderable {
     // Layout getters lag until the next frame, so geometry is kept here.
     this.w = Math.min(s.terminal.cols, EXPLORER_WIDTH + (this.float ? 2 : 1));
     this.h = Math.max(0, s.terminal.rows - 3);
+    this.onRight = explorerSide(s) === "right";
+    this.x0 = this.onRight ? s.terminal.cols - this.w : 0;
+    this.left = this.x0;
     this.width = this.w;
     this.height = this.h;
     const rows = this.rows(s);
@@ -111,14 +121,14 @@ export class ExplorerView extends Renderable {
     this.first = Math.max(0, Math.min(this.first, rows.length - room));
     const row = rows[at];
     const box = this.inner();
-    const x = box.x + 1 + 2 * (row?.depth ?? 0);
+    const x = this.x0 + box.x + 1 + 2 * (row?.depth ?? 0);
     const y = 1 + box.y + 1 + at - this.first;
     this.cursorAt =
       !ex.open || row === undefined
         ? undefined
         : row.edit !== undefined
           ? {
-              x: Math.min(box.x + box.w - 1, x + 2 + cells(row.edit)),
+              x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
               y,
               style: "line",
             }
@@ -132,7 +142,8 @@ export class ExplorerView extends Renderable {
   }
 
   /** A listed row's path; the title, frame, and empty rows give "" (focus only). */
-  targetAt(x: number, y: number): MouseTarget | undefined {
+  targetAt(ax: number, y: number): MouseTarget | undefined {
+    const x = ax - this.x0;
     if (!this.visible || x < 0 || x >= this.w || y < 1 || y >= 1 + this.h)
       return undefined;
     const box = this.inner();
@@ -147,7 +158,7 @@ export class ExplorerView extends Renderable {
   private inner() {
     return this.float
       ? { x: 1, y: 1, w: this.w - 2, h: this.h - 2 }
-      : { x: 0, y: 0, w: this.w - 1, h: this.h };
+      : { x: this.onRight ? 1 : 0, y: 0, w: this.w - 1, h: this.h };
   }
 
   /** Rows left for entries below the title row. */
@@ -215,7 +226,7 @@ export class ExplorerView extends Renderable {
         drawCells(
           buf,
           theme.style("separator"),
-          this.x + box.w,
+          this.onRight ? this.x : this.x + box.w,
           this.y + r,
           "│",
         );

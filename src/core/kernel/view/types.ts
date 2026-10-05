@@ -12,6 +12,10 @@ export type Span = {
   col?: number;
   /** Replacement text: every cell maps to `col`. */
   inserted?: true;
+  /** A click on this text flips the fold of this block id in its window. */
+  fold?: number;
+  /** The tag this text shows, for a click on text drawn in place of its source. */
+  tag?: string;
 };
 
 export type Sign = { text: string; style: StyleToken };

@@ -223,6 +223,8 @@ export type PickerState = {
   time?: number;
   /** Below the preview width, `Tab` shows the preview in place of the list. */
   showPreview?: true;
+  /** The selected note in the preview pane, set while that pane has the keys (`C-l`). */
+  browse?: number;
   preview?: {
     id: number;
     path: string;
@@ -287,8 +289,13 @@ export type PreviewState =
 
 /** What a pointer is over inside an editor or Base window. */
 export type WindowSpot =
-  /** `edge` is -1 or 1 when a drag leaves the text above or below. */
-  | { kind: "text"; pos: Pos; edge: -1 | 0 | 1 }
+  /**
+   * `edge` is -1 or 1 when a drag leaves the text above or below; `tag` is
+   * the tag drawn there in place of its source (a frontmatter tag).
+   */
+  | { kind: "text"; pos: Pos; edge: -1 | 0 | 1; tag?: string }
+  /** A rendered fold marker; a click flips the fold of block `block`. */
+  | { kind: "fold"; block: number }
   | { kind: "winbar" }
   | { kind: "baseTab"; view: number }
   | { kind: "baseCell"; row: number; column: number }

@@ -29,7 +29,7 @@ exports[`picker selection stays visible without colour: marker and reverse video
     ~       │                                                        │                                     │            
     ~       │                                                        │                                     │            
     ~       │                                                        │                                     │            
-    ~       ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────────────────────────────────────╯            
+    ~       ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -84,7 +84,7 @@ exports[`picker selection matches the light theme golden 2`] = `
     ~       │                                                        │                                     │            
     ~       │                                                        │                                     │            
     ~       │                                                        │                                     │            
-    ~       ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────────────────────────────────────╯            
+    ~       ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
@@ -114,7 +114,7 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
     ~   │   log/day-08.md                                              │        
     ~   │   log/day-09.md                                              │        
     ~   │   log/day-10.md                                              │        
-    ~   ╰─ ↑↓ move · Enter open · Esc close ───────────────────────────╯        
+    ~   ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────╯        
     ~                                                                           
     ~                                                                           
     ~                                                                           

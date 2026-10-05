@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { parseConfig } from "../../src/core/config/toml";
 import type { SearchHit } from "../../src/core/state/types";
 import { answerSearch, indexFixture, NOTES, SYNC_TS } from "../support/notes";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
+
+const RIGHT = '[explorer]\nposition = "right"\n';
 
 const IDEAS_MD =
   "# Ideas\n\nA terminal editor for notes.\n- keep files plain\n";
@@ -197,6 +200,28 @@ test("narrow statuslines drop preview, words, then view", async () => {
   expect(await shown(20, 80)).toEqual(["NORMAL", longNote(20), "1:1"]);
 });
 
+test("on a narrow terminal the explorer floats on its configured edge", async () => {
+  m = await mountShell({ cols: 80, rows: 24, config: RIGHT });
+  const frame = await m.frame();
+  expect(frame).toMatchSnapshot();
+  const row = frame.split("\n")[1] ?? "";
+  expect(row.trimEnd().endsWith("╮")).toBe(true);
+  expect(row.startsWith("╭")).toBe(false);
+});
+
+test("a config reload moves the explorer to its new edge", async () => {
+  m = await mountShell({ cols: 120, rows: 36 });
+  expect((await m.frame()).split("\n")[1]).toStartWith(" NOTES");
+  m.store.dispatch({
+    type: "configLoaded",
+    result: parseConfig(RIGHT),
+    reload: true,
+  });
+  const row = (await m.frame()).split("\n")[1] ?? "";
+  expect(row).not.toStartWith(" NOTES");
+  expect(row.trimEnd()).toEndWith(" NOTES  ~/notes");
+});
+
 test("the explorer marks notes by their registered file type, in any case", async () => {
   m = await mountShell({ cols: 120, rows: 36 });
   m.store.dispatch({
@@ -360,6 +385,29 @@ describe("index and panels at 120×36", () => {
     expect(frame).toContain(" OUTLINE");
     expect(frame).toContain("▸ Goals");
     expect(frame).toMatchSnapshot();
+  });
+
+  test("the backlinks picker names its note in the title", async () => {
+    m = await mountShell({ cols: 120, rows: 36 });
+    indexFixture(m);
+    m.advance(3000);
+    openNote(m, "notes/plan.md", NOTES["notes/plan.md"] ?? "");
+    m.keys("<leader>sb");
+    expect(await m.frame()).toContain("─ Backlinks of plan ─");
+  });
+
+  test("with the explorer on the right, the backlinks panel docks left", async () => {
+    m = await mountShell({ cols: 120, rows: 36, config: RIGHT });
+    indexFixture(m);
+    m.advance(3000);
+    m.open("notes/plan.md", NOTES["notes/plan.md"] ?? "");
+    m.keys("<leader>lb");
+    answerSearch(m, MENTIONS);
+    const rows = (await m.frame()).split("\n");
+    expect(rows[1]?.startsWith(" BACKLINKS")).toBe(true);
+    expect(rows[1]?.trimEnd().endsWith(" NOTES  ~/notes")).toBe(true);
+    expect(rows.join("\n")).toMatchSnapshot();
+    expect(rows.at(-4)).toContain("C-w l back to the editor");
   });
 
   test("the backlinks panel shows Linked then Unlinked mentions", async () => {

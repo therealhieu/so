@@ -96,3 +96,13 @@ test("mouse defaults to on and rejects a non-boolean", () => {
   expect(e?.line).toBe(1);
   expect(e?.message).toStartWith("mouse: ");
 });
+
+test("the explorer docks left unless configured right", () => {
+  expect(defaults.explorer).toEqual({ position: "left" });
+  const r = parseConfig(lines("[explorer]", 'position = "right"'));
+  expect(r.ok && r.config.explorer.position).toBe("right");
+  const [e, ...rest] = errors(lines("[explorer]", 'position = "top"'));
+  expect(rest).toEqual([]);
+  expect(e?.line).toBe(2);
+  expect(e?.message).toStartWith("explorer.position: ");
+});

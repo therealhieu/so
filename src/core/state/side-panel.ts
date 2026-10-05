@@ -20,6 +20,10 @@ const DOCK_MIN_COLS = 100;
 export const panelDocked = (s: AppState): boolean =>
   s.panels.side.open && s.terminal.cols >= DOCK_MIN_COLS;
 
+/** The docked panel's edge: the one the explorer is not on. */
+export const panelSide = (s: AppState): "left" | "right" =>
+  s.config.explorer.position === "right" ? "left" : "right";
+
 /** Keys go to the panel: docked and focused. */
 export const panelFocused = (s: AppState): boolean =>
   panelDocked(s) && s.panels.side.focused;

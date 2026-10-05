@@ -27,6 +27,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>sc", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>:", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>?", id: "help.keymap" },
+  { scope: { mode: "normal" }, seq: "<leader>qq", id: "app.quit" },
   { scope: { mode: "normal" }, seq: "<C-o>", id: "jump.back" },
   { scope: { mode: "normal" }, seq: "<C-i>", id: "jump.forward" },
   { scope: { mode: "normal" }, seq: "<Tab>", id: "jump.forward" },
@@ -40,6 +41,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "m", id: "explorer.move" },
   { scope: { mode: "explorer" }, seq: "d", id: "explorer.delete" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
+  { scope: { mode: "explorer" }, seq: "<leader>qq", id: "app.quit" },
 ];
 
 /** Which-key group labels by prefix sequence. */
@@ -49,4 +51,5 @@ export const defaultGroups: Readonly<Record<string, string>> = {
   "<leader>b": "buffer",
   "<leader>w": "window",
   "<leader>u": "ui",
+  "<leader>q": "quit",
 };
