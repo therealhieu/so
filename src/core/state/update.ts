@@ -60,7 +60,7 @@ import {
   followShownNote,
   onMentionResults,
 } from "./side-panel";
-import type { Action, AppState, BufferId, Effect, Result } from "./types";
+import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
 import { onZoomFill } from "./zoom";
@@ -230,17 +230,13 @@ export function createUpdate(reg: Registries): Update {
           reg,
         ),
       );
-      const withSession =
+      const withSession: Result =
         action.type !== "stateLoaded" && sessionChanged(state, r.state)
           ? {
               state: r.state,
               effects: [
                 ...r.effects,
-                {
-                  kind: "startTimer" as const,
-                  id: "saveState" as const,
-                  ms: SAVE_STATE_MS,
-                },
+                { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
               ],
             }
           : r;
@@ -296,7 +292,7 @@ function onTimerAction(
     };
   if (a.id === "gitRefresh") return onGitRefreshTimer(s);
   if (a.id.startsWith("gitDiff:"))
-    return onGitDiffTimer(s, Number(a.id.slice("gitDiff:".length)) as BufferId);
+    return onGitDiffTimer(s, Number(a.id.slice("gitDiff:".length)));
   return onTimer(s, a);
 }
 
