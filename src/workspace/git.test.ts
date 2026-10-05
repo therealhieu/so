@@ -2,8 +2,16 @@ import { afterEach, expect, test } from "bun:test";
 import { statSync, utimesSync } from "node:fs";
 import { join } from "node:path";
 import { type GitRepo, gitRepo } from "../../test/support/git-repo";
-import type { RepoInfo } from "../core/state/types";
-import { bunGitSpawn, createGit, type GitSpawn, parseVersion } from "./git";
+import { diffLines } from "../core/features/git/diff";
+import { hunkPatch } from "../core/features/git/patch";
+import type { IndexEntry, RepoInfo } from "../core/state/types";
+import {
+  BASE,
+  bunGitSpawn,
+  createGit,
+  type GitSpawn,
+  parseVersion,
+} from "./git";
 import type { Logger } from "./log";
 
 type Logged = { event: string; fields?: Record<string, unknown> };
@@ -215,4 +223,197 @@ test("index reads classify ignored, untracked, and conflicted files, and blame o
     fields: { command: "blame --porcelain", code: 128 },
   });
   expect(String(logger.logged[0]?.fields?.reason)).toStartWith("fatal:");
+});
+
+/** A file's text in the buffer's line model. */
+const bufferOf = (text: string) => {
+  const lf = text.replaceAll("\r\n", "\n");
+  const finalNewline = lf.endsWith("\n");
+  return {
+    lines: (finalNewline ? lf.slice(0, -1) : lf).split("\n"),
+    finalNewline,
+    bom: false,
+  };
+};
+
+const tracked = (e: IndexEntry) => {
+  if (e.kind !== "tracked") throw new Error(`entry is ${e.kind}`);
+  return e;
+};
+
+const TEN = `${Array.from({ length: 10 }, (_, i) => `line ${i + 1}`).join("\n")}\n`;
+
+test("staging one of two hunks stages exactly that hunk", async () => {
+  const r = await repo({ "notes/a.md": TEN });
+  const info = await detected(r, join(r.root, "notes"));
+  const g = gitIn(r);
+  const saved = TEN.replace("line 2\n", "line two\n").replace(
+    "line 8\n",
+    "line eight\n",
+  );
+  await r.write("notes/a.md", saved);
+  const entry = tracked(await g.readIndex(info, "notes/a.md"));
+  const cur = bufferOf(saved);
+  const hunks = diffLines(entry.text.lines, cur.lines);
+  expect(hunks).toHaveLength(2);
+  const first = hunks[0] as (typeof hunks)[0];
+  const patch = hunkPatch("notes/a.md", entry.mode, first, entry.text, cur);
+
+  expect(
+    await g.stage(info, {
+      repoPath: "notes/a.md",
+      expectedOid: entry.oid,
+      patch,
+    }),
+  ).toBe("ok");
+  const cached = await r.run(["diff", "--cached", "-U0"]);
+  expect(cached).toContain("-line 2\n+line two\n");
+  expect(cached).not.toContain("eight");
+  const unstaged = await r.run(["diff", "-U0"]);
+  expect(unstaged).toContain("-line 8\n+line eight\n");
+  expect(unstaged).not.toContain("two");
+});
+
+test("staging an untracked file and a CRLF line stage only the hunk", async () => {
+  const r = await repo({ "a.md": TEN });
+  const info = await detected(r);
+  const g = gitIn(r);
+  await r.write("new.md", "first\r\nsecond\r\n");
+  expect(await g.readIndex(info, "new.md")).toEqual({ kind: "untracked" });
+  // An untracked file is staged against an empty entry in its own ending.
+  const cur = bufferOf("first\r\nsecond\r\n");
+  const [whole] = diffLines([], cur.lines, { untracked: true });
+  if (whole === undefined) throw new Error("no hunk");
+  const empty = { lines: [], finalNewline: false, bom: false, eol: "\r\n" };
+  const patch = hunkPatch("new.md", "100644", whole, empty, cur);
+  expect(
+    await g.stage(info, { repoPath: "new.md", expectedOid: null, patch }),
+  ).toBe("ok");
+  expect(await r.run(["show", ":new.md"])).toBe("first\r\nsecond\r\n");
+  await r.write("new.md", "first\r\nsecond\r\nthird\r\n");
+  expect(await r.run(["status", "--porcelain", "--", "new.md"])).toBe(
+    "AM new.md\n",
+  );
+
+  const crlf = await repo({ "c.md": "one\ntwo\nthree\n" });
+  await crlf.run(["config", "core.autocrlf", "true"]);
+  const cinfo = await detected(crlf);
+  const cg = gitIn(crlf);
+  const saved = "one\r\nTWO\r\nthree\r\n";
+  await crlf.write("c.md", saved);
+  const entry = tracked(await cg.readIndex(cinfo, "c.md"));
+  const ccur = bufferOf(saved);
+  const hunks = diffLines(entry.text.lines, ccur.lines);
+  expect(hunks).toHaveLength(1);
+  const h = hunks[0] as (typeof hunks)[0];
+  expect(
+    await cg.stage(cinfo, {
+      repoPath: "c.md",
+      expectedOid: entry.oid,
+      patch: hunkPatch("c.md", entry.mode, h, entry.text, ccur),
+    }),
+  ).toBe("ok");
+  expect(await crlf.run(["diff", "--cached", "--numstat"])).toBe(
+    "1\t1\tc.md\n",
+  );
+  expect(await crlf.run(["show", ":c.md"])).toBe("one\nTWO\nthree\n");
+  expect(await crlf.run(["diff", "--numstat"])).toBe("");
+});
+
+test("a changed index entry stages nothing", async () => {
+  const r = await repo({ "a.md": TEN });
+  const info = await detected(r);
+  const g = gitIn(r);
+  const entry = tracked(await g.readIndex(info, "a.md"));
+  const saved = TEN.replace("line 2\n", "line two\n");
+  await r.write("a.md", saved);
+  const cur = bufferOf(saved);
+  const [h] = diffLines(entry.text.lines, cur.lines);
+  if (h === undefined) throw new Error("no hunk");
+  const patch = hunkPatch("a.md", entry.mode, h, entry.text, cur);
+  // Another writer stages a different change first.
+  await r.write("a.md", TEN.replace("line 9\n", "line nine\n"));
+  await r.run(["add", "a.md"]);
+  const before = await r.run(["ls-files", "-s"]);
+  expect(
+    await g.stage(info, { repoPath: "a.md", expectedOid: entry.oid, patch }),
+  ).toBe("stale");
+  expect(await r.run(["ls-files", "-s"])).toBe(before);
+});
+
+const ALLOWED = new Set([
+  "--version",
+  "rev-parse",
+  "symbolic-ref",
+  "status",
+  "ls-files",
+  "cat-file",
+  "blame",
+  "add",
+  "apply",
+]);
+
+test("every git call uses an allowed subcommand and keeps contents on stdin", async () => {
+  const r = await repo({ "a.md": TEN, "notes/b.md": "b\n" });
+  const real = bunGitSpawn(r.env);
+  const calls: { argv: string[]; stdin?: string }[] = [];
+  const spawn: GitSpawn = (argv, o) => {
+    calls.push(o.stdin === undefined ? { argv } : { argv, stdin: o.stdin });
+    return real(argv, o);
+  };
+  const g = createGit({
+    spawn,
+    which: (c) => Bun.which(c),
+    logger: recordingLogger(),
+  });
+  const { repo: info } = await g.detect(join(r.root, "notes"));
+  if (info === null) throw new Error("no repository detected");
+  await g.status(info);
+  const saved = TEN.replace("line 2\n", "line two\n");
+  await r.write("a.md", saved);
+  const entry = tracked(await g.readIndex(info, "a.md"));
+  const cur = bufferOf(saved);
+  const [h] = diffLines(entry.text.lines, cur.lines);
+  if (h === undefined) throw new Error("no hunk");
+  const patch = hunkPatch("a.md", entry.mode, h, entry.text, cur);
+  await g.stage(info, { repoPath: "a.md", expectedOid: entry.oid, patch });
+  await r.write("notes/new.md", "new\n");
+  const newPatch = hunkPatch(
+    "notes/new.md",
+    "100644",
+    {
+      kind: "untracked",
+      old: { start: 0, count: 0 },
+      new: { start: 0, count: 1 },
+      oldLines: [],
+    },
+    { lines: [], finalNewline: false, bom: false, eol: "\n" },
+    bufferOf("new\n"),
+  );
+  await g.stage(info, {
+    repoPath: "notes/new.md",
+    expectedOid: null,
+    patch: newPatch,
+  });
+  const contents = "line 1\nunsaved\nline 2\n";
+  await g.blame(info, "a.md", 1, contents);
+
+  const subcommands = new Set<string>();
+  for (const { argv, stdin } of calls) {
+    expect(argv.slice(0, BASE.length)).toEqual(BASE);
+    const [sub = "", ...rest] = argv.slice(BASE.length);
+    subcommands.add(sub);
+    expect(ALLOWED.has(sub)).toBe(true);
+    if (sub === "add") expect(rest[0]).toBe("--intent-to-add");
+    if (sub === "apply") expect(rest[0]).toBe("--cached");
+    for (const arg of argv) {
+      expect(arg).not.toContain("\n");
+      expect(arg).not.toContain("line two");
+      expect(arg).not.toContain("unsaved");
+    }
+    if (sub === "apply") expect([patch, newPatch]).toContain(stdin as string);
+    else if (sub === "blame") expect(stdin).toBe(contents);
+    else expect(stdin).toBeUndefined();
+  }
+  expect([...subcommands].sort()).toEqual([...ALLOWED].sort());
 });

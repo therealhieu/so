@@ -17,14 +17,22 @@ export type GitSpawn = (
 ) => Promise<{ code: number; stdout: string; stderr: string }>;
 
 /**
- * Every Git call so makes. Reads pass `--no-optional-locks`, so they never
- * refresh the index.
+ * Every Git call so makes. Only `stage` writes the index; reads pass
+ * `--no-optional-locks`, so they never refresh it either.
  */
 export type Git = {
   detect(root: string): Promise<{ repo: RepoInfo | null; notice?: string }>;
   status(repo: RepoInfo): Promise<RepoStatus>;
   /** The index entry of `repoPath` (relative to the repository top). */
   readIndex(repo: RepoInfo, repoPath: string): Promise<IndexEntry>;
+  /**
+   * Apply `patch` to the index while the entry's oid is `expectedOid`;
+   * `null` adds an untracked file with intent-to-add first.
+   */
+  stage(
+    repo: RepoInfo,
+    e: { repoPath: string; expectedOid: string | null; patch: string },
+  ): Promise<"ok" | "stale">;
   /** Blame 0-based `line` of `contents`, the buffer's unsaved text. */
   blame(
     repo: RepoInfo,
@@ -153,15 +161,15 @@ export function createGit(d: {
     return r.code === 0 ? r.stdout : null;
   };
 
-  const listed = async (repo: RepoInfo, repoPath: string) =>
+  /** The index stages of `repoPath`, plus a record for it when `others` and untracked. */
+  const listed = async (repo: RepoInfo, repoPath: string, others: boolean) =>
     parseListing(
       await run(repo.top, [
         "ls-files",
         "-z",
         "-s",
         "--eol",
-        "--others",
-        "--exclude-standard",
+        ...(others ? ["--others", "--exclude-standard"] : []),
         "--",
         repoPath,
       ]),
@@ -232,7 +240,7 @@ export function createGit(d: {
     },
 
     readIndex: async (repo, repoPath) => {
-      const entries = await listed(repo, repoPath);
+      const entries = await listed(repo, repoPath, true);
       if (entries.length === 0) return { kind: "ignored" };
       const stages = entries.filter((e) => e.staged);
       if (stages.length === 0) return { kind: "untracked" };
@@ -247,6 +255,21 @@ export function createGit(d: {
         conflicted: stages.some((x) => x.stage > 0),
         text: normalizeIndexText(text, eolAttr(e.eol)),
       };
+    },
+
+    stage: async (repo, e) => {
+      if (e.expectedOid === null)
+        await run(repo.top, ["add", "--intent-to-add", "--", e.repoPath]);
+      else {
+        const [entry] = await listed(repo, e.repoPath, false);
+        if (!entry?.staged || entry.oid !== e.expectedOid) return "stale";
+      }
+      await run(
+        repo.top,
+        ["apply", "--cached", "--unidiff-zero", "--whitespace=nowarn", "-"],
+        e.patch,
+      );
+      return "ok";
     },
 
     blame: async (repo, repoPath, line, contents) =>
