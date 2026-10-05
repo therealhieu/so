@@ -54,6 +54,8 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   mermaid: ["src/preview/"],
   "toml-eslint-parser": ["src/core/config/"],
   "@resvg/resvg-wasm": ["src/workspace/"],
+  "vscode-jsonrpc": ["src/workspace/lsp/"],
+  "vscode-languageserver-protocol": ["src/workspace/lsp/"],
 };
 
 const transpiler = new Bun.Transpiler({ loader: "ts" });
