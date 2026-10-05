@@ -20,6 +20,7 @@ import type {
 } from "../lang/markdown/frontmatter-patch";
 import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
+import type { CodeCompletionItem, LspState, ServerKey } from "./lsp-types";
 
 export type BufferId = number;
 export type WindowId = number;
@@ -62,7 +63,11 @@ export type TimerId =
   | `toast:${number}`
   | "whichKey"
   | "saveState"
-  | "search";
+  | "search"
+  | "completion"
+  | "lspResolve"
+  | `lsp:${number}`
+  | `lspFormat:${BufferId}`;
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -157,10 +162,24 @@ type PromptBase = {
  * An explorer prompt. `op` is the operation it completes: for "create",
  * `from` is the folder the new entry goes in; otherwise the selected path.
  */
-export type ExplorerPrompt = PromptBase & { op: FsOp; newNote?: never };
+export type ExplorerPrompt = PromptBase & {
+  op: FsOp;
+  newNote?: never;
+  rename?: never;
+};
 /** A new note's title, before its template is chosen. */
-type NewNotePrompt = PromptBase & { newNote: true; op?: never };
-export type PromptState = ExplorerPrompt | NewNotePrompt;
+type NewNotePrompt = PromptBase & {
+  newNote: true;
+  op?: never;
+  rename?: never;
+};
+/** A new name for the symbol at `pos`, asked of the server `key`. */
+type RenamePrompt = PromptBase & {
+  rename: { key: ServerKey; path: string; pos: Pos; version: number };
+  op?: never;
+  newNote?: never;
+};
+export type PromptState = ExplorerPrompt | NewNotePrompt | RenamePrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {
@@ -174,14 +193,22 @@ export type SidePanelState = {
 };
 
 export type CompletionState = {
-  /** The position just after "[[". */
+  /** The position just after "[[", or the word start for code. */
   anchor: Pos;
-  mode: "notes" | "headings" | "blocks";
+  mode: "notes" | "headings" | "blocks" | "code";
   /** The resolved note whose headings or blocks are listed. */
   target?: string;
   query: string;
-  items: { insert: string; label: string; detail?: string }[];
+  /** Ranked rows; `source` is the row's index in `code.items`. */
+  items: { insert: string; label: string; detail?: string; source?: number }[];
   selected: number;
+  /** Code completion: the server's items, kept for local re-ranking and accept. */
+  code?: {
+    key: ServerKey;
+    items: CodeCompletionItem[];
+    incomplete: boolean;
+    version: number;
+  };
 };
 
 /** The open calendar: the month shown, today, and the selected day (always in `month`). */
@@ -425,6 +452,7 @@ export type AppState = {
   /** Workspace paths, most recently opened first. */
   recent: string[];
   preview: PreviewState;
+  lsp: LspState;
 };
 
 export type Action =

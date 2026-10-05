@@ -351,6 +351,7 @@ export function promptKey(
   const closed: AppState = { ...s, overlay: { kind: "none" } };
   if (key === "<Esc>") return none(closed);
   if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
+  if (p.rename !== undefined) return none(s);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);

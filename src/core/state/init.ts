@@ -52,5 +52,13 @@ export function initialState(boot: {
     jumps: { entries: [], at: 0 },
     recent: [],
     preview: { status: "off" },
+    lsp: {
+      servers: {},
+      attached: {},
+      diagnostics: {},
+      shown: {},
+      pending: {},
+      nextId: 1,
+    },
   };
 }
