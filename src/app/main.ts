@@ -36,6 +36,11 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { EmbedModelRegistry } from "../core/state/embed-models";
+import {
+  gitBindings,
+  gitCommands,
+  gitGroups,
+} from "../core/state/git-commands";
 import { initialState } from "../core/state/init";
 import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
@@ -144,6 +149,7 @@ function registries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   const embedModels = new EmbedModelRegistry();
@@ -161,8 +167,9 @@ function registries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...gitBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...gitGroups },
     viewContexts,
     embedModels,
     layouts,

@@ -2,9 +2,10 @@ import { afterEach, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { OptimizedBuffer, TextAttributes } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
+import { createToolHost } from "../../src/app/tool-host";
 import { normalizeIndexText } from "../../src/core/features/git/index-text";
 import { parseStatus } from "../../src/core/features/git/status";
-import type { IndexEntry, RepoInfo } from "../../src/core/state/types";
+import type { Effect, IndexEntry, RepoInfo } from "../../src/core/state/types";
 import { FOREIGN_MODES_RESET } from "../../src/ui/shell";
 import { type Theme, themes } from "../../src/ui/theme";
 import { stamp } from "../support/state";
@@ -907,4 +908,229 @@ test("the hunk float closes on escape, q, outside clicks, and other keys", async
   x.keys("<leader>ghp");
   expect(x.store.get().overlay.kind).toBe("none");
   expect((await rowsOf(x)).at(-2)?.trimEnd()).toBe("no hunk at cursor");
+});
+
+/** The roadmap's index lines, and the buffer whose four hunks count +2 ~2 -3. */
+const ROADMAP_INDEX = [
+  "# Roadmap",
+  "alpha",
+  "beta",
+  "gamma",
+  "delta",
+  "eps",
+  "x1",
+  "x2",
+  "x3",
+  "end",
+];
+const ROADMAP = [
+  "# Roadmap",
+  "alpha!",
+  "beta",
+  "new one",
+  "new two",
+  "gamma",
+  "delta!",
+  "eps",
+  "end",
+];
+const ROADMAP_PATH = "projects/so-roadmap.md";
+
+/**
+ * A git adapter for the mounted shell: it answers the recorded index reads,
+ * status reads, and stages from its own HEAD and index text. Each stage
+ * makes the next of `staged` the index.
+ */
+function fakeGit(x: Mounted, staged: string[][]) {
+  const head = textOf(ROADMAP_INDEX);
+  let index = head;
+  let seen = 0;
+  const status = () => {
+    const xy = `${index === head ? "." : "M"}${index === textOf(ROADMAP) ? "." : "M"}`;
+    const records = [
+      "# branch.oid 0123456789abcdef0123456789abcdef01234567",
+      "# branch.head main",
+    ];
+    if (xy !== "..")
+      records.push(
+        `1 ${xy} N... 100644 100644 100644 ${"1".repeat(40)} ${"2".repeat(40)} ${ROADMAP_PATH}`,
+      );
+    return parseStatus(`${records.join("\0")}\0`, "");
+  };
+  const answer = (e: Effect) => {
+    if (e.kind === "gitReadIndex")
+      x.store.dispatch({
+        type: "gitIndexRead",
+        path: e.path,
+        entry: tracked(index),
+      });
+    if (e.kind === "gitStatus")
+      x.store.dispatch({
+        type: "gitStatus",
+        result: { ok: true, status: status() },
+      });
+    if (e.kind === "gitStage") {
+      index = textOf(staged.shift() ?? []);
+      x.store.dispatch({
+        type: "gitStaged",
+        path: e.path,
+        result: "ok",
+        report: e.report,
+      });
+    }
+  };
+  /** Answer every effect recorded since the last call, and the refresh timer. */
+  const settleGit = () => {
+    for (let round = 0; round < 5; round++) {
+      while (seen < x.effects.length) {
+        const e = x.effects[seen++];
+        if (e !== undefined) answer(e);
+      }
+      x.advance(200);
+    }
+  };
+  return { settleGit };
+}
+
+test("staging updates gutter, statusline, and explorer together", async () => {
+  m = await inRepo({ cols: 120, rows: 36, explorer: true });
+  const x = m;
+  x.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "projects", kind: "dir" }],
+  });
+  x.store.dispatch({
+    type: "dirListed",
+    dir: "projects",
+    entries: [{ name: "so-roadmap.md", kind: "file" }],
+  });
+  x.keys("kl");
+  const withNew = [
+    ...ROADMAP_INDEX.slice(0, 3),
+    "new one",
+    "new two",
+    ...ROADMAP_INDEX.slice(3),
+  ];
+  const git = fakeGit(x, [
+    withNew,
+    withNew.map((l) => (l === "alpha" ? "alpha!" : l)),
+    withNew.map((l) =>
+      l === "alpha" ? "alpha!" : l === "delta" ? "delta!" : l,
+    ),
+    ROADMAP,
+  ]);
+  x.open(ROADMAP_PATH, textOf(ROADMAP));
+  git.settleGit();
+  /** The change column per buffer line, the git segment, the roadmap's tree row, and the message. */
+  const surfaces = async () => {
+    const rows = await rowsOf(x);
+    const left = [...(rows[1] ?? "")].indexOf("│") + 1;
+    return {
+      signs: rows
+        .slice(1, 1 + ROADMAP.length)
+        .map((r) => [...r][left] ?? " ")
+        .join(""),
+      status: rows[34]?.match(/⎇[^│]*/)?.[0].trim(),
+      explorer: rows
+        .slice(2)
+        .find((r) => r.includes("so-roadmap.md"))
+        ?.split("│")[0]
+        ?.trim(),
+      message: rows[35]?.trim(),
+    };
+  };
+  expect(await surfaces()).toEqual({
+    signs: " ~ ++ ~_ ",
+    status: "⎇ main +2 ~2 -3",
+    explorer: expect.stringMatching(/so-roadmap\.md M$/),
+    message: "",
+  });
+
+  x.keys("4G<leader>ghs");
+  git.settleGit();
+  expect(await surfaces()).toEqual({
+    signs: " ~    ~_ ",
+    status: "⎇ main ~2 -3",
+    explorer: expect.stringMatching(/so-roadmap\.md M$/),
+    message: "staged hunk 2/4",
+  });
+
+  for (const line of [2, 7, 8]) {
+    x.keys(`${line}G<leader>ghs`);
+    git.settleGit();
+  }
+  expect(await surfaces()).toEqual({
+    signs: "         ",
+    status: "⎇ main",
+    explorer: expect.stringMatching(/so-roadmap\.md S$/),
+    message: "staged hunk 1/1",
+  });
+});
+
+test("the hand-off paints the saved message once and restores the screen", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    m = await inRepo({
+      cols: 100,
+      rows: 40,
+      capabilities: KITTY,
+      files: { "images/diagram.png": PNG },
+    });
+    const x = m;
+    x.store.dispatch({
+      type: "indexBatch",
+      summaries: [],
+      files: [ROADMAP_PATH, "images/diagram.png"],
+      done: 0,
+      total: 0,
+    });
+    x.open(ROADMAP_PATH, "# Roadmap\n\n![[diagram.png]]\n\nText\n");
+    await x.frame();
+    await Bun.sleep(0);
+    x.keys("GoNext step<Esc><leader>gg");
+    x.store.dispatch({ type: "saved", path: ROADMAP_PATH, stamp: stamp(2) });
+    const run = x.effects.filter((e) => e.kind === "runTool");
+    expect(run).toHaveLength(1);
+    const frames = x.record();
+    const tool = { framesBefore: -1, framesDuring: -1, drawsDuring: -1 };
+    const host = createToolHost({
+      screen: x.shell,
+      holdInterrupts: () => () => {},
+      which: (c) => `/usr/bin/${c}`,
+      logger: { info: () => {}, error: () => {} },
+      spawn: async () => {
+        tool.framesBefore = frames.recordedFrames.length;
+        draw.mockClear();
+        // The editor changes while the tool runs; nothing may paint.
+        x.store.dispatch({ type: "resize", cols: 100, rows: 40 });
+        await settle();
+        tool.framesDuring = frames.recordedFrames.length - tool.framesBefore;
+        tool.drawsDuring = draw.mock.calls.length;
+        return { code: 0 };
+      },
+    });
+    const e = run[0];
+    if (e?.kind !== "runTool") throw new Error("expected runTool");
+    // The runner dispatches the result as soon as the run ends.
+    x.store.dispatch({
+      type: "toolExited",
+      result: await host.run(e.argv, e.cwd),
+    });
+    await settle();
+    frames.stop();
+    const list = frames.recordedFrames.map((f) => f.frame.split("\n"));
+    const pre = list[tool.framesBefore - 1];
+    const post = list[tool.framesBefore];
+    const messageRow = 39;
+    expect(pre?.[messageRow]?.trim()).toBe(
+      `"${ROADMAP_PATH}" written · opening lazygit`,
+    );
+    expect(tool).toMatchObject({ framesDuring: 0, drawsDuring: 0 });
+    expect(post?.[messageRow]?.trim()).toBe("");
+    expect(post?.slice(0, messageRow)).toEqual(pre?.slice(0, messageRow));
+    expect(draw).toHaveBeenCalled();
+  } finally {
+    draw.mockRestore();
+  }
 });
