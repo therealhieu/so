@@ -18,6 +18,10 @@ export type LinkRef = {
 export type NoteSummary = {
   path: string;
   mtime: number;
+  /** Bytes on disk. */
+  size: number;
+  /** Birth time, else the modification time. */
+  ctime: number;
   /** The first H1, or the file name without `.md`. */
   title: string;
   aliases: string[];
@@ -37,14 +41,16 @@ export const CONTEXT_MAX = 160;
 /** Summarize a scanned note; with `lines`, each link also carries its line as context. */
 export function summarize(
   path: string,
-  mtime: number,
+  facts: { mtime: number; size: number; ctime: number },
   scan: DocScan,
   lines?: { line(i: number): string },
 ): NoteSummary {
   const h1 = scan.headings.find((h) => h.level === 1);
   return {
     path,
-    mtime,
+    mtime: facts.mtime,
+    size: facts.size,
+    ctime: facts.ctime,
     title: h1?.text ?? basename(path).replace(/\.md$/i, ""),
     aliases: [...(scan.frontmatter?.aliases ?? [])],
     tags: [

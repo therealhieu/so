@@ -27,9 +27,9 @@ const fixed =
 
 test("no providers lays out raw lines", () => {
   expect(layoutText(view(["one", "", "two"]), [], undefined)).toEqual([
-    { sourceLine: 0, spans: [{ text: "one", style: "text" }] },
+    { sourceLine: 0, spans: [{ text: "one", style: "text", col: 0 }] },
     { sourceLine: 1, spans: [] },
-    { sourceLine: 2, spans: [{ text: "two", style: "text" }] },
+    { sourceLine: 2, spans: [{ text: "two", style: "text", col: 0 }] },
   ]);
 });
 
@@ -46,8 +46,8 @@ test("mark styles a range and keeps span offsets equal to source columns", () =>
     undefined,
   );
   expect(rows[0]?.spans).toEqual([
-    { text: "let", style: "codeKeyword" },
-    { text: " x = 1;", style: "text" },
+    { text: "let", style: "codeKeyword", col: 0 },
+    { text: " x = 1;", style: "text", col: 3 },
   ]);
   expect(rows[0]?.spans.map((s) => s.text).join("")).toBe("let x = 1;");
 });
@@ -67,9 +67,9 @@ test("later providers win where marks overlap", () => {
     undefined,
   );
   expect(rows[0]?.spans).toEqual([
-    { text: "ab", style: "codeString" },
-    { text: "cd", style: "selection" },
-    { text: "ef", style: "text" },
+    { text: "ab", style: "codeString", col: 0 },
+    { text: "cd", style: "selection", col: 2 },
+    { text: "ef", style: "text", col: 4 },
   ]);
 });
 
@@ -94,10 +94,10 @@ test("inline replace hides text and inserts its spans", () => {
     undefined,
   );
   expect(rows[0]?.spans).toEqual([
-    { text: "a ", style: "text" },
-    { text: "b", style: "text" },
-    { text: "†", style: "footnote" },
-    { text: " c", style: "text" },
+    { text: "a ", style: "text", col: 0 },
+    { text: "b", style: "text", col: 4 },
+    { text: "†", style: "footnote", col: 5, inserted: true },
+    { text: " c", style: "text", col: 7 },
   ]);
 });
 
@@ -116,9 +116,9 @@ test("block replace swaps whole lines for a widget row", () => {
     undefined,
   );
   expect(rows).toEqual([
-    { sourceLine: 0, spans: [{ text: "above", style: "text" }] },
+    { sourceLine: 0, spans: [{ text: "above", style: "text", col: 0 }] },
     { sourceLine: 1, spans: [], widget },
-    { sourceLine: 3, spans: [{ text: "below", style: "text" }] },
+    { sourceLine: 3, spans: [{ text: "below", style: "text", col: 0 }] },
   ]);
 });
 
@@ -141,7 +141,7 @@ test("block replace that starts above the viewport hides its visible lines", () 
   );
   expect(rows).toEqual([
     { sourceLine: 2, spans: [], widget },
-    { sourceLine: 4, spans: [{ text: "b", style: "text" }] },
+    { sourceLine: 4, spans: [{ text: "b", style: "text", col: 0 }] },
   ]);
 });
 
@@ -162,11 +162,11 @@ test("inline replace across a line break hides both parts", () => {
     {
       sourceLine: 0,
       spans: [
-        { text: "one ", style: "text" },
-        { text: "…", style: "comment" },
+        { text: "one ", style: "text", col: 0 },
+        { text: "…", style: "comment", col: 4, inserted: true },
       ],
     },
-    { sourceLine: 1, spans: [{ text: " two", style: "text" }] },
+    { sourceLine: 1, spans: [{ text: " two", style: "text", col: 7 }] },
   ]);
 });
 
@@ -178,9 +178,9 @@ test("block widget inserts rows below its line", () => {
     undefined,
   );
   expect(rows).toEqual([
-    { sourceLine: 0, spans: [{ text: "![a](a.png)", style: "text" }] },
+    { sourceLine: 0, spans: [{ text: "![a](a.png)", style: "text", col: 0 }] },
     { sourceLine: 0, spans: [], widget },
-    { sourceLine: 1, spans: [{ text: "next", style: "text" }] },
+    { sourceLine: 1, spans: [{ text: "next", style: "text", col: 0 }] },
   ]);
 });
 
@@ -205,8 +205,12 @@ test("line decoration sets the line style and sign", () => {
     undefined,
   );
   expect(rows).toEqual([
-    { sourceLine: 0, spans: [{ text: "code", style: "codeBlock" }], sign },
-    { sourceLine: 1, spans: [{ text: "plain", style: "text" }] },
+    {
+      sourceLine: 0,
+      spans: [{ text: "code", style: "codeBlock", col: 0 }],
+      sign,
+    },
+    { sourceLine: 1, spans: [{ text: "plain", style: "text", col: 0 }] },
   ]);
 });
 
@@ -234,7 +238,9 @@ test("viewport only", () => {
   expect(rows.map((r) => r.sourceLine)).toEqual(
     Array.from({ length: 30 }, (_, i) => 100 + i),
   );
-  expect(rows[0]?.spans).toEqual([{ text: "line 100", style: "codeString" }]);
+  expect(rows[0]?.spans).toEqual([
+    { text: "line 100", style: "codeString", col: 0 },
+  ]);
 });
 
 test("a failing highlighter yields no marks", () => {

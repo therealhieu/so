@@ -1,13 +1,15 @@
 import { expect, test } from "bun:test";
-import { fresh, openBuffer } from "../../../test/support/state";
+import { fresh, openBuffer, testRegistries } from "../../../test/support/state";
 import type { PreviewCtx } from "../lang/markdown/live-preview";
-import { markdownViewContext } from "./markdown-view";
+import { markdownViewContextFor } from "./markdown-view";
 import { ViewContextRegistry, type ViewHost } from "./view-context";
+
+const markdownViewContext = markdownViewContextFor(testRegistries());
 
 const host = (over: Partial<ViewHost> = {}): ViewHost => ({
   width: 80,
   rows: 40,
-  cellAspect: 0.5,
+  cell: { width: 8, height: 16 },
   imageSize: (p) =>
     p === "img/a.png" ? { width: 1600, height: 900 } : undefined,
   ...over,

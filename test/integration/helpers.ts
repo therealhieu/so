@@ -19,7 +19,7 @@ import {
 } from "../../src/workspace/state-file";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
-import { testRegistries } from "../support/state";
+import { editingNotes, testRegistries } from "../support/state";
 
 /** The runner's clock, so key times and timer times compare. */
 export const clock = () => performance.timeOrigin + performance.now();
@@ -141,7 +141,7 @@ export async function startApp(
   };
   const update = createUpdate(testRegistries());
   const store: Store = createStore(
-    initialState({ root, cols: 100, rows: 30, color: "nocolor" }),
+    editingNotes(initialState({ root, cols: 100, rows: 30, color: "nocolor" })),
     (s, a) => {
       actions.push(a);
       return update(s, a);

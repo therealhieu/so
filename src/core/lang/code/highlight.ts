@@ -83,33 +83,47 @@ function joinLines(buf: TextBuffer, from: number, to: number): string {
   return lines.join("\n");
 }
 
+type Highlighted = { from: number; to: number; spans: Span[][] };
+
 /**
  * Highlight a line range with lowlight's grammar for `language`. Each buffer
- * version is immutable, so results are cached per buffer object.
+ * version is immutable, so results are cached per buffer object. A miss
+ * highlights one more window below the range, so the shifted ranges a frame
+ * tries while fitting the cursor, and the next scroll steps, reuse it; the
+ * same range twice gets the same spans.
  */
 export function lowlightHighlighter(language: string): Highlighter {
   const cache = new WeakMap<
     TextBuffer,
-    { from: number; to: number; spans: Span[][] }
+    { whole: Highlighted; last: Highlighted }
   >();
   return {
     language,
     highlight(buf, lines) {
       const to = Math.min(lines.to, buf.lineCount);
       const hit = cache.get(buf);
-      if (hit !== undefined && hit.from === lines.from && hit.to === to)
-        return hit.spans;
-      if (hit !== undefined && hit.from <= lines.from && hit.to >= to)
-        return hit.spans.slice(lines.from - hit.from, to - hit.from);
-      const from = Math.max(0, lines.from - LOOK_BACK);
-      const tree = low.highlight(language, joinLines(buf, from, to), {
-        prefix: "",
-      });
-      const spans = lineSpans(tree as HastNode).slice(
-        lines.from - from,
-        to - from,
-      );
-      cache.set(buf, { from: lines.from, to, spans });
+      if (hit?.last.from === lines.from && hit.last.to === to)
+        return hit.last.spans;
+      const reuse =
+        hit !== undefined && hit.whole.from <= lines.from && hit.whole.to >= to;
+      let whole = hit?.whole;
+      if (!reuse || whole === undefined) {
+        const end = Math.min(buf.lineCount, to + (to - lines.from));
+        const from = Math.max(0, lines.from - LOOK_BACK);
+        const tree = low.highlight(language, joinLines(buf, from, end), {
+          prefix: "",
+        });
+        whole = {
+          from: lines.from,
+          to: end,
+          spans: lineSpans(tree as HastNode).slice(
+            lines.from - from,
+            end - from,
+          ),
+        };
+      }
+      const spans = whole.spans.slice(lines.from - whole.from, to - whole.from);
+      cache.set(buf, { whole, last: { from: lines.from, to, spans } });
       return spans;
     },
   };

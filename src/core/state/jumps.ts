@@ -62,25 +62,45 @@ function jumpTo(s: AppState, at: number, now: number): Result {
 
 /**
  * Show `path` in the active window with the cursor at `pos`, once its read
- * answers when it is not open yet.
+ * answers when it is not open yet; `subpath` is the "#…" its editor kind
+ * opens at.
  */
-export function goTo(s: AppState, path: string, pos: Pos, now: number): Result {
+export function goTo(
+  s: AppState,
+  path: string,
+  pos: Pos,
+  now: number,
+  subpath?: string,
+): Result {
   if (activeBuffer(s)?.path === path) return none(placeCursor(s, pos));
-  return chain(openPath(s, path, now), (st) =>
-    none(
-      activeBuffer(st)?.path === path
-        ? placeCursor(st, pos)
-        : awaitLoad(st, path, pos),
-    ),
+  return chain(
+    openPath(s, path, now, subpath === undefined ? {} : { subpath }),
+    (st) =>
+      none(
+        activeBuffer(st)?.path === path
+          ? placeCursor(st, pos)
+          : awaitLoad(st, path, pos, subpath),
+      ),
   );
 }
 
-/** The active window shows `path` at `cursor` once its read answers. */
-function awaitLoad(s: AppState, path: string, cursor: Pos): AppState {
+/** The active window shows `path` at `cursor` (and `subpath`) once its read answers. */
+function awaitLoad(
+  s: AppState,
+  path: string,
+  cursor: Pos,
+  subpath: string | undefined,
+): AppState {
   const restore = s.windows.restore ?? { pending: {}, missing: 0 };
   const pending = {
     ...restore.pending,
-    [s.windows.active]: { path, cursor, scroll: 0, navigated: true as const },
+    [s.windows.active]: {
+      path,
+      cursor,
+      scroll: 0,
+      navigated: true as const,
+      ...(subpath === undefined ? {} : { subpath }),
+    },
   };
   return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }

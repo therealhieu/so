@@ -6,9 +6,15 @@ import {
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import { createTextBuffer } from "../../core/kernel/text/text-buffer";
 import { bufferForPath, splitFile } from "../../core/state/buffers";
-import { PREVIEW_MIN_COLS, pickerSources } from "../../core/state/picker";
+import {
+  loadedPreview,
+  PREVIEW_MIN_COLS,
+  type PreviewLines,
+  pickerSources,
+} from "../../core/state/picker";
 import type {
   AppState,
+  MouseTarget,
   PickerItem,
   PickerState,
   TextFile,
@@ -34,6 +40,10 @@ function boxOf(s: AppState): Rect {
   return centered(s, w, h);
 }
 
+/** Below the preview width, a toggled preview shows in place of the list. */
+const narrowPreview = (s: AppState, p: PickerState) =>
+  s.terminal.cols < PREVIEW_MIN_COLS && p.showPreview === true;
+
 const pickerOf = (s: AppState): PickerState | undefined =>
   s.overlay.kind === "picker" ||
   s.overlay.kind === "palette" ||
@@ -49,6 +59,13 @@ const pickerOf = (s: AppState): PickerState | undefined =>
 export class PickerView extends Renderable {
   private s: AppState | undefined;
   private cursorAt: Cursor | undefined;
+  /**
+   * The painted item rows: screen columns `x` to `x + w`, rows `y` to
+   * `y + rows`, the first showing item `first`. Unset until the list paints.
+   */
+  private list:
+    | { x: number; y: number; w: number; rows: number; first: number }
+    | undefined;
   private readonly files = new WeakMap<TextFile, TextBuffer>();
 
   constructor(
@@ -65,7 +82,9 @@ export class PickerView extends Renderable {
     const p = pickerOf(s);
     this.visible = p !== undefined;
     this.cursorAt = undefined;
-    if (p === undefined) return;
+    if (p === undefined) this.list = undefined;
+    // The query line is hidden while a narrow preview replaces the list.
+    if (p === undefined || narrowPreview(s, p)) return;
     const box = boxOf(s);
     this.cursorAt = {
       x: Math.min(box.x + box.w - 2, box.x + 4 + cells(p.query)),
@@ -78,23 +97,58 @@ export class PickerView extends Renderable {
     return this.cursorAt;
   }
 
+  /** A painted item row, else `overlay` inside the float; `undefined` outside it. */
+  itemAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    if (s === undefined || !this.visible) return undefined;
+    const box = boxOf(s);
+    if (x < box.x || x >= box.x + box.w || y < box.y || y >= box.y + box.h)
+      return undefined;
+    const l = this.list;
+    return l !== undefined &&
+      x >= l.x &&
+      x < l.x + l.w &&
+      y >= l.y &&
+      y < l.y + l.rows
+      ? { kind: "overlayItem", index: l.first + y - l.y }
+      : { kind: "overlay" };
+  }
+
   protected renderSelf(buf: OptimizedBuffer): void {
     const s = this.s;
     const p = s && pickerOf(s);
+    this.list = undefined;
     if (s === undefined || p === undefined) return;
     const theme = themeOf(s);
     const source = pickerSources[p.source];
     const box = boxOf(s);
     const inner = box.w - 2;
-    const preview = s.terminal.cols >= PREVIEW_MIN_COLS;
-    const listW = preview ? Math.floor(inner * 0.6) : inner;
-    const accept = s.overlay.kind === "picker" ? "Enter open" : "Enter run";
+    const wide = s.terminal.cols >= PREVIEW_MIN_COLS;
+    const listW = wide ? Math.floor(inner * 0.6) : inner;
+    const accept = `Enter ${source?.action ?? (s.overlay.kind === "picker" ? "open" : "run")}`;
+    const tab = !wide && source?.previewAlways ? " · Tab preview" : "";
     drawFrame(buf, theme, box, {
       border: "floatBorder",
       fill: "float",
-      title: source?.title ?? p.source,
-      footer: `↑↓ move · ${accept} · Esc close`,
+      title:
+        p.arg !== undefined && source?.titleFor !== undefined
+          ? source.titleFor(p.arg)
+          : (source?.title ?? p.source),
+      footer:
+        p.browse !== undefined
+          ? "C-j/C-k move · Enter open · C-h back · Esc close"
+          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${tab} · Esc close`,
     });
+    if (narrowPreview(s, p)) {
+      this.paintPreviewPane(
+        buf,
+        theme,
+        p,
+        { x: box.x + 1, y: box.y + 1, w: inner, h: box.h - 2 },
+        s,
+      );
+      return;
+    }
     this.paintList(
       buf,
       theme,
@@ -102,7 +156,7 @@ export class PickerView extends Renderable {
       { x: box.x + 1, y: box.y + 1, w: listW, h: box.h - 2 },
       s,
     );
-    if (!preview) return;
+    if (!wide) return;
     const sepX = box.x + 1 + listW;
     for (let y = box.y + 1; y < box.y + box.h - 1; y++)
       drawCells(buf, theme.style("floatBorder"), sepX, y, "│", 1);
@@ -157,20 +211,38 @@ export class PickerView extends Renderable {
     }
     const room = r.y + r.h - y;
     if (p.items.length === 0) {
+      const sourceEmpty =
+        p.query === "" ? pickerSources[p.source]?.empty?.(s) : undefined;
       const empty =
-        p.source === "grep" && p.query === ""
+        sourceEmpty ??
+        (p.source === "grep" && p.query === ""
           ? "type to search"
           : p.search?.pending
             ? "searching…"
-            : "No matches";
-      if (room > 0)
-        drawCells(buf, theme.style("floatDim"), r.x, y, `   ${empty}`, r.w);
+            : "No matches");
+      const lines = empty.split("\n");
+      for (let i = 0; i < Math.min(lines.length, room); i++)
+        drawCells(
+          buf,
+          theme.style("floatDim"),
+          r.x,
+          y + i,
+          `   ${lines[i]}`,
+          r.w,
+        );
       return;
     }
     const first = Math.max(
       0,
       Math.min(p.selected - room + 1, p.items.length - room),
     );
+    this.list = {
+      x: r.x,
+      y,
+      w: r.w,
+      rows: Math.min(room, rows, p.items.length - first),
+      first,
+    };
     for (let i = 0; i < Math.min(room, rows); i++) {
       const item = p.items[first + i];
       if (item === undefined) break;
@@ -232,6 +304,20 @@ export class PickerView extends Renderable {
     const dim = theme.style("floatDim");
     if (item === undefined) return;
     const target = p.preview;
+    const describe = pickerSources[p.source]?.describe;
+    if (target === undefined && describe !== undefined) {
+      const lines = describe(s, item, p.browse);
+      // Scroll just enough to keep the selected note in view.
+      const at = lines.findIndex((l) => l.selected === true);
+      const first = Math.max(0, at - r.h + 1);
+      paintLines(
+        buf,
+        theme,
+        { ...r, x: r.x + 1, w: r.w - 1 },
+        lines.slice(first),
+      );
+      return;
+    }
     if (target === undefined) {
       // Commands and help preview their description as text.
       const lines = [item.label, "", ...(item.detail ?? "").split("  ")];
@@ -257,6 +343,12 @@ export class PickerView extends Renderable {
       r.w,
     );
     const body = { x: r.x + 1, y: r.y + 1, w: r.w - 1, h: r.h - 1 };
+    const render = pickerSources[p.source]?.render;
+    const loaded = render && loadedPreview(s, item);
+    if (render !== undefined && loaded !== undefined) {
+      paintLines(buf, theme, body, render(s, item, loaded));
+      return;
+    }
     const open = bufferForPath(s, target.path);
     let text: TextBuffer | undefined = open?.text;
     if (text === undefined && target.file !== undefined) {
@@ -288,6 +380,31 @@ export class PickerView extends Renderable {
       wrap,
     });
   }
+}
+
+/** Source-computed preview lines, each cut to the pane, with their styled ranges. */
+function paintLines(
+  buf: OptimizedBuffer,
+  theme: Theme,
+  r: Rect,
+  lines: PreviewLines,
+): void {
+  lines.slice(0, r.h).forEach((l, i) => {
+    const base = theme.style(l.style ?? "float");
+    const chars = [...l.text].slice(0, r.w);
+    drawCells(buf, base, r.x, r.y + i, "", r.w);
+    chars.forEach((ch, x) => {
+      const range = l.ranges?.find((g) => x >= g.from && x < g.to);
+      drawCells(
+        buf,
+        range === undefined ? base : theme.style(range.style),
+        r.x + x,
+        r.y + i,
+        ch,
+        1,
+      );
+    });
+  });
 }
 
 /** The grep query's first occurrence on `line`, matched as the search does (smart case). */

@@ -248,9 +248,11 @@ export function completionKey(
     });
   const item = c.items[c.selected];
   switch (a.key) {
+    case "<C-j>":
     case "<C-n>":
     case "<Down>":
       return move(1);
+    case "<C-k>":
     case "<C-p>":
     case "<Up>":
       return move(-1);

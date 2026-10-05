@@ -206,7 +206,9 @@ test("the backlinks picker lists linking notes, then unlinked mentions", () => {
   for (const a of [
     {
       type: "indexBatch",
-      summaries: files.map((p) => summarize(p, 1, scanDoc(notes[p] ?? ""))),
+      summaries: files.map((p) =>
+        summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(notes[p] ?? "")),
+      ),
       files,
       done: files.length,
       total: files.length,
@@ -288,4 +290,65 @@ test("an unavailable index shows the error row", () => {
     reason: "crash",
   }).state;
   expect(picker(run(s, "search.grep").state).error).toBe("index unavailable");
+});
+
+test("C-j and C-k move the selection like C-n and C-p", () => {
+  const s = run(indexed(120), "file.find").state;
+  const ctrl = keys(s, "<C-j><C-j><C-k>").state;
+  expect(picker(ctrl).selected).toBe(1);
+  expect(ctrl).toEqual(keys(s, "<C-n><C-n><C-p>").state);
+});
+
+function tagged(): AppState {
+  const notes: Record<string, string> = {
+    "a.md": "#so first\n",
+    "b.md": "---\ntags: [so/ui]\n---\n",
+    "c.md": "#daily\n",
+  };
+  let s = indexed(120, Object.keys(notes));
+  s = update(s, {
+    type: "indexBatch",
+    summaries: Object.keys(notes).map((p) =>
+      summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(notes[p] ?? "")),
+    ),
+    files: Object.keys(notes),
+    done: 3,
+    total: 3,
+  }).state;
+  return update(s, { type: "indexReady" }).state;
+}
+
+test("C-l moves into a tag's notes, C-j/C-k move there, and Enter opens one", () => {
+  const s = keys(run(tagged(), "search.tags").state, "so").state;
+  expect(picker(s).items[picker(s).selected]?.key).toBe("so");
+  const into = keys(s, "<C-l>").state;
+  expect(picker(into).browse).toBe(0);
+  // Two notes: moving stops at the last one and at the first one.
+  const moved = keys(into, "<C-j><C-j><C-j>").state;
+  expect(picker(moved).browse).toBe(1);
+  expect(picker(moved).selected).toBe(picker(s).selected);
+  expect(picker(keys(moved, "<C-k><C-k>").state).browse).toBe(0);
+  const opened = keys(keys(into, "<C-j>").state, "<CR>");
+  expect(opened.state.overlay.kind).toBe("none");
+  expect(opened.effects).toContainEqual({ kind: "read", path: "b.md" });
+});
+
+test("C-h, backspace, or typing give the keys back to the tag list", () => {
+  const into = keys(
+    keys(run(tagged(), "search.tags").state, "so").state,
+    "<C-l>",
+  ).state;
+  expect(picker(keys(into, "<C-h>").state).browse).toBeUndefined();
+  const bs = keys(into, "<BS>").state;
+  expect(picker(bs).browse).toBeUndefined();
+  expect(picker(bs).query).toBe("so");
+  const typed = keys(into, "/").state;
+  expect(picker(typed).browse).toBeUndefined();
+  expect(picker(typed).query).toBe("so/");
+  expect(keys(into, "<Esc>").state.overlay.kind).toBe("none");
+});
+
+test("C-l does nothing in a picker without a notes list", () => {
+  const s = run(indexed(120), "file.find").state;
+  expect(keys(s, "<C-l>").state).toEqual(s);
 });

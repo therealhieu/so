@@ -4,6 +4,7 @@ import {
   resolveImageRenderProtocol,
   type TerminalCapabilities,
 } from "@opentui/core";
+import type { RgbaImage } from "../core/state/types";
 
 /** How an image is drawn: a graphics protocol, block characters, or its name. */
 export type ImageTier = "kitty" | "sixel" | "blocks" | "placeholder";
@@ -51,8 +52,14 @@ export class ImageCache {
     this.retryMs = o.retryMs ?? 60_000;
   }
 
-  /** The decoded image, a failure, or undefined while it loads (the first call starts the load). */
-  get(ref: string): { image: NativeImage } | { failed: true } | undefined {
+  /**
+   * The decoded image, a failure, or undefined while it loads (the first
+   * call starts the load, with `load` in place of the workspace loader).
+   */
+  get(
+    ref: string,
+    load: (ref: string) => Promise<Uint8Array | RgbaImage> = this.o.load,
+  ): { image: NativeImage } | { failed: true } | undefined {
     const e = this.entries.get(ref);
     if (e?.kind === "image") {
       this.entries.delete(ref);
@@ -62,8 +69,14 @@ export class ImageCache {
     if (e?.kind === "loading") return undefined;
     if (e?.kind === "failed" && this.o.now() - e.at < this.retryMs)
       return { failed: true };
-    this.start(ref);
+    this.start(ref, load);
     return undefined;
+  }
+
+  /** The decoded image if it is held; never starts a load. */
+  peek(ref: string): NativeImage | undefined {
+    const e = this.entries.get(ref);
+    return e?.kind === "image" ? e.image : undefined;
   }
 
   /** The pixel size of a decoded image. */
@@ -79,10 +92,18 @@ export class ImageCache {
     return this.o.cell?.();
   }
 
-  /** Cell width ÷ cell height: from the cell's pixels when known, else 0.5. */
-  cellAspect(): number {
+  /** A cell's size in pixels: the terminal's when it reports one, else 8×16. */
+  cellSize(): { width: number; height: number } {
     const c = this.cellPixels();
-    return c === undefined || c.height <= 0 ? 0.5 : c.width / c.height;
+    return c === undefined || c.width <= 0 || c.height <= 0
+      ? { width: 8, height: 16 }
+      : c;
+  }
+
+  /** Cell width ÷ cell height. */
+  cellAspect(): number {
+    const c = this.cellSize();
+    return c.width / c.height;
   }
 
   /** Bytes of decoded pixels held. */
@@ -98,11 +119,13 @@ export class ImageCache {
     this.total = 0;
   }
 
-  private start(ref: string): void {
+  private start(
+    ref: string,
+    load: (ref: string) => Promise<Uint8Array | RgbaImage>,
+  ): void {
     const loading: Entry = { kind: "loading" };
     this.entries.set(ref, loading);
-    this.o
-      .load(ref)
+    load(ref)
       .then((bytes) => this.decode(bytes))
       .then(
         (decoded) => this.store(ref, loading, decoded),
@@ -110,7 +133,15 @@ export class ImageCache {
       );
   }
 
-  private decode(bytes: Uint8Array): Entry {
+  /** Decode file bytes, or take pixels as they are. */
+  private decode(bytes: Uint8Array | RgbaImage): Entry {
+    if (!(bytes instanceof Uint8Array)) {
+      const { rgba, width, height } = bytes;
+      if (width * height * 4 > this.limitBytes)
+        throw new Error("image too large");
+      const image = NativeImage.fromRgba(rgba, width, height);
+      return { kind: "image", image, bytes: width * height * 4 };
+    }
     // The header gives the size, so an image too large to keep is never decoded.
     const info = imageInfo(bytes);
     if (info.width * info.height * 4 > this.limitBytes)

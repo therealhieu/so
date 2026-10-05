@@ -187,6 +187,23 @@ test("each file operation answers once with its result", async () => {
   expect(r.deps.ownOps.isOwn("old")).toBe(true);
 });
 
+test("a created file is sent to the index; a failed create or a folder is not", async () => {
+  const events: unknown[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => events.push(e) },
+  });
+  r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
+  r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
+  r.run({ kind: "create", op: { kind: "create", from: "made", dir: true } });
+  await waitFor(() => r.actions.length === 3);
+  expect(r.actions.map((a) => a.type === "fsResult" && a.ok)).toEqual([
+    true,
+    false,
+    true,
+  ]);
+  expect(events).toEqual([{ kind: "changed", path: "made.csv", isDir: false }]);
+});
+
 test("reads and listings answer with their result or refusal", async () => {
   await writeFile(join(root, "read.md"), "hello\n");
   const r = runner();
@@ -358,4 +375,63 @@ test("an embed read's answer says it was for an embed", async () => {
     reason: "io",
     embed: true,
   });
+});
+
+test("property types are read from the workspace and reported", async () => {
+  await mkdir(join(root, ".obsidian"), { recursive: true });
+  await writeFile(
+    join(root, ".obsidian/types.json"),
+    '{ "types": { "Due": "date" } }',
+  );
+  const r = runner();
+  r.run({ kind: "readPropertyTypes" });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions).toEqual([
+    { type: "propertyTypesLoaded", types: { due: "date" } },
+  ]);
+  await rm(join(root, ".obsidian"), { recursive: true, force: true });
+});
+
+test("a frontmatter patch is written only while the property still holds the shown value", async () => {
+  const note = "---\nstatus: todo # next up\ndue: 2026-10-05\n---\n# Task\n";
+  await writeFile(join(root, "task.md"), note);
+  const notified: string[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => notified.push(e.path) },
+  });
+  r.run({
+    kind: "patchFrontmatter",
+    path: "task.md",
+    patch: { set: "status", value: "doing" },
+    expected: "todo",
+  });
+  await waitFor(() => r.actions.length === 1);
+  const written = await readFile(join(root, "task.md"), "utf8");
+  expect(written).toBe(note.replace("todo", "doing"));
+  expect(r.actions[0]).toMatchObject({
+    type: "frontmatterPatched",
+    path: "task.md",
+    ok: true,
+    text: written,
+    removed: ["status: todo # next up"],
+    added: ["status: doing # next up"],
+  });
+  expect(notified).toEqual(["task.md"]);
+
+  r.run({
+    kind: "patchFrontmatter",
+    path: "task.md",
+    patch: { remove: "status" },
+    expected: "todo",
+  });
+  await waitFor(() => r.actions.length === 2);
+  expect(r.actions[1]).toEqual({
+    type: "frontmatterPatched",
+    path: "task.md",
+    ok: false,
+    removed: [],
+    added: [],
+    reason: "changed on disk",
+  });
+  expect(await readFile(join(root, "task.md"), "utf8")).toBe(written);
 });

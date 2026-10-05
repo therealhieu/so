@@ -16,21 +16,22 @@ const NOTES: Record<string, string> = {
   "people/linh.md": "---\naliases: [Linh]\n---\n# Linh\n",
 };
 
-function indexed(): AppState {
+function indexed(
+  path = "projects/so.md",
+  text = NOTES["projects/so.md"] ?? "",
+): AppState {
   const files = Object.keys(NOTES);
   let s = update(fresh(), {
     type: "indexBatch",
-    summaries: files.map((p) => summarize(p, 1, scanDoc(NOTES[p] ?? ""))),
+    summaries: files.map((p) =>
+      summarize(p, { mtime: 1, size: 0, ctime: 1 }, scanDoc(NOTES[p] ?? "")),
+    ),
     files,
     done: files.length,
     total: files.length,
   }).state;
   s = update(s, { type: "indexReady" }).state;
-  return update(s, {
-    type: "fileLoaded",
-    path: "projects/so.md",
-    file: textFile(NOTES["projects/so.md"] ?? ""),
-  }).state;
+  return update(s, { type: "fileLoaded", path, file: textFile(text) }).state;
 }
 function keys(s: AppState, seq: string) {
   const effects: Effect[] = [];
@@ -149,7 +150,13 @@ test("note items follow index changes made while the popup is open", () => {
   let s = keys(indexed(), "Go[[pl").state;
   s = update(s, {
     type: "indexBatch",
-    summaries: [summarize("projects/plan-b.md", 1, scanDoc("# B\n"))],
+    summaries: [
+      summarize(
+        "projects/plan-b.md",
+        { mtime: 1, size: 0, ctime: 1 },
+        scanDoc("# B\n"),
+      ),
+    ],
     files: [],
     done: 4,
     total: 4,
@@ -170,4 +177,30 @@ test("the popup closes when the cursor leaves the link or Insert ends", () => {
   expect(s.overlay.kind).toBe("none");
   s = keys(indexed(), "Go[[pl]").state;
   expect(s.overlay.kind).toBe("none");
+});
+
+const withTags = () =>
+  indexed(
+    "notes/t.md",
+    "---\ntags: [so, planning]\n---\nsee [[plan]] #so/ui\n",
+  );
+const picked = (s: AppState) =>
+  s.overlay.kind === "picker"
+    ? { source: s.overlay.picker.source, arg: s.overlay.picker.arg }
+    : undefined;
+
+test("gd on a tag lists the notes with it, from the body or the frontmatter", () => {
+  const body = keys(withTags(), "3j$gd").state;
+  expect(picked(body)).toEqual({ source: "tagNotes", arg: "so/ui" });
+  const fm = keys(withTags(), "jfpgd").state;
+  expect(picked(fm)).toEqual({ source: "tagNotes", arg: "planning" });
+});
+
+test("gd on a link still follows it, and Enter does not open a tag's notes", () => {
+  const link = keys(withTags(), "3jf[gd");
+  expect(link.effects).toContainEqual({
+    kind: "read",
+    path: "projects/plan.md",
+  });
+  expect(keys(withTags(), "3j$<CR>").state.overlay.kind).toBe("none");
 });

@@ -6,6 +6,7 @@ import {
   rowText,
   stubCtx,
 } from "../../../../test/support/markdown";
+import { baseEmbedRenderer } from "../../features/bases/embed";
 import { createTextBuffer } from "../../kernel/text/text-buffer";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
@@ -160,14 +161,23 @@ const ROADMAP = (() => {
 const PATHS: Readonly<Record<string, string>> = {
   "so-roadmap": "so-roadmap.md",
   "diagram.png": "diagram.png",
+  "tasks.base": "tasks.base",
 };
 
+/** The tour's embeds: the roadmap note is open, the base is still loading. */
 const tourCtx = stubCtx({
   resolve: (t) => PATHS[t],
   isResolved: (t) => PATHS[t] !== undefined,
   embed: (p) => (p === "so-roadmap.md" ? ROADMAP : "missing"),
+  embedModel: (p) => (p === "tasks.base" ? "loading" : "missing"),
   image: (p) => (p === "diagram.png" ? { rows: 6 } : "unknown"),
 });
+
+/** The built-in renderers and the base embed renderer the app registers. */
+function tourRenderers() {
+  builtinRenderers();
+  registerBlockRenderer("base", baseEmbedRenderer);
+}
 
 const spansText = (spans: Span[]) => spans.map((s) => s.text).join("");
 
@@ -224,13 +234,13 @@ const tour = (width: number, line: number) =>
 for (const width of [60, 100]) {
   for (const cursor of CURSORS)
     test(`tour note at width ${width} with the cursor ${cursor.name}`, () => {
-      builtinRenderers();
+      tourRenderers();
       const rows = layoutNote(tour(width, cursor.line), "live", tourCtx);
       expect(serialize(rows)).toMatchSnapshot();
     });
 
   test(`tour note at width ${width} in reading view`, () => {
-    builtinRenderers();
+    tourRenderers();
     const rows = layoutNote(tour(width, 8), "reading", tourCtx);
     expect(serialize(rows)).toMatchSnapshot();
   });
@@ -268,6 +278,7 @@ test("frontmatter tags render as tag chips", () => {
   expect(block.find((r) => r.sourceLine === 2)?.spans).toContainEqual({
     text: "#daily",
     style: "mdTag",
+    tag: "daily",
   });
 });
 

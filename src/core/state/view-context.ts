@@ -7,8 +7,8 @@ export type ViewHost = {
   rows: number;
   /** A decoded image's pixel size, when the UI has it. */
   imageSize(path: string): { width: number; height: number } | undefined;
-  /** Cell width ÷ cell height. */
-  cellAspect: number;
+  /** A terminal cell's size in pixels. */
+  cell: { width: number; height: number };
 };
 
 /** Builds a view's input context for one window; a pure function of its arguments. */

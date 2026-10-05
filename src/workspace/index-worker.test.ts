@@ -84,6 +84,7 @@ function startWorker() {
       );
       return {
         files: batches.flatMap((b) => b.files ?? []),
+        facts: batches.flatMap((b) => b.facts ?? []),
         summaries: batches.flatMap((b) => b.summaries),
         batches,
       };
@@ -248,4 +249,50 @@ test("the worker never changes the workspace", async () => {
     w.stop();
   }
   expect(await snapshot()).toEqual(before);
+});
+
+test("the index carries size and created time for notes and facts for other files", async () => {
+  const w = startWorker();
+  try {
+    const { summaries, facts } = await w.scanned();
+    const plan = summaries.find((s) => s.path === "notes/plan.md");
+    const st = await stat(join(root, "notes/plan.md"));
+    expect(plan?.size).toBe(st.size);
+    expect(plan?.ctime).toBe(st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs);
+    expect(facts.map((f) => f.path).sort()).toEqual([
+      "big.log",
+      "photo.png",
+      "readme.txt",
+      "src/tool.ts",
+    ]);
+    const photo = await stat(join(root, "photo.png"));
+    expect(facts.find((f) => f.path === "photo.png")).toEqual({
+      path: "photo.png",
+      size: photo.size,
+      mtime: photo.mtimeMs,
+      ctime: photo.birthtimeMs > 0 ? photo.birthtimeMs : photo.mtimeMs,
+    });
+  } finally {
+    w.stop();
+  }
+});
+
+test("a changed file that is not a note gets fresh facts", async () => {
+  const w = startWorker();
+  try {
+    await w.scanned();
+    await writeFile(join(root, "readme.txt"), "nothing to see here at all\n");
+    w.send({ t: "changed", paths: ["readme.txt"] });
+    const update = (await w.until(
+      (m) =>
+        m.t === "batch" &&
+        m.total === 0 &&
+        (m.facts ?? []).some((f) => f.path === "readme.txt"),
+    )) as Extract<FromWorker, { t: "batch" }>;
+    expect([update.done, update.summaries]).toEqual([0, []]);
+    expect(update.facts?.[0]?.size).toBe(27);
+  } finally {
+    await writeFile(join(root, "readme.txt"), "nothing to see\n");
+    w.stop();
+  }
 });

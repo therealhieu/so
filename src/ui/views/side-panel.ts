@@ -4,14 +4,18 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
-import { type SidePanelRow, sidePanelRows } from "../../core/state/side-panel";
-import type { AppState } from "../../core/state/types";
+import {
+  panelSide,
+  type SidePanelRow,
+  sidePanelRows,
+} from "../../core/state/side-panel";
+import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 export const SIDE_WIDTH = 36;
 
-/** Docked right of the windows when open on a terminal of 100 columns or more. */
+/** Docked opposite the explorer when open on a terminal of 100 columns or more. */
 export const sideDocked = (s: AppState, lc: LayoutClass): boolean =>
   s.panels.side.open && lc !== "narrow";
 
@@ -59,6 +63,8 @@ export class SidePanelView extends Renderable {
   private s: AppState | undefined;
   private lines: Line[] = [];
   private first = 0;
+  private x0 = 0;
+  private onLeft = false;
   private h = 0;
   private cursorAt: Cursor | undefined;
 
@@ -73,7 +79,9 @@ export class SidePanelView extends Renderable {
     if (!this.visible) return;
     const w = Math.min(s.terminal.cols, SIDE_WIDTH + 1);
     this.h = Math.max(0, s.terminal.rows - 3);
-    this.left = s.terminal.cols - w;
+    this.onLeft = panelSide(s) === "left";
+    this.x0 = this.onLeft ? 0 : s.terminal.cols - w;
+    this.left = this.x0;
     this.width = w;
     this.height = this.h;
     const rows = sidePanelRows(s);
@@ -87,7 +95,7 @@ export class SidePanelView extends Renderable {
     this.first = Math.max(0, Math.min(this.first, this.lines.length - room));
     if (side.focused && at >= 0)
       this.cursorAt = {
-        x: this.left + 2,
+        x: this.x0 + this.pad() + 1,
         y: 1 + 1 + at - this.first,
         style: "block",
       };
@@ -95,6 +103,32 @@ export class SidePanelView extends Renderable {
 
   cursor(): Cursor | undefined {
     return this.cursorAt;
+  }
+
+  /** A listed line's row; the title, separator, headings, and hints give -1 (focus only). */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const cols = this.s?.terminal.cols ?? 0;
+    const w = Math.min(cols, SIDE_WIDTH + 1);
+    if (
+      !this.visible ||
+      x < this.x0 ||
+      x >= this.x0 + w ||
+      y < 1 ||
+      y >= 1 + this.h
+    )
+      return undefined;
+    const i = y - 2;
+    const sep = this.onLeft ? this.x0 + w - 1 : this.x0;
+    const line =
+      x !== sep && i >= 0 && i < this.listRows()
+        ? this.lines[this.first + i]
+        : undefined;
+    return { kind: "sidePanel", row: line?.row ?? -1 };
+  }
+
+  /** Columns before the content: the separator when docked right. */
+  private pad(): number {
+    return this.onLeft ? 0 : 1;
   }
 
   /** Lines between the title and the key hints. */
@@ -106,10 +140,11 @@ export class SidePanelView extends Renderable {
     const s = this.s;
     if (s === undefined) return [];
     const side = s.panels.side;
-    if (!side.focused) return ["C-w l to focus this panel"];
+    const [enter, leave] = this.onLeft ? ["h", "l"] : ["l", "h"];
+    if (!side.focused) return [`C-w ${enter} to focus this panel`];
     return side.kind === "outline"
       ? ["⏎ jump · q close"]
-      : ["j/k move · ⏎ open · l link it", "C-w h back to the editor"];
+      : ["j/k move · ⏎ open · l link it", `C-w ${leave} back to the editor`];
   }
 
   private layout(s: AppState, rows: SidePanelRow[]): Line[] {
@@ -220,10 +255,11 @@ export class SidePanelView extends Renderable {
     if (s === undefined || !this.visible) return;
     const theme = themeOf(s);
     const side = s.panels.side;
-    const x0 = this.x + 1;
+    const x0 = this.x + this.pad();
     const w = this.width - 1;
+    const sep = this.onLeft ? this.x + w : this.x;
     for (let r = 0; r < this.height; r++) {
-      drawCells(buf, theme.style("separator"), this.x, this.y + r, "│");
+      drawCells(buf, theme.style("separator"), sep, this.y + r, "│");
       drawCells(buf, theme.style("explorer"), x0, this.y + r, "", w);
     }
     const b = activeBuffer(s);

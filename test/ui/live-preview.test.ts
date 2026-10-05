@@ -4,6 +4,8 @@ import { OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
 import { themes } from "../../src/ui/theme";
+import { createSvgRasterizer } from "../../src/workspace/svg";
+import { noteSummary, TASK_NOTES, TASKS_BASE } from "../support/bases";
 import { SYNC_TS } from "../support/notes";
 import { textFile } from "../support/state";
 import {
@@ -69,12 +71,12 @@ async function windowRows(x: Mounted): Promise<string[]> {
   return rows.slice(1, x.store.get().terminal.rows - 2);
 }
 
-/** Open the tour with its embedded roadmap loaded. */
+/** Open the tour with its embedded roadmap and base loaded, and the base's task notes indexed. */
 function openTour(x: Mounted) {
   x.store.dispatch({
     type: "indexBatch",
-    summaries: [],
-    files: ["tour.md", "so-roadmap.md", "diagram.png"],
+    summaries: Object.entries(TASK_NOTES).map(([p, t]) => noteSummary(p, t)),
+    files: ["tour.md", "so-roadmap.md", "diagram.png", "tasks.base"],
     done: 0,
     total: 0,
   });
@@ -84,7 +86,35 @@ function openTour(x: Mounted) {
     path: "so-roadmap.md",
     file: textFile(ROADMAP_MD),
   });
+  x.store.dispatch({
+    type: "fileLoaded",
+    path: "tasks.base",
+    file: textFile(TASKS_BASE),
+    embed: true,
+  });
 }
+
+for (const cols of [60, 100])
+  test(`the tour at width ${cols} matches its golden, base embed included`, async () => {
+    m = await mountShell({ cols, rows: 140 });
+    openTour(m);
+    expect(m.effects).toContainEqual({
+      kind: "read",
+      path: "tasks.base",
+      embed: true,
+    });
+    await m.frame();
+    // diagram.png is not among the mounted files: let its load fail first.
+    await Bun.sleep(0);
+    const rows = await windowRows(m);
+    const title = rows.findIndex((r) => r.includes("╭ ↳ tasks.base#All tasks"));
+    expect(title).toBeGreaterThan(-1);
+    expect(rows[title + 1]).toContain("due ↑");
+    // Every indexed file is a row of the unfiltered base, empty dues first.
+    expect(rows.slice(title + 3, title + 13).join("\n")).toContain("review-pr");
+    expect(rows.join("\n")).not.toContain("loading…");
+    expect((await m.frame()).trimEnd()).toMatchSnapshot();
+  });
 
 test("a note frame paints signs, rules, embed rows, and folded callouts", async () => {
   m = await mountShell({ cols: 100, rows: 80 });
@@ -190,9 +220,14 @@ test("a missing embed paints its title in the unresolved link style", async () =
   expect(lines.join("\n")).not.toContain("cannot read file");
 });
 
-const PNG = new Uint8Array(
-  readFileSync(new URL("../fixtures/images/diagram.png", import.meta.url)),
-);
+const fixture = (name: string) =>
+  new Uint8Array(
+    readFileSync(new URL(`../fixtures/images/${name}`, import.meta.url)),
+  );
+/** 1920×960: wider than any test window, so it fills the window width. */
+const PNG = fixture("wide.png");
+/** 240×120: narrower than the window. */
+const SMALL_PNG = fixture("diagram.png");
 const IMAGE_NOTE = `# Diagram\n\n![[diagram.png]]\n\n${Array.from(
   { length: 40 },
   (_, i) => `Line ${i + 5}`,
@@ -324,7 +359,7 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     const [, , y, , height, , , , , , sourceHeight] = draw.mock.calls[0] ?? [];
     expect(height).toBe(37 - ((y as number) - 1));
     expect(height).toBeLessThan(24);
-    expect(sourceHeight).toBe(Math.round((120 * (height as number)) / 24));
+    expect(sourceHeight).toBe(Math.round((960 * (height as number)) / 24));
 
     m.keys("G");
     expect(await drawn()).toBe(0);
@@ -341,6 +376,24 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     m.open("notes/other.md", "# Other\n\nPlain text.\n");
     expect(await drawn()).toBe(0);
     expect((await windowRows(m)).join("\n")).toContain("Plain text.");
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("an image narrower than the window keeps its natural size", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    m = await mountImageNote({
+      capabilities: KITTY,
+      files: { "images/diagram.png": SMALL_PNG },
+    });
+    draw.mockClear();
+    await m.frame();
+    // 240×120 px in 8×16 px cells: 8 rows, about 30 of the window's 94 columns.
+    const [, , , cols, rows] = draw.mock.calls[0] ?? [];
+    expect(rows).toBe(8);
+    expect(cols).toBeLessThanOrEqual(32);
   } finally {
     draw.mockRestore();
   }
@@ -364,4 +417,221 @@ test("the cursor stays on screen below a tall image", async () => {
     expect(frame[y]?.slice(0, 4)).toBe(String(line + 1).padStart(4));
     m.keys("j");
   }
+});
+
+test("the zoom float draws the image fitted, crops it when zoomed, and hides the note's image", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    m = await mountImageNote({ capabilities: KITTY });
+    m.keys("<leader>m<leader>m");
+    expect(activeBuffer(m.store.get())?.view).toBe("reading");
+    m.keys("2j<leader>z");
+    draw.mockClear();
+    const frame = await m.frame();
+    expect(frame).toContain("diagram.png · 1920×960 · 1×");
+    // One image: the float's. A 90×36 float on 100×40 leaves 88×34 cells of
+    // 8×16 px, so the 1920×960 image fits 88 columns by 22 rows.
+    expect(draw).toHaveBeenCalledTimes(1);
+    const [, , , cols, rows, , , sx, sy, sw, sh] = draw.mock.calls[0] ?? [];
+    expect([cols, rows, sx, sy, sw, sh]).toEqual([88, 22, 0, 0, 1920, 960]);
+
+    m.keys("++++");
+    draw.mockClear();
+    expect(await m.frame()).toContain("· 2×");
+    const zoomed = draw.mock.calls[0] ?? [];
+    expect(zoomed.slice(3, 5)).toEqual([88, 34]);
+    expect(zoomed.slice(7, 11)).toEqual([480, 109, 960, 742]);
+
+    // The float reports that the fitted image covers 22 of its 34 rows.
+    await Bun.sleep(0);
+    const zoom = m.store.get().overlay;
+    expect(zoom.kind === "zoom" && zoom.zoom).toMatchObject({
+      fill: { x: 1, y: 0.647 },
+    });
+
+    m.keys("0--");
+    draw.mockClear();
+    expect(await m.frame()).toContain("· 0.5×");
+    const half = draw.mock.calls[0] ?? [];
+    expect(half.slice(1, 5)).toEqual([28, 13, 44, 11]);
+    expect(half.slice(7, 11)).toEqual([0, 0, 1920, 960]);
+
+    m.keys("q");
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(draw.mock.calls[0]?.[7]).toBe(0);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("without graphics the zoom float names the image", async () => {
+  m = await mountImageNote({
+    capabilities: KITTY,
+    config: '[preview]\nimages = "off"\n',
+  });
+  expect(activeBuffer(m.store.get())?.view).toBe("reading");
+  m.keys("2j<leader>z");
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  const frame = await m.frame();
+  expect(frame).toContain("wheel +/- zoom · 0 fit · drag hjkl pan · q close");
+  expect(
+    frame.split("\n").filter((l) => l.includes("[image: diagram.png]")).length,
+  ).toBe(1);
+});
+
+test("with images off the zoom float draws a diagram too wide for the note as text", async () => {
+  const flow = Array.from({ length: 12 }, (_, i) => `Step${i}`).join(" --> ");
+  m = await mountShell({
+    cols: 80,
+    rows: 24,
+    config: '[preview]\nmode = "reading"\nimages = "off"\n',
+  });
+  openNote(
+    m,
+    "notes/flow.md",
+    `# Flow\n\n\`\`\`mermaid\nflowchart LR\n  ${flow}\n\`\`\`\n`,
+  );
+  expect(await m.frame()).toContain("mermaid: wider than");
+  m.keys("3j<leader>z");
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  const frame = await m.frame();
+  expect(frame).toContain("│ Step0 ├");
+  expect(frame.trimEnd()).toMatchSnapshot();
+  m.keys("-");
+  expect(await m.frame()).toContain("· tight");
+});
+
+test("the wheel over the zoom float zooms the image in and out", async () => {
+  m = await mountImageNote({ capabilities: KITTY });
+  m.keys("<leader>m<leader>m2j<leader>z");
+  await m.frame();
+  const level = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "zoom" && o.zoom.kind === "image" ? o.zoom.level : -1;
+  };
+  expect(level()).toBe(1);
+  await m.mouse.scroll(50, 20, "up");
+  // One notch is one zoom step.
+  expect(await m.frame()).toContain("· 1.25×");
+  for (let i = 0; i < 2; i++) await m.mouse.scroll(50, 20, "down");
+  expect(await m.frame()).toContain("· 0.75×");
+  expect(level()).toBe(0.75);
+});
+
+test("the zoom float draws a diagram as a sharp image of the part in view", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  const rasters: { crop: { w: number }; width: number }[] = [];
+  const real = createSvgRasterizer();
+  try {
+    m = await mountShell({
+      cols: 100,
+      rows: 40,
+      capabilities: KITTY,
+      config: '[preview]\nmode = "reading"\n',
+      rasterizeSvg: (r) => {
+        rasters.push(r);
+        return real(r);
+      },
+    });
+    openNote(
+      m,
+      "notes/flow.md",
+      "```mermaid\nflowchart LR\n  Capture --> Triage --> Ship\n```\n",
+    );
+    m.keys("j<leader>z");
+    expect(await m.frame()).toContain("◌ mermaid");
+    // The first raster also loads the rasterizer, so how long it takes varies.
+    for (let i = 0; i < 200 && (await m.frame()).includes("◌ mermaid"); i++)
+      await Bun.sleep(10);
+    draw.mockClear();
+    expect(await m.frame()).toContain("mermaid · 1×");
+    expect(draw).toHaveBeenCalledTimes(1);
+    const fit = rasters.at(-1);
+    if (fit === undefined) throw new Error("expected a raster");
+    // At fit the whole diagram is drawn, at the float's width in pixels.
+    expect(fit.width).toBe(88 * 8);
+
+    m.keys("++++");
+    // Zoom steps redraw at once from the last raster, stretched; the sharp
+    // raster starts only when the steps stop.
+    const before = rasters.length;
+    draw.mockClear();
+    expect(await m.frame()).toContain("mermaid · 2×");
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(rasters.length).toBe(before);
+    await Bun.sleep(150);
+    await m.frame();
+    await Bun.sleep(20);
+    expect(await m.frame()).toContain("mermaid · 2×");
+    const zoomed = rasters.at(-1);
+    if (zoomed === undefined) throw new Error("expected a raster");
+    // Twice the pixels per diagram unit, over the view plus a margin.
+    expect(zoomed.width / zoomed.crop.w).toBeCloseTo(
+      (2 * fit.width) / fit.crop.w,
+    );
+    expect(zoomed.crop.w).toBeGreaterThan(fit.crop.w / 2);
+
+    // A pan inside the margin moves the placement only: no new raster.
+    const count = rasters.length;
+    m.keys("l");
+    draw.mockClear();
+    await m.frame();
+    await Bun.sleep(120);
+    await m.frame();
+    expect(rasters.length).toBe(count);
+    expect(draw).toHaveBeenCalled();
+    // Panning past it draws what the last raster covers, and asks for a new
+    // one only once the view rests.
+    m.keys("llll");
+    await m.frame();
+    expect(rasters.length).toBe(count);
+    await Bun.sleep(120);
+    await m.frame();
+    expect(rasters.length).toBe(count + 1);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("a diagram the rasterizer cannot draw shows its text drawing in the zoom float", async () => {
+  m = await mountShell({
+    cols: 100,
+    rows: 40,
+    capabilities: KITTY,
+    config: '[preview]\nmode = "reading"\n',
+    rasterizeSvg: () =>
+      Promise.reject(new Error("no system font for diagrams")),
+  });
+  openNote(
+    m,
+    "notes/flow.md",
+    "```mermaid\nflowchart LR\n  Capture --> Ship\n```\n",
+  );
+  m.keys("j<leader>z");
+  await m.frame();
+  await Bun.sleep(0);
+  expect(await m.frame()).toContain("│ Capture ├");
+});
+
+test("dragging inside the zoom float pans the zoomed image", async () => {
+  m = await mountImageNote({ capabilities: KITTY });
+  m.keys("<leader>m<leader>m2j<leader>z++++");
+  await m.frame();
+  await Bun.sleep(0);
+  const centre = () => {
+    const o = m?.store.get().overlay;
+    return o?.kind === "zoom" && o.zoom.kind === "image"
+      ? { cx: o.zoom.cx, cy: o.zoom.cy }
+      : undefined;
+  };
+  expect(centre()).toEqual({ cx: 0.5, cy: 0.5 });
+  // Content is 88 columns wide at 2×: a 22-column drag left moves the
+  // view an eighth of the image right; the press on the image does not close it.
+  await m.mouse.drag(50, 20, 28, 20);
+  await m.frame();
+  expect(m.store.get().overlay.kind).toBe("zoom");
+  expect(centre()?.cx).toBeCloseTo(0.625);
+  expect(centre()?.cy).toBeCloseTo(0.5);
 });

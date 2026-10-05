@@ -6,6 +6,7 @@ import type { WindowTree } from "../kernel/editor/windows";
 import { closeWindow } from "../kernel/editor/windows";
 import type { Edit, Pos } from "../kernel/text/pos";
 import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
+import { handleKey } from "../kernel/vim/engine";
 import { onDiskLoaded } from "./disk";
 import { embedRequested, settleEmbedRead } from "./embeds";
 import { touchRecent } from "./recent";
@@ -19,6 +20,7 @@ import {
 } from "./session";
 import type {
   Action,
+  AfterOpen,
   AppState,
   BufferId,
   BufferState,
@@ -43,7 +45,11 @@ export const bufferForPath = (
 ): BufferState | undefined =>
   Object.values(s.buffers).find((b) => b.path === path);
 
-export const READ_ONLY_HINT = "reading mode — <leader>m to edit";
+export const READ_ONLY_FILE = "read-only file";
+
+/** Why a text edit in `b` is refused: a read-only file, or a reading view to leave. */
+export const readOnlyHint = (b: BufferState): string =>
+  b.readOnly === true ? READ_ONLY_FILE : "reading mode — <leader>m to edit";
 
 /** Whether `b` is shown in a view its file type marks read-only. */
 export const readOnlyView = (reg: Registries, b: BufferState): boolean =>
@@ -112,6 +118,20 @@ export function setWindow(s: AppState, w: WindowState): AppState {
     ...s,
     windows: { ...s.windows, byId: { ...s.windows.byId, [w.id]: w } },
   };
+}
+
+/** Flip block `id` from its default fold in window `w`, keeping only the folds `keep` accepts. */
+export function flipFold(
+  s: AppState,
+  w: WindowState,
+  id: number,
+  keep: (id: number) => boolean = () => true,
+): AppState {
+  const kept = (w.content.folds ?? []).filter(keep);
+  const folds = kept.includes(id)
+    ? kept.filter((x) => x !== id)
+    : [...kept, id];
+  return setWindow(s, { ...w, content: { ...w.content, folds } });
 }
 
 /**
@@ -307,8 +327,16 @@ export function showBuffer(s: AppState, id: BufferId): AppState {
   });
 }
 
-/** The active window waits for `path`, so its read shows it even when a note also embeds it. */
-function awaitOpen(s: AppState, path: string): AppState {
+/**
+ * The active window waits for `path`, so its read shows it even when a note
+ * also embeds it; `after` places the cursor and `subpath` is the "#…" it
+ * opens at once it is shown.
+ */
+function awaitOpen(
+  s: AppState,
+  path: string,
+  opts: { after?: AfterOpen; subpath?: string },
+): AppState {
   const restore = s.windows.restore ?? { pending: {}, missing: 0 };
   const pending = {
     ...restore.pending,
@@ -317,33 +345,130 @@ function awaitOpen(s: AppState, path: string): AppState {
       cursor: { line: 0, col: 0 },
       scroll: 0,
       navigated: true as const,
+      ...(opts.after === undefined ? {} : { after: opts.after }),
+      ...(opts.subpath === undefined ? {} : { subpath: opts.subpath }),
     },
   };
   return { ...s, windows: { ...s.windows, restore: { ...restore, pending } } };
 }
 
+/** Options for `openPath`; `reg` is needed to place the cursor `after`. */
+export type OpenOptions = {
+  after?: AfterOpen;
+  /** The "#…" part the window opens at, for its editor kind. */
+  subpath?: string;
+  reg?: Registries;
+};
+
 /**
  * Open `path` in the active window: an open buffer is shown at once, any
- * other path is read first. The buffer being left is saved now.
+ * other path is read first. The buffer being left is saved now. With `after`,
+ * the cursor is placed by `placeAfterOpen` once the buffer is shown; with
+ * `subpath`, the window's editor kind opens there.
  */
-export function openPath(s: AppState, path: string, now: number): Result {
+export function openPath(
+  s: AppState,
+  path: string,
+  now: number,
+  opts: OpenOptions = {},
+): Result {
   const current = activeBuffer(s);
   const left =
     current !== undefined && current.path !== path
       ? autosaveNow(s, current.id, now)
       : none(s);
+  const waits = opts.after !== undefined || opts.subpath !== undefined;
   return chain(left, (st) => {
     const open = bufferForPath(st, path);
     // An embed target already being read is shown when that read answers.
-    if (open === undefined)
-      return embedRequested(st, path)
-        ? none(awaitOpen(st, path))
+    if (open === undefined) {
+      if (embedRequested(st, path)) return none(awaitOpen(st, path, opts));
+      return waits
+        ? {
+            state: awaitOpen(st, path, opts),
+            effects: [{ kind: "read", path }],
+          }
         : { state: st, effects: [{ kind: "read", path }] };
-    return none({
+    }
+    const shown: AppState = {
       ...showBuffer(st, open.id),
       recent: touchRecent(st.recent, path),
-    });
+    };
+    const at = withSubpath(shown, opts.subpath);
+    return none(
+      opts.after === undefined || opts.reg === undefined
+        ? at
+        : placeAfterOpen(at, opts.after, opts.reg),
+    );
   });
+}
+
+/** The active window opens at `subpath`; its editor kind consumes it. */
+function withSubpath(s: AppState, subpath: string | undefined): AppState {
+  const w = activeWindow(s);
+  return subpath === undefined || w === undefined
+    ? s
+    : setWindow(s, { ...w, content: { ...w.content, subpath } });
+}
+
+/** A Markdown task that is not done; the cursor goes just after its box. */
+const OPEN_TASK = /^\s*[-*+] \[ \](?: |$)/;
+
+/**
+ * Place the active window's cursor for `after`: on the first unchecked task
+ * (else at the end of the file), or at the end in Insert mode, entered as
+ * `A` would. A note opened to write in (a new or daily note) leaves a
+ * read-only view for its file type's first editable one; with none, it stays
+ * in Normal mode.
+ */
+export function placeAfterOpen(
+  st: AppState,
+  after: AfterOpen,
+  reg: Registries,
+): AppState {
+  const opened = activeBuffer(st);
+  if (opened === undefined) return st;
+  const editable = readOnlyView(reg, opened)
+    ? reg.fileTypes.get(opened.fileType)?.views.find((v) => !v.readOnly)
+    : undefined;
+  const s =
+    editable === undefined
+      ? st
+      : setBuffer(st, opened.id, { view: editable.id });
+  const b = activeBuffer(s);
+  if (b === undefined) return s;
+  const last = b.text.lineCount - 1;
+  if (after === "firstTask") {
+    for (let line = 0; line <= last; line++) {
+      const task = OPEN_TASK.exec(b.text.line(line));
+      if (task !== null) return placeCursor(s, { line, col: task[0].length });
+    }
+    return placeCursor(s, { line: last, col: b.text.line(last).length });
+  }
+  const atEnd = placeCursor(s, { line: last, col: 0 });
+  const w = activeWindow(atEnd);
+  if (w === undefined || readOnlyView(reg, b)) return atEnd;
+  const { registers, pendingPaste, ...vim } = atEnd.vim;
+  const r = handleKey(
+    { text: b.text, cursor: w.content.cursor, undo: b.undo, registers, vim },
+    "A",
+    {
+      topLine: w.content.scroll,
+      rows: Math.max(1, s.terminal.rows - 2),
+      tabWidth: s.config.editor.tabWidth,
+    },
+  );
+  return setWindow(
+    {
+      ...atEnd,
+      vim: {
+        ...r.s.vim,
+        registers: r.s.registers,
+        ...(pendingPaste === undefined ? {} : { pendingPaste }),
+      },
+    },
+    { ...w, content: { ...w.content, cursor: r.s.cursor } },
+  );
 }
 
 /** The configured preview mode when the file type has that view, else its first view. */
@@ -362,7 +487,7 @@ export function onFileLoaded(
   if (open !== undefined)
     return chain(onDiskLoaded(s, open, a.file, reg), (st) =>
       awaitsRestore(st, a.path)
-        ? fillRestored(listBuffer(st, open.id), a.path, open.id)
+        ? fillRestored(listBuffer(st, open.id), a.path, open.id, reg)
         : none(st),
     );
   // A read only a note's embed asked for opens the target unlisted and unshown,
@@ -391,6 +516,7 @@ export function onFileLoaded(
       disk: "present",
       save: { kind: "idle" },
       ...(embedOnlyRead ? { listed: false as const } : {}),
+      ...(ft.readOnly === true ? { readOnly: true as const } : {}),
     },
     ft,
   );
@@ -414,6 +540,7 @@ export function onFileLoaded(
     awaitsNavigation(s, a.path) ? { ...added, recent } : added,
     a.path,
     id,
+    reg,
   );
 }
 

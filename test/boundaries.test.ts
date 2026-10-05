@@ -48,11 +48,12 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   "mdast-util-gfm": ["src/core/lang/markdown/"],
   "micromark-extension-math": ["src/core/lang/markdown/"],
   "mdast-util-math": ["src/core/lang/markdown/"],
-  yaml: ["src/core/lang/markdown/"],
+  yaml: ["src/core/lang/markdown/", "src/core/features/bases/"],
   "beautiful-mermaid": ["src/core/lang/markdown/"],
   katex: ["src/preview/"],
   mermaid: ["src/preview/"],
   "toml-eslint-parser": ["src/core/config/"],
+  "@resvg/resvg-wasm": ["src/workspace/"],
 };
 
 const transpiler = new Bun.Transpiler({ loader: "ts" });

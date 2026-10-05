@@ -9,7 +9,8 @@ import {
   activeWindow,
   listedBuffers,
   openPath,
-  READ_ONLY_HINT,
+  READ_ONLY_FILE,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
@@ -34,7 +35,7 @@ import {
   scheduleAutosave,
   writeBuffer,
 } from "./save";
-import { panelDocked, panelFocused } from "./side-panel";
+import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
 
@@ -76,6 +77,9 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   help: "help.keymap",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
+  Today: "note.today",
+  Yesterday: "note.yesterday",
+  Tomorrow: "note.tomorrow",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -154,7 +158,7 @@ function substitute(
   const b = activeBuffer(s);
   const re = searchPattern(ex.pattern);
   if (w === undefined || b === undefined) return none(s);
-  if (readOnlyView(reg, b)) return message(s, READ_ONLY_HINT);
+  if (readOnlyView(reg, b)) return message(s, readOnlyHint(b));
   const notFound = message(
     s,
     `E486: Pattern not found: ${ex.pattern}`,
@@ -237,6 +241,7 @@ function editFile(ctx: CommandContext): Result {
 function writeActive(ctx: CommandContext): Result {
   const b = activeBuffer(ctx.state);
   if (b === undefined) return message(ctx.state, "E32: No file name", "error");
+  if (b.readOnly === true) return message(ctx.state, READ_ONLY_FILE, "error");
   return writeBuffer(ctx.state, b.id, ctx.now, {
     recreate: b.disk === "deleted",
   });
@@ -280,8 +285,8 @@ function split(s: AppState, dir: "row" | "column"): Result {
 }
 
 /**
- * Move focus between windows; the docked side panel sits right of them:
- * `l` past the last window enters it, `h` leaves it.
+ * Move focus between windows; the docked side panel sits beside them:
+ * moving toward its edge past the last window enters it, moving back leaves it.
  */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
   const side = s.panels.side;
@@ -289,10 +294,11 @@ function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
     ...s,
     panels: { ...s.panels, side: { ...side, focused } },
   });
-  if (panelFocused(s)) return none(dir === "h" ? setSide(false) : s);
+  const [enter, leave] = panelSide(s) === "left" ? ["h", "l"] : ["l", "h"];
+  if (panelFocused(s)) return none(dir === leave ? setSide(false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
   if (target === undefined)
-    return none(dir === "l" && panelDocked(s) ? setSide(true) : s);
+    return none(dir === enter && panelDocked(s) ? setSide(true) : s);
   return none({ ...s, windows: { ...s.windows, active: target } });
 }
 

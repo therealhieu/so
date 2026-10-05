@@ -1,0 +1,50 @@
+diff --git a/dist/index.js b/dist/index.js
+index e7e087bcb6f29d0d8f36cd558e0183bc0f162fcb..dbf9c695de599e2b2934fc4044482ad88b9d047d 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1719,7 +1719,17 @@ function determineLabelLine(graph, edge) {
+   }
+   const minX = Math.min(largestLine[0].x, largestLine[1].x);
+   const maxX = Math.max(largestLine[0].x, largestLine[1].x);
+-  const middleX = minX + Math.floor((maxX - minX) / 2);
++  let middleX = minX + Math.floor((maxX - minX) / 2);
++  const inNode = (x) => graph.nodes.some((n) => n.gridCoord && x >= n.gridCoord.x && x <= n.gridCoord.x + 2);
++  if (inNode(middleX)) {
++    for (let d = 1; d <= maxX - minX; d++) {
++      const free = [middleX + d, middleX - d].find((x) => x >= minX && x <= maxX && !inNode(x));
++      if (free !== undefined) {
++        middleX = free;
++        break;
++      }
++    }
++  }
+   const current = graph.columnWidth.get(middleX) ?? 0;
+   graph.columnWidth.set(middleX, Math.max(current, lenLabel + 2));
+   edge.labelLine = [largestLine[0], largestLine[1]];
+diff --git a/src/ascii/edge-routing.ts b/src/ascii/edge-routing.ts
+index e9a9dd4383973053561f5a05bc71949971c4e13e..22e9efd2fe7114f64b7cfa7108cdb4035a556896 100644
+--- a/src/ascii/edge-routing.ts
++++ b/src/ascii/edge-routing.ts
+@@ -276,7 +276,21 @@ export function determineLabelLine(graph: AsciiGraph, edge: AsciiEdge): void {
+   // Ensure column at midpoint is wide enough for the label
+   const minX = Math.min(largestLine[0].x, largestLine[1].x)
+   const maxX = Math.max(largestLine[0].x, largestLine[1].x)
+-  const middleX = minX + Math.floor((maxX - minX) / 2)
++  let middleX = minX + Math.floor((maxX - minX) / 2)
++
++  // Widen a free column: widening a node's border column detaches the edges
++  // that leave from that border.
++  const inNode = (x: number) =>
++    graph.nodes.some(n => n.gridCoord !== null && x >= n.gridCoord.x && x <= n.gridCoord.x + 2)
++  if (inNode(middleX)) {
++    for (let d = 1; d <= maxX - minX; d++) {
++      const free = [middleX + d, middleX - d].find(x => x >= minX && x <= maxX && !inNode(x))
++      if (free !== undefined) {
++        middleX = free
++        break
++      }
++    }
++  }
+ 
+   const current = graph.columnWidth.get(middleX) ?? 0
+   graph.columnWidth.set(middleX, Math.max(current, lenLabel + 2))

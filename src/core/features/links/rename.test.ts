@@ -15,7 +15,9 @@ type Workspace = Record<string, string>;
 function index(ws: Workspace, files: string[] = []): NoteIndex {
   return applySummaries(
     emptyIndex(),
-    Object.entries(ws).map(([path, text]) => summarize(path, 1, scanDoc(text))),
+    Object.entries(ws).map(([path, text]) =>
+      summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text)),
+    ),
     files,
   );
 }

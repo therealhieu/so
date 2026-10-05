@@ -18,6 +18,7 @@ import { join } from "node:path";
 import {
   atomicWrite,
   createEntry,
+  createExclusive,
   listDir,
   moveEntry,
   readTextFile,
@@ -168,4 +169,81 @@ test("create makes missing parents; move and remove act on real paths", async ()
   ).toBe("");
   await removeEntry(root, "archive");
   await expect(stat(join(root, "archive"))).rejects.toThrow();
+});
+
+const noNewTemp = async (dir: string) =>
+  (await readdir(dir)).some((n) => n.includes(".so-new-"));
+
+test("exclusive create publishes the whole text and refuses an existing file", async () => {
+  const r = await createExclusive(root, "daily/2026-10-03.md", "# x\n");
+  expect(r.created).toBe(true);
+  const p = join(root, "daily/2026-10-03.md");
+  expect(await readFile(p, "utf8")).toBe("# x\n");
+  expect((await stat(p)).mode & 0o777).toBe(0o644);
+  expect(r.created && r.stamp).toEqual(await stampOfFile(p, await stat(p)));
+  const before = await stat(p);
+  expect(await createExclusive(root, "daily/2026-10-03.md", "other")).toEqual({
+    created: false,
+  });
+  expect(await readFile(p, "utf8")).toBe("# x\n");
+  expect((await stat(p)).mtimeMs).toBe(before.mtimeMs);
+  expect(await noNewTemp(join(root, "daily"))).toBe(false);
+});
+
+test("exclusive create refuses a case variant on a case-insensitive volume", async () => {
+  await writeFile(join(root, "Variant.md"), "keep\n");
+  const insensitive = await stat(join(root, "variant.md")).then(
+    () => true,
+    () => false,
+  );
+  if (!insensitive) return;
+  expect(await createExclusive(root, "variant.md", "new")).toEqual({
+    created: false,
+  });
+  expect(await readFile(join(root, "Variant.md"), "utf8")).toBe("keep\n");
+  expect(await noNewTemp(root)).toBe(false);
+});
+
+test("exclusive create falls back to an exclusive open without hard links", async () => {
+  const spy = spyOn(fsp, "link").mockImplementation(async () => {
+    throw Object.assign(new Error("EPERM: operation not permitted"), {
+      code: "EPERM",
+    });
+  });
+  try {
+    expect((await createExclusive(root, "nolink.md", "body\n")).created).toBe(
+      true,
+    );
+    expect(await createExclusive(root, "nolink.md", "again")).toEqual({
+      created: false,
+    });
+  } finally {
+    spy.mockRestore();
+  }
+  expect(await readFile(join(root, "nolink.md"), "utf8")).toBe("body\n");
+  expect(await noNewTemp(root)).toBe(false);
+});
+
+test("exclusive create fails cleanly in a read-only folder", async () => {
+  if (process.getuid?.() === 0) return;
+  const dir = join(root, "locked");
+  await mkdir(dir);
+  await chmod(dir, 0o555);
+  try {
+    await expect(createExclusive(root, "locked/a.md", "x")).rejects.toThrow();
+    expect(await noNewTemp(dir)).toBe(false);
+    expect(await readdir(dir)).toEqual([]);
+  } finally {
+    await chmod(dir, 0o755);
+  }
+});
+
+test("a read reports the file's created time", async () => {
+  const p = join(root, "created.md");
+  await writeFile(p, "x\n");
+  const r = await readTextFile(p);
+  const st = await stat(p);
+  expect("createdMs" in r && r.createdMs).toBe(
+    st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
+  );
 });

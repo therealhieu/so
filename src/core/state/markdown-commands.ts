@@ -8,7 +8,8 @@ import {
   activeBuffer,
   activeWindow,
   applyBufferEdits,
-  READ_ONLY_HINT,
+  flipFold,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
@@ -18,6 +19,7 @@ import { followLink } from "./link-commands";
 import { startPreview, stopPreview } from "./preview";
 import { message, none } from "./result";
 import type { Result } from "./types";
+import { openZoom } from "./zoom";
 
 type AppCommand = Command<CommandContext, CommandResult>;
 
@@ -48,7 +50,7 @@ function toggleTask(c: CommandContext): Result {
   const line = w.content.cursor.line;
   const m = TASK.exec(b.text.line(line));
   if (m === null) return message(s, "no checkbox on this line");
-  if (readOnlyView(c.reg, b)) return message(s, READ_ONLY_HINT);
+  if (readOnlyView(c.reg, b)) return message(s, readOnlyHint(b));
   const col = m[1]?.length ?? 0;
   const mark = m[2] ?? " ";
   const r = applyBufferEdits(
@@ -81,18 +83,15 @@ function toggleFold(c: CommandContext): Result {
   const key = block && renderKey(block, doc, b.text);
   // Ids of blocks that no longer exist are dropped on every toggle.
   const ids = new Set(doc.blocks.map((x) => x.id));
-  const kept = (w.content.folds ?? []).filter((id) => ids.has(id));
-  const withFolds = (folds: number[]) =>
-    setWindow(s, { ...w, content: { ...w.content, folds } });
-  if (block === undefined || (key !== "callout" && key !== "embed"))
-    return message(withFolds(kept), "nothing to fold here");
-  return none(
-    withFolds(
-      kept.includes(block.id)
-        ? kept.filter((id) => id !== block.id)
-        : [...kept, block.id],
-    ),
-  );
+  const live = (id: number) => ids.has(id);
+  if (block === undefined || (key !== "callout" && key !== "embed")) {
+    const folds = (w.content.folds ?? []).filter(live);
+    return message(
+      setWindow(s, { ...w, content: { ...w.content, folds } }),
+      "nothing to fold here",
+    );
+  }
+  return none(flipFold(s, w, block.id, live));
 }
 
 /** `Enter`: toggle the task on the cursor line, or follow the link under the cursor. */
@@ -138,6 +137,12 @@ export const markdownCommands: readonly AppCommand[] = [
     run: startPreview,
   },
   { id: "preview.stop", title: "Stop browser preview", run: stopPreview },
+  {
+    id: "image.zoom",
+    title: "Zoom image or diagram",
+    filetypes: ["markdown"],
+    run: openZoom,
+  },
 ];
 
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
@@ -147,4 +152,5 @@ export const markdownBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "<leader>x", id: "task.toggle" },
   { scope: md("normal"), seq: "za", id: "fold.toggle" },
   { scope: md("normal"), seq: "<CR>", id: "note.enter" },
+  { scope: md("normal"), seq: "<leader>z", id: "image.zoom" },
 ];

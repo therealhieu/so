@@ -1,0 +1,14 @@
+views:
+  - type: table
+    name: Ordered
+    order:
+      - file.name
+      - status
+    groupBy:
+      property: status
+      direction: ASC
+    groupOrder:
+      - todo
+      - doing
+      - done
+      - null

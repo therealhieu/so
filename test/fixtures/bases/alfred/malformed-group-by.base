@@ -1,0 +1,6 @@
+views:
+  - type: board
+    name: Board
+    groupBy:
+      property:
+        - status

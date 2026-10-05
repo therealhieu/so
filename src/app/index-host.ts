@@ -81,6 +81,7 @@ export function createIndexHost(d: {
           type: "indexBatch",
           summaries: m.summaries,
           files: m.files ?? [],
+          ...(m.facts === undefined ? {} : { facts: m.facts }),
           done: m.done,
           total: m.total,
         });

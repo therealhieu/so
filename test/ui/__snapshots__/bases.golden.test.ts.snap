@@ -1,0 +1,530 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`base table matches the colour golden with a focused cell 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                 
+   ────────────────┼────────┼────────────┼─────                                 
+   ship-release.md │ done   │ 2026-10-01 │ ☑                                    
+▌  review-pr.md    │ doing  │ 2026-10-03 │ ☐                                    
+   write-report.md │ todo   │ 2026-10-05 │ ☐                                    
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴────────────┴─────                                 
+ Σ                            2026-10-01   1                                    
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  │ tasks.base                                                         1:1 
+Status: doing                                                                   
+"
+`;
+
+exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                 
+   ────────────────┼────────┼────────────┼─────                                 
+   ship-release.md │ done   │ 2026-10-01 │ ☑                                    
+▌  review-pr.md    │ doing  │ 2026-10-03 │ ☐                                    
+   write-report.md │ todo   │ 2026-10-05 │ ☐                                    
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴────────────┴─────                                 
+ Σ                            2026-10-01   1                                    
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  │ tasks.base                                                         1:1 
+Status: doing                                                                   
+"
+`;
+
+exports[`base table matches the light golden with a focused cell 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                 
+   ────────────────┼────────┼────────────┼─────                                 
+   ship-release.md │ done   │ 2026-10-01 │ ☑                                    
+▌  review-pr.md    │ doing  │ 2026-10-03 │ ☐                                    
+   write-report.md │ todo   │ 2026-10-05 │ ☐                                    
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴────────────┴─────                                 
+ Σ                            2026-10-01   1                                    
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  │ tasks.base                                                         1:1 
+Status: doing                                                                   
+"
+`;
+
+exports[`base table an edited cell shows its text, caret, and inline error 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑        │ done                               
+   ────────────────┼────────┼──────────────┼─────                               
+▌  ship-release.md │ done   │ 2026-10-01x  │ ☑                                  
+   review-pr.md    │ doing  │ ✗ use YYYY-MM-DD                                  
+   write-report.md │ todo   │ 2026-10-05   │ ☐                                  
+   inbox.md        │ —      │ 2026-10-08   │ ☐                                  
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴──────────────┴─────                               
+ Σ                            2026-10-01     1                                  
+ editing — ⏎ write to frontmatter · esc cancel                                  
+ INSERT  │ tasks.base                                                       1:1 
+                                                                                
+"
+`;
+
+exports[`base board matches the colour golden with a focused card 1`] = `
+" board.base                                                                     
+ ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
+────────────────────────────────────────────────────────────────────────────────
+● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
+ review-pr           ship-release       ▌write-report        inbox              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+ BASE  │ board.base                                                         1:1 
+todo · write-report                                                             
+"
+`;
+
+exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
+" board.base                                                                     
+ ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
+────────────────────────────────────────────────────────────────────────────────
+● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
+ review-pr           ship-release       ▌write-report        inbox              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+ BASE  │ board.base                                                         1:1 
+todo · write-report                                                             
+"
+`;
+
+exports[`base board matches the light golden with a focused card 1`] = `
+" board.base                                                                     
+ ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
+────────────────────────────────────────────────────────────────────────────────
+● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
+ review-pr           ship-release       ▌write-report        inbox              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+ BASE  │ board.base                                                         1:1 
+todo · write-report                                                             
+"
+`;
+
+exports[`base states waiting and empty states match their goldens 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                               ◌ waiting for index 
+────────────────────────────────────────────────────────────────────────────────
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ Tab next view · 1-4 switch view                                                
+ BASE  │ tasks.base                                                         1:1 
+                                                                                
+"
+`;
+
+exports[`base states waiting and empty states match their goldens 2`] = `
+" empty.base                                                                     
+ ▦ empty.base   1 Archived                      ⧩ status == "archived" · 0 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                                                                         
+   ────                                                                         
+  No notes match this view's filters                                            
+  f shows the notes this view's filters hide                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  │ empty.base                                                         1:1 
+                                                                                
+"
+`;
+
+exports[`base states toolbar notices explain disabled moves and the cards fallback 1`] = `
+" board.base                                                                     
+ ▦ board.base   1 Board  2 By late          ⊘ moves off · group: late · 4 cards 
+────────────────────────────────────────────────────────────────────────────────
+● false 1 ──────────────── ● true 3 ───────────────── ● None 0 ─────────────────
+▌ship-release               inbox                       (empty)                 
+                            review-pr                                           
+                            write-report                                        
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/l j/k focus · H/L off · ⏎ open note · v views · Tab next                     
+ BASE  │ board.base                                                         1:1 
+                                                                                
+"
+`;
+
+exports[`base states toolbar notices explain disabled moves and the cards fallback 2`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   4/4 Cards                                                4 rows 
+────────────────────────────────────────────────────────────────────────────────
+ ⓘ cards view is not supported yet; showing a table                             
+   name            │ Status │ late                                              
+   ────────────────┼────────┼─────                                              
+▌  inbox.md        │ —      │ ☑                                                 
+   review-pr.md    │ doing  │ ☐                                                 
+   ship-release.md │ done   │ ☐                                                 
+   write-report.md │ todo   │ ☑                                                 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  │ tasks.base                                                         1:1 
+                                                                                
+"
+`;
+
+exports[`base states a wide window shows every view tab 1`] = `
+" tasks.base                                                                                                     ~/notes 
+ ▦ tasks.base   1 All tasks  2 By status  3 Late  4 Cards                                              ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                                                         
+   ────────────────┼────────┼────────────┼─────                                                                         
+▌  ship-release.md │ done   │ 2026-10-01 │ ☑                                                                            
+   review-pr.md    │ doing  │ 2026-10-03 │ ☐                                                                            
+   write-report.md │ todo   │ 2026-10-05 │ ☐                                                                            
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+   ────────────────┴────────┴────────────┴─────                                                                         
+ Σ                            2026-10-01   1                                                                            
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open                                                
+ BASE  │ base │ tasks.base │ preview off                                                                            1:1 
+                                                                                                                        
+"
+`;
+
+exports[`base cell editors a text cell lists the property's existing values 1`] = `
+" tasks.base                                                                     
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                 
+   ────────────────┼────────┼────────────┼─────                                 
+▌  ship-release.md │ d      │ 2026-10-01 │ ☑                                    
+   review-pr.md    │  doing                                                     
+   write-report.md │  done                                                      
+   inbox.md        │ —      │ 2026-10-08 │ ☐                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────┴────────┴────────────┴─────                                 
+ Σ                            2026-10-01   1                                    
+ editing — Tab complete · ⏎ write to frontmatter · esc cancel                   
+ INSERT  │ tasks.base                                                       1:1 
+                                                                                
+"
+`;
+
+exports[`base cell editors a list cell shows its values as chips 1`] = `
+" labels.base                                                                    
+ ▦ labels.base   1 Labels                                                4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name            │ status │ tags                                              
+   ────────────────┼────────┼──────────                                         
+▌  inbox.md        │ —      │                                                   
+   review-pr.md    │ doing  │ #api × #docs × #ui ×                              
+   ship-release.md │ done   │ —                                                 
+   write-report.md │ todo   │ —                                                 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ editing — ⏎ add · ⏎ on empty writes · ⌫ removes · esc cancel                   
+ INSERT  │ labels.base                                                      1:1 
+                                                                                
+"
+`;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the colour theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 0,
+    "bg": "45,63,118,255",
+    "fg": "192,202,245,255",
+  },
+  "focusedCell": {
+    "attrs": 0,
+    "bg": "45,63,118,255",
+    "fg": "192,202,245,255",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "26,27,38,255",
+    "fg": "125,207,255,255",
+  },
+  "movesOff": {
+    "attrs": 0,
+    "bg": "26,27,38,255",
+    "fg": "224,175,104,255",
+  },
+}
+`;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the NO_COLOR theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 32,
+    "bg": "default",
+    "fg": "default",
+  },
+  "focusedCell": {
+    "attrs": 32,
+    "bg": "default",
+    "fg": "default",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "default",
+    "fg": "default",
+  },
+  "movesOff": {
+    "attrs": 1,
+    "bg": "default",
+    "fg": "default",
+  },
+}
+`;
+
+exports[`base styles paints the focused cell and card, lane dots, and moves off in the light theme 1`] = `
+{
+  "focusedCard": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+  "focusedCell": {
+    "attrs": 0,
+    "bg": "183,197,240,255",
+    "fg": "55,96,191,255",
+  },
+  "laneDot": {
+    "attrs": 1,
+    "bg": "225,226,231,255",
+    "fg": "0,113,151,255",
+  },
+  "movesOff": {
+    "attrs": 0,
+    "bg": "225,226,231,255",
+    "fg": "140,108,62,255",
+  },
+}
+`;
+
+exports[`base embed a note paints an embedded base read-only, capped with a more marker 1`] = `
+" today.md                                                                       
+   1 ▕# Today                                                                   
+   1                                                                            
+   2  ╭ ↳ tasks.base                                                            
+      │    name            │ Status │ due ↑      │ done                         
+      │    ────────────────┼────────┼────────────┼─────                         
+      │    tasks.base      │ —      │ —          │ —                            
+      │    today.md        │ —      │ —          │ —                            
+      ╰ ↓ 4 more                                                                
+   3                                                                            
+   4  ↳ gone.base                                                               
+        base not found                                                          
+   5                                                                            
+   6  After                                                                     
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ today.md                                                         1:1 
+                                                                                
+"
+`;
+
+exports[`base embed a note paints an embedded board read-only, with one-line cards capped per lane 1`] = `
+" today.md                                                                       
+   1 ▕# Today                                                                   
+   1                                                                            
+   2  ╭ ↳ board.base#By late                                                    
+      │ ● false 1 ───────────── ● true 3 ────────────── ● None 0 ────────────── 
+      │  ship-release            inbox                    (empty)               
+      │                           ↓ 2 more                                      
+   3                                                                            
+   4  After                                                                     
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  │ today.md                                                         1:1 
+                                                                                
+"
+`;

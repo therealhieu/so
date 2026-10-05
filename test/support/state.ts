@@ -1,3 +1,14 @@
+import { baseEmbedRenderer } from "../../src/core/features/bases/embed";
+import {
+  baseEditorKind,
+  baseFileType,
+} from "../../src/core/features/bases/file-type";
+import { KANBAN_TYPE } from "../../src/core/features/bases/types";
+import {
+  BaseLayoutRegistry,
+  boardLayout,
+  tableLayout,
+} from "../../src/core/features/bases/views";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -12,8 +23,12 @@ import { UndoHistory } from "../../src/core/kernel/editor/undo";
 import { createTextBuffer } from "../../src/core/kernel/text/text-buffer";
 import { codeFileTypes } from "../../src/core/lang/code/file-types";
 import { markdownFileType } from "../../src/core/lang/markdown/file-type";
+import { registerBlockRenderer } from "../../src/core/lang/markdown/live-preview";
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
+import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
+import { baseEmbedModel, baseViewModel } from "../../src/core/state/base-model";
 import { registerBuiltins } from "../../src/core/state/commands";
+import { EmbedModelRegistry } from "../../src/core/state/embed-models";
 import { initialState } from "../../src/core/state/init";
 import { editorBindings, nextLineCommand } from "../../src/core/state/keys";
 import {
@@ -25,7 +40,12 @@ import {
   markdownBindings,
   markdownCommands,
 } from "../../src/core/state/markdown-commands";
-import { markdownViewContext } from "../../src/core/state/markdown-view";
+import { markdownViewContextFor } from "../../src/core/state/markdown-view";
+import {
+  noteBindings,
+  noteCommands,
+  noteGroups,
+} from "../../src/core/state/note-commands";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
 import { ViewContextRegistry } from "../../src/core/state/view-context";
@@ -42,27 +62,44 @@ export function testRegistries(): Registries {
   const fileTypes = new FileTypeRegistry(textFileType);
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
+  fileTypes.register(baseFileType);
+  const editorKinds = new EditorKindRegistry();
+  editorKinds.register(baseEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
+  for (const c of noteCommands) commands.register(c);
+  for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
-  viewContexts.register("markdown", markdownViewContext);
+  const embedModels = new EmbedModelRegistry();
   builtinRenderers();
-  return {
+  const layouts = new BaseLayoutRegistry(tableLayout);
+  if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
+  layouts.register("kanban-test", boardLayout);
+  const reg: Registries = {
     fileTypes,
-    editorKinds: new EditorKindRegistry(),
+    editorKinds,
     commands,
     bindings: [
       ...defaultBindings,
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,
+      ...noteBindings,
+      ...baseBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    embedModels,
+    layouts,
   };
+  viewContexts.register("markdown", markdownViewContextFor(reg));
+  viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  embedModels.register("base", baseEmbedModel);
+  registerBlockRenderer("base", baseEmbedRenderer);
+  return reg;
 }
 
 export function deepFreeze<T>(value: T): T {
@@ -86,7 +123,16 @@ export const textFile = (text: string, n = 1): TextFile => ({
   stamp: stamp(n),
 });
 
-export const fresh = (): AppState => initialState(boot);
+/** `s` with notes opening in the editable `live` view, which most suites type into. */
+export const editingNotes = (s: AppState): AppState => ({
+  ...s,
+  config: { ...s.config, preview: { ...s.config.preview, mode: "live" } },
+});
+
+export const fresh = (): AppState => editingNotes(initialState(boot));
+
+/** A fresh state with the shipped config, where notes open in `reading`. */
+export const freshDefaults = (): AppState => initialState(boot);
 
 /**
  * Open `text` as a clean buffer saved with `stamp(1)` and show it in the

@@ -13,7 +13,8 @@ const update = createUpdate(testRegistries());
 const run = (s: AppState, ...actions: Action[]) =>
   actions.reduce((st, a) => update(st, a).state, s);
 
-const note = (path: string, text: string) => summarize(path, 1, scanDoc(text));
+const note = (path: string, text: string) =>
+  summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text));
 
 /** A ready index over `notes` (path → text) and other `files`. */
 function indexed(notes: Record<string, string>, files: string[] = []) {
@@ -207,4 +208,19 @@ test("the outline shows a new heading before saving", () => {
     s = run(s, { type: "key", key, now: 0 });
   expect(s.buffers[1]?.dirty).toBe(true);
   expect(titles()).toEqual(["A", "New"]);
+});
+
+test("property types start empty and each load replaces them", () => {
+  const s = fresh();
+  expect(s.index.types).toEqual({});
+  const a = update(s, {
+    type: "propertyTypesLoaded",
+    types: { status: "number" },
+  });
+  expect(a.effects).toEqual([]);
+  expect(a.state.index.types).toEqual({ status: "number" });
+  expect(
+    update(a.state, { type: "propertyTypesLoaded", types: {} }).state.index
+      .types,
+  ).toEqual({});
 });

@@ -19,9 +19,9 @@ test("forPath matches extension, then file name, then falls back to text", () =>
   expect(id("Makefile")).toBe("makefile");
   expect(id("a.md")).toBe("markdown");
   expect(registry.forPath("a.md").views.map((v) => v.id)).toEqual([
+    "reading",
     "live",
     "source",
-    "reading",
   ]);
   expect(id("run.sh")).toBe("bash");
   expect(id("pyproject.toml")).toBe("ini");

@@ -4,7 +4,8 @@ import { applySummaries, emptyIndex, type NoteIndex } from "./note-index";
 import { linkText, resolveLink } from "./resolve";
 import { summarize } from "./summarize";
 
-const note = (path: string, text = "") => summarize(path, 1, scanDoc(text));
+const note = (path: string, text = "") =>
+  summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text));
 
 function index(notes: Record<string, string>, files: string[] = []): NoteIndex {
   return applySummaries(

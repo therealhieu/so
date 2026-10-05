@@ -103,8 +103,12 @@ const withIndex = (s: AppState, ...actions: Action[]) =>
 const batch = (done: number, total: number): Action => ({
   type: "indexBatch",
   summaries: [
-    summarize("a.md", 1, scanDoc("")),
-    summarize("b.md", 1, scanDoc("[[a]] and [[a#h]]")),
+    summarize("a.md", { mtime: 1, size: 0, ctime: 1 }, scanDoc("")),
+    summarize(
+      "b.md",
+      { mtime: 1, size: 0, ctime: 1 },
+      scanDoc("[[a]] and [[a#h]]"),
+    ),
   ],
   files: ["scripts/sync.ts"],
   done,

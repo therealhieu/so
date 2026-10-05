@@ -4,7 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { activeBuffer, listedBuffers } from "../../core/state/buffers";
-import type { AppState } from "../../core/state/types";
+import type { AppState, BufferId, MouseTarget } from "../../core/state/types";
 import type { LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
@@ -19,6 +19,8 @@ const cells = (text: string) => [...text].length;
 export class Bufferline extends Renderable {
   private s: AppState | undefined;
   private lc: LayoutClass = "wide";
+  /** The painted tabs' columns, `x0` inclusive and `x1` exclusive. */
+  private tabs: { x0: number; x1: number; bufferId: BufferId }[] = [];
 
   constructor(ctx: RenderContext) {
     super(ctx, { position: "absolute", left: 0, top: 0, height: 1 });
@@ -30,8 +32,20 @@ export class Bufferline extends Renderable {
     this.width = s.terminal.cols;
   }
 
+  /** A painted tab, or any other cell of row 0, which takes no click. */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const s = this.s;
+    if (s === undefined || y !== 0 || x < 0 || x >= s.terminal.cols)
+      return undefined;
+    const tab = this.tabs.find((t) => x >= t.x0 && x < t.x1);
+    return tab === undefined
+      ? { kind: "inert" }
+      : { kind: "bufferTab", bufferId: tab.bufferId };
+  }
+
   protected renderSelf(buf: OptimizedBuffer): void {
     const s = this.s;
+    this.tabs = [];
     if (s === undefined) return;
     const theme = themeOf(s);
     const cols = s.terminal.cols;
@@ -41,6 +55,7 @@ export class Bufferline extends Renderable {
     const tabs = listedBuffers(s)
       .sort((a, b) => a.id - b.id)
       .map((b) => ({
+        id: b.id,
         name: ` ${basename(b.path)}`,
         dirty: b.dirty,
         active: b.id === active,
@@ -66,12 +81,14 @@ export class Bufferline extends Renderable {
         break;
       }
       const token = t.active ? "bufferActive" : "bufferline";
+      const x0 = x;
       x = this.text(buf, theme, x, t.name, token);
       if (t.dirty) {
         x = this.text(buf, theme, x, " ", token);
         x = this.text(buf, theme, x, "●", "bufferDirty");
       }
       x = this.text(buf, theme, x, " ", token);
+      this.tabs.push({ x0, x1: x, bufferId: t.id });
     }
     if (right !== "")
       drawCells(

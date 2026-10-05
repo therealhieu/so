@@ -55,7 +55,7 @@ function randomNote(path: string, next: () => number): NoteSummary {
     next() < 0.3 ? `aliases: [${pick(["alias-one", "plan", "Other"])}]\n` : "";
   const tags = next() < 0.5 ? `tags: [${pick(["a", "a/b", "c"])}]\n` : "";
   const text = `---\n${aliases}${tags}---\n# ${path}\n\n${links.join(" ")} #${pick(["t", "t/u", "v"])}\n`;
-  return summarize(path, 1, scanDoc(text));
+  return summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text));
 }
 
 /** Plain, order-independent views of every derived map. */
@@ -67,6 +67,7 @@ function snapshot(ix: NoteIndex) {
   return {
     files: [...ix.files].sort(),
     summaries: sorted(ix.summaries),
+    facts: sorted(ix.facts),
     byBasename: sorted(ix.byBasename),
     byAlias: sorted(ix.byAlias),
     byTag: sorted(ix.byTag),
@@ -76,7 +77,7 @@ function snapshot(ix: NoteIndex) {
 }
 
 const rebuilt = (ix: NoteIndex) =>
-  buildIndex([...ix.summaries.values()], [...ix.files]);
+  buildIndex([...ix.summaries.values()], [...ix.files], [...ix.facts.values()]);
 
 test("incremental updates equal a full rebuild", () => {
   for (const seed of [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]) {
@@ -155,7 +156,7 @@ test("only notes have summaries and moved notes keep theirs at the new path", ()
 
 test("backlinks, tag counts, and notes with a tag", () => {
   const note = (path: string, text: string) =>
-    summarize(path, 1, scanDoc(text));
+    summarize(path, { mtime: 1, size: 0, ctime: 1 }, scanDoc(text));
   const ix = applySummaries(emptyIndex(), [
     note("plan.md", "# Plan\n#project/so"),
     note("a.md", "see [[plan]] and [[plan#Goals|goals]] #project"),
@@ -171,4 +172,40 @@ test("backlinks, tag counts, and notes with a tag", () => {
     { tag: "project/so", count: 2 },
   ]);
   expect(notesWithTag(ix, "project/so")).toEqual(["b.md", "plan.md"]);
+});
+
+test("file facts never include Markdown notes and follow moves and removals", () => {
+  const facts = [
+    { path: "img.png", size: 3, mtime: 5, ctime: 4 },
+    { path: "a.md", size: 1, mtime: 1, ctime: 1 },
+    { path: "docs/r.pdf", size: 9, mtime: 2, ctime: 2 },
+  ];
+  let ix = buildIndex(
+    [summarize("a.md", { mtime: 1, size: 1, ctime: 1 }, scanDoc(""))],
+    ["img.png", "docs/r.pdf"],
+    facts,
+  );
+  expect([...ix.facts.keys()].sort()).toEqual(["docs/r.pdf", "img.png"]);
+  expect(ix.facts.get("img.png")).toEqual(facts[0]);
+  ix = applySummaries(
+    ix,
+    [],
+    [],
+    [
+      { path: "img.png", size: 7, mtime: 6, ctime: 4 },
+      { path: "b.md", size: 1, mtime: 1, ctime: 1 },
+    ],
+  );
+  expect(ix.facts.get("img.png")?.size).toBe(7);
+  expect(ix.facts.has("b.md")).toBe(false);
+  ix = movePaths(ix, [{ from: "docs", to: "papers" }]);
+  expect(ix.facts.get("papers/r.pdf")).toEqual({
+    path: "papers/r.pdf",
+    size: 9,
+    mtime: 2,
+    ctime: 2,
+  });
+  expect(ix.facts.has("docs/r.pdf")).toBe(false);
+  ix = removePaths(ix, ["img.png"]);
+  expect([...ix.facts.keys()]).toEqual(["papers/r.pdf"]);
 });

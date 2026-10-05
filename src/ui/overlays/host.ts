@@ -3,7 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import type { AppState } from "../../core/state/types";
+import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass, View } from "../shell";
 import { drawCells, type Theme } from "../theme";
 
@@ -66,13 +66,23 @@ export function wrap(text: string, width: number): string[] {
 }
 
 /**
+ * An overlay view. `itemAt` answers for a cell inside its float, `undefined`
+ * outside it or while hidden.
+ */
+type OverlayView = View & {
+  itemAt?(x: number, y: number): MouseTarget | undefined;
+  dragAt?(x: number, y: number): MouseTarget | undefined;
+};
+
+/**
  * Paints the one open overlay above the body. It holds one view per overlay
  * kind; each shows itself only while its kind is open.
  */
 export class OverlayHost extends Renderable {
-  private readonly views: View[];
+  private readonly views: OverlayView[];
+  private open: AppState["overlay"]["kind"] = "none";
 
-  constructor(ctx: RenderContext, views: View[] = []) {
+  constructor(ctx: RenderContext, views: OverlayView[] = []) {
     super(ctx, { position: "absolute", left: 0, top: 0, zIndex: 50 });
     this.views = views;
     for (const v of views) this.add(v);
@@ -81,8 +91,33 @@ export class OverlayHost extends Renderable {
   update(s: AppState, lc: LayoutClass): void {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
-    this.visible = s.overlay.kind !== "none";
+    this.open = s.overlay.kind;
+    this.visible = this.open !== "none";
     for (const v of this.views) v.update(s, lc);
+  }
+
+  /**
+   * What the open overlay has under the cell. Outside its float the cell is
+   * `outside`, so nothing below answers, except for completion, which leaves
+   * the cell to the body. Overlays without `itemAt` are `outside` everywhere.
+   */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    if (this.open === "none") return undefined;
+    for (const v of this.views) {
+      const t = v.visible ? v.itemAt?.(x, y) : undefined;
+      if (t !== undefined) return t;
+    }
+    return this.open === "completion" ? undefined : { kind: "outside" };
+  }
+
+  /** What a drag that started in the open overlay is over, anywhere on screen. */
+  dragAt(x: number, y: number): MouseTarget | undefined {
+    if (this.open === "none") return undefined;
+    for (const v of this.views) {
+      const t = v.visible ? v.dragAt?.(x, y) : undefined;
+      if (t !== undefined) return t;
+    }
+    return undefined;
   }
 
   cursor(): Cursor | undefined {

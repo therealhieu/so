@@ -1,12 +1,14 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
-import { markdownViewContext } from "./markdown-view";
+import { markdownViewContextFor } from "./markdown-view";
 import { snapshotSession } from "./session";
 import type { Action, AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
+const markdownViewContext = markdownViewContextFor(reg);
 const FILES = ["a.md", "b.md", "c.md", "d.md", "e.md"];
 
 function indexed(): AppState {
@@ -131,7 +133,7 @@ test("a refused embed is not requested again and shows no error", () => {
     width: 80,
     rows: 20,
     imageSize: () => undefined,
-    cellAspect: 0.5,
+    cell: { width: 8, height: 16 },
   };
   const ctx = markdownViewContext(
     typed.state,
@@ -163,7 +165,7 @@ const viewHost = {
   width: 80,
   rows: 20,
   imageSize: () => undefined,
-  cellAspect: 0.5,
+  cell: { width: 8, height: 16 },
 };
 
 test("an embed target reads as loading until its read answers", () => {

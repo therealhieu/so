@@ -13,10 +13,12 @@
     "test:ci": "bun test test/ui test/integration test/e2e",
     "bench": "bun scripts/bench-gate.ts",
     "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so",
-    "record:vim": "bun scripts/record-vim.ts"
+    "record:vim": "bun scripts/record-vim.ts",
+    "sandbox": "bun scripts/sandbox.ts"
   },
   "dependencies": {
     "@opentui/core": "0.5.14",
+    "@resvg/resvg-wasm": "2.6.2",
     "beautiful-mermaid": "1.1.3",
     "ignore": "7.0.12",
     "katex": "0.16.47",
@@ -37,5 +39,8 @@
     "@biomejs/biome": "2.5.15",
     "knip": "6.39.0",
     "@xterm/headless": "6.0.0"
+  },
+  "patchedDependencies": {
+    "beautiful-mermaid@1.1.3": "patches/beautiful-mermaid@1.1.3.patch"
   }
 }

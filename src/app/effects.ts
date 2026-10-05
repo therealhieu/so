@@ -1,12 +1,19 @@
 import { join } from "node:path";
 import { parseConfig } from "../core/config/toml";
 import { applySpanEdits } from "../core/features/links/rename";
+import { expandTemplate } from "../core/features/notes/template";
+import {
+  frontmatterValue,
+  patchFrontmatter,
+} from "../core/lang/markdown/frontmatter-patch";
 import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
 import { readConfigText } from "../workspace/config-file";
 import {
   atomicWrite,
   createEntry,
+  createExclusive,
+  exists,
   FsError,
   listDir,
   moveEntry,
@@ -16,6 +23,7 @@ import {
 } from "../workspace/fs";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
+import { readPropertyTypes } from "../workspace/property-types";
 import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
@@ -138,6 +146,23 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     if (seen === undefined) own.delete(path);
     else own.set(path, { from: seen, to: stamp });
     return stamp;
+  }
+
+  /** The template text to expand, and what became of the template file. */
+  async function templateText(
+    e: Extract<Effect, { kind: "createNote" }>,
+  ): Promise<{
+    text: string;
+    template: Extract<Action, { type: "noteCreated" }>["template"];
+  }> {
+    if (e.template === undefined) return { text: "", template: "none" };
+    const file = await readTextFile(abs(e.template)).catch(() => ({
+      refused: "io" as const,
+    }));
+    if (!("refused" in file)) return { text: file.text, template: "used" };
+    if (await exists(abs(e.template)))
+      return { text: "", template: "unreadable" };
+    return { text: e.fallback ?? "", template: "missing" };
   }
 
   async function runFsOp(
@@ -270,8 +295,114 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         });
         return;
       }
+      case "patchFrontmatter": {
+        const before = [...unreported];
+        void serial(async () => {
+          const followed = follow(e.path, before);
+          const path = followed ?? e.path;
+          const fail = (reason: string) => {
+            d.logger.error("bases.patchFailed", { path, reason });
+            d.dispatch({
+              type: "frontmatterPatched",
+              path,
+              ok: false,
+              removed: [],
+              added: [],
+              reason,
+            });
+          };
+          if (followed === null) return fail("removed");
+          const cur = await readTextFile(abs(path)).catch(() => ({
+            refused: "io" as const,
+          }));
+          if ("refused" in cur) return fail(`not readable (${cur.refused})`);
+          const property = "set" in e.patch ? e.patch.set : e.patch.remove;
+          const held = frontmatterValue(cur.text, property);
+          if (JSON.stringify(held) !== JSON.stringify(e.expected))
+            return fail("changed on disk");
+          const r = patchFrontmatter(cur.text, e.patch);
+          if (!r.ok) return fail(r.reason);
+          try {
+            const stamp = await write(
+              path,
+              restoreFile(cur, r.text),
+              cur.stamp,
+            );
+            d.ownOps.noteWrite(path, stamp);
+            d.index?.notify({ kind: "changed", path, isDir: false });
+            d.logger.info("bases.patched", { path });
+            d.dispatch({
+              type: "frontmatterPatched",
+              path,
+              ok: true,
+              text: r.text,
+              stamp,
+              removed: r.removed,
+              added: r.added,
+            });
+          } catch (x) {
+            fail(msg(x));
+          }
+        });
+        return;
+      }
       case "create":
-        void serial(async () => d.dispatch(await runFsOp(e.op)));
+        void serial(async () => {
+          const result = await runFsOp(e.op);
+          d.dispatch(result);
+          if (result.ok && e.op.dir !== true)
+            d.index?.notify({ kind: "changed", path: e.op.from, isDir: false });
+        });
+        return;
+      case "readPropertyTypes":
+        void readPropertyTypes(d.root, (reason) =>
+          d.logger.error("bases.typesInvalid", { reason }),
+        ).then((types) => d.dispatch({ type: "propertyTypesLoaded", types }));
+        return;
+      case "createNote":
+        void serial(async () => {
+          const answer = {
+            type: "noteCreated" as const,
+            path: e.path,
+            after: e.after,
+            reason: e.reason,
+            ...(e.template === undefined ? {} : { templatePath: e.template }),
+          };
+          const { text, template } = await templateText(e);
+          try {
+            const r = await createExclusive(
+              d.root,
+              e.path,
+              expandTemplate(text, e.vars),
+            );
+            if (r.created) {
+              d.ownOps.noteWrite(e.path, r.stamp);
+              d.index?.notify({ kind: "changed", path: e.path, isDir: false });
+              if (r.fallback)
+                d.logger.info("notes.createFallback", { path: e.path });
+            }
+            d.logger.info("notes.created", {
+              path: e.path,
+              created: r.created,
+            });
+            d.dispatch({
+              ...answer,
+              outcome: r.created ? "created" : "exists",
+              template,
+            });
+          } catch (x) {
+            d.logger.error("notes.createFailed", {
+              path: e.path,
+              reason: msg(x),
+            });
+            d.dispatch({
+              ...answer,
+              outcome: "failed",
+              template,
+              failure: msg(x),
+            });
+          }
+        });
         return;
       case "rename":
       case "move":

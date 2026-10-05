@@ -3,10 +3,16 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { isNote, visiblePaths } from "../../core/state/explorer";
-import type { AppState, PromptState } from "../../core/state/types";
+import { visiblePaths } from "../../core/state/explorer";
+import type {
+  AppState,
+  ExplorerPrompt,
+  MouseTarget,
+  PromptState,
+} from "../../core/state/types";
+import { fileIcon, folderIcon } from "../icons";
 import { drawFrame } from "../overlays/host";
-import type { Cursor, LayoutClass, ViewDeps } from "../shell";
+import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 /** Columns of the tree, not counting its separator or float border. */
@@ -15,6 +21,10 @@ export const EXPLORER_WIDTH = 30;
 /** Docked beside the windows when open on a terminal of 100 columns or more. */
 export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
   s.panels.explorer.open && lc !== "narrow";
+
+/** The terminal edge the explorer sits on, docked or floating. */
+export const explorerSide = (s: AppState): "left" | "right" =>
+  s.config.explorer.position;
 
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const depthOf = (path: string) => path.split("/").length - 1;
@@ -36,10 +46,11 @@ type Row = {
  * The open create or rename prompt, which the open tree edits in place
  * (otherwise the prompt shows as a float).
  */
-export function treeField(s: AppState): PromptState | undefined {
+export function treeField(s: AppState): ExplorerPrompt | undefined {
   if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
   const p = s.overlay.prompt;
-  return p.kind === "input" &&
+  return p.newNote !== true &&
+    p.kind === "input" &&
     (p.op.kind === "create" ||
       (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
     ? p
@@ -64,23 +75,26 @@ export function impactLine(
 }
 
 /**
- * The file tree: docked left with a `│` separator, or a rounded float over
- * the windows on narrow terminals. Folders show `▸`/`▾`, notes `◇`, other
- * files `≡`; `●` marks a file with unsaved changes. Create and rename edit
+ * The file tree: docked on its configured edge with a `│` separator toward
+ * the windows, or a rounded float on that edge on narrow terminals. Each row starts with an
+ * icon for its folder state or file type (`explorer.icons` picks Nerd Font or
+ * plain symbols); `●` marks a file with unsaved changes. Create and rename edit
  * the name in the tree: a new row under the target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
   private float = false;
+  private onRight = false;
+  /** The view's first column on the terminal. */
+  private x0 = 0;
   private first = 0;
   private w = 0;
   private h = 0;
+  /** The listed rows' paths, "" for a name field or a note line. */
+  private paths: string[] = [];
   private cursorAt: Cursor | undefined;
 
-  constructor(
-    ctx: RenderContext,
-    private readonly deps: Pick<ViewDeps, "reg">,
-  ) {
+  constructor(ctx: RenderContext) {
     super(ctx, { position: "absolute", left: 0, top: 1, zIndex: 20 });
   }
 
@@ -92,9 +106,13 @@ export class ExplorerView extends Renderable {
     // Layout getters lag until the next frame, so geometry is kept here.
     this.w = Math.min(s.terminal.cols, EXPLORER_WIDTH + (this.float ? 2 : 1));
     this.h = Math.max(0, s.terminal.rows - 3);
+    this.onRight = explorerSide(s) === "right";
+    this.x0 = this.onRight ? s.terminal.cols - this.w : 0;
+    this.left = this.x0;
     this.width = this.w;
     this.height = this.h;
     const rows = this.rows(s);
+    this.paths = rows.map((r) => r.path);
     const at = selectedRow(rows, ex.cursor);
     const room = this.listRows();
     if (at >= 0 && at < this.first) this.first = at;
@@ -102,14 +120,14 @@ export class ExplorerView extends Renderable {
     this.first = Math.max(0, Math.min(this.first, rows.length - room));
     const row = rows[at];
     const box = this.inner();
-    const x = box.x + 1 + 2 * (row?.depth ?? 0);
+    const x = this.x0 + box.x + 1 + 2 * (row?.depth ?? 0);
     const y = 1 + box.y + 1 + at - this.first;
     this.cursorAt =
       !ex.open || row === undefined
         ? undefined
         : row.edit !== undefined
           ? {
-              x: Math.min(box.x + box.w - 1, x + 2 + cells(row.edit)),
+              x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
               y,
               style: "line",
             }
@@ -122,11 +140,24 @@ export class ExplorerView extends Renderable {
     return this.cursorAt;
   }
 
+  /** A listed row's path; the title, frame, and empty rows give "" (focus only). */
+  targetAt(ax: number, y: number): MouseTarget | undefined {
+    const x = ax - this.x0;
+    if (!this.visible || x < 0 || x >= this.w || y < 1 || y >= 1 + this.h)
+      return undefined;
+    const box = this.inner();
+    const i = y - (1 + box.y + 1);
+    const listed =
+      x >= box.x && x < box.x + box.w && i >= 0 && i < this.listRows();
+    const path = listed ? (this.paths[this.first + i] ?? "") : "";
+    return { kind: "explorer", path };
+  }
+
   /** The tree's area inside the float border, relative to this view. */
   private inner() {
     return this.float
       ? { x: 1, y: 1, w: this.w - 2, h: this.h - 2 }
-      : { x: 0, y: 0, w: this.w - 1, h: this.h };
+      : { x: this.onRight ? 1 : 0, y: 0, w: this.w - 1, h: this.h };
   }
 
   /** Rows left for entries below the title row. */
@@ -194,7 +225,7 @@ export class ExplorerView extends Renderable {
         drawCells(
           buf,
           theme.style("separator"),
-          this.x + box.w,
+          this.onRight ? this.x : this.x + box.w,
           this.y + r,
           "│",
         );
@@ -245,13 +276,10 @@ export class ExplorerView extends Renderable {
           ? "treeSelFocus"
           : "treeSel"
         : "explorer";
+      const set = s.config.explorer.icons;
       const icon = row.dir
-        ? row.open
-          ? "▾ "
-          : "▸ "
-        : row.path === "" || isNote(this.deps.reg.fileTypes, row.path) // a new row shows as a note
-          ? "◇ "
-          : "≡ ";
+        ? { glyph: folderIcon(row.open, set), token: "explorerDir" }
+        : fileIcon(row.path === "" ? "new.md" : row.path, set); // a new row shows as a note
       const indent = ` ${"  ".repeat(row.depth)}`;
       drawCells(buf, theme.style(base), x0, y, "", box.w);
       let x = x0;
@@ -269,7 +297,7 @@ export class ExplorerView extends Renderable {
         x += [...text].length;
       };
       put(indent, "explorer");
-      put(icon, row.dir ? "explorerDir" : "explorerDim");
+      put(`${icon.glyph} `, icon.token);
       if (row.edit !== undefined) {
         const room = x0 + box.w - x;
         if (room > 0)

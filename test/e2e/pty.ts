@@ -1,5 +1,5 @@
 import { statSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import xterm from "@xterm/headless";
@@ -69,6 +69,8 @@ export type PtyProcess = {
   type(s: string): void;
   /** The emulator's visible screen as text. */
   screen(): string;
+  /** The terminal's current mouse tracking mode. */
+  mouse(): PtyRun["screen"]["mouse"];
   /** Resolve once `pred` holds, polling every 10 ms. */
   waitFor(pred: () => boolean, ms?: number): Promise<void>;
   /** Whether the process has exited. */
@@ -116,13 +118,20 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const term = new xterm.Terminal({ cols, rows, allowProposedApi: true });
   const probe = new TerminalProbe();
   let done = false;
-  // The session state file goes to a private folder, never the user's.
+  // The session state and config files go to a private folder, never the
+  // user's; notes open in the editable live view the runs type into.
   const state = await mkdtemp(join(tmpdir(), "so-pty-state-"));
+  await mkdir(join(state, "config/so"), { recursive: true });
+  await writeFile(
+    join(state, "config/so/config.toml"),
+    '[preview]\nmode = "live"\n',
+  );
   const proc = Bun.spawn(argv, {
     env: {
       ...process.env,
       TERM: "xterm-256color",
       XDG_STATE_HOME: state,
+      XDG_CONFIG_HOME: join(state, "config"),
       ...o.env,
     },
     terminal: {
@@ -146,6 +155,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
     file: startFile(argv),
     type: (s) => proc.terminal?.write(s),
     screen: () => screenText(term),
+    mouse: () => term.modes.mouseTrackingMode,
     async waitFor(pred, ms = 5000) {
       const until = performance.now() + ms;
       while (!pred()) {

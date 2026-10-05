@@ -21,9 +21,12 @@ import type {
 const isConflicted = (s: AppState, id: BufferId): boolean =>
   s.overlay.kind === "conflict" && s.overlay.bufferId === id;
 
-/** The single save gate: dirty, present on disk, and not in a conflict. */
+/** The single save gate: writable file type, dirty, present on disk, and not in a conflict. */
 const writable = (s: AppState, b: BufferState): boolean =>
-  b.dirty && b.disk === "present" && !isConflicted(s, b.id);
+  b.readOnly !== true &&
+  b.dirty &&
+  b.disk === "present" &&
+  !isConflicted(s, b.id);
 
 /** A buffer that `:q` and `:bd` must not close: its edits cannot be written. */
 const blocked = (s: AppState, b: BufferState): boolean =>
@@ -62,7 +65,8 @@ export function scheduleAutosave(
 
 /**
  * Emit the buffer's write. A no-op unless the buffer is writable and no write
- * is in flight; `recreate` writes a deleted-on-disk buffer without a stamp check.
+ * is in flight; `recreate` writes a deleted-on-disk buffer without a stamp
+ * check. A read-only buffer is never written, not even to recreate it.
  */
 export function writeBuffer(
   s: AppState,
@@ -71,7 +75,12 @@ export function writeBuffer(
   opts: { recreate?: boolean } = {},
 ): Result {
   const b = s.buffers[id];
-  if (b === undefined || b.save.kind === "writing" || isConflicted(s, id))
+  if (
+    b === undefined ||
+    b.readOnly === true ||
+    b.save.kind === "writing" ||
+    isConflicted(s, id)
+  )
     return none(s);
   const recreate = opts.recreate === true && b.disk === "deleted";
   if (!recreate && !writable(s, b)) return none(s);

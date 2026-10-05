@@ -11,14 +11,25 @@ import type {
   TimerId,
 } from "../../src/core/state/types";
 import { createUpdate, type Registries } from "../../src/core/state/update";
+import { BaseView } from "../../src/ui/editors/base-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
-import { createShell, type GraphicsSupport } from "../../src/ui/shell";
+import {
+  createShell,
+  type GraphicsSupport,
+  type ShellDeps,
+} from "../../src/ui/shell";
+import { paintBaseEmbed } from "../../src/ui/widgets/base";
 import { paintEmbed } from "../../src/ui/widgets/embed";
 import { paintImage } from "../../src/ui/widgets/image";
+import { createSvgRasterizer } from "../../src/workspace/svg";
+
+/** One rasterizer for every mount: it starts WebAssembly once. */
+const rasterizeSvg = createSvgRasterizer();
+
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
 import { paintRule } from "../../src/ui/widgets/rule";
-import { testRegistries, textFile } from "./state";
+import { editingNotes, testRegistries, textFile } from "./state";
 
 export type MountOptions = {
   cols: number;
@@ -32,6 +43,8 @@ export type MountOptions = {
   capabilities?: GraphicsSupport;
   /** Image bytes by workspace path or URL; any other image fails to load. */
   files?: Record<string, Uint8Array>;
+  /** Draws SVG in place of the real rasterizer. */
+  rasterizeSvg?: ShellDeps["rasterizeSvg"];
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
@@ -60,10 +73,12 @@ export const TREE: Record<string, DirEntry[]> = {
  */
 export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
   registerWidgetPainter("image", paintImage);
+  registerWidgetPainter("base", paintBaseEmbed);
   const t = await createTestRenderer({
     width: o.cols,
     height: o.rows,
@@ -79,9 +94,10 @@ export async function mountShell(o: MountOptions) {
     rows: o.rows,
     color: o.color ?? "color",
   });
+  const editing = editingNotes(base);
   const initial: AppState = {
-    ...base,
-    config: { ...base.config, theme: o.theme ?? "dark" },
+    ...editing,
+    config: { ...editing.config, theme: o.theme ?? "dark" },
   };
   const store = createStore(initial, createUpdate(reg), (e) => {
     effects.push(e);
@@ -108,6 +124,7 @@ export async function mountShell(o: MountOptions) {
     reg,
     now: () => now,
     loadImage,
+    rasterizeSvg: o.rasterizeSvg ?? rasterizeSvg,
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });
   shell.attach(store);
@@ -116,6 +133,8 @@ export async function mountShell(o: MountOptions) {
 
   return {
     t,
+    /** OpenTUI's mock mouse, driving the renderer's real hit grid and mouse layer. */
+    mouse: t.mockMouse,
     store,
     shell,
     /** The registries `update` and the views read; register test file types here. */

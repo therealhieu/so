@@ -1,9 +1,17 @@
 import type { TextBuffer } from "../../../kernel/text/text-buffer";
-import type { DecorationProvider } from "../../../kernel/view/decorations";
+import type {
+  Decoration,
+  DecorationProvider,
+} from "../../../kernel/view/decorations";
 import { layoutText } from "../../../kernel/view/text-view";
-import type { LineRange, RenderLine, Span } from "../../../kernel/view/types";
+import type {
+  LineRange,
+  RenderLine,
+  Span,
+  TextView,
+} from "../../../kernel/view/types";
 import { contentEnd, contentStart, embedLink, wholeBlock } from "../block-text";
-import type { Doc } from "../doc";
+import type { Block, Doc } from "../doc";
 import {
   type BlockRenderer,
   blocksIn,
@@ -131,30 +139,45 @@ export function embedRows(
 }
 
 /**
+ * Inside an embedded note an embed of any kind is its link, so embedding
+ * stops at one level; undefined anywhere else.
+ */
+export function embedAsLink(
+  block: Block,
+  v: TextView,
+  doc: Doc,
+  ctx: PreviewCtx,
+): Decoration[] | undefined {
+  if (!nested.has(ctx)) return undefined;
+  const { target, section } = embedLink(doc, block, v.buf);
+  return [
+    {
+      kind: "replace",
+      range: wholeBlock(v.buf, block),
+      block: true,
+      spans: [
+        {
+          text: `${target}${section ?? ""}`,
+          style: ctx.isResolved(target) ? "mdLink" : "linkUnresolved",
+          link: target,
+        },
+      ],
+    },
+  ];
+}
+
+/**
  * A note embed as an `embed` widget: the target section capped at
  * `embedMaxRows` source lines unless its block id is toggled in `folds`,
  * three reserved rows while the target loads, and the title alone when it is
  * missing.
  */
 export const embedRenderer: BlockRenderer = (block, v, { doc, ctx }) => {
+  const nestedLink = embedAsLink(block, v, doc, ctx);
+  if (nestedLink !== undefined) return nestedLink;
   const { target, section } = embedLink(doc, block, v.buf);
   const range = wholeBlock(v.buf, block);
   const title = `${target}${section ?? ""}`;
-  if (nested.has(ctx))
-    return [
-      {
-        kind: "replace",
-        range,
-        block: true,
-        spans: [
-          {
-            text: title,
-            style: ctx.isResolved(target) ? "mdLink" : "linkUnresolved",
-            link: target,
-          },
-        ],
-      },
-    ];
   const path = ctx.resolve(target);
   const got = path === undefined ? "missing" : ctx.embed(path);
   const max = ctx.folds.has(block.id)

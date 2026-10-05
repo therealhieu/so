@@ -7,7 +7,12 @@ import {
 } from "../../../../../test/support/markdown";
 import { parseDoc } from "../doc";
 import { registerBlockRenderer } from "../live-preview";
-import { mermaidRenderer, mermaidText } from "./mermaid";
+import {
+  mermaidLines,
+  mermaidRenderer,
+  mermaidSvg,
+  mermaidText,
+} from "./mermaid";
 
 const FLOWCHART = [
   "flowchart LR",
@@ -20,6 +25,18 @@ test("a flowchart becomes box-drawing lines", () => {
   if (r.kind !== "text") throw new Error(`expected text, got ${r.label}`);
   expect(r.lines.join("\n")).toContain("│ Capture ├");
   expect(r.lines.join("\n")).toMatch(/[┌┐└┘─►]/);
+});
+
+test("an edge leaves its box even when a sibling edge has a label", () => {
+  for (const spacing of ["loose", "tight"] as const) {
+    const drawn = mermaidLines(FLOWCHART, spacing)?.join("\n");
+    expect(drawn).toMatch(/Triage *├─+►│ *Plan/);
+  }
+});
+
+test("every line of a drawing has the same width", () => {
+  const lines = mermaidLines(FLOWCHART, "loose") ?? [];
+  expect(new Set(lines.map((l) => l.length)).size).toBe(1);
 });
 
 test("unsupported mermaid diagrams fall back to labelled source", () => {
@@ -62,4 +79,31 @@ test("typing outside a diagram does not lay it out again", () => {
   }
   expect(calls).toHaveBeenCalledTimes(1);
   calls.mockRestore();
+});
+
+test("a diagram drawn at any width is wider with the default spacing than the tight one", () => {
+  const widest = (lines: string[] | undefined) =>
+    Math.max(...(lines ?? []).map((l) => l.length));
+  const loose = mermaidLines(FLOWCHART, "loose");
+  expect(loose?.join("\n")).toContain("│ Capture ├");
+  expect(widest(loose)).toBeGreaterThan(
+    widest(mermaidLines(FLOWCHART, "tight")),
+  );
+  expect(mermaidLines("gantt\n  title x", "loose")).toBeUndefined();
+  expect(
+    mermaidLines("flowchart SIDEWAYS\n  A --> B", "loose"),
+  ).toBeUndefined();
+});
+
+test("a diagram as SVG carries plain colours and generic fonts a rasterizer can draw", () => {
+  const dark = mermaidSvg(FLOWCHART, "dark");
+  if (dark === undefined) throw new Error("expected an SVG");
+  expect(dark.svg).toContain(">Capture</text>");
+  expect(dark.svg).not.toMatch(/var\(|color-mix\(|@import/);
+  expect(dark.svg).toContain("font-family: sans-serif");
+  expect(dark.width).toBeGreaterThan(dark.height);
+  expect(dark.background).toBe("#1a1b26");
+  expect(mermaidSvg(FLOWCHART, "light")?.background).not.toBe(dark.background);
+  expect(mermaidSvg("gantt\n  title x", "dark")).toBeUndefined();
+  expect(mermaidSvg("flowchart SIDEWAYS\n  A --> B", "dark")).toBeUndefined();
 });

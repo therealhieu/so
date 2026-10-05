@@ -1,5 +1,6 @@
 import type { Stats } from "node:fs";
 import {
+  link,
   lstat,
   mkdir,
   open,
@@ -84,6 +85,7 @@ export async function readTextFile(
     bom,
     eol: text.includes("\r\n") ? "\r\n" : "\n",
     stamp: stampOfBytes(st, bytes),
+    createdMs: st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
   };
 }
 
@@ -132,7 +134,8 @@ export async function atomicWrite(
   }
 }
 
-const exists = (p: string) =>
+/** Whether anything, even a dangling link, is at `p`. */
+export const exists = (p: string) =>
   lstat(p).then(
     () => true,
     () => false,
@@ -182,6 +185,88 @@ export async function createEntry(
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "EEXIST") throw e13(rel);
     throw FsError.from(e);
+  }
+}
+
+/** Errors of `link()` on a file system without hard links. */
+const NO_HARD_LINKS = new Set(["EPERM", "ENOTSUP", "EXDEV", "EOPNOTSUPP"]);
+
+const errCode = (e: unknown) => (e as NodeJS.ErrnoException).code;
+
+/**
+ * Create `rel` with `text`, with missing parents, never replacing an entry:
+ * a private temp file is written and synced, then published with `link()`,
+ * which fails with EEXIST when anything exists at the target (on a
+ * case-insensitive volume, also a case variant). A file system without hard
+ * links falls back to an exclusive open of the target (`fallback`), which is
+ * still exclusive but not atomic against a crash mid-write. No temp file
+ * remains on any path.
+ */
+export async function createExclusive(
+  root: string,
+  rel: string,
+  text: string,
+): Promise<
+  { created: true; stamp: Stamp; fallback?: true } | { created: false }
+> {
+  const target = join(root, rel);
+  const tmp = join(
+    dirname(target),
+    `.${basename(target)}.so-new-${process.pid}`,
+  );
+  const bytes = new TextEncoder().encode(text);
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await rm(tmp, { force: true });
+    const fd = await open(tmp, "wx", 0o600);
+    let st: Stats;
+    try {
+      await fd.writeFile(bytes);
+      await fd.sync();
+      await fd.chmod(0o644);
+      st = await fd.stat();
+    } finally {
+      await fd.close();
+    }
+    try {
+      await link(tmp, target);
+      return { created: true, stamp: stampOfBytes(st, bytes) };
+    } catch (e) {
+      if (errCode(e) === "EEXIST") return { created: false };
+      if (!NO_HARD_LINKS.has(errCode(e) ?? "")) throw e;
+    }
+    return await createByOpen(target, bytes);
+  } catch (e) {
+    throw FsError.from(e);
+  } finally {
+    await rm(tmp, { force: true });
+  }
+}
+
+/** Exclusive create without hard links; a target this call made is removed when its write fails. */
+async function createByOpen(
+  target: string,
+  bytes: Uint8Array,
+): Promise<
+  { created: true; stamp: Stamp; fallback: true } | { created: false }
+> {
+  let fd: Awaited<ReturnType<typeof open>>;
+  try {
+    fd = await open(target, "wx", 0o644);
+  } catch (e) {
+    if (errCode(e) === "EEXIST") return { created: false };
+    throw e;
+  }
+  try {
+    await fd.writeFile(bytes);
+    await fd.sync();
+    const st = await fd.stat();
+    return { created: true, stamp: stampOfBytes(st, bytes), fallback: true };
+  } catch (e) {
+    await rm(target, { force: true });
+    throw e;
+  } finally {
+    await fd.close();
   }
 }
 

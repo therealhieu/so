@@ -4,7 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { type StatusSegments, statusSegments } from "../../core/state/status";
-import type { AppState } from "../../core/state/types";
+import type { AppState, MouseTarget } from "../../core/state/types";
 import type { LayoutClass, ViewDeps } from "../shell";
 import { drawCells, middle, themeOf } from "../theme";
 
@@ -15,6 +15,7 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
   visualLine: ["V-LINE", "modeVisual"],
   cmdline: ["COMMAND", "modeCmd"],
   explorer: ["EXPLORER", "modeNormal"],
+  base: ["BASE", "modeNormal"],
   conflict: ["CONFLICT", "modeCmd"],
 };
 
@@ -62,6 +63,17 @@ export class Statusline extends Renderable {
     this.lc = lc;
     this.top = Math.max(0, s.terminal.rows - 2);
     this.width = s.terminal.cols;
+  }
+
+  /** The status row takes no click. */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const t = this.s?.terminal;
+    return t !== undefined &&
+      y === Math.max(0, t.rows - 2) &&
+      x >= 0 &&
+      x < t.cols
+      ? { kind: "inert" }
+      : undefined;
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {

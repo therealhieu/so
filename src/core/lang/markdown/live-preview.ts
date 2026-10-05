@@ -18,6 +18,11 @@ export type PreviewCtx = {
   isResolved(target: string): boolean;
   /** An open buffer's analysis and text, or why there is none yet. */
   embed(path: string): { doc: Doc; text: TextBuffer } | "loading" | "missing";
+  /**
+   * A non-note file's model at `subpath`, built by its file type, or why
+   * there is none yet; renderers check the model's shape themselves.
+   */
+  embedModel(path: string, subpath?: string): unknown;
   /** Rows for an image once its size is known. */
   image(ref: string): { rows: number } | "unknown";
   /** Block ids toggled from their default fold in this window. */

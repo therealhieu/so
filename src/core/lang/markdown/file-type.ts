@@ -18,9 +18,9 @@ const rendered = (
 });
 
 /**
- * Markdown analyzed into a `Doc`: `live` (the default) renders the note and
- * reveals source at the cursor, `source` is highlighted source, and
- * `reading` renders without reveal and refuses edits.
+ * Markdown analyzed into a `Doc`, in `<leader>m` order: `reading` (the
+ * default) renders without reveal and refuses edits, `live` renders the note
+ * and reveals source at the cursor, and `source` is highlighted source.
  */
 export const markdownFileType: FileType<Doc> = {
   id: "markdown",
@@ -29,9 +29,9 @@ export const markdownFileType: FileType<Doc> = {
   // A rendered view's providers read `MarkdownViewInput`, which its `input`
   // hook builds from the `Doc`; `ViewSpec<Doc>` cannot express that pairing.
   views: [
+    rendered("reading") as unknown as ViewSpec<Doc>,
     rendered("live") as unknown as ViewSpec<Doc>,
     { id: "source", decorations: [] },
-    rendered("reading") as unknown as ViewSpec<Doc>,
   ],
   highlighter: lowlightHighlighter("markdown"),
   analyze: parseDoc,

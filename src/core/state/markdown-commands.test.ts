@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import {
+  fresh,
+  freshDefaults,
+  testRegistries,
+  textFile,
+} from "../../../test/support/state";
 import { layoutText } from "../kernel/view/text-view";
 import type { TextView } from "../kernel/view/types";
 import { splitKeys } from "../kernel/vim/keys";
@@ -10,11 +15,13 @@ import {
   type PreviewCtx,
 } from "../lang/markdown/live-preview";
 import { activeBuffer, activeWindow } from "./buffers";
-import { markdownViewContext } from "./markdown-view";
+import { markdownViewContextFor } from "./markdown-view";
 import type { Action, AppState } from "./types";
 import { createUpdate } from "./update";
 
-const update = createUpdate(testRegistries());
+const reg = testRegistries();
+const update = createUpdate(reg);
+const markdownViewContext = markdownViewContextFor(reg);
 
 function keys(s: AppState, seq: string): AppState {
   for (const key of splitKeys(seq))
@@ -50,7 +57,7 @@ function liveRows(s: AppState): string[] {
     width: 60,
     rows: 40,
     imageSize: () => undefined,
-    cellAspect: 0.5,
+    cell: { width: 8, height: 16 },
   };
   const ctx = markdownViewContext(s, s.windows.active, host) as PreviewCtx;
   const v: TextView = {
@@ -110,17 +117,18 @@ test("a callout marked folded starts folded with no toggle", () => {
   expect(rows.join("\n")).not.toContain("secret");
 });
 
-test("the view cycles live, source, reading with a message", () => {
-  let s = open(fresh(), "n.md", NOTE);
+test("a note opens in reading view and cycles live, source, reading with a message", () => {
+  let s = open(freshDefaults(), "n.md", NOTE);
+  expect(activeBuffer(s)?.view).toBe("reading");
   const seen: [string | undefined, string | undefined][] = [];
   for (let i = 0; i < 3; i++) {
     s = keys(s, "<leader>m");
     seen.push([activeBuffer(s)?.view, message(s)]);
   }
   expect(seen).toEqual([
+    ["live", "mode: live"],
     ["source", "mode: source"],
     ["reading", "mode: reading (read-only)"],
-    ["live", "mode: live"],
   ]);
 });
 

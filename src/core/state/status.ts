@@ -4,6 +4,7 @@ import type { TextBuffer } from "../kernel/text/text-buffer";
 import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { RenderCache } from "../lang/markdown/render-cache";
+import { baseWindow } from "./base-model";
 import { activeBuffer, activeWindow } from "./buffers";
 import { jumpSegment } from "./jumps";
 import type { AppState } from "./types";
@@ -65,9 +66,20 @@ function countWords(text: TextBuffer, doc: Doc | undefined): number {
   return n;
 }
 
+/**
+ * The mode the badge names: the explorer, a base window (`insert` while one
+ * of its cells is edited), or the vim mode.
+ */
+function modeOf(s: AppState): string {
+  if (s.panels.explorer.focused) return "explorer";
+  const base = baseWindow(s, s.windows.active);
+  if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
+  return base.edit === undefined ? "base" : "insert";
+}
+
 /** What the statusline shows; the file-type decision lives here, not in the UI. */
 export function statusSegments(s: AppState): StatusSegments {
-  const mode = s.panels.explorer.focused ? "explorer" : s.vim.mode;
+  const mode = modeOf(s);
   const b = activeBuffer(s);
   const w = activeWindow(s);
   const index = s.index.status;

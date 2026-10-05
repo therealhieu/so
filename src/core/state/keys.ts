@@ -6,13 +6,15 @@ import { exCompletions } from "../kernel/vim/ex";
 import type { Key } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
+import { cellEditKey, editingCell } from "./base-commands";
 import {
   activeBuffer,
   activeWindow,
-  READ_ONLY_HINT,
+  readOnlyHint,
   readOnlyView,
   setBuffer,
 } from "./buffers";
+import { calendarKey } from "./calendar";
 import {
   type CommandContext,
   type CommandResult,
@@ -32,6 +34,7 @@ import { panelFocused, sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
+import { zoomKey } from "./zoom";
 
 const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
   ...s,
@@ -67,7 +70,7 @@ function routeKey(
     case "conflict":
       return conflictKey(s, a, reg);
     case "prompt":
-      return promptKey(s, a.key, a.now);
+      return promptKey(s, a.key, a.now, reg);
     case "whichKey":
       return (
         whichKeyKey(s, a, reg) ??
@@ -77,7 +80,12 @@ function routeKey(
     case "palette":
     case "help":
       return pickerKey(s, a, reg);
+    case "calendar":
+      return calendarKey(s, a, reg);
+    case "zoom":
+      return zoomKey(s, a);
   }
+  if (editingCell(s)) return cellEditKey(s, a, reg);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
   return bindingOrVim(s, a, reg);
@@ -114,7 +122,13 @@ function bindingOrVim(
   const idle = s.vim.pending.length === 0 && mode !== "insert";
   if (a.key === ":" && idle && (inExplorer || mode === "normal"))
     return none(setVim(s, { mode: "cmdline", cmdline: ":", pending: [] }));
-  if (inExplorer || inPanel || b === undefined)
+  // A non-text editor kind handles keys only through its bindings.
+  if (
+    inExplorer ||
+    inPanel ||
+    b === undefined ||
+    activeWindow(s)?.content.editor !== "text"
+  )
     return none(setVim(s, { pending: [] }));
   return runVim(s, a.key, a.now, reg);
 }
@@ -260,7 +274,7 @@ function runVim(
     (r.s.text !== b.text || r.s.vim.mode === "insert") &&
     readOnlyView(reg, b)
   )
-    return message(refusedKey(s), READ_ONLY_HINT);
+    return message(refusedKey(s), readOnlyHint(b));
   const { line } = r.s.cursor;
   const top = w.content.scroll;
   const scroll =

@@ -46,7 +46,7 @@ test("unknown top-level tables and dotted keys name their lines", () => {
   const r = parseConfig(
     lines(
       "escTimeoutMs = 10",
-      "daily.folder = 'x'",
+      "calendar.week = 'x'",
       "[export]",
       "port = 1",
       "[filetypes.markdown]",
@@ -57,7 +57,7 @@ test("unknown top-level tables and dotted keys name their lines", () => {
   expect(r.ok).toBe(false);
   if (r.ok) return;
   expect(r.errors).toEqual([
-    { line: 2, message: 'unknown key "daily"' },
+    { line: 2, message: 'unknown key "calendar"' },
     { line: 3, message: 'unknown key "export"' },
     { line: 7, message: 'unknown key "filetypes.markdown.colour"' },
   ]);
@@ -91,8 +91,16 @@ test("a valid file parses with binding lines", () => {
       autosave: { enabled: false, delayMs: 500 },
       theme: "light",
       color: "never",
+      mouse: true,
       editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
-      preview: { mode: "live", embedMaxRows: 10, images: "auto" },
+      explorer: { position: "left", icons: "nerd" },
+      preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
+      daily: {
+        folder: "daily",
+        format: "YYYY-MM-DD",
+        template: "templates/daily.md",
+      },
+      templates: { folder: "templates" },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },

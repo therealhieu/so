@@ -30,7 +30,7 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -78,21 +78,33 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor on a bold line 1`] = `
@@ -125,7 +137,7 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -173,21 +185,33 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the table 1`] = `
@@ -220,7 +244,7 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -268,21 +292,33 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a callout 1`] = `
@@ -315,7 +351,7 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -363,21 +399,33 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
@@ -410,7 +458,7 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -460,21 +508,33 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
@@ -507,7 +567,7 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -555,21 +615,33 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = `
@@ -602,7 +674,7 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -660,7 +732,11 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 in reading view 1`] = `
@@ -693,7 +769,7 @@ exports[`tour note at width 60 in reading view 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -741,21 +817,33 @@ exports[`tour note at width 60 in reading view 1`] = `
  65   │∑ᵢ₌₁ⁿ xᵢ ≤ a/b  ⟦mdCode@0+14⟧
  68   │
  69   │
-      ↳ text ×7
-      │┌───────┐ ┌──────┐         ┌───────┐ ┌────┐
-      ││Capture├►│Triage│   ├────►│  Plan ├►│Ship│
-      │└───────┘ └───┬──┘         └───────┘ └────┘
-      │              │
-      │              │            ┌───────┐
-      │              └──someday──►│Archive│
-      │                           └───────┘
+      ↳ text ×15
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 60 in source view 1`] = `
@@ -836,7 +924,9 @@ exports[`tour note at width 60 in source view 1`] = `
  75   │---
  76   │
  77   │[^1]: Footnotes render at the bottom, dimmed.
- 78   │"
+ 78   │
+ 79   │![[tasks.base#All tasks]]
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a blank line 1`] = `
@@ -869,7 +959,7 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -918,28 +1008,32 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a bold line 1`] = `
@@ -972,7 +1066,7 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1021,28 +1115,32 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the table 1`] = `
@@ -1075,7 +1173,7 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1124,28 +1222,32 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a callout 1`] = `
@@ -1178,7 +1280,7 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  28 ▕ │> [!note] Reveal rule
  29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1227,28 +1329,32 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
@@ -1281,7 +1387,7 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1332,28 +1438,32 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
@@ -1386,7 +1496,7 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1435,28 +1545,32 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] = `
@@ -1489,7 +1603,7 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1547,7 +1661,11 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 in reading view 1`] = `
@@ -1580,7 +1698,7 @@ exports[`tour note at width 100 in reading view 1`] = `
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
  29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
  30   │
- 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+27⟧
+ 31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
  34   │✗ Data safety  ⟦mdCalloutDanger@0+13⟧
  35   │▎ Saves are atomic: temp file, fsync, rename.  ⟦mdCalloutDanger@0+2⟧
@@ -1629,28 +1747,32 @@ exports[`tour note at width 100 in reading view 1`] = `
  68   │
  69   │
       ↳ text ×15
-      │┌─────────┐     ┌────────┐             ┌─────────┐     ┌──────┐
-      ││         │     │        │             │         │     │      │
-      ││ Capture ├────►│ Triage │   ├────────►│   Plan  ├────►│ Ship │
-      ││         │     │        │             │         │     │      │
-      │└─────────┘     └────┬───┘             └─────────┘     └──────┘
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │
-      │                     │                 ┌─────────┐
-      │                     │                 │         │
-      │                     └─────someday────►│ Archive │
-      │                                       │         │
-      │                                       └─────────┘
+      │┌─────────┐     ┌────────┐         ┌─────────┐     ┌──────┐
+      ││         │     │        │         │         │     │      │
+      ││ Capture ├────►│ Triage ├────────►│   Plan  ├────►│ Ship │
+      ││         │     │        │         │         │     │      │
+      │└─────────┘     └────┬───┘         └─────────┘     └──────┘
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │                                     
+      │                     │             ┌─────────┐             
+      │                     │             │         │             
+      │                     └───someday──►│ Archive │             
+      │                                   │         │             
+      │                                   └─────────┘             
  74   │
  75   │
       ↳ rule ×1
       │null
  76   │
  77   │¹ Footnotes render at the bottom, dimmed.  ⟦mdFootnote@0+2 mdFootnote@2+39⟧
- 78   │"
+ 78   │
+ 79   │
+      ↳ base ×3
+      │{"title":"tasks.base#All tasks","state":"loading"}
+ 80   │"
 `;
 
 exports[`tour note at width 100 in source view 1`] = `
@@ -1731,5 +1853,7 @@ exports[`tour note at width 100 in source view 1`] = `
  75   │---
  76   │
  77   │[^1]: Footnotes render at the bottom, dimmed.
- 78   │"
+ 78   │
+ 79   │![[tasks.base#All tasks]]
+ 80   │"
 `;

@@ -3,20 +3,35 @@ import type { Doc } from "../lang/markdown/doc";
 import { embedOnly } from "../lang/markdown/render-key";
 import { bufferForPath } from "./buffers";
 import type { AppState, BufferId, BufferState, Effect, Result } from "./types";
+import type { Registries } from "./update";
 
 type Embeds = NonNullable<BufferState["embeds"]>;
 
 const isListedNote = (b: BufferState) =>
   b.listed !== false && b.fileType === "markdown";
 
-/** Note paths one listed Markdown buffer embeds; images and other files are left out. */
-export function embedTargets(s: AppState, b: BufferState): Set<string> {
+/**
+ * Paths one listed Markdown buffer embeds that load as buffers: notes, and
+ * files whose type has an embed model. Images and other files are left out.
+ */
+export function embedTargets(
+  s: AppState,
+  b: BufferState,
+  reg: Pick<Registries, "fileTypes" | "embedModels">,
+): Set<string> {
   const doc = b.analysis as Doc | undefined;
   const out = new Set<string>();
   for (const link of doc?.scan.links ?? []) {
-    if (link.kind !== "embed" || embedOnly(link.target) !== "embed") continue;
+    if (link.kind !== "embed") continue;
+    const key = embedOnly(link.target);
+    if (key === "image") continue;
     const r = resolveLink(s.index.ix, b.path, { target: link.target });
-    if ("path" in r && r.path !== b.path) out.add(r.path);
+    if (!("path" in r) || r.path === b.path) continue;
+    if (
+      key === "embed" ||
+      reg.embedModels.has(reg.fileTypes.forPath(r.path).id)
+    )
+      out.add(r.path);
   }
   return out;
 }
@@ -34,7 +49,11 @@ const same = (a: readonly string[], b: readonly string[]) =>
  * buffer no listed note embeds is removed once it has nothing to save.
  * Unchanged buffers keep their identity.
  */
-export function syncEmbeds(prev: AppState, r: Result): Result {
+export function syncEmbeds(
+  prev: AppState,
+  r: Result,
+  reg: Pick<Registries, "fileTypes" | "embedModels">,
+): Result {
   const s = r.state;
   if (prev.buffers === s.buffers && prev.index.ix === s.index.ix) return r;
   const inFlight = new Set(
@@ -45,7 +64,7 @@ export function syncEmbeds(prev: AppState, r: Result): Result {
   const changed: Record<BufferId, BufferState> = {};
   for (const b of Object.values(s.buffers)) {
     if (!isListedNote(b)) continue;
-    const targets = embedTargets(s, b);
+    const targets = embedTargets(s, b, reg);
     for (const p of targets) wanted.add(p);
     const requested = b.embeds?.requested ?? [];
     const refused = (b.embeds?.refused ?? []).filter((p) => targets.has(p));

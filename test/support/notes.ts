@@ -52,7 +52,12 @@ export function indexFixture(m: Mounted): void {
     type: "indexBatch",
     summaries: notes.map((p) => {
       const text = NOTES[p] ?? "";
-      return summarize(p, 1, scanDoc(text), linesOf(text));
+      return summarize(
+        p,
+        { mtime: 1, size: 0, ctime: 1 },
+        scanDoc(text),
+        linesOf(text),
+      );
     }),
     files: Object.keys(FILES),
     done: notes.length,

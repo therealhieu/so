@@ -139,7 +139,9 @@ function spansOf(
     const inserted = inserts.get(c);
     if (inserted !== undefined) {
       flush();
-      spans.push(...inserted);
+      spans.push(
+        ...inserted.map((sp): Span => ({ ...sp, col: c, inserted: true })),
+      );
     }
     if (c === text.length) break;
     if (hidden[c]) {
@@ -149,7 +151,7 @@ function spansOf(
     const style = styles[c] ?? PLAIN;
     if (run?.style !== style) {
       flush();
-      run = { text: "", style };
+      run = { text: "", style, col: c };
     }
     run.text += text[c];
   }

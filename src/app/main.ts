@@ -5,6 +5,14 @@ import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
 import { parseConfig } from "../core/config/toml";
+import { baseEmbedRenderer } from "../core/features/bases/embed";
+import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
+import { KANBAN_TYPE } from "../core/features/bases/types";
+import {
+  BaseLayoutRegistry,
+  boardLayout,
+  tableLayout,
+} from "../core/features/bases/views";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -17,13 +25,17 @@ import {
 import { CommandRegistry } from "../core/kernel/commands/registry";
 import { codeFileTypes } from "../core/lang/code/file-types";
 import { markdownFileType } from "../core/lang/markdown/file-type";
+import { registerBlockRenderer } from "../core/lang/markdown/live-preview";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
+import { baseBindings, baseCommands } from "../core/state/base-commands";
+import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
   type CommandResult,
   registerBuiltins,
 } from "../core/state/commands";
+import { EmbedModelRegistry } from "../core/state/embed-models";
 import { initialState } from "../core/state/init";
 import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
@@ -35,15 +47,22 @@ import {
   markdownBindings,
   markdownCommands,
 } from "../core/state/markdown-commands";
-import { markdownViewContext } from "../core/state/markdown-view";
+import { markdownViewContextFor } from "../core/state/markdown-view";
+import {
+  noteBindings,
+  noteCommands,
+  noteGroups,
+} from "../core/state/note-commands";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { ViewContextRegistry } from "../core/state/view-context";
+import { BaseView } from "../ui/editors/base-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
+import { paintBaseEmbed } from "../ui/widgets/base";
 import { paintEmbed } from "../ui/widgets/embed";
 import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
@@ -57,6 +76,7 @@ import {
   saveStateFileSync,
   statePath,
 } from "../workspace/state-file";
+import { createSvgRasterizer } from "../workspace/svg";
 import { detectClipboard, openUrl } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
@@ -112,27 +132,43 @@ function registries(): Registries {
   const fileTypes = new FileTypeRegistry(textFileType);
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
+  fileTypes.register(baseFileType);
+  const editorKinds = new EditorKindRegistry();
+  editorKinds.register(baseEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
+  for (const c of noteCommands) commands.register(c);
+  for (const c of baseCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
-  viewContexts.register("markdown", markdownViewContext);
+  const embedModels = new EmbedModelRegistry();
   builtinRenderers();
-  return {
+  const layouts = new BaseLayoutRegistry(tableLayout);
+  if (KANBAN_TYPE !== undefined) layouts.register(KANBAN_TYPE, boardLayout);
+  const reg: Registries = {
     fileTypes,
-    editorKinds: new EditorKindRegistry(),
+    editorKinds,
     commands,
     bindings: [
       ...defaultBindings,
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,
+      ...noteBindings,
+      ...baseBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
     viewContexts,
+    embedModels,
+    layouts,
   };
+  viewContexts.register("markdown", markdownViewContextFor(reg));
+  viewContexts.register("base", (s, id) => baseViewModel(s, id, reg));
+  embedModels.register("base", baseEmbedModel);
+  registerBlockRenderer("base", baseEmbedRenderer);
+  return reg;
 }
 
 /**
@@ -240,15 +276,18 @@ async function main(argv: string[]): Promise<void> {
   const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
+  registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
   registerWidgetPainter("image", paintImage);
+  registerWidgetPainter("base", paintBaseEmbed);
   const renderer = await createRenderer();
   const shell = createShell(renderer, {
     reg,
     now: clock,
     loadImage: createImageLoader(ws.root),
+    rasterizeSvg: createSvgRasterizer(),
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
@@ -326,6 +365,7 @@ async function main(argv: string[]): Promise<void> {
       indexHost.notify(event);
     });
     indexHost.start(ws.root, []);
+    runner.run({ kind: "readPropertyTypes" });
     logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
     void detectTrash({
       platform: process.platform,

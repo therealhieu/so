@@ -8,6 +8,12 @@ import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
 import {
+  displayColAt,
+  rowAt,
+  sourceColAt,
+  spanAt,
+} from "../../core/kernel/view/hit";
+import {
   highlightMarks,
   searchMarks,
   selectionMarks,
@@ -27,13 +33,18 @@ import {
 } from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { panelFocused } from "../../core/state/side-panel";
-import type { AppState, BufferState, WindowId } from "../../core/state/types";
+import type {
+  AppState,
+  BufferState,
+  MouseTarget,
+  WindowId,
+} from "../../core/state/types";
 import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
+import type { WindowView } from "./registry";
 
-const SCROLL_LINES = 3;
 const NO_FOLDS: ReadonlySet<number> = new Set();
 
 /** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
@@ -263,7 +274,7 @@ function selectionOf(s: AppState, text: TextBuffer): Range | undefined {
  * highlighter and view decorations plus search and selection marks. A
  * failing layout paints the raw lines instead. Editor kinds extend this.
  */
-export class EditorView extends Renderable {
+export class EditorView extends Renderable implements WindowView {
   protected s: AppState | undefined;
   protected windowId: WindowId = 0;
   protected winbar = false;
@@ -283,13 +294,6 @@ export class EditorView extends Renderable {
     protected readonly deps: ViewDeps,
   ) {
     super(ctx, { position: "absolute" });
-    this.onMouseScroll = (e) => {
-      const up = e.scroll?.direction === "up";
-      deps.dispatch({
-        type: "mouse",
-        event: { kind: "scroll", delta: up ? -SCROLL_LINES : SCROLL_LINES },
-      });
-    };
   }
 
   /**
@@ -400,6 +404,105 @@ export class EditorView extends Renderable {
 
   private textRows(): number {
     return Math.max(0, this.rect.h - (this.winbar ? 1 : 0));
+  }
+
+  /**
+   * What is under (x, y) from this frame's layout: the winbar, a fold
+   * marker, else the source position shown there, with the tag drawn there. The gutter gives the line's first column
+   * and the rows below the text the last line.
+   */
+  targetAt(x: number, y: number): MouseTarget | undefined {
+    const r = this.rect;
+    if (x < r.x || x >= r.x + r.w || y < r.y || y >= r.y + r.h)
+      return undefined;
+    if (this.winbar && y === r.y)
+      return {
+        kind: "window",
+        window: this.windowId,
+        spot: { kind: "winbar" },
+      };
+    return this.textAt(x, y, 0, true);
+  }
+
+  /**
+   * Where a drag that started in this window's text is now: the cell is
+   * clamped into the text area, and `edge` says the pointer left it above
+   * (-1) or below (1).
+   */
+  dragAt(x: number, y: number): MouseTarget | undefined {
+    const r = this.rect;
+    const top = r.y + (this.winbar ? 1 : 0);
+    const bottom = top + this.textRows() - 1;
+    const edge = y < top ? -1 : y > bottom ? 1 : 0;
+    const cy = Math.max(top, Math.min(y, bottom));
+    return this.textAt(Math.max(r.x, Math.min(x, r.x + r.w - 1)), cy, edge);
+  }
+
+  /**
+   * The text position shown at screen cell (x, y), inside the text rows, or
+   * the fold marker there and the tag drawn there when `markers` is set.
+   */
+  private textAt(
+    x: number,
+    y: number,
+    edge: -1 | 0 | 1,
+    markers = false,
+  ): MouseTarget | undefined {
+    const s = this.s;
+    const w = s?.windows.byId[this.windowId];
+    const b = w && s?.buffers[w.content.bufferId];
+    const rows = this.textRows();
+    if (s === undefined || b === undefined || rows <= 0) return undefined;
+    const { tabWidth, wrap } = s.config.editor;
+    const gw = gutterWidth(b.text.lineCount);
+    const textX = this.rect.x + gw;
+    const row = y - this.rect.y - (this.winbar ? 1 : 0);
+    const shown = rowAt(this.lines, row, {
+      width: Math.max(1, this.rect.w - gw),
+      tabWidth,
+      wrap,
+      skipRows: this.skipRows,
+    });
+    const line = Math.min(
+      shown?.line.sourceLine ?? this.topLine,
+      b.text.lineCount - 1,
+    );
+    const length = b.text.line(line).length;
+    const widget =
+      shown?.line.widget !== undefined && shown.line.spans.length === 0;
+    const span =
+      markers && shown !== undefined && !widget && x >= textX
+        ? spanAt(
+            shown.line.spans,
+            displayColAt(shown, this.leftCol + x - textX),
+            tabWidth,
+          )
+        : undefined;
+    const block = span?.fold;
+    if (block !== undefined)
+      return {
+        kind: "window",
+        window: this.windowId,
+        spot: { kind: "fold", block },
+      };
+    const col =
+      shown === undefined || widget || x < textX
+        ? 0
+        : sourceColAt(
+            shown.line.spans,
+            displayColAt(shown, this.leftCol + x - textX),
+            tabWidth,
+            length,
+          );
+    const pos = { line, col: Math.min(col, length) };
+    return {
+      kind: "window",
+      window: this.windowId,
+      spot:
+        span?.tag === undefined
+          ? { kind: "text", pos, edge }
+          : { kind: "text", pos, edge, tag: span.tag },
+    };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
@@ -547,7 +650,7 @@ export class EditorView extends Renderable {
         width,
         rows,
         imageSize: (path) => this.deps.images.size(path),
-        cellAspect: this.deps.images.cellAspect(),
+        cell: this.deps.images.cellSize(),
       };
       const input =
         spec?.input === undefined

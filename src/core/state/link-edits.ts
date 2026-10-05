@@ -15,9 +15,9 @@ import type {
   Action,
   AppState,
   Effect,
+  ExplorerPrompt,
   FsOp,
   LinkRewrite,
-  PromptState,
   Result,
 } from "./types";
 import type { Registries } from "./update";
@@ -79,7 +79,7 @@ function normalize(path: string): string | undefined {
 /** Where a rename or move prompt's value puts `op.from`, or why it cannot. */
 function targetOf(
   s: AppState,
-  p: PromptState,
+  p: ExplorerPrompt,
 ): { to: string } | { invalid: string } {
   const value = p.value.trim();
   if (value === "")
@@ -101,7 +101,7 @@ const planFor = (s: AppState, from: string, to: string): FileEdit[] =>
   to === from ? [] : planRename(s.index.ix, [{ from, to }], openScans(s));
 
 /** The prompt with `impact` and `invalid` recomputed from its value. */
-export function promptImpact(s: AppState, p: PromptState): PromptState {
+export function promptImpact(s: AppState, p: ExplorerPrompt): ExplorerPrompt {
   const { impact: _, invalid: __, ...rest } = p;
   const t = targetOf(s, p);
   if ("invalid" in t) return { ...rest, invalid: t.invalid };
@@ -122,7 +122,7 @@ export function startRename(
   if (from === "") return none(s);
   const refused = requireIndex(s) ?? refuseWhileRewriting(s);
   if (refused !== undefined) return refused;
-  const prompt: PromptState =
+  const prompt: ExplorerPrompt =
     kind === "rename"
       ? {
           kind: "input",
@@ -143,7 +143,11 @@ export function startRename(
  * unchanged value submits nothing; a rewrite still in flight closes the
  * prompt with a message and submits nothing.
  */
-export function submitRename(s: AppState, p: PromptState, now: number): Result {
+export function submitRename(
+  s: AppState,
+  p: ExplorerPrompt,
+  now: number,
+): Result {
   const busy = refuseWhileRewriting(s);
   if (busy !== undefined) return busy;
   const open: AppState = { ...s, overlay: { kind: "prompt", prompt: p } };
@@ -264,7 +268,7 @@ export function onEditsApplied(
 ): Result {
   const written =
     a.ok && a.text !== undefined
-      ? summarizeWritten(s, a.path, a.text, a.stamp?.mtimeMs ?? 0)
+      ? summarizeWritten(s, a.path, a.text, a.stamp)
       : s;
   const r = written.index.rewrite;
   if (r === undefined || r.batch !== a.batch || !r.pending.includes(a.path))

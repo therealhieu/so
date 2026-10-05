@@ -46,7 +46,12 @@ function opened(cols = 120, path = "plan.md"): AppState {
       type: "indexBatch",
       summaries: files.map((p) => {
         const text = NOTES[p] ?? "";
-        return summarize(p, 1, scanDoc(text), linesOf(text));
+        return summarize(
+          p,
+          { mtime: 1, size: 0, ctime: 1 },
+          scanDoc(text),
+          linesOf(text),
+        );
       }),
       files,
       done: files.length,
@@ -145,9 +150,17 @@ test("a linked row in a closed note shows its source line", () => {
 
 test("a link's context is its trimmed line, cut for long lines", () => {
   const long = `  ${"word ".repeat(60)}[[plan]] end`;
-  const [link] = summarize("d.md", 1, scanDoc(long), linesOf(long)).links;
+  const [link] = summarize(
+    "d.md",
+    { mtime: 1, size: 0, ctime: 1 },
+    scanDoc(long),
+    linesOf(long),
+  ).links;
   expect(link?.context).toBe(long.trim().slice(0, CONTEXT_MAX));
-  expect(summarize("d.md", 1, scanDoc(long)).links[0]?.context).toBeUndefined();
+  expect(
+    summarize("d.md", { mtime: 1, size: 0, ctime: 1 }, scanDoc(long)).links[0]
+      ?.context,
+  ).toBeUndefined();
 });
 
 test("panel keys move, open the row, and leave", () => {
@@ -256,4 +269,22 @@ test("an undocked panel takes no keys and no focus", () => {
   const small = run(left, { type: "resize", cols: 80, rows: 24 }).state;
   expect(keys(small, "<C-w>l").state.panels.side.focused).toBe(false);
   expect(keys(left, "<C-w>l").state.panels.side.focused).toBe(true);
+});
+
+test("with the explorer on the right, the panel docks left: C-w h enters, C-w l leaves", () => {
+  const base = opened();
+  const s = {
+    ...base,
+    config: {
+      ...base.config,
+      explorer: { ...base.config.explorer, position: "right" as const },
+    },
+  };
+  const r = runCommand(s, "link.backlinks", 0, reg);
+  expect(r.state.panels.side.focused).toBe(true);
+  expect(keys(r.state, "<C-w>h").state.panels.side.focused).toBe(true);
+  const left = keys(r.state, "<C-w>l").state;
+  expect(left.panels.side.focused).toBe(false);
+  expect(keys(left, "<C-w>l").state.panels.side.focused).toBe(false);
+  expect(keys(left, "<C-w>h").state.panels.side.focused).toBe(true);
 });

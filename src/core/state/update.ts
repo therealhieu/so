@@ -1,18 +1,28 @@
+import type { BaseLayoutRegistry } from "../features/bases/views";
 import type {
   EditorKindRegistry,
   FileTypeRegistry,
 } from "../filetypes/registry";
 import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
-import { onFileLoaded, onFileRefused } from "./buffers";
+import { onFrontmatterPatched } from "./base-write";
+import { fullText, onFileLoaded, onFileRefused } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
+import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
 import { onDirListed, onFsResult, withTrash } from "./explorer";
-import { onIndexBatch, onIndexFailed, onIndexReady } from "./index";
+import {
+  onIndexBatch,
+  onIndexFailed,
+  onIndexReady,
+  onPropertyTypesLoaded,
+} from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import { onMouse } from "./mouse";
+import { onNoteCreated } from "./note-commands";
 import {
   onPickerResize,
   onPreviewLoaded,
@@ -38,9 +48,10 @@ import {
   followShownNote,
   onMentionResults,
 } from "./side-panel";
-import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
+import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
+import { onZoomFill } from "./zoom";
 
 export type Update = (
   state: AppState,
@@ -57,16 +68,23 @@ export type Registries = {
   groups: Readonly<Record<string, string>>;
   /** Per-file-type builders of a view's input context. */
   viewContexts: ViewContextRegistry;
+  /** Per-file-type builders of what a note shows for an embedded non-note file. */
+  embedModels: EmbedModelRegistry;
+  /** Base view types to the layouts that show them. */
+  layouts: BaseLayoutRegistry;
 };
 
 /**
  * Each window shows its buffer in the editor kind the buffer's file type
- * names when that kind is registered, and in "text" otherwise. Unchanged
- * windows keep their identity.
+ * names when that kind is registered, and in "text" otherwise. A window that
+ * becomes a non-text kind, or is opened at a subpath, gets its kind state
+ * from the kind's `open`; one that becomes text drops it. A new base window
+ * reads the property types. Unchanged windows keep their identity.
  */
 function syncEditorKinds(r: Result, reg: Registries): Result {
   const s = r.state;
   let byId: AppState["windows"]["byId"] | undefined;
+  const effects: Effect[] = [];
   for (const w of Object.values(s.windows.byId)) {
     const b = s.buffers[w.content.bufferId];
     if (b === undefined) continue;
@@ -75,13 +93,29 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
       kind !== undefined && reg.editorKinds.get(kind) !== undefined
         ? kind
         : "text";
-    if (editor === w.content.editor) continue;
+    const changed = editor !== w.content.editor;
+    if (!changed && w.content.subpath === undefined) continue;
+    const spec = editor === "text" ? undefined : reg.editorKinds.get(editor);
+    const { kindState: _, subpath, ...rest } = w.content;
+    const content =
+      spec === undefined
+        ? { ...rest, editor }
+        : {
+            ...rest,
+            editor,
+            kindState: spec.open(b.path, fullText(b.text), subpath),
+          };
     byId ??= { ...s.windows.byId };
-    byId[w.id] = { ...w, content: { ...w.content, editor } };
+    byId[w.id] = { ...w, content };
+    if (changed && editor === "base")
+      effects.push({ kind: "readPropertyTypes" });
   }
   return byId === undefined
     ? r
-    : { ...r, state: { ...s, windows: { ...s.windows, byId } } };
+    : {
+        state: { ...s, windows: { ...s.windows, byId } },
+        effects: [...r.effects, ...effects],
+      };
 }
 
 /**
@@ -119,8 +153,10 @@ export function createUpdate(reg: Registries): Update {
         return onSaveFailed(state, action);
       case "resize":
         return onResize(state, action);
+      case "zoomFill":
+        return onZoomFill(state, action);
       case "mouse":
-        return onMouse(state, action.event);
+        return onMouse(state, action, reg);
       case "configLoaded":
         return onConfigLoaded(state, action, reg);
       case "indexBatch":
@@ -147,6 +183,13 @@ export function createUpdate(reg: Registries): Update {
         return onPreviewFailed(state, action);
       case "openUrlFailed":
         return onOpenUrlFailed(state, action);
+      case "noteCreated":
+        // The runner's answer has no time, so a save of the note left is due now (0).
+        return onNoteCreated(state, action, 0, reg);
+      case "propertyTypesLoaded":
+        return onPropertyTypesLoaded(state, action);
+      case "frontmatterPatched":
+        return onFrontmatterPatched(state, action);
     }
     const unhandled: never = action;
     return unhandled;
@@ -156,6 +199,7 @@ export function createUpdate(reg: Registries): Update {
       const r = syncEmbeds(
         state,
         followShownNote(state, syncEditorKinds(step(state, action), reg)),
+        reg,
       );
       return action.type !== "stateLoaded" && sessionChanged(state, r.state)
         ? {
@@ -193,25 +237,4 @@ function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {
     { ...s, terminal: { ...s.terminal, cols: a.cols, rows: a.rows } },
     s.terminal.cols,
   );
-}
-
-/** Scroll the active window, keeping at least its last line on screen. */
-function onMouse(s: AppState, e: MouseEvent): Result {
-  const w = s.windows.byId[s.windows.active];
-  const b = w && s.buffers[w.content.bufferId];
-  if (w === undefined || b === undefined) return none(s);
-  const scroll = Math.max(
-    0,
-    Math.min(w.content.scroll + e.delta, b.text.lineCount - 1),
-  );
-  return none({
-    ...s,
-    windows: {
-      ...s.windows,
-      byId: {
-        ...s.windows.byId,
-        [w.id]: { ...w, content: { ...w.content, scroll } },
-      },
-    },
-  });
 }

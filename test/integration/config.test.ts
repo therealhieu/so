@@ -20,13 +20,16 @@ import {
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createImageLoader } from "../../src/workspace/images";
 import { createLogger } from "../../src/workspace/log";
+import { createSvgRasterizer } from "../../src/workspace/svg";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
 import { clock, tmpWorkspace, waitFor } from "./helpers";
 
 const LONG = Array.from({ length: 40 }, (_, i) => `word${i}`).join(" ");
 
-const SAVE_ON_LEADER_W = `[keys.normal]
+const SAVE_ON_LEADER_W = `[preview]
+mode = "live"
+[keys.normal]
 "<leader>w" = "file.save"
 `;
 
@@ -85,6 +88,7 @@ async function start(config?: string) {
     reg,
     now: clock,
     loadImage: createImageLoader(root),
+    rasterizeSvg: createSvgRasterizer(),
   });
   shell.attach(store);
 
@@ -207,6 +211,8 @@ test("reload applies bindings, escape timeout, theme, and wrap", async () => {
       'theme = "light"',
       "[editor]",
       "wrap = false",
+      "[preview]",
+      'mode = "live"',
       "[keys.normal]",
       '"<leader>v" = "window.vsplit"',
     ].join("\n"),
