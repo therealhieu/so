@@ -731,6 +731,21 @@ test("inlay hints are fetched after opening and each change, and again on refres
   await waitFor(() => asked() === 3);
 });
 
+test("inlay hints come back after the server restarts", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const rs = fake("rs", ["rust"], HINTS);
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(
+    () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
+  );
+  app.keys(":LspRestart<CR>");
+  await waitFor(() => messages(rs.log, "textDocument/inlayHint").length === 2);
+  await waitFor(
+    () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
+  );
+});
+
 test("turning inlay hints off clears them and stops asking", async () => {
   const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], HINTS);
