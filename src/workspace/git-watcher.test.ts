@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import { EventEmitter } from "node:events";
 import { watch } from "node:fs";
 import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -121,4 +122,41 @@ test("a failing directory is logged and the others keep notifying after retarget
   await writeFile(join(c, "HEAD"), "2");
   await quietPeriod();
   expect(w.n).toBe(0);
+});
+
+test("a watcher error is logged, silences that folder, and the next retarget watches it again", () => {
+  type Listener = (type: string, name: string | null) => void;
+  const made: { w: EventEmitter & { closed: boolean }; listener: Listener }[] =
+    [];
+  const fake = ((_dir: string, _o: unknown, listener: Listener) => {
+    const w = Object.assign(new EventEmitter(), {
+      closed: false,
+      close: () => {
+        w.closed = true;
+      },
+    });
+    made.push({ w, listener });
+    return w;
+  }) as unknown as typeof watch;
+  const logged: { event: string; dir: unknown }[] = [];
+  const logger: Logger = {
+    info() {},
+    error: (event, fields) => logged.push({ event, dir: fields?.dir }),
+  };
+  const c = counted(["/repo/.git"], logger, fake);
+  const [first] = made;
+  if (first === undefined) throw new Error("not watched");
+  first.listener("rename", "HEAD");
+  expect(c.n).toBe(1);
+
+  first.w.emit("error", new Error("ENOENT: no such file or directory"));
+  expect(logged).toEqual([{ event: "git.watch.fail", dir: "/repo/.git" }]);
+  expect(first.w.closed).toBe(true);
+  first.listener("rename", "HEAD");
+  expect(c.n).toBe(1);
+
+  c.w.retarget(["/repo/.git"]);
+  expect(made).toHaveLength(2);
+  made[1]?.listener("rename", "HEAD");
+  expect(c.n).toBe(2);
 });
