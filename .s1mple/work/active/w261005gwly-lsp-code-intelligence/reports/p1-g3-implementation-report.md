@@ -67,12 +67,38 @@ Written by the implementer after the initial implementation turn and before retu
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** Not yet available
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005gwly-lsp-code-intelligence/reports/p1-g3-verification-report.md` (status `Failed`, commit `bf999c9`)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+| Finding | Change and verification evidence | Commit evidence | Result |
+|---|---|---|---|
+| `P1-G3-VER1` | `src/core/state/lsp-types.ts:CodeAccept` adds `window` and `cursor`; `src/core/state/code-completion.ts:acceptCode` records the active window and its Insert-mode cursor; `stillAccepting` now also requires the same active window, Insert mode, and that cursor, so both `onResolvedItem` and `onResolveTimeout` drop the accept otherwise (the timeout also sends `lspCancel` for the resolve). New test `a key that moves the cursor during a resolve drops the accept` (`src/core/state/code-completion.test.ts`) runs `<Esc>` and `<Esc>hi` after an unresolved accept, each through resolved-answer-then-timer and timer-then-late-answer, and asserts the text stays `"const value = obj\nfo\nlet n = 1;"`, `lsp.accept` is undefined, and the timeout emits `lspCancel{id: 2}`. RED: `bun test src/core/state/code-completion.test.ts` → 9 pass / 1 fail (received `import … formato`, the verifier's corruption). GREEN: 10 pass / 0 fail. `bun run check` → Passed (1185 pass / 0 fail) | `a2776a0a2dc3d020035efd01ceef2ff435a072d2` | `Fixed` |
+| `P1-G3-VER2` | `src/core/state/types.ts`: action `lspResult` gains a required `now: number`; `src/app/effects.ts` stamps it with the runner clock. `src/core/state/lsp.ts:onLspResult` passes `a.now` to `formattedSave` (format edits and the write) and `applyResult` (`edit`, `action`, `completionItem` branches); `src/core/state/code-completion.ts:onResolvedItem` takes `now`. Every `0` time for writes and autosave started from an answer is gone. Existing test dispatches add `now: 0` (`code-completion`, `lsp`, `lsp-commands`, `lsp-edits` tests). New test `a write after a format answer that then fails retries in the future` (`src/core/state/lsp-commands.test.ts`): `:w` with format on save, format edit answer at `now: 2000`, then `saveFailed{EACCES}` → `retryAt > 2000`. RED: `bun test src/core/state/lsp-commands.test.ts` → 13 pass / 1 fail (`retryAt` 1000). GREEN: `bun test src/core/state` → 386 pass / 0 fail. `bun run check` → Passed (1186 pass / 0 fail) | `c77186cea33f290c82b1e082cfc7d0a0dc01f93d` | `Fixed` |
+| `P1-G3-VER3` | `src/core/state/buffers.test.ts`: `overlapping edits change nothing` (`stale: true`, no effects, same state, text unchanged), `inserts at one position keep their order` (`first second let b = 2;`), `edits move the cursor of every window showing the buffer` (after `jjlll<C-w>vgg`, the non-active window's cursor `(2,3)` moves to `(3,4)` through an import line above and a widening edit before it on its line, while an edit after it on the same line leaves its column). Tests only; no source change. The behavior already existed, so RED was shown by mutation: removing the overlap check, reversing the same-position tie-break, and replacing `edits.reduce(shifted, …)` with the old cursor each fail exactly the matching test (6 pass / 1 fail each); source restored, `git status` clean for `buffers.ts`. GREEN: `bun test src/core/state` → 389 pass / 0 fail. `bun run check` → Passed (1189 pass / 0 fail) | `e482a73b6455368a4a9e5e1a1bce6e6c3b365abc` | `Fixed` |
+
+#### Completion Checklists
+
+- `P1-G3-VER1`: [x] Required resolution is implemented. [x] Required proof passes. [x] Change evidence is recorded. [x] Verification evidence is recorded.
+- `P1-G3-VER2`: [x] Required resolution is implemented. [x] Required proof passes. [x] Change evidence is recorded. [x] Verification evidence is recorded.
+- `P1-G3-VER3`: [x] Required resolution is implemented. [x] Required proof passes. [x] Change evidence is recorded. [x] Verification evidence is recorded.
+
+#### Remediation Deviations
+
+1. **`CodeAccept.window` and `CodeAccept.cursor`** (not in design §6, which lists `{id, item, path, version}`). The accept applies only while the window, Insert mode, and cursor match the accept. The verifier's alternative (apply at the recorded range) was not taken: dropping keeps the item out of a changed context and keeps `applyCompletion` unchanged.
+2. **`lspResult.now`** (not in design §6, which shows `lspResult{id, result}`). Required rather than optional, so every dispatcher, including the P2 language-server host, must stamp the answer time. Picker opens (`now: 0` in `applyResult`) and `goTo` in `onLocations` start no write and are unchanged.
+3. Checks touched files outside the original group range only where the type change required it: `src/app/effects.ts` (one dispatch) and `src/core/state/lsp.test.ts` (one dispatch helper).
+
+#### Remediation Verification
+
+- `bun run check` → `Passed` — biome clean, tsc clean, knip zero findings, 1189 pass / 0 fail across 105 files
+- `bun test src/core` → `Passed` — 763 pass / 0 fail across 83 files
+- `bun run test:ci` → `Passed` — 229 pass / 0 fail across 28 files (`test/ui`, `test/integration`, `test/e2e`)
+- `rg "maybeOpenCompletion" src test` → `Passed` — no matches
+- `rg -n "W261005GWLY|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P1-G[0-9]|VER[0-9]"` over the 23 `src`/`test` files changed in `8519213..e482a73` → `Passed` — no matches
+- `pgrep -f fake-lsp` → `Passed` — empty after `test:ci`; no `bin/so` process remains. One `bun src/app/main.ts …/.sandbox/vault` process (started 17:15, before this remediation) belongs to a user sandbox session on the main checkout and was left running
+- Self-review of `8519213..e482a73`: no issues found beyond the three findings
 
 ## Final Status
 
@@ -80,8 +106,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — every task is committed and every group check passes
+- **Final report status:** `Completed` — all three findings are fixed and committed, and every group check passes
 - **Final report commit:** Returned to the orchestrator; not written here because it would need a self-referential commit
-- **Final commits:** `05b4b6027ffafc7a86bc5b10d83c27149f3e75c9`, `9258d59b9662b8063acd6d1b4059d8341c4408de`, `9ccf3408037c4c206da7835ee17376b19cc70cbf`, `d14872c82d6fca18c8e4f53b88695d4711068e72`, `b3d1ccb62363c30c3649cf39ee7f87a3b84b370d`
-- **Final checks:** `bun run check` → Passed (1184 pass / 0 fail); `bun test src/core` → Passed (758 pass / 0 fail); `rg "maybeOpenCompletion" src test` → no matches; work-process id search over changed files → no matches; `pgrep -f fake-lsp` → empty
+- **Final commits:** `05b4b6027ffafc7a86bc5b10d83c27149f3e75c9`, `9258d59b9662b8063acd6d1b4059d8341c4408de`, `9ccf3408037c4c206da7835ee17376b19cc70cbf`, `d14872c82d6fca18c8e4f53b88695d4711068e72`, `b3d1ccb62363c30c3649cf39ee7f87a3b84b370d`, `a2776a0a2dc3d020035efd01ceef2ff435a072d2`, `c77186cea33f290c82b1e082cfc7d0a0dc01f93d`, `e482a73b6455368a4a9e5e1a1bce6e6c3b365abc`
+- **Final checks:** `bun run check` → Passed (1189 pass / 0 fail); `bun test src/core` → Passed (763 pass / 0 fail); `bun run test:ci` → Passed (229 pass / 0 fail); `rg "maybeOpenCompletion" src test` → no matches; work-process id search over changed files → no matches; `pgrep -f fake-lsp` → empty
 - **Remaining issues:** None
