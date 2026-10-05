@@ -24,7 +24,7 @@ import {
   createLspClient,
   type LspClient,
 } from "../workspace/lsp/client";
-import { toErrorResult } from "../workspace/lsp/convert";
+import { isRetriable, toErrorResult } from "../workspace/lsp/convert";
 import { languageIdFor } from "../workspace/lsp/language-id";
 import { findRoot } from "../workspace/lsp/roots";
 import { lineChange } from "../workspace/lsp/sync";
@@ -40,6 +40,9 @@ export const CRASH_LIMIT = 5;
 export const CRASH_WINDOW_MS = 180_000;
 /** Progress reaches the state at most once per this interval per server. */
 const PROGRESS_THROTTLE_MS = 100;
+/** A request the server dropped as outdated is sent again after this, times the attempt. */
+const RETRY_MS = 500;
+const RETRY_LIMIT = 3;
 
 type LspEffect = Extract<
   Effect,
@@ -69,7 +72,11 @@ type Doc = {
   finalNewline: boolean;
   /** The buffer's saved version as last observed. */
   saved: number;
+  /** Pending resends of a pull or hint request the server dropped as outdated. */
+  retry: { pull?: Timer | undefined; hints?: Timer | undefined };
 };
+
+type Timer = ReturnType<typeof setTimeout>;
 
 /** One server process for one root, across its restarts. */
 type Server = {
@@ -279,7 +286,10 @@ export function createLspHost(d: {
     server.generation++;
     clearTimeout(server.progress?.timer);
     server.progress = undefined;
-    for (const doc of server.docs.values()) clearTimeout(doc.timer);
+    for (const doc of server.docs.values()) {
+      clearTimeout(doc.timer);
+      cancelRetries(doc);
+    }
     server.abort?.abort();
     const done = server.client?.stop(LSP_STOP_BOUND_MS) ?? server.starting;
     server.client = undefined;
@@ -428,6 +438,7 @@ export function createLspHost(d: {
       clearTimeout(doc.timer);
       doc.timer = undefined;
       doc.sent = undefined;
+      cancelRetries(doc);
     }
     const at = now();
     server.crashes = [
@@ -454,10 +465,43 @@ export function createLspHost(d: {
     resync();
   }
 
+  function cancelRetries(doc: Doc): void {
+    clearTimeout(doc.retry.pull);
+    clearTimeout(doc.retry.hints);
+    doc.retry = {};
+  }
+
+  /**
+   * Sends a request the server dropped as outdated again, unless a newer one
+   * went out, the document closed, or the server stopped meanwhile.
+   */
+  function retryLater(
+    server: Server,
+    path: string,
+    kind: "pull" | "hints",
+    attempt: number,
+    again: () => void,
+  ): boolean {
+    const doc = server.docs.get(path);
+    if (doc === undefined || attempt >= RETRY_LIMIT) return false;
+    const generation = server.generation;
+    doc.retry[kind] = setTimeout(
+      () => {
+        doc.retry[kind] = undefined;
+        if (!stopped && server.generation === generation) again();
+      },
+      RETRY_MS * (attempt + 1),
+    );
+    return true;
+  }
+
   /** Pulls `path`'s diagnostics from a server that answers pulls. */
-  function pull(server: Server, path: string): void {
+  function pull(server: Server, path: string, attempt = 0): void {
     const client = server.client;
     if (client === undefined || !server.view.pullDiagnostics) return;
+    const pending = server.docs.get(path)?.retry;
+    clearTimeout(pending?.pull);
+    if (pending !== undefined) pending.pull = undefined;
     const generation = server.generation;
     client.pullDiagnostics(path).then(
       (r) => {
@@ -472,6 +516,15 @@ export function createLspHost(d: {
         });
       },
       (e: unknown) => {
+        if (
+          stopped ||
+          server.generation !== generation ||
+          (isRetriable(e) &&
+            retryLater(server, path, "pull", attempt, () =>
+              pull(server, path, attempt + 1),
+            ))
+        )
+          return;
         if (toErrorResult(e).quiet === true || server.pullFailed.has(path))
           return;
         server.pullFailed.add(path);
@@ -486,7 +539,9 @@ export function createLspHost(d: {
   }
 
   /** Fetches the hints of an open document from a server that has them, when they are on. */
-  function hints(server: Server, doc: Doc): void {
+  function hints(server: Server, doc: Doc, attempt = 0): void {
+    clearTimeout(doc.retry.hints);
+    doc.retry.hints = undefined;
     const client = server.client;
     const sent = doc.sent;
     if (
@@ -509,6 +564,15 @@ export function createLspHost(d: {
         });
       },
       (e: unknown) => {
+        if (
+          stopped ||
+          server.generation !== generation ||
+          (isRetriable(e) &&
+            retryLater(server, doc.path, "hints", attempt, () =>
+              hints(server, doc, attempt + 1),
+            ))
+        )
+          return;
         if (toErrorResult(e).quiet === true) return;
         d.logger.error("lsp.inlayHintsFailed", { server: server.spec.name });
       },
@@ -539,6 +603,7 @@ export function createLspHost(d: {
 
   function close(server: Server, doc: Doc): void {
     clearTimeout(doc.timer);
+    cancelRetries(doc);
     server.docs.delete(doc.path);
     server.pullFailed.delete(doc.path);
     if (doc.sent === undefined || server.client === undefined) return;
@@ -707,6 +772,7 @@ export function createLspHost(d: {
         latest: b.text,
         finalNewline: b.finalNewline,
         saved: b.savedVersion,
+        retry: {},
       };
       server.docs.set(b.path, added);
       if (server.client !== undefined) open(server, added);

@@ -8,6 +8,7 @@ import type {
 import { clientCapabilities } from "./capabilities";
 import {
   flattenSnippet,
+  isRetriable,
   pathToUri,
   toCodeActions,
   toCodeEdit,
@@ -184,6 +185,20 @@ test("snippets become plain text with the cursor at the final stop", () => {
     incomplete: true,
     items: [{ insertText: "x()", filterText: "x", sortText: "x" }],
   });
+});
+
+test("outdated answers are retried unless the server says not to", () => {
+  expect(isRetriable(new ResponseError(-32801, "content modified"))).toBe(true);
+  expect(isRetriable(new ResponseError(-32802, "server cancelled"))).toBe(true);
+  expect(
+    isRetriable(
+      new ResponseError(-32802, "server cancelled", {
+        retriggerRequest: false,
+      }),
+    ),
+  ).toBe(false);
+  expect(isRetriable(new ResponseError(-32800, "cancelled"))).toBe(false);
+  expect(isRetriable(new Error("closed"))).toBe(false);
 });
 
 test("content-modified and cancelled errors are quiet", () => {

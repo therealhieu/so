@@ -733,6 +733,37 @@ test("inlay hints are fetched after opening and each change, and again on refres
   await waitFor(() => asked() === 3);
 });
 
+test("hints and pulls the server drops as outdated are asked again", async () => {
+  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const rs = fake("rs", ["rust"], {
+    ...HINTS,
+    capabilities: { ...HINTS.capabilities, diagnosticProvider: {} },
+    pull: {
+      items: [
+        {
+          range: {
+            start: { line: 0, character: 16 },
+            end: { line: 0, character: 17 },
+          },
+          message: "unused",
+          severity: 2,
+        },
+      ],
+    },
+    contentModifiedFirst: {
+      methods: ["textDocument/inlayHint", "textDocument/diagnostic"],
+      times: 2,
+    },
+  });
+  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  await app.open("main.rs");
+  await waitFor(
+    () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
+  );
+  await waitFor(() => messages(rs.log, "textDocument/diagnostic").length === 3);
+  expect(messages(rs.log, "textDocument/inlayHint")).toHaveLength(3);
+});
+
 test("inlay hints come back after the server restarts", async () => {
   const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], HINTS);

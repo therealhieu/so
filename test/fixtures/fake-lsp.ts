@@ -43,6 +43,8 @@ export type FakeScript = {
   resolveActionFails?: boolean;
   /** Methods answered with ContentModified. */
   contentModified?: string[];
+  /** Methods answered with ContentModified the first `times` they are received. */
+  contentModifiedFirst?: { methods: string[]; times: number };
   /** Asks `workspace/configuration` for these sections after `initialized`. */
   configurationRequest?: { sections: (string | null)[] };
   /** Registers file watchers with these globs after `initialized`. */
@@ -144,10 +146,19 @@ function received(method: string, params: unknown): void {
     void asked("workspace/applyEdit", { edit: script.applyEdit.edit });
 }
 
+/** How often each method was answered with ContentModified so far. */
+const modified = new Map<string, number>();
+
 conn.onRequest((method, params) => {
   received(method, params);
   if (script.contentModified?.includes(method))
     return new ResponseError(-32801, "content modified");
+  const first = script.contentModifiedFirst;
+  if (first?.methods.includes(method)) {
+    const n = (modified.get(method) ?? 0) + 1;
+    modified.set(method, n);
+    if (n <= first.times) return new ResponseError(-32801, "content modified");
+  }
   switch (method) {
     case "initialize": {
       if (script.ignoreInitialize === true) return new Promise(() => {});

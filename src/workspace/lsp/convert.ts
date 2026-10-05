@@ -653,6 +653,19 @@ export function toServerView(
   };
 }
 
+/**
+ * The server dropped the request because the project changed under it
+ * (ContentModified, or ServerCancelled asking to be retriggered): the same
+ * request is worth sending again.
+ */
+export function isRetriable(e: unknown): boolean {
+  if (!(e instanceof ResponseError)) return false;
+  if (e.code === LSPErrorCodes.ContentModified) return true;
+  if (e.code !== LSPErrorCodes.ServerCancelled) return false;
+  const data: unknown = e.data;
+  return !(isObject(data) && data.retriggerRequest === false);
+}
+
 /** An error response as a result; ContentModified and RequestCancelled are quiet. */
 export function toErrorResult(
   e: unknown,
