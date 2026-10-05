@@ -285,7 +285,38 @@ export type PreviewState =
   | { status: "starting" }
   | { status: "on"; port: number };
 
-export type MouseEvent = { kind: "scroll"; delta: number };
+/** What a pointer is over inside an editor or Base window. */
+export type WindowSpot =
+  /** `edge` is -1 or 1 when a drag leaves the text above or below. */
+  | { kind: "text"; pos: Pos; edge: -1 | 0 | 1 }
+  | { kind: "winbar" }
+  | { kind: "baseTab"; view: number }
+  | { kind: "baseCell"; row: number; column: number }
+  | { kind: "baseCard"; lane: number; card: number }
+  | { kind: "base" };
+
+/**
+ * What a pointer is over, in model terms. `explorer` with path "" and
+ * `sidePanel` with row -1 are the panel's frame or empty area; `overlay` is
+ * inside an overlay but on no item, `outside` is outside the open overlay,
+ * and `inert` is chrome that takes no click.
+ */
+export type MouseTarget =
+  | { kind: "window"; window: WindowId; spot: WindowSpot }
+  | { kind: "explorer"; path: string }
+  | { kind: "sidePanel"; row: number }
+  | { kind: "bufferTab"; bufferId: BufferId }
+  | { kind: "overlayItem"; index: number }
+  | { kind: "calendarDay"; date: LocalDate }
+  | { kind: "overlay" }
+  | { kind: "outside" }
+  | { kind: "inert" };
+
+/** One left-button gesture or wheel notch; the wheel repeats a vertical notch. */
+export type MouseEvent =
+  | { kind: "press"; target: MouseTarget; clicks: 1 | 2 | 3; ctrl: boolean }
+  | { kind: "drag"; target: MouseTarget }
+  | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
 
 export type AppState = {
   workspace: { root: string };
@@ -362,7 +393,7 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
-  | { type: "mouse"; event: MouseEvent }
+  | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
   | {
       type: "indexBatch";

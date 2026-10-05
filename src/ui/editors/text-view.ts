@@ -34,7 +34,6 @@ import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
 import type { WindowView } from "./registry";
 
-const SCROLL_LINES = 3;
 const NO_FOLDS: ReadonlySet<number> = new Set();
 
 /** Line numbers (room for the largest, at least 4 digits), a space, and the sign cell. */
@@ -284,13 +283,6 @@ export class EditorView extends Renderable implements WindowView {
     protected readonly deps: ViewDeps,
   ) {
     super(ctx, { position: "absolute" });
-    this.onMouseScroll = (e) => {
-      const up = e.scroll?.direction === "up";
-      deps.dispatch({
-        type: "mouse",
-        event: { kind: "scroll", delta: up ? -SCROLL_LINES : SCROLL_LINES },
-      });
-    };
   }
 
   /**

@@ -21,6 +21,7 @@ import {
 } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
 import {
   onPickerResize,
@@ -47,7 +48,7 @@ import {
   followShownNote,
   onMentionResults,
 } from "./side-panel";
-import type { Action, AppState, Effect, MouseEvent, Result } from "./types";
+import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
 
@@ -152,7 +153,7 @@ export function createUpdate(reg: Registries): Update {
       case "resize":
         return onResize(state, action);
       case "mouse":
-        return onMouse(state, action.event);
+        return onMouse(state, action, reg);
       case "configLoaded":
         return onConfigLoaded(state, action, reg);
       case "indexBatch":
@@ -233,25 +234,4 @@ function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {
     { ...s, terminal: { ...s.terminal, cols: a.cols, rows: a.rows } },
     s.terminal.cols,
   );
-}
-
-/** Scroll the active window, keeping at least its last line on screen. */
-function onMouse(s: AppState, e: MouseEvent): Result {
-  const w = s.windows.byId[s.windows.active];
-  const b = w && s.buffers[w.content.bufferId];
-  if (w === undefined || b === undefined) return none(s);
-  const scroll = Math.max(
-    0,
-    Math.min(w.content.scroll + e.delta, b.text.lineCount - 1),
-  );
-  return none({
-    ...s,
-    windows: {
-      ...s.windows,
-      byId: {
-        ...s.windows.byId,
-        [w.id]: { ...w, content: { ...w.content, scroll } },
-      },
-    },
-  });
 }
