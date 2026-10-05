@@ -138,6 +138,54 @@ test("a drag from the text selects to the pointer and clamps at the window edge"
   expect(cursorOf(m)).toEqual({ line: 0, col: 1 });
 });
 
+test("a drag past the text rows of a long buffer moves one line beyond the window", async () => {
+  m = await mountShell({ cols: 40, rows: 12 });
+  m.keys("<leader>e");
+  const text = Array.from({ length: 60 }, (_, i) => `line ${i + 1}`).join("\n");
+  m.open("long.md", `${text}\n`);
+  const shownLines = async () => {
+    const rows = (await m?.frame())?.split("\n") ?? [];
+    const shown = rows.flatMap((r, y) => {
+      const n = /line (\d+)\b/.exec(r)?.[1];
+      return n === undefined ? [] : [{ line: Number(n) - 1, y }];
+    });
+    const first = shown[0];
+    const last = shown.at(-1);
+    if (first === undefined || last === undefined)
+      throw new Error("expected visible lines");
+    return { first, last };
+  };
+  /** Press at `from`, drag through the text to `mid`, then drag to `edgeY`. */
+  const dragToEdge = async (fromY: number, midY: number, edgeY: number) => {
+    const mouse = m?.mouse;
+    if (mouse === undefined) throw new Error("expected a mounted shell");
+    await mouse.pressDown(3, fromY);
+    await mouse.emitMouseEvent("drag", 3, midY);
+    const shown = await shownLines();
+    await mouse.emitMouseEvent("drag", 3, edgeY);
+    await mouse.release(3, edgeY);
+    return shown;
+  };
+
+  // The cmdline row is below the last text row.
+  const start = await shownLines();
+  const down = await dragToEdge(start.first.y + 1, start.first.y + 3, 11);
+  expect(m.store.get().vim.mode).toBe("visual");
+  expect(m.store.get().vim.visualAnchor).toEqual({
+    line: start.first.line + 1,
+    col: 0,
+  });
+  expect(cursorOf(m)?.line).toBe(down.last.line + 1);
+
+  // The bufferline is above the first text row.
+  m.keys("<Esc>40G");
+  const end = await shownLines();
+  const up = await dragToEdge(end.last.y, end.last.y - 2, 0);
+  expect(up.first.line).toBeGreaterThan(0);
+  expect(m.store.get().vim.mode).toBe("visual");
+  expect(cursorOf(m)?.line).toBe(up.first.line - 1);
+});
+
 /** Screen cell of the first `text` at or below row `from`. */
 async function find(x: Mounted, text: string, from = 0) {
   const lines = (await x.frame()).split("\n");
