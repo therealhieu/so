@@ -257,7 +257,7 @@ function onTimerAction(
       state: s,
       effects: [{ kind: "saveState", state: snapshotSession(s) }],
     };
-  return onTimer(s, a);
+  return onTimer(s, a, reg);
 }
 
 function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {

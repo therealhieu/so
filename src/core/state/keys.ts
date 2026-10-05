@@ -15,6 +15,7 @@ import {
   setBuffer,
 } from "./buffers";
 import { calendarKey } from "./calendar";
+import { maybeSignature } from "./code-completion";
 import {
   type CommandContext,
   type CommandResult,
@@ -62,7 +63,7 @@ export function handleKeyAction(
   return r.state.overlay.kind === "completion" ||
     r.state.vim.mode === "insert" ||
     from.vim.mode === "insert"
-    ? maybeCompletion(r, a.key)
+    ? maybeSignature(maybeCompletion(r, a.key), a.key)
     : r;
 }
 

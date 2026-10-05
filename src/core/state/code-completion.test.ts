@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import type { Pos } from "../kernel/text/pos";
 import { splitKeys } from "../kernel/vim/keys";
+import { fullText } from "./buffers";
 import type {
   CodeCompletionItem,
   LspFeature,
@@ -194,4 +195,163 @@ test("a manual completion with nothing to offer says so", () => {
   const shown = run(asked.state, answer(1, ["object", "obscure"]));
   expect(popup(shown.state)).toMatchObject({ anchor: at(0, 14), query: "obj" });
   expect(labels(shown.state)).toEqual(["object"]);
+});
+
+const ACCEPTS: LspFeature[] = [
+  "completion",
+  "completionResolve",
+  "executeCommand",
+  "signature",
+];
+
+/** "fo" typed on a new line 1, answered with `items`. */
+function offered(items: CodeCompletionItem[]): AppState {
+  const typed = keys(open(ACCEPTS), "ofo").state;
+  const asked = run(typed, { type: "timer", id: "completion", now: 200 });
+  return run(asked.state, {
+    type: "lspResult",
+    id: 1,
+    result: { kind: "completion", items, incomplete: false },
+  }).state;
+}
+
+const textOf = (s: AppState) => {
+  const b = Object.values(s.buffers).find((x) => x.path === "src/a.ts");
+  return b === undefined ? undefined : fullText(b.text);
+};
+const cursorOf = (s: AppState) =>
+  s.windows.byId[s.windows.active]?.content.cursor;
+const IMPORT = "import { format } from 'fmt';\n";
+const range = (line: number, from: number, to: number) => ({
+  start: at(line, from),
+  end: at(line, to),
+});
+
+test("an auto-import completion is one undo step", () => {
+  const s = offered([
+    item("format", {
+      additional: [{ range: range(0, 0, 0), text: IMPORT }],
+    }),
+  ]);
+  const accepted = keys(s, "<CR>").state;
+  expect(accepted.overlay.kind).toBe("none");
+  expect(textOf(accepted)).toBe(
+    "import { format } from 'fmt';\nconst value = obj\nformat\nlet n = 1;",
+  );
+  expect(cursorOf(accepted)).toEqual(at(2, 6));
+  expect(textOf(keys(accepted, "<Esc>u").state)).toBe(TEXT);
+});
+
+test("a resolved item places the cursor at its stop and then runs its command", () => {
+  const s = offered([
+    item("log", {
+      filterText: "fo",
+      edit: { range: range(1, 0, 2), text: "console.log()" },
+      cursor: 12,
+      command: { command: "after" },
+    }),
+  ]);
+  const r = keys(s, "<Tab>");
+  expect(textOf(r.state)).toBe("const value = obj\nconsole.log()\nlet n = 1;");
+  expect(cursorOf(r.state)).toEqual(at(1, 12));
+  const last = r.effects.at(-1);
+  expect(last).toMatchObject({
+    kind: "lsp",
+    key: "a@/ws",
+    op: { kind: "executeCommand", command: { command: "after" } },
+  });
+  const id = last?.kind === "lsp" ? last.id : -1;
+  expect(r.state.lsp.pending[id]?.auto).toBe(true);
+  expect(r.effects).not.toContainEqual(
+    expect.objectContaining({ kind: "startTimer", id: `lsp:${id}` }),
+  );
+});
+
+test("a slow resolve applies the item once without waiting", () => {
+  const unresolved = item("format", { resolved: false, data: { n: 1 } });
+  const s = offered([unresolved]);
+  const accepted = keys(s, "<CR>");
+  expect(accepted.state.overlay.kind).toBe("none");
+  expect(textOf(accepted.state)).toBe("const value = obj\nfo\nlet n = 1;");
+  expect(lspOps(accepted.effects)).toEqual([
+    { kind: "resolveCompletion", item: unresolved },
+  ]);
+  expect(accepted.effects).toContainEqual({
+    kind: "startTimer",
+    id: "lspResolve",
+    ms: 500,
+  });
+
+  const timedOut = run(accepted.state, {
+    type: "timer",
+    id: "lspResolve",
+    now: 700,
+  });
+  expect(textOf(timedOut.state)).toBe("const value = obj\nformat\nlet n = 1;");
+  expect(timedOut.effects).toContainEqual({
+    kind: "lspCancel",
+    id: 2,
+    key: "a@/ws",
+  });
+  expect(timedOut.state.lsp.accept).toBeUndefined();
+  const late = run(timedOut.state, {
+    type: "lspResult",
+    id: 2,
+    result: {
+      kind: "completionItem",
+      item: {
+        ...unresolved,
+        resolved: true,
+        additional: [{ range: range(0, 0, 0), text: IMPORT }],
+      },
+    },
+  });
+  expect(textOf(late.state)).toBe(textOf(timedOut.state));
+
+  const resolved = run(accepted.state, {
+    type: "lspResult",
+    id: 2,
+    result: {
+      kind: "completionItem",
+      item: {
+        ...unresolved,
+        resolved: true,
+        additional: [{ range: range(0, 0, 0), text: IMPORT }],
+      },
+    },
+  });
+  expect(textOf(resolved.state)).toBe(
+    "import { format } from 'fmt';\nconst value = obj\nformat\nlet n = 1;",
+  );
+  expect(resolved.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "lspResolve",
+  });
+  const after = run(resolved.state, {
+    type: "timer",
+    id: "lspResolve",
+    now: 700,
+  });
+  expect(textOf(after.state)).toBe(textOf(resolved.state));
+
+  const moved = keys(accepted.state, "x").state;
+  const stale = run(moved, {
+    type: "lspResult",
+    id: 2,
+    result: { kind: "completionItem", item: { ...unresolved, resolved: true } },
+  });
+  const expired = run(stale.state, {
+    type: "timer",
+    id: "lspResolve",
+    now: 700,
+  });
+  expect(textOf(expired.state)).toBe("const value = obj\nfox\nlet n = 1;");
+  expect(expired.state.lsp.accept).toBeUndefined();
+});
+
+test("a signature trigger character asks for signature help", () => {
+  const r = keys(open(ACCEPTS), "A(");
+  expect(lspOps(r.effects)).toEqual([{ kind: "signature", pos: at(0, 18) }]);
+  expect(r.state.lsp.pending[1]?.auto).toBe(true);
+  expect(lspOps(keys(open(["completion"]), "A(").effects)).toEqual([]);
 });

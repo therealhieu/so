@@ -4,7 +4,7 @@ import type {
   DiagnosticSeverity,
 } from "../kernel/view/diagnostics";
 import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
-import { onCompletionResult } from "./code-completion";
+import { onCompletionResult, onResolvedItem } from "./code-completion";
 import { goTo, recordJump } from "./jumps";
 import { startCodeEdit } from "./lsp-edits";
 import type {
@@ -173,7 +173,7 @@ export function onLspResult(
     format?.requestId === a.id
       ? formattedSave(state, format, current ? a.result : { kind: "none" }, reg)
       : current
-        ? applyResult(state, p, a.result, reg)
+        ? applyResult(state, a.id, p, a.result, reg)
         : none(state);
   return { state: fresh.state, effects: [...ended, ...fresh.effects] };
 }
@@ -237,6 +237,7 @@ export function onFormatTimeout(
 
 function applyResult(
   s: AppState,
+  id: number,
   p: PendingRequest,
   r: LspResult,
   reg: Registries,
@@ -320,7 +321,7 @@ function applyResult(
     case "completion":
       return onCompletionResult(s, p, r);
     case "completionItem":
-      return none(s);
+      return onResolvedItem(s, id, r.item, reg);
   }
 }
 

@@ -1,9 +1,16 @@
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
-import { activeBuffer, activeWindow } from "./buffers";
+import {
+  activeBuffer,
+  activeWindow,
+  applyBufferEdits,
+  setWindow,
+  shifted,
+} from "./buffers";
 import { pickServer, request } from "./lsp";
 import type {
+  CodeAccept,
   CodeCompletionItem,
   LspResult,
   PendingRequest,
@@ -11,6 +18,7 @@ import type {
 } from "./lsp-types";
 import { chain, message, none } from "./result";
 import type { AppState, CompletionState, Effect, Result } from "./types";
+import type { Registries } from "./update";
 
 /** The pause after an identifier character before completion is asked for. */
 const PAUSE_MS = 150;
@@ -224,4 +232,212 @@ export function onCompletionResult(
   if (codePopup(next)?.items.length !== 0) return none(next);
   const nothing: AppState = { ...s, overlay: { kind: "none" } };
   return p.auto ? none(nothing) : message(nothing, "completion: nothing found");
+}
+
+/** How long an accept waits for the server to resolve the item. */
+const RESOLVE_MS = 500;
+
+/** `s` without a waiting accept. */
+function withoutAccept(s: AppState): AppState {
+  const { accept: _, ...lsp } = s.lsp;
+  return { ...s, lsp };
+}
+
+/**
+ * Enter or Tab on a code row: an item that is resolved, or whose server
+ * cannot resolve, applies now; otherwise it is resolved first, waiting at
+ * most `RESOLVE_MS`.
+ */
+export function acceptCode(
+  s: AppState,
+  item: CodeCompletionItem,
+  key: ServerKey,
+  now: number,
+  reg: Registries,
+): Result {
+  const b = activeBuffer(s);
+  const prev = s.lsp.accept;
+  const closed: AppState = withoutAccept({ ...s, overlay: { kind: "none" } });
+  const dropped: Result =
+    prev === undefined ? none(closed) : endResolve(closed, prev);
+  if (
+    b === undefined ||
+    item.resolved ||
+    s.lsp.servers[key]?.features.includes("completionResolve") !== true
+  )
+    return chain(dropped, (st) => applyCompletion(st, item, key, now, reg));
+  return chain(dropped, (st) => {
+    const id = st.lsp.nextId;
+    const asked = request(
+      st,
+      "completionResolve",
+      { kind: "resolveCompletion", item },
+      { auto: true, key },
+    );
+    if (asked.state.lsp.pending[id] === undefined)
+      return applyCompletion(st, item, key, now, reg);
+    return {
+      state: {
+        ...asked.state,
+        lsp: {
+          ...asked.state.lsp,
+          accept: { id, key, item, path: b.path, version: b.text.version },
+        },
+      },
+      effects: [
+        ...asked.effects,
+        { kind: "startTimer", id: "lspResolve", ms: RESOLVE_MS },
+      ],
+    };
+  });
+}
+
+/** The accept still applies: same buffer, nothing typed since. */
+function stillAccepting(s: AppState, a: CodeAccept): boolean {
+  const b = activeBuffer(s);
+  return b?.path === a.path && b.text.version === a.version;
+}
+
+/** The resolve answer came first: apply the resolved item, unless typing moved on. */
+export function onResolvedItem(
+  s: AppState,
+  id: number,
+  resolved: CodeCompletionItem,
+  reg: Registries,
+): Result {
+  const a = s.lsp.accept;
+  if (a === undefined || a.id !== id) return none(s);
+  const ended: Result = {
+    state: withoutAccept(s),
+    effects: [{ kind: "cancelTimer", id: "lspResolve" }],
+  };
+  if (!stillAccepting(s, a)) return ended;
+  // The answer has no time, so the buffer's autosave is due now (0).
+  return chain(ended, (st) =>
+    applyCompletion(
+      st,
+      { ...a.item, ...resolved, resolved: true },
+      a.key,
+      0,
+      reg,
+    ),
+  );
+}
+
+/** `s` without accept `a`'s resolve request, cancelled when still pending. */
+function endResolve(s: AppState, a: CodeAccept): Result {
+  if (s.lsp.pending[a.id] === undefined) return none(s);
+  const { [a.id]: _, ...pending } = s.lsp.pending;
+  return {
+    state: { ...s, lsp: { ...s.lsp, pending } },
+    effects: [{ kind: "lspCancel", id: a.id, key: a.key }],
+  };
+}
+
+/** The resolve took too long: cancel it and apply the item as it is. */
+export function onResolveTimeout(
+  s: AppState,
+  now: number,
+  reg: Registries,
+): Result {
+  const a = s.lsp.accept;
+  if (a === undefined) return none(s);
+  const ended = endResolve(withoutAccept(s), a);
+  return stillAccepting(s, a)
+    ? chain(ended, (st) => applyCompletion(st, a.item, a.key, now, reg))
+    : ended;
+}
+
+const after = (a: Pos, b: Pos) =>
+  a.line > b.line || (a.line === b.line && a.col > b.col);
+
+/**
+ * Insert `item` in place of the word before the cursor (or its own edit
+ * range), with its extra edits such as an import, as one change. The cursor
+ * lands on the item's stop, else after the text; then the item's command,
+ * if any, goes to server `key`.
+ */
+export function applyCompletion(
+  s: AppState,
+  item: CodeCompletionItem,
+  key: ServerKey,
+  now: number,
+  reg: Registries,
+): Result {
+  const b = activeBuffer(s);
+  const w = activeWindow(s);
+  if (b === undefined || w === undefined) return none(s);
+  const cur = w.content.cursor;
+  const start = item.edit?.range.start ?? {
+    line: cur.line,
+    col: wordStart(b.text.line(cur.line), cur.col),
+  };
+  const end =
+    item.edit !== undefined && after(item.edit.range.end, cur)
+      ? item.edit.range.end
+      : cur;
+  const text = item.edit?.text ?? item.insertText ?? item.label;
+  const applied = applyBufferEdits(
+    s,
+    {
+      path: b.path,
+      edits: [{ range: { start, end }, text }, ...item.additional],
+    },
+    now,
+    reg,
+  );
+  if (applied.stale)
+    return message(s, `completion: ${item.label} no longer fits here`, "error");
+  // Extra edits before the word move it; at the same spot they follow the item.
+  const from = item.additional
+    .filter((e) => after(start, e.range.start))
+    .sort(
+      (x, y) =>
+        y.range.start.line - x.range.start.line ||
+        y.range.start.col - x.range.start.col,
+    )
+    .reduce(shifted, start);
+  const typed = text.slice(0, item.cursor ?? text.length).split("\n");
+  const last = typed.at(-1) ?? "";
+  const at: Pos =
+    typed.length === 1
+      ? { line: from.line, col: from.col + last.length }
+      : { line: from.line + typed.length - 1, col: last.length };
+  const placed = setWindow(applied.state, {
+    ...w,
+    content: { ...w.content, cursor: at },
+  });
+  const done: Result = { state: placed, effects: applied.effects };
+  return item.command === undefined
+    ? done
+    : chain(done, (st) =>
+        request(
+          st,
+          "executeCommand",
+          { kind: "executeCommand", command: item.command },
+          { auto: true, key },
+        ),
+      );
+}
+
+/** A signature trigger typed in a code buffer asks for signature help. */
+export function maybeSignature(r: Result, key: Key): Result {
+  const s = r.state;
+  const b = activeBuffer(s);
+  const w = activeWindow(s);
+  if (b === undefined || w === undefined || s.vim.mode !== "insert") return r;
+  const server = pickServer(s, b.path, "signature");
+  if (
+    server === undefined ||
+    s.lsp.servers[server]?.signatureTriggers.includes(key) !== true
+  )
+    return r;
+  return chain(r, (st) =>
+    request(
+      st,
+      "signature",
+      { kind: "signature", pos: w.content.cursor },
+      { auto: true, replace: true },
+    ),
+  );
 }

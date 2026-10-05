@@ -4,7 +4,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { Key } from "../kernel/vim/keys";
 import { activeBuffer, activeWindow } from "./buffers";
-import { codeCompletionStep } from "./code-completion";
+import { acceptCode, codeCompletionStep } from "./code-completion";
 import { typeKeys } from "./keys";
 import { anchorsOf } from "./link-commands";
 import { none } from "./result";
@@ -269,9 +269,21 @@ export function completionKey(
       return move(-1);
     case "<CR>":
     case "<Tab>":
-      return item === undefined || c.mode === "code"
-        ? undefined
-        : insertItem(s, c, item.insert, closed(s) ? [] : [..."]]"], a.now, reg);
+      if (item === undefined) return undefined;
+      if (c.code !== undefined) {
+        const chosen = c.code.items[item.source ?? -1];
+        return chosen === undefined
+          ? undefined
+          : acceptCode(s, chosen, c.code.key, a.now, reg);
+      }
+      return insertItem(
+        s,
+        c,
+        item.insert,
+        closed(s) ? [] : [..."]]"],
+        a.now,
+        reg,
+      );
     case "#": {
       if (c.mode !== "notes" || item === undefined) return undefined;
       const name = item.insert.split("|")[0] ?? item.insert;

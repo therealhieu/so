@@ -6,7 +6,7 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
-import { onCompletionTimer } from "./code-completion";
+import { onCompletionTimer, onResolveTimeout } from "./code-completion";
 import { summarizeSaved } from "./index";
 import { onFormatTimeout, onLspTimeout } from "./lsp";
 import { chain, message, none } from "./result";
@@ -19,6 +19,7 @@ import type {
   Result,
   SaveState,
 } from "./types";
+import type { Registries } from "./update";
 
 const isConflicted = (s: AppState, id: BufferId): boolean =>
   s.overlay.kind === "conflict" && s.overlay.bufferId === id;
@@ -113,6 +114,7 @@ export const autosaveNow = (s: AppState, id: BufferId, now: number): Result =>
 export function onTimer(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
+  reg: Registries,
 ): Result {
   const [kind, n] = a.id.split(":");
   const id = Number(n);
@@ -125,6 +127,7 @@ export function onTimer(
       },
     });
   if (kind === "completion") return onCompletionTimer(s);
+  if (kind === "lspResolve") return onResolveTimeout(s, a.now, reg);
   if (kind === "lsp") return onLspTimeout(s, id);
   if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;

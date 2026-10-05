@@ -155,9 +155,10 @@ export type CodeEditBatch = {
 };
 /** Pushed and pulled diagnostics of one server for one path, kept apart. */
 export type DiagnosticSlots = { push?: Diagnostic[]; pull?: Diagnostic[] };
-/** A completion accept waiting for the item to resolve. */
+/** A completion accept waiting for server `key` to resolve the item. */
 export type CodeAccept = {
   id: number;
+  key: ServerKey;
   item: CodeCompletionItem;
   path: string;
   version: number;

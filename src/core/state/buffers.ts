@@ -178,7 +178,7 @@ const after = (a: Pos, b: Pos) =>
   a.line > b.line || (a.line === b.line && a.col > b.col);
 
 /** Where `pos` is once `e` is applied: moved when the edit ends before it, else kept. */
-function shifted(pos: Pos, e: Edit): Pos {
+export function shifted(pos: Pos, e: Edit): Pos {
   const { start, end } = e.range;
   if (after(end, pos)) return pos;
   const lines = e.text.split("\n");
