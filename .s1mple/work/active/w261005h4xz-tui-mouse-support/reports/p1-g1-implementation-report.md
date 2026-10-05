@@ -98,6 +98,32 @@ Append remediation evidence here after verifier findings. This is not a separate
 
 `w261005h4xz-plan-2-ui-mouse-routing.md:307` still shows `sourceColAt(spans, startCol + leftCol + x - textX, tabWidth)`. Part 2 must pass the source line length as the fourth argument, and `tsc` enforces this. The plan text was not edited because it is outside this group.
 
+### Overall Remediation
+
+The overall verification (`reports/overall-verification-report.md`, commit `e6fbd4b`, `Failed`) raised two Cross-group findings that touch this group. Both are fixed.
+
+#### OVR-VER1 — A click right of a word-wrapped row lands on the next screen row — `Fixed`
+
+- **Change evidence:** `src/core/kernel/view/hit.ts`: `ScreenRow` gains `endCol`, the display column where the next wrap row starts, set only on a wrap row followed by another. The new pure `displayColAt(row, x)` adds the cell offset to `startCol` and clamps it to `endCol − 1`, so a cell in the blank tail of a word-wrapped row maps to that row's last character (the space the row breaks after). Final rows and unwrapped lines keep the past-end rule through `sourceColAt`'s `lineLength`. `src/ui/editors/text-view.ts:EditorView.textAt` calls `displayColAt(shown, this.leftCol + x − textX)` before `sourceColAt`, so `dragAt` gets the same clamp. Insert mode lands on the same character with `i`, because the column is below the line length. `hit.ts` still imports only `./types` and `./wrap`. Tests: `src/core/kernel/view/hit.test.ts` adds "a cell right of a word-wrapped row maps to that row's last character" (`alpha bravo charlie`, width 8, starts `[0, 6, 12]`: row 0 cells 5–7 → 5, row 1 cells 5–7 → 11, last row past end → 19, unwrapped cell 12 → 12), and the existing `rowAt` case now expects `endCol` on non-final rows. `test/ui/mouse.test.ts` adds "a click right of a word-wrapped row stays on that row" (40×12, `the quick brown fox jumps over the lazy dog and keeps running far`, click x = 38 → `{line: 1, col: 30}` in Normal, and in Insert after `ggi`).
+- **Verification evidence:** RED at `e6fbd4b` code: the component case failed with `Expected col 30, Received col 32` (the `h` of `the` on the next screen row, as in the reported probe), and the unit case failed to import `displayColAt`. GREEN: `bun test src/core/kernel/view/hit.test.ts test/ui/mouse.test.ts` → 24 pass, 0 fail.
+- **Commit evidence:** `c6444ab` — `fix(view): keep a click right of a word-wrapped row on that row`
+
+#### OVR-VER2 — A press that closes the command line still starts a drag selection from the old cursor — `Fixed`
+
+- **Change evidence:** `src/core/state/mouse.ts` exports the pure predicate `pressStops(s, t)`: true while a prompt or conflict dialog is open, for a press outside any other overlay but completion, and for a non-`inert` press while the command line is open. `overlayGate` now uses it, so the gate and the router share one rule. `src/ui/mouse.ts:createMouseRouter` takes `stops(target)`, still sends every resolved press, and keeps it as the drag origin only when `stops` is false. `src/ui/shell.ts` wires `stops: (t) => pressStops(store.get(), t)`, read before the press is dispatched. Why this shape: `AppState` gains nothing and the core stays pure; the router stays the single entry point and already reads the store for `enabled`; the wheel path is untouched, so a wheel over a window while `:` is open still scrolls it (REQ2). The rejected alternative, making `CommandLine.targetAt` return `outside` over the body, would have turned that wheel into a no-op. Tests: `test/ui/mouse.test.ts` adds "a drag after the press that closes the command line selects nothing" (`j:`, then a plain click gives mode `normal`, no anchor, cursor `{1, 0}`; `:` again, then a drag on line 2 gives the same state; with `:` closed, a drag anchors at its press `{2, 5}`). `src/ui/mouse.test.ts` adds "a press the core stops is still sent but starts no drag". `src/core/state/mouse.test.ts` adds "a press stops at the gate exactly where the gate closes something" over every target in five states (no overlay, picker, command line, completion, prompt).
+- **Verification evidence:** RED at `e6fbd4b` code: the component case failed with mode `visual`, anchor `{line: 1, col: 0}`, cursor `{line: 2, col: 4}`, matching the reported probe. Mutation: with the router guard reverted to `origin = hit`, the component case and the router unit case both fail (2 fail); the file was restored from a copy. GREEN: `bun test src/ui/mouse.test.ts test/ui/mouse.test.ts` → 26 pass, 0 fail; `bun test src/core/kernel/view/hit.test.ts src/core/state/mouse.test.ts` → 44 pass, 0 fail. The existing drag, completion-yield, picker-outside, and command-line cases still pass.
+- **Commit evidence:** `2a0b2d3` — `fix(ui): start no drag from a press that only closes the command line`
+
+#### Overall Remediation Checks
+
+- `bun run check` → `Passed` — biome 313 files clean, tsc clean, knip clean; 1055 pass, 0 fail
+- `bun run test:ci` → `Passed` — 211 pass, 0 fail, 58 snapshots, 28 files
+- `bun test test/e2e/quit.test.ts test/e2e/restore.test.ts` → `Passed` — 10 pass, 0 fail, 48 expect() calls
+- `rg 'kind: "scroll"|onMouseScroll' src` → `Passed` — no matches (exit 1)
+- `git diff --name-only da4275e..HEAD -- src test | xargs rg -n 'W261005H4XZ|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P[12]-G[12]|OVR-VER'` → `Passed` — no matches (exit 1)
+- `pgrep -fl 'src/app/main.ts|bun run dev'` → `Passed` — no processes (exit 1); the remediation started no app processes
+- Benchmarks were not rerun. The changed code runs once per mouse press or drag event, not per frame or keystroke.
+
 ## Final Status
 
 `Completed`
