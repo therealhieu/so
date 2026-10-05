@@ -17,6 +17,7 @@ import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
 import { OverlayHost } from "./overlays/host";
+import { HunkView } from "./overlays/hunk";
 import { ToastStack } from "./overlays/notify";
 import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
@@ -175,6 +176,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         new CompletionView(renderer, () => windows.cursor()),
         new CalendarOverlay(renderer),
         new ZoomOverlay(renderer, ctx),
+        new HunkView(renderer, () => windows.anchor()),
       ]);
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);

@@ -746,3 +746,165 @@ test("warnings and errors use their own message styles", async () => {
     TextAttributes.BOLD,
   );
 });
+
+/**
+ * Forty buffer lines with four hunks: an added line 5, a changed line 10,
+ * line 31 replacing three index lines, and an index line removed after
+ * line 35.
+ */
+const FLOAT_BUFFER = Array.from({ length: 40 }, (_, i) => `b${i + 1}`);
+const FLOAT_INDEX = FLOAT_BUFFER.flatMap((l, i) =>
+  i === 4
+    ? []
+    : i === 9
+      ? ["old10"]
+      : i === 30
+        ? ["Signs should be quiet.", "They must not distract.", "Prose first."]
+        : i === 34
+          ? [l, "gone"]
+          : [l],
+);
+
+/** The open float's rows, from its top border to its bottom border. */
+async function floatOf(x: Mounted) {
+  const rows = await rowsOf(x);
+  const top = rows.findIndex((r) => r.includes("╭─ hunk preview "));
+  const bottom = rows.findIndex((r, y) => y > top && r.includes("╰─"));
+  const left = [...(rows[top] ?? "")].indexOf("╭");
+  const right = [...(rows[top] ?? "")].indexOf("╮");
+  return {
+    rows,
+    top,
+    bottom,
+    left,
+    right,
+    inner: rows.slice(top + 1, bottom).map((r) =>
+      [...r]
+        .slice(left + 1, right)
+        .join("")
+        .trimEnd(),
+    ),
+  };
+}
+
+const cursorRow = (x: Mounted) => {
+  const c = x.t.renderer.getCursorState();
+  return c.y - 1;
+};
+
+test("the hunk float lays out header, removed and added lines, and caps long hunks", async () => {
+  m = await inRepo({ cols: 120, rows: 36 });
+  openWithIndex(m, "notes/plan.md", textOf(FLOAT_BUFFER), textOf(FLOAT_INDEX));
+  m.keys("31G<leader>ghp");
+  expect(m.store.get().overlay.kind).toBe("gitHunk");
+  let f = await floatOf(m);
+  expect(f.inner).toEqual([
+    " ≃ changed + deleted · line 31 · hunk 3/4",
+    " - Signs should be quiet.",
+    " - They must not distract.",
+    " - Prose first.",
+    " + b31",
+  ]);
+  expect(f.rows[f.bottom]).toContain("╰─ esc / q close ─");
+  const spans = m.t.captureSpans().lines;
+  for (const y of [f.top + 2, f.top + 3, f.top + 4])
+    expect(cellStyle(spans, f.left + 2, y)).toEqual(
+      styleOf(themes.dark, "diffDel"),
+    );
+  expect(cellStyle(spans, f.left + 2, f.top + 5)).toEqual(
+    styleOf(themes.dark, "diffAdd"),
+  );
+  expect(cellStyle(spans, f.left + 2, f.top + 1)).toEqual(
+    styleOf(themes.dark, "floatDim"),
+  );
+  // Line 31 has no room below in 36 rows: the float sits right above it.
+  expect(f.bottom).toBe(cursorRow(m) - 1);
+
+  m.keys("<Esc>10G<leader>ghp");
+  f = await floatOf(m);
+  expect(f.inner).toEqual([
+    " ~ changed · line 10 · hunk 2/4",
+    " - old10",
+    " + b10",
+  ]);
+  // Below the cursor row, from the text column, at most 72 cells wide.
+  expect(f.top).toBe(cursorRow(m) + 1);
+  expect(f.left).toBe(7);
+  expect(f.right - f.left + 1).toBe(72);
+
+  m.keys("<Esc>35G<leader>ghp");
+  f = await floatOf(m);
+  expect(f.inner).toEqual([
+    " _ deleted below · after line 35 · hunk 4/4",
+    " - gone",
+  ]);
+  expect(f.bottom).toBe(cursorRow(m) - 1);
+});
+
+for (const [cols, rows, cap] of [
+  [120, 36, 12],
+  [80, 24, 8],
+] as const)
+  test(`a long hunk shows ${cap} lines at ${cols}×${rows}`, async () => {
+    const base = ["# Long", "", "end"];
+    const added = Array.from({ length: 22 }, (_, i) => `added ${i + 1}`);
+    m = await inRepo({ cols, rows });
+    openWithIndex(
+      m,
+      "notes/plan.md",
+      textOf([...base.slice(0, 2), ...added, ...base.slice(2)]),
+      textOf(base),
+    );
+    m.keys("3G<leader>ghp");
+    const f = await floatOf(m);
+    expect(f.inner).toEqual([
+      " + added · lines 3–24 · hunk 1/1",
+      ...added.slice(0, cap).map((l) => ` + ${l}`),
+      `   … ${22 - cap} more lines (0 removed, 22 added)`,
+    ]);
+    // Inside the editor area: below the bufferline, above the statusline.
+    expect(f.top).toBeGreaterThanOrEqual(1);
+    expect(f.bottom).toBeLessThanOrEqual(rows - 3);
+    expect(f.top > cursorRow(m) || f.bottom < cursorRow(m)).toBe(true);
+    if (cols === 80) expect(f.right).toBe(cols - 1);
+    else expect(f.right - f.left + 1).toBe(72);
+  });
+
+test("the hunk float closes on escape, q, outside clicks, and other keys", async () => {
+  m = await inRepo({ cols: 120, rows: 36 });
+  const x = m;
+  openWithIndex(x, "notes/plan.md", textOf(FLOAT_BUFFER), textOf(FLOAT_INDEX));
+  const cursor = () => {
+    const s = x.store.get();
+    return s.windows.byId[s.windows.active]?.content.cursor;
+  };
+  const open = async () => {
+    x.keys("<leader>ghp");
+    expect(x.store.get().overlay.kind).toBe("gitHunk");
+    return floatOf(x);
+  };
+  x.keys("10G");
+  const at = cursor();
+  for (const key of ["<Esc>", "q"]) {
+    await open();
+    x.keys(key);
+    expect(x.store.get().overlay.kind).toBe("none");
+    expect(cursor()).toEqual(at);
+  }
+  let f = await open();
+  await x.mouse.click(f.left + 3, f.top + 1);
+  expect(x.store.get().overlay.kind).toBe("gitHunk");
+  await x.mouse.click(f.right + 5, f.bottom + 2);
+  expect(x.store.get().overlay.kind).toBe("none");
+  expect(cursor()).toEqual(at);
+
+  f = await open();
+  x.keys("j");
+  expect(x.store.get().overlay.kind).toBe("none");
+  expect(cursor()).toEqual({ line: 10, col: 0 });
+  expect((await rowsOf(x)).join("\n")).not.toContain("hunk preview");
+
+  x.keys("<leader>ghp");
+  expect(x.store.get().overlay.kind).toBe("none");
+  expect((await rowsOf(x)).at(-2)?.trimEnd()).toBe("no hunk at cursor");
+});

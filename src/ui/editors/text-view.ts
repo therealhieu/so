@@ -409,6 +409,22 @@ export class EditorView extends Renderable implements WindowView {
     return this.cursorAt;
   }
 
+  /** Where this frame paints text: right of the gutter, below the winbar. */
+  textArea(): Rect {
+    const r = this.rect;
+    const s = this.s;
+    const w = s?.windows.byId[this.windowId];
+    const b = w && s?.buffers[w.content.bufferId];
+    const gw = gutterWidth(b?.text.lineCount ?? 0, this.change);
+    const top = this.winbar ? 1 : 0;
+    return {
+      x: r.x + gw,
+      y: r.y + top,
+      w: Math.max(0, r.w - gw),
+      h: this.textRows(),
+    };
+  }
+
   private textRows(): number {
     return Math.max(0, this.rect.h - (this.winbar ? 1 : 0));
   }
