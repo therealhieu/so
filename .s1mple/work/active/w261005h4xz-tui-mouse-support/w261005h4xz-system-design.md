@@ -1322,7 +1322,7 @@ The mock mouse drives the real renderer path, including the hit grid and the `Mo
 - **Data Backfill:** None — none needed.
 - **Mixed-Version Compatibility:** Old config files without `mouse` default to `true`; the session file is unchanged.
 - **Feature Flags:** The `mouse` config key is the user-facing switch; no internal flag.
-- **Rollout Constraints:** None — one binary; ships in one PR stacked on the open DI4 branch until it merges.
+- **Rollout Constraints:** None — one binary; ships in the DI4 pull request (#8, branch `feat/rm261003abzp-di4-daily-notes-and-bases`) together with W26100423LX.
 - **Rollback:** Revert the PR; a config file that sets `mouse` would then fail strict validation, so the release notes must mention the key.
 
 # 8. Testing and Verification
