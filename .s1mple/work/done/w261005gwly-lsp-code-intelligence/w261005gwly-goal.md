@@ -2,8 +2,8 @@
 
 ## Status
 
-- **State:** `In Progress`
-- **Current Position:** `Overall verification`
+- **State:** `Completed`
+- **Current Position:** `Complete — PR #11 open, awaiting the user's review and merge decision`
 - **Last Updated:** `2026-10-06`
 
 ## Sources
@@ -430,46 +430,46 @@ Conditions are defined in system design §8 Design Success Criteria; the column 
 
 | Complete | Criterion | Observable condition | Verification cases | Evidence |
 |---|---|---|---|---|
-| [ ] | `S1` | No `[lsp]` or `enabled = false` spawns no process | `V1, V2` | `Pending implementation` |
-| [ ] | `S2` | `:ConfigReload` toggling `enabled` starts or stops servers | `V2` | `Pending implementation` |
-| [ ] | `S3` | `resolveServers` order, overrides, removals, additions | `V3, V4` | `Pending implementation` |
-| [ ] | `S4` | Two servers: both diagnostics shown; request to first capable | `V5, V31` | `Pending implementation` |
-| [ ] | `S5` | Statusline `◌`/`◆`/`✗`; progress ≤ 1 dispatch per 100 ms | `V6, V7` | `Pending implementation` |
-| [ ] | `S6` | error/warning → one toast; info/log → none; `:LspInfo` shows `not on PATH` | `V7, V8` | `Pending implementation` |
-| [ ] | `S7` | Every `LspOp` maps to its method and result | `V9, V32, V44, V45, V46` | `Pending implementation` |
-| [ ] | `S8` | Unsupported feature reports `<feature>: not supported by <servers>` | `V10` | `Pending implementation` |
-| [ ] | `S9` | Bad `fileTypes` is a line error; no Markdown LSP binding | `V11, V39` | `Pending implementation` |
-| [ ] | `S10` | One highest-severity sign per line, underline per range, clamped | `V12, V13, V14, V47` | `Pending implementation` |
-| [ ] | `S11` | `]d`/`[d` move and wrap | `V12` | `Pending implementation` |
-| [ ] | `S12` | Insert-mode freeze; cmdline shows cursor diagnostic | `V15, V16` | `Pending implementation` |
-| [ ] | `S13` | `:Diagnostics` lists all, sorted; `Enter` opens | `V12, V17` | `Pending implementation` |
-| [ ] | `S14` | Completion on triggers and 150 ms pause; local narrowing | `V18, V19` | `Pending implementation` |
-| [ ] | `S15` | Stale completion opens nothing; link completion unchanged | `V20`, obsolete-reference check | `Pending implementation` |
-| [ ] | `S16` | Accept applies edit + `additionalTextEdits` in one undo; `snippetSupport` per server | `V21, V33` | `Pending implementation` |
-| [ ] | `S17` | Rename over open and closed file changes both | `V22, V48` | `Pending implementation` |
-| [ ] | `S18` | Versioned edit for older version applies nothing and says why | `V23` | `Pending implementation` |
-| [ ] | `S19` | `applyEdit` answered exactly once; `resourceOperations: []`; lazy action resolve | `V24, V33` | `Pending implementation` |
-| [ ] | `S20` | `:Format` is one undo step | `V25` | `Pending implementation` |
-| [ ] | `S21` | `formatOnSave` on `:w` only; ≤ 1000 ms delay | `V26` | `Pending implementation` |
-| [ ] | `S22` | One process per (server, root); ordered markers; marker-less shared | `V27, V30` | `Pending implementation` |
-| [ ] | `S23` | Incremental `didChange` rebuilds buffer text exactly | `V28` | `Pending implementation` |
-| [ ] | `S24` | Crash restarts; fifth within 180 s fails with one toast | `V29, V61` | `Pending implementation` |
-| [ ] | `S25` | Shutdown → exit at 400 ms; all stopped ≤ 500 ms | `V34` | `Pending implementation` |
-| [ ] | `S26` | Neovim 0.11 keys work in code buffers, overridable | `V35, V39` | `Pending implementation` |
-| [ ] | `S27` | One definition jumps (`<C-o>` returns); several → picker; outside counted | `V33, V35, V36` | `Pending implementation` |
-| [ ] | `S28` | Floats show and close; `<C-Space>` reaches the keymap | `V37, V38, V49` (+ P3-G1-T2 float component case) | `Pending implementation` |
-| [ ] | `S29` | Stale hover/definition result changes nothing | `V40` | `Pending implementation` |
-| [ ] | `S30` | Keys within 150 ms → one `didChange` before a following request | `V41` | `Pending implementation` |
-| [ ] | `S31` | `lspKeystrokeP95` ≤ 16 ms (gate 2×) | `V42` | `Pending implementation` |
-| [ ] | `S32` | `bun run check` and `bun run test:ci` pass without servers; no child processes left | `V43, V44, V46` | `Pending implementation` |
-| [ ] | `S33` | TS server chosen by root `tsc` major; local `node_modules/.bin` first | `V50, V51` | `Pending implementation` |
-| [ ] | `S34` | `workspace/configuration` by dotted path; one `didChangeConfiguration`; rust-analyzer `initOptions` | `V3, V52` | `Pending implementation` |
-| [ ] | `S35` | Exit before `initialize` → `unavailable`, quiet, no restart | `V8, V53` | `Pending implementation` |
-| [ ] | `S36` | Pull after `didOpen`/`didChange`, refresh re-pull, push+pull kept, close clears pull | `V33, V54, V55, V56` | `Pending implementation` |
-| [ ] | `S37` | Snippets inserted as plain text, cursor at `$0`; item command runs after edits | `V57, V58` | `Pending implementation` |
-| [ ] | `S38` | Resolve waits ≤ 500 ms; item applied exactly once | `V59` | `Pending implementation` |
-| [ ] | `S39` | `ContentModified`/`RequestCancelled` are quiet | `V60, V64` | `Pending implementation` |
-| [ ] | `S40` | Partial `applyEdit` replies `applied:false` with `failureReason`; written files reach servers | `V62, V63` | `Pending implementation` |
+| [x] | `S1` | No `[lsp]` or `enabled = false` spawns no process | `V1, V2` | `V1` `src/core/config/lsp.test.ts` "language servers are off…"; `V2` `test/integration/lsp-host.test.ts` "servers start only when enabled…" (overall report 26fc65d) |
+| [x] | `S2` | `:ConfigReload` toggling `enabled` starts or stops servers | `V2` | `V2` (same test) (overall report 26fc65d) |
+| [x] | `S3` | `resolveServers` order, overrides, removals, additions | `V3, V4` | `V3`, `V4` in `src/core/config/lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S4` | Two servers: both diagnostics shown; request to first capable | `V5, V31` | `V5` `src/core/state/lsp.test.ts`; `V31` `lsp-host.test.ts` "a second server on the same file type…" (overall report 26fc65d) |
+| [x] | `S5` | Statusline `◌`/`◆`/`✗`; progress ≤ 1 dispatch per 100 ms | `V6, V7` | `V6` `test/e2e/lsp.test.ts`; `V7` `lsp-host.test.ts` "progress is throttled…" (≤ 5 bound, accepted) (overall report 26fc65d) |
+| [x] | `S6` | error/warning → one toast; info/log → none; `:LspInfo` shows `not on PATH` | `V7, V8` | `V7`; `V8` `lsp.test.ts` "a failed server toasts once…", "the server list shows missing binaries…" (overall report 26fc65d) |
+| [x] | `S7` | Every `LspOp` maps to its method and result | `V9, V32, V44, V45, V46` | `V9`, `V32`, `V44` (ran locally, skipped without rust-analyzer), `V45`, `V46` (overall report 26fc65d) |
+| [x] | `S8` | Unsupported feature reports `<feature>: not supported by <servers>` | `V10` | `V10` `lsp.test.ts` "a feature no attached server supports explains why" (overall report 26fc65d) |
+| [x] | `S9` | Bad `fileTypes` is a line error; no Markdown LSP binding | `V11, V39` | `V11` `lsp.test.ts` (config); `V39` "no language binding exists for notes…" (overall report 26fc65d) |
+| [x] | `S10` | One highest-severity sign per line, underline per range, clamped | `V12, V13, V14, V47` | `V13`, `V14` `diagnostics.test.ts`; `V47` `test/ui/lsp.test.ts`; `V12` e2e (overall report 26fc65d) |
+| [x] | `S11` | `]d`/`[d` move and wrap | `V12` | `V12` e2e; `lsp-commands.test.ts` "]d … wraps", "[d … wraps" (overall report 26fc65d) |
+| [x] | `S12` | Insert-mode freeze; cmdline shows cursor diagnostic | `V15, V16` | `V15`, `V16` `lsp.test.ts`; cmdline case in `test/ui/lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S13` | `:Diagnostics` lists all, sorted; `Enter` opens | `V12, V17` | `V12`, `V17` `test/e2e/lsp.test.ts`; picker sort case in `lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S14` | Completion on triggers and 150 ms pause; local narrowing | `V18, V19` | `V18`, `V19` `code-completion.test.ts` (overall report 26fc65d) |
+| [x] | `S15` | Stale completion opens nothing; link completion unchanged | `V20`, obsolete-reference check | `V20` `code-completion.test.ts`; `rg "maybeOpenCompletion" src test` empty (overall report 26fc65d) |
+| [x] | `S16` | Accept applies edit + `additionalTextEdits` in one undo; `snippetSupport` per server | `V21, V33` | `V21` `code-completion.test.ts`; `V33` `convert.test.ts` (overall report 26fc65d) |
+| [x] | `S17` | Rename over open and closed file changes both | `V22, V48` | `V22` `lsp-edits.test.ts`; `V48` `test/integration/lsp-edits.test.ts` (overall report 26fc65d) |
+| [x] | `S18` | Versioned edit for older version applies nothing and says why | `V23` | `V23` `lsp-edits.test.ts` (overall report 26fc65d) |
+| [x] | `S19` | `applyEdit` answered exactly once; `resourceOperations: []`; lazy action resolve | `V24, V33` | `V24` `lsp-edits.test.ts`; `V33` `convert.test.ts` (overall report 26fc65d) |
+| [x] | `S20` | `:Format` is one undo step | `V25` | `V25` `lsp-commands.test.ts` ":Format applies … one undo step" (overall report 26fc65d) |
+| [x] | `S21` | `formatOnSave` on `:w` only; ≤ 1000 ms delay | `V26` | `V26` `lsp-commands.test.ts` "format on save formats :w only…", "autosave never formats" (overall report 26fc65d) |
+| [x] | `S22` | One process per (server, root); ordered markers; marker-less shared | `V27, V30` | `V27` `roots.test.ts`; `V30` `lsp-host.test.ts` "one process serves a Cargo workspace…" (overall report 26fc65d) |
+| [x] | `S23` | Incremental `didChange` rebuilds buffer text exactly | `V28` | `V28` `sync.test.ts` (500 seeded sequences) (overall report 26fc65d) |
+| [x] | `S24` | Crash restarts; fifth within 180 s fails with one toast | `V29, V61` | `V29`, `V61` `lsp-host.test.ts` (overall report 26fc65d) |
+| [x] | `S25` | Shutdown → exit at 400 ms; all stopped ≤ 500 ms | `V34` | `V34` `lsp-host.test.ts`; "stopping leaves no version probe…" (`80affa6`) (overall report 26fc65d) |
+| [x] | `S26` | Neovim 0.11 keys work in code buffers, overridable | `V35, V39` | `V35`, `V39` `lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S27` | One definition jumps (`<C-o>` returns); several → picker; outside counted | `V33, V35, V36` | `V33`, `V35`, `V36` (overall report 26fc65d) |
+| [x] | `S28` | Floats show and close; `<C-Space>` reaches the keymap | `V37, V38, V49` (+ P3-G1-T2 float component case) | `V37`, `V49` `lsp.test.ts`; `V38` `src/ui/input.test.ts`; float cases in `test/ui/lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S29` | Stale hover/definition result changes nothing | `V40` | `V40` `lsp.test.ts` (overall report 26fc65d) |
+| [x] | `S30` | Keys within 150 ms → one `didChange` before a following request | `V41` | `V41` `lsp-host.test.ts` (overall report 26fc65d) |
+| [x] | `S31` | `lspKeystrokeP95` ≤ 16 ms (gate 2×) | `V42` | `V42` this run 5.11 ms (limit 32); CI ubuntu 7.57 ms on `15b1e7d` (overall report 26fc65d) |
+| [x] | `S32` | `bun run check` and `bun run test:ci` pass without servers; no child processes left | `V43, V44, V46` | `V43` e2e; `V44`; `V46`; overall Fast gate, CI suites, Process hygiene checks (overall report 26fc65d) |
+| [x] | `S33` | TS server chosen by root `tsc` major; local `node_modules/.bin` first | `V50, V51` | `V50` `lsp.test.ts` (config); `V51` `lsp-host.test.ts` (overall report 26fc65d) |
+| [x] | `S34` | `workspace/configuration` by dotted path; one `didChangeConfiguration`; rust-analyzer `initOptions` | `V3, V52` | `V3`; `V52` `lsp-host.test.ts` (overall report 26fc65d) |
+| [x] | `S35` | Exit before `initialize` → `unavailable`, quiet, no restart | `V8, V53` | `V8`; `V53` `lsp-host.test.ts` (overall report 26fc65d) |
+| [x] | `S36` | Pull after `didOpen`/`didChange`, refresh re-pull, push+pull kept, close clears pull | `V33, V54, V55, V56` | `V33`, `V54`, `V55`, `V56` (overall report 26fc65d) |
+| [x] | `S37` | Snippets inserted as plain text, cursor at `$0`; item command runs after edits | `V57, V58` | `V57` `convert.test.ts`; `V58` `code-completion.test.ts` (overall report 26fc65d) |
+| [x] | `S38` | Resolve waits ≤ 500 ms; item applied exactly once | `V59` | `V59` plus "a key that moves the cursor during a resolve drops the accept" (overall report 26fc65d) |
+| [x] | `S39` | `ContentModified`/`RequestCancelled` are quiet | `V60, V64` | `V60` `lsp.test.ts`; `V64` `convert.test.ts` (overall report 26fc65d) |
+| [x] | `S40` | Partial `applyEdit` replies `applied:false` with `failureReason`; written files reach servers | `V62, V63` | `V62` `lsp-edits.test.ts`; `V63` `test/integration/lsp-edits.test.ts` (overall report 26fc65d) |
 
 ## Verification Cases
 
@@ -567,25 +567,25 @@ Fresh verifier → Passed → Project documentation
 
 | Complete | Check | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | Fast gate | `bun run check` | biome, tsc, knip (zero findings), unit suites, boundaries, repo pins pass | `Pending implementation` |
-| [ ] | CI suites | `bun run test:ci` | Component, integration, and e2e suites pass without language servers installed | `Pending implementation` |
-| [ ] | Bench | `bun run bench` (after `pgrep -f fake-lsp` is empty) | `lspKeystrokeP95` ≤ gate (2× the 16 ms target); a miss is recorded, not blocking | `Pending implementation` |
-| [ ] | Obsolete reference | `rg "maybeOpenCompletion" src test` | No matches | `Pending implementation` |
-| [ ] | Process hygiene | `pgrep -f fake-lsp` after suites | No processes | `Pending implementation` |
-| [ ] | Work-process ids | `rg "W261005GWLY\|REQ[0-9]\|DES[0-9]" src test scripts` | No matches | `Pending implementation` |
-| [ ] | Delivery | `gh pr checks <pr>` on the PR head and after the work-folder move | All CI jobs green on both heads | `Pending implementation` |
+| [x] | Fast gate | `bun run check` | biome, tsc, knip (zero findings), unit suites, boundaries, repo pins pass | `bun run check` 1206 pass, knip zero (overall 26fc65d); 1207 pass after OVR-VER1 fix (6591b03) |
+| [x] | CI suites | `bun run test:ci` | Component, integration, and e2e suites pass without language servers installed | `bun run test:ci` 262 pass (overall run and after 6591b03); lsp-real skips without a working rust-analyzer |
+| [x] | Bench | `bun run bench` (after `pgrep -f fake-lsp` is empty) | `lspKeystrokeP95` ≤ gate (2× the 16 ms target); a miss is recorded, not blocking | `lspKeystrokeP95` 5.11 ms local, 7.57 ms CI ubuntu (gate 32 ms); all targets ok |
+| [x] | Obsolete reference | `rg "maybeOpenCompletion" src test` | No matches | No matches |
+| [x] | Process hygiene | `pgrep -f fake-lsp` after suites | No processes | `pgrep -f fake-lsp` empty after every suite and bench |
+| [x] | Work-process ids | `rg "W261005GWLY\|REQ[0-9]\|DES[0-9]" src test scripts` | No matches | No matches |
+| [x] | Delivery | `gh pr checks <pr>` on the PR head and after the work-folder move | All CI jobs green on both heads | Green on pre-move head `5b859df`; post-move heads `4f8f849`, `d4b894a`, `15b1e7d`, `16ff305` (red `ae081ea`, `129e62b` fixed by the next commit) |
 
 ### Evidence
 
-- **Status:** `Pending implementation`
+- **Status:** `Failed` (one Minor finding, OVR-VER1); remediated
 - **Report:** `.s1mple/work/done/w261005gwly-lsp-code-intelligence/reports/overall-verification-report.md`
-- **Report commit:** `Pending implementation`
-- **Findings and owners:** `Pending implementation`
-- **Remediation status:** `Pending implementation`
-- **Remediation commits:** `Pending implementation`
-- **Updated implementation report commits:** `Pending implementation`
-- **Closure evidence:** `Pending implementation`
-- **Remaining issues:** `Pending implementation`
+- **Report commit:** `26fc65d`
+- **Findings and owners:** `OVR-VER1` (Minor, Cross-group P1-G2/P2-G1) — `:LspInfo` showed the configured command instead of the resolved binary path
+- **Remediation status:** `Completed` — fresh implementer; Fixed
+- **Remediation commits:** `OVR-VER1 → 6591b03` (`ServerView.binary`, host sets it, `lspInfo` row shows it; unit + local-tsc integration assertions)
+- **Updated implementation report commits:** P1-G2 `5041e26`; P2-G1 `16ff305`
+- **Closure evidence:** RED then GREEN for the new unit and integration assertions; `bun run check` 1207 pass; `bun run test:ci` 262 pass; overall report unchanged; pushed `16ff305`, CI green (check, test ubuntu-24.04 + bench, test macos-15; `check` once not acquired by a hosted runner and re-run with zero code change)
+- **Remaining issues:** None
 
 ## Delivery Acceptance
 
@@ -602,9 +602,9 @@ After all groups and overall checks pass, the orchestrator must:
 
 Missing documents, unresolved conflicts, failed checks/commits, or unsafe change isolation block completion. Send implementation defects back to remediation, not into project guidance.
 
-- **Changes or No-change Reason:** `Pending implementation`
-- **Validation and Commit SHA:** `Pending implementation`
-- **Final head and CI result:** `Pending implementation`
+- **Changes or No-change Reason:** `project.md` updated for facts changed after P3-G1-T7: `stop()` resolves only after every server and version probe exits (P2-G1-VER3 fix), `:LspInfo` shows each started server's resolved binary (`ServerView.binary`, OVR-VER1), and the real rust-analyzer test runs only where `rust-analyzer --version` succeeds (`5b859df`). Last Modified already 2026-10-06
+- **Validation and Commit SHA:** each claim checked against `src/app/lsp-host.ts` (`probesExited`, `LSP_STOP_BOUND_MS`), `src/core/state/lsp-pickers.ts` (`serverDetail`), `test/integration/lsp-real.test.ts` (`--version` guard); commit `66e1986` (`docs(project): describe LSP code intelligence`)
+- **Final head and CI result:** docs head `66e1986`: `test (ubuntu-24.04)` + bench and `test (macos-15)` green (run 37366497877); `check` cancelled twice with zero steps ("not acquired by Runner of type hosted", GitHub capacity) — no code ran. The final head is the commit that records this goal (`docs: complete W261005GWLY execution goal`); its full CI run on PR #11 is confirmed green by the orchestrator after push. Not merged.
 
 **Commit Message:**
 
@@ -616,10 +616,10 @@ Work: W261005GWLY — lsp-code-intelligence
 
 ## Implementation Evidence
 
-- **Commits:** `Pending implementation`
-- **Subagent Replacements:** `Pending implementation`
-- **Changed Files:** `Pending implementation`
-- **Automated Verification:** `Pending implementation`
+- **Commits:** `git log --oneline main..HEAD` on `feat/w261005gwly-lsp-code-intelligence`; task and remediation SHAs per group above
+- **Subagent Replacements:** None (each stage used a fresh agent as planned; the P3-G1 implementer was resumed twice by message after its CI monitor went idle)
+- **Changed Files:** `git diff --stat main...HEAD` — `src/core/{config,kernel/view,state,features/links}`, `src/workspace/lsp/*`, `src/app/{lsp-host,effects,lifecycle,main}.ts`, `src/ui/*`, `test/{fixtures,support,integration,e2e,ui,bench}`, `scripts/bench-gate.ts`, `package.json`, `bun.lock`, `.s1mple/`
+- **Automated Verification:** `bun run check`, `bun run test:ci`, `bun run bench` locally and on CI for PR #11; see Overall Verification Checks
 - **Manual Evidence:** P2-G1-T8: `bun bin/so` in a PTY with no `[lsp]` — first frame at 229 ms, exit 0, no child processes (p2-g1-implementation-report.md); P2-G1 verifier drove `bin/so` with the fake server — `shutdown`/`exit` on `:q`, server gone
 
 ## Blockers and Deviations
@@ -635,27 +635,32 @@ Replace with `None` or entries containing location, evidence, impact, and requir
 
 ## Final Completion Checklist
 
-- [ ] Every plan part and group is completed.
-- [ ] Every task outcome is implemented.
-- [ ] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
-- [ ] Every subagent replacement has a recorded reason and complete handoff evidence.
-- [ ] Every group persisted one complete verification report.
-- [ ] Every verifier finding and its completion checklist are resolved with closure evidence.
-- [ ] Every group acceptance criterion is satisfied.
-- [ ] Every assigned system design chain is covered.
-- [ ] Every `S` criterion and `V` case has passing evidence.
-- [ ] The overall-verification report is committed.
-- [ ] Every overall verification check passes with actual evidence.
-- [ ] Cross-part contracts and handoffs are integrated and verified.
-- [ ] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
-- [ ] The overall-verification report path and commit SHA are recorded.
-- [ ] Project documentation matches the completed implementation and its validation passes.
-- [ ] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
-- [ ] The PR is open and every CI job is green on the final pushed head; nothing was merged, force-pushed, tagged, or released.
-- [ ] No fake-lsp or other started process remains (`pgrep -f fake-lsp` empty).
-- [ ] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved.
-- [ ] Final changes match the complete approved plan.
+- [x] Every plan part and group is completed.
+- [x] Every task outcome is implemented.
+- [x] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
+- [x] Every subagent replacement has a recorded reason and complete handoff evidence.
+- [x] Every group persisted one complete verification report.
+- [x] Every verifier finding and its completion checklist are resolved with closure evidence.
+- [x] Every group acceptance criterion is satisfied.
+- [x] Every assigned system design chain is covered.
+- [x] Every `S` criterion and `V` case has passing evidence.
+- [x] The overall-verification report is committed.
+- [x] Every overall verification check passes with actual evidence.
+- [x] Cross-part contracts and handoffs are integrated and verified.
+- [x] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
+- [x] The overall-verification report path and commit SHA are recorded.
+- [x] Project documentation matches the completed implementation and its validation passes.
+- [x] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
+- [x] The PR is open and every CI job is green on the final pushed head; nothing was merged, force-pushed, tagged, or released.
+- [x] No fake-lsp or other started process remains (`pgrep -f fake-lsp` empty).
+- [x] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved.
+- [x] Final changes match the complete approved plan.
 
 ## Completion Summary
 
-`Pending implementation`
+`so` has opt-in LSP code intelligence for code file types, delivered as PR https://github.com/therealhieu/so/pull/11 (open, not merged). It covers diagnostics (gutter signs, underlines, insert freeze, `]d`/`[d`, `:Diagnostics`, push and pull), completion (triggers, 150 ms pause, bounded resolve, one-undo auto-imports), navigation (jumps and pickers), hover and signature floats, rename and code actions through one workspace-edit path, formatting and format-on-save, and server status (statusline, `:LspInfo`, toasts). `src/core` stays protocol-free. Every suite passes without real servers.
+
+- Groups: P1-G1 (passed first time), P1-G2 (3 findings fixed), P1-G3 (3 fixed), P2-G1 (3 fixed), P3-G1 (passed first time); overall verification found 1 Minor finding (OVR-VER1), fixed in `6591b03`.
+- Checks: `bun run check` 1207 pass, knip zero; `bun run test:ci` 262 pass; `lspKeystrokeP95` 5.11 ms local / 7.57 ms CI against a 32 ms gate; `pgrep -f fake-lsp` empty.
+- Accepted deviations are listed under Blockers and Deviations (notably: outside-only definition message has no path; `applyBufferEdits` now merges into a running Insert change and moves cursors for every caller).
+- Follow-ups for the user: review and merge PR #11; clear the stale `/goal` that names the `work/active/` path; consider a UI discussion for the underlined severity text in the command line and gutter.
