@@ -11,7 +11,7 @@
 | `src/ui/shell.ts`, `src/ui/views/*.ts`, `src/ui/editors/{text-view,base-view}.ts`, `src/ui/overlays/*.ts`, `src/ui/widgets/base.ts` | Every UI surface, its geometry, and its current mouse handling |
 | `src/core/state/{types,update,keys,commands,explorer,picker,calendar,side-panel,link-commands}.ts`, `src/core/kernel/vim/{types,engine}.ts`, `src/core/kernel/view/types.ts` | The `mouse` action, key routing, focus, Visual mode, yank and clipboard effects, and render-line data |
 | `test/support/ui.ts`, `test/e2e/{pty,quit.test,restore.test}.ts` | How component and PTY tests drive input and check mouse modes |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (RM261003ABZP-UREQ11@R1), `rm261003abzp-ui-design.md` (lines 483, 2359), `rm261003abzp-design.md` (RM261003ABZP-DES10@R2), `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:621` | Related parent context: the roadmap's optional mouse obligations; not a binding |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (RM261003ABZP-UREQ11@R1), `rm261003abzp-ui-design.md` (lines 483, 2359), `rm261003abzp-design.md` (RM261003ABZP-DES10@R2), `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:621` | Related parent context: the roadmap's optional mouse obligations; not a binding |
 | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md:2344,2377` | Why any-motion tracking was turned off |
 
 ## Roadmap Binding

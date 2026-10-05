@@ -12,8 +12,8 @@
 ## Baseline
 
 - **Context:** `rm261003abzp-roadmap-context.md@R1` - The repository is empty except for `.s1mple/` guidance. The user has decided on OpenTUI (pre-1.0), its own vim engine, a read-only `Bun.serve` preview, and a v1 Obsidian scope of Links core, Live preview, Daily notes/templates, and Bases. Unknowns listed there: OpenTUI stability, whether `bun build --compile` works with OpenTUI's native library, whether the performance targets are achievable, and the Bases compatibility level.
-- **Requirements:** `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` (Status: Approved; ledger REQ1–REQ11 at R1)
-- **History:** `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements-revisions.md` (Archived Changes: None — supplied revisions match the current ledger)
+- **Requirements:** `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md` (Status: Approved; ledger REQ1–REQ11 at R1)
+- **History:** `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements-revisions.md` (Archived Changes: None — supplied revisions match the current ledger)
 - **Evaluated requirements:**
   - `RM261003ABZP-REQ1@R1` - Folder workspace and safe file management: `so [path]` opens a folder or file workspace; tree browsing; create/rename/move/delete; autosave plus `:w`; atomic writes; external-change reload and conflict prompt; hidden and `.gitignore` files excluded.
   - `RM261003ABZP-REQ2@R1` - Vim-modal editing with a core command set: Normal, Insert, Visual (char/line), and Command-line modes; listed motions, operators, text objects, registers, undo/redo, `.`, search, `:s`, Ex commands, splits, buffers; mode display and cursor shape.

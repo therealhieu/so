@@ -23,7 +23,7 @@ The adapters, runner, and integration suites meet most assigned cases, and every
 
 - **System Design:** `REQ3, REQ6, REQ7, REQ8, REQ9, REQ10, REQ11 (with REQ1@R3) → DES4, DES5, DES8, DES10, DES11, DES12 (with DES13) → S3, S5, S6, S10, S11, S12, S13 → V3.1, V3.2, V3.4, V5.1, V5.5, V6.4, V6.5, V10.1, V10.2, V10.4, V11.1, V11.2, V11.3, V12.1, V12.2, V12.3, V12.4, V13.1, V13.4, V7.1`. Plan part rows: `REQ9@R1 → DES12 → S12 → V12.1–V12.4`; `REQ1@R3 → DES8 → S3, S6 → V3.1, V3.2, V6.4, V6.5`; `REQ1@R3, REQ6@R1, REQ10@R2 → DES5 → S5 → V5.1, V5.5, V3.2 (d)`; `REQ8@R2 → DES11 → S11 → V11.1–V11.3`; `REQ7@R2 → DES10 → S10 → V10.1, V10.2, V10.4`; `REQ1@R3, REQ10@R2 → DES4, DES13 → S3, S13 → V3.4, V13.1, V13.4`.
 - **UI Design:** `None`
-- **Roadmap binding:** `w261003hege-discuss-context.md` (RM261003ABZP, PH1@R2, DI1@R2). `git log d00d3a3..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` is empty. Index `:131` and `:142` still carry DI1@R2. The parent files were not modified.
+- **Roadmap binding:** `w261003hege-discuss-context.md` (RM261003ABZP, PH1@R2, DI1@R2). `git log d00d3a3..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` is empty. Index `:131` and `:142` still carry DI1@R2. The parent files were not modified.
 - **Gate G1** (`rm261003abzp-roadmap-phase-1-daily-usable-editor.md:73`): this group produces `readTextFile`, `atomicWrite`, the watcher, and the effect runner. They match the §7 shapes: `readTextFile(path) → TextFile | {refused: "binary" | "tooLarge" | "io"}`, `atomicWrite(path, text, expected?) → Stamp`, `watchWorkspace(root, ownOps, matcher, emit) → stop`, and `createEffectRunner(deps) → {run, flush}`. G1 is not due within this goal. Its evidence belongs to P3-G1-T6/T7.
 
 ## Specification Verification

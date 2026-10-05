@@ -6,18 +6,18 @@
 |---|---|
 | `.s1mple/S1MPLE.md` | Discuss behavior and required context |
 | `.s1mple/docs/project.md` | Reusable project baseline |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI2 assignment state (`:132`, `:143`), accepted baseline (`:9-49`) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` | DI2 definition (`:429-517`), Phase Design (`:100-322`), gate G1 (`:73`), integration obligation (`:591`) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | Gates G2 and G3 that DI2 produces (`:70-71`) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | DES5/6/7/14/16/17 decisions, data models, flows, and V4/V5/V6/V13 definitions |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ3@R4 (`:106`), REQ4@R3 (`:128`), REQ9@R2 (`:226`), REQ11@R3 (`:271`) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | Assigned UI obligations and mockup acceptance state |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI2 assignment state (`:132`, `:143`), accepted baseline (`:9-49`) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` | DI2 definition (`:429-517`), Phase Design (`:100-322`), gate G1 (`:73`), integration obligation (`:591`) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | Gates G2 and G3 that DI2 produces (`:70-71`) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` | DES5/6/7/14/16/17 decisions, data models, flows, and V4/V5/V6/V13 definitions |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ3@R4 (`:106`), REQ4@R3 (`:128`), REQ9@R2 (`:226`), REQ11@R3 (`:271`) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | Assigned UI obligations and mockup acceptance state |
 | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-system-design.md` | DI1 compatibility notes for DI2 (`:187`, `:294`, `:956`, `:988`, `:1094`, `:1145`, `:1222`) |
 | `src/core/state/*`, `src/core/kernel/commands/*`, `src/core/kernel/vim/keys.ts`, `src/core/filetypes/registry.ts`, `src/core/lang/markdown/file-type.ts`, `src/core/config/schema.ts`, `src/app/{main,effects}.ts`, `src/ui/{shell.ts,overlays/host.ts,views/statusline.ts,editors/registry.ts}`, `src/workspace/{fs,watcher,ignore}.ts`, `test/boundaries.test.ts`, `scripts/bench-gate.ts`, `package.json`, `.github/workflows/release.yml` | Delivered DI1 surfaces that DI2 extends |
 
 ## Roadmap Binding
 
-- **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
+- **Roadmap:** RM261003ABZP — `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
 - **Phase:** RM261003ABZP-PH1@R2 — Daily-usable editor; `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, Phase Definition (`:10-36`) and Phase Design (`:100-322`)
 - **Delivery item:** RM261003ABZP-DI2@R2 — Navigation and links; `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:429-517`; index Delivery Items row `rm261003abzp-roadmap-index.md:132`
 - **Accepted upstream baseline:**
@@ -47,8 +47,8 @@ None
 ### Parent Synchronization
 
 - **Registration or discussion update:** Pending parent synchronization. Proposed changes:
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` — Delivery Items row RM261003ABZP-DI2@R2 (`:132`): Work `Pending` → `W261003FX70`; Work Progress row RM261003ABZP-DI2@R2 (`:143`): stage `Not started` → `Discuss`, evidence = the commit of this context document.
-  - `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` — Progress row RM261003ABZP-DI2@R2 (`:627`): Work `Pending` → `W261003FX70`.
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` — Delivery Items row RM261003ABZP-DI2@R2 (`:132`): Work `Pending` → `W261003FX70`; Work Progress row RM261003ABZP-DI2@R2 (`:143`): stage `Not started` → `Discuss`, evidence = the commit of this context document.
+  - `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` — Progress row RM261003ABZP-DI2@R2 (`:627`): Work `Pending` → `W261003FX70`.
   - Evidence: the commit that adds this document. No parent file is modified by this work without explicit authorization.
 
 ## 1. User Input

@@ -19,7 +19,7 @@ The finalized system design is the only governing design, it agrees with the req
 | Research | Not needed — research was skipped; local experiments are recorded in the requirements' Discussion Evidence | — |
 | Discussion context | `.s1mple/work/done/w261003fx70-navigation-and-links/w261003fx70-discuss-context.md` | Roadmap binding, constraints, DI1 surfaces |
 | UI context | Not applicable — no Work-level UI context | — |
-| Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, `ui-mockups/manifest.md` | Validate the accepted binding, assigned scope, and gates |
+| Roadmap sources | `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, `ui-mockups/manifest.md` | Validate the accepted binding, assigned scope, and gates |
 | Additional project files | `.s1mple/docs/communication.md`, `.s1mple/docs/languages/typescript.md`, `package.json`, `knip.json`, `.github/workflows/{ci,release}.yml`, `scripts/{bench-gate,record-vim}.ts`, `src/core/kernel/vim/{keys,motions}.ts`, `src/ui/editors/text-view.ts`, `src/core/state/{types,commands}.ts`, `test/` tree | Confirm cited current shapes and resolve gaps |
 
 ## 2. Governing Design Handoff
@@ -95,7 +95,7 @@ Full flows: design section 5.
 
 - **Accepted binding:** `w261003fx70-discuss-context.md`, Roadmap Binding (commit `3f01513`): RM261003ABZP-PH1@R2, RM261003ABZP-DI2@R2.
 - **Parent-to-child coverage:** `w261003fx70-system-design.md`, section 1, Assigned Parent Obligation Coverage (eight coverage groups, all `System design required`). No Work-level UI design; UI obligations map to DES9 and V42–V46.
-- **Baseline assessment:** Aligned. `git log` shows no change to `.s1mple/work/active/rm261003abzp-so-v1/` after `2f907fa`, the commit the binding was accepted against. Checked on 2026-10-03: `rm261003abzp-roadmap-index.md:132` (DI2@R2, Work `Pending`), `:143` (stage `Not started`), `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:73` (G1), `:591` (integration obligation), `:627` (DI2 progress `Pending`), `rm261003abzp-roadmap-phase-2-obsidian-experience.md:70-71` (G2, G3), and `ui-mockups/manifest.md:3-5`, `:89-93` (M1@R2 and M3@R2 still `Draft`; binding stays M1@R1, M3@R1, AD4).
+- **Baseline assessment:** Aligned. `git log` shows no change to `.s1mple/work/done/rm261003abzp-so-v1/` after `2f907fa`, the commit the binding was accepted against. Checked on 2026-10-03: `rm261003abzp-roadmap-index.md:132` (DI2@R2, Work `Pending`), `:143` (stage `Not started`), `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:73` (G1), `:591` (integration obligation), `:627` (DI2 progress `Pending`), `rm261003abzp-roadmap-phase-2-obsidian-experience.md:70-71` (G2, G3), and `ui-mockups/manifest.md:3-5`, `:89-93` (M1@R2 and M3@R2 still `Draft`; binding stays M1@R1, M3@R1, AD4).
 - **Unresolved impacts:** None. Nine parent synchronization updates remain pending authorization (design section 1, Parent Synchronization, rows 1–9). They are refinements that change no contract consumed by DI3 or DI4 and do not block planning.
 
 ### Cross-Work Dependency Gates
@@ -237,7 +237,7 @@ scripts/ bench-gate.ts, record-vim.ts
 
 | Planning question | Files inspected | Finding |
 |---|---|---|
-| Has the roadmap changed since the binding? | `git log -- .s1mple/work/active/rm261003abzp-so-v1/`; index, phase files, manifest | No commit after `2f907fa`; rows and gates match the binding |
+| Has the roadmap changed since the binding? | `git log -- .s1mple/work/done/rm261003abzp-so-v1/`; index, phase files, manifest | No commit after `2f907fa`; rows and gates match the binding |
 | Do the design's cited current shapes still hold? | `keys.ts:10`, `motions.ts:34`, `text-view.ts:20-22`, `commands.ts:46-47,261`, `types.ts:105-168`, `bench-gate.ts:8-13`, `release.yml:25-26`, `package.json` | All match |
 | Does CI build `dist/so` before `test:ci` for V47? | `.github/workflows/ci.yml` | No build step exists; design section 4 does not modify `ci.yml` |
 | Is Neovim 0.11.x available for V27 recordings? | `which nvim`; `scripts/record-vim.ts:1-2,30` | Local `nvim` is 0.12.4; the script requires 0.11.x and accepts `NVIM=/path` |

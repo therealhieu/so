@@ -1026,15 +1026,15 @@ isIgnored("pkg/dist", dir=true): root.ignores("pkg/dist/") || pkgScope.ignores("
 - `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:477-514` — Supports `RF8`, `RF11` by establishing REQ10's rename, move, and delete behaviour
 - `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-requirements.md:516-548` — Supports `RF10` by establishing REQ11's `common` set and static mapping
 - `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md:20` — Supports `RF1`, `RF13` by establishing local Bun 1.3.10 and Neovim 0.12.4
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:416-423` — Supports `RF2`, `RF8` by establishing the DI1 confirmation duty and the material-mismatch return rule
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:626-635` — Supports `RF2`, `RF8`, `RF10`, `RF11` by listing the four confirmations (fs.watch, OpenTUI APIs, Finder trash, lowlight set)
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:778-794` — Supports `RF2`, `RF4` by establishing the illustrative `EditorView`, `normalizeKey`, and `requestRender` shapes
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:425` — Supports `RF4` by establishing the `escTimeoutMs` (50) default
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:890-896` — Supports `RF4` by establishing V3's 50 ms ± 10 ms Esc expectation via `normalizeKey`
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:1088-1097` — Supports `RF3`, `RF6` by establishing V17's PTY restore scenario and `NO_COLOR` assertion
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:1257-1266` — Supports `RF7`, `RF9` by establishing DES15's cross-compile, `OPENTUI_LIBC`, smoke matrix, and release-please decisions
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:745-756` — Supports `RF8` by establishing the watcher shape (debounce 50 ms, own-write stamps)
-- `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md:674-680` — Supports `RF10` by establishing `lowlightHighlighter` with 200-line look-back
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:416-423` — Supports `RF2`, `RF8` by establishing the DI1 confirmation duty and the material-mismatch return rule
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md:626-635` — Supports `RF2`, `RF8`, `RF10`, `RF11` by listing the four confirmations (fs.watch, OpenTUI APIs, Finder trash, lowlight set)
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:778-794` — Supports `RF2`, `RF4` by establishing the illustrative `EditorView`, `normalizeKey`, and `requestRender` shapes
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:425` — Supports `RF4` by establishing the `escTimeoutMs` (50) default
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:890-896` — Supports `RF4` by establishing V3's 50 ms ± 10 ms Esc expectation via `normalizeKey`
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:1088-1097` — Supports `RF3`, `RF6` by establishing V17's PTY restore scenario and `NO_COLOR` assertion
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:1257-1266` — Supports `RF7`, `RF9` by establishing DES15's cross-compile, `OPENTUI_LIBC`, smoke matrix, and release-please decisions
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:745-756` — Supports `RF8` by establishing the watcher shape (debounce 50 ms, own-write stamps)
+- `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md:674-680` — Supports `RF10` by establishing `lowlightHighlighter` with 200-line look-back
 
 # 4. Confidence and Open Questions
 

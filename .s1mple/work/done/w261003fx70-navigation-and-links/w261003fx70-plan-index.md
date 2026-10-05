@@ -19,7 +19,7 @@
 
 - **Accepted binding:** `w261003fx70-discuss-context.md`, Roadmap Binding — RM261003ABZP-PH1@R2, RM261003ABZP-DI2@R2.
 - **Assigned parent coverage:** `w261003fx70-system-design.md`, section 1, Assigned Parent Obligation Coverage.
-- **Finalization assessment:** Aligned on 2026-10-03. `git log 2f907fa..1aa1fae -- .s1mple/work/active/rm261003abzp-so-v1/` is empty, so the parent sources are unchanged since the accepted binding. Assigned parent coverage (system design section 1, eight coverage groups) maps to parts as follows:
+- **Finalization assessment:** Aligned on 2026-10-03. `git log 2f907fa..1aa1fae -- .s1mple/work/done/rm261003abzp-so-v1/` is empty, so the parent sources are unchanged since the accepted binding. Assigned parent coverage (system design section 1, eight coverage groups) maps to parts as follows:
   - Navigation, commands, configuration and state → Parts 1 and 2.
   - Links, backlinks, tags and rename → Parts 1 and 2.
   - Markdown parse and syntax registration → Part 1.
@@ -32,7 +32,7 @@
   No parent obligation is duplicated or missing. Gate placement: G1 is met (`c98aa19`) and is checked before `P1-G1-T1`. G2 and G3 are future gates with named owners (DI3, DI4) and evidence requirements in `P3-G1-T5`; they do not block planning.
 - **Cross-work gates:** Plan context section 2, Cross-Work Dependency Gates. G1 (DI1 foundation) is met (`c98aa19`) and is required before Part 1. G2 and G3 are produced by this Work. Their evidence is the merged DI2 PR with RM261003ABZP-V4@R2, V5@R1, V6@R2 and V18@R1 passing, proven here by V8–V15, V22, V38, V39, V42–V44 and V48. It is collected in `P3-G1`.
 - **Parent synchronization:** Pending parent synchronization — design section 1, Parent Synchronization, rows 1–9. Parent files are not edited without explicit user authorization.
-  - **Plan-stage receipt (2026-10-03):** No parent-write authorization was given. Parent files under `.s1mple/work/active/rm261003abzp-so-v1/` are unchanged since `2f907fa`.
+  - **Plan-stage receipt (2026-10-03):** No parent-write authorization was given. Parent files under `.s1mple/work/done/rm261003abzp-so-v1/` are unchanged since `2f907fa`.
   - **Pending updates:**
     - Design section 1 rows 1–9.
     - The DI2 Work assignment to W261003FX70 and the stage moving from `Not started` to `Planned` (`rm261003abzp-roadmap-index.md:132`, `:143`; `rm261003abzp-roadmap-phase-1-daily-usable-editor.md:627`).

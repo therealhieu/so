@@ -7,21 +7,21 @@
 | `.s1mple/S1MPLE.md` | Discuss behavior and required context |
 | `.s1mple/docs/project.md` | Reusable project baseline |
 | `.s1mple/docs/communication.md`, `.s1mple/docs/languages/typescript.md` | Chat and document rules; TypeScript rules (toolchain and conventions `Not established`) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | Roadmap status, DI1 row (Work and PR `Pending`), Work Progress, delivery constraints, UI coverage |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` | PH1@R2 definition, gate G1, Phase Design, DI1@R2 definition, Unresolved Items, Approval |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-context.md` | Context R2: empty repository, Alfred porting references, scope change ("Apply all six") |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ1@R3, REQ2@R2, REQ9@R2, REQ10@R2, REQ11@R3 definitions and acceptance criteria |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | DES1–DES17 decisions, architecture, project structure, runtime flows, contracts, code shapes, S/V definitions |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-research.md` | RF1, RF3, RF5, RF6, RF11, RF13, RF14 evidence for DI1 choices |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md` | UREQ/UDES/US/UV records assigned to DI1 |
-| `.s1mple/work/active/rm261003abzp-so-v1/ui-mockups/manifest.md` | Accepted mockups M1@R1, M4@R1, AD4; cycle 3 drafts M1@R2, M3@R2 awaiting review |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | Roadmap status, DI1 row (Work and PR `Pending`), Work Progress, delivery constraints, UI coverage |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-1-daily-usable-editor.md` | PH1@R2 definition, gate G1, Phase Design, DI1@R2 definition, Unresolved Items, Approval |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-context.md` | Context R2: empty repository, Alfred porting references, scope change ("Apply all six") |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ1@R3, REQ2@R2, REQ9@R2, REQ10@R2, REQ11@R3 definitions and acceptance criteria |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` | DES1–DES17 decisions, architecture, project structure, runtime flows, contracts, code shapes, S/V definitions |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-research.md` | RF1, RF3, RF5, RF6, RF11, RF13, RF14 evidence for DI1 choices |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md` | UREQ/UDES/US/UV records assigned to DI1 |
+| `.s1mple/work/done/rm261003abzp-so-v1/ui-mockups/manifest.md` | Accepted mockups M1@R1, M4@R1, AD4; cycle 3 drafts M1@R2, M3@R2 awaiting review |
 | Repository root (`.gitignore`, `AGENTS.md`, `CLAUDE.md`, `git log`) | Current repository state: only `.s1mple/` guidance, one commit `d00d3a3` |
 | `../alfred/apps/tui/src/terminal/shutdown.ts`, `../alfred/apps/tui/src/view/editor/vim.ts`, `../alfred/apps/tui/src/view/markdown/code-highlight.ts`, `../alfred/packages/view-model/src/knowledge/autosave-queue.ts` | Porting references named by the parent design; all four files exist |
 | Local toolchain (`bun --version`, `nvim --version`) | Bun 1.3.10 and Neovim 0.12.4 installed on the developer machine (2026-10-03) |
 
 ## Roadmap Binding
 
-- **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Status `Approved`, line 3)
+- **Roadmap:** RM261003ABZP — `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` (Status `Approved`, line 3)
 - **Phase:** RM261003ABZP-PH1@R2 — Daily-usable editor; definition in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (Phase Definition, lines 10–36; Phase Design, lines 100–319)
 - **Delivery item:** RM261003ABZP-DI1@R2 — Editor foundation; definition in `rm261003abzp-roadmap-phase-1-daily-usable-editor.md` (Delivery Items, lines 323–424); index row `rm261003abzp-roadmap-index.md:131`
 - **Accepted upstream baseline:**
@@ -60,7 +60,7 @@ The main orchestrator owns this receipt. It does not replace parent W/PR assignm
 
 ### Original Input
 
-"read @.s1mple/work/active/rm261003abzp-so-v1/ self drive /s1mple-discuss about this DI - follow the requirementzs - choose options/designs/options that are stable, simple, easy to maintain and extend with industry compliance"
+"read @.s1mple/work/done/rm261003abzp-so-v1/ self drive /s1mple-discuss about this DI - follow the requirementzs - choose options/designs/options that are stable, simple, easy to maintain and extend with industry compliance"
 
 ### Consolidated Requirement or Problem
 

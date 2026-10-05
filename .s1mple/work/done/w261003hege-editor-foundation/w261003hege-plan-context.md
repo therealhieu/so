@@ -19,7 +19,7 @@ Planning can start: the system design is `Finalized System Design` with no unres
 | Research | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-research.md` | RF1–RF14 (commit `4867795`) |
 | Discussion context | `.s1mple/work/done/w261003hege-editor-foundation/w261003hege-discuss-context.md` | Roadmap Binding, scope, constraints |
 | UI context | Not applicable — no work-level UI context artifact | — |
-| Roadmap sources | `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-design.md`, `rm261003abzp-requirements.md`, `rm261003abzp-ui-design.md` | Validate binding, DI1 scope, G1 gate |
+| Roadmap sources | `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`, `rm261003abzp-roadmap-phase-1-daily-usable-editor.md`, `rm261003abzp-design.md`, `rm261003abzp-requirements.md`, `rm261003abzp-ui-design.md` | Validate binding, DI1 scope, G1 gate |
 | Additional project files | `git log`, `git remote -v`, `.gitignore`, `bun --version`, `nvim --version`, `../alfred/**` porting references, user memory `ci-pull-request-only` | Toolchain and repository state on 2026-10-03 |
 
 ## 2. Governing Design Handoff
@@ -214,7 +214,7 @@ No package.json, tsconfig.json, src/, test/, scripts/, bin/, or .github/ exists.
 
 | Planning question | Files inspected | Finding |
 |---|---|---|
-| Has the parent baseline changed since the binding? | `git log -- .s1mple/work/active/rm261003abzp-so-v1/`; index rows 131, 142; phase file 392–424, 618–635 | No: single commit `d00d3a3`; DI1@R2, Work `Pending`, Dependencies `None` |
+| Has the parent baseline changed since the binding? | `git log -- .s1mple/work/done/rm261003abzp-so-v1/`; index rows 131, 142; phase file 392–424, 618–635 | No: single commit `d00d3a3`; DI1@R2, Work `Pending`, Dependencies `None` |
 | Is any other W bound to DI1? | `.s1mple/work/active/`, `.s1mple/work/done/` | No; only `w261003hege-editor-foundation` |
 | Does the local toolchain match the pins? | `bun --version` → `1.3.10`; `nvim --version` → `v0.12.4`; `uname -m` → `arm64` | Bun 1.4.2 and Neovim 0.11.x must be installed before the toolchain and vim-recording groups (see Planning Gaps) |
 | Do the Alfred porting references exist? | `../alfred/...` four files | All four exist |

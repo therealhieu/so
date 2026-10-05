@@ -24,9 +24,9 @@ Part 2 consumes the frontmatter patcher, `core/time`, and the `createNote`/`note
 - Plan index: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-index.md`
 - Plan context: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-plan-context.md`
 - System design: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-system-design.md`
-- UI design: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (parent, `Ready for Planning`) — Surface: Daily notes and templates (line 873), Component: Picker (1350), Prompt (1515), Toast stack (1671), Calendar (1743), Theme (1978); accepted mockup RM261003ABZP-M5@R2
+- UI design: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-design.md` (parent, `Ready for Planning`) — Surface: Daily notes and templates (line 873), Component: Picker (1350), Prompt (1515), Toast stack (1671), Calendar (1743), Theme (1978); accepted mockup RM261003ABZP-M5@R2
 - System requirements: `.s1mple/work/done/w26100423lx-daily-notes-templates-and-bases/w26100423lx-requirements.md`
-- UI requirements: `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (parent) — UREQ8@R2 (line 135), UREQ11@R1 (line 184)
+- UI requirements: `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md` (parent) — UREQ8@R2 (line 135), UREQ11@R1 (line 184)
 
 ## Dependencies
 

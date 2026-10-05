@@ -76,7 +76,7 @@ Every task is implemented and committed. PR #2 is green on the final head, and t
   | [37150892248](https://github.com/therealhieu/so/actions/runs/37150892248) | `df5aefc` | Green |
   | [37151048366](https://github.com/therealhieu/so/actions/runs/37151048366) | `ce836ae` | Green; final implementation head |
 
-- **Main baseline before the PR:** `git log 2f907fa..HEAD -- .s1mple/work/active/rm261003abzp-so-v1/` was empty, and `origin/main` = `c98aa19` is an ancestor of HEAD. No merge was needed. No force-push, amend or rebase.
+- **Main baseline before the PR:** `git log 2f907fa..HEAD -- .s1mple/work/done/rm261003abzp-so-v1/` was empty, and `origin/main` = `c98aa19` is an ancestor of HEAD. No merge was needed. No force-push, amend or rebase.
 
 **Cross-work gates (outputs on the PR head; both `Pending`)**
 

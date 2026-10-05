@@ -6,11 +6,11 @@
 |---|---|
 | `.s1mple/S1MPLE.md` | Discuss behavior and required context |
 | `.s1mple/docs/project.md` | Reusable project baseline |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI3 definition (lines 322–403), PH2 phase design (98–319), gates G2/G4 (65–73), progress (579–588), approval (593–609) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI3 assignment (Delivery Items line 133) and Work Progress row (line 144) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ5@R2 (149), REQ8@R2 (207), REQ9@R2 (226), REQ10@R4 (248), REQ11@R3 (273) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-design.md` | DES and S/V definitions (Success and Verification 859+, Design Decisions 1119+), Preview HTTP routes (410), AppConfig (420) |
-| `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | UREQ/UDES/US/UV and accepted mockups M1, M2, M7 |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-phase-2-obsidian-experience.md` | DI3 definition (lines 322–403), PH2 phase design (98–319), gates G2/G4 (65–73), progress (579–588), approval (593–609) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md` | DI3 assignment (Delivery Items line 133) and Work Progress row (line 144) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-requirements.md` | REQ5@R2 (149), REQ8@R2 (207), REQ9@R2 (226), REQ10@R4 (248), REQ11@R3 (273) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-design.md` | DES and S/V definitions (Success and Verification 859+, Design Decisions 1119+), Preview HTTP routes (410), AppConfig (420) |
+| `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-ui-requirements.md`, `rm261003abzp-ui-design.md`, `ui-mockups/manifest.md` | UREQ/UDES/US/UV and accepted mockups M1, M2, M7 |
 | `src/core/kernel/view/{types,decorations,text-view}.ts` | Current `TextView`, `RenderLine`, `Decoration`, `DecorationProvider`, `layoutText` |
 | `src/core/filetypes/registry.ts`, `src/core/lang/markdown/{file-type,doc,mdast,blocks,syntax}.ts` | `ViewSpec.input` hook, `markdownFileType`, `Doc`, `blockNode`, `syntaxExtensions` |
 | `src/core/state/{types,store,status}.ts`, `src/core/config/schema.ts` | State shape, store subscription, status segments, config schema |
@@ -21,7 +21,7 @@
 
 ## Roadmap Binding
 
-- **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
+- **Roadmap:** RM261003ABZP — `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
 - **Phase:** RM261003ABZP-PH2@R4 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–38)
 - **Delivery item:** RM261003ABZP-DI3@R3 — same file, Delivery Items (lines 322–403); index Delivery Items row (line 133)
 - **Accepted upstream baseline:**
@@ -55,7 +55,7 @@ Use revision-qualified parent PH/DI/REQ/DES/S/V and applicable M/UREQ/UDES/US/UV
 - **Resulting baseline:** RM261003ABZP-PH2@R4 / RM261003ABZP-DI3@R3 with RM261003ABZP-DES13@R3, RM261003ABZP-UDES10@R2, and RM261003ABZP-UV9@R2 (Roadmap Binding above). The W requirements and system design keep their IDs and revisions; their parent citations were refreshed to this baseline.
 - **Archived fields (line numbers refer to the parent files before `da4739d`):**
 
-  - **Roadmap:** RM261003ABZP — `.s1mple/work/active/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
+  - **Roadmap:** RM261003ABZP — `.s1mple/work/done/rm261003abzp-so-v1/rm261003abzp-roadmap-index.md`
   - **Phase:** RM261003ABZP-PH2@R3 — `rm261003abzp-roadmap-phase-2-obsidian-experience.md`, Phase Definition (lines 10–38)
   - **Delivery item:** RM261003ABZP-DI3@R2 — same file, Delivery Items (lines 315–396); index Delivery Items row (line 133)
   - **Accepted upstream baseline:**
