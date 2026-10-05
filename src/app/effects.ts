@@ -29,6 +29,7 @@ import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
+import type { LspHost } from "./lsp-host";
 import type { PreviewHost } from "./preview-host";
 
 /**
@@ -55,6 +56,8 @@ export type RunnerDeps = {
    * are reported to it, since the watcher keeps them silent.
    */
   index?: Pick<IndexHost, "search" | "notify">;
+  /** Runs language-server effects; without one, every request fails at once. */
+  lsp?: Pick<LspHost, "run">;
   /** The one preview server's owner. */
   preview: Pick<PreviewHost, "start" | "stop">;
   /** Opens an address in the user's browser; rejects when no browser could be launched. */
@@ -503,6 +506,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         });
         return;
       case "lsp":
+        if (d.lsp !== undefined) {
+          d.lsp.run(e);
+          return;
+        }
         // No language-server host: every request fails at once.
         d.dispatch({
           type: "lspResult",
@@ -514,6 +521,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "lspCancel":
       case "lspReply":
       case "lspRestart":
+        d.lsp?.run(e);
         return;
     }
     const unhandled: never = e;

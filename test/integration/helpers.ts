@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
 import { createIndexHost, type IndexHost } from "../../src/app/index-host";
+import { createLspHost, type LspHost } from "../../src/app/lsp-host";
+import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
 import { initialState } from "../../src/core/state/init";
@@ -76,7 +78,12 @@ export type App = {
   select(path: string): void;
   /** The index host, when the app was started with one. */
   index?: IndexHost;
-  stop(): void;
+  /** The language server host, when the app was started with one. */
+  lsp?: LspHost;
+  /** config.toml, read again by `:ConfigReload`. */
+  configPath: string;
+  /** Stops the watcher, the index, and every language server. */
+  stop(): Promise<void>;
 };
 
 /**
@@ -97,6 +104,16 @@ export async function startApp(
      * `stop` save it, as the lifecycle does on every shutdown path.
      */
     state?: { path: string; restore: boolean };
+    /**
+     * Run the real language server host with this config.toml text, loaded
+     * at startup as `main` does; `now` and `which` replace the host's clock
+     * (crash window and answer times only) and `PATH` lookup.
+     */
+    lsp?: {
+      config: string;
+      now?: () => number;
+      which?: (cmd: string) => string | null;
+    };
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -110,6 +127,21 @@ export async function startApp(
   });
   const ownOps = createOwnOps();
   const logger = createLogger(opts.env ?? {}, root);
+  const configPath =
+    opts.lsp === undefined
+      ? join(root, ".no-config.toml")
+      : join(await mkdtemp(join(tmpdir(), "so-config-")), "config.toml");
+  if (opts.lsp !== undefined) await writeFile(configPath, opts.lsp.config);
+  const lsp =
+    opts.lsp === undefined
+      ? undefined
+      : createLspHost({
+          root,
+          dispatch: (a) => store.dispatch(a),
+          logger,
+          ...(opts.lsp.now === undefined ? {} : { now: opts.lsp.now }),
+          ...(opts.lsp.which === undefined ? {} : { which: opts.lsp.which }),
+        });
   const runner = createEffectRunner({
     root,
     matcher,
@@ -122,7 +154,8 @@ export async function startApp(
     dispatch: (a) => store.dispatch(a),
     exit: () => saveSession(),
     logger,
-    configPath: join(root, ".no-config.toml"),
+    configPath,
+    ...(lsp === undefined ? {} : { lsp }),
     preview: { start: () => {}, stop: async () => {} },
     openUrl: async () => {},
     ...(opts.state === undefined ? {} : { statePath: opts.state.path }),
@@ -151,6 +184,14 @@ export async function startApp(
       runner.run(e);
     },
   );
+  if (lsp !== undefined) {
+    store.subscribe(lsp.observe);
+    store.dispatch({
+      type: "configLoaded",
+      result: parseConfig(opts.lsp?.config ?? ""),
+      reload: false,
+    });
+  }
   const index =
     opts.index === undefined
       ? undefined
@@ -223,10 +264,13 @@ export async function startApp(
         throw new Error(`cannot select ${path}`);
     },
     ...(index === undefined ? {} : { index }),
-    stop() {
+    ...(lsp === undefined ? {} : { lsp }),
+    configPath,
+    async stop() {
       stopWatch();
       index?.stop();
       saveSession();
+      await lsp?.stop();
     },
   };
 }

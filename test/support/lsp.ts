@@ -1,5 +1,6 @@
 import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { BUILTIN_SERVERS } from "../../src/core/config/lsp";
 import type { FakeScript } from "../fixtures/fake-lsp";
 
 const FAKE = join(import.meta.dir, "../fixtures/fake-lsp.ts");
@@ -65,6 +66,19 @@ export function fakeServerConfig(o: {
   for (const [k, v] of Object.entries(fields))
     if (v !== undefined) lines.push(`${k} = ${toml(v)}`);
   return `${lines.join("\n")}\n`;
+}
+
+/**
+ * A config.toml with `[lsp] enabled` and `servers` (tables from
+ * `fakeServerConfig`); every built-in server without a table of its own is
+ * disabled, so no installed server starts during a test.
+ */
+export function lspConfig(enabled: boolean, ...servers: string[]): string {
+  const text = servers.join("");
+  const off = BUILTIN_SERVERS.filter(
+    (s) => !text.includes(`[lsp.servers.${JSON.stringify(s.name)}]`),
+  ).map((s) => `[lsp.servers.${JSON.stringify(s.name)}]\nenabled = false\n`);
+  return `[lsp]\nenabled = ${enabled}\n${off.join("")}${text}`;
 }
 
 /**
