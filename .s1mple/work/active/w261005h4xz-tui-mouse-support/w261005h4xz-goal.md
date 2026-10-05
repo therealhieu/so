@@ -3,7 +3,7 @@
 ## Status
 
 - **State:** `In Progress`
-- **Current Position:** `Overall verification`
+- **Current Position:** `Project documentation finalization`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
@@ -321,20 +321,20 @@ Canonical definitions: system design §8 "Design Success Criteria".
 
 | Complete | Criterion | Observable condition | Verification cases | Evidence |
 |---|---|---|---|---|
-| [ ] | `S1` | Each gesture yields the same state and effects as its keyboard equivalent from the same start state | `V1`, `V3`, `V30`, `V31` | `Pending implementation` |
-| [ ] | `S2` | Right and middle buttons, and events while mouse is off, change nothing | `V2`, `V25`, `V29` | `Pending implementation` |
-| [ ] | `S3` | The wheel acts on the surface under the pointer and leaves focus and mode unchanged | `V4`, `V5`, `V6`, `V20` | `Pending implementation` |
-| [ ] | `S4` | A press focuses the window, explorer, or side panel under it | `V7` | `Pending implementation` |
-| [ ] | `S5` | A click maps to the source column shown under the pointer on wrapped, tabbed, concealed, and widget rows | `V8`, `V9`, `V10`, `V21` | `Pending implementation` |
-| [ ] | `S6` | Mode rules after a text click hold (Insert stays with split undo; Visual → Normal; pending cancelled) | `V11` | `Pending implementation` |
-| [ ] | `S7` | Drag yields charwise Visual from the press to the pointer, extending and edge-scrolling | `V12`, `V22` | `Pending implementation` |
-| [ ] | `S8` | Double- and triple-click equal `viw` and `V`; clicks beyond 500 ms or another cell are singles | `V13`, `V14` | `Pending implementation` |
-| [ ] | `S9` | Ctrl+click on a link equals placing the cursor and `gd` | `V15` | `Pending implementation` |
-| [ ] | `S10` | Chrome and Bases clicks equal their keyboard actions, with Bases single = focus, double = open | `V1`, `V16`, `V17`, `V23` | `Pending implementation` |
-| [ ] | `S11` | Overlay item clicks accept; toasts pass clicks through | `V3`, `V18` | `Pending implementation` |
-| [ ] | `S12` | Outside clicks close dismissible overlays and the command line (consumed); prompt and conflict ignore the mouse; completion yields | `V19`, `V24` | `Pending implementation` |
-| [ ] | `S13` | `mouse = false` keeps terminal mouse tracking off while running; default runs button-event tracking | `V25`, `V26`, `V27` | `Pending implementation` |
-| [ ] | `S14` | Mouse tracking is off after every exit path | `V28` | `Pending implementation` |
+| [x] | `S1` | Each gesture yields the same state and effects as its keyboard equivalent from the same start state | `V1`, `V3`, `V30`, `V31` | Equivalence reducer tests (V1, V30, V31) + component/router z-order (V3) |
+| [x] | `S2` | Right and middle buttons, and events while mouse is off, change nothing | `V2`, `V25`, `V29` | Router drop tests (V2), PTY mouse-off (V25), contract type check (V29) |
+| [x] | `S3` | The wheel acts on the surface under the pointer and leaves focus and mode unchanged | `V4`, `V5`, `V6`, `V20` | Reducer wheel tests (V4–V6) + component wheel over split (V20); toast wheel inert |
+| [x] | `S4` | A press focuses the window, explorer, or side panel under it | `V7` | Reducer press-focus tests (V7) |
+| [x] | `S5` | A click maps to the source column shown under the pointer on wrapped, tabbed, concealed, and widget rows | `V8`, `V9`, `V10`, `V21` | `hit.test.ts` (V8–V10) + component wrapped/gutter click (V21) + past-end and wrap-row-end fixes (`a3d73ab`, `c6444ab`) |
+| [x] | `S6` | Mode rules after a text click hold (Insert stays with split undo; Visual → Normal; pending cancelled) | `V11` | Insert click undo split (V11) |
+| [x] | `S7` | Drag yields charwise Visual from the press to the pointer, extending and edge-scrolling | `V12`, `V22` | Reducer drag (V12) + router capture/dedupe (V22) + edge-drag component (`b32c9c5`) + no drag after a consumed press (`2a0b2d3`) |
+| [x] | `S8` | Double- and triple-click equal `viw` and `V`; clicks beyond 500 ms or another cell are singles | `V13`, `V14` | Router click counting (V13) + reducer `viw`/`V` (V14) |
+| [x] | `S9` | Ctrl+click on a link equals placing the cursor and `gd` | `V15` | Ctrl+click reducer test (V15) |
+| [x] | `S10` | Chrome and Bases clicks equal their keyboard actions, with Bases single = focus, double = open | `V1`, `V16`, `V17`, `V23` | Reducer chrome/Bases (V1, V17) + component (V16, V23) |
+| [x] | `S11` | Overlay item clicks accept; toasts pass clicks through | `V3`, `V18` | Router/component z-order (V3) + picker row and toast pass-through (V18) |
+| [x] | `S12` | Outside clicks close dismissible overlays and the command line (consumed); prompt and conflict ignore the mouse; completion yields | `V19`, `V24` | Reducer gate (V19, V24) + which-key inside no-op and outside close (`a20ac03`) |
+| [x] | `S13` | `mouse = false` keeps terminal mouse tracking off while running; default runs button-event tracking | `V25`, `V26`, `V27` | PTY modes (V25, V26) + schema default (V27) |
+| [x] | `S14` | Mouse tracking is off after every exit path | `V28` | Exit restore suites (V28): 10 pass, assertions unchanged |
 
 ## Verification Cases
 
@@ -399,28 +399,28 @@ Fresh verifier → Passed → Project documentation
 
 | Complete | Check | Command or method | Expected result | Actual result |
 |---|---|---|---|---|
-| [ ] | Fast gate (V29, V30) | `bun run check` | Exit 0: biome, tsc, knip, unit suites | `Pending implementation` |
-| [ ] | Full suites | `bun run test:ci` | Component, integration, and PTY suites green, including `test/ui/mouse.test.ts` and `test/e2e/mouse.test.ts` | `Pending implementation` |
-| [ ] | Exit restore (V28) | `bun test test/e2e/quit.test.ts test/e2e/restore.test.ts` | `screen.mouse` is `"none"` after `:q`, `SIGTERM`, and crash | `Pending implementation` |
-| [ ] | Obsolete reference (V31) | `rg 'kind: "scroll"\|onMouseScroll' src` | No matches | `Pending implementation` |
-| [ ] | Work-ID scan | `rg -n 'W261005H4XZ\|REQ[0-9]\|DES[0-9]\|\bV[0-9]+\b' src test` over changed files | No matches | `Pending implementation` |
-| [ ] | Benchmarks | `bun run bench` | Reported only; non-blocking | `Pending implementation` |
-| [ ] | Process cleanup | `pgrep -fl 'src/app/main.ts\|bun run dev'` after test runs | No orphan processes started by the work | `Pending implementation` |
+| [x] | Fast gate (V29, V30) | `bun run check` | Exit 0: biome, tsc, knip, unit suites | Exit 0 — 1055 pass (overall verifier; orchestrator rerun after remediation also exit 0). One first-run flake in untouched `src/workspace/watcher.test.ts`, clean on 3 isolated runs and the rerun |
+| [x] | Full suites | `bun run test:ci` | Component, integration, and PTY suites green, including `test/ui/mouse.test.ts` and `test/e2e/mouse.test.ts` | Exit 0 — 211 pass, 58 snapshots (after remediation) |
+| [x] | Exit restore (V28) | `bun test test/e2e/quit.test.ts test/e2e/restore.test.ts` | `screen.mouse` is `"none"` after `:q`, `SIGTERM`, and crash | 10 pass, assertions unchanged |
+| [x] | Obsolete reference (V31) | `rg 'kind: "scroll"\|onMouseScroll' src` | No matches | No matches |
+| [x] | Work-ID scan | `rg -n 'W261005H4XZ\|REQ[0-9]\|DES[0-9]\|\bV[0-9]+\b' src test` over changed files | No matches | No matches (pattern also covered `OVR-VER`) |
+| [x] | Benchmarks | `bun run bench` | Reported only; non-blocking | All `ok` (e.g. `firstFrame` 148 ms, `liveKeystrokeP95` 11.7 ms); remediation touched only per-press code, not rerun |
+| [x] | Process cleanup | `pgrep -fl 'src/app/main.ts\|bun run dev'` after test runs | No orphan processes started by the work | No orphans |
 | [ ] | CI | PR #8 checks after each push (Delivery stage) | `check` and `test` jobs green on the pushed head | `Pending implementation` |
 
 The CI check is recorded in the Delivery stage; the verifier runs the local checks.
 
 ### Evidence
 
-- **Status:** `Pending implementation`
+- **Status:** `Failed` → remediated; orchestrator validated closure
 - **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
-- **Report commit:** `Pending implementation`
-- **Findings and owners:** `Pending implementation`
-- **Remediation status:** `Pending implementation`
-- **Remediation commits:** `Pending implementation`
-- **Updated implementation report commits:** `Pending implementation`
-- **Closure evidence:** `Pending implementation`
-- **Remaining issues:** `Pending implementation`
+- **Report commit:** `e6fbd4b`
+- **Findings and owners:** `OVR-VER1` (Major, Cross-group P1-G1/P2-G1) click right of a non-last wrap row landed on the next row; `OVR-VER2` (Major, Cross-group P2-G1/P1-G1) drag after a press that only closed the `:` line entered Visual from the old cursor
+- **Remediation status:** `Completed` by one fresh implementer
+- **Remediation commits:** `OVR-VER1` → `c6444ab` (`ScreenRow.endCol`, `displayColAt`); `OVR-VER2` → `2a0b2d3` (core `pressStops` predicate shared by `overlayGate` and the router's `stops` option; wheel unchanged)
+- **Updated implementation report commits:** P1-G1 `18a6d25`; P2-G1 `3b99053`
+- **Closure evidence:** both findings reproduced RED with the verifier's probe values (`col 32` vs `30`; `visual` anchor `{1,0}` cursor `{2,4}`) then GREEN; mutation check on `OVR-VER2`; `bun run check` exit 0 (1055 pass, orchestrator rerun); `bun run test:ci` 211 pass; quit/restore 10 pass; V31 and work-ID scans clean; no orphans; working tree clean
+- **Remaining issues:** None. Plan part 2 text does not list the router `stops` option; code is the source of truth (recorded in Blockers and Deviations)
 
 ## Delivery Acceptance
 
@@ -474,6 +474,7 @@ Run after project documentation finalization. The orchestrator owns this stage.
 
 - **P2-G2 file-scope extension (authorized by the orchestrator).** Location: `src/ui/overlays/whichkey.ts`, `src/ui/overlays/notify.ts`, `src/ui/mouse.ts` (`MouseSource.wheelOnly`), `src/ui/shell.ts` (`toasts` after `overlays` in `sources`). Evidence: `P2-G2-VER1`, `P2-G2-VER2`; commits `a20ac03`, `caab0e2`. Impact: REQ7 (which-key click does nothing) and REQ2 (wheel over a toast does nothing) now hold as written; clicks still pass through toasts. Resolution: none required — requirements were kept authoritative; no requirement revision.
 - **Design text drift.** Location: system design §2/§4/§5 say `ToastStack` is not a mouse source; §7 says the which-key box comes from `centered`. Evidence: `ToastStack` is now a wheel-only source answering `inert`; which-key keeps its own painted box. Impact: documentation only; behavior matches the approved requirements. Resolution: recorded here and in `reports/p2-g2-implementation-report.md`; the finalized design document is left unchanged.
+- **Router `stops` option and wrap-row `endCol`.** Location: `src/ui/mouse.ts` (`createMouseRouter` `stops`), `src/core/state/mouse.ts` (`pressStops`), `src/core/kernel/view/hit.ts` (`ScreenRow.endCol`, `displayColAt`). Evidence: `OVR-VER1`, `OVR-VER2`; commits `c6444ab`, `2a0b2d3`. Impact: not in plan/design text; needed for REQ4, REQ5, REQ8 as written. Resolution: none required; recorded in the P1-G1 and P2-G1 implementation reports.
 - **Earlier group deviations** (core-path choices, `sourceColAt` `lineLength` argument, test-renderer frame between drags) are recorded in each group's implementation report and were accepted by the group verifiers.
 
 Replace with `None` or entries containing location, evidence, impact, and required resolution.
