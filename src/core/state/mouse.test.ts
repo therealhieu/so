@@ -711,3 +711,56 @@ test("a click on the text closes completion and still moves the cursor", () => {
   expect(r.state.vim.mode).toBe("insert");
   expect(cursorOf(r.state)).toEqual({ line: 0, col: 0 });
 });
+
+const BOARD = `views:
+  - type: kanban-test
+    name: Board
+    order: [file.name]
+    groupBy:
+      property: status
+      direction: ASC
+`;
+
+function board(): { s: AppState; id: WindowId } {
+  const loaded = update(fresh(), {
+    type: "fileLoaded",
+    path: "plan.base",
+    file: textFile(BOARD),
+  }).state;
+  const s = update(
+    loaded,
+    indexed({
+      "tasks/a.md": "---\nstatus: todo\n---\n# A\n",
+      "tasks/b.md": "---\nstatus: doing\n---\n# B\n",
+    }),
+  ).state;
+  if (baseViewModel(s, s.windows.active, reg)?.board === undefined)
+    throw new Error("expected a board");
+  return { s, id: s.windows.active };
+}
+
+test("a click on a board card focuses it, a double click opens it, and a sideways notch changes lane", () => {
+  const { s, id } = board();
+  const card: MouseTarget = {
+    kind: "window",
+    window: id,
+    spot: { kind: "baseCard", lane: 1, card: 0 },
+  };
+  expectSame(mouse(s, press(card)), keys(s, "l"));
+  const opened = mouse(s, press(card, 2));
+  expectSame(opened, keys(s, "l<CR>"));
+  expect(opened.effects.length).toBeGreaterThan(0);
+  expectSame(
+    mouse(
+      s,
+      wheel({ kind: "window", window: id, spot: { kind: "base" } }, 0, 1),
+    ),
+    keys(s, "l"),
+  );
+  const missing: MouseTarget = {
+    kind: "window",
+    window: id,
+    spot: { kind: "baseCard", lane: 9, card: 0 },
+  };
+  expect(mouse(s, press(missing)).state).toEqual(s);
+});
