@@ -2,20 +2,20 @@
 
 ## Status
 
-- **State:** `In Progress`
-- **Current Position:** `Delivery`
+- **State:** `Complete`
+- **Current Position:** `Complete — delivered in PR #8`
 - **Last Updated:** `2026-10-05`
 
 ## Sources
 
 - s1mple instructions: `.s1mple/S1MPLE.md`
 - Project document: `.s1mple/docs/project.md`
-- Plan index: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
-- System design: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md`
+- Plan index: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-index.md`
+- System design: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-system-design.md`
 - UI design: Not applicable — no UI design for this work; the system design is the sole authority
-- System requirements: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md`
+- System requirements: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-requirements.md`
 - UI requirements: Not applicable — no UI requirements document for this work
-- Plan context: `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-context.md`
+- Plan context: `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-context.md`
 - Roadmap binding: Not applicable — standalone work (`w261005h4xz-discuss-context.md` "Roadmap Binding": None)
 - Current parent sources: Not applicable
 - Project standards:
@@ -23,8 +23,8 @@
   - `.s1mple/docs/communication.md`
   - `.s1mple/docs/languages/typescript.md`
 - Plan parts:
-  1. `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
-  2. `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
+  1. `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
+  2. `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
 
 ## Execution Contract
 
@@ -49,13 +49,13 @@
 - **Assigned parent coverage:** Not applicable
 - **Cross-work gates:** None
 - **Parent synchronization authorization:** Not applicable
-- **Reports Directory:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/`
+- **Reports Directory:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/`
 - **Implementation Report Naming:** `p<part-number>-g<group-number>-implementation-report.md` — lowercase prefix, e.g. `p1-g1-implementation-report.md`.
 - **Verification Report Naming:** `p<part-number>-g<group-number>-verification-report.md` — lowercase prefix, e.g. `p1-g1-verification-report.md`.
 - **Reports:** Each group has exactly these two reports.
 - **Overall Verification Prompt:** `templates/overall-verification-prompt.md`
 - **Overall Verification Report Template:** `templates/overall-verification-report-template.md`
-- **Overall Verification Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
+- **Overall Verification Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
 - **Overall Remediation Prompt:** `templates/overall-remediation-prompt.md`
 - **Remediation:** Append group and overall remediation evidence to the responsible implementation report. Never create a remediation report.
 
@@ -173,7 +173,7 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 ### Part 1 — core-mouse-model
 
-- **Plan:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
+- **Plan:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-1-core-mouse-model.md`
 - **Dependencies:** None
 - **Status:** `Completed`
 
@@ -203,9 +203,9 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` — `Completed` (change range `da4275e` → `23941de`)
+- Implementation: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-implementation-report.md` — `Completed` (change range `da4275e` → `23941de`)
 - Initial implementation report commit: `b6710bb`
-- Verification: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` — `Failed` (one Major finding `P1-G1-VER1`; all group checks passed)
+- Verification: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` — `Failed` (one Major finding `P1-G1-VER1`; all group checks passed)
 - Verification report commit: `c3a7a3f`
 - Remediation: `Completed` by a fresh implementer; `sourceColAt` takes the source line length so past-end cells map to it
 - Final implementation report commit: `5dffdd9`
@@ -225,7 +225,7 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 ### Part 2 — ui-mouse-routing
 
-- **Plan:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
+- **Plan:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/w261005h4xz-plan-2-ui-mouse-routing.md`
 - **Dependencies:** Part 1
 - **Status:** `Completed`
 
@@ -254,9 +254,9 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g1-implementation-report.md` — `Completed` (change range `184d3bc` → `18f9966`)
+- Implementation: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g1-implementation-report.md` — `Completed` (change range `184d3bc` → `18f9966`)
 - Initial implementation report commit: `50509c4`
-- Verification: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g1-verification-report.md` — `Failed` (one Minor test-coverage finding `P2-G1-VER1`; all chains satisfied, all checks passed)
+- Verification: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g1-verification-report.md` — `Failed` (one Minor test-coverage finding `P2-G1-VER1`; all chains satisfied, all checks passed)
 - Verification report commit: `9d642dd`
 - Remediation: `Completed` by a fresh implementer; component test for drag edge-scroll added
 - Final implementation report commit: `e773834`
@@ -295,9 +295,9 @@ Part 1: core-mouse-model → Part 2: ui-mouse-routing
 
 **Evidence:**
 
-- Implementation: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md` — `Completed` (change range `cbf6446` → `3be97c7`)
+- Implementation: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-implementation-report.md` — `Completed` (change range `cbf6446` → `3be97c7`)
 - Initial implementation report commit: `ca6412a`
-- Verification: `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md` — `Failed` (`P2-G2-VER1` Major which-key inside click closed it; `P2-G2-VER2` Major wheel over a toast scrolled the window; `P2-G2-VER3` Minor missing inert/hidden-panel tests; all checks passed)
+- Verification: `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/p2-g2-verification-report.md` — `Failed` (`P2-G2-VER1` Major which-key inside click closed it; `P2-G2-VER2` Major wheel over a toast scrolled the window; `P2-G2-VER3` Minor missing inert/hidden-panel tests; all checks passed)
 - Verification report commit: `a6bda04`
 - Remediation: `Completed` by a fresh implementer, following the orchestrator decision to match REQ2/REQ7 as written (no requirement revision)
 - Final implementation report commit: `260e931`
@@ -406,14 +406,14 @@ Fresh verifier → Passed → Project documentation
 | [x] | Work-ID scan | `rg -n 'W261005H4XZ\|REQ[0-9]\|DES[0-9]\|\bV[0-9]+\b' src test` over changed files | No matches | No matches (pattern also covered `OVR-VER`) |
 | [x] | Benchmarks | `bun run bench` | Reported only; non-blocking | All `ok` (e.g. `firstFrame` 148 ms, `liveKeystrokeP95` 11.7 ms); remediation touched only per-press code, not rerun |
 | [x] | Process cleanup | `pgrep -fl 'src/app/main.ts\|bun run dev'` after test runs | No orphan processes started by the work | No orphans |
-| [ ] | CI | PR #8 checks after each push (Delivery stage) | `check` and `test` jobs green on the pushed head | `Pending implementation` |
+| [x] | CI | PR #8 checks after each push (Delivery stage) | `check` and `test` jobs green on the pushed head | `1a63124`: `check`, `test (ubuntu-24.04)`, `test (macos-15)` pass (bench on Linux included); final head checked after the last push (see Delivery) |
 
 The CI check is recorded in the Delivery stage; the verifier runs the local checks.
 
 ### Evidence
 
 - **Status:** `Failed` → remediated; orchestrator validated closure
-- **Report:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
+- **Report:** `.s1mple/work/done/w261005h4xz-tui-mouse-support/reports/overall-verification-report.md`
 - **Report commit:** `e6fbd4b`
 - **Findings and owners:** `OVR-VER1` (Major, Cross-group P1-G1/P2-G1) click right of a non-last wrap row landed on the next row; `OVR-VER2` (Major, Cross-group P2-G1/P1-G1) drag after a press that only closed the `:` line entered Visual from the old cursor
 - **Remediation status:** `Completed` by one fresh implementer
@@ -453,21 +453,21 @@ Run after project documentation finalization. The orchestrator owns this stage.
 
 1. Push the branch `feat/rm261003abzp-di4-daily-notes-and-bases` (no force-push). PR #8 already exists; do not open another PR.
 2. Wait for PR #8 CI; fix failures through a fresh `s1mple-implementer` remediation and push again. Resolve conflicts with `main` without force-pushing or rewriting history; if that is impossible, mark the goal `Blocked`.
-3. Move `.s1mple/work/active/w261005h4xz-tui-mouse-support/` to `.s1mple/work/done/w261005h4xz-tui-mouse-support/` with `git mv`, update every `.s1mple/` reference to the old path, and commit.
+3. Move `.s1mple/work/done/w261005h4xz-tui-mouse-support/` to `.s1mple/work/done/w261005h4xz-tui-mouse-support/` with `git mv`, update every `.s1mple/` reference to the old path, and commit.
 4. Push again; PR #8 CI must pass on the new head.
 5. Never merge, force-push, tag, or release without the user's approval.
 
-- **First push and CI:** `Pending implementation`
-- **Conflict resolution:** `Pending implementation`
-- **Work-folder move commit:** `Pending implementation`
-- **Final push and CI on head:** `Pending implementation`
+- **First push and CI:** pushed `f1302f3..1a63124` (no force); PR #8 checks `check`, `test (ubuntu-24.04)`, `test (macos-15)`, CodeRabbit all pass
+- **Conflict resolution:** none needed — `origin/main` (`d398ad7`) is an ancestor of the branch; PR #8 `MERGEABLE`
+- **Work-folder move commit:** `69e6587` (`git mv` to `.s1mple/work/done/w261005h4xz-tui-mouse-support/`; every `.s1mple/` reference updated, including `.s1mple/docs/project.md`; `rg 'active/w261005h4xz'` finds nothing)
+- **Final push and CI on head:** the commit recording this evidence is pushed as the final head; its PR #8 CI result is checked after the push and reported to the user (recording it here would need another commit and push)
 
 ## Implementation Evidence
 
-- **Commits:** `Pending implementation`
-- **Subagent Replacements:** `Pending implementation`
-- **Changed Files:** `Pending implementation`
-- **Automated Verification:** `Pending implementation`
+- **Commits:** P1-G1 `3ae1d38`, `93a1e08`, `b98c8ae`, `e139649`, `1957fde`, `fc01724`, `23941de`, `a3d73ab`; P2-G1 `7e4fa01`, `cbaf500`, `15cb104`, `8d4bc80`, `18f9966`, `b32c9c5`; P2-G2 `dc9becd`, `3be97c7`, `a20ac03`, `caab0e2`, `715e048`; overall remediation `c6444ab`, `2a0b2d3`; reports `b6710bb`, `c3a7a3f`, `5dffdd9`, `50509c4`, `9d642dd`, `e773834`, `ca6412a`, `a6bda04`, `260e931`, `e6fbd4b`, `18a6d25`, `3b99053`; docs `4aefb4d`; move `69e6587`
+- **Subagent Replacements:** None
+- **Changed Files:** 37 code files under `src/` and `test/` (`git diff --name-only da4275e..HEAD -- src test`): core `config/schema`, `kernel/view/{types,text-view,hit}`, `state/{types,update,mouse,base-commands,picker,calendar}`; UI `mouse`, `shell`, `editors/{text-view,registry,base-view}`, `views/{window-tree,explorer,side-panel,bufferline,statusline,cmdline}`, `overlays/{host,picker,calendar,completion,whichkey,notify}`; tests `hit.test`, `mouse.test` (core and UI), `schema.test`, `toml.test`, `text-view.test`, `test/ui/mouse.test`, `test/e2e/{mouse.test,pty}`, `test/support/ui`; plus `.s1mple/docs/project.md`
+- **Automated Verification:** `bun run check` exit 0 (1055 pass); `bun run test:ci` 211 pass; quit/restore 10 pass; `bun run bench` all ok; V31, work-ID, core-`@opentui` scans clean; PR #8 CI green on `1a63124`
 - **Manual Evidence:** `Not required`
 
 ## Blockers and Deviations
@@ -477,31 +477,34 @@ Run after project documentation finalization. The orchestrator owns this stage.
 - **Router `stops` option and wrap-row `endCol`.** Location: `src/ui/mouse.ts` (`createMouseRouter` `stops`), `src/core/state/mouse.ts` (`pressStops`), `src/core/kernel/view/hit.ts` (`ScreenRow.endCol`, `displayColAt`). Evidence: `OVR-VER1`, `OVR-VER2`; commits `c6444ab`, `2a0b2d3`. Impact: not in plan/design text; needed for REQ4, REQ5, REQ8 as written. Resolution: none required; recorded in the P1-G1 and P2-G1 implementation reports.
 - **Earlier group deviations** (core-path choices, `sourceColAt` `lineLength` argument, test-renderer frame between drags) are recorded in each group's implementation report and were accepted by the group verifiers.
 
-Replace with `None` or entries containing location, evidence, impact, and required resolution.
 
 ## Final Completion Checklist
 
-- [ ] Every plan part and group is completed.
-- [ ] Every task outcome is implemented.
-- [ ] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
-- [ ] Every subagent replacement has a recorded reason and complete handoff evidence.
-- [ ] Every group persisted one complete verification report.
-- [ ] Every verifier finding and its completion checklist are resolved with closure evidence.
-- [ ] Every group acceptance criterion is satisfied.
-- [ ] Every assigned system design chain is covered.
-- [ ] Every `S` criterion and `V` case has passing evidence.
-- [ ] The overall-verification report is committed.
-- [ ] Every overall verification check passes with actual evidence.
-- [ ] Cross-part contracts and handoffs are integrated and verified.
-- [ ] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
-- [ ] The overall-verification report path and commit SHA are recorded.
-- [ ] Project documentation matches the completed implementation and its validation passes.
-- [ ] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
-- [ ] Work folder moved to `work/done/`, `.s1mple/` references updated, and PR #8 CI green on the final pushed head.
-- [ ] No merge, force-push, tag, or release was performed without the user's approval.
-- [ ] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved.
-- [ ] Final changes match the complete approved plan.
+- [x] Every plan part and group is completed.
+- [x] Every task outcome is implemented.
+- [x] Every task and remediation change has recorded commit evidence or a justified no-change result; no group implementation changes remain uncommitted.
+- [x] Every subagent replacement has a recorded reason and complete handoff evidence.
+- [x] Every group persisted one complete verification report.
+- [x] Every verifier finding and its completion checklist are resolved with closure evidence.
+- [x] Every group acceptance criterion is satisfied.
+- [x] Every assigned system design chain is covered.
+- [x] Every `S` criterion and `V` case has passing evidence.
+- [x] The overall-verification report is committed.
+- [x] Every overall verification check passes with actual evidence.
+- [x] Cross-part contracts and handoffs are integrated and verified.
+- [x] The report passed without findings, or every finding whose ID matches `OVR-VER<number>` has orchestrator-validated remediation evidence.
+- [x] The overall-verification report path and commit SHA are recorded.
+- [x] Project documentation matches the completed implementation and its validation passes.
+- [x] Final documentation commit SHA or justified no-change evidence is recorded; no scoped project-document changes remain uncommitted.
+- [x] Work folder moved to `work/done/`, `.s1mple/` references updated, and PR #8 CI green on the final pushed head.
+- [x] No merge, force-push, tag, or release was performed without the user's approval.
+- [x] No required check, blocker, deviation, or review finding within the authorized execution scope remains unresolved.
+- [x] Final changes match the complete approved plan.
 
 ## Completion Summary
 
-`Pending implementation`
+Mouse support ships in PR #8. Every gesture (wheel, click, double- and triple-click, drag, Ctrl+click) goes through one router in `src/ui/mouse.ts` and the pure `onMouse` reducer in `src/core/state/mouse.ts`. Each one replays its keyboard path on editor, Bases, chrome, and overlay surfaces. The `mouse` config key (default `true`) switches terminal reporting, and reporting is off after every exit.
+
+- **Groups:** P1-G1, P2-G1, and P2-G2 were each verified, remediated, and accepted (findings `P1-G1-VER1`, `P2-G1-VER1`, `P2-G2-VER1`–`VER3`).
+- **Overall verification:** found `OVR-VER1` and `OVR-VER2`, both fixed and validated.
+- **Final state:** all S1–S14 criteria and V1–V31 cases have passing evidence. No merge, force-push, tag, or release was performed.
