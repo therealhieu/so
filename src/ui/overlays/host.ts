@@ -107,17 +107,18 @@ export class OverlayHost extends Renderable {
    * What the open overlay has under the cell. Outside its float the cell is
    * `outside`, so nothing below answers, except for completion, which leaves
    * the cell to the body. Overlays without `itemAt` are `outside` everywhere.
-   * With no overlay open, the non-modal float is the only answer.
+   * The non-modal float answers where the body would: with no overlay
+   * open, or outside the completion popup.
    */
   targetAt(x: number, y: number): MouseTarget | undefined {
-    const float = this.float?.targetAt?.(x, y);
-    if (this.open === "none") return float;
+    if (this.open === "none") return this.float?.targetAt?.(x, y);
     for (const v of this.views) {
       const t = v.visible ? v.itemAt?.(x, y) : undefined;
       if (t !== undefined) return t;
     }
-    if (float !== undefined) return float;
-    return this.open === "completion" ? undefined : { kind: "outside" };
+    return this.open === "completion"
+      ? this.float?.targetAt?.(x, y)
+      : { kind: "outside" };
   }
 
   /** What a drag that started in the open overlay is over, anywhere on screen. */
