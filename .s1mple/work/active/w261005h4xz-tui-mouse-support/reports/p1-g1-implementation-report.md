@@ -65,12 +65,38 @@ No unresolved implementation or verification issue remains.
 
 Append remediation evidence here after verifier findings. This is not a separate report. Preserve the Initial Implementation section unchanged.
 
-- **Verification reports:** `Pending verification`
-- **Status:** `Not required`
+- **Verification reports:** `.s1mple/work/active/w261005h4xz-tui-mouse-support/reports/p1-g1-verification-report.md` (commit `c3a7a3f`, status `Failed`, one finding)
+- **Status:** `Completed`
 
 ### Finding Closure
 
-None
+#### P1-G1-VER1 — Past-end click on a line ending in hidden text does not map to the line length — `Fixed`
+
+- **Change evidence:** `src/core/kernel/view/hit.ts:sourceColAt` takes a fourth parameter, `lineLength` (the source line's length), and returns it for any display column past the last cell instead of the source column after the last shown character. The fix sits in the core mapping, as design §7 states ("past the end → line length"). The function stays pure and imports only `./types` and `./wrap`. A `RenderLine` does not carry its source length, so the caller passes it. Part 2's `EditorView.targetAt` already has the buffer, so it passes `buf.line(sourceLine).length`. The required parameter makes `tsc` reject a call site that leaves it out. This replaces the Part 2 clamp proposed in Initial Implementation Deviation 2. A span without `col` still continues from the previous span. Tests: `src/core/kernel/view/hit.test.ts` gains three things. First, a case for `See [[Project Plan]]` with `[[`/`]]` concealed: the last shown cell maps to 17, and past-end cells (16 and 99) map to 20. Second, a fully replaced trailing `[[Target]]`, whose past-end cell maps to 12. Third, a case for the design invariant on an undecorated line with tabs: `sourceColAt(spans, displayWidth(text.slice(0, c)), 4, text.length) === c` for every `c` up to the line length. Existing calls pass the line length. `src/core/state/mouse.test.ts` gains "a click at the length of a line ending in a link lands after the link". At col 20 on `See [[Project Plan]]`, Normal mode puts the cursor on col 19 (the last `]`). Insert mode puts it on col 20 through `a`, and typing `!` yields `See [[Project Plan]]!`.
+- **Verification evidence:** RED: with `hit.ts` restored to `HEAD` (`c3a7a3f`), `bun test src/core/kernel/view/hit.test.ts` → 5 pass, 1 fail (`Expected: 20`, `Received: 18`). GREEN: `bun test src/core/kernel/view/hit.test.ts` → 6 pass, 0 fail, 42 expect() calls. `bun test src/core/state/mouse.test.ts src/core/kernel/view/hit.test.ts src/core/config/schema.test.ts` → 49 pass, 0 fail. `bun run check` → exit 0 (biome 309 files clean, tsc clean, knip clean, 1044 pass, 0 fail).
+- **Commit evidence:** `a3d73ab` — `fix(view): map past-end cells to the source line length`
+
+**Completion Checklist:**
+
+- [x] Required resolution is implemented.
+- [x] Required proof passes.
+- [x] Change evidence is recorded.
+- [x] Verification evidence is recorded.
+
+### Remediation Group Verification
+
+- `bun test src/core/kernel/view/hit.test.ts src/core/state/mouse.test.ts src/core/config/schema.test.ts` → `Passed` — 49 pass, 0 fail
+- `bun run check` → `Passed` — biome, tsc, knip clean; 1044 pass, 0 fail
+- `rg 'kind: "scroll"|onMouseScroll' src` → `Passed` — no matches (exit 1)
+- `git diff --name-only da4275e -- . ':!.s1mple' | xargs rg -n 'W261005H4XZ|REQ[0-9]|DES[0-9]|\bV[0-9]+\b|P1-G1'` → `Passed` — no matches (exit 1). The `.s1mple` reports are excluded because they are work documents and name the ids by design.
+- `rg -n '@opentui' src/core` → `Passed` — no matches (exit 1)
+- `bun run test:ci` (extra) → `Passed` — 191 pass, 0 fail
+- `pgrep -fl 'src/app/main.ts|bun run dev'` → `Passed` — no processes (exit 1); remediation started no app processes
+- Self-review of `da4275e..a3d73ab`: `sourceColAt` has no caller outside `hit.test.ts` yet, so the signature change breaks no consumer. No other group code changed.
+
+### Handoff Note
+
+`w261005h4xz-plan-2-ui-mouse-routing.md:307` still shows `sourceColAt(spans, startCol + leftCol + x - textX, tabWidth)`. Part 2 must pass the source line length as the fourth argument, and `tsc` enforces this. The plan text was not edited because it is outside this group.
 
 ## Final Status
 
@@ -78,8 +104,8 @@ None
 
 ### Final Evidence
 
-- **Final report status:** `Completed` — initial implementation; awaiting verification
-- **Final report commit:** `Pending report commit`
-- **Final commits:** `3ae1d38`, `93a1e08`, `b98c8ae`, `e139649`, `1957fde`, `fc01724`, `23941de`
-- **Final checks:** `bun run check` → exit 0 (1041 pass); `bun run test:ci` → 191 pass; V31 `rg` and work-ID scan → no matches
+- **Final report status:** `Completed`. P1-G1-VER1 is fixed.
+- **Final report commit:** Returned to the orchestrator; not self-referenced
+- **Final commits:** `3ae1d38`, `93a1e08`, `b98c8ae`, `e139649`, `1957fde`, `fc01724`, `23941de`, `a3d73ab`
+- **Final checks:** `bun run check` → exit 0 (1044 pass); `bun run test:ci` → 191 pass; V31 `rg` and work-ID scan → no matches; no orphan processes
 - **Remaining issues:** None
