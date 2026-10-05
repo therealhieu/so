@@ -2,14 +2,14 @@
 
 ## Status
 
-`Draft`
+`Ready for Planning`
 
 ## Sources
 
 - **UI context:** `w261005f2a7-ui-context.md`
 - **UI requirements:** `w261005f2a7-ui-requirements.md`
 - **Current UI requirement revisions:** `W261005F2A7-UREQ1@R1`, `UREQ2@R1`, `UREQ3@R1`, `UREQ4@R1`, `UREQ5@R1`, `UREQ6@R1`, `UREQ7@R1`, `UREQ8@R1`, `UREQ9@R1`, `UREQ10@R1`, `UREQ11@R1`, `UREQ12@R1`
-- **Requirements and system design:** `w261005f2a7-requirements.md` (`W261005F2A7-REQ1@R2`, `REQ2@R2`, `REQ3@R1`, `REQ4@R2`, `REQ5@R2`, `REQ6@R2`, `REQ7@R2`, `REQ8@R1`, `REQ9@R1`); `w261005f2a7-system-design.md` (`W261005F2A7-DES1`–`DES11`, `S1`–`S31`, `V1`–`V62`)
+- **Requirements and system design:** `w261005f2a7-requirements.md` (`W261005F2A7-REQ1@R2`, `REQ2@R2`, `REQ3@R1`, `REQ4@R3`, `REQ5@R2`, `REQ6@R2`, `REQ7@R2`, `REQ8@R1`, `REQ9@R1`); `w261005f2a7-system-design.md` (`W261005F2A7-DES1`–`DES13`, `S1`–`S36`, `V1`–`V69`)
 - **Mockup manifest:** `ui-mockups/manifest.md`
 - **Accepted mockups:** `W261005F2A7-M1@R3`, `W261005F2A7-M2@R3`, `W261005F2A7-M3@R3`
 - **Accepted feedback and decisions:** manifest "Accepted Decisions", "Assumptions", "Feedback Ledger" cycles 1–2, "Acceptance"
@@ -38,7 +38,7 @@ None — standalone work
 - [x] Proposed verification is not presented as executed evidence.
 - [x] Historical revisions are excluded from current planning inputs.
 - [x] Every omitted state, surface, component, responsive condition, or verification method explains why it does not apply.
-- [ ] Unresolved items are `None`. — Blocked until the system-impact assessment resolves the conflicting or missing system support listed in §1 "Required System Support".
+- [x] Unresolved items are `None`.
 
 ## Table of Contents
 
@@ -72,7 +72,7 @@ None — standalone work
   - Bar-style signs (`▎`), right-aligned explorer markers, a `D` explorer marker, and ghost rows for deleted files (rejected in feedback cycles 1–2).
   - Inline (virtual-text) blame; `.git-blame-ignore-revs` (deferred by `W261005F2A7-DES11`).
   - Stage or reset keys inside the hunk float.
-- **Unresolved items:** System support that conflicts with or is missing from the current system design; see "Required System Support". No UI item is unresolved.
+- **Unresolved items:** None
 
 ## Users and Tasks
 
@@ -88,17 +88,17 @@ None — standalone work
 
 | Source Evidence | Accepted Mockup | Feedback Evidence | UI Requirement | UI Design | Detailed Design | Success Criteria | Verification | Status |
 |---|---|---|---|---|---|---|---|---|
-| `REQ4@R2`, `REQ5@R2`, `DES10` | `W261005F2A7-M1@R3` S1, S2, S14, S15 | Cycle 2; "Git sign column" | `W261005F2A7-UREQ1@R1` | `W261005F2A7-UDES1@R1` | §7 Surface: Editor gutter; Component: Git sign column | `W261005F2A7-US1@R1` | `W261005F2A7-UV1@R1`, `UV2@R1` | Covered |
-| `REQ4@R2`, `REQ5@R2`, `DES2`, `DES10` | `W261005F2A7-M1@R3` S1–S5, S13 | Cycle 1 item 1; "Sign glyphs" | `W261005F2A7-UREQ2@R1` | `W261005F2A7-UDES2@R1` | §7 Component: Git sign column | `W261005F2A7-US2@R1` | `W261005F2A7-UV3@R1`, `UV4@R1`, `UV16@R1` | Covered |
-| `REQ1@R2`, `REQ4@R2`, `REQ9@R1`, `DES4`, `DES5`, `DES11` | `W261005F2A7-M1@R3` S6–S10 | Assumptions "Notice wording" | `W261005F2A7-UREQ3@R1` | `W261005F2A7-UDES3@R1` | §7 Surface: Message line; Component: Git message catalogue | `W261005F2A7-US3@R1` | `W261005F2A7-UV5@R1`, `UV6@R1` | Covered |
-| `REQ4@R2`, `REQ7@R2`, `DES10`, `RF8` | `W261005F2A7-M1@R3` S1, S7, S9, S11–S14 | Cycle 1 item 5; "Statusline segment" | `W261005F2A7-UREQ4@R1` | `W261005F2A7-UDES4@R1` | §7 Surface: Statusline; Component: Statusline Git segment | `W261005F2A7-US4@R1` | `W261005F2A7-UV7@R1`, `UV16@R1` | Covered |
-| `REQ4@R2`, `DES10`, `RF9` | `W261005F2A7-M2@R3` S1–S6 | Cycles 1 (items 2, 3) and 2; "Explorer marker position", "Deleted tracked files" | `W261005F2A7-UREQ5@R1` | `W261005F2A7-UDES5@R1` | §7 Surface: Explorer rows; Component: Explorer Git marker | `W261005F2A7-US5@R1` | `W261005F2A7-UV8@R1` | Covered |
-| `REQ4@R2`, `DES11` | `W261005F2A7-M3@R3` S1–S4 | Cycle 1 item 4; "Hunk float" | `W261005F2A7-UREQ6@R1` | `W261005F2A7-UDES6@R1` | §7 Surface: Hunk preview float; Component: HunkView | `W261005F2A7-US6@R1` | `W261005F2A7-UV9@R1`, `UV10@R1` | Covered |
+| `REQ4@R3`, `REQ5@R2`, `DES10` | `W261005F2A7-M1@R3` S1, S2, S14, S15 | Cycle 2; "Git sign column" | `W261005F2A7-UREQ1@R1` | `W261005F2A7-UDES1@R1` | §7 Surface: Editor gutter; Component: Git sign column | `W261005F2A7-US1@R1` | `W261005F2A7-UV1@R1`, `UV2@R1` | Covered |
+| `REQ4@R3`, `REQ5@R2`, `DES2`, `DES10` | `W261005F2A7-M1@R3` S1–S5, S13 | Cycle 1 item 1; "Sign glyphs" | `W261005F2A7-UREQ2@R1` | `W261005F2A7-UDES2@R1` | §7 Component: Git sign column | `W261005F2A7-US2@R1` | `W261005F2A7-UV3@R1`, `UV4@R1`, `UV16@R1` | Covered |
+| `REQ1@R2`, `REQ4@R3`, `REQ9@R1`, `DES4`, `DES5`, `DES11` | `W261005F2A7-M1@R3` S6–S10 | Assumptions "Notice wording" | `W261005F2A7-UREQ3@R1` | `W261005F2A7-UDES3@R1` | §7 Surface: Message line; Component: Git message catalogue | `W261005F2A7-US3@R1` | `W261005F2A7-UV5@R1`, `UV6@R1` | Covered |
+| `REQ4@R3`, `REQ7@R2`, `DES10`, `RF8` | `W261005F2A7-M1@R3` S1, S7, S9, S11–S14 | Cycle 1 item 5; "Statusline segment" | `W261005F2A7-UREQ4@R1` | `W261005F2A7-UDES4@R1` | §7 Surface: Statusline; Component: Statusline Git segment | `W261005F2A7-US4@R1` | `W261005F2A7-UV7@R1`, `UV16@R1` | Covered |
+| `REQ4@R3`, `DES10`, `RF9` | `W261005F2A7-M2@R3` S1–S6 | Cycles 1 (items 2, 3) and 2; "Explorer marker position", "Deleted tracked files" | `W261005F2A7-UREQ5@R1` | `W261005F2A7-UDES5@R1` | §7 Surface: Explorer rows; Component: Explorer Git marker | `W261005F2A7-US5@R1` | `W261005F2A7-UV8@R1` | Covered |
+| `REQ4@R3`, `DES11` | `W261005F2A7-M3@R3` S1–S4 | Cycle 1 item 4; "Hunk float" | `W261005F2A7-UREQ6@R1` | `W261005F2A7-UDES6@R1` | §7 Surface: Hunk preview float; Component: HunkView | `W261005F2A7-US6@R1` | `W261005F2A7-UV9@R1`, `UV10@R1` | Covered |
 | `DES11` | `W261005F2A7-M3@R3` S5, S6 | Acceptance | `W261005F2A7-UREQ7@R1` | `W261005F2A7-UDES7@R1` | §7 Surface: Which-key popup | `W261005F2A7-US7@R1` | `W261005F2A7-UV11@R1` | Covered |
-| `REQ4@R2`, `DES11`, `RF13` | `W261005F2A7-M3@R3` S7, S8 | Assumptions "Blame" | `W261005F2A7-UREQ8@R1` | `W261005F2A7-UDES8@R1` | §7 Surface: Message line; Component: Git message catalogue | `W261005F2A7-US8@R1` | `W261005F2A7-UV12@R1` | Covered |
+| `REQ4@R3`, `DES11`, `RF13` | `W261005F2A7-M3@R3` S7, S8 | Assumptions "Blame" | `W261005F2A7-UREQ8@R1` | `W261005F2A7-UDES8@R1` | §7 Surface: Message line; Component: Git message catalogue | `W261005F2A7-US8@R1` | `W261005F2A7-UV12@R1` | Covered |
 | `REQ1@R2`, `REQ3@R1`, `REQ7@R2`, `REQ8@R1`, `DES8`, `DES9` | `W261005F2A7-M3@R3` S9–S15 | Cycle 1 item 6; "Busy notice"; Assumptions "Notice wording" | `W261005F2A7-UREQ9@R1` | `W261005F2A7-UDES9@R1` | §7 Surface: Message line; Component: Git message catalogue | `W261005F2A7-US9@R1` | `W261005F2A7-UV13@R1` | Covered |
 | `REQ2@R2`, `REQ6@R2`, `REQ8@R1`, `DES9` | `W261005F2A7-M3@R3` S16–S18 | Assumptions "lazygit screen" | `W261005F2A7-UREQ10@R1` | `W261005F2A7-UDES10@R1` | §7 Surface: Tool hand-off | `W261005F2A7-US10@R1` | `W261005F2A7-UV14@R1`, `UV15@R1` | Covered |
-| `REQ4@R2`, `REQ7@R2`, `DES8`, `DES10` | `W261005F2A7-M1@R3` S15; `M2@R3` S7; `M3@R3` S10, S14 | "Git sign column" | `W261005F2A7-UREQ11@R1` | `W261005F2A7-UDES11@R1` | §7 Surfaces: Editor gutter, Statusline, Explorer rows (No repository state) | `W261005F2A7-US11@R1` | `W261005F2A7-UV17@R1` | Covered |
+| `REQ4@R3`, `REQ7@R2`, `DES8`, `DES10` | `W261005F2A7-M1@R3` S15; `M2@R3` S7; `M3@R3` S10, S14 | "Git sign column" | `W261005F2A7-UREQ11@R1` | `W261005F2A7-UDES11@R1` | §7 Surfaces: Editor gutter, Statusline, Explorer rows (No repository state) | `W261005F2A7-US11@R1` | `W261005F2A7-UV17@R1` | Covered |
 | `DES10`, UI context | `W261005F2A7-M1@R3`, `M2@R3`, `M3@R3` | Shared `git.css` R3 | `W261005F2A7-UREQ12@R1` | `W261005F2A7-UDES12@R1` | §7 Component: Git theme tokens | `W261005F2A7-US12@R1` | `W261005F2A7-UV18@R1` | Covered |
 
 ## Constraints and Dependencies
@@ -122,24 +122,24 @@ None — standalone work
 - **Accepted assumptions:**
   - Users mostly run with colour; NO_COLOR must stay readable (UI context).
   - Blame sample data in M3 is illustrative; the format is the requirement.
-  - The block-replace sign rule of `W261005F2A7-DES10` (a sign on a hidden line moves to the block's rendered row) applies to the Git column (manifest Open Items).
+  - A block-replace row carries the last Git sign of its covered range (`W261005F2A7-DES12`; manifest Open Items).
 
 ## Required System Support
 
 | UI Design | Required System Support | Current Coverage |
 |---|---|---|
-| `W261005F2A7-UDES1@R1` | A Git sign carried per render row separately from the existing `sign` (`▕`/`⚠`), so both paint on the same line; block-replace rows inherit the Git sign from their covered range; the gutter widens by one cell only when `git.repo` is set, consistently for paint, mouse hit-testing, and cursor placement (`src/ui/editors/text-view.ts:335`, `:457`, `:520`). | **Conflicts** — `W261005F2A7-DES10` and §7 `src/ui/editors/text-view.ts` / `src/core/kernel/view/text-view.ts` reuse the single sign cell, make Git win by provider order, and keep the gutter width unchanged. `REQ4@R2`, `REQ5@R2` cover the signs themselves. |
-| `W261005F2A7-UDES2@R1` | Six hunk kinds with delete anchors (`delete` on the line before the gap, `topdelete` on line 0), one `untracked` hunk for untracked and unborn files, at most one Git sign per line. | `W261005F2A7-REQ4@R2`, `REQ5@R2`; `W261005F2A7-DES2`, `DES10` (§7 `src/core/features/git/signs.ts` `GIT_SIGNS`, `hunkSigns`) |
-| `W261005F2A7-UDES3@R1` | `gotoHunk` reports `hunk n/m`, `no next hunk`, `no previous hunk`; stage success reports `staged hunk n/m`, prefixed by `"<path>" written · ` when the stage saved first; reset reports `reset hunk n/m · buffer changed, autosave pending`; stage, reset, and preview with no hunk at the cursor report `no hunk at cursor`. | **None** for the wording — `W261005F2A7-DES4`, `DES5`, `DES11` define the commands and the "stops at ends" rule (`S7`) but no success or no-hunk messages. `REQ1@R2`, `REQ9@R1` cover the behaviour. |
-| `W261005F2A7-UDES4@R1` | `StatusSegments.git` with `ref`, `op`, and counts; counts are zero for untracked files and unborn repositories. | **Conflicts** — §7 `src/core/state/disk.ts, status.ts, keys.ts, mouse.ts` says "an untracked hunk counts as `added`". Ref, op, and narrow drop are covered by `W261005F2A7-REQ4@R2`, `REQ7@R2`; `W261005F2A7-DES10` (§6 `StatusSegments.git`). |
-| `W261005F2A7-UDES5@R1` | Explorer markers `conflict`, `untracked`, `modified`, `staged` per file row, by precedence `conflict > untracked > modified > staged`; `contains` on every ancestor folder of a changed path, including deleted tracked files; per-file untracked inside new folders; no `deleted` row marker. | **Conflicts** — `W261005F2A7-DES10` and §7 `src/core/features/git/status.ts` `Marker` include `"deleted"` with precedence `conflict > deleted > …`. Folder aggregation and per-file untracked are covered by `W261005F2A7-REQ4@R2`, `DES10`, `RF9`. |
-| `W261005F2A7-UDES6@R1` | A `gitHunk` overlay carrying `bufferId` and `hunk`; Esc and `q` close it, a click outside closes it, any other key closes it and re-dispatches; opening with no hunk at the cursor sets `no hunk at cursor` and opens nothing. | `W261005F2A7-REQ4@R2`; `W261005F2A7-DES11` (§6 `Overlay` `gitHunk`; §7 `keys.ts`/`mouse.ts` gates). The no-hunk wording is **None** (see `UDES3@R1`). |
-| `W261005F2A7-UDES7@R1` | `gitCommands` titles `Lazygit (full screen)`, `Stage hunk`, `Reset hunk`, `Preview hunk`, `Blame line` (which-key prints command titles); groups `git` and `hunk`. | **Conflicts** — `W261005F2A7-DES11` (§7 `src/core/state/git-commands.ts`) titles the commands `Git: open tool`, `Git: stage hunk`, … Groups and bindings are covered by `DES11`. |
-| `W261005F2A7-UDES8@R1` | Blame result as `<author>, <relative date> · <summary> (<short sha>)` at info level, or `not committed yet` at info level; relative date formatted from `time` and `now`. | `W261005F2A7-REQ4@R2`; `W261005F2A7-DES11` (§5 Blame flow; §7 `src/core/features/git/blame.ts`). Relative-date buckets are defined here (§7 Git message catalogue). |
-| `W261005F2A7-UDES9@R1` | A third message level `warn` (`message()` accepts only `info` and `error`, `src/core/state/result.ts:12-21`) used for `index changed; hunks refreshed` and the Git-version notice; conflicted-stage notice `<path> has conflicts; resolve them in lazygit`; blocked and failed saves before the tool both read `git tool not started: <path> could not be saved` (error); busy notice `git: another operation is running` on every pending path. | **None** for the `warn` level and the conflict wording. **Partial** for the rest — `W261005F2A7-DES8` (version notice text), `DES9` (§5 flow says `busy` and `cannot save <path>; git tool not started`; §7 `openTool` says `git: another operation is running` and `git tool not started: cannot save <path>`), §5 "Failure and Recovery Rules" (`index changed; hunks refreshed`). `REQ1@R2`, `REQ3@R1`, `REQ7@R2`, `REQ8@R1` cover the behaviour. |
-| `W261005F2A7-UDES10@R1` | When `openTool` saved dirty buffers, the message `"<path>" written · opening lazygit` (or `N files written · opening lazygit`) is set and painted once before `shell.suspend()`; nothing is painted while suspended; on resume the full frame, including images, repaints and Git state refreshes. | **Partial** — `W261005F2A7-REQ2@R2`, `REQ6@R2`, `REQ8@R1`; `W261005F2A7-DES9` (paint guard, `S12`, `S14`, `S31`, refresh on `toolExited`). The pre-suspend message and its guaranteed paint are **None**. |
-| `W261005F2A7-UDES11@R1` | `git.repo === null` outside a repository, with Git missing, or below 2.31; then every Git surface renders as v1. | `W261005F2A7-REQ4@R2`, `REQ7@R2`; `W261005F2A7-DES8`, `DES10` (invariant "without a repository, rendering is byte-identical"). The Git-column part depends on `UDES1@R1`. |
-| `W261005F2A7-UDES12@R1` | None beyond `UDES9@R1` (the `warn` level that selects `messageWarn`). Tokens live in `src/ui/theme.ts`, a UI file. | `W261005F2A7-DES10` (lists `gitAdd` … `gitBranch` as presentation defaults); this design refines the set. |
+| `W261005F2A7-UDES1@R1` | A Git sign carried per render row separately from the existing `sign` (`▕`/`⚠`), so both paint on the same line; block-replace rows inherit the Git sign from their covered range; the gutter widens by one cell only when `git.repo` is set, consistently for paint, mouse hit-testing, and cursor placement (`src/ui/editors/text-view.ts:335`, `:457`, `:520`). | `W261005F2A7-REQ4@R3`, `REQ5@R2`; `W261005F2A7-DES12` (`RenderLine.changeSign`, `gutterWidth(lineCount, change)`; `S8`, `S32`, `S33`; `V9`, `V63`–`V65`) |
+| `W261005F2A7-UDES2@R1` | Six hunk kinds with delete anchors (`delete` on the line before the gap, `topdelete` on line 0), one `untracked` hunk for untracked and unborn files, at most one Git sign per line. | `W261005F2A7-REQ4@R3`, `REQ5@R2`; `W261005F2A7-DES2`, `DES10` (§7 `src/core/features/git/signs.ts` `GIT_SIGNS`, `hunkSigns`) |
+| `W261005F2A7-UDES3@R1` | `gotoHunk` reports `hunk n/m`, `no next hunk`, `no previous hunk`; stage success reports `staged hunk n/m`, prefixed by `"<path>" written · ` when the stage saved first; reset reports `reset hunk n/m · buffer changed, autosave pending`; stage, reset, and preview with no hunk at the cursor report `no hunk at cursor`. | `W261005F2A7-REQ1@R2`, `REQ4@R3`, `REQ9@R1`; `W261005F2A7-DES4`, `DES5`, `DES13` (catalogue; `S34`; `V66`) |
+| `W261005F2A7-UDES4@R1` | `StatusSegments.git` with `ref`, `op`, and counts; counts are zero for untracked files and unborn repositories. | `W261005F2A7-REQ4@R3`, `REQ7@R2`; `W261005F2A7-DES10` (§6 `StatusSegments.git`; `S10`; `V15`) |
+| `W261005F2A7-UDES5@R1` | Explorer markers `conflict`, `untracked`, `modified`, `staged` per file row, by precedence `conflict > untracked > modified > staged`; `contains` on every ancestor folder of a changed path, including deleted tracked files; per-file untracked inside new folders; no `deleted` row marker. | `W261005F2A7-REQ4@R3`; `W261005F2A7-DES10`, `RF9` (§7 `src/core/features/git/status.ts` `Marker`; `S9`; `V16`, `V17`) |
+| `W261005F2A7-UDES6@R1` | A `gitHunk` overlay carrying `bufferId` and `hunk`; Esc and `q` close it, a click outside closes it, any other key closes it and re-dispatches; opening with no hunk at the cursor sets `no hunk at cursor` and opens nothing. | `W261005F2A7-REQ4@R3`; `W261005F2A7-DES11` (§6 `Overlay` `gitHunk`; §7 `keys.ts`/`mouse.ts` gates), `DES13` (`no hunk at cursor`; `S34`; `V66`) |
+| `W261005F2A7-UDES7@R1` | `gitCommands` titles `Lazygit (full screen)`, `Stage hunk`, `Reset hunk`, `Preview hunk`, `Blame line` (which-key prints command titles); groups `git` and `hunk`. | `W261005F2A7-REQ4@R3`, `REQ2@R2`; `W261005F2A7-DES11` (§7 `src/core/state/git-commands.ts`; `S36`; `V69`) |
+| `W261005F2A7-UDES8@R1` | Blame result as `<author>, <relative date> · <summary> (<short sha>)` at info level, or `not committed yet` at info level; relative date formatted from `time` and `now`. | `W261005F2A7-REQ4@R3`; `W261005F2A7-DES11` (§5 Blame flow; §7 `src/core/features/git/blame.ts`). Relative-date buckets are defined here (§7 Git message catalogue). |
+| `W261005F2A7-UDES9@R1` | A third message level `warn` (`message()` accepts only `info` and `error`, `src/core/state/result.ts:12-21`) used for `index changed; hunks refreshed` and the Git-version notice; conflicted-stage notice `<path> has conflicts; resolve them in lazygit`; blocked and failed saves before the tool both read `git tool not started: <path> could not be saved` (error); busy notice `git: another operation is running` on every pending path. | `W261005F2A7-REQ1@R2`, `REQ3@R1`, `REQ7@R2`, `REQ8@R1`; `W261005F2A7-DES8`, `DES9`, `DES13` (`warn` level, catalogue; `S34`; `V66`) |
+| `W261005F2A7-UDES10@R1` | When `openTool` saved dirty buffers, the message `"<path>" written · opening lazygit` (or `N files written · opening lazygit`) is set and painted once before `shell.suspend()`; nothing is painted while suspended; on resume the full frame, including images, repaints and Git state refreshes. | `W261005F2A7-REQ2@R2`, `REQ6@R2`, `REQ8@R1`; `W261005F2A7-DES9` (`Shell.flush()` before `suspend`, paint guard; `S12`, `S14`, `S31`, `S35`), `DES13` (pre-suspend message; `V30`, `V67`, `V68`) |
+| `W261005F2A7-UDES11@R1` | `git.repo === null` outside a repository, with Git missing, or below 2.31; then every Git surface renders as v1. | `W261005F2A7-REQ4@R3`, `REQ7@R2`; `W261005F2A7-DES8`, `DES10`, `DES12` (no change column when `git.repo === null`; `S32`; `V64`) |
+| `W261005F2A7-UDES12@R1` | None beyond `UDES9@R1` (the `warn` level that selects `messageWarn`). Tokens live in `src/ui/theme.ts`, a UI file. | `W261005F2A7-REQ4@R3`; `W261005F2A7-DES10` (per-surface token names), `DES13` (`warn` → `messageWarn`; `S34`; `V66`) |
 
 # 2. Experience Architecture
 
@@ -487,26 +487,26 @@ Example (M1 S1, S2): `+  18 ▕- [ ] Git signs in the gutter`; outside a reposit
 
 - **Target:** `src/ui/editors/text-view.ts` — `gutterWidth`, `EditorView.renderSelf` `gutter`
 - **Language and framework:** TypeScript, OpenTUI `Renderable`
-- **System-design authority:** `W261005F2A7-DES10`; required system support for `UDES1@R1` (Git sign per row)
+- **System-design authority:** `W261005F2A7-DES12` (`RenderLine.changeSign`, `gutterWidth(lineCount, change)`); `W261005F2A7-DES10` (`GIT_SIGNS`)
 
 ```ts
 /** A Git sign cell when the workspace is in a repository, line numbers, a space, and the sign cell. */
-const gutterWidth = (lineCount: number, git: boolean) =>
-  (git ? 1 : 0) + Math.max(4, String(lineCount).length) + 2;
+const gutterWidth = (lineCount: number, change: boolean) =>
+  (change ? 1 : 0) + Math.max(4, String(lineCount).length) + 2;
 
-const git = s.git.repo !== null;
-const gw = gutterWidth(b?.text.lineCount ?? 0, git);
-const gutter = (text: string, at: number, sign?: Sign, gitSign?: Sign) => {
-  if (git)
-    drawCells(buf, theme.style(gitSign?.style ?? "gutter"), this.x, y + at, gitSign?.text ?? "", 1);
-  const nx = this.x + (git ? 1 : 0);
-  drawCells(buf, theme.style(isCursor && text !== "" ? "gutterCursor" : "gutter"), nx, y + at, `${text.padStart(gw - (git ? 3 : 2))} `, gw - (git ? 2 : 1));
+const change = s.git.repo !== null;
+const gw = gutterWidth(b?.text.lineCount ?? 0, change);
+const gutter = (text: string, at: number, sign?: Sign, changeSign?: Sign) => {
+  if (change)
+    drawCells(buf, theme.style(changeSign?.style ?? "gutter"), this.x, y + at, changeSign?.text ?? "", 1);
+  const nx = this.x + (change ? 1 : 0);
+  drawCells(buf, theme.style(isCursor && text !== "" ? "gutterCursor" : "gutter"), nx, y + at, `${text.padStart(gw - (change ? 3 : 2))} `, gw - (change ? 2 : 1));
   drawCells(buf, theme.style(sign?.style ?? "gutter"), this.x + gw - 1, y + at, sign?.text ?? "", 1);
 };
-// first screen row of a line: gutter(number(), i, row.sign, row.gitSign); continuation rows: gutter("", i)
+// first screen row of a line: gutter(number(), i, row.sign, row.changeSign); continuation rows: gutter("", i)
 ```
 
-`gutterWidth` gains a `git` flag, and every caller (`renderSelf`, the hit-test at `:457`, and the cursor/scroll width at `:335`) passes the same `s.git.repo !== null`, so a click or cursor never lands one cell off. `gutter` paints the Git cell first, then the v1 number and sign cells shifted right by one. `row.gitSign` is the per-row Git sign that the system design must supply separately from `row.sign` (required system support for `UDES1@R1`); its exact field name and how `layoutText` fills it, including block-replace inheritance, belong to the system design. Outside a repository `git` is false and the function draws exactly the v1 cells, which keeps the "byte-identical" invariant of `W261005F2A7-DES10`.
+`gutterWidth` gains the `change` flag of `W261005F2A7-DES12`, and every caller (`renderSelf` at `:520`, the hit-test at `:457`, and the cursor/scroll width at `:335`) passes the same `s.git.repo !== null`, so a click or cursor never lands one cell off. `gutter` paints the change cell first, then the v1 number and sign cells shifted right by one. `row.changeSign` is the per-row Git sign that `layoutText` fills separately from `row.sign`, including block-replace inheritance (`W261005F2A7-DES12`). Outside a repository `change` is false and the function draws exactly the v1 cells, which keeps the "byte-identical" invariant of `W261005F2A7-DES10` and `DES12`.
 
 ## Surface: Statusline
 
@@ -807,7 +807,7 @@ export const gitCommands: AppCommand[] = [
 ];
 ```
 
-Only the `title` strings change from the system design's proposed shape (`Git: open tool` → `Lazygit (full screen)`, `Git: stage hunk` → `Stage hunk`, …); ids, handlers, bindings, and groups stay as `W261005F2A7-DES11` defines. `whichKeyRows` prints `title` as the label, so this is the only change needed for M3 S5–S6.
+The titles match `W261005F2A7-DES11`; ids, handlers, bindings, and groups are as `DES11` defines. `whichKeyRows` prints `title` as the label, which yields M3 S5–S6.
 
 ## Surface: Message line
 
@@ -871,7 +871,7 @@ Unchanged — one row at every width; truncation per v1.
 
 - **Target:** `src/ui/views/cmdline.ts` — message painter; `src/core/state/result.ts` — `message`
 - **Language and framework:** TypeScript, OpenTUI
-- **System-design authority:** required system support for `UDES9@R1`
+- **System-design authority:** `W261005F2A7-DES13` (`message()` `warn` level, Git message catalogue)
 
 ```ts
 const MESSAGE_TOKEN = { info: "message", warn: "messageWarn", error: "messageError" } as const;
@@ -958,7 +958,7 @@ None — suspend, resume, and the paint guard are system-design shapes (§7 `src
 - **Specification mode:** new
 - **Existing contract:** None — new component (adjacent v1 sign cell: `src/ui/editors/text-view.ts:540-557`)
 - **Reuse scope:** surface
-- **System contract:** `W261005F2A7-DES10` `GIT_SIGNS`; per-row Git sign (required system support for `UDES1@R1`)
+- **System contract:** `W261005F2A7-DES10` `GIT_SIGNS`; `W261005F2A7-DES12` `RenderLine.changeSign`, `gutterWidth`
 - **Success criteria:** `W261005F2A7-US1@R1`, `US2@R1`, `US11@R1`
 - **Verification:** `W261005F2A7-UV1@R1`, `UV2@R1`, `UV3@R1`, `UV4@R1`, `UV16@R1`, `UV17@R1`
 
@@ -1137,7 +1137,7 @@ for (const optional of [git, preview, words, view]) { /* v1 drop rule */ }
 - **Specification mode:** new
 - **Existing contract:** None — new component (row painter `src/ui/views/explorer.ts:273-315`)
 - **Reuse scope:** surface
-- **System contract:** `W261005F2A7-DES10` `explorerMarkers`; required system support for `UDES5@R1`
+- **System contract:** `W261005F2A7-DES10` `explorerMarkers`, `Marker`
 - **Success criteria:** `W261005F2A7-US5@R1`
 - **Verification:** `W261005F2A7-UV8@R1`
 
@@ -1351,7 +1351,7 @@ export class HunkView extends Renderable {
 - **Specification mode:** new
 - **Existing contract:** None — new content contract (painter `src/ui/views/cmdline.ts:92-100`; `message()` `src/core/state/result.ts:12-21`)
 - **Reuse scope:** feature
-- **System contract:** `W261005F2A7-DES4`, `DES5`, `DES8`, `DES9`, `DES11`; required system support for `UDES3@R1`, `UDES9@R1`, `UDES10@R1`
+- **System contract:** `W261005F2A7-DES4`, `DES5`, `DES8`, `DES9`, `DES11`, `DES13` (the system design's catalogue table follows this one)
 - **Success criteria:** `W261005F2A7-US3@R1`, `US8@R1`, `US9@R1`, `US10@R1`
 - **Verification:** `W261005F2A7-UV5@R1`, `UV12@R1`, `UV13@R1`, `UV14@R1`
 
@@ -1375,12 +1375,12 @@ export class HunkView extends Renderable {
 | Blame uncommitted | `not committed yet` | info | M3 S8 |
 | Tool missing | `<git.tool[0]> not found (git.tool)` | error | M3 S9 |
 | Not a repository | `not a git repository` | info | M3 S10 |
-| Conflicted stage | `<path> has conflicts; resolve them in lazygit` | error | M3 S11 |
+| Conflicted stage | `<path> has conflicts; resolve them in <git.tool[0]>` (`lazygit` by default) | error | M3 S11 |
 | Stale index | `index changed; hunks refreshed` | warn | M3 S12 |
 | Save failed / blocked before tool | `git tool not started: <path> could not be saved` | error | M3 S13 |
 | Git too old (once, startup) | `git <version> is older than 2.31; git features off` | warn | M3 S14 |
 | Busy | `git: another operation is running` | info | M3 S15 |
-| Before suspend | `"<path>" written · opening lazygit`; `N files written · opening lazygit` when N > 1 | info | M3 S16 |
+| Before suspend | `"<path>" written · opening <git.tool[0]>`; `N files written · opening <git.tool[0]>` when N > 1 (`lazygit` by default) | info | M3 S16 |
 
 `n/m` is the 1-based position of the acted-on hunk among the file's hunks before the action. Relative date buckets for blame, from `now − time`: `just now` (< 1 minute), `N minute(s) ago` (< 1 hour), `N hour(s) ago` (< 1 day), `N day(s) ago` (< 30 days), `N month(s) ago` (< 365 days), `N year(s) ago`; singular for 1 (e.g. `1 day ago`, `2 days ago`).
 
@@ -1436,7 +1436,7 @@ None — the strings are a content contract consumed by core reducers that the s
 - **Specification mode:** new
 - **Existing contract:** None — new tokens in `TOKENS` (`src/ui/theme.ts:125-240`)
 - **Reuse scope:** shared
-- **System contract:** `W261005F2A7-DES10` (token names as presentation defaults)
+- **System contract:** `W261005F2A7-DES10` (per-surface token names), `DES13` (`messageWarn`)
 - **Success criteria:** `W261005F2A7-US12@R1`, `US2@R1`
 - **Verification:** `W261005F2A7-UV18@R1`, `UV3@R1`
 
@@ -1468,7 +1468,7 @@ token → [fg palette key, bg palette key, attributes, NO_COLOR attributes]
 | `explorerGitContains` | `fg-dim` | `bg-dark` | 0 | DIM | `•` |
 | `messageWarn` | `warn` | `bg` | 0 | 0 | warn notices |
 
-The float reuses `diffAdd`, `diffDel`, `float`, `floatDim`, `floatBorder`, `floatTitle` unchanged. `gitConflict`, `gitStaged`, and `gitBranch` from the system design's list are named `explorerGitConflict`, `explorerGitStaged`, and `statusGitRef` here because each surface has its own background (`bg` for the gutter, `bg-dark` for statusline and explorer), following the v1 split (`explorerDirty` vs `statusDirty`).
+The float reuses `diffAdd`, `diffDel`, `float`, `floatDim`, `floatBorder`, `floatTitle` unchanged. Each surface has its own background (`bg` for the gutter, `bg-dark` for statusline and explorer), so tokens are named per surface, following the v1 split (`explorerDirty` vs `statusDirty`); `W261005F2A7-DES10` uses the same names.
 
 ### Input and Content Contract
 
@@ -2004,5 +2004,4 @@ All entries add keys to `TOKENS` and reuse existing palette keys, so no current 
 
 ## Open Questions and Blockers
 
-- **System support conflicts** (to resolve in the system-impact assessment): `UDES1@R1` (Git sign channel, gutter width) vs `W261005F2A7-DES10`; `UDES4@R1` (no counts for untracked) vs §7 `status.ts`; `UDES5@R1` (no `deleted` marker) vs `DES10` / §7 `src/core/features/git/status.ts`; `UDES7@R1` (command titles) vs `DES11`.
-- **Missing system support:** `UDES3@R1` success and no-hunk wording; `UDES9@R1` `warn` level and conflict wording, plus aligning the busy and blocked-save wording across §5 and §7; `UDES10@R1` pre-suspend message and its paint.
+None — the system-support conflicts and gaps of the draft (`UDES1@R1`, `UDES3@R1`, `UDES4@R1`, `UDES5@R1`, `UDES7@R1`, `UDES9@R1`, `UDES10@R1`) are covered by `W261005F2A7-REQ4@R3` and `W261005F2A7-DES9`–`DES13`.
