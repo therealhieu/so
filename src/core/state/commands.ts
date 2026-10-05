@@ -80,6 +80,10 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   Today: "note.today",
   Yesterday: "note.yesterday",
   Tomorrow: "note.tomorrow",
+  Format: "lsp.format",
+  Diagnostics: "diag.list",
+  LspInfo: "lsp.info",
+  LspRestart: "lsp.restart",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */

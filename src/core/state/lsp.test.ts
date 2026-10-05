@@ -3,7 +3,10 @@ import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import type { Pos } from "../kernel/text/pos";
 import type { Diagnostic } from "../kernel/view/diagnostics";
 import { splitKeys } from "../kernel/vim/keys";
+import { runCommand } from "./commands";
+import { keymapFor } from "./keymap";
 import { cursorDiagnostic, request } from "./lsp";
+import { lspBindings } from "./lsp-commands";
 import type { LspFeature, LspResult, ServerView } from "./lsp-types";
 import { openPicker } from "./picker";
 import type { Action, AppState, Effect, Result } from "./types";
@@ -586,4 +589,92 @@ test("the diagnostics picker lists every diagnostic by severity, path, and posit
   }).state;
   expect(activePath(loaded)).toBe("src/z.rs");
   expect(cursorOf(loaded)).toEqual(at(1, 0));
+});
+
+test("each language feature command sends its operation", () => {
+  const all: LspFeature[] = [
+    "hover",
+    "definition",
+    "implementation",
+    "references",
+    "symbols",
+    "prepareRename",
+    "rename",
+    "codeActions",
+    "signature",
+    "completion",
+    "format",
+  ];
+  const s = attached([ready("a", all)]);
+  const table: [string, string][] = [
+    ["lsp.hover", "hover"],
+    ["lsp.definition", "definition"],
+    ["lsp.implementation", "implementation"],
+    ["lsp.references", "references"],
+    ["lsp.symbols", "symbols"],
+    ["lsp.rename", "prepareRename"],
+    ["lsp.codeAction", "codeActions"],
+    ["lsp.signature", "signature"],
+    ["lsp.complete", "completion"],
+    ["lsp.format", "format"],
+  ];
+  for (const [id, kind] of table) {
+    const sent = lspEffects(runCommand(s, id, 0, reg).effects);
+    expect(sent.map((e) => [id, e.op.kind])).toEqual([[id, kind]]);
+  }
+});
+
+test("rename without prepare support asks for a name starting from the word", () => {
+  const s = keys(attached([ready("a", ["rename"])]), "j4l").state;
+  const r = runCommand(s, "lsp.rename", 0, reg);
+  expect(r.effects).toEqual([]);
+  expect(r.state.overlay).toMatchObject({
+    kind: "prompt",
+    prompt: {
+      title: "Rename symbol",
+      value: "helper",
+      rename: { key: "a@/ws", path: "src/a.rs", pos: at(1, 4) },
+    },
+  });
+});
+
+test("a code action in Visual mode sends the selection and its diagnostics", () => {
+  const s = run(
+    keys(attached([ready("a", ["codeActions"])]), "jv3l").state,
+    publish("a@/ws", [diag(1, 1, 1, "unused"), diag(2, 0, 1, "other")]),
+  ).state;
+  const r = keys(s, "gra");
+  expect(lspEffects(r.effects).map((e) => e.op)).toEqual([
+    {
+      kind: "codeActions",
+      range: { start: at(1, 0), end: at(1, 4) },
+      diagnostics: [diag(1, 1, 1, "unused")],
+    },
+  ]);
+  expect(r.state.vim.mode).toBe("normal");
+});
+
+test("no language binding exists for notes and gd in a note still follows links", () => {
+  expect(lspBindings.every((b) => b.scope.filetype !== "markdown")).toBe(true);
+  const km = keymapFor(reg, fresh().config);
+  expect(
+    km.lookup({ mode: "normal", filetype: "markdown" }, ["g", "d"]),
+  ).toEqual({ kind: "command", id: "link.followOrTag" });
+  expect(km.lookup({ mode: "normal", filetype: "rust" }, ["g", "d"])).toEqual({
+    kind: "command",
+    id: "lsp.definition",
+  });
+  expect(
+    km.lookup({ mode: "insert", filetype: "rust" }, ["<C-Space>"]),
+  ).toEqual({ kind: "command", id: "lsp.complete" });
+  expect(km.lookup({ mode: "insert", filetype: "rust" }, ["<"]).kind).toBe(
+    "none",
+  );
+});
+
+test("K in a code file asks the first server for hover", () => {
+  const r = keys(attached([ready("a", ["hover"])]), "K");
+  expect(lspEffects(r.effects)).toMatchObject([
+    { key: "a@/ws", op: { kind: "hover", pos: at(0, 0) } },
+  ]);
 });

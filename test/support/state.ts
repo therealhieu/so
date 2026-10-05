@@ -37,6 +37,11 @@ import {
   linkGroups,
 } from "../../src/core/state/link-commands";
 import {
+  lspBindings,
+  lspCommands,
+  lspGroups,
+} from "../../src/core/state/lsp-commands";
+import {
   markdownBindings,
   markdownCommands,
 } from "../../src/core/state/markdown-commands";
@@ -71,6 +76,7 @@ export function testRegistries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of lspCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
   const embedModels = new EmbedModelRegistry();
@@ -89,8 +95,9 @@ export function testRegistries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...lspBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups },
+    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...lspGroups },
     viewContexts,
     embedModels,
     layouts,
