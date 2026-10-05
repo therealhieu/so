@@ -5,6 +5,7 @@ import type { Diagnostic } from "../kernel/view/diagnostics";
 import { splitKeys } from "../kernel/vim/keys";
 import { cursorDiagnostic, request } from "./lsp";
 import type { LspFeature, LspResult, ServerView } from "./lsp-types";
+import { openPicker } from "./picker";
 import type { Action, AppState, Effect, Result } from "./types";
 import { createUpdate } from "./update";
 
@@ -75,6 +76,8 @@ const activePath = (s: AppState) => {
 };
 const cursorOf = (s: AppState) =>
   s.windows.byId[s.windows.active]?.content.cursor;
+const pickerOf = (s: AppState) =>
+  s.overlay.kind === "picker" ? s.overlay.picker : undefined;
 const lspEffects = (effects: Effect[]) =>
   effects.filter((e) => e.kind === "lsp");
 
@@ -273,6 +276,16 @@ test("several locations open a picker and outside ones are counted", () => {
   );
   expect(r.state.lsp.list).toEqual({ title: "References", items });
   expect(messageOf(r.state)).toContain("2 outside the workspace");
+  const p = pickerOf(r.state);
+  expect(p?.source).toBe("lspLocations");
+  expect(p?.items.map((i) => i.label)).toEqual([
+    "src/a.rs:2:5",
+    "src/b.rs:2:5",
+    "src/c.rs:2:5",
+  ]);
+  const opened = keys(r.state, "<C-n><C-n><CR>");
+  expect(opened.state.overlay.kind).toBe("none");
+  expect(opened.effects).toContainEqual({ kind: "read", path: "src/c.rs" });
 });
 
 test("a failed server toasts once and an unavailable one never", () => {
@@ -476,4 +489,101 @@ test("an action that touches neither diagnostics nor floats keeps the language s
   ).state;
   expect(keys(s, "j").state.lsp).toBe(s.lsp);
   expect(run(s, { type: "resize", cols: 120, rows: 40 }).state.lsp).toBe(s.lsp);
+});
+
+test("document symbols open a picker indented by depth", () => {
+  const sent = request(attached([ready("a", ["symbols"])]), "symbols", {
+    kind: "symbols",
+  });
+  const range = (line: number) => ({ start: at(line, 3), end: at(line, 7) });
+  const r = run(
+    sent.state,
+    result(1, {
+      kind: "symbols",
+      items: [
+        { name: "Server", kind: "struct", range: range(0), depth: 0 },
+        { name: "start", kind: "method", range: range(1), depth: 1 },
+      ],
+    }),
+  );
+  const p = pickerOf(r.state);
+  expect(p?.source).toBe("lspSymbols");
+  expect(p?.items.map((i) => [i.label, i.detail])).toEqual([
+    ["Server", "struct"],
+    ["  start", "method"],
+  ]);
+  const chosen = keys(r.state, "<C-n><CR>").state;
+  expect(chosen.overlay.kind).toBe("none");
+  expect(cursorOf(chosen)).toEqual(at(1, 3));
+});
+
+test("the server list shows missing binaries and unavailable servers with their reason", () => {
+  const s = attached([ready("rust-analyzer", [])]);
+  const r = run(
+    s,
+    {
+      type: "lspServer",
+      key: "rust-analyzer@/ws",
+      view: { ...ready("rust-analyzer", []), state: "missing" },
+    },
+    {
+      type: "lspServer",
+      key: "gopls@/ws",
+      view: {
+        ...ready("gopls", []),
+        state: "unavailable",
+        reason: "error: component not installed",
+      },
+    },
+    {
+      type: "lspServer",
+      key: "clangd@",
+      view: (({ root: _, ...v }) => v)(ready("clangd", [])),
+    },
+  );
+  const items = pickerOf(
+    openPicker({ state: r.state, now: 0, reg }, "lspInfo").state,
+  )?.items;
+  const row = (name: string) =>
+    items?.find((i) => i.label.startsWith(`${name} `));
+  expect(row("rust-analyzer")).toMatchObject({
+    label: "rust-analyzer · /ws · missing",
+    detail: "not on PATH",
+  });
+  expect(row("gopls")).toMatchObject({
+    label: "gopls · /ws · unavailable",
+    detail: "unavailable: error: component not installed",
+  });
+  expect(row("clangd")).toMatchObject({
+    label: "clangd · (no project) · ready",
+    detail: "clangd",
+  });
+  expect(row("tsc")?.label).toBe("tsc · not started");
+});
+
+test("the diagnostics picker lists every diagnostic by severity, path, and position", () => {
+  const s = run(
+    attached([ready("a", []), ready("b", [])]),
+    publish("a@/ws", [diag(2, 1, 2, "late warning"), diag(0, 3, 1, "error")]),
+    publish("b@/ws", [diag(1, 0, 1, "first error")], "push", "src/z.rs"),
+    publish("b@/ws", [diag(1, 0, 2, "warning in b")], "push", "src/b.rs"),
+  ).state;
+  const opened = openPicker({ state: s, now: 0, reg }, "diagnostics").state;
+  const p = pickerOf(opened);
+  expect(p?.source).toBe("diagnostics");
+  expect(p?.items.map((i) => i.label)).toEqual([
+    "E src/a.rs:1:4 error",
+    "E src/z.rs:2:1 first error",
+    "W src/a.rs:3:2 late warning",
+    "W src/b.rs:2:1 warning in b",
+  ]);
+  const chosen = keys(opened, "<C-n><CR>");
+  expect(chosen.effects).toContainEqual({ kind: "read", path: "src/z.rs" });
+  const loaded = run(chosen.state, {
+    type: "fileLoaded",
+    path: "src/z.rs",
+    file: textFile("one\ntwo\n"),
+  }).state;
+  expect(activePath(loaded)).toBe("src/z.rs");
+  expect(cursorOf(loaded)).toEqual(at(1, 0));
 });

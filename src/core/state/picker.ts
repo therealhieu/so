@@ -20,6 +20,7 @@ import {
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
+import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
@@ -540,6 +541,7 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
       return id === undefined ? none(closed) : runCommand(closed, id, now, reg);
     },
   },
+  ...lspPickerSources,
 };
 
 const pickerOf = (s: AppState): PickerState | undefined =>
