@@ -107,11 +107,12 @@ open note   → applyBufferEdits (one undo step)
 closed note → patchFrontmatter effect (serial queue) → read → refuse if stale → patch → atomic write → frontmatterPatched
 ```
 
-Git starts after the first frame. Every Git call runs through `src/workspace/git.ts` as an argv (never a shell) with `--no-optional-locks` and `--literal-pathspecs`; the core only sees results:
+Git starts after the first frame. Every Git call runs through `src/workspace/git.ts` as an argv (never a shell) with `--no-optional-locks` and `--literal-pathspecs`, with patch and buffer contents only on stdin; its output is decoded keeping a leading BOM, so index text compares with the buffer exactly. The core only sees results:
 
 ```text
 first frame → detect (git missing → inert; < 2.31 → warn notice, inert; no repo → inert)
-   → gitDetected → watch the git dirs → status (coalesced 200 ms) → index read per open file whose oid changed
+   → gitDetected → watch the git dirs → status (coalesced 200 ms) → index read per open file whose status entry changed
+     (every open tracked file after a git-dir change, e.g. an outside checkout)
    → buffer edit → 100 ms diff timer → hunks → change column, statusline counts, explorer markers
 <leader>ghs / <leader>gg → save gate (unsaved buffers are written first; a failed save stops) → stage patch | tool hand-off
 tool hand-off → flush frame → hold interrupts → suspend shell → tool runs → reset foreign modes → resume → re-read buffers, status, and index
@@ -154,6 +155,7 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 | Frontmatter patch | `src/core/lang/markdown/frontmatter-patch.ts` — `patchFrontmatter` changes one key and keeps comments, order, quoting, line endings, and the body; `mergeFrontmatter` (template insert); `yamlScalar` |
 | Bases | `src/core/features/bases/*` — `parseBase`, `evaluateBase` (Obsidian `inFolder`/`hasTag`, `filter_hides_rows` diagnostics), `summarize` (15 default summaries), `propertyType` (`.obsidian/types.json`, else inference), `candidatesFrom` (every `file.*` field from index facts), `tableModel`, `kanbanModel`, `BaseLayoutRegistry`, `KANBAN_TYPE`; `src/core/state/base-{model,commands,write}.ts`; painters in `src/ui/widgets/base.ts` |
 | Embed models | `src/core/state/embed-models.ts` (`EmbedModelRegistry` by file type; `PreviewCtx.embedModel`); `base` registers `baseEmbedModel` |
+| Git | `GitState`, `RepoInfo`, `IndexEntry`, `GitPending`, `StageReport`, `ToolResult` and the git actions and effects in `src/core/state/types.ts`; reducers and the notice catalogue in `src/core/state/git.ts`; `Git`/`createGit` (`detect`, `status`, `readIndex`, `stage` with an index-oid guard, `blame`) in `src/workspace/git.ts`; `watchGitDirs` in `src/workspace/git-watcher.ts`; `createToolHost` in `src/app/tool-host.ts`; `Shell.flush/suspend/resume/resetForeignModes` in `src/ui/shell.ts` |
 | Session state | `PersistedState` in `src/core/state/types.ts` (`"version": 1`); `snapshotSession`/`parsePersisted` in `src/core/state/session.ts` |
 | Mouse | `MouseEvent`, `MouseTarget`, `WindowSpot` in `src/core/state/types.ts` (model values only, no screen coordinates or buttons); `onMouse` and `pressStops` in `src/core/state/mouse.ts`; `rowAt`, `displayColAt`, `sourceColAt` in `src/core/kernel/view/hit.ts` (screen row and display column → source column, using `Span.col`/`Span.inserted` set by `spansOf`); `createMouseRouter`, `MouseSource`, `MouseLayer`, `CLICK_MS` in `src/ui/mouse.ts`; each view's `targetAt`/`dragAt`/`itemAt`. Prompt and conflict dialogs ignore the mouse; toasts pass clicks through |
 | Vim behaviour | `test/vim/expected.json`, recorded from Neovim 0.11.x over RPC by `bun run record:vim` |
