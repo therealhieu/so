@@ -1,6 +1,6 @@
 # so
 
-- **Last Modified:** 2026-10-05
+- **Last Modified:** 2026-10-06
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
@@ -44,7 +44,7 @@ Default branch: `main`. One package, no monorepo.
 | `src/workspace` | File-system, watcher, trash, clipboard, config-file, state-file, log, and image-loading (`images.ts`) adapters; the index worker (`index-worker.ts`) |
 | `src/preview` | Browser preview server (`server.ts`) and the page, KaTeX, and Mermaid files embedded into the binary (`assets.ts`) |
 | `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (`links`, `notes`, `bases`, `git`), `time` (local calendar fields and a Moment-compatible formatter), `state`, `config` |
-| `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`) |
+| `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`, `sandbox.ts` with its profiles in `sandbox/`) |
 | `test` | Policy, boundary, vim, component, integration, e2e, and benchmark suites |
 | `.github/workflows` | `ci.yml`, `release.yml` |
 
@@ -175,7 +175,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
 
 ## Development and Verification
 
-- **Local Setup:** install Bun `1.4.2`, then `bun install --frozen-lockfile`. Run with `bun run dev` (no build step), or `bun run sandbox` for a demo vault with isolated config and state. `NO_COLOR` disables colour. `so --version` prints `package.json` `version`, or `SO_VERSION` when set at build time (release builds). PTY tests set `SO_TEST=1`, which alone enables the test-only hooks `SO_TEST_SLOW_WRITE` and `SO_TEST_THROW` in `src/app/main.ts`.
+- **Local Setup:** install Bun `1.4.2`, then `bun install --frozen-lockfile`. Run with `bun run dev` (no build step), or `bun run sandbox [--profile <name>]` for a demo vault with isolated config and state (`--list` names the profiles, `--journeys` prints a profile's manual checks). `NO_COLOR` disables colour. `so --version` prints `package.json` `version`, or `SO_VERSION` when set at build time (release builds). PTY tests set `SO_TEST=1`, which alone enables the test-only hooks `SO_TEST_SLOW_WRITE` and `SO_TEST_THROW` in `src/app/main.ts`.
 - **Files outside the workspace** (`src/workspace/config-file.ts`, `state-file.ts`, `log.ts`). An XDG variable counts only when it is an absolute path.
 
   | File | Path | Behaviour |
@@ -188,18 +188,18 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | Script | Command | Purpose |
   |---|---|---|
   | `dev` | `bun src/app/main.ts` | Run from source |
-  | `check` | `biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src test/boundaries.test.ts test/repo.test.ts test/vim` | Fast local gate: format, lint, types, unused code, unit suites (< 30 s) |
+  | `check` | `biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src scripts test/boundaries.test.ts test/repo.test.ts test/vim` | Fast local gate: format, lint, types, unused code, unit suites (< 30 s) |
   | `test:ci` | `bun test test/ui test/integration test/e2e` | Component, integration, and PTY e2e suites |
   | `bench` | `bun scripts/bench-gate.ts` | Benchmark gate (median of 5 runs, 2× target) |
   | `build` | `bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so` | Single binary; the worker is a second compile entrypoint; the preview page, KaTeX (with fonts), and Mermaid are embedded, so the binary needs no `node_modules` |
   | `record:vim` | `bun scripts/record-vim.ts` | Record vim expectations from Neovim 0.11.x (local only) |
-  | `sandbox` | `bun scripts/sandbox.ts` | Launch so on a demo vault staged from fixtures, with config and state isolated under `.sandbox/` (`--reset` restages; other args go to so) |
+  | `sandbox` | `bun scripts/sandbox.ts` | Launch so on a profile (`scripts/sandbox/profiles/`, default `tour`): a vault, optional `config.toml`, and journeys to check by hand, staged once under `.sandbox/<profile>/` with its own config and state (`--reset` restages that profile; other args go to so) |
 
 - **Test Layers:**
 
   | Layer | Location | Runs in |
   |---|---|---|
-  | Unit | colocated `src/**/*.test.ts`, `test/vim`, `test/boundaries.test.ts`, `test/repo.test.ts` | `check` |
+  | Unit | colocated `src/**/*.test.ts`, `scripts/*.test.ts`, `test/vim`, `test/boundaries.test.ts`, `test/repo.test.ts` | `check` |
   | Component | `test/ui` | `test:ci` |
   | Integration | `test/integration` | `test:ci` |
   | End-to-end (PTY) | `test/e2e` | `test:ci` |
