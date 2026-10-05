@@ -470,7 +470,8 @@ export function withoutFloat(s: AppState): AppState {
 /**
  * Post-step: the float closes when its window is no longer active or shows
  * another buffer. Signature help lives only in Insert mode; a hover or
- * diagnostic float also closes when the text or the cursor changes.
+ * diagnostic float also closes when the text, the cursor, or the mode
+ * changes.
  */
 export function syncFloat(prev: AppState, r: Result): Result {
   const s = r.state;
@@ -488,7 +489,8 @@ export function syncFloat(prev: AppState, r: Result): Result {
     was.content.bufferId !== w.content.bufferId ||
     prev.buffers[was.content.bufferId]?.text.version !== b?.text.version ||
     was.content.cursor.line !== w.content.cursor.line ||
-    was.content.cursor.col !== w.content.cursor.col;
+    was.content.cursor.col !== w.content.cursor.col ||
+    prev.vim.mode !== s.vim.mode;
   return changed ? close() : r;
 }
 

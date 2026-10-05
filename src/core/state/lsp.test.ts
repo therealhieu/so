@@ -493,6 +493,17 @@ test("hover closes on cursor move and signature help on leaving insert mode", ()
   expect(keys(typed, "<Esc>").state.lsp.float).toBeUndefined();
 });
 
+test("hover closes when the mode changes", () => {
+  const sent = hover(attached([ready("a", ["hover"])]));
+  const shown = run(
+    sent.state,
+    result(1, { kind: "hover", text: "doc" }),
+  ).state;
+  expect(shown.lsp.float?.kind).toBe("hover");
+  expect(keys(shown, "i").state.lsp.float).toBeUndefined();
+  expect(keys(shown, "v").state.lsp.float).toBeUndefined();
+});
+
 test("<Esc> in normal mode closes a hover float without moving", () => {
   const s = keys(attached([ready("a", ["hover"])]), "j4l").state;
   const sent = hover(s);
