@@ -511,20 +511,13 @@ export function toFormatEdit(
   };
 }
 
-/** Markdown text without code fences. */
-const unfenced = (md: string) =>
-  md
-    .split("\n")
-    .filter((l) => !/^\s*(```|~~~)/.test(l))
-    .join("\n");
-
 function markedText(c: MarkupContent | MarkedString): string {
-  if (typeof c === "string") return unfenced(c);
-  if ("kind" in c) return c.kind === "markdown" ? unfenced(c.value) : c.value;
-  return c.value;
+  if (typeof c === "string") return c;
+  if ("kind" in c) return c.value;
+  return `\`\`\`${c.language}\n${c.value}\n\`\`\``;
 }
 
-/** Hover contents as plain text: Markdown fences dropped, the text kept. */
+/** Hover contents as Markdown; a language-tagged string becomes a fenced block. */
 export function toHover(h: Hover | null | undefined): LspResult {
   if (!isObject(h)) return NONE;
   const parts = Array.isArray(h.contents) ? h.contents : [h.contents];

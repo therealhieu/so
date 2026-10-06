@@ -222,7 +222,7 @@ test("content-modified and cancelled errors are quiet", () => {
   });
 });
 
-test("markdown hover text drops code fences", () => {
+test("hover contents become Markdown, language-tagged strings as fenced code", () => {
   expect(
     toHover({
       contents: {
@@ -230,10 +230,10 @@ test("markdown hover text drops code fences", () => {
         value: "```rust\nfn main()\n```\n\nRuns first.",
       },
     }),
-  ).toEqual({ kind: "hover", text: "fn main()\n\nRuns first." });
+  ).toEqual({ kind: "hover", text: "```rust\nfn main()\n```\n\nRuns first." });
   expect(
     toHover({ contents: [{ language: "ts", value: "let x: number" }, "doc"] }),
-  ).toEqual({ kind: "hover", text: "let x: number\n\ndoc" });
+  ).toEqual({ kind: "hover", text: "```ts\nlet x: number\n```\n\ndoc" });
   expect(toHover(null)).toEqual({ kind: "none" });
   expect(toHover({ contents: "" })).toEqual({ kind: "none" });
 });

@@ -14,6 +14,7 @@ import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
 import { onCompletionResult, onResolvedItem } from "./code-completion";
 import { goTo, recordJump } from "./jumps";
 import { startCodeEdit } from "./lsp-edits";
+import { hoverLines } from "./lsp-hover";
 import type {
   CodeAction,
   DiagnosticSlots,
@@ -275,12 +276,18 @@ function applyResult(
         ? none(s)
         : message(s, `${p.feature}: nothing found`);
     case "hover": {
-      const lines = r.text.split("\n");
-      return lines.every((l) => l.trim() === "")
+      const { lines, spans } = hoverLines(r.text);
+      return lines.length === 0
         ? message(s, `${p.feature}: nothing found`)
         : none(
             withLsp(s, {
-              float: { kind: "hover", window: p.window, at: pos, lines },
+              float: {
+                kind: "hover",
+                window: p.window,
+                at: pos,
+                lines,
+                ...(spans.some((x) => x !== undefined) ? { spans } : {}),
+              },
             }),
           );
     }

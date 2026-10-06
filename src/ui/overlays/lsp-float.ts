@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { FLOAT_RULE } from "../../core/state/lsp-hover";
 import type { LspFloat } from "../../core/state/lsp-types";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
@@ -120,7 +121,39 @@ export class LspFloatView extends Renderable {
       if (row === undefined) break;
       const x = box.x + 2;
       const y = box.y + 1 + i;
-      drawCells(buf, body, x, y, row.text, inner);
+      const styled = f.spans?.[row.line];
+      if (styled?.[0]?.style === FLOAT_RULE)
+        drawCells(buf, theme.style("floatDim"), x, y, "─".repeat(inner), inner);
+      else {
+        drawCells(buf, body, x, y, row.text, inner);
+        if (styled !== undefined) {
+          // Code colours on the float's background.
+          let at = 0;
+          for (const sp of styled) {
+            const start = Math.max(at, row.from);
+            const end = Math.min(
+              at + sp.text.length,
+              row.from + row.text.length,
+            );
+            at += sp.text.length;
+            if (end <= start) continue;
+            const lead = cells(row.text.slice(0, start - row.from));
+            if (lead >= inner) break;
+            const piece = sp.text.slice(
+              start - (at - sp.text.length),
+              end - (at - sp.text.length),
+            );
+            drawCells(
+              buf,
+              { ...theme.style(sp.style), bg: body.bg },
+              x + lead,
+              y,
+              piece,
+              Math.min(cells(piece), inner - lead),
+            );
+          }
+        }
+      }
       const a = f.active;
       if (a === undefined || a.line !== row.line) continue;
       const from = Math.max(a.start, row.from) - row.from;

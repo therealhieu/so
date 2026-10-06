@@ -1,6 +1,7 @@
 import type { Pos, Range } from "../kernel/text/pos";
 import type { Diagnostic } from "../kernel/view/diagnostics";
 import type { InlayHint } from "../kernel/view/inlay-hints";
+import type { Span } from "../kernel/view/types";
 
 /** `${name}@${root}`, or `${name}@` for files with no project root. */
 export type ServerKey = string;
@@ -158,6 +159,8 @@ export type LspFloat = {
   window: number;
   at: Pos;
   lines: string[];
+  /** Styles of the lines that have them, by line. */
+  spans?: (Span[] | undefined)[];
   active?: { line: number; start: number; end: number };
 };
 /** A workspace edit in progress: files still to apply, applied, and skipped. */
