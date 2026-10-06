@@ -693,9 +693,12 @@ test("a watched file change reaches a server only when it matches a registered g
   await writeFile(join(root, "notes.md"), "# notes\n");
   await waitForMessage(rs.log, "workspace/didChangeWatchedFiles");
   await Bun.sleep(300);
-  expect(
-    messages(rs.log, "workspace/didChangeWatchedFiles").map((m) => m.params),
-  ).toEqual([{ changes: [{ uri: uri(join(root, "lib.rs")), type: 2 }] }]);
+  // macOS may also report main.rs, written just before the start.
+  const changed = messages(rs.log, "workspace/didChangeWatchedFiles").flatMap(
+    (m) => (m.params as { changes: { uri: string; type: number }[] }).changes,
+  );
+  expect(changed).toContainEqual({ uri: uri(join(root, "lib.rs")), type: 2 });
+  expect(changed.every((c) => c.uri.endsWith(".rs"))).toBe(true);
 });
 
 /** A server that answers every inlay hint request with `: i32` after `x`. */
