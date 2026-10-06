@@ -421,6 +421,38 @@ test("diagnostics published in insert mode show after leaving insert mode", () =
   expect(left.lsp.shown["src/a.rs"]?.map((d) => d.message)).toEqual(["new"]);
 });
 
+test("diagnostics and hints below an added line move down with it, even while typing", () => {
+  const s = run(
+    attached([ready("a", [])]),
+    publish("a@/ws", [diag(1, 4, 1, "below"), diag(0, 3, 2, "above")]),
+    {
+      type: "lspInlayHints",
+      key: "a@/ws",
+      path: "src/a.rs",
+      items: [{ pos: at(1, 10), label: ": ()" }],
+    },
+  ).state;
+  const lines = (st: AppState) =>
+    st.lsp.shown["src/a.rs"]?.map((d) => [d.message, d.range.start.line]);
+  // `O` on line 1 opens a line above it.
+  const typing = keys(s, "jOlet x = 1;").state;
+  expect(typing.vim.mode).toBe("insert");
+  expect(lines(typing)).toEqual([
+    ["below", 2],
+    ["above", 0],
+  ]);
+  expect(typing.lsp.inlayHints["src/a.rs"]?.["a@/ws"]?.[0]?.pos).toEqual(
+    at(2, 10),
+  );
+  const back = keys(typing, "<Esc>dd").state;
+  expect(lines(back)).toEqual([
+    ["below", 1],
+    ["above", 0],
+  ]);
+  // Deleting the line a diagnostic is on removes it until the server answers.
+  expect(lines(keys(back, "dd").state)).toEqual([["above", 0]]);
+});
+
 test("diagnostics of another file still show while inserting", () => {
   const typing = keys(attached([ready("a", [])]), "i").state;
   const r = run(

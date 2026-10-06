@@ -1,3 +1,10 @@
+import {
+  type LineShift,
+  lineRemoved,
+  lineShift,
+  shiftPos,
+  shiftRange,
+} from "../kernel/text/line-shift";
 import type { Pos, Range } from "../kernel/text/pos";
 import type {
   Diagnostic,
@@ -617,6 +624,93 @@ export function mergedDiagnostics(
     ...(slots.push ?? []),
     ...(slots.pull ?? []),
   ]);
+}
+
+/** `ds` moved by `sh`; the ones that started on removed lines are dropped. */
+const shiftDiagnostics = (ds: readonly Diagnostic[], sh: LineShift) =>
+  ds.flatMap((d) => {
+    if (lineRemoved(d.range.start.line, sh)) return [];
+    const range = shiftRange(d.range, sh);
+    return [range === d.range ? d : { ...d, range }];
+  });
+
+const mapValues = <T>(
+  r: Readonly<Record<string, T>>,
+  f: (v: T) => T,
+): Record<string, T> =>
+  Object.fromEntries(Object.entries(r).map(([k, v]) => [k, f(v)]));
+
+/** `path`'s diagnostics, shown diagnostics, and inlay hints moved by `sh`. */
+function shiftPath(lsp: LspState, path: string, sh: LineShift): LspState {
+  const diagnostics = lsp.diagnostics[path];
+  const shown = lsp.shown[path];
+  const hints = lsp.inlayHints[path];
+  return {
+    ...lsp,
+    ...(diagnostics === undefined
+      ? {}
+      : {
+          diagnostics: {
+            ...lsp.diagnostics,
+            [path]: mapValues(diagnostics, (slots) => ({
+              ...(slots.push === undefined
+                ? {}
+                : { push: shiftDiagnostics(slots.push, sh) }),
+              ...(slots.pull === undefined
+                ? {}
+                : { pull: shiftDiagnostics(slots.pull, sh) }),
+            })),
+          },
+        }),
+    ...(shown === undefined
+      ? {}
+      : { shown: { ...lsp.shown, [path]: shiftDiagnostics(shown, sh) } }),
+    ...(hints === undefined
+      ? {}
+      : {
+          inlayHints: {
+            ...lsp.inlayHints,
+            [path]: mapValues(hints, (items) =>
+              items.flatMap((h) =>
+                lineRemoved(h.pos.line, sh)
+                  ? []
+                  : [
+                      h.pos.line >= sh.from
+                        ? { ...h, pos: shiftPos(h.pos, sh) }
+                        : h,
+                    ],
+              ),
+            ),
+          },
+        }),
+  };
+}
+
+/**
+ * Post-step: when an edit adds or removes lines, the diagnostics (shown ones
+ * included, even while typing) and inlay hints below it move with their
+ * text, and those on removed lines go, until the server answers for the
+ * new text.
+ */
+export function syncLineShift(prev: AppState, r: Result): Result {
+  const s = r.state;
+  if (s.buffers === prev.buffers) return r;
+  let lsp: LspState | undefined;
+  for (const b of Object.values(s.buffers)) {
+    const old = prev.buffers[b.id];
+    if (old === undefined || old.text === b.text || old.path !== b.path)
+      continue;
+    const cur = lsp ?? s.lsp;
+    if (
+      cur.diagnostics[b.path] === undefined &&
+      cur.shown[b.path] === undefined &&
+      cur.inlayHints[b.path] === undefined
+    )
+      continue;
+    const sh = lineShift(old.text, b.text);
+    if (sh !== undefined) lsp = shiftPath(cur, b.path, sh);
+  }
+  return lsp === undefined ? r : { state: { ...s, lsp }, effects: r.effects };
 }
 
 /** The path whose shown diagnostics stay as they are: the one being typed into. */

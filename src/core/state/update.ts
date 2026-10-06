@@ -44,6 +44,7 @@ import {
   syncDiagnostics,
   syncFloat,
   syncHighlight,
+  syncLineShift,
 } from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
@@ -256,13 +257,16 @@ export function createUpdate(reg: Registries): Update {
             state,
             syncDiagnostics(
               state,
-              syncEmbeds(
+              syncLineShift(
                 state,
-                followShownNote(
+                syncEmbeds(
                   state,
-                  syncEditorKinds(step(state, action), reg),
+                  followShownNote(
+                    state,
+                    syncEditorKinds(step(state, action), reg),
+                  ),
+                  reg,
                 ),
-                reg,
               ),
             ),
           ),
