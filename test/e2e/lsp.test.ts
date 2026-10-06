@@ -3,7 +3,6 @@ import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import { stripVTControlCharacters } from "node:util";
 import type { FakeScript } from "../fixtures/fake-lsp";
 import { fakeServerConfig, killServers, lspConfig } from "../support/lsp";
 import { type PtyProcess, ready, runInPty, statusRow } from "./pty";
@@ -140,8 +139,7 @@ test(
       },
     });
     expect(r.exitCode).toBe(0);
-    // The glyph and the name are drawn in separate colours.
-    expect(stripVTControlCharacters(r.probe.text)).toContain("◌ fake");
+    expect(r.statusRows.some((row) => row.includes("◌ fake"))).toBe(true);
   },
   TIMEOUT,
 );
