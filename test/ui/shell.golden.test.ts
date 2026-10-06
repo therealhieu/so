@@ -304,7 +304,8 @@ describe("themes", () => {
       m.keys("<Esc>vj");
       styles.selection = await at(6, 1);
       m.keys("<Esc>Az<Esc>");
-      styles.dirtyMarker = await at(10, 0);
+      const tabs = (await m.frame()).split("\n")[0] ?? "";
+      styles.dirtyMarker = await at([...tabs].indexOf("●"), 0);
       m.store.dispatch({
         type: "fsResult",
         op: { kind: "trash", from: "todo.md" },

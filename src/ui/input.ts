@@ -41,6 +41,8 @@ function printable(s: string): string | undefined {
 export function toKey(e: KeyInput): Key | undefined {
   if (e.ctrl && /^[a-z]$/.test(e.name)) return `<C-${e.name}>`;
   if (e.ctrl && e.name === "space") return "<C-Space>";
+  // Ctrl-^ arrives as "^" from a legacy terminal and as "6" with modified keys.
+  if (e.ctrl && (e.name === "^" || e.name === "6")) return "<C-^>";
   const named = NAMES[e.name];
   if (named !== undefined) return named;
   const seq =

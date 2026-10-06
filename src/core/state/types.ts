@@ -125,10 +125,17 @@ export type BufferState = {
   embeds?: { requested: string[]; refused: string[] };
   /** Its file type is never written: no save, autosave, or recreate. */
   readOnly?: true;
+  /** Kept at the front of the bufferline and out of bulk closes. */
+  pinned?: true;
 };
+
+/** Where a window last showed a buffer. */
+export type BufferView = { cursor: Pos; scroll: number };
 
 export type WindowState = {
   id: WindowId;
+  /** The view each buffer this window left had, restored when it shows it again. Never persisted. */
+  views?: Record<BufferId, BufferView>;
   content: {
     /** The editor kind showing the buffer: its file type's kind when registered, else "text". */
     editor: EditorKind;
@@ -315,7 +322,7 @@ export type PickerItem = {
 };
 /** An open picker: its source, query, ranked rows, and the search and preview it waits for. */
 export type PickerState = {
-  /** "files" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
+  /** "files" | "buffers" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
   source: string;
   /** tagNotes: the tag; backlinks: the target path */
   arg?: string;
@@ -348,7 +355,8 @@ export type PersistedState = {
   version: 1;
   recent: string[];
   jumps: JumpList;
-  buffers: { path: string; view: string }[];
+  /** Open buffers in bufferline order. */
+  buffers: { path: string; view: string; pinned?: true | undefined }[];
   layout: {
     tree: WindowTree;
     active: WindowId;
@@ -485,11 +493,13 @@ export type MouseTarget =
   | { kind: "outside" }
   | { kind: "inert" };
 
-/** One left-button gesture or wheel notch; the wheel repeats a vertical notch. */
+/** One left-button gesture, middle press, or wheel notch; the wheel repeats a vertical notch. */
 export type MouseEvent =
   | { kind: "press"; target: MouseTarget; clicks: 1 | 2 | 3; ctrl: boolean }
   | { kind: "drag"; target: MouseTarget }
   | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
+  /** A middle-button press. */
+  | { kind: "middle"; target: MouseTarget }
   /** The pointer moved onto `target` with no button held. */
   | { kind: "move"; target: MouseTarget };
 
@@ -497,6 +507,10 @@ export type AppState = {
   workspace: { root: string };
   buffers: Record<BufferId, BufferState>;
   nextBufferId: BufferId;
+  /** Listed buffers in bufferline order, pinned ones first. */
+  bufferOrder: BufferId[];
+  /** Listed buffers, most recently shown first; the second is the alternate. */
+  bufferMru: BufferId[];
   /** A window without a `byId` entry is empty (nothing open). */
   windows: {
     tree: WindowTree;
@@ -507,6 +521,8 @@ export type AppState = {
      * Windows waiting for their file, and how many files of the last session
      * were not found. `navigated` marks a wait from a jump or link follow,
      * which reports its own refusal instead of counting as missing.
+     * `background` lists the last session's other buffers still being read,
+     * and `buffers` their saved order and pins, applied once all have answered.
      */
     restore?: {
       pending: Record<
@@ -523,6 +539,8 @@ export type AppState = {
         }
       >;
       missing: number;
+      background?: string[];
+      buffers?: { path: string; pinned?: true | undefined }[];
     };
   };
   vim: VimState & {

@@ -16,6 +16,7 @@ import {
   fullText,
   listedBuffers,
   openPath,
+  recentBuffers,
 } from "./buffers";
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
@@ -24,6 +25,7 @@ import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
+import { closeBuffer } from "./save";
 import {
   cycleSetting,
   describeSetting,
@@ -81,6 +83,8 @@ export type PickerSource = {
   /** How many candidates there are before filtering. */
   total?(s: AppState, reg: Registries, arg?: string): number;
   accept(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
+  /** What `C-x` does to the selected item; the list is listed again after it. */
+  remove?(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
   /** File-based sources: the path and line to preview. */
   preview?(item: PickerItem): { path: string; line: number } | undefined;
   /** Display lines computed from the loaded preview file, instead of its raw lines. */
@@ -177,6 +181,26 @@ function baseViewCandidates(s: AppState, reg: Registries): Candidate[] {
     key: v.name,
     text: v.name,
     detail: v.name === m?.selected ? `${v.type} · shown` : v.type,
+  }));
+}
+
+/**
+ * Open buffers, the one shown before the current first and the current last,
+ * with their number, unsaved marker, and pin.
+ */
+function bufferCandidates(s: AppState): Candidate[] {
+  const current = activeBuffer(s)?.id;
+  const recent = recentBuffers(s);
+  return [
+    ...recent.filter((b) => b.id !== current),
+    ...recent.filter((b) => b.id === current),
+  ].map((b) => ({
+    key: String(b.id),
+    text: b.path,
+    path: b.path,
+    detail: [String(b.id), b.dirty ? "●" : "", b.pinned ? "pinned" : ""]
+      .filter((x) => x !== "")
+      .join(" "),
   }));
 }
 
@@ -337,6 +361,16 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     total: (s) => allFiles(s).length,
     accept: acceptFile,
     preview: previewFile,
+  },
+  buffers: {
+    id: "buffers",
+    title: "Buffers",
+    items: (s, _r, q) => ranked(bufferCandidates(s), q),
+    total: (s) => listedBuffers(s).length,
+    accept: acceptFile,
+    preview: previewFile,
+    remove: (s, item, now) =>
+      closeBuffer(s, Number(item.key), { force: false }, now),
   },
   recent: {
     id: "recent",
@@ -789,6 +823,15 @@ export function pickerKey(
         state: { ...s, overlay: { kind: "none" } },
         effects: [{ kind: "cancelTimer", id: "search" }],
       };
+    case "<C-x>": {
+      const item = p.items[p.selected];
+      const source = pickerSources[p.source];
+      return item === undefined || source?.remove === undefined
+        ? none(s)
+        : chain(source.remove(s, item, a.now, reg), (st) =>
+            refreshPicker(st, reg, p.source),
+          );
+    }
     case "<CR>": {
       const item = p.items[p.selected];
       const source = pickerSources[p.source];

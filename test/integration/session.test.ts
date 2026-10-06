@@ -143,3 +143,42 @@ test("a file gone since the last session is reported once", async () => {
     "1 files from the last session were not found",
   ]);
 });
+
+test("every open buffer comes back in its bufferline order with its pin", async () => {
+  const root = await tmpWorkspace({
+    "a.md": "a\n",
+    "b.md": "b\n",
+    "c.md": "c\n",
+    "d.md": "d\n",
+  });
+  const state = await mkState();
+  dirs.push(root, state);
+  const path = statePath(
+    { XDG_STATE_HOME: state },
+    "/no-home",
+    await realpath(root),
+  );
+  if (path === undefined) throw new Error("no state path");
+  const tabs = (s: AppState) =>
+    s.bufferOrder.map((id) => {
+      const b = s.buffers[id];
+      return b?.pinned ? `${b.path} (pinned)` : b?.path;
+    });
+
+  const before = await run(root, path, true, async (app) => {
+    for (const p of ["a.md", "b.md", "c.md", "d.md"]) await app.open(p);
+    app.keys("<leader>bp");
+    app.keys(":b b.md<CR>");
+    app.keys("]B");
+  });
+  expect(tabs(before)).toEqual(["d.md (pinned)", "a.md", "c.md", "b.md"]);
+
+  const after = await run(root, path, true, async (app) => {
+    await waitFor(() => app.store.get().windows.restore === undefined);
+  });
+  expect(windows(after)).toEqual([
+    { id: 1, path: "b.md", cursor: { line: 0, col: 0 } },
+  ]);
+  expect(tabs(after)).toEqual(["d.md (pinned)", "a.md", "c.md", "b.md"]);
+  expect(sessionToasts(after)).toEqual([]);
+});

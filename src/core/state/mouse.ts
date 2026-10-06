@@ -23,7 +23,7 @@ import { tagUnderCursor } from "./link-commands";
 import { onPointerMove } from "./lsp";
 import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
-import { autosaveNow } from "./save";
+import { autosaveNow, closeBuffer } from "./save";
 import { sidePanelRows } from "./side-panel";
 import type {
   AppState,
@@ -71,6 +71,11 @@ export function onMouse(
     }
     case "wheel":
       return wheel(s, e.target, e.dx, e.dy, a.now, reg);
+    case "middle":
+      // A middle click closes a tab, as `:bd` would, unless something floats over it.
+      return e.target.kind === "bufferTab" && s.overlay.kind === "none"
+        ? closeBuffer(s, e.target.bufferId, { force: false }, a.now)
+        : none(s);
   }
 }
 

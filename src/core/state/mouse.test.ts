@@ -708,6 +708,7 @@ test("prompt and conflict dialogs ignore every mouse gesture", () => {
         { kind: "drag", target } as const,
         wheel(target, 1),
         wheel(target, 0, -1),
+        { kind: "middle", target } as const,
       ]) {
         const r = mouse(start, event);
         expect(r.state).toBe(start);
@@ -916,4 +917,21 @@ test("dragging the explorer's separator resizes it like <C-w>>", () => {
     target: { kind: "explorerEdge", width: 90 },
   });
   expect(tooFar.state.panels.explorer.width).toBe(50);
+});
+
+test("a middle click on a tab closes that buffer as :bd does", () => {
+  const s = open("b.md", "bee\n", open("a.md", LINES));
+  const r = mouse(s, {
+    kind: "middle",
+    target: { kind: "bufferTab", bufferId: 1 },
+  });
+  expect(Object.values(r.state.buffers).map((b) => b.path)).toEqual(["b.md"]);
+  for (const target of ALL_TARGETS.filter((t) => t.kind !== "bufferTab"))
+    expect(mouse(s, { kind: "middle", target }).state).toBe(s);
+  const picking = keys(s, " sc").state;
+  const over = mouse(picking, {
+    kind: "middle",
+    target: { kind: "bufferTab", bufferId: 1 },
+  });
+  expect(Object.keys(over.state.buffers)).toHaveLength(2);
 });

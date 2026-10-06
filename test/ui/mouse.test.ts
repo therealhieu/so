@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import { MouseButtons } from "@opentui/core/testing";
 import { parseConfig } from "../../src/core/config/toml";
 import { baseWindow } from "../../src/core/state/base-model";
 import { activeBuffer } from "../../src/core/state/buffers";
@@ -298,6 +299,24 @@ test("clicks on the bufferline and explorer switch, expand, and open", async () 
     kind: "read",
     path: "notes/plan.md",
   });
+});
+
+test("the bufferline shows tabs in order with pins, and a middle click closes one", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.open("a.md", "alpha\n");
+  m.open("b.md", "bravo\n");
+  m.open("c.md", "charlie\n");
+  m.keys("<leader>bp");
+  const row0 = async () => (await m?.frame())?.split("\n")[0] ?? "";
+  expect(await row0()).toContain("▎ \uf435 c.md   a.md │ b.md ");
+  const tab = await find(m, " a.md ");
+  await m.mouse.click(tab.x + 2, 0, MouseButtons.MIDDLE);
+  expect(await row0()).toContain("▎ \uf435 c.md   b.md ");
+  expect(
+    Object.values(m.store.get().buffers)
+      .map((b) => b.path)
+      .sort(),
+  ).toEqual(["b.md", "c.md"]);
 });
 
 test("a click on an outline heading jumps there and the panel title only focuses", async () => {

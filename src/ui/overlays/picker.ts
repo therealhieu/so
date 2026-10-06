@@ -147,7 +147,7 @@ export class PickerView extends Renderable {
       footer:
         p.browse !== undefined
           ? "C-j/C-k move · Enter open · C-h back · Esc close"
-          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${tab} · Esc close`,
+          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${source?.remove ? " · C-x close" : ""}${tab} · Esc close`,
     });
     if (narrowPreview(s, p)) {
       this.paintPreviewPane(

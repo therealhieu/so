@@ -1,7 +1,7 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`picker selection stays visible without colour: marker and reverse video 1`] = `
-" plan.md                                                                                                        ~/notes 
+"▎ plan.md                                                                                                       ~/notes 
    1 ▕# Plan                                                                                                            
    1                                                                                                                    
    2  Why this exists.                                                                                                  
@@ -56,7 +56,7 @@ exports[`picker selection matches the light theme golden 1`] = `
 `;
 
 exports[`picker selection matches the light theme golden 2`] = `
-" plan.md                                                                                                        ~/notes 
+"▎ plan.md                                                                                                       ~/notes 
    1 ▕# Plan                                                                                                            
    1                                                                                                                    
    2  Why this exists.                                                                                                  
@@ -96,7 +96,7 @@ exports[`picker selection matches the light theme golden 2`] = `
 `;
 
 exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = `
-" plan.md                                                                        
+"▎ plan.md                                                                       
    1 ▕# Plan                                                                    
    1                                                                            
    2  Wh╭─ Find files ─────────────────────────────────────────────────╮        
@@ -124,7 +124,7 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
 `;
 
 exports[`live view states stay distinguishable without colour at 80×24 1`] = `
-" states.md                                                                      
+"▎ states.md                                                                     
    1 ▕# States                                                                  
    1                                                                            
    2  See nowhere and plan.                                                     
@@ -177,7 +177,7 @@ exports[`live view states matches the light theme golden 1`] = `
 `;
 
 exports[`live view states matches the light theme golden 2`] = `
-" states.md                                                                      
+"▎ states.md                                                                     
    1 ▕# States                                                                  
    1                                                                            
    2  See nowhere and plan.                                                     

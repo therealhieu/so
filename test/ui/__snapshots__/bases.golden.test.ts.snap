@@ -1,7 +1,7 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`base table matches the colour golden with a focused cell 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑      │ done                                 
@@ -29,7 +29,7 @@ exports[`base table matches the colour golden with a focused cell 1`] = `
 `;
 
 exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑      │ done                                 
@@ -57,7 +57,7 @@ exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
 `;
 
 exports[`base table matches the light golden with a focused cell 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑      │ done                                 
@@ -85,7 +85,7 @@ exports[`base table matches the light golden with a focused cell 1`] = `
 `;
 
 exports[`base table an edited cell shows its text, caret, and inline error 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑        │ done                               
@@ -113,7 +113,7 @@ exports[`base table an edited cell shows its text, caret, and inline error 1`] =
 `;
 
 exports[`base board matches the colour golden with a focused card 1`] = `
-" board.base                                                                     
+"▎ board.base                                                                    
  ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
 ────────────────────────────────────────────────────────────────────────────────
 ● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
@@ -141,7 +141,7 @@ exports[`base board matches the colour golden with a focused card 1`] = `
 `;
 
 exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
-" board.base                                                                     
+"▎ board.base                                                                    
  ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
 ────────────────────────────────────────────────────────────────────────────────
 ● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
@@ -169,7 +169,7 @@ exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
 `;
 
 exports[`base board matches the light golden with a focused card 1`] = `
-" board.base                                                                     
+"▎ board.base                                                                    
  ▦ board.base   1 Board  2 By late                      group: status · 4 cards 
 ────────────────────────────────────────────────────────────────────────────────
 ● doing 1 ───────── ● done 1 ────────── ● todo 1 ────────── ● None 1 ────────── 
@@ -197,7 +197,7 @@ exports[`base board matches the light golden with a focused card 1`] = `
 `;
 
 exports[`base states waiting and empty states match their goldens 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                               ◌ waiting for index 
 ────────────────────────────────────────────────────────────────────────────────
                                                                                 
@@ -225,7 +225,7 @@ exports[`base states waiting and empty states match their goldens 1`] = `
 `;
 
 exports[`base states waiting and empty states match their goldens 2`] = `
-" empty.base                                                                     
+"▎ empty.base                                                                    
  ▦ empty.base   1 Archived                      ⧩ status == "archived" · 0 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name                                                                         
@@ -253,7 +253,7 @@ exports[`base states waiting and empty states match their goldens 2`] = `
 `;
 
 exports[`base states toolbar notices explain disabled moves and the cards fallback 1`] = `
-" board.base                                                                     
+"▎ board.base                                                                    
  ▦ board.base   1 Board  2 By late          ⊘ moves off · group: late · 4 cards 
 ────────────────────────────────────────────────────────────────────────────────
 ● false 1 ──────────────── ● true 3 ───────────────── ● None 0 ─────────────────
@@ -281,7 +281,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
 `;
 
 exports[`base states toolbar notices explain disabled moves and the cards fallback 2`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   4/4 Cards                                                4 rows 
 ────────────────────────────────────────────────────────────────────────────────
  ⓘ cards view is not supported yet; showing a table                             
@@ -309,7 +309,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
 `;
 
 exports[`base states a wide window shows every view tab 1`] = `
-" tasks.base                                                                                                     ~/notes 
+"▎ tasks.base                                                                                                    ~/notes 
  ▦ tasks.base   1 All tasks  2 By status  3 Late  4 Cards                                              ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑      │ done                                                                         
@@ -343,7 +343,7 @@ exports[`base states a wide window shows every view tab 1`] = `
 `;
 
 exports[`base cell editors a text cell lists the property's existing values 1`] = `
-" tasks.base                                                                     
+"▎ tasks.base                                                                    
  ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ Status │ due ↑      │ done                                 
@@ -371,7 +371,7 @@ exports[`base cell editors a text cell lists the property's existing values 1`] 
 `;
 
 exports[`base cell editors a list cell shows its values as chips 1`] = `
-" labels.base                                                                    
+"▎ labels.base                                                                   
  ▦ labels.base   1 Labels                                                4 rows 
 ────────────────────────────────────────────────────────────────────────────────
    name            │ status │ tags                                              
@@ -474,7 +474,7 @@ exports[`base styles paints the focused cell and card, lane dots, and moves off 
 `;
 
 exports[`base embed a note paints an embedded base read-only, capped with a more marker 1`] = `
-" today.md                                                                       
+"▎ today.md                                                                      
    1 ▕# Today                                                                   
    1                                                                            
    2  ╭ ↳ tasks.base                                                            
@@ -502,7 +502,7 @@ exports[`base embed a note paints an embedded base read-only, capped with a more
 `;
 
 exports[`base embed a note paints an embedded board read-only, with one-line cards capped per lane 1`] = `
-" today.md                                                                       
+"▎ today.md                                                                      
    1 ▕# Today                                                                   
    1                                                                            
    2  ╭ ↳ board.base#By late                                                    

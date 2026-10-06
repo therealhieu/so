@@ -230,3 +230,93 @@ test("a resized explorer width is saved and loads with any start", () => {
     undefined,
   );
 });
+
+/** One window on b.md; a.md, c.md, and d.md were open too, d.md pinned. */
+const withHidden: PersistedState = {
+  ...saved,
+  buffers: [
+    { path: "d.md", view: "source", pinned: true },
+    { path: "c.md", view: "source" },
+    { path: "b.md", view: "source" },
+    { path: "a.md", view: "source" },
+  ],
+  layout: {
+    tree: { kind: "leaf", id: 1 },
+    active: 1,
+    windows: [{ id: 1, path: "b.md", cursor: { line: 1, col: 0 }, scroll: 0 }],
+  },
+};
+const tabs = (s: AppState) =>
+  s.bufferOrder.map((id) => {
+    const b = s.buffers[id];
+    return b?.pinned ? `${b.path} (pinned)` : b?.path;
+  });
+
+test("a folder start reopens every buffer of the last session in its order", () => {
+  const r = update(fresh(), {
+    type: "stateLoaded",
+    state: withHidden,
+    restore: true,
+  });
+  expect(r.effects).toEqual(
+    ["b.md", "d.md", "c.md", "a.md"].map((path) => ({ kind: "read", path })),
+  );
+  let s = r.state;
+  for (const path of ["a.md", "b.md", "c.md", "d.md"])
+    s = load(s, path, "x\ny\n").state;
+  expect(shown(s)).toEqual([
+    { id: 1, path: "b.md", cursor: { line: 1, col: 0 } },
+  ]);
+  expect(tabs(s)).toEqual(["d.md (pinned)", "c.md", "b.md", "a.md"]);
+  expect(s.recent).toEqual(saved.recent);
+  expect(s.windows.restore).toBeUndefined();
+  expect(snapshotSession(s).buffers).toEqual(
+    withHidden.buffers.map((b) => ({ ...b, view: "live" })),
+  );
+});
+
+test("a missing background buffer counts as not found and the rest still restore", () => {
+  let s = update(fresh(), {
+    type: "stateLoaded",
+    state: withHidden,
+    restore: true,
+  }).state;
+  s = update(s, { type: "fileRefused", path: "c.md", reason: "io" }).state;
+  expect(s.notifications.message).toBeUndefined();
+  for (const path of ["a.md", "b.md", "d.md"]) s = load(s, path, "x\n").state;
+  expect(tabs(s)).toEqual(["d.md (pinned)", "b.md", "a.md"]);
+  expect(s.notifications.toasts.map((t) => t.text)).toEqual([
+    "1 files from the last session were not found",
+  ]);
+});
+
+test("opening a buffer still being read in the background shows it when it loads", () => {
+  let s = update(fresh(), {
+    type: "stateLoaded",
+    state: withHidden,
+    restore: true,
+  }).state;
+  s = load(s, "b.md", "x\n").state;
+  const opened = update(s, { type: "key", key: ":", now: 0 }).state;
+  s = keys(opened, "e a.md<CR>");
+  s = load(s, "a.md", "x\n").state;
+  expect(shown(s)).toEqual([
+    { id: 1, path: "a.md", cursor: { line: 0, col: 0 } },
+  ]);
+});
+
+test("a state file from before pins still loads", () => {
+  expect(parsePersisted(JSON.parse(JSON.stringify(saved)))).toEqual(saved);
+});
+
+test("pinning or reordering buffers schedules a save", () => {
+  let s = load(fresh(), "a.md", "a\n").state;
+  s = load(s, "b.md", "b\n").state;
+  const pin = update(s, { type: "key", key: " ", now: 0 }).state;
+  const r = [..."bp"].reduce(
+    (acc: { state: AppState; effects: Effect[] }, key) =>
+      update(acc.state, { type: "key", key, now: 0 }),
+    { state: pin, effects: [] },
+  );
+  expect(r.effects).toContainEqual(SAVE);
+});

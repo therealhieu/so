@@ -1,7 +1,7 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`calendar matches the colour golden with a marked day selected 1`] = `
-" standup.md                                                                     
+"▎ standup.md                                                                    
    1 ▕# Standup                                                                 
                                                                                 
                                                                                 
@@ -29,7 +29,7 @@ exports[`calendar matches the colour golden with a marked day selected 1`] = `
 `;
 
 exports[`calendar matches the NO_COLOR golden with a marked day selected 1`] = `
-" standup.md                                                                     
+"▎ standup.md                                                                    
    1 ▕# Standup                                                                 
                                                                                 
                                                                                 
@@ -57,7 +57,7 @@ exports[`calendar matches the NO_COLOR golden with a marked day selected 1`] = `
 `;
 
 exports[`calendar matches the light golden with a marked day selected 1`] = `
-" standup.md                                                                     
+"▎ standup.md                                                                    
    1 ▕# Standup                                                                 
                                                                                 
                                                                                 
@@ -85,7 +85,7 @@ exports[`calendar matches the light golden with a marked day selected 1`] = `
 `;
 
 exports[`template picker shows source then the expansion at 120 columns 1`] = `
-" standup.md                                                                                                     ~/notes 
+"▎ standup.md                                                                                                    ~/notes 
    1 ▕# Standup                                                                                                         
                                                                                                                         
             ╭─ Insert template ────────────────────────────────────────────────────────────────────────────╮            
@@ -113,7 +113,7 @@ exports[`template picker shows source then the expansion at 120 columns 1`] = `
 `;
 
 exports[`template picker hides the preview at 90 columns until Tab 1`] = `
-" standup.md                                                                               
+"▎ standup.md                                                                              
    1 ▕# Standup                                                                           
                                                                                           
          ╭─ Insert template ────────────────────────────────────────────────────╮         
@@ -141,7 +141,7 @@ exports[`template picker hides the preview at 90 columns until Tab 1`] = `
 `;
 
 exports[`template picker hides the preview at 90 columns until Tab 2`] = `
-" standup.md                                                                               
+"▎ standup.md                                                                              
    1 ▕# Standup                                                                           
                                                                                           
          ╭─ Insert template ────────────────────────────────────────────────────╮         

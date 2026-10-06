@@ -148,3 +148,78 @@ test("edits move the cursor of every window showing the buffer", () => {
     col: 4,
   });
 });
+
+const load = (
+  s: AppState,
+  path: string,
+  text = "one\ntwo\nthree\nfour\n",
+  stamp = 1,
+) => update(s, { type: "fileLoaded", path, file: textFile(text, stamp) }).state;
+const ex = (s: AppState, line: string) =>
+  [":", ...line, "<CR>"].reduce((st, k) => key(st, k), s);
+const shownPath = (s: AppState) => {
+  const w = s.windows.byId[s.windows.active];
+  return w && s.buffers[w.content.bufferId]?.path;
+};
+const cursor = (s: AppState) =>
+  s.windows.byId[s.windows.active]?.content.cursor;
+
+test("switching buffers returns to where the window left each one", () => {
+  let s = load(fresh(), "a.md");
+  s = key(key(s, "j"), "j");
+  s = load(s, "b.md");
+  expect(cursor(s)).toEqual({ line: 0, col: 0 });
+  s = ex(s, "bp");
+  expect(shownPath(s)).toBe("a.md");
+  expect(cursor(s)).toEqual({ line: 2, col: 0 });
+});
+
+test("a view is restored inside text that shrank meanwhile", () => {
+  let s = load(fresh(), "a.md");
+  s = key(s, "G");
+  s = load(s, "b.md");
+  s = load(s, "a.md", "only\n", 2);
+  expect(shownPath(s)).toBe("b.md");
+  s = ex(s, "bp");
+  expect(cursor(s)).toEqual({ line: 0, col: 0 });
+});
+
+test("closing a buffer shows the one shown before it, where it was", () => {
+  let s = load(fresh(), "a.md");
+  s = load(s, "b.md");
+  s = key(s, "G");
+  s = load(s, "c.md");
+  s = ex(s, "bn");
+  expect(shownPath(s)).toBe("a.md");
+  s = ex(s, "bp");
+  s = ex(s, "bp");
+  expect(shownPath(s)).toBe("b.md");
+  s = ex(s, "bn");
+  expect(shownPath(s)).toBe("c.md");
+  s = ex(s, "bd");
+  expect(shownPath(s)).toBe("b.md");
+  expect(cursor(s)).toEqual({ line: 3, col: 0 });
+  expect(s.bufferOrder.map((id) => s.buffers[id]?.path)).toEqual([
+    "a.md",
+    "b.md",
+  ]);
+});
+
+test("the bufferline order keeps pinned buffers first and adds new ones last", () => {
+  let s = load(fresh(), "a.md");
+  s = load(s, "b.md");
+  const b = Object.values(s.buffers).find((x) => x.path === "b.md");
+  if (b === undefined) throw new Error("no b.md");
+  s = { ...s, buffers: { ...s.buffers, [b.id]: { ...b, pinned: true } } };
+  s = load(s, "c.md");
+  expect(s.bufferOrder.map((id) => s.buffers[id]?.path)).toEqual([
+    "b.md",
+    "a.md",
+    "c.md",
+  ]);
+  expect(s.bufferMru.map((id) => s.buffers[id]?.path)).toEqual([
+    "c.md",
+    "b.md",
+    "a.md",
+  ]);
+});

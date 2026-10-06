@@ -6,7 +6,12 @@ import type {
 import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
 import { onFrontmatterPatched } from "./base-write";
-import { fullText, onFileLoaded, onFileRefused } from "./buffers";
+import {
+  fullText,
+  onFileLoaded,
+  onFileRefused,
+  syncBufferLists,
+} from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
@@ -148,8 +153,8 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
  * A pure reducer over the given registries; a thrown error keeps the
  * previous state. A change to the persisted session (re)starts the save
  * debounce, the backlinks panel follows the active note, notes' embed
- * targets stay loaded while they are embedded, and each window's editor
- * kind follows its file type.
+ * targets stay loaded while they are embedded, the buffer lists follow the
+ * buffers, and each window's editor kind follows its file type.
  */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
@@ -266,7 +271,10 @@ export function createUpdate(reg: Registries): Update {
                   state,
                   followShownNote(
                     state,
-                    syncEditorKinds(step(state, action), reg),
+                    syncEditorKinds(
+                      syncBufferLists(state, step(state, action)),
+                      reg,
+                    ),
                   ),
                   reg,
                 ),

@@ -111,9 +111,12 @@ export function whichKeyKey(
   return noMapping(s, seq);
 }
 
+const TAB_COMMAND = /^buffer\.goto\d$/;
+
 /**
  * The popup's rows: direct actions (command titles) first, then `+groups`,
- * each alphabetical by key. Only keys bound in the popup's scope appear.
+ * each alphabetical by key; the keys that go to the Nth tab share one row.
+ * Only keys bound in the popup's scope appear.
  */
 export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
   if (s.overlay.kind !== "whichKey") return [];
@@ -127,7 +130,21 @@ export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
       label,
     ]),
   );
-  const rows = hit.next.map((item): WhichKeyRow => {
+  // The nine tab keys read as one row.
+  const tabKeys = hit.next.filter((i) => i.id?.match(TAB_COMMAND) != null);
+  const tabRow: WhichKeyRow[] =
+    tabKeys.length > 1
+      ? [
+          {
+            key: `${tabKeys[0]?.key}-${tabKeys.at(-1)?.key}`,
+            label: "Go to buffer N",
+            group: false,
+          },
+        ]
+      : [];
+  const rest =
+    tabRow.length > 0 ? hit.next.filter((i) => !tabKeys.includes(i)) : hit.next;
+  const rows = rest.map((item): WhichKeyRow => {
     if (item.id !== undefined)
       return {
         key: item.key,
@@ -137,7 +154,7 @@ export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
     const label = groups.get([...prefix, item.key].join("\u0000")) ?? "…";
     return { key: item.key, label: `+${label}`, group: true };
   });
-  return rows.sort(
+  return [...rows, ...tabRow].sort(
     (a, b) =>
       Number(a.group) - Number(b.group) ||
       (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),

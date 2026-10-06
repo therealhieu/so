@@ -16,6 +16,7 @@ import {
   toggleExplorer,
 } from "./explorer";
 import { scheduleAutosave } from "./save";
+import { SAVE_STATE_MS } from "./session";
 import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
 
@@ -141,6 +142,8 @@ test("moving a folder re-paths every buffer below it", () => {
     { kind: "listDir", dir: "" },
     { kind: "listDir", dir: "archive" },
     { kind: "listDir", dir: "archive/notes" },
+    // The open buffers' paths are part of the saved session.
+    { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
   ]);
 });
 

@@ -1,6 +1,13 @@
 import { z } from "zod";
 import type { WindowTree } from "../kernel/editor/windows";
-import { leaves, listedBuffers, placeAfterOpen } from "./buffers";
+import {
+  bufferForPath,
+  clampView,
+  leaves,
+  orderedBuffers,
+  placeAfterOpen,
+  showIn,
+} from "./buffers";
 import { JUMP_LIMIT } from "./jumps";
 import { RECENT_LIMIT } from "./recent";
 import { chain, none, toast } from "./result";
@@ -46,7 +53,13 @@ const persisted = z.object({
       at: count,
     })
     .refine((j) => j.at <= j.entries.length),
-  buffers: z.array(z.object({ path: relPath, view: z.string() })),
+  buffers: z.array(
+    z.object({
+      path: relPath,
+      view: z.string(),
+      pinned: z.literal(true).optional(),
+    }),
+  ),
   layout: z.object({
     tree,
     active: count,
@@ -90,9 +103,11 @@ export function snapshotSession(s: AppState): PersistedState {
     version: 1,
     recent: s.recent,
     jumps: s.jumps,
-    buffers: listedBuffers(s)
-      .sort((a, b) => a.id - b.id)
-      .map((b) => ({ path: b.path, view: b.view })),
+    buffers: orderedBuffers(s).map((b) => ({
+      path: b.path,
+      view: b.view,
+      ...(b.pinned === true ? { pinned: true as const } : {}),
+    })),
     layout: { tree: s.windows.tree, active: s.windows.active, windows },
     ...(width === undefined ? {} : { explorer: { width } }),
   };
@@ -113,7 +128,7 @@ const shownPaths = (s: AppState) =>
 
 /**
  * Whether a persisted part changed: recents, jumps, the explorer width, the
- * window tree, or the file a window shows. Cursor and scroll moves alone are saved with the next
+ * window tree, the open buffers' order and pins, or the file a window shows. Cursor and scroll moves alone are saved with the next
  * change or on exit.
  */
 export function sessionChanged(prev: AppState, next: AppState): boolean {
@@ -134,6 +149,15 @@ export function sessionChanged(prev: AppState, next: AppState): boolean {
     return true;
   if (prev.panels.explorer.width !== next.panels.explorer.width) return true;
   if (prev.windows.tree !== next.windows.tree) return true;
+  if (
+    (prev.buffers !== next.buffers || prev.bufferOrder !== next.bufferOrder) &&
+    !sameList(
+      orderedBuffers(prev),
+      orderedBuffers(next),
+      (a, b) => a.path === b.path && a.pinned === b.pinned,
+    )
+  )
+    return true;
   if (prev.windows.byId === next.windows.byId && prev.buffers === next.buffers)
     return false;
   return !sameList(shownPaths(prev), shownPaths(next), (a, b) => a === b);
@@ -152,8 +176,8 @@ function usable(layout: PersistedState["layout"]): boolean {
 
 /**
  * The state file was read. Recents, jumps, and the explorer width always
- * load; a start on a folder also rebuilds the layout and reads each window's
- * file once.
+ * load; a start on a folder also rebuilds the layout, reads each window's
+ * file once, and reads the other open buffers in the background.
  */
 export function onStateLoaded(
   s: AppState,
@@ -176,6 +200,13 @@ export function onStateLoaded(
   for (const w of layout.windows)
     pending[w.id] = { path: w.path, cursor: w.cursor, scroll: w.scroll };
   const paths = [...new Set(layout.windows.map((w) => w.path))];
+  const shown = new Set(paths);
+  const background = [
+    ...new Set(a.state.buffers.map((b) => b.path).filter((p) => !shown.has(p))),
+  ];
+  const buffers = a.state.buffers.map(({ path, pinned }) =>
+    pinned === true ? { path, pinned } : { path },
+  );
   return {
     state: {
       ...loaded,
@@ -184,11 +215,31 @@ export function onStateLoaded(
         byId: {},
         active: layout.active,
         nextWindowId: Math.max(...leaves(layout.tree)) + 1,
-        restore: { pending, missing: 0 },
+        restore: { pending, missing: 0, background, buffers },
       },
     },
-    effects: paths.map((path) => ({ kind: "read", path })),
+    effects: [...paths, ...background].map((path) => ({ kind: "read", path })),
   };
+}
+
+/** Whether `path` is a buffer of the last session still being read for no window. */
+export const backgroundRead = (s: AppState, path: string): boolean =>
+  s.windows.restore?.background?.includes(path) === true;
+
+/** A background read answered: `missed` when its file could not be opened. */
+export function settleBackground(
+  s: AppState,
+  path: string,
+  missed: boolean,
+): Result {
+  const restore = s.windows.restore;
+  if (restore?.background === undefined) return none(s);
+  const background = restore.background.filter((p) => p !== path);
+  return finish(
+    { ...s, windows: { ...s.windows, restore: { ...restore, background } } },
+    restore.pending,
+    restore.missing + (missed ? 1 : 0),
+  );
 }
 
 /** Whether a window is waiting for `path` to load. */
@@ -214,21 +265,12 @@ export function fillRestored(
   for (const [key, p] of Object.entries(restore.pending)) {
     if (p.path !== path) continue;
     const id: WindowId = Number(key);
-    const line = Math.min(p.cursor.line, b.text.lineCount - 1);
-    const col = Math.max(
-      0,
-      Math.min(p.cursor.col, b.text.line(line).length - 1),
-    );
-    byId[id] = {
-      id,
-      content: {
-        editor: "text",
-        bufferId,
-        cursor: { line, col },
-        scroll: Math.min(p.scroll, line),
-        ...(p.subpath === undefined ? {} : { subpath: p.subpath }),
-      },
-    };
+    byId[id] = showIn(byId[id], id, {
+      editor: "text",
+      bufferId,
+      ...clampView(b, p),
+      ...(p.subpath === undefined ? {} : { subpath: p.subpath }),
+    });
     delete pending[id];
   }
   const active = restore.pending[s.windows.active];
@@ -264,18 +306,44 @@ export function dropRestored(s: AppState, path: string): Result {
   return finish(s, pending, restore.missing + missed);
 }
 
+/**
+ * The last session's buffers take their saved bufferline order and pins;
+ * buffers opened meanwhile follow them.
+ */
+function applySavedBuffers(
+  s: AppState,
+  saved: NonNullable<AppState["windows"]["restore"]>["buffers"],
+): AppState {
+  if (saved === undefined) return s;
+  const buffers = { ...s.buffers };
+  const ids: BufferId[] = [];
+  for (const { path, pinned } of saved) {
+    const b = bufferForPath(s, path);
+    if (b === undefined || b.listed === false) continue;
+    ids.push(b.id);
+    if (pinned === true) buffers[b.id] = { ...b, pinned };
+  }
+  const placed = new Set(ids);
+  return {
+    ...s,
+    buffers,
+    bufferOrder: [...ids, ...s.bufferOrder.filter((id) => !placed.has(id))],
+  };
+}
+
 function finish(
   s: AppState,
   pending: NonNullable<AppState["windows"]["restore"]>["pending"],
   missing: number,
 ): Result {
-  if (Object.keys(pending).length > 0)
+  const restore = s.windows.restore;
+  if (Object.keys(pending).length > 0 || (restore?.background?.length ?? 0) > 0)
     return none({
       ...s,
-      windows: { ...s.windows, restore: { pending, missing } },
+      windows: { ...s.windows, restore: { ...restore, pending, missing } },
     });
   const { restore: _, ...windows } = s.windows;
-  const done: AppState = { ...s, windows };
+  const done = applySavedBuffers({ ...s, windows }, restore?.buffers);
   return missing > 0
     ? toast(
         done,

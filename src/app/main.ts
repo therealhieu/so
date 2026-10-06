@@ -28,6 +28,7 @@ import { registerBlockRenderer } from "../core/lang/markdown/live-preview";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
+import { bufferBindings } from "../core/state/buffer-commands";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
@@ -158,6 +159,7 @@ function registries(): Registries {
     commands,
     bindings: [
       ...defaultBindings,
+      ...bufferBindings,
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,

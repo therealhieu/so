@@ -36,6 +36,7 @@ export type MouseRouter = {
 };
 
 const LEFT = 0;
+const MIDDLE = 1;
 
 const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   up: { dx: 0, dy: -1 },
@@ -52,7 +53,8 @@ const draggable = (t: MouseTarget) =>
 
 /**
  * Turn OpenTUI mouse events into core mouse actions: drop everything while
- * `enabled()` is false and every button but the left one, ask `sources`
+ * `enabled()` is false and every button but the left one (a middle press
+ * is sent alone, with no clicks or drag), ask `sources`
  * (top of the z-order first, skipping wheel-only ones for a press) for the
  * target, count clicks on one cell (a repeated click keeps the first one's
  * target), and keep a drag with the source its press landed on, sending
@@ -115,6 +117,11 @@ export function createMouseRouter(o: {
           return;
         }
         case "down": {
+          if (e.button === MIDDLE) {
+            const hit = resolve(e.x, e.y);
+            if (hit !== undefined) send({ kind: "middle", target: hit.target });
+            return;
+          }
           if (e.button !== LEFT) return;
           origin = undefined;
           lastDrag = undefined;

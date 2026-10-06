@@ -61,6 +61,8 @@ test("which-key opens only after the prefix idles 300 ms", () => {
 test("direct actions list before groups and backspace pops a key", () => {
   let s = update(keys(opened(), " ").state, TIMER).state;
   expect(whichKeyRows(s, reg)).toEqual([
+    { key: ",", label: "Find buffer", group: false },
+    { key: "1-9", label: "Go to buffer N", group: false },
     { key: ":", label: "Command palette", group: false },
     { key: "?", label: "Help: keymap", group: false },
     { key: "a", label: "Split window", group: false },
@@ -69,6 +71,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "o", label: "Toggle outline", group: false },
     { key: "x", label: "Toggle task", group: false },
     { key: "z", label: "Zoom image or diagram", group: false },
+    { key: "b", label: "+buffer", group: true },
     { key: "f", label: "+find", group: true },
     { key: "g", label: "+git", group: true },
     { key: "l", label: "+links", group: true },
@@ -80,7 +83,7 @@ test("direct actions list before groups and backspace pops a key", () => {
 
   s = keys(s, "f").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" ", "f"] } });
-  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual(["f", "r"]);
+  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual(["b", "f", "r"]);
 
   s = keys(s, "<BS>").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" "] } });
@@ -118,7 +121,7 @@ test("an unmapped key closes with a notice", () => {
 
 test("groups without bindings in the scope are not shown", () => {
   const s = update(keys(opened(), " ").state, TIMER).state;
-  expect(whichKeyRows(s, reg).some((r) => r.label === "+buffer")).toBe(false);
+  expect(whichKeyRows(s, reg).some((r) => r.label === "+window")).toBe(false);
 });
 
 const note = (): AppState =>

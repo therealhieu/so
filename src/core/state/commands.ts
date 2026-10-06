@@ -4,17 +4,16 @@ import type { Edit } from "../kernel/text/pos";
 import { parseEx } from "../kernel/vim/ex";
 import { firstNonBlank } from "../kernel/vim/motions";
 import { searchPattern } from "../kernel/vim/search";
+import { bufferCommands } from "./buffer-commands";
 import {
   activeBuffer,
   activeWindow,
-  listedBuffers,
   openPath,
   READ_ONLY_FILE,
   readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
-  showBuffer,
 } from "./buffers";
 import { reloadConfig } from "./config";
 import {
@@ -33,14 +32,8 @@ import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
 import { pickServer } from "./lsp";
 import { formatThenSave } from "./lsp-commands";
 import { openPicker } from "./picker";
-import { chain, message, none } from "./result";
-import {
-  autosaveNow,
-  closeBuffer,
-  requestQuit,
-  scheduleAutosave,
-  writeBuffer,
-} from "./save";
+import { message, none } from "./result";
+import { requestQuit, scheduleAutosave, writeBuffer } from "./save";
 import { toggleDotfiles } from "./settings";
 import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
@@ -79,6 +72,13 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   bdelete: "buffer.delete",
   "bd!": "buffer.deleteForce",
   "bdelete!": "buffer.deleteForce",
+  b: "buffer.go",
+  buffer: "buffer.go",
+  ls: "buffer.list",
+  buffers: "buffer.list",
+  files: "buffer.list",
+  wa: "file.saveAll",
+  wall: "file.saveAll",
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
@@ -273,29 +273,6 @@ function writeActive(ctx: CommandContext): Result {
   });
 }
 
-function closeActive(ctx: CommandContext, force: boolean): Result {
-  const b = activeBuffer(ctx.state);
-  return b === undefined
-    ? none(ctx.state)
-    : closeBuffer(ctx.state, b.id, { force }, ctx.now);
-}
-
-/** `:bn` / `:bp`: show the next or previous open buffer, saving the one left. */
-function cycleBuffer(ctx: CommandContext, delta: 1 | -1): Result {
-  const s = ctx.state;
-  const ids = listedBuffers(s)
-    .map((b) => b.id)
-    .sort((a, b) => a - b);
-  const current = activeBuffer(s);
-  if (current === undefined || ids.length < 2) return none(s);
-  const at = ids.indexOf(current.id);
-  const next = ids[(at + delta + ids.length) % ids.length];
-  if (next === undefined) return none(s);
-  return chain(autosaveNow(s, current.id, ctx.now), (st) =>
-    none(showBuffer(st, next)),
-  );
-}
-
 /** `:sp` / `:vs`: the new window shows the same buffer and takes focus. */
 function split(s: AppState, dir: "row" | "column"): Result {
   const id = s.windows.nextWindowId;
@@ -342,20 +319,9 @@ const builtins: AppCommand[] = [
     run: (c) => requestQuit(c.state, { force: true }, c.now),
   },
   {
-    id: "buffer.delete",
-    title: "Close buffer",
-    run: (c) => closeActive(c, false),
-  },
-  {
-    id: "buffer.deleteForce",
-    title: "Close buffer without saving",
-    run: (c) => closeActive(c, true),
-  },
-  { id: "buffer.next", title: "Next buffer", run: (c) => cycleBuffer(c, 1) },
-  {
-    id: "buffer.prev",
-    title: "Previous buffer",
-    run: (c) => cycleBuffer(c, -1),
+    id: "buffer.list",
+    title: "List buffers",
+    run: (c) => openPicker(c, "buffers"),
   },
   { id: "file.edit", title: "Open file", run: editFile },
   {
@@ -494,5 +460,5 @@ const builtins: AppCommand[] = [
 export function registerBuiltins(
   commands: CommandRegistry<CommandContext, CommandResult>,
 ): void {
-  for (const cmd of builtins) commands.register(cmd);
+  for (const cmd of [...builtins, ...bufferCommands]) commands.register(cmd);
 }

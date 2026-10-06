@@ -16,8 +16,10 @@ import { autosaveNow, scheduleAutosave } from "./save";
 import {
   awaitsNavigation,
   awaitsRestore,
+  backgroundRead,
   dropRestored,
   fillRestored,
+  settleBackground,
 } from "./session";
 import type {
   Action,
@@ -25,9 +27,11 @@ import type {
   AppState,
   BufferId,
   BufferState,
+  BufferView,
   Effect,
   Result,
   TextFile,
+  WindowId,
   WindowState,
 } from "./types";
 import type { Registries } from "./update";
@@ -60,6 +64,121 @@ export const readOnlyView = (reg: Registries, b: BufferState): boolean =>
 /** Buffers the user opened; embed targets loaded for display are left out. */
 export const listedBuffers = (s: AppState): BufferState[] =>
   Object.values(s.buffers).filter((b) => b.listed !== false);
+
+/** Listed buffers in bufferline order: `bufferOrder`, then any it does not hold yet. */
+export function orderedBuffers(s: AppState): BufferState[] {
+  return byRank(s, s.bufferOrder, (a, b) => a.id - b.id);
+}
+
+/** Listed buffers, most recently shown first: `bufferMru`, then the newest of the rest. */
+export function recentBuffers(s: AppState): BufferState[] {
+  return byRank(s, s.bufferMru, (a, b) => b.id - a.id);
+}
+
+function byRank(
+  s: AppState,
+  ids: readonly BufferId[],
+  rest: (a: BufferState, b: BufferState) => number,
+): BufferState[] {
+  const listed = listedBuffers(s);
+  const rank = new Map(ids.map((id, i) => [id, i]));
+  const ranked = listed
+    .filter((b) => rank.has(b.id))
+    .sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+  return [...ranked, ...listed.filter((b) => !rank.has(b.id)).sort(rest)];
+}
+
+const sameIds = (a: readonly BufferId[], b: readonly BufferId[]) =>
+  a.length === b.length && a.every((x, i) => x === b[i]);
+
+/**
+ * Keep the buffer lists in step with the buffers and windows: closed buffers
+ * leave them, new listed ones join the bufferline at the end of their pinned
+ * or unpinned group, pinned ones stay first, a buffer the active window
+ * comes to show heads the recent list, and windows forget views of closed buffers.
+ */
+export function syncBufferLists(prev: AppState, r: Result): Result {
+  const s = r.state;
+  if (
+    prev.buffers === s.buffers &&
+    prev.windows === s.windows &&
+    prev.bufferOrder === s.bufferOrder &&
+    prev.bufferMru === s.bufferMru
+  )
+    return r;
+  const ordered = orderedBuffers(s);
+  const order = [
+    ...ordered.filter((b) => b.pinned === true),
+    ...ordered.filter((b) => b.pinned !== true),
+  ].map((b) => b.id);
+  const active = activeBuffer(s);
+  const recent = recentBuffers(s).map((b) => b.id);
+  const shown =
+    active !== undefined &&
+    active.listed !== false &&
+    (activeBuffer(prev)?.id !== active.id ||
+      !prev.bufferMru.includes(active.id));
+  const mru = shown
+    ? [active.id, ...recent.filter((id) => id !== active.id)]
+    : recent;
+  let byId: AppState["windows"]["byId"] | undefined;
+  for (const w of Object.values(s.windows.byId)) {
+    if (w.views === undefined) continue;
+    const kept = Object.entries(w.views).filter(
+      ([id]) => s.buffers[Number(id)] !== undefined,
+    );
+    if (kept.length === Object.keys(w.views).length) continue;
+    byId ??= { ...s.windows.byId };
+    byId[w.id] = { ...w, views: Object.fromEntries(kept) };
+  }
+  const orderSame = sameIds(order, s.bufferOrder);
+  const mruSame = sameIds(mru, s.bufferMru);
+  if (orderSame && mruSame && byId === undefined) return r;
+  return {
+    state: {
+      ...s,
+      ...(orderSame ? {} : { bufferOrder: order }),
+      ...(mruSame ? {} : { bufferMru: mru }),
+      ...(byId === undefined ? {} : { windows: { ...s.windows, byId } }),
+    },
+    effects: r.effects,
+  };
+}
+
+/** `b`'s cursor and scroll from `view`, kept inside its text; the top when there is none. */
+export function clampView(
+  b: BufferState,
+  view: BufferView | undefined,
+): BufferView {
+  if (view === undefined) return { cursor: { line: 0, col: 0 }, scroll: 0 };
+  const line = Math.min(view.cursor.line, b.text.lineCount - 1);
+  const col = Math.max(
+    0,
+    Math.min(view.cursor.col, b.text.line(line).length - 1),
+  );
+  return { cursor: { line, col }, scroll: Math.min(view.scroll, line) };
+}
+
+/**
+ * Window `id` (empty when `w` is undefined) showing `content`; the view of
+ * the buffer it showed is kept for its return.
+ */
+export function showIn(
+  w: WindowState | undefined,
+  id: WindowId,
+  content: WindowState["content"],
+): WindowState {
+  if (w === undefined) return { id, content };
+  const left = w.content.bufferId;
+  const views =
+    left === content.bufferId
+      ? w.views
+      : {
+          ...w.views,
+          [left]: { cursor: w.content.cursor, scroll: w.content.scroll },
+        };
+  return views === undefined ? { id, content } : { id, views, content };
+}
 
 /** Buffers at `path` or, for a folder, anywhere below it. */
 export const buffersUnder = (s: AppState, path: string): BufferState[] =>
@@ -306,25 +425,28 @@ export function closeActiveWindow(s: AppState): Result {
 }
 
 /**
- * Drop a buffer without writing it. Windows that showed it switch to
- * another open buffer, or become empty when none is left.
+ * Drop a buffer without writing it. Windows that showed it switch to the
+ * most recently shown open buffer, where they last showed it, or become
+ * empty when none is left.
  */
 export function removeBuffer(s: AppState, id: BufferId): Result {
   const { [id]: _, ...buffers } = s.buffers;
-  const other = listedBuffers({ ...s, buffers }).sort((a, b) => a.id - b.id)[0];
+  const other = recentBuffers({ ...s, buffers })[0];
   const byId: Record<number, WindowState> = {};
   for (const w of Object.values(s.windows.byId)) {
     if (w.content.bufferId !== id) byId[w.id] = w;
-    else if (other !== undefined)
+    else if (other !== undefined) {
+      const { [id]: _gone, ...views } = w.views ?? {};
       byId[w.id] = {
         id: w.id,
+        views,
         content: {
           editor: "text",
           bufferId: other.id,
-          cursor: { line: 0, col: 0 },
-          scroll: 0,
+          ...clampView(other, views[other.id]),
         },
       };
+    }
   }
   const quit = s.terminal.quit;
   const terminal =
@@ -363,20 +485,17 @@ export function splitFile(f: TextFile): {
   return { body: finalNewline ? text.slice(0, -1) : text, finalNewline };
 }
 
-/** Show buffer `id` in the active window; a shown buffer is listed. */
+/** Show buffer `id` in the active window where it last was there; a shown buffer is listed. */
 export function showBuffer(s: AppState, id: BufferId): AppState {
   const listed = listBuffer(s, id);
   const w = activeWindow(listed);
-  if (w?.content.bufferId === id) return listed;
-  return setWindow(listed, {
-    id: listed.windows.active,
-    content: {
-      editor: "text",
-      bufferId: id,
-      cursor: { line: 0, col: 0 },
-      scroll: 0,
-    },
-  });
+  const b = listed.buffers[id];
+  if (w?.content.bufferId === id || b === undefined) return listed;
+  const view = clampView(b, w?.views?.[id]);
+  return setWindow(
+    listed,
+    showIn(w, listed.windows.active, { editor: "text", bufferId: id, ...view }),
+  );
 }
 
 /**
@@ -432,9 +551,10 @@ export function openPath(
   const waits = opts.after !== undefined || opts.subpath !== undefined;
   return chain(left, (st) => {
     const open = bufferForPath(st, path);
-    // An embed target already being read is shown when that read answers.
+    // An embed target or a last-session buffer already being read is shown when that read answers.
     if (open === undefined) {
-      if (embedRequested(st, path)) return none(awaitOpen(st, path, opts));
+      if (embedRequested(st, path) || backgroundRead(st, path))
+        return none(awaitOpen(st, path, opts));
       return waits
         ? {
             state: awaitOpen(st, path, opts),
@@ -540,8 +660,10 @@ export function onFileLoaded(
     return chain(onDiskLoaded(s, open, a.file, reg), (st) =>
       awaitsRestore(st, a.path)
         ? fillRestored(listBuffer(st, open.id), a.path, open.id, reg)
-        : none(st),
+        : settleBackground(st, a.path, false),
     );
+  // The last session's buffer no window shows opens listed but unshown.
+  const hidden = backgroundRead(s, a.path) && !awaitsRestore(s, a.path);
   // A read only a note's embed asked for opens the target unlisted and unshown,
   // even when the note no longer embeds it or was closed before the answer.
   const embedOnlyRead =
@@ -579,6 +701,7 @@ export function onFileLoaded(
     nextBufferId: id + 1,
   };
   if (embedOnlyRead) return none(withBuffer);
+  if (hidden) return settleBackground(withBuffer, a.path, false);
   const explorer = { ...s.panels.explorer, focused: false };
   const added: AppState = {
     ...withBuffer,
@@ -619,6 +742,8 @@ export function onFileRefused(
     message(st, REFUSED[a.reason](a.path), "error");
   // A refused embed shows as missing in its note, so no notice interrupts typing.
   const embed = a.embed === true || embedRequested(s, a.path);
+  if (backgroundRead(s, a.path) && !awaitsRestore(s, a.path))
+    return settleBackground(s, a.path, true);
   if (!awaitsRestore(s, a.path))
     return embed ? none(settleEmbedRead(s, a.path, true)) : refused(s);
   const dropped = dropRestored(
