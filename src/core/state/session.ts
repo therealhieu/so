@@ -54,6 +54,7 @@ const persisted = z.object({
       z.object({ id: count, path: relPath, cursor: pos, scroll: count }),
     ),
   }),
+  explorer: z.object({ width: z.number().int().min(1).max(1000) }).optional(),
 });
 
 /** The parsed state file; a wrong version or shape is no state at all. */
@@ -65,8 +66,9 @@ export function parsePersisted(json: unknown): PersistedState | undefined {
 const pathOf = (s: AppState, w: WindowState) =>
   s.buffers[w.content.bufferId]?.path;
 
-/** What the state file keeps of `s`: recents, jumps, open buffers, and the layout. */
+/** What the state file keeps of `s`: recents, jumps, open buffers, the layout, and a resized explorer. */
 export function snapshotSession(s: AppState): PersistedState {
+  const width = s.panels.explorer.width;
   const windows: PersistedState["layout"]["windows"] = [];
   const pending = s.windows.restore?.pending ?? {};
   for (const id of leaves(s.windows.tree)) {
@@ -92,6 +94,7 @@ export function snapshotSession(s: AppState): PersistedState {
       .sort((a, b) => a.id - b.id)
       .map((b) => ({ path: b.path, view: b.view })),
     layout: { tree: s.windows.tree, active: s.windows.active, windows },
+    ...(width === undefined ? {} : { explorer: { width } }),
   };
 }
 
@@ -109,8 +112,8 @@ const shownPaths = (s: AppState) =>
   });
 
 /**
- * Whether a persisted part changed: recents, jumps, the window tree, or the
- * file a window shows. Cursor and scroll moves alone are saved with the next
+ * Whether a persisted part changed: recents, jumps, the explorer width, the
+ * window tree, or the file a window shows. Cursor and scroll moves alone are saved with the next
  * change or on exit.
  */
 export function sessionChanged(prev: AppState, next: AppState): boolean {
@@ -129,6 +132,7 @@ export function sessionChanged(prev: AppState, next: AppState): boolean {
       ))
   )
     return true;
+  if (prev.panels.explorer.width !== next.panels.explorer.width) return true;
   if (prev.windows.tree !== next.windows.tree) return true;
   if (prev.windows.byId === next.windows.byId && prev.buffers === next.buffers)
     return false;
@@ -147,16 +151,26 @@ function usable(layout: PersistedState["layout"]): boolean {
 }
 
 /**
- * The state file was read. Recents and jumps always load; a start on a
- * folder also rebuilds the layout and reads each window's file once.
+ * The state file was read. Recents, jumps, and the explorer width always
+ * load; a start on a folder also rebuilds the layout and reads each window's
+ * file once.
  */
 export function onStateLoaded(
   s: AppState,
   a: Extract<Action, { type: "stateLoaded" }>,
 ): Result {
   if (a.state === undefined) return none(s);
-  const { recent, jumps, layout } = a.state;
-  const loaded: AppState = { ...s, recent, jumps };
+  const { recent, jumps, layout, explorer } = a.state;
+  const ex = s.panels.explorer;
+  const loaded: AppState = {
+    ...s,
+    recent,
+    jumps,
+    panels: {
+      ...s.panels,
+      explorer: explorer === undefined ? ex : { ...ex, width: explorer.width },
+    },
+  };
   if (!a.restore || !usable(layout)) return none(loaded);
   const pending: NonNullable<AppState["windows"]["restore"]>["pending"] = {};
   for (const w of layout.windows)

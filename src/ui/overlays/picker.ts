@@ -6,6 +6,7 @@ import {
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import { createTextBuffer } from "../../core/kernel/text/text-buffer";
 import { bufferForPath, splitFile } from "../../core/state/buffers";
+import { bodyRows } from "../../core/state/layout";
 import {
   loadedPreview,
   PREVIEW_MIN_COLS,
@@ -45,7 +46,7 @@ function chunks(text: string, width: number): string[] {
 function boxOf(s: AppState): Rect {
   const { cols, rows } = s.terminal;
   const w = Math.min(cols, Math.max(60, Math.floor(cols * 0.8)));
-  const h = Math.min(rows - 2, Math.max(12, Math.floor(rows * 0.7)));
+  const h = Math.min(bodyRows({ rows }), Math.max(12, Math.floor(rows * 0.7)));
   return centered(s, w, h);
 }
 

@@ -149,7 +149,19 @@ export const editingNotes = (s: AppState): AppState => ({
   config: { ...s.config, preview: { ...s.config.preview, mode: "live" } },
 });
 
-export const fresh = (): AppState => editingNotes(initialState(boot));
+/**
+ * `config` with the explorer docked left, the layout most suites measure
+ * columns against; suites about the edge set `position` themselves.
+ */
+export const explorerLeft = <C extends AppState["config"]>(config: C): C => ({
+  ...config,
+  explorer: { ...config.explorer, position: "left" },
+});
+
+export const fresh = (): AppState => {
+  const s = editingNotes(initialState(boot));
+  return { ...s, config: explorerLeft(s.config) };
+};
 
 /** A fresh state with the shipped config, where notes open in `reading`. */
 export const freshDefaults = (): AppState => initialState(boot);

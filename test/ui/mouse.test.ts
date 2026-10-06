@@ -577,7 +577,7 @@ test("the wheel over a toast does nothing and a click there reaches the window",
   expect(scroll()).toBe(0);
 });
 
-test("with the command line open its row, the status row, and its completions take no click", async () => {
+test("with the command line open its popup, the status row, and its completions take no click", async () => {
   const reg = testRegistries();
   m = await mountShell({ cols: 120, rows: 24, reg });
   m.keys("<leader>e");
@@ -591,7 +591,7 @@ test("with the command line open its row, the status row, and its completions ta
   expect(before?.mode).toBe("cmdline");
   const item = await find(m, ":write");
   expect(item.y).toBeGreaterThan(0);
-  expect(item.y).toBeLessThan(22);
+  expect(item.y).toBeLessThan(20);
 
   for (const [x, y] of [
     [10, 23],
@@ -601,11 +601,11 @@ test("with the command line open its row, the status row, and its completions ta
     await m.mouse.click(x, y);
     expect(typing()).toEqual(before);
   }
-  // Nothing lies under the command row, so ask the view itself: its row and
-  // float are inert, and a cell beside the float is left to the body.
+  // Ask the view itself: its popup and float are inert, and a cell beside
+  // the float is left to the body.
   const line = new CommandLine(m.t.renderer, { reg });
   line.update(m.store.get(), "wide");
-  expect(line.targetAt(10, 23)).toEqual({ kind: "inert" });
+  expect(line.targetAt(10, 21)).toEqual({ kind: "inert" });
   expect(line.targetAt(item.x + 2, item.y)).toEqual({ kind: "inert" });
   expect(line.targetAt(119, item.y)).toBeUndefined();
   const bravo = await find(m, "bravo");
@@ -704,4 +704,44 @@ test("the wheel inside the zoom float scrolls a wide text diagram", async () => 
   await m.mouse.scroll(40, 12, "down");
   await m.frame();
   expect(col()).toBeGreaterThan(0);
+});
+
+test("dragging the explorer's separator resizes it on either edge", async () => {
+  const sepAt = async (mounted: Mounted) =>
+    [...((await mounted.frame()).split("\n")[5] ?? "")].indexOf("│");
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.open("a.md", "alpha\n");
+  expect(await sepAt(m)).toBe(30);
+  await m.mouse.drag(30, 5, 45, 5);
+  expect(m.store.get().panels.explorer.width).toBe(45);
+  expect(await sepAt(m)).toBe(45);
+  // Past half the terminal the separator stops.
+  await m.mouse.drag(45, 5, 100, 5);
+  expect(await sepAt(m)).toBe(60);
+  m.destroy();
+
+  m = await mountShell({
+    cols: 120,
+    rows: 24,
+    config: '[explorer]\nposition = "right"\n',
+  });
+  m.open("a.md", "alpha\n");
+  const row = async () => [...((await m?.frame())?.split("\n")[5] ?? "")];
+  expect((await row()).lastIndexOf("│")).toBe(89);
+  await m.mouse.drag(89, 5, 79, 5);
+  expect(m.store.get().panels.explorer.width).toBe(40);
+  expect((await row()).lastIndexOf("│")).toBe(79);
+});
+
+test("the shipped config docks the explorer on the right", async () => {
+  m = await mountShell({ cols: 120, rows: 24 });
+  m.store.dispatch({
+    type: "configLoaded",
+    result: parseConfig(""),
+    reload: false,
+  });
+  m.open("a.md", "alpha\n");
+  const row = [...((await m.frame()).split("\n")[5] ?? "")];
+  expect(m.store.get().config.explorer.position).toBe("right");
+  expect(row.lastIndexOf("│")).toBe(89);
 });

@@ -5,6 +5,7 @@ import {
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
 import { COMPLETION_ROWS } from "../../core/state/completion";
+import { statusRow } from "../../core/state/layout";
 import type {
   AppState,
   CompletionState,
@@ -66,12 +67,12 @@ export class CompletionView extends Renderable {
       b === undefined || w === undefined
         ? ""
         : b.text.line(c.anchor.line).slice(c.anchor.col, w.content.cursor.col);
-    const { cols, rows } = s.terminal;
+    const { cols } = s.terminal;
     const width = Math.min(WIDTH, cols);
     const h = Math.max(1, Math.min(COMPLETION_ROWS, c.items.length)) + 3;
     // Below the cursor line, or above it when fewer than 10 rows remain
     // above the statusline; never on the cursor row.
-    const below = rows - 2 - (at.y + 1);
+    const below = statusRow(s.terminal) - (at.y + 1);
     const y =
       below >= ABOVE_UNDER && below >= h ? at.y + 1 : Math.max(0, at.y - h);
     const x = Math.max(0, Math.min(cols - width, at.x - cells(typed) - 2));

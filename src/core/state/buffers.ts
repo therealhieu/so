@@ -9,6 +9,7 @@ import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
 import { handleKey } from "../kernel/vim/engine";
 import { onDiskLoaded } from "./disk";
 import { embedRequested, settleEmbedRead } from "./embeds";
+import { bodyRows } from "./layout";
 import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -144,7 +145,7 @@ export function placeCursor(s: AppState, pos: Pos): AppState {
   if (w === undefined || b === undefined) return s;
   const line = Math.max(0, Math.min(pos.line, b.text.lineCount - 1));
   const col = Math.max(0, Math.min(pos.col, b.text.line(line).length - 1));
-  const rows = Math.max(1, s.terminal.rows - 2);
+  const rows = Math.max(1, bodyRows(s.terminal));
   const top = w.content.scroll;
   const scroll = line < top ? line : line >= top + rows ? line - rows + 1 : top;
   return setWindow(s, {
@@ -505,7 +506,7 @@ export function placeAfterOpen(
     "A",
     {
       topLine: w.content.scroll,
-      rows: Math.max(1, s.terminal.rows - 2),
+      rows: Math.max(1, bodyRows(s.terminal)),
       tabWidth: s.config.editor.tabWidth,
     },
   );

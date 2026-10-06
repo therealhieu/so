@@ -68,6 +68,7 @@ import {
   sessionChanged,
   snapshotSession,
 } from "./session";
+import { onSettingFailed } from "./settings";
 import {
   answersMentions,
   followShownNote,
@@ -184,6 +185,8 @@ export function createUpdate(reg: Registries): Update {
         return onMouse(state, action, reg);
       case "configLoaded":
         return onConfigLoaded(state, action, reg);
+      case "settingFailed":
+        return onSettingFailed(state, action);
       case "indexBatch":
         return onIndexBatch(state, action);
       case "indexReady":

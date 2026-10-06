@@ -19,9 +19,12 @@ import {
 import { reloadConfig } from "./config";
 import {
   collapse,
+  EXPLORER_WIDTH_STEP,
   expandOrOpen,
+  explorerWidth,
   moveCursor,
   openSelected,
+  resizeExplorer,
   startOp,
   toggleExplorer,
 } from "./explorer";
@@ -77,6 +80,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
+  Settings: "settings.open",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
   Today: "note.today",
@@ -380,6 +384,11 @@ const builtins: AppCommand[] = [
     run: (c) => openPicker(c, "commands"),
   },
   {
+    id: "settings.open",
+    title: "Settings",
+    run: (c) => openPicker(c, "settings"),
+  },
+  {
     id: "help.keymap",
     title: "Help: keymap",
     run: (c) => openPicker(c, "help"),
@@ -405,6 +414,27 @@ const builtins: AppCommand[] = [
     id: "explorer.toggle",
     title: "Toggle explorer",
     run: (c) => toggleExplorer(c.state),
+  },
+  {
+    id: "explorer.wider",
+    title: "Widen explorer",
+    run: (c) =>
+      none(
+        resizeExplorer(c.state, explorerWidth(c.state) + EXPLORER_WIDTH_STEP),
+      ),
+  },
+  {
+    id: "explorer.narrower",
+    title: "Narrow explorer",
+    run: (c) =>
+      none(
+        resizeExplorer(c.state, explorerWidth(c.state) - EXPLORER_WIDTH_STEP),
+      ),
+  },
+  {
+    id: "explorer.resetWidth",
+    title: "Reset explorer width",
+    run: (c) => none(resizeExplorer(c.state, undefined)),
   },
   {
     id: "explorer.down",

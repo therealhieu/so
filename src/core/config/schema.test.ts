@@ -105,7 +105,11 @@ test("the explorer draws Nerd Font icons unless configured to plain symbols", ()
 });
 
 test("the explorer docks left unless configured right", () => {
-  expect(defaults.explorer).toEqual({ position: "left", icons: "nerd" });
+  expect(defaults.explorer).toEqual({
+    position: "right",
+    icons: "nerd",
+    width: 30,
+  });
   const r = parseConfig(lines("[explorer]", 'position = "right"'));
   expect(r.ok && r.config.explorer.position).toBe("right");
   const [e, ...rest] = errors(lines("[explorer]", 'position = "top"'));

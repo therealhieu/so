@@ -23,8 +23,8 @@ exports[`calendar matches the colour golden with a marked day selected 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
- NORMAL  │ notes/standup.md │ ← 0 backlinks │ ◆ index ready                 1:1 
-Thu 2026-10-01 · note exists                                                    
+    ~                                              Thu 2026-10-01 · note exists 
+ NORMAL  notes/standup.md                     ← 0 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -51,8 +51,8 @@ exports[`calendar matches the NO_COLOR golden with a marked day selected 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
- NORMAL  │ notes/standup.md │ ← 0 backlinks │ ◆ index ready                 1:1 
-Thu 2026-10-01 · note exists                                                    
+    ~                                              Thu 2026-10-01 · note exists 
+ NORMAL  notes/standup.md                     ← 0 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -79,8 +79,8 @@ exports[`calendar matches the light golden with a marked day selected 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
- NORMAL  │ notes/standup.md │ ← 0 backlinks │ ◆ index ready                 1:1 
-Thu 2026-10-01 · note exists                                                    
+    ~                                              Thu 2026-10-01 · note exists 
+ NORMAL  notes/standup.md                     ← 0 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -107,8 +107,8 @@ exports[`template picker shows source then the expansion at 120 columns 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ live │ notes/standup.md │ ← 0 backlinks │ 2 words │ preview off │ ◆ index ready                          1:1 
-2/2 meeting.md                                                                                                          
+    ~                                                                                                    2/2 meeting.md 
+ NORMAL  live  notes/standup.md                                 ← 0 backlinks  2 words  preview off  ◆ index ready  1:1 
 "
 `;
 
@@ -135,8 +135,8 @@ exports[`template picker hides the preview at 90 columns until Tab 1`] = `
     ~                                                                                     
     ~                                                                                     
     ~                                                                                     
- NORMAL  │ notes/standup.md │ ← 0 backlinks │ ◆ index ready                           1:1 
-2/2 meeting.md                                                                            
+    ~                                                                      2/2 meeting.md 
+ NORMAL  notes/standup.md                               ← 0 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -163,8 +163,8 @@ exports[`template picker hides the preview at 90 columns until Tab 2`] = `
     ~                                                                                     
     ~                                                                                     
     ~                                                                                     
- NORMAL  │ notes/standup.md │ ← 0 backlinks │ ◆ index ready                           1:1 
-                                                                                          
+    ~                                                                                     
+ NORMAL  notes/standup.md                               ← 0 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -292,8 +292,8 @@ exports[`tags picker previews the selected tag's notes 1`] = `
     ~       ╰─ C-j/C-k move · Enter open · C-l notes · Esc close ──────────────────────────────────────────╯            
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ [No Name] │ preview off │ ◆ index ready                                                                      
-                                                                                                                        
+    ~                                                                                                                   
+ NORMAL  [No Name]                                                                           preview off  ◆ index ready 
 "
 `;
 
@@ -316,7 +316,7 @@ exports[`tags picker previews the selected tag's notes 2`] = `
     ~       ╰─ C-j/C-k move · Enter open · C-h back · Esc close ───────────────────────────────────────────╯            
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ [No Name] │ preview off │ ◆ index ready                                                                      
-                                                                                                                        
+    ~                                                                                                                   
+ NORMAL  [No Name]                                                                           preview off  ◆ index ready 
 "
 `;

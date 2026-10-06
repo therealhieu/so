@@ -1,5 +1,6 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
+import type { SettingValue } from "../config/toml-edit";
 import type { PropertyTypes } from "../features/bases/property-types";
 import type { BlameLine } from "../features/git/blame";
 import type { Hunk } from "../features/git/diff";
@@ -165,6 +166,8 @@ export type ExplorerState = {
   /** Selected path ("" when nothing is selected). */
   cursor: string;
   trash: "unknown" | "available" | "unavailable";
+  /** Columns of the tree after a resize; unset follows `[explorer] width`. */
+  width?: number;
 };
 
 /** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */
@@ -351,6 +354,8 @@ export type PersistedState = {
     active: WindowId;
     windows: { id: WindowId; path: string; cursor: Pos; scroll: number }[];
   };
+  /** Present once the explorer was resized. */
+  explorer?: { width: number } | undefined;
 };
 
 /** A position the cursor jumped from; Neovim's jumplist entry. */
@@ -468,6 +473,8 @@ export type WindowSpot =
 export type MouseTarget =
   | { kind: "window"; window: WindowId; spot: WindowSpot }
   | { kind: "explorer"; path: string }
+  /** The docked explorer's separator; `width` is the tree width with the separator at the pointer. */
+  | { kind: "explorerEdge"; width: number }
   | { kind: "sidePanel"; row: number }
   | { kind: "bufferTab"; bufferId: BufferId }
   | { kind: "overlayItem"; index: number }
@@ -567,6 +574,12 @@ export type Action =
   | { type: "clipboardText"; text: string; error?: string }
   | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
+  | {
+      type: "settingFailed";
+      path: string[];
+      previous: SettingValue;
+      reason: string;
+    }
   | {
       type: "indexBatch";
       summaries: NoteSummary[];
@@ -705,6 +718,13 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
+  /** Write one config.toml value; `previous` is restored if the write fails. */
+  | {
+      kind: "writeSetting";
+      path: string[];
+      value: SettingValue;
+      previous: SettingValue;
+    }
   | { kind: "applyEdits"; batch: number; edit: FileEdit }
   | { kind: "startPreview" }
   | { kind: "stopPreview" }

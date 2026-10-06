@@ -4,13 +4,15 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import type { WindowTree as Tree } from "../../core/kernel/editor/windows";
+import { explorerWidth } from "../../core/state/explorer";
+import { bodyRows } from "../../core/state/layout";
 import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import { editorViews, type WindowView } from "../editors/registry";
 import type { Rect } from "../editors/text-view";
 import type { HunkAnchor } from "../overlays/hunk";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
-import { EXPLORER_WIDTH, explorerDocked, explorerSide } from "./explorer";
+import { explorerDocked, explorerSide } from "./explorer";
 import { SIDE_WIDTH, sideDocked } from "./side-panel";
 
 /**
@@ -71,14 +73,14 @@ export class WindowTree extends Renderable {
     this.s = s;
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
-    const ex = explorerDocked(s, lc) ? EXPLORER_WIDTH + 1 : 0;
+    const ex = explorerDocked(s, lc) ? explorerWidth(s) + 1 : 0;
     const side = sideDocked(s, lc) ? SIDE_WIDTH + 1 : 0;
     const [x, right] = explorerSide(s) === "right" ? [side, ex] : [ex, side];
     const body = {
       x,
       y: 1,
       w: Math.max(0, s.terminal.cols - x - right),
-      h: Math.max(0, s.terminal.rows - 3),
+      h: bodyRows(s.terminal),
     };
     const rects = new Map<WindowId, Rect>();
     this.seps = [];

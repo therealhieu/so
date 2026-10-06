@@ -370,6 +370,62 @@ test("loadConfig answers with one configLoaded for a file, no file, or a read er
   expect(results[2]).toEqual([{ line: 1, message: expect.any(String) }]);
 });
 
+test("writeSetting edits config.toml in order, creating it and its folder", async () => {
+  const configPath = join(root, "settings", "so", "config.toml");
+  const r = runner({ configPath });
+  r.run({
+    kind: "writeSetting",
+    path: ["explorer", "position"],
+    value: "left",
+    previous: "right",
+  });
+  r.run({
+    kind: "writeSetting",
+    path: ["theme"],
+    value: "light",
+    previous: "dark",
+  });
+  r.run({
+    kind: "writeSetting",
+    path: ["explorer", "position"],
+    value: "right",
+    previous: "left",
+  });
+  const until = performance.now() + 3000;
+  let text = "";
+  while (performance.now() < until) {
+    text = await readFile(configPath, "utf8").catch(() => "");
+    if (text.includes("theme") && text.includes('"right"')) break;
+    await Bun.sleep(5);
+  }
+  expect(text).toBe('theme = "light"\n\n[explorer]\nposition = "right"\n');
+  expect(r.actions).toEqual([]);
+});
+
+test("writeSetting leaves a broken config.toml alone and reports why", async () => {
+  const configPath = join(root, "broken.toml");
+  await writeFile(configPath, '[explorer]\nposition = "up"\n');
+  const r = runner({ configPath });
+  r.run({
+    kind: "writeSetting",
+    path: ["theme"],
+    value: "light",
+    previous: "dark",
+  });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions).toEqual([
+    {
+      type: "settingFailed",
+      path: ["theme"],
+      previous: "dark",
+      reason: "config.toml:2 has an error; fix it before changing settings",
+    },
+  ]);
+  expect(await readFile(configPath, "utf8")).toBe(
+    '[explorer]\nposition = "up"\n',
+  );
+});
+
 test("an embed read's answer says it was for an embed", async () => {
   await writeFile(join(root, "target.md"), "body\n");
   const r = runner();

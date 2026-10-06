@@ -8,6 +8,7 @@ import { baseName, isWebUrl } from "../lang/markdown/renderers/image";
 import { mermaidLines, mermaidSvg } from "../lang/markdown/renderers/mermaid";
 import { activeBuffer, activeWindow } from "./buffers";
 import type { CommandContext } from "./commands";
+import { bodyRows } from "./layout";
 import { message, none } from "./result";
 import type { AppState, Result, TerminalState, ZoomState } from "./types";
 
@@ -19,7 +20,7 @@ export const ZOOM_MAX = 8;
 export function zoomSize(t: TerminalState): { w: number; h: number } {
   return {
     w: Math.min(t.cols, Math.max(60, Math.floor(t.cols * 0.9))),
-    h: Math.min(t.rows - 2, Math.max(12, Math.floor(t.rows * 0.9))),
+    h: Math.min(bodyRows(t), Math.max(12, Math.floor(t.rows * 0.9))),
   };
 }
 

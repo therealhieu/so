@@ -24,6 +24,12 @@ import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
+import {
+  cycleSetting,
+  describeSetting,
+  SETTINGS,
+  settingItems,
+} from "./settings";
 import type {
   Action,
   AppState,
@@ -491,6 +497,15 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
         ],
       };
     },
+  },
+  settings: {
+    id: "settings",
+    title: "Settings",
+    action: "change",
+    items: (s, _r, q) => settingItems(s, q),
+    total: () => SETTINGS.length,
+    accept: (s, item) => cycleSetting(s, item),
+    describe: describeSetting,
   },
   commands: {
     id: "commands",

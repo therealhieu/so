@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
+import { resizeExplorer } from "./explorer";
 import { jumpBack } from "./jumps";
 import { parsePersisted, snapshotSession } from "./session";
 import type { Action, AppState, Effect, PersistedState } from "./types";
@@ -207,4 +208,25 @@ test("the configured mode applies only to file types that have that view", () =>
   expect(
     viewOf(load(reading, "scripts/sync.ts", "x\n").state, "scripts/sync.ts"),
   ).toBe("source");
+});
+
+test("a resized explorer width is saved and loads with any start", () => {
+  expect(snapshotSession(fresh()).explorer).toBeUndefined();
+  const resized = update(fresh(), { type: "key", key: "<C-w>", now: 0 });
+  const r = update(resized.state, { type: "key", key: ">", now: 0 });
+  expect(r.effects).toContainEqual(SAVE);
+  const snap = snapshotSession(r.state);
+  expect(snap.explorer).toEqual({ width: 35 });
+  expect(parsePersisted(JSON.parse(JSON.stringify(snap)))).toEqual(snap);
+  for (const restore of [true, false]) {
+    const loaded = update(fresh(), {
+      type: "stateLoaded",
+      state: { ...saved, explorer: { width: 44 } },
+      restore,
+    });
+    expect(loaded.state.panels.explorer.width).toBe(44);
+  }
+  expect(snapshotSession(resizeExplorer(r.state, undefined)).explorer).toBe(
+    undefined,
+  );
 });

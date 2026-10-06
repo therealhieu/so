@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { bodyRows } from "../../core/state/layout";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass, View } from "../shell";
 import { drawCells, type Theme } from "../theme";
@@ -40,7 +41,7 @@ export function centered(
 ): { x: number; y: number; w: number; h: number } {
   const { cols, rows } = s.terminal;
   const width = Math.min(w, cols);
-  const height = Math.min(h, rows - 2);
+  const height = Math.min(h, bodyRows(s.terminal));
   return {
     x: Math.max(0, Math.floor((cols - width) / 2)),
     y: Math.max(1, Math.floor((rows - height) / 2) - 1),

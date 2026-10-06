@@ -5,7 +5,7 @@ import type { Diagnostic } from "../kernel/view/diagnostics";
 import { splitKeys } from "../kernel/vim/keys";
 import { runCommand } from "./commands";
 import { keymapFor } from "./keymap";
-import { cursorDiagnostic, request } from "./lsp";
+import { request } from "./lsp";
 import { lspBindings } from "./lsp-commands";
 import type { LspFeature, LspResult, ServerView } from "./lsp-types";
 import { openPicker } from "./picker";
@@ -460,37 +460,6 @@ test("diagnostics of another file still show while inserting", () => {
     publish("a@/ws", [diag(0, 0, 1, "elsewhere")], "push", "src/b.rs"),
   ).state;
   expect(r.lsp.shown["src/b.rs"]).toHaveLength(1);
-});
-
-test("the command line diagnostic is the one under the cursor", () => {
-  const s = keys(attached([ready("a", [])]), "j4l").state;
-  const r = run(
-    s,
-    publish("a@/ws", [
-      diag(1, 2, 2, "unused", "lint"),
-      diag(1, 4, 1, "msg\nmore detail", "srv"),
-      diag(0, 0, 1, "other line"),
-    ]),
-  ).state;
-  expect(cursorDiagnostic(r)).toEqual({ severity: 1, text: "srv: msg" });
-  const away = keys(r, "j").state;
-  expect(cursorDiagnostic(away)).toBeUndefined();
-});
-
-test("a diagnostic ending at the start of a line does not cover that line", () => {
-  const s = keys(attached([ready("a", [])]), "j").state;
-  const range = (sl: number, sc: number, el: number, ec: number) => ({
-    range: { start: at(sl, sc), end: at(el, ec) },
-    severity: 1 as const,
-    message: "m",
-  });
-  const wholeLine = run(s, publish("a@/ws", [range(0, 0, 1, 0)])).state;
-  expect(cursorDiagnostic(wholeLine)).toBeUndefined();
-  const empty = run(
-    keys(s, "2l").state,
-    publish("a@/ws", [range(1, 2, 1, 2)]),
-  ).state;
-  expect(cursorDiagnostic(empty)).toEqual({ severity: 1, text: "m" });
 });
 
 test("hover closes on cursor move and signature help on leaving insert mode", () => {

@@ -105,7 +105,7 @@ for (const [cols, rows] of [
     test("a code file shows the source view and no word count", async () => {
       m = await mountShell({ cols, rows });
       openNote(m, "scripts/sync.ts", SYNC_TS);
-      const status = segments(await m.row(-2));
+      const status = segments(await m.status());
       expect(status).toEqual(
         cols >= 100
           ? ["NORMAL", "source", "scripts/sync.ts", "preview off", "1:1"]
@@ -119,7 +119,7 @@ for (const [cols, rows] of [
 test("a note shows its word count on wide terminals only", async () => {
   m = await mountShell({ cols: 120, rows: 36 });
   openNote(m, "notes/ideas.md", IDEAS_MD);
-  expect(segments(await m.row(-2))).toEqual([
+  expect(segments(await m.status())).toEqual([
     "NORMAL",
     "live",
     "notes/ideas.md",
@@ -128,7 +128,7 @@ test("a note shows its word count on wide terminals only", async () => {
     "1:1",
   ]);
   m.t.resize(80, 24);
-  expect(segments(await m.row(-2))).toEqual([
+  expect(segments(await m.status())).toEqual([
     "NORMAL",
     "notes/ideas.md",
     "1:1",
@@ -140,9 +140,9 @@ test("the statusline shows the preview port after the word count", async () => {
   openNote(m, "notes/plan.md", NOTES["notes/plan.md"] ?? "");
   indexFixture(m);
   m.keys(":Preview<CR>");
-  expect(segments(await m.row(-2))).toContain("preview …");
+  expect(segments(await m.status())).toContain("preview …");
   m.store.dispatch({ type: "previewStarted", port: 8731 });
-  expect(segments(await m.row(-2))).toEqual([
+  expect(segments(await m.status())).toEqual([
     "NORMAL",
     "live",
     "notes/plan.md",
@@ -153,7 +153,7 @@ test("the statusline shows the preview port after the word count", async () => {
     "1:1",
   ]);
   m.open("scripts/sync.ts", SYNC_TS);
-  expect(segments(await m.row(-2))).toEqual([
+  expect(segments(await m.status())).toEqual([
     "NORMAL",
     "source",
     "scripts/sync.ts",
@@ -163,7 +163,7 @@ test("the statusline shows the preview port after the word count", async () => {
     "1:1",
   ]);
   m.t.resize(80, 24);
-  expect(segments(await m.row(-2))).toEqual([
+  expect(segments(await m.status())).toEqual([
     "NORMAL",
     "scripts/sync.ts",
     "jump 2/2",
@@ -178,7 +178,7 @@ test("narrow statuslines drop preview, words, then view", async () => {
     m?.destroy();
     m = await mountShell({ cols, rows: 36 });
     openNote(m, longNote(n), "# Long\n");
-    return segments(await m.row(-2));
+    return segments(await m.status());
   };
   expect(await shown(70)).toEqual([
     "NORMAL",
@@ -195,7 +195,7 @@ test("narrow statuslines drop preview, words, then view", async () => {
     "2 words",
     "1:1",
   ]);
-  expect(await shown(90)).toEqual(["NORMAL", "live", longNote(90), "1:1"]);
+  expect(await shown(95)).toEqual(["NORMAL", "live", longNote(95), "1:1"]);
   expect(await shown(100)).toEqual(["NORMAL", longNote(100), "1:1"]);
   expect(await shown(20, 80)).toEqual(["NORMAL", longNote(20), "1:1"]);
 });
@@ -297,10 +297,10 @@ describe("themes", () => {
         return cellStyle(x.t.captureSpans().lines, cx, cy);
       };
       const styles: Record<string, unknown> = {};
-      styles.normalBadge = await at(1, 34);
+      styles.normalBadge = await at(1, 35);
       styles.cursorline = await at(10, 1);
       m.keys("i");
-      styles.insertBadge = await at(1, 34);
+      styles.insertBadge = await at(1, 35);
       m.keys("<Esc>vj");
       styles.selection = await at(6, 1);
       m.keys("<Esc>Az<Esc>");
@@ -352,7 +352,7 @@ describe("index and panels at 120×36", () => {
       done: 4210,
       total: 10000,
     });
-    expect(await m.row(-2)).toContain("◌ indexing 4,210/10,000");
+    expect(await m.status()).toContain("◌ indexing 4,210/10,000");
     expect(await m.frame()).toMatchSnapshot();
   });
 
@@ -362,7 +362,7 @@ describe("index and panels at 120×36", () => {
     indexFixture(m);
     const frame = await m.frame();
     expect(frame).toContain("✓ index ready");
-    expect(segments(await m.row(-2))).toEqual([
+    expect(segments(await m.status())).toEqual([
       "NORMAL",
       "live",
       "notes/plan.md",
@@ -407,7 +407,7 @@ describe("index and panels at 120×36", () => {
     expect(rows[1]?.startsWith(" BACKLINKS")).toBe(true);
     expect(rows[1]?.trimEnd().endsWith(" NOTES  ~/notes")).toBe(true);
     expect(rows.join("\n")).toMatchSnapshot();
-    expect(rows.at(-4)).toContain("C-w l back to the editor");
+    expect(rows.at(-3)).toContain("C-w l back to the editor");
   });
 
   test("the backlinks panel shows Linked then Unlinked mentions", async () => {
@@ -433,7 +433,7 @@ describe("index and panels at 120×36", () => {
     indexFixture(m);
     m.advance(3000);
     openNote(m, "scripts/sync.ts", SYNC_TS);
-    expect(segments(await m.row(-2))).toEqual([
+    expect(segments(await m.status())).toEqual([
       "NORMAL",
       "source",
       "scripts/sync.ts",
@@ -443,4 +443,23 @@ describe("index and panels at 120×36", () => {
     ]);
     expect(await m.frame()).toMatchSnapshot();
   });
+});
+
+test("the settings picker moves the explorer to the other edge at once", async () => {
+  m = await mountShell({ cols: 120, rows: 30 });
+  m.open("notes/ideas.md", IDEAS_MD);
+  const sepAt = async () =>
+    [...((await m?.frame())?.split("\n")[5] ?? "")].indexOf("│");
+  expect(await sepAt()).toBe(30);
+  m.keys("<leader>e<leader>us");
+  const frame = await m.frame();
+  expect(frame).toContain("Settings");
+  expect(frame).toContain("explorer.position");
+  expect(frame).toMatchSnapshot();
+  m.keys("<CR>");
+  expect(m.store.get().config.explorer.position).toBe("right");
+  expect(await m.frame()).toContain("explorer.position");
+  m.keys("<Esc>");
+  const row = [...((await m.frame()).split("\n")[5] ?? "")];
+  expect(row.lastIndexOf("│")).toBe(89);
 });

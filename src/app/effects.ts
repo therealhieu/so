@@ -1,5 +1,7 @@
-import { join } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { parseConfig } from "../core/config/toml";
+import { setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
 import { expandTemplate } from "../core/features/notes/template";
 import {
@@ -120,6 +122,17 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const unreported = new Set<PathOp>();
   /** Per path, the stamp this runner's last write replaced and the one it left. */
   const own = new Map<string, { from: Stamp; to: Stamp }>();
+  /** Setting writes run one after another, so each edits the last one's file. */
+  let settingWrites = Promise.resolve();
+
+  /** Set one config.toml value in place, creating the file and its folder when missing. */
+  async function writeSetting(e: Extract<Effect, { kind: "writeSetting" }>) {
+    const text = (await readConfigText(d.configPath)) ?? "";
+    const edit = setConfigValue(text, e.path, e.value);
+    if (!edit.ok) throw new Error(edit.reason);
+    await mkdir(dirname(d.configPath), { recursive: true });
+    await atomicWrite(d.configPath, edit.text);
+  }
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
     tail = next.catch(() => {});
@@ -611,6 +624,19 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "lspReply":
       case "lspRestart":
         d.lsp?.run(e);
+        return;
+      case "writeSetting":
+        settingWrites = settingWrites
+          .then(() => writeSetting(e))
+          .catch((x) => {
+            d.logger.error("config.writeFailed", { reason: msg(x) });
+            d.dispatch({
+              type: "settingFailed",
+              path: e.path,
+              previous: e.previous,
+              reason: msg(x),
+            });
+          });
         return;
     }
     const unhandled: never = e;

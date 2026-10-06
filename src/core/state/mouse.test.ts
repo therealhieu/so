@@ -678,6 +678,7 @@ const ALL_TARGETS: MouseTarget[] = [
   text(1, 1, 1),
   { kind: "window", window: 1, spot: { kind: "winbar" } },
   { kind: "explorer", path: "" },
+  { kind: "explorerEdge", width: 40 },
   { kind: "sidePanel", row: 0 },
   { kind: "bufferTab", bufferId: 1 },
   { kind: "overlayItem", index: 0 },
@@ -898,4 +899,21 @@ test("a vertical notch pans sideways when only that axis of the zoom float can m
   expect(down.overlay).not.toEqual(s.overlay);
   const up = mouse(down, wheel({ kind: "overlay" }, -1)).state;
   expect(up.overlay).toEqual(s.overlay);
+});
+
+test("dragging the explorer's separator resizes it like <C-w>>", () => {
+  const s = open("a.md", LINES);
+  const pressed = mouse(s, press({ kind: "explorerEdge", width: 30 }));
+  expect(pressed.state).toEqual(s);
+  const dragged = mouse(pressed.state, {
+    kind: "drag",
+    target: { kind: "explorerEdge", width: 42 },
+  });
+  expect(dragged.state.panels.explorer.width).toBe(42);
+  expect(dragged.state.windows).toBe(s.windows);
+  const tooFar = mouse(dragged.state, {
+    kind: "drag",
+    target: { kind: "explorerEdge", width: 90 },
+  });
+  expect(tooFar.state.panels.explorer.width).toBe(50);
 });

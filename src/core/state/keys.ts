@@ -28,6 +28,7 @@ import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
 import { keymapFor, keyScope } from "./keymap";
+import { bodyRows } from "./layout";
 import { withoutFloat } from "./lsp";
 import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
@@ -222,10 +223,10 @@ export function cmdlineCompletions(
   return exCompletions(typed, [...FULL_EX_NAMES, ...ids]);
 }
 
-/** The active window's viewport (the statusline and command line take two rows) and tab width. */
+/** The active window's viewport (the body between the bufferline and the statusline) and tab width. */
 const envOf = (s: AppState, w: WindowState): VimEnv => ({
   topLine: w.content.scroll,
-  rows: Math.max(1, s.terminal.rows - 2),
+  rows: Math.max(1, bodyRows(s.terminal)),
   tabWidth: s.config.editor.tabWidth,
 });
 

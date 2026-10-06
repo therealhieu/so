@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { bodyRows } from "../../core/state/layout";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import type { LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -38,7 +39,7 @@ export class ToastStack extends Renderable {
     const cols = s.terminal.cols;
     const width = Math.min(40, Math.floor(cols / 2));
     const left = Math.max(0, cols - width - 1);
-    const height = Math.max(0, s.terminal.rows - 3);
+    const height = bodyRows(s.terminal);
     this.width = width;
     this.left = left;
     this.height = height;

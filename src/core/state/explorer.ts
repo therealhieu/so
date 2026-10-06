@@ -238,6 +238,36 @@ export function toggleExplorer(s: AppState): Result {
     : none(opened);
 }
 
+/** The narrowest tree, in columns. */
+export const EXPLORER_MIN_WIDTH = 15;
+/** Columns one `<C-w>>` or `<C-w><` adds or takes away. */
+export const EXPLORER_WIDTH_STEP = 5;
+
+/** The tree's columns: the resized or configured width, at most half the terminal. */
+export function explorerWidth(s: AppState): number {
+  const max = Math.max(EXPLORER_MIN_WIDTH, Math.floor(s.terminal.cols / 2));
+  const width = s.panels.explorer.width ?? s.config.explorer.width;
+  return Math.min(max, Math.max(EXPLORER_MIN_WIDTH, width));
+}
+
+/**
+ * Give the tree `width` columns, clamped like `explorerWidth`; `undefined`
+ * returns it to `[explorer] width`.
+ */
+export function resizeExplorer(
+  s: AppState,
+  width: number | undefined,
+): AppState {
+  const ex = s.panels.explorer;
+  if (width === undefined) {
+    if (ex.width === undefined) return s;
+    const { width: _, ...rest } = ex;
+    return { ...s, panels: { ...s.panels, explorer: rest } };
+  }
+  const next = explorerWidth(setExplorer(s, { width }));
+  return next === ex.width ? s : setExplorer(s, { width: next });
+}
+
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const join = (dir: string, name: string) =>
   dir === "" ? name : `${dir}/${name}`;

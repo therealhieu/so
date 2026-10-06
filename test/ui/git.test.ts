@@ -381,8 +381,12 @@ test("a reveal sign and a git sign share a line, and nothing changes outside a r
   const old = await scene({
     notice: "git 2.20.1 is older than 2.31; git features off",
   });
-  expect(old.slice(0, -2)).toEqual(v1.slice(0, -2));
-  expect(old.at(-2)).toStartWith("git 2.20.1 is older than 2.31");
+  // The frame ends in the message row, the statusline, and an empty line.
+  const unchanged = (rows: string[]) => [...rows.slice(0, -3), rows.at(-2)];
+  expect(unchanged(old)).toEqual(unchanged(v1));
+  expect(old.at(-3)?.trimEnd()).toEndWith(
+    "git 2.20.1 is older than 2.31; git features off",
+  );
 });
 
 test("clicks and the cursor land on the painted text with the change column", async () => {
@@ -431,7 +435,7 @@ const COUNT_BUFFER = [
 ];
 
 const statusRowOf = async (x: Mounted) =>
-  (await rowsOf(x))[x.store.get().terminal.rows - 2] ?? "";
+  (await rowsOf(x))[x.store.get().terminal.rows - 1] ?? "";
 
 /** The statusline for `path` in `repo`, with `index` against the counting buffer. */
 async function statusFor(o: {
@@ -458,12 +462,12 @@ async function statusFor(o: {
 }
 
 test("the statusline git segment reads its variants and drops first", async () => {
-  const after = "notes/plan.md │ ";
+  const after = "notes/plan.md  ";
   expect(await statusFor({ index: COUNT_INDEX })).toContain(
-    `${after}⎇ main +2 ~2 -3 │`,
+    `${after}⎇ main +2 ~2 -3  `,
   );
   expect(await statusFor({ index: COUNT_BUFFER })).toContain(
-    `${after}⎇ main │`,
+    `${after}⎇ main  `,
   );
   const rebasing: RepoInfo = {
     ...REPO,
@@ -471,27 +475,27 @@ test("the statusline git segment reads its variants and drops first", async () =
     op: "rebasing",
   };
   expect(await statusFor({ repo: rebasing, index: COUNT_INDEX })).toContain(
-    `${after}⎇ a1b2c3d rebasing +2 ~2 -3 │`,
+    `${after}⎇ a1b2c3d rebasing +2 ~2 -3  `,
   );
   expect(
     await statusFor({ repo: { ...REPO, op: "merging" }, index: COUNT_BUFFER }),
-  ).toContain(`${after}⎇ main merging │`);
+  ).toContain(`${after}⎇ main merging  `);
   const unborn: RepoInfo = { ...REPO, head: { kind: "unborn", name: "main" } };
   expect(await statusFor({ repo: unborn, index: COUNT_INDEX })).toContain(
-    `${after}⎇ main │`,
+    `${after}⎇ main  `,
   );
-  expect(await statusFor({ index: null })).toContain(`${after}⎇ main │`);
+  expect(await statusFor({ index: null })).toContain(`${after}⎇ main  `);
 
   // A dirty buffer keeps its dot right after the path, before the segment.
   m?.keys("ggAx<Esc>");
   expect(await statusRowOf(m as Mounted)).toContain(
-    "notes/plan.md ● │ ⎇ main │",
+    "notes/plan.md ●  ⎇ main  ",
   );
 
   // Narrow terminals drop the segment with the other optional ones.
   expect(await statusFor({ index: COUNT_INDEX, cols: 80 })).not.toContain("⎇");
   // A row too long for the path drops the segment before the preview.
-  const long = "notes/a-very-long-folder-name/plan.md";
+  const long = "notes/a-very-long-folder-name-here/plan.md";
   const row = await statusFor({ index: COUNT_INDEX, cols: 100, path: long });
   expect(row).not.toContain("⎇");
   expect(row).toContain("preview off");
@@ -510,7 +514,7 @@ test("the statusline git segment colours each part", async () => {
     };
     const row = await statusFor({ repo: rebasing, index: COUNT_INDEX, color });
     const x = m as Mounted;
-    const y = x.store.get().terminal.rows - 2;
+    const y = x.store.get().terminal.rows - 1;
     const spans = x.t.captureSpans().lines;
     /** The style of the first cell of `text` on the status row. */
     const at = (text: string) =>
@@ -709,12 +713,14 @@ test("warnings and errors use their own message styles", async () => {
       config: colorConfig(color),
     });
     const x = m;
+    /** The message's text and the style of its first cell. */
     const messageRow = async () => {
-      const rows = await rowsOf(x);
-      const y = x.store.get().terminal.rows - 1;
+      const text = await x.message();
+      const { cols, rows } = x.store.get().terminal;
+      const first = cols - [...text].length - 1;
       return {
-        text: (rows[y] ?? "").trimEnd(),
-        style: cellStyle(x.t.captureSpans().lines, 0, y),
+        text,
+        style: cellStyle(x.t.captureSpans().lines, first, rows - 2),
       };
     };
     x.store.dispatch({
@@ -865,7 +871,7 @@ for (const [cols, rows, cap] of [
     ]);
     // Inside the editor area: below the bufferline, above the statusline.
     expect(f.top).toBeGreaterThanOrEqual(1);
-    expect(f.bottom).toBeLessThanOrEqual(rows - 3);
+    expect(f.bottom).toBeLessThanOrEqual(rows - 2);
     expect(f.top > cursorRow(m) || f.bottom < cursorRow(m)).toBe(true);
     if (cols === 80) expect(f.right).toBe(cols - 1);
     else expect(f.right - f.left + 1).toBe(72);
@@ -907,7 +913,7 @@ test("the hunk float closes on escape, q, outside clicks, and other keys", async
 
   x.keys("<leader>ghp");
   expect(x.store.get().overlay.kind).toBe("none");
-  expect((await rowsOf(x)).at(-2)?.trimEnd()).toBe("no hunk at cursor");
+  expect(await x.message()).toBe("no hunk at cursor");
 });
 
 /** The roadmap's index lines, and the buffer whose four hunks count +2 ~2 -3. */
@@ -1031,13 +1037,13 @@ test("staging updates gutter, statusline, and explorer together", async () => {
         .slice(1, 1 + ROADMAP.length)
         .map((r) => [...r][left] ?? " ")
         .join(""),
-      status: rows[34]?.match(/⎇[^│]*/)?.[0].trim(),
+      status: rows[35]?.match(/⎇.*?(?= {2}|$)/)?.[0],
       explorer: rows
         .slice(2)
         .find((r) => r.includes("so-roadmap.md"))
         ?.split("│")[0]
         ?.trim(),
-      message: rows[35]?.trim(),
+      message: await x.message(),
     };
   };
   expect(await surfaces()).toEqual({
@@ -1122,13 +1128,14 @@ test("the hand-off paints the saved message once and restores the screen", async
     const list = frames.recordedFrames.map((f) => f.frame.split("\n"));
     const pre = list[tool.framesBefore - 1];
     const post = list[tool.framesBefore];
-    const messageRow = 39;
-    expect(pre?.[messageRow]?.trim()).toBe(
+    const messageRow = 38;
+    expect(pre?.[messageRow]?.trimEnd()).toEndWith(
       `"${ROADMAP_PATH}" written · opening lazygit`,
     );
     expect(tool).toMatchObject({ framesDuring: 0, drawsDuring: 0 });
-    expect(post?.[messageRow]?.trim()).toBe("");
+    expect(post?.[messageRow]).not.toContain("written");
     expect(post?.slice(0, messageRow)).toEqual(pre?.slice(0, messageRow));
+    expect(post?.[messageRow + 1]).toEqual(pre?.[messageRow + 1]);
     expect(draw).toHaveBeenCalled();
   } finally {
     draw.mockRestore();

@@ -29,7 +29,7 @@ const rasterizeSvg = createSvgRasterizer();
 
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
 import { paintRule } from "../../src/ui/widgets/rule";
-import { editingNotes, testRegistries, textFile } from "./state";
+import { editingNotes, explorerLeft, testRegistries, textFile } from "./state";
 
 export type MountOptions = {
   cols: number;
@@ -97,19 +97,25 @@ export async function mountShell(o: MountOptions) {
   const editing = editingNotes(base);
   const initial: AppState = {
     ...editing,
-    config: { ...editing.config, theme: o.theme ?? "dark" },
+    config: explorerLeft({ ...editing.config, theme: o.theme ?? "dark" }),
   };
   const store = createStore(initial, createUpdate(reg), (e) => {
     effects.push(e);
     if (e.kind === "startTimer") timers.set(e.id, now + e.ms);
     if (e.kind === "cancelTimer") timers.delete(e.id);
   });
-  if (o.config !== undefined)
+  if (o.config !== undefined) {
+    const result = parseConfig(o.config);
+    const pinned = /^\s*position\s*=/m.test(o.config);
     store.dispatch({
       type: "configLoaded",
-      result: parseConfig(o.config),
+      result:
+        result.ok && !pinned
+          ? { ...result, config: explorerLeft(result.config) }
+          : result,
       reload: false,
     });
+  }
   const loads: string[] = [];
   const loadImage = (ref: string) => {
     loads.push(ref);
@@ -185,6 +191,25 @@ export async function mountShell(o: MountOptions) {
       const lines = (await this.frame()).split("\n");
       const rows = store.get().terminal.rows;
       return lines[y < 0 ? rows + y : y] ?? "";
+    },
+    /** The statusline: the last row. */
+    async status(): Promise<string> {
+      return this.row(-1);
+    },
+    /**
+     * The message as painted at the right end of the row above the
+     * statusline; "" when there is none.
+     */
+    async message(): Promise<string> {
+      const m = store.get().notifications.message;
+      if (m === undefined) return "";
+      return [...(await this.row(-2)).trimEnd()]
+        .slice(-[...m.text].length)
+        .join("");
+    },
+    /** The text typed in the command-line popup above the statusline. */
+    async cmdline(): Promise<string> {
+      return (await this.row(-3)).replace(/^│ ?|│\s*$/g, "").trimEnd();
     },
     destroy() {
       shell.destroy();

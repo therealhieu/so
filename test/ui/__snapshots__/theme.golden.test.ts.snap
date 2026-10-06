@@ -35,8 +35,8 @@ exports[`picker selection stays visible without colour: marker and reverse video
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-2/18 config.yaml                                                                                                        
+    ~                                                                                                  2/18 config.yaml 
+ NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
 
@@ -90,8 +90,8 @@ exports[`picker selection matches the light theme golden 2`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
- NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-2/18 config.yaml                                                                                                        
+    ~                                                                                                  2/18 config.yaml 
+ NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
 
@@ -118,36 +118,8 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
     ~                                                                           
     ~                                                                           
     ~                                                                           
- NORMAL  │ notes/plan.md │ ← 31 backlinks │ ◆ index ready                   1:1 
-2/18 config.yaml                                                                
-"
-`;
-
-exports[`live view states stay distinguishable without colour at 80×24 1`] = `
-" states.md                                                                      
-   1 ▕# States                                                                  
-   1                                                                            
-   2  See nowhere and plan.                                                     
-   3                                                                            
-   4  Plain line.                                                               
-   5                                                                            
-   6 ⚠![[table.broken]]                                                         
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
- NORMAL  │ notes/states.md                                                  1:1 
-                                                                                
+    ~                                                          2/18 config.yaml 
+ NORMAL  notes/plan.md                       ← 31 backlinks  ◆ index ready  1:1 
 "
 `;
 
@@ -199,7 +171,35 @@ exports[`live view states matches the light theme golden 2`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
- NORMAL  │ notes/states.md                                                  1:1 
-                                                                                
+    ~                                                                           
+ NORMAL  notes/states.md                                                    1:1 
+"
+`;
+
+exports[`live view states stay distinguishable without colour at 80×24 1`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+    ~                                                                           
+ NORMAL  notes/states.md                                                    1:1 
 "
 `;

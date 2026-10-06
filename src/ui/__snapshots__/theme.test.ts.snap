@@ -588,10 +588,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "26,27,38,255",
       "fg": "224,175,104,255",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
     "statusDim": {
       "attrs": 0,
       "bg": "22,22,30,255",
-      "fg": "86,95,137,255",
+      "fg": "115,122,162,255",
     },
     "statusDirty": {
       "attrs": 0,
@@ -602,6 +612,21 @@ exports[`existing tokens keep their values 1`] = `
       "attrs": 1,
       "bg": "22,22,30,255",
       "fg": "247,118,142,255",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "192,202,245,255",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "187,154,247,255",
+    },
+    "statusOk": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "158,206,106,255",
     },
     "statusline": {
       "attrs": 0,
@@ -1235,10 +1260,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "225,226,231,255",
       "fg": "140,108,62,255",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
     "statusDim": {
       "attrs": 0,
       "bg": "208,213,227,255",
-      "fg": "137,144,179,255",
+      "fg": "97,114,176,255",
     },
     "statusDirty": {
       "attrs": 0,
@@ -1249,6 +1284,21 @@ exports[`existing tokens keep their values 1`] = `
       "attrs": 1,
       "bg": "208,213,227,255",
       "fg": "198,67,67,255",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "55,96,191,255",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "120,71,189,255",
+    },
+    "statusOk": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "88,117,57,255",
     },
     "statusline": {
       "attrs": 0,
@@ -1882,6 +1932,16 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "default",
       "fg": "default",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
     "statusDim": {
       "attrs": 2,
       "bg": "default",
@@ -1894,6 +1954,21 @@ exports[`existing tokens keep their values 1`] = `
     },
     "statusError": {
       "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusOk": {
+      "attrs": 0,
       "bg": "default",
       "fg": "default",
     },
