@@ -3,8 +3,7 @@ import { rankBy } from "../kernel/text/fuzzy";
 import type { Pos } from "../kernel/text/pos";
 import type { DiagnosticSeverity } from "../kernel/view/diagnostics";
 import { goTo, recordJump } from "./jumps";
-import { mergedDiagnostics, request, runAction } from "./lsp";
-import type { ServerView } from "./lsp-types";
+import { mergedDiagnostics, request, runAction, serverDetail } from "./lsp";
 import type { PickerSource } from "./picker";
 import { none } from "./result";
 import type { AppState, PickerItem } from "./types";
@@ -78,14 +77,6 @@ function diagnosticRows(s: AppState): Row[] {
     path,
     line: d.range.start.line,
   }));
-}
-
-/** What `:LspInfo` says about a server's binary or state. */
-function serverDetail(v: ServerView): string {
-  if (v.state === "missing") return "not on PATH";
-  if (v.state === "unavailable") return `unavailable: ${v.reason ?? ""}`;
-  if (v.state === "failed" && v.reason !== undefined) return v.reason;
-  return v.progress ?? v.binary ?? "";
 }
 
 /** One row per server and root, then the configured servers nothing started. */

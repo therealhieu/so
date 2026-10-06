@@ -199,6 +199,23 @@ test(":LspRestart restarts the servers of the active file, failed ones included"
   ]);
 });
 
+test(":LspRestart with no server for the file says why", () => {
+  const s = run(fresh(), {
+    type: "fileLoaded",
+    path: "src/a.rs",
+    file: textFile("fn main() {}\n"),
+  }).state;
+  const off = {
+    ...s,
+    config: { ...s.config, lsp: { ...s.config.lsp, enabled: false } },
+  };
+  const r = executeEx(off, "LspRestart", 0, reg);
+  expect(r.effects).toEqual([]);
+  expect(r.state.notifications.message?.text).toBe(
+    "language servers are off: set [lsp] enabled = true in config.toml",
+  );
+});
+
 test(":Diagnostics and :LspInfo open their pickers in any file", () => {
   const note = run(fresh(), {
     type: "fileLoaded",

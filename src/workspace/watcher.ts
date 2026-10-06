@@ -3,7 +3,6 @@ import { lstat } from "node:fs/promises";
 import { join } from "node:path";
 import type { FileEvent, Stamp } from "../core/state/types";
 import { sameStamp, stampOfFile } from "./fs";
-import type { ExclusionMatcher } from "./ignore";
 
 /** What `so` itself did on disk, so the watcher can drop the echoes. Paths are workspace-relative. */
 export type OwnOps = {
@@ -61,12 +60,13 @@ export function createOwnOps(clock = () => performance.now()): OwnOps {
 /**
  * Watch `root` recursively. Events are debounced per path and classified by
  * `lstat` alone (event types are unreliable); symlinks are never followed.
- * Excluded paths and `so`'s own operations are dropped. Returns `stop`.
+ * Paths `isExcluded` rejects, asked per event, and `so`'s own operations are
+ * dropped. Returns `stop`.
  */
 export function watchWorkspace(
   root: string,
   own: OwnOps,
-  matcher: ExclusionMatcher,
+  isExcluded: (rel: string) => boolean,
   emit: (e: FileEvent) => void,
 ): () => void {
   const timers = new Map<string, Timer>();
@@ -89,7 +89,7 @@ export function watchWorkspace(
   }
 
   const w = watch(root, { recursive: true }, (_type, name) => {
-    if (!name || matcher.isExcludedPath(name)) return;
+    if (!name || isExcluded(name)) return;
     clearTimeout(timers.get(name));
     timers.set(
       name,

@@ -23,15 +23,15 @@ const builtin = (name: string) => {
   return spec;
 };
 
-test("language servers are off when the config has no lsp section", () => {
+test("language servers are on when the config has no lsp section", () => {
   expect(parsed("").lsp).toEqual({
-    enabled: false,
+    enabled: true,
     formatOnSave: false,
     inlayHints: true,
     endOfLineDiagnostics: true,
     servers: {},
   });
-  expect(defaults.lsp.enabled).toBe(false);
+  expect(defaults.lsp.enabled).toBe(true);
   expect(defaults.lsp.formatOnSave).toBe(false);
 });
 

@@ -1,6 +1,7 @@
 import { defaults } from "../config/schema";
 import type { BindingSource, ConfigError } from "../config/toml";
 import type { CommandContext } from "./commands";
+import { relistShown } from "./explorer";
 import { none, toast } from "./result";
 import type { Action, AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -48,8 +49,13 @@ export function onConfigLoaded(
   const errors = a.result.ok
     ? validateBindings(reg, a.result.bindings)
     : a.result.errors;
-  if (a.result.ok && errors.length === 0)
-    return none({ ...s, config: a.result.config });
+  if (a.result.ok && errors.length === 0) {
+    const next = { ...s, config: a.result.config };
+    const relisted =
+      next.config.explorer.dotfiles !== s.config.explorer.dotfiles &&
+      s.panels.explorer.entries[""] !== undefined;
+    return relisted ? relistShown(next) : none(next);
+  }
   const [first] = errors;
   const more = errors.length > 1 ? ` (+${errors.length - 1} more)` : "";
   const text = `config.toml:${first?.line ?? 1}: ${first?.message ?? "invalid config"}${more}`;

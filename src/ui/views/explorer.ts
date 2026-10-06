@@ -59,13 +59,12 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
 
 const cells = (text: string) => [...text].length;
 
-/** The git marker glyph after a row's name, and its token. */
+/** A git marker's glyph at the row's right edge, and the token for it and the name. */
 const GIT_MARKERS: Readonly<Record<Marker, readonly [string, string]>> = {
   modified: ["M", "explorerGitModified"],
   staged: ["S", "explorerGitStaged"],
   untracked: ["?", "explorerGitUntracked"],
   conflict: ["U", "explorerGitConflict"],
-  contains: ["•", "explorerGitContains"],
 };
 
 /**
@@ -131,18 +130,15 @@ export class ExplorerView extends Renderable {
     const box = this.inner();
     const x = this.x0 + box.x + 1 + 2 * (row?.depth ?? 0);
     const y = 1 + box.y + 1 + at - this.first;
+    // Only the name field shows a cursor; the selected row marks the tree's focus.
     this.cursorAt =
-      !ex.open || row === undefined
+      !ex.open || row?.edit === undefined
         ? undefined
-        : row.edit !== undefined
-          ? {
-              x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
-              y,
-              style: "line",
-            }
-          : ex.focused
-            ? { x, y, style: "block" }
-            : undefined;
+        : {
+            x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
+            y,
+            style: "line",
+          };
   }
 
   cursor(): Cursor | undefined {
@@ -337,13 +333,40 @@ export class ExplorerView extends Renderable {
           );
         continue;
       }
-      put(basename(row.path), row.dir ? "explorerDir" : "explorer");
-      if (dirty.has(row.path)) put(" ●", "explorerDirty");
       const marker = markers?.get(row.path);
-      if (marker !== undefined) {
-        const [glyph, token] = GIT_MARKERS[marker];
-        put(` ${glyph}`, token);
+      const git = marker === undefined ? undefined : GIT_MARKERS[marker];
+      // An open folder's changes show on the rows below it.
+      const glyph =
+        git !== undefined && !(row.dir && row.open) ? git : undefined;
+      // The name stops short of the glyph column: a space, the glyph, a space.
+      const end = x0 + box.w - (glyph === undefined ? 0 : 3);
+      const name = basename(row.path);
+      const room = end - x;
+      if (room > 0) {
+        drawCells(
+          buf,
+          theme.style(
+            selected
+              ? base
+              : (git?.[1] ?? (row.dir ? "explorerDir" : "explorer")),
+          ),
+          x,
+          y,
+          name,
+          Math.min(room, cells(name)),
+        );
+        x += Math.min(room, cells(name));
       }
+      if (dirty.has(row.path) && end - x >= 2) put(" ●", "explorerDirty");
+      if (glyph !== undefined && box.w >= 3)
+        drawCells(
+          buf,
+          theme.style(selected ? base : glyph[1]),
+          x0 + box.w - 2,
+          y,
+          glyph[0],
+          1,
+        );
     }
   }
 }

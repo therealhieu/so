@@ -259,3 +259,17 @@ test("changes outside open buffers relist listed folders", () => {
     { kind: "listDir", dir: "notes" },
   ]);
 });
+
+test("a change under a dot folder relists it but never reaches the index", () => {
+  const s = fresh();
+  const r = update(s, {
+    type: "fileChanged",
+    event: { kind: "changed", path: ".s1mple/logo.png", isDir: false },
+  });
+  expect(r.state.index).toBe(s.index);
+  const removed = update(s, {
+    type: "fileChanged",
+    event: { kind: "removed", path: ".s1mple/old.png" },
+  });
+  expect(removed.state.index).toBe(s.index);
+});

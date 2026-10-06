@@ -187,7 +187,7 @@ type ServerEntry = z.infer<typeof ServerEntry>;
 
 export const LspConfigSchema = z
   .strictObject({
-    enabled: z.boolean().default(false),
+    enabled: z.boolean().default(true),
     formatOnSave: z.boolean().default(false),
     inlayHints: z.boolean().default(true),
     endOfLineDiagnostics: z.boolean().default(true),

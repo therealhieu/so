@@ -9,6 +9,7 @@ import type { ToolHost } from "../../src/app/tool-host";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
+import { hasDotSegment } from "../../src/core/state/explorer";
 import { initialState } from "../../src/core/state/init";
 import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
@@ -235,8 +236,11 @@ export async function startApp(
           logger,
           ...opts.index,
         });
-  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {
+  const excluded = (rel: string) =>
+    matcher.isExcludedPath(rel, store.get().config.explorer.dotfiles);
+  const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
     store.dispatch({ type: "fileChanged", event });
+    if (hasDotSegment(event.path)) return;
     index?.notify(event);
     lsp?.notify(event);
   });

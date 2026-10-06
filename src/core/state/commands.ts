@@ -40,6 +40,7 @@ import {
   scheduleAutosave,
   writeBuffer,
 } from "./save";
+import { toggleDotfiles } from "./settings";
 import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -435,6 +436,11 @@ const builtins: AppCommand[] = [
     id: "explorer.resetWidth",
     title: "Reset explorer width",
     run: (c) => none(resizeExplorer(c.state, undefined)),
+  },
+  {
+    id: "explorer.toggleDotfiles",
+    title: "Show or hide dot entries",
+    run: (c) => toggleDotfiles(c.state),
   },
   {
     id: "explorer.down",

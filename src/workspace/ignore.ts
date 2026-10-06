@@ -3,15 +3,21 @@ import ignore, { type Ignore } from "ignore";
 
 /** Decides which workspace entries the explorer, the watcher, and search skip. */
 export type ExclusionMatcher = {
-  /** `rel` is workspace-relative; `isDir` enables directory-only patterns. */
-  isExcluded(rel: string, isDir: boolean): boolean;
+  /**
+   * `rel` is workspace-relative; `isDir` enables directory-only patterns;
+   * `dotfiles` lets dot entries other than `.git` through.
+   */
+  isExcluded(rel: string, isDir: boolean, dotfiles?: boolean): boolean;
   /** For paths of unknown kind: excluded when any folder above it, or the path as a file, is. */
-  isExcludedPath(rel: string): boolean;
+  isExcludedPath(rel: string, dotfiles?: boolean): boolean;
 };
 
-/** Dot entries and `node_modules` are never shown. */
-const ALWAYS_HIDDEN = (name: string): boolean =>
-  name.startsWith(".") || name === "node_modules";
+/** `.git` and `node_modules` are never shown. */
+const NEVER_SHOWN = (name: string): boolean =>
+  name === ".git" || name === "node_modules";
+
+/** Other dot entries are shown only on request. */
+const isDot = (name: string): boolean => name.startsWith(".");
 
 /**
  * Hidden names plus nested `.gitignore` files with git precedence: each file
@@ -32,9 +38,10 @@ export function createExclusionMatcher(
     return loaded;
   };
 
-  const isExcluded = (rel: string, isDir: boolean): boolean => {
+  const isExcluded = (rel: string, isDir: boolean, dotfiles = false) => {
     const parts = rel.split("/");
-    if (parts.some(ALWAYS_HIDDEN)) return true;
+    if (parts.some(NEVER_SHOWN)) return true;
+    if (!dotfiles && parts.some(isDot)) return true;
     let ignored = false;
     for (let i = 0; i < parts.length; i++) {
       const dir = parts.slice(0, i).join("/");
@@ -48,11 +55,12 @@ export function createExclusionMatcher(
 
   return {
     isExcluded,
-    isExcludedPath(rel) {
+    isExcludedPath(rel, dotfiles = false) {
       const parts = rel.split("/");
       for (let i = 1; i < parts.length; i++)
-        if (isExcluded(parts.slice(0, i).join("/"), true)) return true;
-      return isExcluded(rel, false);
+        if (isExcluded(parts.slice(0, i).join("/"), true, dotfiles))
+          return true;
+      return isExcluded(rel, false, dotfiles);
     },
   };
 }

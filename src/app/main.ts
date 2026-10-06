@@ -35,6 +35,7 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { EmbedModelRegistry } from "../core/state/embed-models";
+import { hasDotSegment, listDirEffect } from "../core/state/explorer";
 import {
   gitBindings,
   gitCommands,
@@ -397,13 +398,17 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
 
-  runner.run({ kind: "listDir", dir: "" });
+  runner.run(listDirEffect(store.get(), ""));
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });
 
   // Watching, indexing, and platform detection start after the first frame.
   setImmediate(() => {
-    watchWorkspace(ws.root, ownOps, matcher, (event) => {
+    const excluded = (rel: string) =>
+      matcher.isExcludedPath(rel, store.get().config.explorer.dotfiles);
+    watchWorkspace(ws.root, ownOps, excluded, (event) => {
       store.dispatch({ type: "fileChanged", event });
+      // Dot paths are watched only for the explorer.
+      if (hasDotSegment(event.path)) return;
       indexHost.notify(event);
       lspHost.notify(event);
     });

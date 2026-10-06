@@ -691,14 +691,7 @@ export class EditorView extends Renderable implements WindowView {
       }
     }
     for (; i < rows; i++)
-      drawCells(
-        buf,
-        theme.style("dim"),
-        this.x,
-        y + i,
-        "~".padStart(gw - 1),
-        this.width,
-      );
+      drawCells(buf, theme.style("text"), this.x, y + i, "", this.width);
   }
 
   /**

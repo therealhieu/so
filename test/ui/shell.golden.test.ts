@@ -265,7 +265,7 @@ test("a window whose layout throws still shows the file's raw lines", async () =
   const body = (await m.frame()).split("\n").slice(1, 4);
   expect(body[0]).toStartWith("   1  first line");
   expect(body[1]).toContain("second line");
-  expect(body[2]).toStartWith("    ~");
+  expect(body[2]?.trim()).toBe("");
 });
 
 test("an info toast expires after 3 s and an error toast stays", async () => {

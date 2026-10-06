@@ -143,11 +143,15 @@ export const exists = (p: string) =>
 
 const e13 = (rel: string) => new FsError(`E13: File exists (${rel})`);
 
-/** One folder's entries without excluded ones, folders first; symlinks report their target's kind. */
+/**
+ * One folder's entries without excluded ones, folders first; symlinks report
+ * their target's kind. `dotfiles` lists dot entries other than `.git`.
+ */
 export async function listDir(
   root: string,
   rel: string,
   matcher: ExclusionMatcher,
+  dotfiles = false,
 ): Promise<DirEntry[]> {
   const dir = join(root, rel);
   const entries: DirEntry[] = [];
@@ -155,7 +159,8 @@ export async function listDir(
     const isDir = d.isSymbolicLink()
       ? ((await statOrNull(join(dir, d.name)))?.isDirectory() ?? false)
       : d.isDirectory();
-    if (matcher.isExcluded(rel ? `${rel}/${d.name}` : d.name, isDir)) continue;
+    const path = rel ? `${rel}/${d.name}` : d.name;
+    if (matcher.isExcluded(path, isDir, dotfiles)) continue;
     entries.push({ name: d.name, kind: isDir ? "dir" : "file" });
   }
   return entries.sort((a, b) =>

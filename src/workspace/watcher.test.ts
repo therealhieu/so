@@ -62,6 +62,7 @@ let root = "";
 let events: FileEvent[] = [];
 let stop = () => {};
 let startMs = Number.POSITIVE_INFINITY;
+let dotfiles = false;
 const own = createOwnOps();
 
 /** The watcher debounce (50 ms) plus time for macOS event replays. */
@@ -90,7 +91,12 @@ beforeAll(async () => {
     }
   });
   const t0 = performance.now();
-  stop = watchWorkspace(root, own, matcher, (e) => events.push(e));
+  stop = watchWorkspace(
+    root,
+    own,
+    (rel) => matcher.isExcludedPath(rel, dotfiles),
+    (e) => events.push(e),
+  );
   startMs = performance.now() - t0;
   await settle();
   events = [];
@@ -124,6 +130,20 @@ test("writes under excluded paths are never reported", async () => {
   await writeFile(join(root, ".hidden.md"), "x\n");
   await settle();
   expect(events).toEqual([]);
+});
+
+test("dot entries other than .git are reported while dotfiles are shown", async () => {
+  dotfiles = true;
+  await mkdir(join(root, ".git"), { recursive: true });
+  await writeFile(join(root, ".git/HEAD"), "x\n");
+  await writeFile(join(root, ".notes.md"), "x\n");
+  await waitFor(() => events.length > 0);
+  await settle();
+  dotfiles = false;
+  expect(events).toEqual([
+    { kind: "changed", path: ".notes.md", isDir: false },
+  ]);
+  events = [];
 });
 
 test("a removal and a new folder are classified by stat", async () => {

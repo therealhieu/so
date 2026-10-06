@@ -125,22 +125,24 @@ test("each row gets one marker and staged-and-modified reads modified", () => {
   });
 });
 
-test("ancestor folders contain changes, including a deleted tracked file", () => {
+test("a folder takes the strongest marker below it, including a deleted file's", () => {
   const st = status(
     tracked(".M", "a/b/c.md"),
     tracked(".D", "old/gone.md"),
     tracked("D.", "trash/deep/gone.md"),
     "? a/new.md",
+    tracked("M.", "a/b/staged.md"),
   );
   const m = explorerMarkers(st);
   expect(Object.fromEntries(m)).toEqual({
-    a: "contains",
-    "a/b": "contains",
+    a: "untracked",
+    "a/b": "modified",
     "a/b/c.md": "modified",
+    "a/b/staged.md": "staged",
     "a/new.md": "untracked",
-    old: "contains",
-    trash: "contains",
-    "trash/deep": "contains",
+    old: "modified",
+    trash: "staged",
+    "trash/deep": "staged",
   });
   expect(m.has("old/gone.md")).toBe(false);
   expect(explorerMarkers(st)).toBe(m);

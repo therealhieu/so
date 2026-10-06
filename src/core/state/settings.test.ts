@@ -34,6 +34,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
     expect(rows(s)).toEqual([
       "explorer.position left",
       "explorer.icons nerd",
+      "explorer.dotfiles off",
       "theme dark",
       "color auto",
       "mouse on",
@@ -82,4 +83,45 @@ test("a setting that could not be saved returns to its previous value", () => {
     level: "error",
     text: "Setting not saved: config.toml:2 has an error; fix it before changing settings",
   });
+});
+
+test("cycling explorer.dotfiles lists the shown folders again, and so does a failed save", () => {
+  const open = keys(editing(), " us").state;
+  const r = keys(open, "dotfiles<CR>");
+  expect(r.state.config.explorer.dotfiles).toBe(true);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "dotfiles"],
+      value: true,
+      previous: false,
+    },
+    { kind: "listDir", dir: "", dotfiles: true },
+  ]);
+  const failed = update(r.state, {
+    type: "settingFailed",
+    path: ["explorer", "dotfiles"],
+    previous: false,
+    reason: "read-only",
+  });
+  expect(failed.state.config.explorer.dotfiles).toBe(false);
+  expect(failed.effects).toEqual([{ kind: "listDir", dir: "" }]);
+});
+
+test("Enter cycles theme through every colour theme and wraps around", () => {
+  let s = keys(editing(), " ustheme").state;
+  const seen: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    s = keys(s, "<CR>").state;
+    seen.push(s.config.theme);
+  }
+  expect(seen).toEqual([
+    "light",
+    "catppuccin-latte",
+    "catppuccin-frappe",
+    "catppuccin-macchiato",
+    "catppuccin-mocha",
+    "dark",
+  ]);
+  expect(rows(s)).toEqual(["theme dark"]);
 });

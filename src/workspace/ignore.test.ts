@@ -34,6 +34,18 @@ test("hidden entries, node_modules, and gitignored folders are excluded", () => 
   expect(matcher.isExcluded("pkg", true)).toBe(false);
 });
 
+test("shown dot entries still leave out .git, node_modules, and gitignored names", () => {
+  const { matcher } = matcherWith({ "": ".env\n" });
+  expect(matcher.isExcluded(".s1mple", true, true)).toBe(false);
+  expect(matcher.isExcluded(".github/ci.yml", false, true)).toBe(false);
+  expect(matcher.isExcludedPath(".github/workflows/ci.yml", true)).toBe(false);
+  expect(matcher.isExcluded(".git", true, true)).toBe(true);
+  expect(matcher.isExcludedPath(".git/HEAD", true)).toBe(true);
+  expect(matcher.isExcluded("node_modules", true, true)).toBe(true);
+  expect(matcher.isExcluded(".env", false, true)).toBe(true);
+  expect(matcher.isExcludedPath(".github/ci.yml")).toBe(true);
+});
+
 test("a deeper negation re-includes what a shallower pattern excludes", () => {
   const { matcher } = matcherWith(workspace);
   expect(matcher.isExcluded("debug.log", false)).toBe(true);

@@ -1,7 +1,8 @@
-import type { AppConfig } from "../config/schema";
+import { type AppConfig, THEME_NAMES } from "../config/schema";
 import type { SettingValue } from "../config/toml-edit";
 import { rankBy } from "../kernel/text/fuzzy";
-import { toast } from "./result";
+import { relistShown } from "./explorer";
+import { chain, message, none, toast } from "./result";
 import type { Action, AppState, PickerItem, Result } from "./types";
 
 /** A setting the settings picker cycles: its config path, choices, and what it does. */
@@ -27,7 +28,20 @@ export const SETTINGS: readonly Setting[] = [
     choices: ["nerd", "unicode"],
     about: ["Nerd Font file-type icons, or", "plain symbols for other fonts."],
   },
-  { path: ["theme"], choices: ["dark", "light"], about: ["The colour theme."] },
+  {
+    path: ["explorer", "dotfiles"],
+    choices: [false, true],
+    about: [
+      "List dot entries other than",
+      "`.git` in the explorer; search",
+      "still skips them.",
+    ],
+  },
+  {
+    path: ["theme"],
+    choices: THEME_NAMES,
+    about: ["The colour theme: `dark`/`light`", "are Tokyo Night."],
+  },
   {
     path: ["color"],
     choices: ["auto", "never"],
@@ -137,6 +151,30 @@ export function describeSetting(s: AppState, item: PickerItem) {
   ];
 }
 
+/** Work a new value needs beyond repainting: the explorer lists dot entries again. */
+const applySetting = (s: AppState, path: Setting["path"]): Result =>
+  keyOf(path) === "explorer.dotfiles" ? relistShown(s) : none(s);
+
+/** `value` applies now and is written to config.toml. */
+function setSetting(
+  s: AppState,
+  path: Setting["path"],
+  value: SettingValue,
+): Result {
+  const previous = currentValue(s.config, path);
+  const next = refreshSettings(
+    { ...s, config: withValue(s.config, path, value) },
+    keyOf(path),
+  );
+  return chain(
+    {
+      state: next,
+      effects: [{ kind: "writeSetting", path: [...path], value, previous }],
+    },
+    (st) => applySetting(st, path),
+  );
+}
+
 /** Enter: the setting's next choice applies now and is written to config.toml; the picker stays open. */
 export function cycleSetting(s: AppState, item: PickerItem): Result {
   const x = settingOf(item.key);
@@ -144,13 +182,15 @@ export function cycleSetting(s: AppState, item: PickerItem): Result {
   const previous = currentValue(s.config, x.path);
   const at = x.choices.indexOf(previous);
   const value = x.choices[(at + 1) % x.choices.length] ?? previous;
-  return {
-    state: refreshSettings(
-      { ...s, config: withValue(s.config, x.path, value) },
-      item.key,
-    ),
-    effects: [{ kind: "writeSetting", path: [...x.path], value, previous }],
-  };
+  return setSetting(s, x.path, value);
+}
+
+/** `H` in the explorer: show or hide dot entries, saved like the setting. */
+export function toggleDotfiles(s: AppState): Result {
+  const shown = !s.config.explorer.dotfiles;
+  return chain(setSetting(s, ["explorer", "dotfiles"], shown), (st) =>
+    message(st, shown ? "dot entries shown" : "dot entries hidden"),
+  );
 }
 
 /** A setting could not be saved: it returns to `previous`, and a toast says why. */
@@ -161,12 +201,17 @@ export function onSettingFailed(
   const x = settingOf(keyOf(a.path));
   const reverted =
     x === undefined
-      ? s
-      : refreshSettings(
-          { ...s, config: withValue(s.config, x.path, a.previous) },
-          keyOf(x.path),
+      ? none(s)
+      : applySetting(
+          refreshSettings(
+            { ...s, config: withValue(s.config, x.path, a.previous) },
+            keyOf(x.path),
+          ),
+          x.path,
         );
-  return toast(reverted, "error", `Setting not saved: ${a.reason}`);
+  return chain(reverted, (st) =>
+    toast(st, "error", `Setting not saved: ${a.reason}`),
+  );
 }
 
 /** Re-list an open settings picker, keeping `key` selected. */

@@ -104,11 +104,19 @@ test("the explorer draws Nerd Font icons unless configured to plain symbols", ()
   expect(e?.message).toStartWith("explorer.icons: ");
 });
 
+test("the explorer hides dot entries unless dotfiles is on", () => {
+  const r = parseConfig(lines("[explorer]", "dotfiles = true"));
+  expect(r.ok && r.config.explorer.dotfiles).toBe(true);
+  const [e] = errors(lines("[explorer]", 'dotfiles = "yes"'));
+  expect(e?.message).toStartWith("explorer.dotfiles: ");
+});
+
 test("the explorer docks left unless configured right", () => {
   expect(defaults.explorer).toEqual({
     position: "right",
     icons: "nerd",
     width: 30,
+    dotfiles: false,
   });
   const r = parseConfig(lines("[explorer]", 'position = "right"'));
   expect(r.ok && r.config.explorer.position).toBe("right");
@@ -130,4 +138,13 @@ test("git.tool takes a non-empty list of strings and defaults to lazygit", () =>
   if (!empty.ok) throw new Error("expected a parsed config");
   expect(empty.config.git.tool).toEqual(["lazygit"]);
   expect(defaults.git.tool).toEqual(["lazygit"]);
+});
+
+test("theme accepts the catppuccin flavors and rejects unknown names", () => {
+  const r = parseConfig('theme = "catppuccin-mocha"');
+  if (!r.ok) throw new Error(JSON.stringify(r.errors));
+  expect(r.config.theme).toBe("catppuccin-mocha");
+  const [e, ...rest] = errors('theme = "catppuccin"');
+  expect(rest).toEqual([]);
+  expect(e?.message).toStartWith("theme: ");
 });

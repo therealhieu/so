@@ -378,3 +378,15 @@ describe("refused files", () => {
     expect(effectsOf("write")).toEqual([]);
   });
 });
+
+test("the focused tree hides the cursor, and its name field shows a line cursor", async () => {
+  await m.frame();
+  expect(m.store.get().panels.explorer.focused).toBe(true);
+  expect(m.t.renderer.getCursorState().visible).toBe(false);
+  m.keys("a");
+  await m.frame();
+  expect(m.t.renderer.getCursorState()).toMatchObject({
+    visible: true,
+    style: "line",
+  });
+});

@@ -13,29 +13,29 @@ exports[`picker selection stays visible without colour: marker and reverse video
    8  ▊ Risk│   log/day-01.md                                        │                                     │            
    9        │   log/day-02.md                                        │                                     │            
   10  Scope.│   log/day-03.md                                        │                                     │            
-    ~       │   log/day-04.md                                        │                                     │            
-    ~       │   log/day-05.md                                        │                                     │            
-    ~       │   log/day-06.md                                        │                                     │            
-    ~       │   log/day-07.md                                        │                                     │            
-    ~       │   log/day-08.md                                        │                                     │            
-    ~       │   log/day-09.md                                        │                                     │            
-    ~       │   log/day-10.md                                        │                                     │            
-    ~       │   log/day-11.md                                        │                                     │            
-    ~       │   notes/ideas.md                                       │                                     │            
-    ~       │   projects/so-roadmap.md                               │                                     │            
-    ~       │   projects/so.md                                       │                                     │            
-    ~       │   scripts/sync.ts                                      │                                     │            
-    ~       │   todo.md                                              │                                     │            
-    ~       │                                                        │                                     │            
-    ~       │                                                        │                                     │            
-    ~       │                                                        │                                     │            
-    ~       ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                  2/18 config.yaml 
+            │   log/day-04.md                                        │                                     │            
+            │   log/day-05.md                                        │                                     │            
+            │   log/day-06.md                                        │                                     │            
+            │   log/day-07.md                                        │                                     │            
+            │   log/day-08.md                                        │                                     │            
+            │   log/day-09.md                                        │                                     │            
+            │   log/day-10.md                                        │                                     │            
+            │   log/day-11.md                                        │                                     │            
+            │   notes/ideas.md                                       │                                     │            
+            │   projects/so-roadmap.md                               │                                     │            
+            │   projects/so.md                                       │                                     │            
+            │   scripts/sync.ts                                      │                                     │            
+            │   todo.md                                              │                                     │            
+            │                                                        │                                     │            
+            │                                                        │                                     │            
+            │                                                        │                                     │            
+            ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                       2/18 config.yaml 
  NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
@@ -68,29 +68,29 @@ exports[`picker selection matches the light theme golden 2`] = `
    8  ▊ Risk│   log/day-01.md                                        │                                     │            
    9        │   log/day-02.md                                        │                                     │            
   10  Scope.│   log/day-03.md                                        │                                     │            
-    ~       │   log/day-04.md                                        │                                     │            
-    ~       │   log/day-05.md                                        │                                     │            
-    ~       │   log/day-06.md                                        │                                     │            
-    ~       │   log/day-07.md                                        │                                     │            
-    ~       │   log/day-08.md                                        │                                     │            
-    ~       │   log/day-09.md                                        │                                     │            
-    ~       │   log/day-10.md                                        │                                     │            
-    ~       │   log/day-11.md                                        │                                     │            
-    ~       │   notes/ideas.md                                       │                                     │            
-    ~       │   projects/so-roadmap.md                               │                                     │            
-    ~       │   projects/so.md                                       │                                     │            
-    ~       │   scripts/sync.ts                                      │                                     │            
-    ~       │   todo.md                                              │                                     │            
-    ~       │                                                        │                                     │            
-    ~       │                                                        │                                     │            
-    ~       │                                                        │                                     │            
-    ~       ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                  2/18 config.yaml 
+            │   log/day-04.md                                        │                                     │            
+            │   log/day-05.md                                        │                                     │            
+            │   log/day-06.md                                        │                                     │            
+            │   log/day-07.md                                        │                                     │            
+            │   log/day-08.md                                        │                                     │            
+            │   log/day-09.md                                        │                                     │            
+            │   log/day-10.md                                        │                                     │            
+            │   log/day-11.md                                        │                                     │            
+            │   notes/ideas.md                                       │                                     │            
+            │   projects/so-roadmap.md                               │                                     │            
+            │   projects/so.md                                       │                                     │            
+            │   scripts/sync.ts                                      │                                     │            
+            │   todo.md                                              │                                     │            
+            │                                                        │                                     │            
+            │                                                        │                                     │            
+            │                                                        │                                     │            
+            ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────────────────────────────────────╯            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                       2/18 config.yaml 
  NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
@@ -108,18 +108,46 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
    8  ▊ │   log/day-02.md                                              │        
    9    │   log/day-03.md                                              │        
   10  Sc│   log/day-04.md                                              │        
-    ~   │   log/day-05.md                                              │        
-    ~   │   log/day-06.md                                              │        
-    ~   │   log/day-07.md                                              │        
-    ~   │   log/day-08.md                                              │        
-    ~   │   log/day-09.md                                              │        
-    ~   │   log/day-10.md                                              │        
-    ~   ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────╯        
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                          2/18 config.yaml 
+        │   log/day-05.md                                              │        
+        │   log/day-06.md                                              │        
+        │   log/day-07.md                                              │        
+        │   log/day-08.md                                              │        
+        │   log/day-09.md                                              │        
+        │   log/day-10.md                                              │        
+        ╰─ C-j/C-k move · Enter open · Esc close ──────────────────────╯        
+                                                                                
+                                                                                
+                                                                                
+                                                               2/18 config.yaml 
  NORMAL  notes/plan.md                       ← 31 backlinks  ◆ index ready  1:1 
+"
+`;
+
+exports[`live view states stay distinguishable without colour at 80×24 1`] = `
+" states.md                                                                      
+   1 ▕# States                                                                  
+   1                                                                            
+   2  See nowhere and plan.                                                     
+   3                                                                            
+   4  Plain line.                                                               
+   5                                                                            
+   6 ⚠![[table.broken]]                                                         
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ NORMAL  notes/states.md                                                    1:1 
 "
 `;
 
@@ -157,49 +185,21 @@ exports[`live view states matches the light theme golden 2`] = `
    4  Plain line.                                                               
    5                                                                            
    6 ⚠![[table.broken]]                                                         
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
- NORMAL  notes/states.md                                                    1:1 
-"
-`;
-
-exports[`live view states stay distinguishable without colour at 80×24 1`] = `
-" states.md                                                                      
-   1 ▕# States                                                                  
-   1                                                                            
-   2  See nowhere and plan.                                                     
-   3                                                                            
-   4  Plain line.                                                               
-   5                                                                            
-   6 ⚠![[table.broken]]                                                         
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
  NORMAL  notes/states.md                                                    1:1 
 "
 `;

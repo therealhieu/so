@@ -5,7 +5,7 @@ import {
   setBuffer,
   splitFile,
 } from "./buffers";
-import { dirname, pruneTree, relist } from "./explorer";
+import { dirname, hasDotSegment, pruneTree, relist } from "./explorer";
 import { requestRefresh } from "./git";
 import { indexAfterFileEvent } from "./index";
 import { chain, message, none, toast } from "./result";
@@ -41,7 +41,8 @@ export function onFileChanged(prev: AppState, e: FileEvent): Result {
 }
 
 function fileEvent(prev: AppState, e: FileEvent): Result {
-  const s = indexAfterFileEvent(prev, e);
+  // Dot paths reach here only for the explorer; the index never holds them.
+  const s = hasDotSegment(e.path) ? prev : indexAfterFileEvent(prev, e);
   if (e.kind === "removed") {
     const open = buffersUnder(s, e.path).filter((b) => b.disk === "present");
     const marked = open.reduce<Result>(

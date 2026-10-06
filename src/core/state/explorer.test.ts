@@ -5,6 +5,7 @@ import {
   stamp,
   testRegistries,
 } from "../../../test/support/state";
+import { parseConfig } from "../config/toml";
 import { splitKeys } from "../kernel/vim/keys";
 import { setBuffer } from "./buffers";
 import {
@@ -300,4 +301,79 @@ test("[explorer] width sets the width until the explorer is resized", () => {
   };
   expect(explorerWidth(configured)).toBe(22);
   expect(resizedTo(configured, "<C-w>>")).toBe(27);
+});
+
+const pressInExplorer = (s: AppState, seq: string): Result => {
+  const effects: Effect[] = [];
+  for (const key of splitKeys(seq)) {
+    const r = update(s, { type: "key", key, now: 0 });
+    s = r.state;
+    effects.push(...r.effects);
+  }
+  return { state: s, effects };
+};
+
+test("H shows dot entries in every listed folder and saves the choice", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "notes", kind: "dir" }],
+  }).state;
+  const expanded = pressInExplorer(s, "l").state;
+  const r = pressInExplorer(expanded, "H");
+  expect(r.state.config.explorer.dotfiles).toBe(true);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "dotfiles"],
+      value: true,
+      previous: false,
+    },
+    { kind: "listDir", dir: "", dotfiles: true },
+    { kind: "listDir", dir: "notes", dotfiles: true },
+  ]);
+  expect(r.state.notifications.message?.text).toBe("dot entries shown");
+});
+
+test("hiding dot entries collapses dot folders and moves a selection inside one to the top", () => {
+  let s = pressInExplorer(fresh(), "H").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: ".s1mple", kind: "dir" },
+      { name: "notes", kind: "dir" },
+    ],
+  }).state;
+  s = pressInExplorer(s, "l").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: ".s1mple",
+    entries: [{ name: "S1MPLE.md", kind: "file" }],
+  }).state;
+  s = pressInExplorer(s, "j").state;
+  expect(s.panels.explorer.cursor).toBe(".s1mple/S1MPLE.md");
+  const r = pressInExplorer(s, "H");
+  expect(r.state.panels.explorer.expanded).toEqual([]);
+  expect(r.state.panels.explorer.cursor).toBe("");
+  expect(r.effects).toContainEqual({ kind: "listDir", dir: "" });
+  const relisted = update(r.state, {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "notes", kind: "dir" }],
+  }).state;
+  expect(relisted.panels.explorer.cursor).toBe("notes");
+});
+
+test("a reloaded config.toml that turns dotfiles on lists the tree again", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  const result = parseConfig("[explorer]\ndotfiles = true\n");
+  const r = update(s, { type: "configLoaded", result, reload: true });
+  expect(r.effects).toEqual([{ kind: "listDir", dir: "", dotfiles: true }]);
+  const same = update(r.state, { type: "configLoaded", result, reload: true });
+  expect(same.effects).toEqual([]);
 });

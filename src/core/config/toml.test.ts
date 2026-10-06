@@ -93,7 +93,12 @@ test("a valid file parses with binding lines", () => {
       color: "never",
       mouse: true,
       editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
-      explorer: { position: "right", icons: "nerd", width: 30 },
+      explorer: {
+        position: "right",
+        icons: "nerd",
+        width: 30,
+        dotfiles: false,
+      },
       preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
       daily: {
         folder: "daily",
@@ -107,7 +112,7 @@ test("a valid file parses with binding lines", () => {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },
       },
       lsp: {
-        enabled: false,
+        enabled: true,
         formatOnSave: false,
         inlayHints: true,
         endOfLineDiagnostics: true,

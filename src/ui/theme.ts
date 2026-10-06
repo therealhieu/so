@@ -1,11 +1,13 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
+import type { ThemeName } from "../core/config/schema";
 import type { AppState } from "../core/state/types";
+import { catppuccin, FLAVORS } from "./catppuccin";
 
 /** Terminal attributes for one token. */
 export type Style = { fg: RGBA; bg: RGBA; attrs: number };
 
 export type Theme = {
-  name: "dark" | "light" | "nocolor";
+  name: ThemeName | "nocolor";
   /** Kernel style tokens ("codeKeyword", "selection") and chrome tokens ("modeNormal"). */
   style(token: string): Style;
 };
@@ -175,7 +177,7 @@ export const TOKENS: Readonly<
   explorer: ["fg", "bg-dark", 0, 0],
   explorerDim: ["fg-dim", "bg-dark", 0, DIM],
   explorerTitle: ["fg-muted", "bg-dark", BOLD, BOLD],
-  explorerDir: ["h1", "bg-dark", 0, 0],
+  explorerDir: ["fn", "bg-dark", 0, 0],
   explorerDirty: ["warn", "bg-dark", 0, 0],
   explorerWarn: ["warn", "bg-dark", 0, 0],
   explorerError: ["error", "bg-dark", BOLD, BOLD],
@@ -283,15 +285,14 @@ export const TOKENS: Readonly<
   statusGitAdd: ["ok", "bg-dark", 0, 0],
   statusGitChange: ["fn", "bg-dark", 0, 0],
   statusGitDelete: ["error", "bg-dark", 0, 0],
-  explorerGitModified: ["fn", "bg-dark", 0, 0],
+  explorerGitModified: ["warn", "bg-dark", 0, 0],
   explorerGitStaged: ["ok", "bg-dark", 0, 0],
-  explorerGitUntracked: ["fg-muted", "bg-dark", 0, 0],
+  explorerGitUntracked: ["kw", "bg-dark", 0, 0],
   explorerGitConflict: ["error", "bg-dark", BOLD, BOLD | UNDERLINE],
-  explorerGitContains: ["fg-dim", "bg-dark", 0, DIM],
   messageWarn: ["warn", "bg", 0, 0],
 };
 
-function colorTheme(name: "dark" | "light", p: Palette): Theme {
+function colorTheme(name: ThemeName, p: Palette): Theme {
   const cache = new Map<string, Style>();
   return {
     name,
@@ -324,13 +325,23 @@ const nocolorTheme: Theme = {
 export const themes: Readonly<Record<Theme["name"], Theme>> = {
   dark: colorTheme("dark", DARK),
   light: colorTheme("light", LIGHT),
+  "catppuccin-latte": colorTheme("catppuccin-latte", catppuccin(FLAVORS.latte)),
+  "catppuccin-frappe": colorTheme(
+    "catppuccin-frappe",
+    catppuccin(FLAVORS.frappe),
+  ),
+  "catppuccin-macchiato": colorTheme(
+    "catppuccin-macchiato",
+    catppuccin(FLAVORS.macchiato),
+  ),
+  "catppuccin-mocha": colorTheme("catppuccin-mocha", catppuccin(FLAVORS.mocha)),
   nocolor: nocolorTheme,
 };
 
 /** The one place colour is decided: `NO_COLOR` (resolved at boot) wins over the theme. */
 export const resolveTheme = (o: {
   color: "color" | "nocolor";
-  theme: "dark" | "light";
+  theme: ThemeName;
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
 
 /** The theme for the state's colour mode and configured theme; `color = "never"` turns colour off. */

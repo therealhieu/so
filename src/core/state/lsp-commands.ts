@@ -6,7 +6,7 @@ import type { Pos, Range } from "../kernel/text/pos";
 import type { Diagnostic } from "../kernel/view/diagnostics";
 import { activeBuffer, activeWindow, placeCursor } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
-import { openRenamePrompt, pickServer, request } from "./lsp";
+import { noServerMessage, openRenamePrompt, pickServer, request } from "./lsp";
 import type { ServerKey } from "./lsp-types";
 import { openPicker } from "./picker";
 import { message, none } from "./result";
@@ -161,7 +161,7 @@ export function formattingOptions(
 function formatCommand(c: CommandContext): Result {
   const s = c.state;
   const b = activeBuffer(s);
-  if (b === undefined) return message(s, "no language server for this window");
+  if (b === undefined) return message(s, noServerMessage(s, b));
   const options = formattingOptions(b, s.config.editor.tabWidth);
   const range = selection(s);
   return range === undefined
@@ -256,7 +256,7 @@ function diagnosticFloat(c: CommandContext): Result {
 function restartAttached(c: CommandContext): Result {
   const s = c.state;
   const b = activeBuffer(s);
-  if (b === undefined) return message(s, "no language server for this window");
+  if (b === undefined) return message(s, noServerMessage(s, b));
   const names = new Set(
     resolveServers(s.config.lsp)
       .filter((spec) => spec.fileTypes.includes(b.fileType))
@@ -274,7 +274,7 @@ function restartAttached(c: CommandContext): Result {
     .map(([key]) => key);
   const keys: ServerKey[] = [...attached, ...stopped];
   return keys.length === 0
-    ? message(s, `no language server for ${b.fileType}`)
+    ? message(s, noServerMessage(s, b))
     : { state: s, effects: [{ kind: "lspRestart", keys }] };
 }
 
@@ -282,10 +282,7 @@ function restartAttached(c: CommandContext): Result {
 function workspaceSymbols(c: CommandContext): Result {
   const b = activeBuffer(c.state);
   if (b === undefined || (c.state.lsp.attached[b.path] ?? []).length === 0)
-    return message(
-      c.state,
-      `no language server for ${b?.fileType ?? "this window"}`,
-    );
+    return message(c.state, noServerMessage(c.state, b));
   if (pickServer(c.state, b.path, "workspaceSymbols") === undefined)
     return message(c.state, "workspaceSymbols: not supported");
   return openPicker(

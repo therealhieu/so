@@ -2,6 +2,17 @@ import { z } from "zod";
 import { splitKeys } from "../kernel/vim/keys";
 import { LspConfigSchema } from "./lsp";
 
+/** Colour themes: `dark` and `light` are Tokyo Night (night and day). */
+export const THEME_NAMES = [
+  "dark",
+  "light",
+  "catppuccin-latte",
+  "catppuccin-frappe",
+  "catppuccin-macchiato",
+  "catppuccin-mocha",
+] as const;
+export type ThemeName = (typeof THEME_NAMES)[number];
+
 /** `"<key-seq>" = "<command-id>"` */
 const KeyTable = z.record(z.string().min(1), z.string().min(1));
 /** Mode → key table; modes are checked against the registered bindings when applied. */
@@ -58,7 +69,7 @@ export const ConfigSchema = z.strictObject({
       delayMs: z.number().int().min(0).default(1000),
     })
     .prefault({}),
-  theme: z.enum(["dark", "light"]).default("dark"),
+  theme: z.enum(THEME_NAMES).default("dark"),
   color: z.enum(["auto", "never"]).default("auto"),
   /** Terminal mouse reporting: clicks, drags, and the wheel. */
   mouse: z.boolean().default(true),
@@ -77,6 +88,8 @@ export const ConfigSchema = z.strictObject({
       icons: z.enum(["nerd", "unicode"]).default("nerd"),
       /** Columns of the tree until it is resized; the session keeps a resized width. */
       width: z.number().int().min(15).max(200).default(30),
+      /** List dot entries other than `.git`; search and the index skip them either way. */
+      dotfiles: z.boolean().default(false),
     })
     .prefault({}),
   preview: z

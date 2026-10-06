@@ -65,6 +65,18 @@ test("listing shows symlinks with their target kind and skips excluded entries",
   ]);
 });
 
+test("dotfiles lists dot entries but never .git", async () => {
+  await mkdir(join(root, ".git"), { recursive: true });
+  await mkdir(join(root, ".s1mple"), { recursive: true });
+  const names = (await listDir(root, "", matcher(), true)).map((e) => e.name);
+  expect(names).toContain(".s1mple");
+  expect(names).toContain(".env");
+  expect(names).not.toContain(".git");
+  expect(names).not.toContain("build");
+  await rm(join(root, ".git"), { recursive: true });
+  await rm(join(root, ".s1mple"), { recursive: true });
+});
+
 test("a linked folder lists only when it is expanded", async () => {
   expect(await listDir(root, "linked", matcher())).toEqual([
     { name: "a.md", kind: "file" },

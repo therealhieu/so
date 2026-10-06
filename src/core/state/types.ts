@@ -700,7 +700,8 @@ export type Effect =
   | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
   | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
-  | { kind: "listDir"; dir: string }
+  /** `dotfiles` lists dot entries other than `.git`. */
+  | { kind: "listDir"; dir: string; dotfiles?: true }
   | { kind: "startTimer"; id: TimerId; ms: number }
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }
