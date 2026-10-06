@@ -1,5 +1,6 @@
 import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
+import type { SettingValue } from "../config/toml-edit";
 import type { PropertyTypes } from "../features/bases/property-types";
 import type { BlameLine } from "../features/git/blame";
 import type { Hunk } from "../features/git/diff";
@@ -16,6 +17,8 @@ import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
+import type { Diagnostic } from "../kernel/view/diagnostics";
+import type { InlayHint } from "../kernel/view/inlay-hints";
 import type { Key } from "../kernel/vim/keys";
 import type { VimState } from "../kernel/vim/types";
 import type {
@@ -24,6 +27,15 @@ import type {
 } from "../lang/markdown/frontmatter-patch";
 import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
+import type {
+  CodeCompletionItem,
+  CodeEdit,
+  LspOp,
+  LspResult,
+  LspState,
+  ServerKey,
+  ServerView,
+} from "./lsp-types";
 import type { MessageLevel } from "./result";
 
 export type BufferId = number;
@@ -68,6 +80,12 @@ export type TimerId =
   | "whichKey"
   | "saveState"
   | "search"
+  | "completion"
+  | "lspResolve"
+  | "lspHighlight"
+  | "lspPointer"
+  | `lsp:${number}`
+  | `lspFormat:${BufferId}`
   | `gitDiff:${BufferId}`
   | "gitRefresh";
 
@@ -148,6 +166,8 @@ export type ExplorerState = {
   /** Selected path ("" when nothing is selected). */
   cursor: string;
   trash: "unknown" | "available" | "unavailable";
+  /** Columns of the tree after a resize; unset follows `[explorer] width`. */
+  width?: number;
 };
 
 /** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */
@@ -164,10 +184,30 @@ type PromptBase = {
  * An explorer prompt. `op` is the operation it completes: for "create",
  * `from` is the folder the new entry goes in; otherwise the selected path.
  */
-export type ExplorerPrompt = PromptBase & { op: FsOp; newNote?: never };
+export type ExplorerPrompt = PromptBase & {
+  op: FsOp;
+  newNote?: never;
+  rename?: never;
+};
 /** A new note's title, before its template is chosen. */
-type NewNotePrompt = PromptBase & { newNote: true; op?: never };
-export type PromptState = ExplorerPrompt | NewNotePrompt;
+type NewNotePrompt = PromptBase & {
+  newNote: true;
+  op?: never;
+  rename?: never;
+};
+/** A new name for the symbol `name` at `pos`, asked of the server `key`. */
+type RenamePrompt = PromptBase & {
+  rename: {
+    key: ServerKey;
+    path: string;
+    pos: Pos;
+    version: number;
+    name: string;
+  };
+  op?: never;
+  newNote?: never;
+};
+export type PromptState = ExplorerPrompt | NewNotePrompt | RenamePrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {
@@ -181,14 +221,22 @@ export type SidePanelState = {
 };
 
 export type CompletionState = {
-  /** The position just after "[[". */
+  /** The position just after "[[", or the word start for code. */
   anchor: Pos;
-  mode: "notes" | "headings" | "blocks";
+  mode: "notes" | "headings" | "blocks" | "code";
   /** The resolved note whose headings or blocks are listed. */
   target?: string;
   query: string;
-  items: { insert: string; label: string; detail?: string }[];
+  /** Ranked rows; `source` is the row's index in `code.items`. */
+  items: { insert: string; label: string; detail?: string; source?: number }[];
   selected: number;
+  /** Code completion: the server's items, kept for local re-ranking and accept. */
+  code?: {
+    key: ServerKey;
+    items: CodeCompletionItem[];
+    incomplete: boolean;
+    version: number;
+  };
 };
 
 /** The open calendar: the month shown, today, and the selected day (always in `month`). */
@@ -306,6 +354,8 @@ export type PersistedState = {
     active: WindowId;
     windows: { id: WindowId; path: string; cursor: Pos; scroll: number }[];
   };
+  /** Present once the explorer was resized. */
+  explorer?: { width: number } | undefined;
 };
 
 /** A position the cursor jumped from; Neovim's jumplist entry. */
@@ -423,6 +473,8 @@ export type WindowSpot =
 export type MouseTarget =
   | { kind: "window"; window: WindowId; spot: WindowSpot }
   | { kind: "explorer"; path: string }
+  /** The docked explorer's separator; `width` is the tree width with the separator at the pointer. */
+  | { kind: "explorerEdge"; width: number }
   | { kind: "sidePanel"; row: number }
   | { kind: "bufferTab"; bufferId: BufferId }
   | { kind: "overlayItem"; index: number }
@@ -437,7 +489,9 @@ export type MouseTarget =
 export type MouseEvent =
   | { kind: "press"; target: MouseTarget; clicks: 1 | 2 | 3; ctrl: boolean }
   | { kind: "drag"; target: MouseTarget }
-  | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
+  | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
+  /** The pointer moved onto `target` with no button held. */
+  | { kind: "move"; target: MouseTarget };
 
 export type AppState = {
   workspace: { root: string };
@@ -488,6 +542,7 @@ export type AppState = {
   /** Workspace paths, most recently opened first. */
   recent: string[];
   preview: PreviewState;
+  lsp: LspState;
   git: GitState;
 };
 
@@ -519,6 +574,12 @@ export type Action =
   | { type: "clipboardText"; text: string; error?: string }
   | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
+  | {
+      type: "settingFailed";
+      path: string[];
+      previous: SettingValue;
+      reason: string;
+    }
   | {
       type: "indexBatch";
       summaries: NoteSummary[];
@@ -578,6 +639,34 @@ export type Action =
       added: string[];
       reason?: string;
     }
+  /** A server's state changed; `undefined`: it was stopped. */
+  | { type: "lspServer"; key: ServerKey; view: ServerView | undefined }
+  /** The servers attached to `path`, in routing order. */
+  | { type: "lspAttached"; path: string; keys: ServerKey[] }
+  /** Server `key`'s pushed or pulled diagnostics for `path`, replacing that list. */
+  | {
+      type: "lspDiagnostics";
+      key: ServerKey;
+      path: string;
+      source: "push" | "pull";
+      items: Diagnostic[];
+    }
+  /** Server `key`'s inlay hints for `path`, replacing its list; empty removes it. */
+  | { type: "lspInlayHints"; key: ServerKey; path: string; items: InlayHint[] }
+  | { type: "lspResult"; id: number; result: LspResult; now: number }
+  | {
+      type: "lspMessage";
+      key: ServerKey;
+      level: "error" | "warning";
+      text: string;
+    }
+  /** Server `key` asks for `edit`; answered once by `lspReply` with `requestId`. */
+  | {
+      type: "lspApplyEdit";
+      key: ServerKey;
+      requestId: number | string;
+      edit: CodeEdit;
+    }
   | { type: "gitDetected"; repo: RepoInfo | null; notice?: string }
   | {
       type: "gitStatus";
@@ -629,6 +718,13 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
+  /** Write one config.toml value; `previous` is restored if the write fails. */
+  | {
+      kind: "writeSetting";
+      path: string[];
+      value: SettingValue;
+      previous: SettingValue;
+    }
   | { kind: "applyEdits"; batch: number; edit: FileEdit }
   | { kind: "startPreview" }
   | { kind: "stopPreview" }
@@ -660,6 +756,18 @@ export type Effect =
       patch: FrontmatterPatch;
       expected: FrontmatterValue | undefined;
     }
+  /** Send `op` for `path` to server `key`; answered by `lspResult` with `id`. */
+  | { kind: "lsp"; id: number; key: ServerKey; path: string; op: LspOp }
+  | { kind: "lspCancel"; id: number; key: ServerKey }
+  /** Answer the server's edit request `requestId`. */
+  | {
+      kind: "lspReply";
+      key: ServerKey;
+      requestId: number | string;
+      applied: boolean;
+      failureReason?: string;
+    }
+  | { kind: "lspRestart"; keys: ServerKey[] }
   /** Read the status of the workspace's part of the repository; answered by `gitStatus`. */
   | { kind: "gitStatus"; repo: RepoInfo; prefix: string }
   /** Read the index entry of `path` (`repoPath` from the top); answered by `gitIndexRead`. */

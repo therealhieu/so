@@ -7,7 +7,13 @@ import {
 } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
 import { setBuffer } from "./buffers";
-import { createTarget, explorerOp, toggleExplorer } from "./explorer";
+import {
+  createTarget,
+  explorerOp,
+  explorerWidth,
+  resizeExplorer,
+  toggleExplorer,
+} from "./explorer";
 import { scheduleAutosave } from "./save";
 import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
@@ -247,4 +253,51 @@ test("toggle opens and focuses the explorer, then closes it", () => {
     focused: true,
   });
   expect(reopened.effects).toEqual([{ kind: "listDir", dir: "" }]);
+});
+
+const pressKeys = (s: AppState, seq: string): Result => {
+  let r: Result = { state: s, effects: [] };
+  for (const key of splitKeys(seq))
+    r = update(r.state, { type: "key", key, now: 0 });
+  return r;
+};
+const resizedTo = (s: AppState, seq: string) =>
+  explorerWidth(pressKeys(s, seq).state);
+
+test("<C-w>> and <C-w>< resize the focused explorer by five columns", () => {
+  const s = fresh();
+  expect(s.panels.explorer.focused).toBe(true);
+  expect(explorerWidth(s)).toBe(30);
+  expect(resizedTo(s, "<C-w>>")).toBe(35);
+  expect(resizedTo(s, "<C-w>><C-w>>")).toBe(40);
+  expect(resizedTo(s, "<C-w><lt>")).toBe(25);
+  expect(resizedTo(s, "<C-w>><C-w>=")).toBe(30);
+  expect(pressKeys(s, "<C-w>><C-w>=").state.panels.explorer.width).toBe(
+    undefined,
+  );
+});
+
+test("the explorer stays between 15 columns and half the terminal", () => {
+  const s = fresh();
+  expect(s.terminal.cols).toBe(100);
+  expect(resizedTo(s, "<C-w>>".repeat(10))).toBe(50);
+  // Widening past the limit stores the limit, so one step back narrows at once.
+  expect(resizedTo(s, `${"<C-w>>".repeat(10)}<C-w><lt>`)).toBe(45);
+  expect(resizedTo(s, "<C-w><lt>".repeat(10))).toBe(15);
+  expect(explorerWidth(resizeExplorer(s, 3))).toBe(15);
+  // A smaller terminal narrows a wide explorer without forgetting its width.
+  const wide = resizeExplorer(s, 50);
+  const small = { ...wide, terminal: { ...wide.terminal, cols: 60 } };
+  expect(explorerWidth(small)).toBe(30);
+  expect(small.panels.explorer.width).toBe(50);
+});
+
+test("[explorer] width sets the width until the explorer is resized", () => {
+  const s = fresh();
+  const configured = {
+    ...s,
+    config: { ...s.config, explorer: { ...s.config.explorer, width: 22 } },
+  };
+  expect(explorerWidth(configured)).toBe(22);
+  expect(resizedTo(configured, "<C-w>>")).toBe(27);
 });

@@ -1,3 +1,5 @@
+import type { Span } from "./types";
+
 /** Cells `ch` takes at display column `v`: a tab reaches the next multiple of `tabWidth`. */
 export const cellWidth = (ch: string, v: number, tabWidth: number): number =>
   ch === "\t" ? tabWidth - (v % tabWidth) : 1;
@@ -44,3 +46,10 @@ export function rowOf(starts: readonly number[], col: number): number {
   while (row + 1 < starts.length && (starts[row + 1] ?? 0) <= col) row++;
   return row;
 }
+
+/** The text a row wraps on: every span but end-of-line virtual text. */
+export const wrapText = (spans: readonly Span[]): string =>
+  spans
+    .filter((sp) => sp.virtual !== "eol")
+    .map((sp) => sp.text)
+    .join("");

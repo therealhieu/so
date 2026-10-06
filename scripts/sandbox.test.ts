@@ -205,3 +205,22 @@ test("bases and large stage their vaults", async () => {
   );
   expect(notes).toHaveLength(10_000);
 });
+
+test("lsp stages a Rust crate and a TypeScript project as their own repositories", async () => {
+  const { vault } = await staged("lsp");
+  const files = filesUnder(vault);
+  for (const f of [
+    "rs/Cargo.toml",
+    "rs/src/main.rs",
+    "ts/tsconfig.json",
+    "ts/src/a.ts",
+  ])
+    expect(files).toContain(f);
+  for (const repo of ["rs", "ts"]) {
+    const status = Bun.spawnSync(["git", "status", "--porcelain"], {
+      cwd: join(vault, repo),
+    });
+    expect(status.exitCode).toBe(0);
+    expect(status.stdout.toString()).toBe("");
+  }
+});

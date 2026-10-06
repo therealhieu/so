@@ -42,6 +42,11 @@ import {
   linkGroups,
 } from "../../src/core/state/link-commands";
 import {
+  lspBindings,
+  lspCommands,
+  lspGroups,
+} from "../../src/core/state/lsp-commands";
+import {
   markdownBindings,
   markdownCommands,
 } from "../../src/core/state/markdown-commands";
@@ -76,6 +81,7 @@ export function testRegistries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
@@ -95,9 +101,16 @@ export function testRegistries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...lspBindings,
       ...gitBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...gitGroups },
+    groups: {
+      ...defaultGroups,
+      ...linkGroups,
+      ...noteGroups,
+      ...lspGroups,
+      ...gitGroups,
+    },
     viewContexts,
     embedModels,
     layouts,
@@ -136,7 +149,19 @@ export const editingNotes = (s: AppState): AppState => ({
   config: { ...s.config, preview: { ...s.config.preview, mode: "live" } },
 });
 
-export const fresh = (): AppState => editingNotes(initialState(boot));
+/**
+ * `config` with the explorer docked left, the layout most suites measure
+ * columns against; suites about the edge set `position` themselves.
+ */
+export const explorerLeft = <C extends AppState["config"]>(config: C): C => ({
+  ...config,
+  explorer: { ...config.explorer, position: "left" },
+});
+
+export const fresh = (): AppState => {
+  const s = editingNotes(initialState(boot));
+  return { ...s, config: explorerLeft(s.config) };
+};
 
 /** A fresh state with the shipped config, where notes open in `reading`. */
 export const freshDefaults = (): AppState => initialState(boot);

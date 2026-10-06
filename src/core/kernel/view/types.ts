@@ -16,6 +16,12 @@ export type Span = {
   fold?: number;
   /** The tag this text shows, for a click on text drawn in place of its source. */
   tag?: string;
+  /**
+   * Text that is not in the buffer and hides nothing: `inline` sits before
+   * the character at `col`; `eol` follows the line and is cut at the window
+   * edge instead of wrapping.
+   */
+  virtual?: "inline" | "eol";
 };
 
 export type Sign = { text: string; style: StyleToken };

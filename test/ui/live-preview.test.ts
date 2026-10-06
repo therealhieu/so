@@ -46,7 +46,7 @@ test("reading view refuses edits with a hint and still moves", async () => {
     m.keys(seq);
     expect(lines(m)).toEqual(before);
     expect(m.store.get().vim.mode).toBe("normal");
-    expect(await m.row(-1)).toContain("reading mode — <leader>m to edit");
+    expect(await m.message()).toContain("reading mode — <leader>m to edit");
   }
   m.keys("j");
   expect(activeWindow(m.store.get())?.content.cursor.line).toBe(1);
@@ -65,10 +65,10 @@ const ROADMAP_MD = `# So roadmap\n\n## Goals\n\n${Array.from(
 const SIGN_X = 5;
 const signOf = (row: string) => [...row][SIGN_X] ?? " ";
 
-/** Rows of the editor window: below the bufferline, above the statusline and command line. */
+/** Rows of the editor window: below the bufferline, above the statusline. */
 async function windowRows(x: Mounted): Promise<string[]> {
   const rows = (await x.frame()).split("\n");
-  return rows.slice(1, x.store.get().terminal.rows - 2);
+  return rows.slice(1, x.store.get().terminal.rows - 1);
 }
 
 /** Open the tour with its embedded roadmap and base loaded, and the base's task notes indexed. */
@@ -357,7 +357,7 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     };
     expect(await drawn()).toBe(1);
     const [, , y, , height, , , , , , sourceHeight] = draw.mock.calls[0] ?? [];
-    expect(height).toBe(37 - ((y as number) - 1));
+    expect(height).toBe(38 - ((y as number) - 1));
     expect(height).toBeLessThan(24);
     expect(sourceHeight).toBe(Math.round((960 * (height as number)) / 24));
 
@@ -401,7 +401,7 @@ test("an image narrower than the window keeps its natural size", async () => {
 
 test("the cursor stays on screen below a tall image", async () => {
   m = await mountImageNote({ cols: 120, rows: 24, capabilities: KITTY });
-  const textRows = 24 - 3;
+  const textRows = 24 - 2;
   // The image takes 80% of the window: its first row is numbered, the rest are blank.
   const blankGutter = (await windowRows(m)).filter((r) =>
     r.startsWith(" ".repeat(6)),

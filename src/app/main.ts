@@ -1,9 +1,8 @@
 import { readFileSync, realpathSync } from "node:fs";
-import { stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
+import { resolveServers } from "../core/config/lsp";
 import { parseConfig } from "../core/config/toml";
 import { baseEmbedRenderer } from "../core/features/bases/embed";
 import { baseEditorKind, baseFileType } from "../core/features/bases/file-type";
@@ -48,6 +47,11 @@ import {
   linkCommands,
   linkGroups,
 } from "../core/state/link-commands";
+import {
+  lspBindings,
+  lspCommands,
+  lspGroups,
+} from "../core/state/lsp-commands";
 import {
   markdownBindings,
   markdownCommands,
@@ -94,8 +98,10 @@ import {
 } from "./effects";
 import { createIndexHost } from "./index-host";
 import { installLifecycle } from "./lifecycle";
+import { createLspHost } from "./lsp-host";
 import { createPreviewHost } from "./preview-host";
 import { createToolHost } from "./tool-host";
+import { resolveWorkspace } from "./workspace";
 
 /** Inlined from the release tag at build time; the package version otherwise. */
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
@@ -124,18 +130,6 @@ function parseCli(argv: string[]): Cli {
   };
 }
 
-/** The workspace folder, and the file to open when `path` names one. */
-async function resolveWorkspace(
-  path: string,
-): Promise<{ root: string; file?: string } | undefined> {
-  const abs = resolve(path);
-  const st = await stat(abs).catch(() => undefined);
-  if (st === undefined) return undefined;
-  return st.isDirectory()
-    ? { root: abs }
-    : { root: dirname(abs), file: basename(abs) };
-}
-
 function registries(): Registries {
   const fileTypes = new FileTypeRegistry(textFileType);
   for (const ft of codeFileTypes) fileTypes.register(ft);
@@ -149,6 +143,7 @@ function registries(): Registries {
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
   const viewContexts = new ViewContextRegistry();
@@ -167,9 +162,16 @@ function registries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...lspBindings,
       ...gitBindings,
     ],
-    groups: { ...defaultGroups, ...linkGroups, ...noteGroups, ...gitGroups },
+    groups: {
+      ...defaultGroups,
+      ...linkGroups,
+      ...noteGroups,
+      ...lspGroups,
+      ...gitGroups,
+    },
     viewContexts,
     embedModels,
     layouts,
@@ -204,6 +206,16 @@ function loadStartupConfig(path: string, logger: Logger): Action | undefined {
   if (!result.ok)
     logger.error("config.invalid", { errors: result.errors.length });
   return { type: "configLoaded", result, reload: false };
+}
+
+/** The file types an enabled language server serves under the startup config. */
+function servedFileTypes(config: Action | undefined): ReadonlySet<string> {
+  const lsp =
+    config?.type === "configLoaded" && config.result.ok
+      ? config.result.config.lsp
+      : undefined;
+  if (lsp?.enabled !== true) return new Set();
+  return new Set(resolveServers(lsp).flatMap((spec) => spec.fileTypes));
 }
 
 /** Saves the session on shutdown; a failure is logged and never stops the exit. */
@@ -274,15 +286,15 @@ async function main(argv: string[]): Promise<void> {
     process.exit(0);
   }
   const target = cli.path ?? process.cwd();
-  const ws = await resolveWorkspace(target);
+  const logger = createLogger(process.env, homedir());
+  const configFile = configPath(process.env, homedir());
+  const config = loadStartupConfig(configFile, logger);
+  const ws = await resolveWorkspace(target, servedFileTypes(config));
   if (ws === undefined) {
     process.stderr.write(`so: no such file or directory: ${target}\n`);
     process.exit(2);
   }
-
-  const logger = createLogger(process.env, homedir());
   logger.info("app.startup", { root: ws.root });
-  const configFile = configPath(process.env, homedir());
   const stateFile = statePath(process.env, homedir(), realpathSync(ws.root));
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
@@ -312,6 +324,11 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
+  const lspHost = createLspHost({
+    root: ws.root,
+    dispatch: (a) => store.dispatch(a),
+    logger,
+  });
   // Constructing the adapter runs no git; discovery waits for the first frame.
   const git = createGit({ which: (c) => Bun.which(c), logger });
   // Trash, clipboard, exit, and the git tool are bound once detected or
@@ -332,6 +349,7 @@ async function main(argv: string[]): Promise<void> {
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
     index: indexHost,
+    lsp: lspHost,
     preview: previewHost,
     openUrl: (url) => openUrl(url, process.platform),
     git,
@@ -352,7 +370,7 @@ async function main(argv: string[]): Promise<void> {
     createUpdate(reg),
     runner.run,
   );
-  const config = loadStartupConfig(configFile, logger);
+  store.subscribe(lspHost.observe);
   if (config !== undefined) store.dispatch(config);
   if (stateFile !== undefined)
     store.dispatch({
@@ -369,6 +387,7 @@ async function main(argv: string[]): Promise<void> {
     runner,
     ...(saveSession === undefined ? {} : { saveSession }),
     stopPreview: previewHost.stop,
+    stopLsp: lspHost.stop,
   });
   deps.exit = lifecycle.exitNow;
   deps.tool = createToolHost({
@@ -386,6 +405,7 @@ async function main(argv: string[]): Promise<void> {
     watchWorkspace(ws.root, ownOps, matcher, (event) => {
       store.dispatch({ type: "fileChanged", event });
       indexHost.notify(event);
+      lspHost.notify(event);
     });
     indexHost.start(ws.root, []);
     runner.run({ kind: "readPropertyTypes" });

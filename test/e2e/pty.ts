@@ -80,6 +80,8 @@ export type PtyProcess = {
 export type PtyRun = {
   exitCode: number;
   probe: TerminalProbe;
+  /** Each different last row the screen showed, in order: transient statusline states. */
+  statusRows: string[];
   screen: {
     buffer: "normal" | "alternate";
     mouse: "none" | "x10" | "vt200" | "drag" | "any";
@@ -117,6 +119,13 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   const rows = o.rows ?? 30;
   const term = new xterm.Terminal({ cols, rows, allowProposedApi: true });
   const probe = new TerminalProbe();
+  const statusRows: string[] = [];
+  /** Note the last row once the emulator has applied a write. */
+  const noteStatus = () => {
+    const buf = term.buffer.active;
+    const row = buf.getLine(buf.length - 1)?.translateToString(true) ?? "";
+    if (row !== statusRows.at(-1)) statusRows.push(row);
+  };
   let done = false;
   // The session state and config files go to a private folder, never the
   // user's; notes open in the editable live view the runs type into.
@@ -140,7 +149,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
       data(t: PtyTerminal, bytes: Uint8Array) {
         const s = decoder.decode(bytes, { stream: true });
         probe.feed(s);
-        term.write(s);
+        term.write(s, noteStatus);
         // Answer the kitty keyboard query, as a kitty-capable terminal does.
         if (s.includes(KITTY_QUERY)) t.write(`${ESC}[?0u`);
       },
@@ -184,6 +193,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   return {
     exitCode,
     probe,
+    statusRows,
     screen: {
       buffer,
       mouse: term.modes.mouseTrackingMode,
@@ -192,9 +202,9 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   };
 }
 
-/** The statusline: the second-to-last row of the screen. */
+/** The statusline: the last row of the screen. */
 export const statusRow = (p: PtyProcess): string =>
-  p.screen().split("\n").at(-2) ?? "";
+  p.screen().split("\n").at(-1) ?? "";
 
 /**
  * The first frame is painted, the kitty keyboard mode is on, and a file the

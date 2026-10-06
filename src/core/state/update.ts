@@ -33,6 +33,19 @@ import {
 } from "./index";
 import { handleKeyAction, onClipboardText } from "./keys";
 import { onEditsApplied } from "./link-edits";
+import {
+  onLspApplyEdit,
+  onLspAttached,
+  onLspDiagnostics,
+  onLspInlayHints,
+  onLspMessage,
+  onLspResult,
+  onLspServer,
+  syncDiagnostics,
+  syncFloat,
+  syncHighlight,
+  syncLineShift,
+} from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
 import {
@@ -55,6 +68,7 @@ import {
   sessionChanged,
   snapshotSession,
 } from "./session";
+import { onSettingFailed } from "./settings";
 import {
   answersMentions,
   followShownNote,
@@ -171,6 +185,8 @@ export function createUpdate(reg: Registries): Update {
         return onMouse(state, action, reg);
       case "configLoaded":
         return onConfigLoaded(state, action, reg);
+      case "settingFailed":
+        return onSettingFailed(state, action);
       case "indexBatch":
         return onIndexBatch(state, action);
       case "indexReady":
@@ -202,6 +218,20 @@ export function createUpdate(reg: Registries): Update {
         return onPropertyTypesLoaded(state, action);
       case "frontmatterPatched":
         return onFrontmatterPatched(state, action);
+      case "lspServer":
+        return onLspServer(state, action);
+      case "lspAttached":
+        return onLspAttached(state, action);
+      case "lspDiagnostics":
+        return onLspDiagnostics(state, action);
+      case "lspInlayHints":
+        return onLspInlayHints(state, action);
+      case "lspResult":
+        return onLspResult(state, action, reg);
+      case "lspMessage":
+        return onLspMessage(state, action);
+      case "lspApplyEdit":
+        return onLspApplyEdit(state, action, reg);
       case "gitDetected":
         return onGitDetected(state, action);
       case "gitStatus":
@@ -224,10 +254,25 @@ export function createUpdate(reg: Registries): Update {
     try {
       const r = syncGitFiles(
         state,
-        syncEmbeds(
+        syncHighlight(
           state,
-          followShownNote(state, syncEditorKinds(step(state, action), reg)),
-          reg,
+          syncFloat(
+            state,
+            syncDiagnostics(
+              state,
+              syncLineShift(
+                state,
+                syncEmbeds(
+                  state,
+                  followShownNote(
+                    state,
+                    syncEditorKinds(step(state, action), reg),
+                  ),
+                  reg,
+                ),
+              ),
+            ),
+          ),
         ),
       );
       const withSession: Result =
@@ -293,7 +338,7 @@ function onTimerAction(
   if (a.id === "gitRefresh") return onGitRefreshTimer(s);
   if (a.id.startsWith("gitDiff:"))
     return onGitDiffTimer(s, Number(a.id.slice("gitDiff:".length)));
-  return onTimer(s, a);
+  return onTimer(s, a, reg);
 }
 
 function onResize(s: AppState, a: Extract<Action, { type: "resize" }>): Result {

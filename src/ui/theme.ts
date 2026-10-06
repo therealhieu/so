@@ -158,7 +158,12 @@ export const TOKENS: Readonly<
   bufferActive: ["fg", "bg", BOLD, BOLD | UNDERLINE],
   bufferDirty: ["warn", "bg-dark", 0, 0],
   statusline: ["fg", "bg-dark", 0, 0],
-  statusDim: ["fg-dim", "bg-dark", 0, DIM],
+  statusDim: ["fg-muted", "bg-dark", 0, DIM],
+  statusFile: ["fg", "bg-dark", BOLD, BOLD],
+  statusAlt: ["fg", "bg-hl", 0, 0],
+  statusLink: ["wikilink", "bg-dark", 0, 0],
+  statusOk: ["ok", "bg-dark", 0, 0],
+  statusBusy: ["warn", "bg-dark", 0, 0],
   statusError: ["error", "bg-dark", BOLD, BOLD],
   statusDirty: ["warn", "bg-dark", 0, 0],
   modeNormal: ["mode-fg", "mode-normal", BOLD, BOLD | INVERSE],
@@ -202,6 +207,7 @@ export const TOKENS: Readonly<
   floatMatch: ["fg", "match-bg", UNDERLINE, UNDERLINE],
   floatWarn: ["warn", "bg-float", 0, 0],
   floatError: ["error", "bg-float", BOLD, BOLD],
+  floatActive: ["fg", "bg-sel", BOLD, BOLD | UNDERLINE],
   calendarMark: ["tag", "bg-float", 0, 0],
   toastInfo: ["ok", "bg-float", 0, 0],
   toastError: ["error", "bg-float", BOLD, BOLD],
@@ -232,6 +238,20 @@ export const TOKENS: Readonly<
   mdProperty: ["fg-muted", "bg", 0, DIM],
   signReveal: ["h2", "bg", 0, BOLD],
   signError: ["error", "bg", BOLD, BOLD],
+  // Diagnostics: the gutter sign letter (E, W, I, H) carries the severity
+  // without colour; the underline marks the range.
+  diagnosticError: ["error", "bg", UNDERLINE, UNDERLINE],
+  diagnosticWarn: ["warn", "bg", UNDERLINE, UNDERLINE],
+  diagnosticInfo: ["info", "bg", UNDERLINE, UNDERLINE],
+  diagnosticHint: ["fg-muted", "bg", UNDERLINE, UNDERLINE | DIM],
+  // A diagnostic's message after its line, prefixed by ●.
+  diagnosticTextError: ["error", "bg", 0, BOLD],
+  diagnosticTextWarn: ["warn", "bg", 0, 0],
+  diagnosticTextInfo: ["info", "bg", 0, DIM],
+  diagnosticTextHint: ["fg-muted", "bg", 0, DIM],
+  // Language-server hints between the characters, and uses of the symbol under the cursor.
+  inlayHint: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
+  lspReference: ["fg", "bg-hl", 0, UNDERLINE],
   imagePlaceholder: ["fg-dim", "bg", ITALIC, DIM | ITALIC],
   // Bases views: the focused cell or card is reversed and marked with ▌;
   // lane dots carry their names, never colour alone.

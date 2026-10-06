@@ -4,6 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { fullText, splitFile } from "../../core/state/buffers";
+import { bodyRows, statusRow } from "../../core/state/layout";
 import type { AppState, TextFile } from "../../core/state/types";
 import type { LayoutClass } from "../shell";
 import { drawCells, type Theme, themeOf } from "../theme";
@@ -169,9 +170,9 @@ export class ConflictView extends Renderable {
     s: AppState,
     ops: Op[],
   ): void {
-    const { cols, rows } = s.terminal;
+    const { cols } = s.terminal;
     const top = 1;
-    const height = Math.max(0, rows - 3);
+    const height = Math.max(0, bodyRows(s.terminal) - 1);
     const firstChange = Math.max(
       0,
       ops.findIndex((op) => op.sign !== " "),
@@ -237,7 +238,7 @@ export class ConflictView extends Renderable {
       buf,
       theme.style("message"),
       0,
-      rows - 1,
+      statusRow(s.terminal) - 1,
       " k keep mine  t take disk  q back to the prompt",
       cols,
     );

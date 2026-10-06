@@ -4,6 +4,7 @@ import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import type { Shell } from "../ui/shell";
 import type { EffectRunner } from "./effects";
+import { LSP_STOP_BOUND_MS } from "./lsp-host";
 
 /** The longest a shutdown waits for its writes before restoring the terminal. */
 export const FLUSH_BOUND_MS = 2000;
@@ -14,8 +15,9 @@ const PREVIEW_STOP_BOUND_MS = 250;
  * Install the process handlers that end `so`. Signals exit 0 and uncaught
  * errors exit 1; both first write every writable buffer (bounded by
  * `FLUSH_BOUND_MS`), then save the session, then stop the browser preview
- * (bounded by `PREVIEW_STOP_BOUND_MS`), then restore the terminal once, then
- * name any file left unsaved on stderr. `exitNow` is the `exit`
+ * (bounded by `PREVIEW_STOP_BOUND_MS`), then stop the language servers
+ * (bounded by `LSP_STOP_BOUND_MS` plus a margin), then restore the terminal
+ * once, then name any file left unsaved on stderr. `exitNow` is the `exit`
  * effect after `:q`, which has already saved or was told to discard; it
  * still saves the session. `holdInterrupts` makes SIGINT do nothing until
  * the returned release runs, while another program owns the terminal; holds
@@ -30,6 +32,8 @@ export function installLifecycle(d: {
   saveSession?: (s: AppState) => void;
   /** Tells connected preview pages the preview stopped, then closes the server. */
   stopPreview?: () => Promise<void>;
+  /** Stops every language server; each is killed once its own bound passes. */
+  stopLsp?: () => Promise<void>;
 }): { exitNow(code: number): void; holdInterrupts(): () => void } {
   let done = false;
   let held = 0;
@@ -54,6 +58,11 @@ export function installLifecycle(d: {
       const stopped = d.stopPreview?.().catch(() => {});
       if (stopped !== undefined)
         await Promise.race([stopped, Bun.sleep(PREVIEW_STOP_BOUND_MS)]);
+    } catch {}
+    try {
+      const stopped = d.stopLsp?.().catch(() => {});
+      if (stopped !== undefined)
+        await Promise.race([stopped, Bun.sleep(LSP_STOP_BOUND_MS + 100)]);
     } catch {}
     d.shell.destroy();
     // Written after the restore, so the lines land on the main screen, and

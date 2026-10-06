@@ -10,6 +10,7 @@ import { applyBufferEdits, bufferForPath } from "./buffers";
 import type { CommandContext } from "./commands";
 import { dirname, explorerOp } from "./explorer";
 import { summarizeWritten } from "./index";
+import { onCodeEditApplied } from "./lsp-edits";
 import { chain, message, none, toast } from "./result";
 import type {
   Action,
@@ -158,7 +159,7 @@ export function submitRename(
   const op: FsOp = { kind: p.op.kind, from: p.op.from, to: t.to };
   const edits = s.index.status === "ready" ? planFor(s, op.from, t.to) : [];
   const { rewrite: _, ...index } = s.index;
-  const batch = Math.max(now, (s.index.rewrite?.batch ?? 0) + 1);
+  const batch = nextEditBatch(s, now);
   const rewrite: LinkRewrite = {
     batch,
     op,
@@ -173,6 +174,17 @@ export function submitRename(
     now,
   );
 }
+
+/**
+ * A batch id for closed-file edits: after every batch still in flight, link
+ * rewrite or server edit, so one `editsApplied` never answers both.
+ */
+export const nextEditBatch = (s: AppState, now: number): number =>
+  Math.max(
+    now,
+    (s.index.rewrite?.batch ?? 0) + 1,
+    (s.lsp.edit?.batch ?? 0) + 1,
+  );
 
 const sameOp = (a: FsOp | undefined, b: FsOp) =>
   a !== undefined && a.kind === b.kind && a.from === b.from && a.to === b.to;
@@ -192,12 +204,23 @@ const under = (path: string, root: string) =>
 
 /** Another rename or move while closed-file edits are queued: their paths follow it. */
 export function followMove(s: AppState, from: string, to: string): AppState {
+  const follow = (paths: string[]) =>
+    paths.map((p) => (under(p, from) ? to + p.slice(from.length) : p));
   const r = s.index.rewrite;
-  if (r === undefined) return s;
-  const pending = r.pending.map((p) =>
-    under(p, from) ? to + p.slice(from.length) : p,
-  );
-  return { ...s, index: { ...s.index, rewrite: { ...r, pending } } };
+  const e = s.lsp.edit;
+  const rewritten =
+    r === undefined
+      ? s
+      : {
+          ...s,
+          index: { ...s.index, rewrite: { ...r, pending: follow(r.pending) } },
+        };
+  return e === undefined
+    ? rewritten
+    : {
+        ...rewritten,
+        lsp: { ...rewritten.lsp, edit: { ...e, pending: follow(e.pending) } },
+      };
 }
 
 /**
@@ -252,7 +275,7 @@ export function startMentionEdit(
   )
     return toast(s, "error", MENTION_CHANGED);
   const rewrite: LinkRewrite = {
-    batch: now,
+    batch: nextEditBatch(s, now),
     edits: [edit],
     pending: [],
     updated: [],
@@ -261,7 +284,10 @@ export function startMentionEdit(
   return beginRewrite({ ...s, index: { ...s.index, rewrite } }, reg);
 }
 
-/** One closed file's result; the batch's last one reports the whole batch. */
+/**
+ * One closed file's result; the batch's last one reports the whole batch.
+ * A server edit's batch reports through its own path.
+ */
 export function onEditsApplied(
   s: AppState,
   a: Extract<Action, { type: "editsApplied" }>,
@@ -270,6 +296,7 @@ export function onEditsApplied(
     a.ok && a.text !== undefined
       ? summarizeWritten(s, a.path, a.text, a.stamp)
       : s;
+  if (written.lsp.edit?.batch === a.batch) return onCodeEditApplied(written, a);
   const r = written.index.rewrite;
   if (r === undefined || r.batch !== a.batch || !r.pending.includes(a.path))
     return none(written);

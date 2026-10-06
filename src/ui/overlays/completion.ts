@@ -5,6 +5,7 @@ import {
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
 import { COMPLETION_ROWS } from "../../core/state/completion";
+import { statusRow } from "../../core/state/layout";
 import type {
   AppState,
   CompletionState,
@@ -22,8 +23,12 @@ const cells = (t: string) => [...t].length;
 const basename = (path: string) =>
   path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");
 
-function titleOf(c: CompletionState): string {
+function titleOf(s: AppState, c: CompletionState): string {
   if (c.mode === "notes") return "notes & aliases";
+  if (c.mode === "code")
+    return c.code === undefined
+      ? "completion"
+      : (s.lsp.servers[c.code.key]?.name ?? "completion");
   const note = basename(c.target ?? "");
   return `${c.mode === "headings" ? "headings" : "blocks"} · ${note}`;
 }
@@ -62,12 +67,12 @@ export class CompletionView extends Renderable {
       b === undefined || w === undefined
         ? ""
         : b.text.line(c.anchor.line).slice(c.anchor.col, w.content.cursor.col);
-    const { cols, rows } = s.terminal;
+    const { cols } = s.terminal;
     const width = Math.min(WIDTH, cols);
     const h = Math.max(1, Math.min(COMPLETION_ROWS, c.items.length)) + 3;
     // Below the cursor line, or above it when fewer than 10 rows remain
     // above the statusline; never on the cursor row.
-    const below = rows - 2 - (at.y + 1);
+    const below = statusRow(s.terminal) - (at.y + 1);
     const y =
       below >= ABOVE_UNDER && below >= h ? at.y + 1 : Math.max(0, at.y - h);
     const x = Math.max(0, Math.min(cols - width, at.x - cells(typed) - 2));
@@ -107,7 +112,7 @@ export class CompletionView extends Renderable {
     drawFrame(buf, theme, box, {
       border: "floatBorder",
       fill: "float",
-      title: titleOf(c),
+      title: titleOf(s, c),
     });
     const inner = box.w - 2;
     const room = box.h - 3;
@@ -127,7 +132,12 @@ export class CompletionView extends Renderable {
       if (item === undefined) break;
       const selected = first + i === c.selected;
       const y = box.y + 1 + i;
-      const icon = c.mode === "notes" ? "◇ " : "";
+      const kind =
+        item.source === undefined
+          ? undefined
+          : c.code?.items[item.source]?.kind;
+      const icon =
+        c.mode === "notes" ? "◇ " : kind === undefined ? "" : `${kind} `;
       const head = `${selected ? " ▸ " : "   "}${icon}${item.label}`;
       drawCells(
         buf,

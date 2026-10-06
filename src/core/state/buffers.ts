@@ -9,6 +9,7 @@ import { createTextBuffer, type TextBuffer } from "../kernel/text/text-buffer";
 import { handleKey } from "../kernel/vim/engine";
 import { onDiskLoaded } from "./disk";
 import { embedRequested, settleEmbedRead } from "./embeds";
+import { bodyRows } from "./layout";
 import { touchRecent } from "./recent";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -144,7 +145,7 @@ export function placeCursor(s: AppState, pos: Pos): AppState {
   if (w === undefined || b === undefined) return s;
   const line = Math.max(0, Math.min(pos.line, b.text.lineCount - 1));
   const col = Math.max(0, Math.min(pos.col, b.text.line(line).length - 1));
-  const rows = Math.max(1, s.terminal.rows - 2);
+  const rows = Math.max(1, bodyRows(s.terminal));
   const top = w.content.scroll;
   const scroll = line < top ? line : line >= top + rows ? line - rows + 1 : top;
   return setWindow(s, {
@@ -174,10 +175,32 @@ export function saveText(b: BufferState): string {
 export const restoreFile = (f: TextFile, text: string): string =>
   (f.bom ? BOM : "") + text;
 
+const after = (a: Pos, b: Pos) =>
+  a.line > b.line || (a.line === b.line && a.col > b.col);
+
+/** Where `pos` is once `e` is applied: moved when the edit ends before it, else kept. */
+export function shifted(pos: Pos, e: Edit): Pos {
+  const { start, end } = e.range;
+  if (after(end, pos)) return pos;
+  const lines = e.text.split("\n");
+  const added = lines.length - 1;
+  if (end.line !== pos.line)
+    return { line: pos.line + added - (end.line - start.line), col: pos.col };
+  const last = lines[added]?.length ?? 0;
+  return {
+    line: start.line + added,
+    col: (added === 0 ? start.col + last : last) + pos.col - end.col,
+  };
+}
+
 /**
  * Apply `edit` to the open buffer at `edit.path` as one undo step, then
- * schedule its autosave. Nothing changes (`stale`) when no buffer is open
- * there or any span's text differs from `expected`.
+ * schedule its autosave. While the active window is in Insert on that
+ * buffer, the edits join the Insert change instead, as typed text does, so
+ * one `u` after `<Esc>` undoes both. Cursors after an edit move with the
+ * text. Nothing changes (`stale`) when no buffer is open there, a span is
+ * out of range or overlaps another, or a span's text differs from its
+ * `expected`.
  */
 export function applyBufferEdits(
   s: AppState,
@@ -188,22 +211,30 @@ export function applyBufferEdits(
   const b = bufferForPath(s, edit.path);
   const stale = { state: s, effects: [], stale: true };
   if (b === undefined) return stale;
-  const spans = [...edit.edits].sort(
-    (x, y) =>
-      y.range.start.line - x.range.start.line ||
-      y.range.start.col - x.range.start.col,
-  );
+  // From the last span to the first; inserts at one position keep their order.
+  const spans = edit.edits
+    .map((span, i) => ({ span, i }))
+    .sort(
+      (x, y) =>
+        y.span.range.start.line - x.span.range.start.line ||
+        y.span.range.start.col - x.span.range.start.col ||
+        y.i - x.i,
+    )
+    .map(({ span }) => span);
   let text = b.text;
   const edits: Edit[] = [];
   const inverses: Edit[] = [];
+  let limit: Pos | undefined;
   for (const span of spans) {
     const { end } = span.range;
     if (
       end.line >= text.lineCount ||
       end.col > text.line(end.line).length ||
-      text.slice(span.range) !== span.expected
+      (limit !== undefined && after(end, limit)) ||
+      (span.expected !== undefined && text.slice(span.range) !== span.expected)
     )
       return stale;
+    limit = span.range.start;
     const e = { range: span.range, text: span.text };
     const applied = text.apply(e);
     text = applied.buffer;
@@ -215,20 +246,41 @@ export function applyBufferEdits(
     (w) => w.content.bufferId === b.id,
   );
   const cursorBefore = shown?.content.cursor ?? { line: 0, col: 0 };
+  const insert = s.vim.insert;
+  const typing =
+    insert !== undefined && activeWindow(s)?.content.bufferId === b.id;
   let next = setBuffer(
-    s,
+    typing
+      ? {
+          ...s,
+          vim: {
+            ...s.vim,
+            insert: {
+              ...insert,
+              block: {
+                ...insert.block,
+                edits: [...insert.block.edits, ...edits],
+                inverses: [...insert.block.inverses, ...inverses],
+              },
+            },
+          },
+        }
+      : s,
     b.id,
     {
       text,
-      undo: b.undo.push({ edits, inverses, cursorBefore }),
+      ...(typing
+        ? {}
+        : { undo: b.undo.push({ edits, inverses, cursorBefore }) }),
       dirty: text.version !== b.savedVersion,
     },
     reg,
   );
   for (const w of Object.values(next.windows.byId)) {
     if (w.content.bufferId !== b.id) continue;
-    const line = Math.min(w.content.cursor.line, text.lineCount - 1);
-    const col = Math.min(w.content.cursor.col, text.line(line).length);
+    const moved = edits.reduce(shifted, w.content.cursor);
+    const line = Math.min(moved.line, text.lineCount - 1);
+    const col = Math.min(moved.col, text.line(line).length);
     next = setWindow(next, {
       ...w,
       content: { ...w.content, cursor: { line, col } },
@@ -454,7 +506,7 @@ export function placeAfterOpen(
     "A",
     {
       topLine: w.content.scroll,
-      rows: Math.max(1, s.terminal.rows - 2),
+      rows: Math.max(1, bodyRows(s.terminal)),
       tabWidth: s.config.editor.tabWidth,
     },
   );

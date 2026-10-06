@@ -4,7 +4,8 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { explorerMarkers, type Marker } from "../../core/features/git/status";
-import { visiblePaths } from "../../core/state/explorer";
+import { explorerWidth, visiblePaths } from "../../core/state/explorer";
+import { bodyRows } from "../../core/state/layout";
 import type {
   AppState,
   ExplorerPrompt,
@@ -15,9 +16,6 @@ import { fileIcon, folderIcon } from "../icons";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
-
-/** Columns of the tree, not counting its separator or float border. */
-export const EXPLORER_WIDTH = 30;
 
 /** Docked beside the windows when open on a terminal of 100 columns or more. */
 export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
@@ -51,6 +49,7 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
   if (s.overlay.kind !== "prompt" || !s.panels.explorer.open) return undefined;
   const p = s.overlay.prompt;
   return p.newNote !== true &&
+    p.rename === undefined &&
     p.kind === "input" &&
     (p.op.kind === "create" ||
       (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
@@ -114,8 +113,8 @@ export class ExplorerView extends Renderable {
     this.visible = ex.open;
     this.float = lc === "narrow";
     // Layout getters lag until the next frame, so geometry is kept here.
-    this.w = Math.min(s.terminal.cols, EXPLORER_WIDTH + (this.float ? 2 : 1));
-    this.h = Math.max(0, s.terminal.rows - 3);
+    this.w = Math.min(s.terminal.cols, explorerWidth(s) + (this.float ? 2 : 1));
+    this.h = bodyRows(s.terminal);
     this.onRight = explorerSide(s) === "right";
     this.x0 = this.onRight ? s.terminal.cols - this.w : 0;
     this.left = this.x0;
@@ -150,17 +149,32 @@ export class ExplorerView extends Renderable {
     return this.cursorAt;
   }
 
-  /** A listed row's path; the title, frame, and empty rows give "" (focus only). */
+  /**
+   * A listed row's path; the title, frame, and empty rows give "" (focus
+   * only); the docked separator gives the edge a drag resizes.
+   */
   targetAt(ax: number, y: number): MouseTarget | undefined {
     const x = ax - this.x0;
     if (!this.visible || x < 0 || x >= this.w || y < 1 || y >= 1 + this.h)
       return undefined;
     const box = this.inner();
+    if (!this.float && x === (this.onRight ? 0 : box.w))
+      return { kind: "explorerEdge", width: box.w };
     const i = y - (1 + box.y + 1);
     const listed =
       x >= box.x && x < box.x + box.w && i >= 0 && i < this.listRows();
     const path = listed ? (this.paths[this.first + i] ?? "") : "";
     return { kind: "explorer", path };
+  }
+
+  /** A separator dragged to column `ax` leaves the tree the columns between it and the terminal edge. */
+  dragAt(ax: number, _y: number, from: MouseTarget): MouseTarget | undefined {
+    const cols = this.s?.terminal.cols;
+    if (from.kind !== "explorerEdge" || cols === undefined) return undefined;
+    return {
+      kind: "explorerEdge",
+      width: Math.max(0, this.onRight ? cols - ax - 1 : ax),
+    };
   }
 
   /** The tree's area inside the float border, relative to this view. */

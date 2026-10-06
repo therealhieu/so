@@ -1,5 +1,5 @@
 import type { RenderLine, Span } from "./types";
-import { cellWidth, wrapLine } from "./wrap";
+import { cellWidth, wrapLine, wrapText } from "./wrap";
 
 /**
  * One screen row of text: the rendered line, the display column it starts
@@ -31,8 +31,9 @@ export function rowAt(
       row += height;
       continue;
     }
-    const text = line.spans.map((sp) => sp.text).join("");
-    const starts = o.wrap ? wrapLine(text, o.width, o.tabWidth) : [0];
+    const starts = o.wrap
+      ? wrapLine(wrapText(line.spans), o.width, o.tabWidth)
+      : [0];
     const skip = line.sourceLine === lines[0]?.sourceLine ? o.skipRows : 0;
     for (let k = skip; k < starts.length; k++, row++) {
       const startCol = starts[k] ?? 0;
@@ -97,4 +98,32 @@ export function sourceColAt(
     end = span.inserted ? col : col + span.text.length;
   }
   return lineLength;
+}
+
+/**
+ * Display column, from the line start, of source column `col` on a row with
+ * virtual text: inline text at `col` comes before it, and end-of-line text
+ * never counts. Like the cursor, a tab takes its last cell outside Insert
+ * mode; `col` at the line's end maps just past the last source character.
+ */
+export function displayColOf(
+  spans: readonly Span[],
+  col: number,
+  tabWidth: number,
+  insert: boolean,
+): number {
+  let v = 0;
+  for (const span of spans) {
+    if (span.virtual === "eol") continue;
+    const start = span.col ?? 0;
+    let i = 0;
+    for (const ch of span.text) {
+      const w = cellWidth(ch, v, tabWidth);
+      if (span.virtual === undefined && start + i === col)
+        return ch === "\t" && !insert ? v + w - 1 : v;
+      v += w;
+      i += ch.length;
+    }
+  }
+  return v;
 }

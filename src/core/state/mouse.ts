@@ -17,9 +17,10 @@ import {
 } from "./buffers";
 import { selectCalendarDay } from "./calendar";
 import { runCommand } from "./commands";
-import { moveCursor, visiblePaths } from "./explorer";
+import { moveCursor, resizeExplorer, visiblePaths } from "./explorer";
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
+import { onPointerMove } from "./lsp";
 import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
 import { autosaveNow } from "./save";
@@ -41,8 +42,8 @@ const WHEEL_LINES = 3;
 /**
  * One mouse gesture, run as its keyboard equivalent: a press focuses what it
  * is over and then acts on it, a drag extends a charwise selection from the
- * press (or, in the zoom float, pans it), and the wheel scrolls what it is
- * over.
+ * press (or, in the zoom float, pans it; on the explorer's separator, resizes
+ * the explorer like `<C-w>>`), and the wheel scrolls what it is over.
  */
 export function onMouse(
   state: AppState,
@@ -50,6 +51,7 @@ export function onMouse(
   reg: Registries,
 ): Result {
   const e = a.event;
+  if (e.kind === "move") return onPointerMove(state, e.target);
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
@@ -60,6 +62,7 @@ export function onMouse(
     case "drag": {
       const t = e.target;
       if (t.kind === "zoomPoint") return dragZoom(s, t);
+      if (t.kind === "explorerEdge") return none(resizeExplorer(s, t.width));
       return t.kind === "window" &&
         t.spot.kind === "text" &&
         t.window === s.windows.active

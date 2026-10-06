@@ -19,13 +19,18 @@ import {
 import { reloadConfig } from "./config";
 import {
   collapse,
+  EXPLORER_WIDTH_STEP,
   expandOrOpen,
+  explorerWidth,
   moveCursor,
   openSelected,
+  resizeExplorer,
   startOp,
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
+import { pickServer } from "./lsp";
+import { formatThenSave } from "./lsp-commands";
 import { openPicker } from "./picker";
 import { chain, message, none } from "./result";
 import {
@@ -75,11 +80,17 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
+  Settings: "settings.open",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
   Today: "note.today",
   Yesterday: "note.yesterday",
   Tomorrow: "note.tomorrow",
+  Format: "lsp.format",
+  Diagnostics: "diag.list",
+  WorkspaceSymbols: "lsp.workspaceSymbols",
+  LspInfo: "lsp.info",
+  LspRestart: "lsp.restart",
 };
 
 /** Run a registered command; a command limited to other file types is a no-op notice. */
@@ -238,10 +249,23 @@ function editFile(ctx: CommandContext): Result {
   return openPath(recordJump(s), path, ctx.now);
 }
 
+/**
+ * `:w`; with format on save and a formatting server, the buffer is formatted
+ * first. While one buffer waits for its formatter, `:w` there changes
+ * nothing and `:w` in another buffer writes it unformatted.
+ */
 function writeActive(ctx: CommandContext): Result {
-  const b = activeBuffer(ctx.state);
-  if (b === undefined) return message(ctx.state, "E32: No file name", "error");
-  if (b.readOnly === true) return message(ctx.state, READ_ONLY_FILE, "error");
+  const s = ctx.state;
+  const b = activeBuffer(s);
+  if (b === undefined) return message(s, "E32: No file name", "error");
+  if (b.readOnly === true) return message(s, READ_ONLY_FILE, "error");
+  if (s.lsp.format?.bufferId === b.id) return none(s);
+  if (
+    s.config.lsp.formatOnSave &&
+    s.lsp.format === undefined &&
+    pickServer(s, b.path, "format") !== undefined
+  )
+    return formatThenSave(ctx, b);
   return writeBuffer(ctx.state, b.id, ctx.now, {
     recreate: b.disk === "deleted",
   });
@@ -360,6 +384,11 @@ const builtins: AppCommand[] = [
     run: (c) => openPicker(c, "commands"),
   },
   {
+    id: "settings.open",
+    title: "Settings",
+    run: (c) => openPicker(c, "settings"),
+  },
+  {
     id: "help.keymap",
     title: "Help: keymap",
     run: (c) => openPicker(c, "help"),
@@ -385,6 +414,27 @@ const builtins: AppCommand[] = [
     id: "explorer.toggle",
     title: "Toggle explorer",
     run: (c) => toggleExplorer(c.state),
+  },
+  {
+    id: "explorer.wider",
+    title: "Widen explorer",
+    run: (c) =>
+      none(
+        resizeExplorer(c.state, explorerWidth(c.state) + EXPLORER_WIDTH_STEP),
+      ),
+  },
+  {
+    id: "explorer.narrower",
+    title: "Narrow explorer",
+    run: (c) =>
+      none(
+        resizeExplorer(c.state, explorerWidth(c.state) - EXPLORER_WIDTH_STEP),
+      ),
+  },
+  {
+    id: "explorer.resetWidth",
+    title: "Reset explorer width",
+    run: (c) => none(resizeExplorer(c.state, undefined)),
   },
   {
     id: "explorer.down",

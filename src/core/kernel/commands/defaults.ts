@@ -27,6 +27,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>sc", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>:", id: "command.palette" },
   { scope: { mode: "normal" }, seq: "<leader>?", id: "help.keymap" },
+  { scope: { mode: "normal" }, seq: "<leader>us", id: "settings.open" },
   { scope: { mode: "normal" }, seq: "<leader>qq", id: "app.quit" },
   { scope: { mode: "normal" }, seq: "<C-o>", id: "jump.back" },
   { scope: { mode: "normal" }, seq: "<C-i>", id: "jump.forward" },
@@ -40,7 +41,11 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "r", id: "explorer.rename" },
   { scope: { mode: "explorer" }, seq: "m", id: "explorer.move" },
   { scope: { mode: "explorer" }, seq: "d", id: "explorer.delete" },
+  { scope: { mode: "explorer" }, seq: "<C-w>>", id: "explorer.wider" },
+  { scope: { mode: "explorer" }, seq: "<C-w><lt>", id: "explorer.narrower" },
+  { scope: { mode: "explorer" }, seq: "<C-w>=", id: "explorer.resetWidth" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
+  { scope: { mode: "explorer" }, seq: "<leader>us", id: "settings.open" },
   { scope: { mode: "explorer" }, seq: "<leader>qq", id: "app.quit" },
 ];
 

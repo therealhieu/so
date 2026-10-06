@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import { splitKeys } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
+import { applyBufferEdits, fullText } from "./buffers";
 import type { AppState, BufferState } from "./types";
 import { createUpdate } from "./update";
 
@@ -75,4 +77,74 @@ test("a file type whose analysis throws still opens without analysis", () => {
   }).state;
   expect(only(s).path).toBe("x.broken");
   expect(only(s).analysis).toBeUndefined();
+});
+
+const CODE = "let a = 1;\nlet b = 2;\nlet c = 3;\n";
+const code = () =>
+  update(fresh(), {
+    type: "fileLoaded",
+    path: "src/a.ts",
+    file: textFile(CODE),
+  }).state;
+const keys = (s: AppState, seq: string) =>
+  splitKeys(seq).reduce((st, k) => key(st, k), s);
+const span = (line: number, from: number, to: number, text: string) => ({
+  range: { start: { line, col: from }, end: { line, col: to } },
+  text,
+});
+
+test("overlapping edits change nothing", () => {
+  const s = code();
+  const r = applyBufferEdits(
+    s,
+    { path: "src/a.ts", edits: [span(0, 0, 5, "x"), span(0, 3, 7, "y")] },
+    0,
+    reg,
+  );
+  expect(r).toMatchObject({ stale: true, effects: [] });
+  expect(r.state).toBe(s);
+  expect(fullText(only(r.state).text)).toBe(CODE.slice(0, -1));
+});
+
+test("inserts at one position keep their order", () => {
+  const r = applyBufferEdits(
+    code(),
+    {
+      path: "src/a.ts",
+      edits: [span(1, 0, 0, "first "), span(1, 0, 0, "second ")],
+    },
+    0,
+    reg,
+  );
+  expect(r.stale).toBe(false);
+  expect(only(r.state).text.line(1)).toBe("first second let b = 2;");
+});
+
+test("edits move the cursor of every window showing the buffer", () => {
+  const split = keys(code(), "jjlll<C-w>vgg");
+  const other = Object.values(split.windows.byId).find(
+    (w) => w.id !== split.windows.active,
+  );
+  expect(other?.content.cursor).toEqual({ line: 2, col: 3 });
+  const r = applyBufferEdits(
+    split,
+    {
+      path: "src/a.ts",
+      edits: [
+        span(0, 0, 0, "import x;\n"),
+        span(2, 0, 1, "XY"),
+        span(2, 8, 9, "4"),
+      ],
+    },
+    0,
+    reg,
+  );
+  expect(r.stale).toBe(false);
+  expect(fullText(only(r.state).text)).toBe(
+    "import x;\nlet a = 1;\nlet b = 2;\nXYet c = 4;",
+  );
+  expect(r.state.windows.byId[other?.id ?? -1]?.content.cursor).toEqual({
+    line: 3,
+    col: 4,
+  });
 });

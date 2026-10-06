@@ -127,3 +127,13 @@ test("key events map to Vim key notation", () => {
   expect(toKey(key("é", { sequence: "é", source: "kitty" }))).toBe("é");
   expect(toKey(key("f5", { sequence: "\x1b[15~" }))).toBeUndefined();
 });
+
+test("ctrl+space is its own key and space stays a space", () => {
+  expect(
+    toKey(key("space", { ctrl: true, sequence: " ", source: "kitty" })),
+  ).toBe("<C-Space>");
+  expect(toKey(key("space", { ctrl: true, sequence: "\x00" }))).toBe(
+    "<C-Space>",
+  );
+  expect(toKey(key("space", { sequence: " " }))).toBe(" ");
+});

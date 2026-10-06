@@ -198,6 +198,46 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "35,36,51,255",
       "fg": "192,202,245,255",
     },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "diagnosticHint": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "diagnosticTextError": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "247,118,142,255",
+    },
+    "diagnosticTextHint": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "115,122,162,255",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "125,207,255,255",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
     "diffAdd": {
       "attrs": 0,
       "bg": "32,48,59,255",
@@ -251,6 +291,11 @@ exports[`existing tokens keep their values 1`] = `
     "float": {
       "attrs": 0,
       "bg": "31,35,53,255",
+      "fg": "192,202,245,255",
+    },
+    "floatActive": {
+      "attrs": 1,
+      "bg": "45,63,118,255",
       "fg": "192,202,245,255",
     },
     "floatBorder": {
@@ -348,10 +393,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "26,27,38,255",
       "fg": "86,95,137,255",
     },
+    "inlayHint": {
+      "attrs": 4,
+      "bg": "26,27,38,255",
+      "fg": "86,95,137,255",
+    },
     "linkUnresolved": {
       "attrs": 8,
       "bg": "26,27,38,255",
       "fg": "247,118,142,255",
+    },
+    "lspReference": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
     },
     "mdBold": {
       "attrs": 1,
@@ -533,10 +588,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "26,27,38,255",
       "fg": "224,175,104,255",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "41,46,66,255",
+      "fg": "192,202,245,255",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "224,175,104,255",
+    },
     "statusDim": {
       "attrs": 0,
       "bg": "22,22,30,255",
-      "fg": "86,95,137,255",
+      "fg": "115,122,162,255",
     },
     "statusDirty": {
       "attrs": 0,
@@ -547,6 +612,21 @@ exports[`existing tokens keep their values 1`] = `
       "attrs": 1,
       "bg": "22,22,30,255",
       "fg": "247,118,142,255",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "22,22,30,255",
+      "fg": "192,202,245,255",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "187,154,247,255",
+    },
+    "statusOk": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "158,206,106,255",
     },
     "statusline": {
       "attrs": 0,
@@ -790,6 +870,46 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "213,215,225,255",
       "fg": "55,96,191,255",
     },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "diagnosticHint": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "diagnosticTextError": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "198,67,67,255",
+    },
+    "diagnosticTextHint": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "97,114,176,255",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "0,113,151,255",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
     "diffAdd": {
       "attrs": 0,
       "bg": "207,227,197,255",
@@ -843,6 +963,11 @@ exports[`existing tokens keep their values 1`] = `
     "float": {
       "attrs": 0,
       "bg": "214,216,226,255",
+      "fg": "55,96,191,255",
+    },
+    "floatActive": {
+      "attrs": 1,
+      "bg": "183,197,240,255",
       "fg": "55,96,191,255",
     },
     "floatBorder": {
@@ -940,10 +1065,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "225,226,231,255",
       "fg": "137,144,179,255",
     },
+    "inlayHint": {
+      "attrs": 4,
+      "bg": "225,226,231,255",
+      "fg": "137,144,179,255",
+    },
     "linkUnresolved": {
       "attrs": 8,
       "bg": "225,226,231,255",
       "fg": "198,67,67,255",
+    },
+    "lspReference": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
     },
     "mdBold": {
       "attrs": 1,
@@ -1125,10 +1260,20 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "225,226,231,255",
       "fg": "140,108,62,255",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "196,200,218,255",
+      "fg": "55,96,191,255",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "140,108,62,255",
+    },
     "statusDim": {
       "attrs": 0,
       "bg": "208,213,227,255",
-      "fg": "137,144,179,255",
+      "fg": "97,114,176,255",
     },
     "statusDirty": {
       "attrs": 0,
@@ -1139,6 +1284,21 @@ exports[`existing tokens keep their values 1`] = `
       "attrs": 1,
       "bg": "208,213,227,255",
       "fg": "198,67,67,255",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "208,213,227,255",
+      "fg": "55,96,191,255",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "120,71,189,255",
+    },
+    "statusOk": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "88,117,57,255",
     },
     "statusline": {
       "attrs": 0,
@@ -1382,6 +1542,46 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "default",
       "fg": "default",
     },
+    "diagnosticError": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticHint": {
+      "attrs": 10,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticInfo": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextError": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextHint": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextInfo": {
+      "attrs": 2,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticTextWarn": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "diagnosticWarn": {
+      "attrs": 8,
+      "bg": "default",
+      "fg": "default",
+    },
     "diffAdd": {
       "attrs": 0,
       "bg": "default",
@@ -1434,6 +1634,11 @@ exports[`existing tokens keep their values 1`] = `
     },
     "float": {
       "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "floatActive": {
+      "attrs": 9,
       "bg": "default",
       "fg": "default",
     },
@@ -1532,8 +1737,18 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "default",
       "fg": "default",
     },
+    "inlayHint": {
+      "attrs": 6,
+      "bg": "default",
+      "fg": "default",
+    },
     "linkUnresolved": {
       "attrs": 10,
+      "bg": "default",
+      "fg": "default",
+    },
+    "lspReference": {
+      "attrs": 8,
       "bg": "default",
       "fg": "default",
     },
@@ -1717,6 +1932,16 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "default",
       "fg": "default",
     },
+    "statusAlt": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusBusy": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
     "statusDim": {
       "attrs": 2,
       "bg": "default",
@@ -1729,6 +1954,21 @@ exports[`existing tokens keep their values 1`] = `
     },
     "statusError": {
       "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusFile": {
+      "attrs": 1,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusLink": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "statusOk": {
+      "attrs": 0,
       "bg": "default",
       "fg": "default",
     },

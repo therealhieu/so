@@ -11,6 +11,7 @@ import {
   startRename,
   submitRename,
 } from "./link-edits";
+import { request } from "./lsp";
 import { submitNewNote } from "./note-commands";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
@@ -237,6 +238,36 @@ export function toggleExplorer(s: AppState): Result {
     : none(opened);
 }
 
+/** The narrowest tree, in columns. */
+export const EXPLORER_MIN_WIDTH = 15;
+/** Columns one `<C-w>>` or `<C-w><` adds or takes away. */
+export const EXPLORER_WIDTH_STEP = 5;
+
+/** The tree's columns: the resized or configured width, at most half the terminal. */
+export function explorerWidth(s: AppState): number {
+  const max = Math.max(EXPLORER_MIN_WIDTH, Math.floor(s.terminal.cols / 2));
+  const width = s.panels.explorer.width ?? s.config.explorer.width;
+  return Math.min(max, Math.max(EXPLORER_MIN_WIDTH, width));
+}
+
+/**
+ * Give the tree `width` columns, clamped like `explorerWidth`; `undefined`
+ * returns it to `[explorer] width`.
+ */
+export function resizeExplorer(
+  s: AppState,
+  width: number | undefined,
+): AppState {
+  const ex = s.panels.explorer;
+  if (width === undefined) {
+    if (ex.width === undefined) return s;
+    const { width: _, ...rest } = ex;
+    return { ...s, panels: { ...s.panels, explorer: rest } };
+  }
+  const next = explorerWidth(setExplorer(s, { width }));
+  return next === ex.width ? s : setExplorer(s, { width: next });
+}
+
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const join = (dir: string, name: string) =>
   dir === "" ? name : `${dir}/${name}`;
@@ -351,21 +382,61 @@ export function promptKey(
   const closed: AppState = { ...s, overlay: { kind: "none" } };
   if (key === "<Esc>") return none(closed);
   if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
+  if (p.rename !== undefined) return renamePromptKey(s, p, key);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);
-  const value =
-    key === "<BS>"
-      ? p.value.slice(0, -1)
-      : [...key].length === 1
-        ? p.value + key
-        : p.value;
+  const value = typed(p.value, key);
   if (value === p.value) return none(s);
   const edited = { ...p, value };
   const prompt =
     p.op.kind === "rename" || p.op.kind === "move"
       ? promptImpact(s, edited)
       : edited;
+  return none({ ...s, overlay: { kind: "prompt", prompt } });
+}
+
+/** The edited value of a text prompt: `<BS>` drops a character, a printable key adds one. */
+const typed = (value: string, key: string): string =>
+  key === "<BS>"
+    ? value.slice(0, -1)
+    : [...key].length === 1
+      ? value + key
+      : value;
+
+/**
+ * Typing edits the new name; it cannot be submitted while empty or equal to
+ * the current name. Enter asks the server that prepared the rename.
+ */
+function renamePromptKey(
+  s: AppState,
+  p: Extract<PromptState, { rename: object }>,
+  key: string,
+): Result {
+  const { rename } = p;
+  if (key === "<CR>")
+    return p.invalid !== undefined
+      ? none(s)
+      : request(
+          { ...s, overlay: { kind: "none" } },
+          "rename",
+          { kind: "rename", pos: rename.pos, newName: p.value },
+          { key: rename.key },
+        );
+  const value = typed(p.value, key);
+  if (value === p.value) return none(s);
+  const { invalid: _, ...rest } = p;
+  const invalid =
+    value.trim() === ""
+      ? "name is empty"
+      : value === rename.name
+        ? "type a new name"
+        : undefined;
+  const prompt = {
+    ...rest,
+    value,
+    ...(invalid === undefined ? {} : { invalid }),
+  };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
 
@@ -431,12 +502,7 @@ function newNotePromptKey(
         )
       : none({ ...s, overlay: { kind: "prompt", prompt: { ...p, invalid } } });
   }
-  const value =
-    key === "<BS>"
-      ? p.value.slice(0, -1)
-      : [...key].length === 1
-        ? p.value + key
-        : p.value;
+  const value = typed(p.value, key);
   if (value === p.value) return none(s);
   const { invalid: _, ...rest } = p;
   const invalid = newNoteTitleError(value);

@@ -53,6 +53,15 @@ export function initialState(boot: {
     jumps: { entries: [], at: 0 },
     recent: [],
     preview: { status: "off" },
+    lsp: {
+      servers: {},
+      attached: {},
+      diagnostics: {},
+      inlayHints: {},
+      shown: {},
+      pending: {},
+      nextId: 1,
+    },
     git: initialGit,
   };
 }

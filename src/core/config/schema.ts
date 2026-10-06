@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { splitKeys } from "../kernel/vim/keys";
+import { LspConfigSchema } from "./lsp";
 
 /** `"<key-seq>" = "<command-id>"` */
 const KeyTable = z.record(z.string().min(1), z.string().min(1));
@@ -71,9 +72,11 @@ export const ConfigSchema = z.strictObject({
   /** The docked explorer's edge; the side panel docks on the other one. */
   explorer: z
     .strictObject({
-      position: z.enum(["left", "right"]).default("left"),
+      position: z.enum(["left", "right"]).default("right"),
       /** Nerd Font file-type icons, or plain symbols for fonts without them. */
       icons: z.enum(["nerd", "unicode"]).default("nerd"),
+      /** Columns of the tree until it is resized; the session keeps a resized width. */
+      width: z.number().int().min(15).max(200).default(30),
     })
     .prefault({}),
   preview: z
@@ -108,6 +111,7 @@ export const ConfigSchema = z.strictObject({
       z.strictObject({ keys: KeyBindingsSchema.default({}) }),
     )
     .default({}),
+  lsp: LspConfigSchema.prefault({}),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;

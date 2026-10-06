@@ -29,7 +29,7 @@ async function opened(path: string): Promise<Mounted> {
 }
 
 const lines = async (x: Mounted) => (await x.frame()).split("\n");
-const status = async (x: Mounted) => x.row(-2);
+const status = async (x: Mounted) => x.status();
 const textOf = (x: Mounted, path: string) => {
   const b = Object.values(x.store.get().buffers).find((b) => b.path === path);
   return b === undefined ? undefined : fullText(b.text);

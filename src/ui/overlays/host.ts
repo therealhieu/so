@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { bodyRows } from "../../core/state/layout";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import type { Cursor, LayoutClass, View } from "../shell";
 import { drawCells, type Theme } from "../theme";
@@ -40,7 +41,7 @@ export function centered(
 ): { x: number; y: number; w: number; h: number } {
   const { cols, rows } = s.terminal;
   const width = Math.min(w, cols);
-  const height = Math.min(h, rows - 2);
+  const height = Math.min(h, bodyRows(s.terminal));
   return {
     x: Math.max(0, Math.floor((cols - width) / 2)),
     y: Math.max(1, Math.floor((rows - height) / 2) - 1),
@@ -76,15 +77,21 @@ type OverlayView = View & {
 
 /**
  * Paints the one open overlay above the body. It holds one view per overlay
- * kind; each shows itself only while its kind is open.
+ * kind; each shows itself only while its kind is open. The non-modal `float`
+ * paints below them and shows whenever its own state is set.
  */
 export class OverlayHost extends Renderable {
   private readonly views: OverlayView[];
   private open: AppState["overlay"]["kind"] = "none";
 
-  constructor(ctx: RenderContext, views: OverlayView[] = []) {
+  constructor(
+    ctx: RenderContext,
+    views: OverlayView[] = [],
+    private readonly float?: View,
+  ) {
     super(ctx, { position: "absolute", left: 0, top: 0, zIndex: 50 });
     this.views = views;
+    if (float !== undefined) this.add(float);
     for (const v of views) this.add(v);
   }
 
@@ -92,22 +99,27 @@ export class OverlayHost extends Renderable {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
     this.open = s.overlay.kind;
-    this.visible = this.open !== "none";
+    this.float?.update(s, lc);
     for (const v of this.views) v.update(s, lc);
+    this.visible = this.open !== "none" || this.float?.visible === true;
   }
 
   /**
    * What the open overlay has under the cell. Outside its float the cell is
    * `outside`, so nothing below answers, except for completion, which leaves
    * the cell to the body. Overlays without `itemAt` are `outside` everywhere.
+   * The non-modal float answers where the body would: with no overlay
+   * open, or outside the completion popup.
    */
   targetAt(x: number, y: number): MouseTarget | undefined {
-    if (this.open === "none") return undefined;
+    if (this.open === "none") return this.float?.targetAt?.(x, y);
     for (const v of this.views) {
       const t = v.visible ? v.itemAt?.(x, y) : undefined;
       if (t !== undefined) return t;
     }
-    return this.open === "completion" ? undefined : { kind: "outside" };
+    return this.open === "completion"
+      ? this.float?.targetAt?.(x, y)
+      : { kind: "outside" };
   }
 
   /** What a drag that started in the open overlay is over, anywhere on screen. */
@@ -121,7 +133,7 @@ export class OverlayHost extends Renderable {
   }
 
   cursor(): Cursor | undefined {
-    if (!this.visible) return undefined;
+    if (this.open === "none") return undefined;
     return this.views.map((v) => v.cursor?.()).find((c) => c !== undefined);
   }
 

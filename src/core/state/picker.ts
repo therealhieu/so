@@ -20,9 +20,16 @@ import {
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
+import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
+import {
+  cycleSetting,
+  describeSetting,
+  SETTINGS,
+  settingItems,
+} from "./settings";
 import type {
   Action,
   AppState,
@@ -89,6 +96,11 @@ export type PickerSource = {
   previewAlways?: true;
   /** What an empty list says when nothing is typed, one row per line. */
   empty?(s: AppState): string;
+  /**
+   * Sources whose items come from elsewhere: called once the query has
+   * settled, like grep, instead of ranking on every key.
+   */
+  search?(s: AppState, query: string): Result;
 };
 
 type Candidate = {
@@ -486,6 +498,15 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
       };
     },
   },
+  settings: {
+    id: "settings",
+    title: "Settings",
+    action: "change",
+    items: (s, _r, q) => settingItems(s, q),
+    total: () => SETTINGS.length,
+    accept: (s, item) => cycleSetting(s, item),
+    describe: describeSetting,
+  },
   commands: {
     id: "commands",
     title: "Commands",
@@ -540,6 +561,7 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
       return id === undefined ? none(closed) : runCommand(closed, id, now, reg);
     },
   },
+  ...lspPickerSources,
 };
 
 const pickerOf = (s: AppState): PickerState | undefined =>
@@ -647,7 +669,7 @@ function setQuery(
 ): Result {
   const source = pickerSources[p.source];
   if (source === undefined) return none(s);
-  if (p.source === "grep") {
+  if (p.source === "grep" || source.search !== undefined) {
     const { search: _, ...rest } = p;
     const next = withPicker(
       s,
@@ -806,7 +828,10 @@ export function pickerKey(
 /** The grep query settled: search it under a fresh id. */
 export function onSearchTimer(s: AppState): Result {
   const p = pickerOf(s);
-  if (p === undefined || p.source !== "grep" || p.query === "") return none(s);
+  if (p === undefined || p.query === "") return none(s);
+  const search = pickerSources[p.source]?.search;
+  if (search !== undefined) return search(s, p.query);
+  if (p.source !== "grep") return none(s);
   const id = s.index.searchSeq + 1;
   const next = withPicker(
     { ...s, index: { ...s.index, searchSeq: id } },

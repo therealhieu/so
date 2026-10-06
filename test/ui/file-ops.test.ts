@@ -169,7 +169,7 @@ describe("explorer prompts", () => {
     select("todo.md");
     m.keys("r");
     expect(m.store.get().overlay.kind).toBe("none");
-    expect(await m.row(-1)).toContain(
+    expect(await m.message()).toContain(
       "index not ready — try again when indexing finishes",
     );
   });
@@ -258,7 +258,7 @@ describe("disk changes", () => {
     m.keys("<leader>e");
     m.open("todo.md", "alpha\n");
     changed("alpha\nfrom disk\n", 8);
-    expect((await m.row(-1)).trim()).toBe("Reloaded from disk — u to undo");
+    expect((await m.message()).trim()).toBe("Reloaded from disk — u to undo");
     expect(text()).toBe("alpha\nfrom disk");
     m.keys("u");
     expect(text()).toBe("alpha");
@@ -358,9 +358,10 @@ describe("refused files", () => {
       reason: "binary",
     });
     let frame = await m.frame();
-    expect((await m.row(-1)).trim()).toBe("binary file — not opened");
-    expect(frame.split("\n").slice(0, -2)).toEqual(
-      before.split("\n").slice(0, -2),
+    expect((await m.message()).trim()).toBe("binary file — not opened");
+    // Nothing changes but the message row and the statusline.
+    expect(frame.split("\n").slice(0, -3)).toEqual(
+      before.split("\n").slice(0, -3),
     );
     expect(m.store.get().panels.explorer.cursor).toBe("photo.png");
     m.keys("<leader>e:e big.log<CR>");
@@ -370,7 +371,7 @@ describe("refused files", () => {
       reason: "tooLarge",
     });
     frame = await m.frame();
-    expect((await m.row(-1)).trim()).toBe(
+    expect((await m.message()).trim()).toBe(
       "file too large — not opened (limit 16 MiB)",
     );
     expect(Object.keys(m.store.get().buffers)).toEqual([]);

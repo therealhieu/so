@@ -57,6 +57,7 @@ function setup(
       clock = ms;
     },
     handle: router.handle,
+    pointer: router.pointer,
   };
 }
 
@@ -241,12 +242,34 @@ test("a press the core stops is still sent but starts no drag", () => {
   ]);
 });
 
-test("hover and other events are ignored", () => {
-  const r = setup([editor]);
+test("a move dispatches only when the target under the pointer changes", () => {
+  const word: MouseSource = { targetAt: (x, y) => text(y, Math.floor(x / 4)) };
+  const r = setup([word]);
   r.handle(ev("move", 1, 1));
+  r.handle(ev("move", 2, 1));
+  r.handle(ev("move", 5, 1));
+  r.handle(ev("move", 50, 50));
+  expect(r.events()).toEqual([
+    { kind: "move", target: text(1, 0) },
+    { kind: "move", target: text(1, 1) },
+    { kind: "move", target: text(50, 12) },
+  ]);
+  expect(r.pointer()).toEqual({ x: 50, y: 50 });
+  const none = setup([]);
+  none.handle(ev("move", 1, 1));
+  expect(none.events()).toEqual([
+    { kind: "move", target: { kind: "outside" } },
+  ]);
+});
+
+test("over and up events, and moves with the mouse off, are ignored", () => {
+  const r = setup([editor]);
   r.handle(ev("over", 1, 1));
   r.handle(ev("up", 1, 1));
   expect(r.sent).toEqual([]);
+  const off = setup([editor], () => false);
+  off.handle(ev("move", 1, 1));
+  expect(off.sent).toEqual([]);
 });
 
 test("a repeated click acts on what the first click hit", () => {

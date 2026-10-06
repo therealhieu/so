@@ -1,5 +1,7 @@
-import { join } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { parseConfig } from "../core/config/toml";
+import { setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
 import { expandTemplate } from "../core/features/notes/template";
 import {
@@ -31,6 +33,7 @@ import type { ClipboardProvider } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
+import type { LspHost } from "./lsp-host";
 import type { PreviewHost } from "./preview-host";
 import type { ToolHost } from "./tool-host";
 
@@ -58,6 +61,8 @@ export type RunnerDeps = {
    * are reported to it, since the watcher keeps them silent.
    */
   index?: Pick<IndexHost, "search" | "notify">;
+  /** Runs language-server effects; without one, every request fails at once. */
+  lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
   preview: Pick<PreviewHost, "start" | "stop">;
   /** Opens an address in the user's browser; rejects when no browser could be launched. */
@@ -117,6 +122,17 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const unreported = new Set<PathOp>();
   /** Per path, the stamp this runner's last write replaced and the one it left. */
   const own = new Map<string, { from: Stamp; to: Stamp }>();
+  /** Setting writes run one after another, so each edits the last one's file. */
+  let settingWrites = Promise.resolve();
+
+  /** Set one config.toml value in place, creating the file and its folder when missing. */
+  async function writeSetting(e: Extract<Effect, { kind: "writeSetting" }>) {
+    const text = (await readConfigText(d.configPath)) ?? "";
+    const edit = setConfigValue(text, e.path, e.value);
+    if (!edit.ok) throw new Error(edit.reason);
+    await mkdir(dirname(d.configPath), { recursive: true });
+    await atomicWrite(d.configPath, edit.text);
+  }
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
     tail = next.catch(() => {});
@@ -291,6 +307,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             const stamp = await write(path, restoreFile(cur, text), cur.stamp);
             d.ownOps.noteWrite(path, stamp);
             d.index?.notify({ kind: "changed", path, isDir: false });
+            d.lsp?.notify({ kind: "changed", path, isDir: false });
             d.logger.info("links.edited", { path, links: edit.edits.length });
             d.dispatch({
               type: "editsApplied",
@@ -589,6 +606,37 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           d.logger.error("browser.openFailed", { reason: msg(x) });
           d.dispatch({ type: "openUrlFailed", url: e.url, reason: msg(x) });
         });
+        return;
+      case "lsp":
+        if (d.lsp !== undefined) {
+          d.lsp.run(e);
+          return;
+        }
+        // No language-server host: every request fails at once.
+        d.dispatch({
+          type: "lspResult",
+          id: e.id,
+          result: { kind: "error", message: "language servers off" },
+          now: now(),
+        });
+        return;
+      case "lspCancel":
+      case "lspReply":
+      case "lspRestart":
+        d.lsp?.run(e);
+        return;
+      case "writeSetting":
+        settingWrites = settingWrites
+          .then(() => writeSetting(e))
+          .catch((x) => {
+            d.logger.error("config.writeFailed", { reason: msg(x) });
+            d.dispatch({
+              type: "settingFailed",
+              path: e.path,
+              previous: e.previous,
+              reason: msg(x),
+            });
+          });
         return;
     }
     const unhandled: never = e;

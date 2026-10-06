@@ -46,6 +46,19 @@ function layout(p: PromptState): {
       field: 0,
       footer: "⏎ choose a template · esc cancel",
     };
+  if (p.rename !== undefined)
+    return {
+      title: p.title,
+      border: "floatBorder",
+      lines: [
+        field,
+        p.invalid === undefined
+          ? { text: "", token: "float" }
+          : { text: ` ✗ ${p.invalid}`, token: "floatError" },
+      ],
+      field: 0,
+      footer: "⏎ rename · esc cancel",
+    };
   if (p.kind === "confirm" && p.op.kind === "create")
     return {
       title: "New note",

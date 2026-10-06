@@ -75,3 +75,13 @@ export function selectionMarks(
     return [{ kind: "mark", range: { start, end }, style: "selection" }];
   };
 }
+
+/** Uses of the symbol under the cursor, on the visible lines. */
+export function referenceMarks(ranges: readonly Range[]): DecorationProvider {
+  return (v) =>
+    ranges
+      .filter(
+        (r) => r.end.line >= v.visible.from && r.start.line < v.visible.to,
+      )
+      .map((range) => ({ kind: "mark", range, style: "lspReference" }));
+}

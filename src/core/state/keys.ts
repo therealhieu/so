@@ -15,6 +15,7 @@ import {
   setBuffer,
 } from "./buffers";
 import { calendarKey } from "./calendar";
+import { maybeSignature } from "./code-completion";
 import {
   type CommandContext,
   type CommandResult,
@@ -22,11 +23,13 @@ import {
   executeEx,
   runCommand,
 } from "./commands";
-import { completionKey, maybeOpenCompletion } from "./completion";
+import { completionKey, maybeCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
 import { keymapFor, keyScope } from "./keymap";
+import { bodyRows } from "./layout";
+import { withoutFloat } from "./lsp";
 import { pickerKey } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -55,9 +58,13 @@ export function handleKeyAction(
     const r = completionKey(s, a, reg);
     if (r !== undefined) return r;
   }
-  const r = routeKey(s, a, reg);
-  return r.state.overlay.kind === "completion" || r.state.vim.mode === "insert"
-    ? { ...r, state: maybeOpenCompletion(r.state) }
+  // An open info float closes on <Esc>; the key still routes, so Esc also leaves Insert.
+  const from = a.key === "<Esc>" ? withoutFloat(s) : s;
+  const r = routeKey(from, a, reg);
+  return r.state.overlay.kind === "completion" ||
+    r.state.vim.mode === "insert" ||
+    from.vim.mode === "insert"
+    ? maybeSignature(maybeCompletion(r, a.key), a.key)
     : r;
 }
 
@@ -216,10 +223,10 @@ export function cmdlineCompletions(
   return exCompletions(typed, [...FULL_EX_NAMES, ...ids]);
 }
 
-/** The active window's viewport (the statusline and command line take two rows) and tab width. */
+/** The active window's viewport (the body between the bufferline and the statusline) and tab width. */
 const envOf = (s: AppState, w: WindowState): VimEnv => ({
   topLine: w.content.scroll,
-  rows: Math.max(1, s.terminal.rows - 2),
+  rows: Math.max(1, bodyRows(s.terminal)),
   tabWidth: s.config.editor.tabWidth,
 });
 

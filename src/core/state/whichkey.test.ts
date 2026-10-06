@@ -75,6 +75,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "n", label: "+notes", group: true },
     { key: "q", label: "+quit", group: true },
     { key: "s", label: "+search", group: true },
+    { key: "u", label: "+ui", group: true },
   ]);
 
   s = keys(s, "f").state;

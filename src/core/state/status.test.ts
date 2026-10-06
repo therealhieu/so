@@ -8,6 +8,7 @@ import {
 import { normalizeIndexText } from "../features/git/index-text";
 import { summarize } from "../features/links/summarize";
 import { scanDoc } from "../lang/markdown/scan";
+import type { ServerView } from "./lsp-types";
 import { statusSegments } from "./status";
 import type { Action, AppState, RepoInfo } from "./types";
 import { createUpdate } from "./update";
@@ -157,6 +158,77 @@ test("the statusline shows the jump position", () => {
   expect(statusSegments(s).jump).toBe("jump 2/2");
   s = withIndex(s, { type: "key", key: "<C-o>", now: 0 });
   expect(statusSegments(s).jump).toBe("jump 1/2");
+});
+
+test("the statusline lists servers attached to the active buffer with their state", () => {
+  const view = (name: string, state: ServerView["state"]): ServerView => ({
+    name,
+    root: "/ws",
+    state,
+    features: [],
+    pullDiagnostics: false,
+    completionTriggers: [],
+    signatureTriggers: [],
+  });
+  let s = open("a.rs", "fn main() {}\n");
+  expect(statusSegments(s).lsp).toBeUndefined();
+  const actions: Action[] = [
+    {
+      type: "lspServer",
+      key: "a@/ws",
+      view: { ...view("a", "starting"), progress: "indexing 42%" },
+    },
+    { type: "lspServer", key: "b@/ws", view: view("b", "ready") },
+    { type: "lspServer", key: "d@/ws", view: view("d", "unavailable") },
+    {
+      type: "lspAttached",
+      path: "a.rs",
+      keys: ["a@/ws", "b@/ws", "d@/ws"],
+    },
+    { type: "lspAttached", path: "other.rs", keys: ["a@/ws"] },
+  ];
+  for (const a of actions) s = update(s, a).state;
+  expect(statusSegments(s).lsp).toEqual([
+    { text: "a indexing 42%", state: "starting" },
+    { text: "b", state: "ready" },
+  ]);
+  s = update(s, { type: "lspAttached", path: "a.rs", keys: [] }).state;
+  expect(statusSegments(s).lsp).toBeUndefined();
+});
+
+test("a server that failed for good stays on the statusline of the files it served", () => {
+  const failed = (root: string): ServerView => ({
+    name: "rust-analyzer",
+    root,
+    state: "failed",
+    reason: "exited with code 1",
+    features: [],
+    pullDiagnostics: false,
+    completionTriggers: [],
+    signatureTriggers: [],
+  });
+  let s = open("app/src/main.rs", "fn main() {}\n");
+  const root = `${s.workspace.root}/app`;
+  s = update(s, {
+    type: "lspServer",
+    key: `rust-analyzer@${root}`,
+    view: failed(root),
+  }).state;
+  expect(statusSegments(s).lsp).toEqual([
+    { text: "rust-analyzer", state: "failed" },
+  ]);
+  s = update(s, {
+    type: "fileLoaded",
+    path: "lib/src/lib.rs",
+    file: textFile("pub fn f() {}\n"),
+  }).state;
+  expect(statusSegments(s).lsp).toBeUndefined();
+  s = update(s, {
+    type: "fileLoaded",
+    path: "app/notes.md",
+    file: textFile("# x\n"),
+  }).state;
+  expect(statusSegments(s).lsp).toBeUndefined();
 });
 
 const REPO: RepoInfo = {

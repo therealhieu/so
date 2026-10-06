@@ -12,6 +12,7 @@ const NAMED: Record<string, Key> = {
   "<enter>": "<CR>",
   "<bs>": "<BS>",
   "<tab>": "<Tab>",
+  "<c-space>": "<C-Space>",
 };
 
 /**

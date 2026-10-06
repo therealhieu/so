@@ -9,6 +9,7 @@ import { gitSubfolder } from "./git-subfolder";
 import { gitUnborn } from "./git-unborn";
 import { gitWorktree } from "./git-worktree";
 import { large } from "./large";
+import { lsp } from "./lsp";
 import { tour } from "./tour";
 
 /** Every profile, in `--list` order. */
@@ -24,6 +25,7 @@ export const PROFILES: readonly Profile[] = [
   gitSubfolder,
   gitWorktree,
   gitEol,
+  lsp,
 ];
 
 export const DEFAULT_PROFILE = tour.name;

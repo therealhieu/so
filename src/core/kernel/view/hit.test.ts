@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 import { createTextBuffer } from "../text/text-buffer";
 import type { Decoration } from "./decorations";
-import { displayColAt, rowAt, sourceColAt, spanAt } from "./hit";
+import { displayColAt, displayColOf, rowAt, sourceColAt, spanAt } from "./hit";
 import { layoutText } from "./text-view";
 import type { RenderLine, TextView } from "./types";
-import { displayWidth, wrapLine } from "./wrap";
+import { displayWidth, wrapLine, wrapText } from "./wrap";
 
 function layout(lines: string[], ...decos: Decoration[]): RenderLine[] {
   const v: TextView = {
@@ -190,4 +190,57 @@ test("spanAt finds the span under a display column, counting tabs as cells", () 
   expect(spanAt(spans, 6, 4)?.fold).toBe(7);
   expect(spanAt(spans, 7, 4)?.fold).toBe(7);
   expect(spanAt(spans, 8, 4)).toBeUndefined();
+});
+
+/** Virtual text inserted at `col` of line 0, hiding nothing. */
+const virtualAt = (
+  col: number,
+  text: string,
+  virtual: "inline" | "eol",
+): Decoration => ({
+  kind: "replace",
+  range: range(0, col, col),
+  block: false,
+  spans: [{ text, style: "inlayHint", virtual }],
+});
+
+test("inline virtual text pushes the columns after it and maps back to its column", () => {
+  const [line] = layout(["let d = f(a);"], virtualAt(5, ": f64", "inline"));
+  const spans = line?.spans ?? [];
+  expect(wrapText(spans)).toBe("let d: f64 = f(a);");
+  // The cursor on `d` stays put; on `=` it moves past the hint.
+  expect(displayColOf(spans, 4, 4, false)).toBe(4);
+  expect(displayColOf(spans, 6, 4, false)).toBe(11);
+  expect(displayColOf(spans, 13, 4, true)).toBe(18);
+  // A click on the hint lands on the character it sits before.
+  expect(sourceColAt(spans, 7, 4, 13)).toBe(5);
+  expect(sourceColAt(spans, 11, 4, 13)).toBe(6);
+});
+
+test("end-of-line virtual text neither wraps nor moves the cursor", () => {
+  const text = "let y = z;";
+  const [line] = layout(
+    [text],
+    virtualAt(text.length, "  ● cannot find value `z` in this scope", "eol"),
+  );
+  const spans = line?.spans ?? [];
+  expect(wrapText(spans)).toBe(text);
+  expect(displayColOf(spans, text.length, 4, true)).toBe(text.length);
+  const rows = rowAt([line as RenderLine], 1, {
+    width: 12,
+    tabWidth: 4,
+    wrap: true,
+    skipRows: 0,
+  });
+  // One row only: row 1 does not exist, so the last row is returned.
+  expect(rows?.startCol).toBe(0);
+});
+
+test("a tab after inline text keeps the cursor on its last cell", () => {
+  const [line] = layout(["a\tb"], virtualAt(1, "::", "inline"));
+  const spans = line?.spans ?? [];
+  // a(0) :: (1-2) tab (3) → b at 4
+  expect(displayColOf(spans, 1, 4, false)).toBe(3);
+  expect(displayColOf(spans, 1, 4, true)).toBe(3);
+  expect(displayColOf(spans, 2, 4, false)).toBe(4);
 });

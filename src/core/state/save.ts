@@ -6,8 +6,15 @@ import {
   saveText,
   setBuffer,
 } from "./buffers";
+import { onCompletionTimer, onResolveTimeout } from "./code-completion";
 import { advanceGitPending, cancelGitPending, requestRefresh } from "./git";
 import { summarizeSaved } from "./index";
+import {
+  onFormatTimeout,
+  onHighlightTimer,
+  onLspTimeout,
+  onPointerTimer,
+} from "./lsp";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -18,6 +25,7 @@ import type {
   Result,
   SaveState,
 } from "./types";
+import type { Registries } from "./update";
 
 const isConflicted = (s: AppState, id: BufferId): boolean =>
   s.overlay.kind === "conflict" && s.overlay.bufferId === id;
@@ -112,6 +120,7 @@ export const autosaveNow = (s: AppState, id: BufferId, now: number): Result =>
 export function onTimer(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
+  reg: Registries,
 ): Result {
   const [kind, n] = a.id.split(":");
   const id = Number(n);
@@ -123,6 +132,12 @@ export function onTimer(
         toasts: s.notifications.toasts.filter((t) => t.id !== id),
       },
     });
+  if (kind === "completion") return onCompletionTimer(s);
+  if (kind === "lspResolve") return onResolveTimeout(s, a.now, reg);
+  if (kind === "lspHighlight") return onHighlightTimer(s);
+  if (kind === "lspPointer") return onPointerTimer(s);
+  if (kind === "lsp") return onLspTimeout(s, id);
+  if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;
   if (kind === "autosave" && save?.kind === "scheduled" && save.at <= a.now)
     return writeBuffer(s, id, a.now);
