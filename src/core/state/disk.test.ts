@@ -245,7 +245,7 @@ test("changes outside open buffers relist listed folders", () => {
       type: "fileChanged",
       event: { kind: "changed", path: "notes/new.md", isDir: false },
     }),
-  ).toEqual([{ kind: "listDir", dir: "notes" }]);
+  ).toEqual([{ kind: "listDir", dir: "notes", gitignored: true }]);
   expect(
     ev({ type: "fileChanged", event: { kind: "removed", path: "x/y.md" } }),
   ).toEqual([]);
@@ -255,21 +255,26 @@ test("changes outside open buffers relist listed folders", () => {
       event: { kind: "changed", path: "notes", isDir: true },
     }),
   ).toEqual([
-    { kind: "listDir", dir: "" },
-    { kind: "listDir", dir: "notes" },
+    { kind: "listDir", dir: "", gitignored: true },
+    { kind: "listDir", dir: "notes", gitignored: true },
   ]);
 });
 
-test("a change under a dot folder relists it but never reaches the index", () => {
+test("a change watched only for the explorer never reaches the index", () => {
   const s = fresh();
   const r = update(s, {
     type: "fileChanged",
-    event: { kind: "changed", path: ".s1mple/logo.png", isDir: false },
+    event: {
+      kind: "changed",
+      path: ".s1mple/logo.png",
+      isDir: false,
+      explorerOnly: true,
+    },
   });
   expect(r.state.index).toBe(s.index);
   const removed = update(s, {
     type: "fileChanged",
-    event: { kind: "removed", path: ".s1mple/old.png" },
+    event: { kind: "removed", path: "build/old.md", explorerOnly: true },
   });
   expect(removed.state.index).toBe(s.index);
 });

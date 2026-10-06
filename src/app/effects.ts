@@ -247,7 +247,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           });
         return;
       case "listDir":
-        void listDir(d.root, e.dir, d.matcher, e.dotfiles === true).then(
+        void listDir(d.root, e.dir, d.matcher, {
+          dotfiles: e.dotfiles === true,
+          gitignored: e.gitignored === true,
+        }).then(
           (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
           (x) => {
             d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });

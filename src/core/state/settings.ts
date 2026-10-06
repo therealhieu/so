@@ -38,6 +38,16 @@ export const SETTINGS: readonly Setting[] = [
     ],
   },
   {
+    path: ["explorer", "gitignored"],
+    choices: [true, false],
+    about: [
+      "List names a `.gitignore`",
+      "matches, dimmed, in the",
+      "explorer; search still skips",
+      "them.",
+    ],
+  },
+  {
     path: ["theme"],
     choices: THEME_NAMES,
     about: ["The colour theme: `dark`/`light`", "are Tokyo Night."],
@@ -151,9 +161,12 @@ export function describeSetting(s: AppState, item: PickerItem) {
   ];
 }
 
-/** Work a new value needs beyond repainting: the explorer lists dot entries again. */
+/** Settings that change which entries the explorer lists. */
+const LISTING = ["explorer.dotfiles", "explorer.gitignored"];
+
+/** Work a new value needs beyond repainting: the explorer lists its folders again. */
 const applySetting = (s: AppState, path: Setting["path"]): Result =>
-  keyOf(path) === "explorer.dotfiles" ? relistShown(s) : none(s);
+  LISTING.includes(keyOf(path)) ? relistShown(s) : none(s);
 
 /** `value` applies now and is written to config.toml. */
 function setSetting(
@@ -190,6 +203,17 @@ export function toggleDotfiles(s: AppState): Result {
   const shown = !s.config.explorer.dotfiles;
   return chain(setSetting(s, ["explorer", "dotfiles"], shown), (st) =>
     message(st, shown ? "dot entries shown" : "dot entries hidden"),
+  );
+}
+
+/** `I` in the explorer: show or hide gitignored entries, saved like the setting. */
+export function toggleGitignored(s: AppState): Result {
+  const shown = !s.config.explorer.gitignored;
+  return chain(setSetting(s, ["explorer", "gitignored"], shown), (st) =>
+    message(
+      st,
+      shown ? "gitignored entries shown" : "gitignored entries hidden",
+    ),
   );
 }
 

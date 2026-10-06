@@ -117,6 +117,7 @@ test("the explorer docks left unless configured right", () => {
     icons: "nerd",
     width: 30,
     dotfiles: false,
+    gitignored: true,
   });
   const r = parseConfig(lines("[explorer]", 'position = "right"'));
   expect(r.ok && r.config.explorer.position).toBe("right");

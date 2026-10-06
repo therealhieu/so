@@ -94,7 +94,7 @@ beforeAll(async () => {
   stop = watchWorkspace(
     root,
     own,
-    (rel) => matcher.isExcludedPath(rel, dotfiles),
+    (rel) => matcher.isExcludedPath(rel, { dotfiles }),
     (e) => events.push(e),
   );
   startMs = performance.now() - t0;

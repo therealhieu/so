@@ -52,7 +52,8 @@ export function onConfigLoaded(
   if (a.result.ok && errors.length === 0) {
     const next = { ...s, config: a.result.config };
     const relisted =
-      next.config.explorer.dotfiles !== s.config.explorer.dotfiles &&
+      (next.config.explorer.dotfiles !== s.config.explorer.dotfiles ||
+        next.config.explorer.gitignored !== s.config.explorer.gitignored) &&
       s.panels.explorer.entries[""] !== undefined;
     return relisted ? relistShown(next) : none(next);
   }

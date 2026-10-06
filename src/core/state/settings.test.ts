@@ -35,6 +35,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "explorer.position left",
       "explorer.icons nerd",
       "explorer.dotfiles off",
+      "explorer.gitignored on",
       "theme dark",
       "color auto",
       "mouse on",
@@ -96,7 +97,7 @@ test("cycling explorer.dotfiles lists the shown folders again, and so does a fai
       value: true,
       previous: false,
     },
-    { kind: "listDir", dir: "", dotfiles: true },
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
   ]);
   const failed = update(r.state, {
     type: "settingFailed",
@@ -105,7 +106,24 @@ test("cycling explorer.dotfiles lists the shown folders again, and so does a fai
     reason: "read-only",
   });
   expect(failed.state.config.explorer.dotfiles).toBe(false);
-  expect(failed.effects).toEqual([{ kind: "listDir", dir: "" }]);
+  expect(failed.effects).toEqual([
+    { kind: "listDir", dir: "", gitignored: true },
+  ]);
+});
+
+test("cycling explorer.gitignored hides gitignored entries and lists the shown folders again", () => {
+  const open = keys(editing(), " us").state;
+  const r = keys(open, "gitignored<CR>");
+  expect(r.state.config.explorer.gitignored).toBe(false);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "gitignored"],
+      value: false,
+      previous: true,
+    },
+    { kind: "listDir", dir: "" },
+  ]);
 });
 
 test("Enter cycles theme through every colour theme and wraps around", () => {

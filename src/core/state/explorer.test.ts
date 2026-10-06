@@ -60,7 +60,7 @@ test("rename flushes a dirty buffer first, then follows it to the new path", () 
   expect(done.state.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
   expect(done.state.buffers[1]?.undo).toBe(undoBefore);
   expect(done.effects).toEqual([
-    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "", gitignored: true },
     { kind: "startTimer", id: "saveState", ms: 2000 },
   ]);
 });
@@ -139,9 +139,9 @@ test("moving a folder re-paths every buffer below it", () => {
     "archive",
   ]);
   expect(done.effects).toEqual([
-    { kind: "listDir", dir: "" },
-    { kind: "listDir", dir: "archive" },
-    { kind: "listDir", dir: "archive/notes" },
+    { kind: "listDir", dir: "", gitignored: true },
+    { kind: "listDir", dir: "archive", gitignored: true },
+    { kind: "listDir", dir: "archive/notes", gitignored: true },
     // The open buffers' paths are part of the saved session.
     { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
   ]);
@@ -189,13 +189,13 @@ test("create adds .md only without an extension; a trailing slash makes a folder
   expect(explorerOp(fresh(), op, 0).effects).toEqual([{ kind: "create", op }]);
   const created = update(fresh(), { type: "fsResult", op, ok: true });
   expect(created.effects).toEqual([
-    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "", gitignored: true },
     { kind: "read", path: "projects/new/idea.md" },
   ]);
   const folder: FsOp = { kind: "create", from: "ideas", dir: true };
   expect(
     update(fresh(), { type: "fsResult", op: folder, ok: true }).effects,
-  ).toEqual([{ kind: "listDir", dir: "" }]);
+  ).toEqual([{ kind: "listDir", dir: "", gitignored: true }]);
 });
 
 test("a failed operation reports its reason; a failed trash turns trash off", () => {
@@ -256,7 +256,9 @@ test("toggle opens and focuses the explorer, then closes it", () => {
     open: true,
     focused: true,
   });
-  expect(reopened.effects).toEqual([{ kind: "listDir", dir: "" }]);
+  expect(reopened.effects).toEqual([
+    { kind: "listDir", dir: "", gitignored: true },
+  ]);
 });
 
 const pressKeys = (s: AppState, seq: string): Result => {
@@ -332,8 +334,8 @@ test("H shows dot entries in every listed folder and saves the choice", () => {
       value: true,
       previous: false,
     },
-    { kind: "listDir", dir: "", dotfiles: true },
-    { kind: "listDir", dir: "notes", dotfiles: true },
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
+    { kind: "listDir", dir: "notes", dotfiles: true, gitignored: true },
   ]);
   expect(r.state.notifications.message?.text).toBe("dot entries shown");
 });
@@ -359,13 +361,75 @@ test("hiding dot entries collapses dot folders and moves a selection inside one 
   const r = pressInExplorer(s, "H");
   expect(r.state.panels.explorer.expanded).toEqual([]);
   expect(r.state.panels.explorer.cursor).toBe("");
-  expect(r.effects).toContainEqual({ kind: "listDir", dir: "" });
+  expect(r.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
   const relisted = update(r.state, {
     type: "dirListed",
     dir: "",
     entries: [{ name: "notes", kind: "dir" }],
   }).state;
   expect(relisted.panels.explorer.cursor).toBe("notes");
+});
+
+test("I hides gitignored entries, collapses gitignored folders, and moves a selection inside one to the top", () => {
+  let s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: "build", kind: "dir", ignored: true },
+      { name: "notes", kind: "dir" },
+    ],
+  }).state;
+  s = pressInExplorer(s, "l").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "build",
+    entries: [{ name: "out", kind: "dir", ignored: true }],
+  }).state;
+  s = pressInExplorer(s, "jl").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "build/out",
+    entries: [{ name: "a.md", kind: "file", ignored: true }],
+  }).state;
+  s = pressInExplorer(s, "jjlk").state;
+  expect(s.panels.explorer.expanded).toEqual(["build", "build/out", "notes"]);
+  expect(s.panels.explorer.cursor).toBe("build/out/a.md");
+  const r = pressInExplorer(s, "I");
+  expect(r.state.config.explorer.gitignored).toBe(false);
+  expect(r.state.panels.explorer.expanded).toEqual(["notes"]);
+  expect(r.state.panels.explorer.cursor).toBe("");
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "gitignored"],
+      value: false,
+      previous: true,
+    },
+    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "notes" },
+  ]);
+  expect(r.state.notifications.message?.text).toBe("gitignored entries hidden");
+  const back = pressInExplorer(r.state, "I");
+  expect(back.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
+});
+
+test("a reloaded config.toml that turns gitignored off lists the tree again", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  const result = parseConfig("[explorer]\ngitignored = false\n");
+  const r = update(s, { type: "configLoaded", result, reload: true });
+  expect(r.effects).toEqual([{ kind: "listDir", dir: "" }]);
 });
 
 test("a reloaded config.toml that turns dotfiles on lists the tree again", () => {
@@ -376,7 +440,9 @@ test("a reloaded config.toml that turns dotfiles on lists the tree again", () =>
   }).state;
   const result = parseConfig("[explorer]\ndotfiles = true\n");
   const r = update(s, { type: "configLoaded", result, reload: true });
-  expect(r.effects).toEqual([{ kind: "listDir", dir: "", dotfiles: true }]);
+  expect(r.effects).toEqual([
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
+  ]);
   const same = update(r.state, { type: "configLoaded", result, reload: true });
   expect(same.effects).toEqual([]);
 });

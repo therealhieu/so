@@ -27,7 +27,7 @@ test("the store runs effects in order, then notifies subscribers once", () => {
   const calls: string[] = [];
   const effects: Effect[] = [
     { kind: "read", path: "a.md" },
-    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "", gitignored: true },
   ];
   const store = createStore(
     fresh(),

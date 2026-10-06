@@ -13,7 +13,7 @@ import {
 } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import type { DirEntry, Stamp, TextFile } from "../core/state/types";
-import type { ExclusionMatcher } from "./ignore";
+import type { ExclusionMatcher, Shown } from "./ignore";
 
 const MAX_TEXT_BYTES = 16 * 1024 * 1024;
 const SNIFF_BYTES = 8192;
@@ -145,13 +145,14 @@ const e13 = (rel: string) => new FsError(`E13: File exists (${rel})`);
 
 /**
  * One folder's entries without excluded ones, folders first; symlinks report
- * their target's kind. `dotfiles` lists dot entries other than `.git`.
+ * their target's kind. `shown` lets dot or gitignored entries through, and a
+ * listed gitignored entry is marked `ignored`.
  */
 export async function listDir(
   root: string,
   rel: string,
   matcher: ExclusionMatcher,
-  dotfiles = false,
+  shown: Shown = {},
 ): Promise<DirEntry[]> {
   const dir = join(root, rel);
   const entries: DirEntry[] = [];
@@ -160,8 +161,13 @@ export async function listDir(
       ? ((await statOrNull(join(dir, d.name)))?.isDirectory() ?? false)
       : d.isDirectory();
     const path = rel ? `${rel}/${d.name}` : d.name;
-    if (matcher.isExcluded(path, isDir, dotfiles)) continue;
-    entries.push({ name: d.name, kind: isDir ? "dir" : "file" });
+    if (matcher.isExcluded(path, isDir, shown)) continue;
+    const kind = isDir ? "dir" : "file";
+    entries.push(
+      shown.gitignored === true && matcher.isIgnored(path, isDir)
+        ? { name: d.name, kind, ignored: true }
+        : { name: d.name, kind },
+    );
   }
   return entries.sort((a, b) =>
     a.kind !== b.kind

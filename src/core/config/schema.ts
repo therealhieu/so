@@ -90,6 +90,8 @@ export const ConfigSchema = z.strictObject({
       width: z.number().int().min(15).max(200).default(30),
       /** List dot entries other than `.git`; search and the index skip them either way. */
       dotfiles: z.boolean().default(false),
+      /** List names a `.gitignore` matches, dimmed; search and the index skip them either way. */
+      gitignored: z.boolean().default(true),
     })
     .prefault({}),
   preview: z

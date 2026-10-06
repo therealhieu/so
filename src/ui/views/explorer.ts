@@ -4,7 +4,11 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { explorerMarkers, type Marker } from "../../core/features/git/status";
-import { explorerWidth, visiblePaths } from "../../core/state/explorer";
+import {
+  explorerWidth,
+  isIgnoredPath,
+  visiblePaths,
+} from "../../core/state/explorer";
 import { bodyRows } from "../../core/state/layout";
 import type {
   AppState,
@@ -86,8 +90,9 @@ export function impactLine(
  * The file tree: docked on its configured edge with a `│` separator toward
  * the windows, or a rounded float on that edge on narrow terminals. Each row starts with an
  * icon for its folder state or file type (`explorer.icons` picks Nerd Font or
- * plain symbols); `●` marks a file with unsaved changes. Create and rename edit
- * the name in the tree: a new row under the target folder, or the selected row.
+ * plain symbols); `●` marks a file with unsaved changes, and a gitignored name
+ * is dimmed. Create and rename edit the name in the tree: a new row under the
+ * target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
@@ -348,7 +353,12 @@ export class ExplorerView extends Renderable {
           theme.style(
             selected
               ? base
-              : (git?.[1] ?? (row.dir ? "explorerDir" : "explorer")),
+              : (git?.[1] ??
+                  (isIgnoredPath(s, row.path)
+                    ? "explorerDim"
+                    : row.dir
+                      ? "explorerDir"
+                      : "explorer")),
           ),
           x,
           y,

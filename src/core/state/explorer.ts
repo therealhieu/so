@@ -40,14 +40,32 @@ const isListed = (s: AppState, dir: string) =>
   dir === "" || s.panels.explorer.expanded.includes(dir);
 
 /** Whether a path has a dot-prefixed segment, which only the explorer may show. */
-export const hasDotSegment = (path: string): boolean =>
+const hasDotSegment = (path: string): boolean =>
   path.split("/").some((p) => p.startsWith("."));
 
-/** Read one folder for the tree, with dot entries when `[explorer] dotfiles` is on. */
-export const listDirEffect = (s: AppState, dir: string): Effect =>
-  s.config.explorer.dotfiles
-    ? { kind: "listDir", dir, dotfiles: true }
-    : { kind: "listDir", dir };
+/** Whether the tree lists `path`, or a folder above it, as gitignored. */
+export function isIgnoredPath(s: AppState, path: string): boolean {
+  const parts = path.split("/");
+  return parts.some((name, i) =>
+    s.panels.explorer.entries[parts.slice(0, i).join("/")]?.some(
+      (e) => e.name === name && e.ignored === true,
+    ),
+  );
+}
+
+/**
+ * Read one folder for the tree, with dot entries when `[explorer] dotfiles`
+ * is on and gitignored ones when `[explorer] gitignored` is.
+ */
+export const listDirEffect = (s: AppState, dir: string): Effect => {
+  const { dotfiles, gitignored } = s.config.explorer;
+  return {
+    kind: "listDir",
+    dir,
+    ...(dotfiles ? { dotfiles: true as const } : {}),
+    ...(gitignored ? { gitignored: true as const } : {}),
+  };
+};
 
 /** List again every given folder the explorer shows, once each. */
 export function relist(s: AppState, dirs: string[]): Result {
@@ -58,17 +76,20 @@ export function relist(s: AppState, dirs: string[]): Result {
 }
 
 /**
- * `[explorer] dotfiles` changed: list every shown folder again. Hiding them
- * also collapses dot folders and moves a selection inside one to the top.
+ * `[explorer] dotfiles` or `gitignored` changed: list every shown folder
+ * again. Hiding entries also collapses the hidden folders and moves a
+ * selection inside one to the top.
  */
 export function relistShown(s: AppState): Result {
   const ex = s.panels.explorer;
-  const next = s.config.explorer.dotfiles
-    ? s
-    : setExplorer(s, {
-        expanded: ex.expanded.filter((d) => !hasDotSegment(d)),
-        cursor: hasDotSegment(ex.cursor) ? "" : ex.cursor,
-      });
+  const { dotfiles, gitignored } = s.config.explorer;
+  const hidden = (path: string) =>
+    (!dotfiles && hasDotSegment(path)) ||
+    (!gitignored && isIgnoredPath(s, path));
+  const next = setExplorer(s, {
+    expanded: ex.expanded.filter((d) => !hidden(d)),
+    cursor: hidden(ex.cursor) ? "" : ex.cursor,
+  });
   return relist(next, ["", ...next.panels.explorer.expanded]);
 }
 

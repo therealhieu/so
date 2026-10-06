@@ -826,20 +826,20 @@ exports[`the settings picker moves the explorer to the other edge at once 1`] = 
  NOTES  ~/notes               │   1 ▕# Ideas                                                                            
   notes                      │   1                                                                                     
   scripts  ╭─ Settings ───────────────────────────────────────────────────────────────────────────────────╮            
-  config.ya│ ❯                                                11/11 │ explorer.position                   │            
+  config.ya│ ❯                                                12/12 │ explorer.position                   │            
   todo.md  │ ────────────────────────────────────────────────────── │                                     │            
             │ ▸ explorer.position                               left │ The edge the explorer docks on;     │            
             │   explorer.icons                                  nerd │ the side panel takes the other.     │            
             │   explorer.dotfiles                                off │                                     │            
-            │   theme                                           dark │ left · right                        │            
-            │   color                                           auto │                                     │            
-            │   mouse                                             on │ Enter: next choice                  │            
-            │   editor.wrap                                       on │ Saved to config.toml                │            
+            │   explorer.gitignored                               on │ left · right                        │            
+            │   theme                                           dark │                                     │            
+            │   color                                           auto │ Enter: next choice                  │            
+            │   mouse                                             on │ Saved to config.toml                │            
+            │   editor.wrap                                       on │                                     │            
             │   editor.relativeNumbers                            on │                                     │            
             │   preview.mode                                    live │                                     │            
             │   preview.images                                  auto │                                     │            
             │   autosave.enabled                                  on │                                     │            
-            │                                                        │                                     │            
             │                                                        │                                     │            
             │                                                        │                                     │            
             │                                                        │                                     │            

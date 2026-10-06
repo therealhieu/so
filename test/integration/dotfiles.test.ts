@@ -34,13 +34,24 @@ afterAll(async () => {
   await rm(app.root, { recursive: true, force: true });
 });
 
-test("H lists dot entries except .git and gitignored ones, saves the choice, and hides them again", async () => {
+test("H lists dot entries except .git, saves the choice, and hides them again", async () => {
   expect(names()).toEqual(["a.md"]);
   app.keys("H");
   await waitFor(() => names().includes(".notes"));
   expect(names()).not.toContain(".git");
-  expect(names()).not.toContain(".env");
+  expect(app.store.get().panels.explorer.entries[""]).toContainEqual({
+    name: ".env",
+    kind: "file",
+    ignored: true,
+  });
   await saved("dotfiles = true");
+
+  app.keys("I");
+  await waitFor(() => !names().includes(".env"));
+  await saved("gitignored = false");
+  app.keys("I");
+  await waitFor(() => names().includes(".env"));
+  await saved("gitignored = true");
 
   app.select(".notes");
   app.keys("l");

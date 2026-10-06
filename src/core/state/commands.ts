@@ -34,7 +34,7 @@ import { formatThenSave } from "./lsp-commands";
 import { openPicker } from "./picker";
 import { message, none } from "./result";
 import { requestQuit, scheduleAutosave, writeBuffer } from "./save";
-import { toggleDotfiles } from "./settings";
+import { toggleDotfiles, toggleGitignored } from "./settings";
 import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -408,6 +408,11 @@ const builtins: AppCommand[] = [
     id: "explorer.toggleDotfiles",
     title: "Show or hide dot entries",
     run: (c) => toggleDotfiles(c.state),
+  },
+  {
+    id: "explorer.toggleGitignored",
+    title: "Show or hide gitignored entries",
+    run: (c) => toggleGitignored(c.state),
   },
   {
     id: "explorer.down",

@@ -53,7 +53,8 @@ export type TextFile = {
   createdMs?: number;
 };
 /** One listed folder entry; symlinks report their target's kind. */
-export type DirEntry = { name: string; kind: "file" | "dir" };
+/** `ignored`: a `.gitignore` matches it; listed only while gitignored entries are shown. */
+export type DirEntry = { name: string; kind: "file" | "dir"; ignored?: true };
 /** A file-system operation; `permanent` turns "trash" into a deletion. Paths are workspace-relative. */
 export type FsOp = {
   kind: "create" | "rename" | "move" | "trash";
@@ -62,9 +63,10 @@ export type FsOp = {
   dir?: boolean;
   permanent?: true;
 };
+/** `explorerOnly`: a dot or gitignored path, watched only for the explorer. */
 export type FileEvent =
-  | { kind: "changed"; path: string; isDir: boolean }
-  | { kind: "removed"; path: string };
+  | { kind: "changed"; path: string; isDir: boolean; explorerOnly?: true }
+  | { kind: "removed"; path: string; explorerOnly?: true };
 /** One search match: a line of `path` with the match at `col`, `len` code units long. */
 export type SearchHit = {
   path: string;
@@ -718,8 +720,8 @@ export type Effect =
   | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
   | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
-  /** `dotfiles` lists dot entries other than `.git`. */
-  | { kind: "listDir"; dir: string; dotfiles?: true }
+  /** `dotfiles` lists dot entries other than `.git`; `gitignored` lists names a `.gitignore` matches. */
+  | { kind: "listDir"; dir: string; dotfiles?: true; gitignored?: true }
   | { kind: "startTimer"; id: TimerId; ms: number }
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }

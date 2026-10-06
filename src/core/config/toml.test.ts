@@ -98,6 +98,7 @@ test("a valid file parses with binding lines", () => {
         icons: "nerd",
         width: 30,
         dotfiles: false,
+        gitignored: true,
       },
       preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
       daily: {

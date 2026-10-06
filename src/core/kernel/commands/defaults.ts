@@ -46,6 +46,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "<C-w><lt>", id: "explorer.narrower" },
   { scope: { mode: "explorer" }, seq: "<C-w>=", id: "explorer.resetWidth" },
   { scope: { mode: "explorer" }, seq: "H", id: "explorer.toggleDotfiles" },
+  { scope: { mode: "explorer" }, seq: "I", id: "explorer.toggleGitignored" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
   { scope: { mode: "explorer" }, seq: "<leader>us", id: "settings.open" },
   { scope: { mode: "explorer" }, seq: "<leader>qq", id: "app.quit" },
