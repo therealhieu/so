@@ -9,6 +9,11 @@ import type { ToolHost } from "../../src/app/tool-host";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
+import {
+  dirname as folderOf,
+  isListed,
+  listDirEffect,
+} from "../../src/core/state/explorer";
 import { initialState } from "../../src/core/state/init";
 import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
@@ -235,8 +240,14 @@ export async function startApp(
           logger,
           ...opts.index,
         });
-  const excluded = (rel: string) =>
-    matcher.isExcludedPath(rel, store.get().config.explorer);
+  const excluded = (rel: string) => {
+    const s = store.get();
+    if (matcher.isExcludedPath(rel, s.config.explorer)) return true;
+    return (
+      matcher.isExcludedPath(rel, { dotfiles: true }) &&
+      !isListed(s, folderOf(rel))
+    );
+  };
   const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
     const explorerOnly = matcher.isExcludedPath(event.path);
     store.dispatch({
@@ -265,7 +276,7 @@ export async function startApp(
       state: parsePersisted(readStateFile(opts.state.path)),
       restore: opts.state.restore,
     });
-  runner.run({ kind: "listDir", dir: "" });
+  runner.run(listDirEffect(store.get(), ""));
   // Without a worker, an empty index is ready, so renames are not refused.
   if (index === undefined) store.dispatch({ type: "indexReady" });
   else index.start(root, []);

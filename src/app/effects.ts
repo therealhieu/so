@@ -115,6 +115,8 @@ const REMOVED = "deleted on disk — :w to recreate";
  * A write emitted before an earlier rename, move, or trash reported back
  * still names the old path, so it follows that operation's outcome.
  */
+type ListDirEffect = Extract<Effect, { kind: "listDir" }>;
+
 export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const now = d.now ?? wallClock;
   const abs = (p: string) => join(d.root, p);
@@ -140,6 +142,41 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   };
 
   let gitWatcher: GitWatcher | undefined;
+
+  /**
+   * One listing per folder at a time: listings asked for meanwhile become
+   * one more after it, with the latest options, so a burst of file events
+   * reads a growing folder a few times instead of once per event.
+   */
+  const listings = new Map<string, ListDirEffect | null>();
+  const listFolder = (e: ListDirEffect) => {
+    if (listings.has(e.dir)) {
+      listings.set(e.dir, e);
+      return;
+    }
+    listings.set(e.dir, null);
+    void listDir(d.root, e.dir, d.matcher, {
+      dotfiles: e.dotfiles === true,
+      gitignored: e.gitignored === true,
+    })
+      .then(
+        (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
+        (x) => {
+          d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
+          d.dispatch({
+            type: "dirListed",
+            dir: e.dir,
+            entries: null,
+            reason: msg(x),
+          });
+        },
+      )
+      .finally(() => {
+        const again = listings.get(e.dir);
+        listings.delete(e.dir);
+        if (again) listFolder(again);
+      });
+  };
 
   const timers = new Map<TimerId, Timer>();
   const startTimer = (id: TimerId, due: number) => {
@@ -247,21 +284,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           });
         return;
       case "listDir":
-        void listDir(d.root, e.dir, d.matcher, {
-          dotfiles: e.dotfiles === true,
-          gitignored: e.gitignored === true,
-        }).then(
-          (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
-          (x) => {
-            d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
-            d.dispatch({
-              type: "dirListed",
-              dir: e.dir,
-              entries: null,
-              reason: msg(x),
-            });
-          },
-        );
+        listFolder(e);
         return;
       case "write": {
         const before = [...unreported];

@@ -36,7 +36,7 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { EmbedModelRegistry } from "../core/state/embed-models";
-import { listDirEffect } from "../core/state/explorer";
+import { dirname, isListed, listDirEffect } from "../core/state/explorer";
 import {
   gitBindings,
   gitCommands,
@@ -405,8 +405,15 @@ async function main(argv: string[]): Promise<void> {
 
   // Watching, indexing, and platform detection start after the first frame.
   setImmediate(() => {
-    const excluded = (rel: string) =>
-      matcher.isExcludedPath(rel, store.get().config.explorer);
+    const excluded = (rel: string) => {
+      const s = store.get();
+      if (matcher.isExcludedPath(rel, s.config.explorer)) return true;
+      // A gitignored path matters only in a folder the explorer lists.
+      return (
+        matcher.isExcludedPath(rel, { dotfiles: true }) &&
+        !isListed(s, dirname(rel))
+      );
+    };
     watchWorkspace(ws.root, ownOps, excluded, (event) => {
       // Dot and gitignored paths are watched only for the explorer.
       const explorerOnly = matcher.isExcludedPath(event.path);

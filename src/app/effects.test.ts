@@ -242,6 +242,25 @@ test("reads and listings answer with their result or refusal", async () => {
   );
 });
 
+test("listings asked for while a folder is read become one more, with the latest options", async () => {
+  await mkdir(join(root, "burst"), { recursive: true });
+  await writeFile(join(root, "burst/.hidden"), "x\n");
+  const r = runner();
+  r.run({ kind: "listDir", dir: "burst" });
+  for (let i = 0; i < 50; i++) r.run({ kind: "listDir", dir: "burst" });
+  r.run({ kind: "listDir", dir: "burst", dotfiles: true });
+  await waitFor(() => r.actions.length === 2);
+  await Bun.sleep(50);
+  expect(r.actions).toEqual([
+    { type: "dirListed", dir: "burst", entries: [] },
+    {
+      type: "dirListed",
+      dir: "burst",
+      entries: [{ name: ".hidden", kind: "file" }],
+    },
+  ]);
+});
+
 test("a timer fires once, never before its delay on the runner's clock", async () => {
   // A clock running at half speed: the real timeout elapses before the
   // clock reaches the due time, so the runner must wait for the rest.

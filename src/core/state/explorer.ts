@@ -36,7 +36,7 @@ const under = (path: string, root: string) =>
   path === root || path.startsWith(`${root}/`);
 
 /** The root is always listed; other folders while expanded. */
-const isListed = (s: AppState, dir: string) =>
+export const isListed = (s: AppState, dir: string) =>
   dir === "" || s.panels.explorer.expanded.includes(dir);
 
 /** Whether a path has a dot-prefixed segment, which only the explorer may show. */
