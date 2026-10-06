@@ -1,4 +1,4 @@
-import { buffersUnder, openPath, removeBuffer } from "./buffers";
+import { bufferForPath, buffersUnder, openPath, removeBuffer } from "./buffers";
 import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
 import { indexAfterFsOp } from "./index";
@@ -351,12 +351,19 @@ function expand(s: AppState, dir: string): Result {
   };
 }
 
-/** `l`: expand the selected folder, or open the selected file. */
+/**
+ * `l`: expand the selected folder, or open the selected file. The file's
+ * window takes focus: at once when it is already open, else once it is read.
+ */
 export function expandOrOpen(s: AppState, now: number): Result {
   const path = s.panels.explorer.cursor;
   const kind = kindOf(s, path);
   if (kind === "dir") return expand(s, path);
-  return kind === "file" ? openPath(s, path, now) : none(s);
+  if (kind !== "file") return none(s);
+  const r = openPath(s, path, now);
+  return bufferForPath(s, path) === undefined
+    ? r
+    : { ...r, state: setExplorer(r.state, { focused: false }) };
 }
 
 /** `Enter`: toggle the selected folder, or open the selected file. */

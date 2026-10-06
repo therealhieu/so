@@ -472,3 +472,58 @@ test("Z closes every folder and selects the top-level entry holding the selectio
   expect(r.state.panels.explorer.cursor).toBe("notes");
   expect(r.effects).toEqual([]);
 });
+
+const withA = (): AppState => {
+  const s = openBuffer(fresh(), "a.md", "hello");
+  const listed = update(s, {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  return {
+    ...listed,
+    panels: {
+      ...listed.panels,
+      explorer: { ...listed.panels.explorer, open: true, focused: true },
+    },
+  };
+};
+
+test("<C-w> toward the windows leaves the explorer, and toward its edge enters it again", () => {
+  const s = withA();
+  expect(pressInExplorer(s, "<C-w>h").state.panels.explorer.focused).toBe(true);
+  const left = pressInExplorer(s, "<C-w>l").state;
+  expect(left.panels.explorer.focused).toBe(false);
+  expect(left.panels.explorer.open).toBe(true);
+  expect(pressInExplorer(left, "<C-w>l").state.panels.explorer.focused).toBe(
+    false,
+  );
+  expect(pressInExplorer(left, "<C-w>h").state.panels.explorer.focused).toBe(
+    true,
+  );
+});
+
+test("<C-w> mirrors with the explorer on the right", () => {
+  const s = withA();
+  const right = {
+    ...s,
+    config: {
+      ...s.config,
+      explorer: { ...s.config.explorer, position: "right" as const },
+    },
+  };
+  const left = pressInExplorer(right, "<C-w>h").state;
+  expect(left.panels.explorer.focused).toBe(false);
+  expect(pressInExplorer(left, "<C-w>l").state.panels.explorer.focused).toBe(
+    true,
+  );
+});
+
+test("Enter on a note that is already open focuses its window", () => {
+  const r = pressInExplorer(withA(), "<CR>");
+  expect(r.state.panels.explorer.focused).toBe(false);
+  expect(r.state.panels.explorer.open).toBe(true);
+  expect(r.effects).not.toContainEqual(
+    expect.objectContaining({ kind: "read" }),
+  );
+});

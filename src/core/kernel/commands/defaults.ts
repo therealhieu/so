@@ -42,6 +42,8 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "r", id: "explorer.rename" },
   { scope: { mode: "explorer" }, seq: "m", id: "explorer.move" },
   { scope: { mode: "explorer" }, seq: "d", id: "explorer.delete" },
+  { scope: { mode: "explorer" }, seq: "<C-w>h", id: "window.focush" },
+  { scope: { mode: "explorer" }, seq: "<C-w>l", id: "window.focusl" },
   { scope: { mode: "explorer" }, seq: "<C-w>>", id: "explorer.wider" },
   { scope: { mode: "explorer" }, seq: "<C-w><lt>", id: "explorer.narrower" },
   { scope: { mode: "explorer" }, seq: "<C-w>=", id: "explorer.resetWidth" },

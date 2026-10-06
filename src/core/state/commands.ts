@@ -288,21 +288,32 @@ function split(s: AppState, dir: "row" | "column"): Result {
 }
 
 /**
- * Move focus between windows; the docked side panel sits beside them:
- * moving toward its edge past the last window enters it, moving back leaves it.
+ * Move focus between windows; the docked side panel and the open explorer
+ * sit beside them on opposite edges: moving toward one's edge past the last
+ * window enters it, moving back leaves it.
  */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
-  const side = s.panels.side;
-  const setSide = (focused: boolean): AppState => ({
+  const { side, explorer } = s.panels;
+  const panels = (
+    sideFocused: boolean,
+    explorerFocused: boolean,
+  ): AppState => ({
     ...s,
-    panels: { ...s.panels, side: { ...side, focused } },
+    panels: {
+      ...s.panels,
+      side: { ...side, focused: sideFocused },
+      explorer: { ...explorer, focused: explorerFocused },
+    },
   });
   const [enter, leave] = panelSide(s) === "left" ? ["h", "l"] : ["l", "h"];
-  if (panelFocused(s)) return none(dir === leave ? setSide(false) : s);
+  if (explorer.focused) return none(dir === enter ? panels(false, false) : s);
+  if (panelFocused(s)) return none(dir === leave ? panels(false, false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
-  if (target === undefined)
-    return none(dir === enter && panelDocked(s) ? setSide(true) : s);
-  return none({ ...s, windows: { ...s.windows, active: target } });
+  if (target !== undefined)
+    return none({ ...s, windows: { ...s.windows, active: target } });
+  if (dir === enter && panelDocked(s)) return none(panels(true, false));
+  if (dir === leave && explorer.open) return none(panels(false, true));
+  return none(s);
 }
 
 const builtins: AppCommand[] = [
