@@ -12,7 +12,12 @@ import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
 import type { Registries } from "../core/state/update";
 import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
-import { createMouseRouter, MouseLayer, type MouseSource } from "./mouse";
+import {
+  createMouseRouter,
+  MouseLayer,
+  type MouseRouter,
+  type MouseSource,
+} from "./mouse";
 import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
@@ -33,7 +38,9 @@ import { WindowTree } from "./views/window-tree";
 
 /**
  * Every OpenTUI process handler is off (`src/app/lifecycle.ts` owns signals,
- * exceptions, and exit), and any-motion mouse tracking is not requested.
+ * exceptions, and exit). Any-motion mouse tracking is requested so a
+ * pointer resting on a word can hover it; the router passes on only moves
+ * that change what is under the pointer.
  * Mouse tracking starts off; the first paint turns it on from the config, so
  * `mouse = false` never enables it for a frame.
  */
@@ -42,7 +49,7 @@ export const RENDERER_OPTIONS = {
   exitSignals: [],
   openConsoleOnError: false,
   useMouse: false,
-  enableMouseMovement: false,
+  enableMouseMovement: true,
   screenMode: "alternate-screen",
   useKittyKeyboard: {},
 } as const satisfies CliRendererConfig;
@@ -169,6 +176,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const explorer = new ExplorerView(renderer);
       const cmdline = new CommandLine(renderer, ctx);
       const side = new SidePanelView(renderer);
+      let router: MouseRouter | undefined;
       const overlays = new OverlayHost(
         renderer,
         [
@@ -181,7 +189,9 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           new ZoomOverlay(renderer, ctx),
           new HunkView(renderer, () => windows.anchor()),
         ],
-        new LspFloatView(renderer, () => windows.cursor()),
+        new LspFloatView(renderer, (f) =>
+          f.pointer === true ? router?.pointer() : windows.cursor(),
+        ),
       );
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);
@@ -210,16 +220,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         bufferline,
         windows,
       ];
-      const layer = new MouseLayer(
-        renderer,
-        createMouseRouter({
-          sources,
-          enabled: () => store.get().config.mouse,
-          stops: (t) => pressStops(store.get(), t),
-          dispatch: (a) => store.dispatch(a),
-          now: deps.now,
-        }),
-      );
+      router = createMouseRouter({
+        sources,
+        enabled: () => store.get().config.mouse,
+        stops: (t) => pressStops(store.get(), t),
+        dispatch: (a) => store.dispatch(a),
+        now: deps.now,
+      });
+      const layer = new MouseLayer(renderer, router);
       renderer.root.add(layer);
       const paint = (s: AppState) => {
         if (suspended) return;

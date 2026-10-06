@@ -8,13 +8,13 @@ import { ready, runInPty, statusRow } from "./pty";
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
 
 /**
- * A stand-in for lazygit: it ignores Ctrl-C, turns on any-motion mouse
+ * A stand-in for lazygit: it ignores Ctrl-C, turns on click-only mouse
  * tracking, says it runs, waits for `go`, and then kills itself with
  * SIGKILL, so it never resets the terminal.
  */
 const stubTool = (go: string) => `#!/bin/sh
 trap '' INT
-printf '\\033[?1003h'
+printf '\\033[?1000h'
 echo "stub tool running"
 while [ ! -e '${go}' ]; do sleep 0.05; done
 kill -9 $$
@@ -42,7 +42,7 @@ test("the editor returns intact after the git tool is killed", async () => {
           await p.waitFor(() => statusRow(p).includes("⎇ main"));
           p.type(" gg");
           await p.waitFor(() => p.screen().includes("stub tool running"));
-          expect(p.mouse()).toBe("any");
+          expect(p.mouse()).toBe("vt200");
           // Ctrl-C reaches the tool's process group, so included; so stays up.
           p.type("\x03");
           await Bun.sleep(200);
@@ -53,7 +53,8 @@ test("the editor returns intact after the git tool is killed", async () => {
               statusRow(p).includes("note.md") &&
               !p.screen().includes("stub tool running"),
           );
-          expect(p.mouse()).not.toBe("any");
+          // so's own tracking is back in place of the tool's.
+          expect(p.mouse()).toBe("any");
           expect(statusRow(p)).toContain("NORMAL");
           expect(p.exited()).toBe(false);
           p.type(":q\r");

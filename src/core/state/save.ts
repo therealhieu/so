@@ -9,7 +9,12 @@ import {
 import { onCompletionTimer, onResolveTimeout } from "./code-completion";
 import { advanceGitPending, cancelGitPending, requestRefresh } from "./git";
 import { summarizeSaved } from "./index";
-import { onFormatTimeout, onHighlightTimer, onLspTimeout } from "./lsp";
+import {
+  onFormatTimeout,
+  onHighlightTimer,
+  onLspTimeout,
+  onPointerTimer,
+} from "./lsp";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -130,6 +135,7 @@ export function onTimer(
   if (kind === "completion") return onCompletionTimer(s);
   if (kind === "lspResolve") return onResolveTimeout(s, a.now, reg);
   if (kind === "lspHighlight") return onHighlightTimer(s);
+  if (kind === "lspPointer") return onPointerTimer(s);
   if (kind === "lsp") return onLspTimeout(s, id);
   if (kind === "lspFormat") return onFormatTimeout(s, id, a.now);
   const save = s.buffers[id]?.save;

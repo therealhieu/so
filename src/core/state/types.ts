@@ -82,6 +82,7 @@ export type TimerId =
   | "completion"
   | "lspResolve"
   | "lspHighlight"
+  | "lspPointer"
   | `lsp:${number}`
   | `lspFormat:${BufferId}`
   | `gitDiff:${BufferId}`
@@ -481,7 +482,9 @@ export type MouseTarget =
 export type MouseEvent =
   | { kind: "press"; target: MouseTarget; clicks: 1 | 2 | 3; ctrl: boolean }
   | { kind: "drag"; target: MouseTarget }
-  | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
+  | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
+  /** The pointer moved onto `target` with no button held. */
+  | { kind: "move"; target: MouseTarget };
 
 export type AppState = {
   workspace: { root: string };

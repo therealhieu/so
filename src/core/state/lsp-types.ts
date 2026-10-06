@@ -152,6 +152,8 @@ export type PendingRequest = {
   window: number;
   pos?: Pos;
   auto: boolean;
+  /** Asked for by the mouse pointer resting on a word. */
+  pointer?: true;
 };
 /** A non-modal float anchored at `at` in `window`. */
 export type LspFloat = {
@@ -161,6 +163,8 @@ export type LspFloat = {
   lines: string[];
   /** Styles of the lines that have them, by line. */
   spans?: (Span[] | undefined)[];
+  /** Opened by the mouse pointer: drawn under it, closed when it leaves the word. */
+  pointer?: true;
   active?: { line: number; start: number; end: number };
 };
 /** A workspace edit in progress: files still to apply, applied, and skipped. */
@@ -210,4 +214,6 @@ export type LspState = {
   /** Uses of the symbol under the cursor in `path` at buffer `version`. */
   highlights?: { path: string; version: number; ranges: Range[] };
   accept?: CodeAccept;
+  /** The word the mouse pointer rests on, waiting to be hovered. */
+  pointer?: { window: number; pos: Pos };
 };

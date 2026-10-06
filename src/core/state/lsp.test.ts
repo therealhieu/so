@@ -9,7 +9,7 @@ import { cursorDiagnostic, request } from "./lsp";
 import { lspBindings } from "./lsp-commands";
 import type { LspFeature, LspResult, ServerView } from "./lsp-types";
 import { openPicker } from "./picker";
-import type { Action, AppState, Effect, Result } from "./types";
+import type { Action, AppState, Effect, MouseTarget, Result } from "./types";
 import { createUpdate } from "./update";
 
 const reg = testRegistries();
@@ -940,4 +940,78 @@ test("the workspace symbol picker explains a server that cannot search", () => {
   const r = runCommand(s, "lsp.workspaceSymbols", 0, reg);
   expect(r.state.overlay.kind).toBe("none");
   expect(messageOf(r.state)).toBe("workspaceSymbols: not supported");
+});
+
+/** The pointer moving onto `target`. */
+const move = (target: MouseTarget): Action => ({
+  type: "mouse",
+  event: { kind: "move", target },
+  now: 0,
+});
+const textAt = (s: AppState, line: number, col: number): MouseTarget => ({
+  kind: "window",
+  window: s.windows.active,
+  spot: { kind: "text", pos: at(line, col), edge: 0 },
+});
+const pointerTimer: Action = { type: "timer", id: "lspPointer", now: 0 };
+
+test("a pointer resting on a word hovers it, and the float closes when it leaves", () => {
+  const s = attached([ready("a", ["hover"])]);
+  const rested = run(s, move(textAt(s, 1, 6)));
+  expect(rested.effects).toEqual([
+    { kind: "startTimer", id: "lspPointer", ms: 500 },
+  ]);
+  // Moving within the word keeps the timer running.
+  expect(run(rested.state, move(textAt(s, 1, 9))).effects).toEqual([]);
+  const asked = run(rested.state, pointerTimer);
+  expect(lspEffects(asked.effects)).toEqual([
+    {
+      kind: "lsp",
+      id: 1,
+      key: "a@/ws",
+      path: "src/a.rs",
+      op: { kind: "hover", pos: at(1, 6) },
+    },
+  ]);
+  const shown = run(
+    asked.state,
+    result(1, { kind: "hover", text: "```rust\nfn helper()\n```" }),
+  ).state;
+  expect(shown.lsp.float?.pointer).toBe(true);
+  expect(shown.lsp.float?.lines).toEqual(["fn helper()"]);
+  // Onto the float itself: it stays, so it can be read.
+  expect(run(shown, move({ kind: "inert" })).state.lsp.float).toBeDefined();
+  // Onto another word: it closes and that word waits its turn.
+  const other = run(shown, move(textAt(s, 0, 0)));
+  expect(other.state.lsp.float).toBeUndefined();
+  expect(other.effects).toEqual([
+    { kind: "startTimer", id: "lspPointer", ms: 500 },
+  ]);
+  // Off any word: nothing waits.
+  const off = run(other.state, move(textAt(s, 1, 1)));
+  expect(off.state.lsp.pointer).toBeUndefined();
+  expect(off.effects).toEqual([{ kind: "cancelTimer", id: "lspPointer" }]);
+});
+
+test("an answer after the pointer left, a keyboard float, and plain notes are left alone", () => {
+  const s = attached([ready("a", ["hover"])]);
+  const asked = run(s, move(textAt(s, 1, 6)), pointerTimer).state;
+  const left = run(asked, move(textAt(s, 0, 0)));
+  const late = run(
+    left.state,
+    result(1, { kind: "hover", text: "fn helper()" }),
+  );
+  expect(late.state.lsp.float).toBeUndefined();
+  // A float opened with K is not the pointer's to close.
+  const keyed = run(
+    hover(s).state,
+    result(1, { kind: "hover", text: "fn helper()" }),
+  ).state;
+  expect(run(keyed, move(textAt(s, 0, 0))).state.lsp.float).toBeDefined();
+  const note = run(fresh(), {
+    type: "fileLoaded",
+    path: "a.md",
+    file: textFile("# Title\n"),
+  }).state;
+  expect(run(note, move(textAt(note, 0, 2))).effects).toEqual([]);
 });

@@ -6,7 +6,7 @@ import {
 import { FLOAT_RULE } from "../../core/state/lsp-hover";
 import type { LspFloat } from "../../core/state/lsp-types";
 import type { AppState, MouseTarget } from "../../core/state/types";
-import type { Cursor, LayoutClass } from "../shell";
+import type { LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { drawFrame } from "./host";
 
@@ -56,8 +56,13 @@ export class LspFloatView extends Renderable {
 
   constructor(
     ctx: RenderContext,
-    /** The editor's cursor on screen, read after the windows are laid out. */
-    private readonly editorCursor: () => Cursor | undefined,
+    /**
+     * The cell the float hangs from, read after the windows are laid out:
+     * the editor's cursor, or the mouse pointer for a float it opened.
+     */
+    private readonly anchor: (
+      f: LspFloat,
+    ) => { x: number; y: number } | undefined,
   ) {
     super(ctx, { position: "absolute", left: 0, top: 0 });
   }
@@ -67,7 +72,7 @@ export class LspFloatView extends Renderable {
     this.width = s.terminal.cols;
     this.height = s.terminal.rows;
     const f = s.lsp.float;
-    const at = f === undefined ? undefined : this.editorCursor();
+    const at = f === undefined ? undefined : this.anchor(f);
     this.visible = f !== undefined && at !== undefined;
     if (f === undefined || at === undefined) {
       this.float = undefined;

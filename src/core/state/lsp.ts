@@ -28,7 +28,7 @@ import type {
 import { openPicker, refreshPicker } from "./picker";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
-import type { Action, AppState, Effect, Result } from "./types";
+import type { Action, AppState, Effect, MouseTarget, Result } from "./types";
 import type { Registries } from "./update";
 
 /** User requests that get no answer in this long report a timeout. */
@@ -99,7 +99,12 @@ export function request(
   s: AppState,
   feature: LspFeature,
   op: LspOp,
-  o: { auto?: boolean; replace?: boolean; key?: ServerKey } = {},
+  o: {
+    auto?: boolean;
+    replace?: boolean;
+    key?: ServerKey;
+    pointer?: boolean;
+  } = {},
 ): Result {
   const auto = o.auto === true;
   const b = activeBuffer(s);
@@ -139,6 +144,7 @@ export function request(
       window: st.windows.active,
       auto,
       ...("pos" in op ? { pos: op.pos } : {}),
+      ...(o.pointer === true ? { pointer: true as const } : {}),
     };
     const effects: Effect[] = auto
       ? []
@@ -277,19 +283,22 @@ function applyResult(
         : message(s, `${p.feature}: nothing found`);
     case "hover": {
       const { lines, spans } = hoverLines(r.text);
-      return lines.length === 0
-        ? message(s, `${p.feature}: nothing found`)
-        : none(
-            withLsp(s, {
-              float: {
-                kind: "hover",
-                window: p.window,
-                at: pos,
-                lines,
-                ...(spans.some((x) => x !== undefined) ? { spans } : {}),
-              },
-            }),
-          );
+      // The pointer left the word while the server was answering.
+      if (p.pointer === true && !pointerOn(s, p.window, pos)) return none(s);
+      if (lines.length === 0)
+        return p.auto ? none(s) : message(s, `${p.feature}: nothing found`);
+      return none(
+        withLsp(s, {
+          float: {
+            kind: "hover",
+            window: p.window,
+            at: pos,
+            lines,
+            ...(spans.some((x) => x !== undefined) ? { spans } : {}),
+            ...(p.pointer === true ? { pointer: true as const } : {}),
+          },
+        }),
+      );
     }
     case "workspaceSymbols":
       return refreshPicker(
@@ -883,5 +892,108 @@ export function onHighlightTimer(s: AppState): Result {
     "documentHighlight",
     { kind: "documentHighlight", pos: w.content.cursor },
     { auto: true, replace: true },
+  );
+}
+
+/** The pointer rests this long on a word before it is hovered. */
+export const POINTER_HOVER_MS = 500;
+
+const WORD = /[\p{L}\p{N}_]/u;
+
+/** The columns of the word at `pos` in `text`, or undefined off a word. */
+function wordAt(
+  text: string,
+  col: number,
+): { from: number; to: number } | undefined {
+  if (!WORD.test(text[col] ?? "")) return undefined;
+  let from = col;
+  while (from > 0 && WORD.test(text[from - 1] as string)) from--;
+  let to = col + 1;
+  while (to < text.length && WORD.test(text[to] as string)) to++;
+  return { from, to };
+}
+
+/** Whether `a` and `b` are on the same word of the active buffer. */
+function sameWord(s: AppState, a: Pos, b: Pos): boolean {
+  if (a.line !== b.line) return false;
+  const text = activeBuffer(s)?.text;
+  if (text === undefined || a.line >= text.lineCount) return false;
+  const w = wordAt(text.line(a.line), a.col);
+  return w !== undefined && b.col >= w.from && b.col < w.to;
+}
+
+/** Whether the pointer still rests on the word at `pos` in `window`. */
+function pointerOn(s: AppState, window: number, pos: Pos): boolean {
+  const p = s.lsp.pointer;
+  return p !== undefined && p.window === window && sameWord(s, p.pos, pos);
+}
+
+/**
+ * Where a resting pointer can hover: a word in the active window's code
+ * buffer, in Normal mode with nothing open over it.
+ */
+function hoverSpot(
+  s: AppState,
+  t: MouseTarget,
+): { window: number; pos: Pos } | undefined {
+  if (t.kind !== "window" || t.spot.kind !== "text") return undefined;
+  if (t.window !== s.windows.active || s.vim.mode !== "normal")
+    return undefined;
+  if (s.overlay.kind !== "none") return undefined;
+  const b = activeBuffer(s);
+  if (b === undefined || (s.lsp.attached[b.path] ?? []).length === 0)
+    return undefined;
+  const { pos } = t.spot;
+  if (pos.line >= b.text.lineCount) return undefined;
+  return wordAt(b.text.line(pos.line), pos.col) === undefined
+    ? undefined
+    : { window: t.window, pos };
+}
+
+/**
+ * The pointer moved: resting on a new word starts the hover timer; leaving
+ * the word closes the float it opened. Moving onto the float keeps it, so
+ * it can be read.
+ */
+export function onPointerMove(s: AppState, t: MouseTarget): Result {
+  const f = s.lsp.float;
+  const spot = hoverSpot(s, t);
+  const onFloat = t.kind === "inert" && f?.pointer === true;
+  if (onFloat) return none(s);
+  const keep =
+    spot !== undefined &&
+    f?.pointer === true &&
+    f.window === spot.window &&
+    sameWord(s, f.at, spot.pos);
+  let st = f?.pointer === true && !keep ? withoutFloat(s) : s;
+  if (keep) return none(st);
+  const waiting = st.lsp.pointer;
+  if (spot === undefined) {
+    if (waiting === undefined) return st === s ? none(s) : none(st);
+    const { pointer: _, ...lsp } = st.lsp;
+    return {
+      state: { ...st, lsp },
+      effects: [{ kind: "cancelTimer", id: "lspPointer" }],
+    };
+  }
+  if (waiting !== undefined && pointerOn(st, spot.window, spot.pos))
+    return none(st);
+  st = withLsp(st, { pointer: spot });
+  return {
+    state: st,
+    effects: [{ kind: "startTimer", id: "lspPointer", ms: POINTER_HOVER_MS }],
+  };
+}
+
+/** The pointer rested on a word: hover it. */
+export function onPointerTimer(s: AppState): Result {
+  const p = s.lsp.pointer;
+  if (p === undefined || p.window !== s.windows.active) return none(s);
+  if (s.vim.mode !== "normal" || s.overlay.kind !== "none") return none(s);
+  return request(
+    s,
+    "hover",
+    { kind: "hover", pos: p.pos },
+    { auto: true, replace: true, pointer: true },
   );
 }

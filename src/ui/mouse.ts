@@ -29,7 +29,11 @@ type PointerEvent = Pick<
   "type" | "button" | "x" | "y" | "modifiers" | "scroll"
 >;
 
-export type MouseRouter = { handle(e: PointerEvent): void };
+export type MouseRouter = {
+  handle(e: PointerEvent): void;
+  /** The cell the pointer last moved to with no button held. */
+  pointer(): { x: number; y: number } | undefined;
+};
 
 const LEFT = 0;
 
@@ -72,6 +76,8 @@ export function createMouseRouter(o: {
     | undefined;
   let origin: { source: MouseSource; target: MouseTarget } | undefined;
   let lastDrag: string | undefined;
+  let at: { x: number; y: number } | undefined;
+  let lastMove: string | undefined;
 
   const resolve = (x: number, y: number, wheel = false) => {
     for (const source of o.sources) {
@@ -85,9 +91,20 @@ export function createMouseRouter(o: {
     o.dispatch({ type: "mouse", event, now });
 
   return {
+    pointer: () => at,
     handle(e) {
       if (!o.enabled()) return;
       switch (e.type) {
+        case "move": {
+          at = { x: e.x, y: e.y };
+          // Only a change of what is under the pointer reaches the core.
+          const target = resolve(e.x, e.y)?.target ?? { kind: "outside" };
+          const key = JSON.stringify(target);
+          if (key === lastMove) return;
+          lastMove = key;
+          send({ kind: "move", target });
+          return;
+        }
         case "scroll": {
           const step = WHEEL[e.scroll?.direction ?? ""];
           const hit = resolve(e.x, e.y, true);

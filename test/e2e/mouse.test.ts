@@ -68,7 +68,7 @@ test("with mouse off the terminal reports no mouse and clicks do nothing", async
   expect(r.screen.mouse).toBe("none");
 });
 
-test("by default the terminal reports button drags and a click moves the cursor", async () => {
+test("by default the terminal reports every pointer move and a click moves the cursor", async () => {
   const { path, env } = await setup();
   let tracking: string | undefined;
   const r = await runInPty([process.execPath, MAIN, path], {
@@ -83,7 +83,7 @@ test("by default the terminal reports button drags and a click moves the cursor"
       p.type(":q\r");
     },
   });
-  expect(tracking).toBe("drag");
+  expect(tracking).toBe("any");
   expect(r.exitCode).toBe(0);
   expect(r.screen.mouse).toBe("none");
 });

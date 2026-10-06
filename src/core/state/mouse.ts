@@ -20,6 +20,7 @@ import { runCommand } from "./commands";
 import { moveCursor, visiblePaths } from "./explorer";
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
+import { onPointerMove } from "./lsp";
 import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
 import { autosaveNow } from "./save";
@@ -50,6 +51,7 @@ export function onMouse(
   reg: Registries,
 ): Result {
   const e = a.event;
+  if (e.kind === "move") return onPointerMove(state, e.target);
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
