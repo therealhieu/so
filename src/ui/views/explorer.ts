@@ -5,6 +5,7 @@ import {
 } from "@opentui/core";
 import { explorerMarkers, type Marker } from "../../core/features/git/status";
 import { visiblePaths } from "../../core/state/explorer";
+import { bodyRows } from "../../core/state/layout";
 import type {
   AppState,
   ExplorerPrompt,
@@ -116,7 +117,7 @@ export class ExplorerView extends Renderable {
     this.float = lc === "narrow";
     // Layout getters lag until the next frame, so geometry is kept here.
     this.w = Math.min(s.terminal.cols, EXPLORER_WIDTH + (this.float ? 2 : 1));
-    this.h = Math.max(0, s.terminal.rows - 3);
+    this.h = bodyRows(s.terminal);
     this.onRight = explorerSide(s) === "right";
     this.x0 = this.onRight ? s.terminal.cols - this.w : 0;
     this.left = this.x0;

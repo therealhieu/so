@@ -186,6 +186,25 @@ export async function mountShell(o: MountOptions) {
       const rows = store.get().terminal.rows;
       return lines[y < 0 ? rows + y : y] ?? "";
     },
+    /** The statusline: the last row. */
+    async status(): Promise<string> {
+      return this.row(-1);
+    },
+    /**
+     * The message as painted at the right end of the row above the
+     * statusline; "" when there is none.
+     */
+    async message(): Promise<string> {
+      const m = store.get().notifications.message;
+      if (m === undefined) return "";
+      return [...(await this.row(-2)).trimEnd()]
+        .slice(-[...m.text].length)
+        .join("");
+    },
+    /** The text typed in the command-line popup above the statusline. */
+    async cmdline(): Promise<string> {
+      return (await this.row(-3)).replace(/^│ ?|│\s*$/g, "").trimEnd();
+    },
     destroy() {
       shell.destroy();
     },

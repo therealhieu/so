@@ -146,26 +146,24 @@ test("signature help marks the active parameter", async () => {
 
 test("the statusline shows a ready server attached to the buffer", async () => {
   m = await withHover("x");
-  expect(await m.row(-2)).toContain("│ ◆ fake");
+  expect(await m.status()).toContain("│ ◆ fake");
 });
 
 test("a narrow terminal drops the server segment", async () => {
   m = await withHover("x", 80);
-  const row = await m.row(-2);
+  const row = await m.status();
   expect(row).toContain("foo.rs");
   expect(row).not.toContain("fake");
 });
 
-test("the command line shows the cursor diagnostic in Normal mode only", async () => {
+test("the command line opens as a popup above the statusline", async () => {
   m = await withError();
   m.keys("2j12l");
-  expect((await m.row(-1)).trim()).toBe(
-    "E rustc: cannot find value `z` in this scope",
-  );
-  m.keys("i");
-  expect(await m.row(-1)).not.toContain("cannot find");
-  m.keys("<Esc>:");
-  expect((await m.row(-1)).trim()).toBe(":");
+  expect(await m.status()).toContain("foo.rs");
+  expect(await m.message()).not.toContain("rustc");
+  m.keys(":");
+  expect(await m.cmdline()).toBe(":");
+  expect(await m.status()).toContain("COMMAND");
 });
 
 test("code completion rows show kind, label, and detail", async () => {

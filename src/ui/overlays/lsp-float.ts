@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { statusRow } from "../../core/state/layout";
 import { FLOAT_RULE } from "../../core/state/lsp-hover";
 import type { LspFloat } from "../../core/state/lsp-types";
 import type { AppState, MouseTarget } from "../../core/state/types";
@@ -78,7 +79,7 @@ export class LspFloatView extends Renderable {
       this.float = undefined;
       return;
     }
-    const { cols, rows } = s.terminal;
+    const { cols } = s.terminal;
     const maxW = Math.min(MAX_WIDTH, cols);
     const wrapWidth = Math.max(1, maxW - CHROME);
     if (this.float !== f || this.wrapWidth !== wrapWidth) {
@@ -89,7 +90,7 @@ export class LspFloatView extends Renderable {
     const widest = this.rows.reduce((n, r) => Math.max(n, cells(r.text)), 0);
     const w = Math.min(maxW, widest + CHROME);
     // Rows between the bufferline and the statusline, below or above the cursor.
-    const below = rows - 2 - (at.y + 1);
+    const below = statusRow(s.terminal) - (at.y + 1);
     const above = at.y - 1;
     const want = Math.min(MAX_HEIGHT, this.rows.length + 2);
     const h = Math.max(0, Math.min(want, Math.max(below, above)));

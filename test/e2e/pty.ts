@@ -192,9 +192,9 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   };
 }
 
-/** The statusline: the second-to-last row of the screen. */
+/** The statusline: the last row of the screen. */
 export const statusRow = (p: PtyProcess): string =>
-  p.screen().split("\n").at(-2) ?? "";
+  p.screen().split("\n").at(-1) ?? "";
 
 /**
  * The first frame is painted, the kitty keyboard mode is on, and a file the

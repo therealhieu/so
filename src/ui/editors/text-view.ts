@@ -45,6 +45,7 @@ import {
   wrapText,
 } from "../../core/kernel/view/wrap";
 import { cursorDisplayCol } from "../../core/kernel/vim/motions";
+import { bodyRows } from "../../core/state/layout";
 import { panelFocused } from "../../core/state/side-panel";
 import type {
   AppState,
@@ -343,10 +344,10 @@ export class EditorView extends Renderable implements WindowView {
     const rows = this.textRows();
     const { line, col } = w.content.cursor;
     const { tabWidth, wrap } = s.config.editor;
-    // The core keeps the cursor within `rows − 2` lines from `scroll`; this
-    // window may be shorter, so it scrolls further. A mouse scroll that
+    // The core keeps the cursor within the body's rows from `scroll`; a
+    // split window is shorter, so it scrolls further. A mouse scroll that
     // left the cursor off screen is kept.
-    const coreRows = Math.max(1, s.terminal.rows - 2);
+    const coreRows = Math.max(1, bodyRows(s.terminal));
     this.topLine = w.content.scroll;
     const followsCursor =
       line >= this.topLine && line < this.topLine + coreRows;

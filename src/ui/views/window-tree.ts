@@ -4,6 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import type { WindowTree as Tree } from "../../core/kernel/editor/windows";
+import { bodyRows } from "../../core/state/layout";
 import type { AppState, MouseTarget, WindowId } from "../../core/state/types";
 import { editorViews, type WindowView } from "../editors/registry";
 import type { Rect } from "../editors/text-view";
@@ -78,7 +79,7 @@ export class WindowTree extends Renderable {
       x,
       y: 1,
       w: Math.max(0, s.terminal.cols - x - right),
-      h: Math.max(0, s.terminal.rows - 3),
+      h: bodyRows(s.terminal),
     };
     const rects = new Map<WindowId, Rect>();
     this.seps = [];

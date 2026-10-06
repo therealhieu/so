@@ -4,6 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { activeBuffer, activeWindow } from "../../core/state/buffers";
+import { bodyRows } from "../../core/state/layout";
 import {
   panelSide,
   type SidePanelRow,
@@ -78,7 +79,7 @@ export class SidePanelView extends Renderable {
     this.cursorAt = undefined;
     if (!this.visible) return;
     const w = Math.min(s.terminal.cols, SIDE_WIDTH + 1);
-    this.h = Math.max(0, s.terminal.rows - 3);
+    this.h = bodyRows(s.terminal);
     this.onLeft = panelSide(s) === "left";
     this.x0 = this.onLeft ? 0 : s.terminal.cols - w;
     this.left = this.x0;

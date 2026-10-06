@@ -147,7 +147,7 @@ test("a csv file type works by registration alone", async () => {
   expect(qty).toEqual(comma);
 
   m.keys("gC");
-  expect(await m.row(-1)).toContain("2 data rows");
+  expect(await m.message()).toContain("2 data rows");
 });
 
 test("a csv key stays unbound outside csv files", async () => {
@@ -161,7 +161,7 @@ test("a csv key stays unbound outside csv files", async () => {
   m = await mount(reg);
   m.open("notes/plan.md", "# Plan\n\nText.\n");
   m.keys("gC");
-  expect(await m.row(-1)).not.toContain("data rows");
+  expect(await m.message()).not.toContain("data rows");
 });
 
 /** `@grid(name)` alone on a line becomes an embed of `name.xgrid`. */
@@ -236,10 +236,10 @@ test("a command, syntax, block renderer, and widget painter extend the editor by
   expect(frame).not.toContain("@grid(sales)");
 
   m.keys("gH");
-  expect(await m.row(-1)).toContain("hello from the grid");
+  expect(await m.message()).toContain("hello from the grid");
   m.keys("<leader>:Grid: say<CR>");
   expect(m.store.get().overlay.kind).toBe("none");
-  expect(await m.row(-1)).toContain("hello from the grid");
+  expect(await m.message()).toContain("hello from the grid");
 });
 
 /** A grid editor's view: one header row naming the shown file's line count. */

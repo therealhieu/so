@@ -35,8 +35,8 @@ exports[`picker selection stays visible without colour: marker and reverse video
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                  2/18 config.yaml 
  NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-2/18 config.yaml                                                                                                        
 "
 `;
 
@@ -90,8 +90,8 @@ exports[`picker selection matches the light theme golden 2`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                  2/18 config.yaml 
  NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-2/18 config.yaml                                                                                                        
 "
 `;
 
@@ -118,8 +118,8 @@ exports[`picker selection keeps its title and counter unclipped at 80×24 1`] = 
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                          2/18 config.yaml 
  NORMAL  │ notes/plan.md │ ← 31 backlinks │ ◆ index ready                   1:1 
-2/18 config.yaml                                                                
 "
 `;
 
@@ -146,8 +146,8 @@ exports[`live view states stay distinguishable without colour at 80×24 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ notes/states.md                                                  1:1 
-                                                                                
 "
 `;
 
@@ -199,7 +199,7 @@ exports[`live view states matches the light theme golden 2`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ notes/states.md                                                  1:1 
-                                                                                
 "
 `;

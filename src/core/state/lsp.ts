@@ -6,11 +6,8 @@ import {
   shiftRange,
 } from "../kernel/text/line-shift";
 import type { Pos, Range } from "../kernel/text/pos";
-import type {
-  Diagnostic,
-  DiagnosticSeverity,
-} from "../kernel/view/diagnostics";
-import { activeBuffer, activeWindow, bufferForPath } from "./buffers";
+import type { Diagnostic } from "../kernel/view/diagnostics";
+import { activeBuffer, bufferForPath } from "./buffers";
 import { onCompletionResult, onResolvedItem } from "./code-completion";
 import { goTo, recordJump } from "./jumps";
 import { startCodeEdit } from "./lsp-edits";
@@ -807,29 +804,6 @@ function covers(range: Range, line: number, col: number): boolean {
   const from = line === start.line ? start.col : 0;
   const to = line === end.line ? end.col : Number.POSITIVE_INFINITY;
   return col >= from && col < to;
-}
-
-/** The shown diagnostic under the active window's cursor, the most severe first. */
-export function cursorDiagnostic(
-  s: AppState,
-): { severity: DiagnosticSeverity; text: string } | undefined {
-  const w = activeWindow(s);
-  const b = activeBuffer(s);
-  if (w === undefined || b === undefined) return undefined;
-  const { line, col } = w.content.cursor;
-  let best: Diagnostic | undefined;
-  for (const d of s.lsp.shown[b.path] ?? [])
-    if (
-      covers(d.range, line, col) &&
-      (best === undefined || d.severity < best.severity)
-    )
-      best = d;
-  if (best === undefined) return undefined;
-  const text = best.message.split("\n", 1)[0] ?? "";
-  return {
-    severity: best.severity,
-    text: best.source === undefined ? text : `${best.source}: ${text}`,
-  };
 }
 
 /** How long the cursor rests before the uses of its symbol are asked for. */

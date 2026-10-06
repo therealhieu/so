@@ -137,7 +137,7 @@ describe("live view states", () => {
     expect(lines.find((l) => l.includes("⚠"))).toContain("![[table.broken]]");
 
     expect(lines[0]?.trim()).toBe("states.md");
-    expect(lines[22]).toMatch(/^ NORMAL +│ notes\/states\.md +1:1 $/);
+    expect(lines[23]).toMatch(/^ NORMAL +│ notes\/states\.md +1:1 $/);
     expect(await m.frame()).toMatchSnapshot();
   });
 
@@ -146,9 +146,9 @@ describe("live view states", () => {
     const typed = `:s/${"p".repeat(70)}/r/`;
     expect(typed).toHaveLength(76);
     m.keys(typed);
-    expect((await m.row(-1)).trimEnd()).toBe(typed);
+    expect(await m.cmdline()).toBe(typed);
     m.keys("<Esc><leader>m<leader>m:s/x/y/<CR>");
-    expect((await m.row(-1)).trim()).toBe("reading mode — <leader>m to edit");
+    expect((await m.message()).trim()).toBe("reading mode — <leader>m to edit");
   });
 
   test("matches the light theme golden", async () => {

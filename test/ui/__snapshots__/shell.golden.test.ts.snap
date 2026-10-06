@@ -35,8 +35,8 @@ exports[`shell at 120×36 startup shows the explorer focused and an empty window
                               │    ~                                                                                    
                               │    ~                                                                                    
                               │    ~                                                                                    
+                              │    ~                                                                                    
  EXPLORER  │ [No Name] │ preview off                                                                                    
-                                                                                                                        
 "
 `;
 
@@ -75,8 +75,8 @@ exports[`shell at 120×36 explorer hidden with a note open 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ live │ notes/ideas.md │ 11 words │ preview off                                                           1:1 
-                                                                                                                        
 "
 `;
 
@@ -115,8 +115,8 @@ exports[`shell at 120×36 a vertical split shows winbars and a separator 1`] = `
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
     ~                                                      │    ~                                                       
+    ~                                                      │    ~                                                       
  NORMAL  │ live │ notes/ideas.md │ 11 words │ preview off                                                           1:1 
-                                                                                                                        
 "
 `;
 
@@ -155,8 +155,8 @@ exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                               save failed: EACCES 
  NORMAL  │ live │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s │ 11 words │ preview off                   1:8 
-save failed: EACCES                                                                                                     
 "
 `;
 
@@ -195,8 +195,8 @@ exports[`shell at 120×36 info and error toasts stack at the top right 1`] = `
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ live │ notes/ideas.md ● │ 11 words │ preview off                                                         1:8 
-                                                                                                                        
 "
 `;
 
@@ -235,8 +235,8 @@ exports[`shell at 120×36 a code file shows the source view and no word count 1`
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ source │ scripts/sync.ts │ preview off                                                                   1:1 
-                                                                                                                        
 "
 `;
 
@@ -262,9 +262,9 @@ exports[`shell at 80×24 startup shows the explorer focused and an empty window 
 │                              │                                                
 │                              │                                                
 │                              │                                                
+│                              │                                                
 ╰──────────────────────────────╯                                                
  EXPLORER  │ [No Name]                                                          
-                                                                                
 "
 `;
 
@@ -291,8 +291,8 @@ exports[`shell at 80×24 explorer hidden with a note open 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ notes/ideas.md                                                   1:1 
-                                                                                
 "
 `;
 
@@ -319,8 +319,8 @@ exports[`shell at 80×24 a vertical split shows winbars and a separator 1`] = `
     ~                                  │    ~                                   
     ~                                  │    ~                                   
     ~                                  │    ~                                   
+    ~                                  │    ~                                   
  NORMAL  │ notes/ideas.md                                                   1:1 
-                                                                                
 "
 `;
 
@@ -347,8 +347,8 @@ exports[`shell at 80×24 a failed save shows its reason and retry time 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                       save failed: EACCES 
  NORMAL  │ notes/ideas.md ● │ ✗ save failed: EACCES · retry in 1s           1:8 
-save failed: EACCES                                                             
 "
 `;
 
@@ -375,8 +375,8 @@ exports[`shell at 80×24 info and error toasts stack at the top right 1`] = `
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ notes/ideas.md ●                                                 1:8 
-                                                                                
 "
 `;
 
@@ -403,8 +403,8 @@ exports[`shell at 80×24 a code file shows the source view and no word count 1`]
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ scripts/sync.ts                                                  1:1 
-                                                                                
 "
 `;
 
@@ -430,9 +430,9 @@ exports[`on a narrow terminal the explorer floats on its configured edge 1`] = `
     ~                                           │                              │
     ~                                           │                              │
     ~                                           │                              │
+    ~                                           │                              │
     ~                                           ╰──────────────────────────────╯
  EXPLORER  │ [No Name]                                                          
-                                                                                
 "
 `;
 
@@ -576,8 +576,8 @@ exports[`index and panels at 120×36 indexing progress shows in the statusline 1
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ live │ notes/ideas.md │ 11 words │ preview off │ ◌ indexing 4,210/10,000                                 1:1 
-                                                                                                                        
 "
 `;
 
@@ -616,8 +616,8 @@ exports[`index and panels at 120×36 the index-ready toast and the statusline se
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-                                                                                                                        
 "
 `;
 
@@ -655,9 +655,9 @@ exports[`index and panels at 120×36 the outline panel marks the current heading
     ~                                                                              │                                    
     ~                                                                              │                                    
     ~                                                                              │                                    
+    ~                                                                              │                                    
     ~                                                                              │ ⏎ jump · q close                   
  NORMAL  │ live │ notes/plan.md │ jump 2/2 │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                5:1 
-                                                                                                                        
 "
 `;
 
@@ -694,10 +694,10 @@ exports[`index and panels at 120×36 with the explorer on the right, the backlin
  ◇ log/day-05:4                     │    ~                                               │                              
    - [[plan#Goals]] today           │    ~                                               │                              
  ◇ log/day-05:5                     │    ~                                               │                              
+   - [[plan|the plan]] today        │    ~                                               │                              
  j/k move · ⏎ open · l link it      │    ~                                               │                              
  C-w l back to the editor           │    ~                                               │                              
  NORMAL  │ live │ notes/plan.md │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                           1:1 
-                                                                                                                        
 "
 `;
 
@@ -734,10 +734,10 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
     ~                                                                              │                                    
     ~                                                                              │                                    
     ~                                                                              │                                    
+    ~                                                                              │                                    
     ~                                                                              │ j/k move · ⏎ open · l link it      
     ~                                                                              │ C-w h back to the editor           
  NORMAL  │ live │ projects/so-roadmap.md │ jump 2/2 │ ← 0 backlinks │ 3 words │ preview off │ ◆ index ready         1:1 
-                                                                                                                        
 "
 `;
 
@@ -774,10 +774,10 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
     ~                                                                              │ ◇ log/day-05:4                     
     ~                                                                              │   - [[plan#Goals]] today           
     ~                                                                              │ ◇ log/day-05:5                     
+    ~                                                                              │   - [[plan|the plan]] today        
     ~                                                                              │ j/k move · ⏎ open · l link it      
     ~                                                                              │ C-w h back to the editor           
  NORMAL  │ live │ notes/plan.md │ jump 3/3 │ ← 31 backlinks │ 14 words │ preview off │ ◆ index ready                1:1 
-                                                                                                                        
 "
 `;
 
@@ -816,7 +816,7 @@ exports[`index and panels at 120×36 a code file shows source, path, preview, in
     ~                                                                                                                   
     ~                                                                                                                   
     ~                                                                                                                   
+    ~                                                                                                                   
  NORMAL  │ source │ scripts/sync.ts │ preview off │ ◆ index ready                                                   1:1 
-                                                                                                                        
 "
 `;

@@ -3,6 +3,7 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
+import { statusRow } from "../../core/state/layout";
 import { type StatusSegments, statusSegments } from "../../core/state/status";
 import type { AppState, MouseTarget } from "../../core/state/types";
 import type { LayoutClass, ViewDeps } from "../shell";
@@ -71,8 +72,8 @@ function gitSegment(g: NonNullable<StatusSegments["git"]>): Seg {
 }
 
 /**
- * Row h−2: `MODE │ view │ path ● │ ⎇ ref │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index │ servers`
- * on the left and `Ln:Col` on the right. Narrow terminals drop the server, git, view, word, and
+ * The last row: `MODE │ view │ path ● │ ⎇ ref │ ✗ save failed… │ ✗ deleted on disk… │ jump i/n │ ← N backlinks │ N words │ preview │ index │ servers`
+ * on the left and the pending keys and `Ln:Col` on the right. Narrow terminals drop the server, git, view, word, and
  * preview segments; a row too long for the full path drops servers, then git, then preview, then words,
  * then view, and the path is cut in the middle when the row is still too long.
  */
@@ -90,17 +91,14 @@ export class Statusline extends Renderable {
   update(s: AppState, lc: LayoutClass): void {
     this.s = s;
     this.lc = lc;
-    this.top = Math.max(0, s.terminal.rows - 2);
+    this.top = statusRow(s.terminal);
     this.width = s.terminal.cols;
   }
 
   /** The status row takes no click. */
   targetAt(x: number, y: number): MouseTarget | undefined {
     const t = this.s?.terminal;
-    return t !== undefined &&
-      y === Math.max(0, t.rows - 2) &&
-      x >= 0 &&
-      x < t.cols
+    return t !== undefined && y === statusRow(t) && x >= 0 && x < t.cols
       ? { kind: "inert" }
       : undefined;
   }
@@ -158,10 +156,13 @@ export class Statusline extends Renderable {
       seg.position === undefined
         ? ""
         : ` ${seg.position.line + 1}:${seg.position.col + 1} `;
+    const pending = s.vim.pending.join("");
+    const keys = pending === "" ? "" : ` ${pending} `;
     const dirty = seg.dirty ? " ●" : "";
     const fixedWidth = () =>
       cells(badge) +
       2 +
+      cells(keys) +
       cells(right) +
       cells(dirty) +
       segs.reduce((n, x) => n + 3 + (x === path ? 0 : cells(x.text)), 0);
@@ -200,5 +201,8 @@ export class Statusline extends Renderable {
         this.y,
         right,
       );
+    const keysAt = cols - cells(right) - cells(keys);
+    if (keys !== "" && keysAt >= x)
+      drawCells(buf, theme.style("statusDim"), keysAt, this.y, keys);
   }
 }

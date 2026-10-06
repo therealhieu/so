@@ -20,11 +20,11 @@ exports[`base table matches the colour golden with a focused cell 1`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
  BASE  │ tasks.base                                                         1:1 
-Status: doing                                                                   
 "
 `;
 
@@ -48,11 +48,11 @@ exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
  BASE  │ tasks.base                                                         1:1 
-Status: doing                                                                   
 "
 `;
 
@@ -76,11 +76,11 @@ exports[`base table matches the light golden with a focused cell 1`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
  BASE  │ tasks.base                                                         1:1 
-Status: doing                                                                   
 "
 `;
 
@@ -104,11 +104,11 @@ exports[`base table an edited cell shows its text, caret, and inline error 1`] =
                                                                                 
                                                                                 
                                                                                 
+                                                                                
    ────────────────┴────────┴──────────────┴─────                               
  Σ                            2026-10-01     1                                  
  editing — ⏎ write to frontmatter · esc cancel                                  
  INSERT  │ tasks.base                                                       1:1 
-                                                                                
 "
 `;
 
@@ -134,9 +134,9 @@ exports[`base board matches the colour golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
  BASE  │ board.base                                                         1:1 
-todo · write-report                                                             
 "
 `;
 
@@ -162,9 +162,9 @@ exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
  BASE  │ board.base                                                         1:1 
-todo · write-report                                                             
 "
 `;
 
@@ -190,9 +190,9 @@ exports[`base board matches the light golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next               
+                                                                                
+ h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
  BASE  │ board.base                                                         1:1 
-todo · write-report                                                             
 "
 `;
 
@@ -218,9 +218,9 @@ exports[`base states waiting and empty states match their goldens 1`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
  Tab next view · 1-4 switch view                                                
  BASE  │ tasks.base                                                         1:1 
-                                                                                
 "
 `;
 
@@ -246,9 +246,9 @@ exports[`base states waiting and empty states match their goldens 2`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
  BASE  │ empty.base                                                         1:1 
-                                                                                
 "
 `;
 
@@ -274,9 +274,9 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
                                                                                 
+                                                                                
  h/l j/k focus · H/L off · ⏎ open note · v views · Tab next                     
  BASE  │ board.base                                                         1:1 
-                                                                                
 "
 `;
 
@@ -302,9 +302,9 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
                                                                                 
+                                                                                
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
  BASE  │ tasks.base                                                         1:1 
-                                                                                
 "
 `;
 
@@ -334,11 +334,11 @@ exports[`base states a wide window shows every view tab 1`] = `
                                                                                                                         
                                                                                                                         
                                                                                                                         
+                                                                                                                        
    ────────────────┴────────┴────────────┴─────                                                                         
  Σ                            2026-10-01   1                                                                            
  h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open                                                
  BASE  │ base │ tasks.base │ preview off                                                                            1:1 
-                                                                                                                        
 "
 `;
 
@@ -362,11 +362,11 @@ exports[`base cell editors a text cell lists the property's existing values 1`] 
                                                                                 
                                                                                 
                                                                                 
+                                                                                
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
  editing — Tab complete · ⏎ write to frontmatter · esc cancel                   
  INSERT  │ tasks.base                                                       1:1 
-                                                                                
 "
 `;
 
@@ -392,9 +392,9 @@ exports[`base cell editors a list cell shows its values as chips 1`] = `
                                                                                 
                                                                                 
                                                                                 
+                                                                                
  editing — ⏎ add · ⏎ on empty writes · ⌫ removes · esc cancel                   
  INSERT  │ labels.base                                                      1:1 
-                                                                                
 "
 `;
 
@@ -496,8 +496,8 @@ exports[`base embed a note paints an embedded base read-only, capped with a more
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ today.md                                                         1:1 
-                                                                                
 "
 `;
 
@@ -524,7 +524,7 @@ exports[`base embed a note paints an embedded board read-only, with one-line car
     ~                                                                           
     ~                                                                           
     ~                                                                           
+    ~                                                                           
  NORMAL  │ today.md                                                         1:1 
-                                                                                
 "
 `;
