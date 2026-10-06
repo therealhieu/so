@@ -377,3 +377,29 @@ test("a reloaded config.toml that turns dotfiles on lists the tree again", () =>
   const same = update(r.state, { type: "configLoaded", result, reload: true });
   expect(same.effects).toEqual([]);
 });
+
+test("Z closes every folder and selects the top-level entry holding the selection", () => {
+  const listed = (
+    s: AppState,
+    dir: string,
+    entries: [string, "dir" | "file"][],
+  ) =>
+    update(s, {
+      type: "dirListed",
+      dir,
+      entries: entries.map(([name, kind]) => ({ name, kind })),
+    }).state;
+  let s = listed(fresh(), "", [
+    ["notes", "dir"],
+    ["todo.md", "file"],
+  ]);
+  s = listed(pressInExplorer(s, "l").state, "notes", [["deep", "dir"]]);
+  s = listed(pressInExplorer(s, "jl").state, "notes/deep", [["a.md", "file"]]);
+  s = pressInExplorer(s, "j").state;
+  expect(s.panels.explorer.cursor).toBe("notes/deep/a.md");
+  expect(s.panels.explorer.expanded).toEqual(["notes", "notes/deep"]);
+  const r = pressInExplorer(s, "Z");
+  expect(r.state.panels.explorer.expanded).toEqual([]);
+  expect(r.state.panels.explorer.cursor).toBe("notes");
+  expect(r.effects).toEqual([]);
+});

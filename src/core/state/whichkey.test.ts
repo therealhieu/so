@@ -193,3 +193,23 @@ test("<leader>qq quits from a window and from the explorer", () => {
   expect(tree.panels.explorer.focused).toBe(true);
   expect(keys(tree, " qq").effects).toContainEqual({ kind: "exit", code: 0 });
 });
+
+test("the explorer's leader popup lists Normal mode's leader keys too", () => {
+  const tree = fresh();
+  expect(tree.panels.explorer.focused).toBe(true);
+  const s = update(keys(tree, " ").state, TIMER).state;
+  const rows = whichKeyRows(s, reg);
+  for (const row of [
+    { key: "a", label: "Split window", group: false },
+    { key: "e", label: "Toggle explorer", group: false },
+    { key: "f", label: "+find", group: true },
+    { key: "g", label: "+git", group: true },
+    { key: "s", label: "+search", group: true },
+  ])
+    expect(rows).toContainEqual(row);
+  // A file-type binding of the active buffer stays out of the explorer.
+  expect(rows.map((r) => r.key)).not.toContain("m");
+  expect(keys(tree, " ff").state.notifications.message?.text).toBe(
+    "jump list is empty",
+  );
+});

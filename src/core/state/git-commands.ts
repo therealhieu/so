@@ -9,21 +9,41 @@ import {
   resetHunk,
   stageHunk,
 } from "./git";
+import { message } from "./result";
 
 type AppCommand = Command<CommandContext, CommandResult>;
 
+/**
+ * A command on the editor's cursor line. From the explorer it refuses, since
+ * the tree's selection may be another file than the window's.
+ */
+const atEditorCursor =
+  (run: (c: CommandContext) => CommandResult) =>
+  (c: CommandContext): CommandResult =>
+    c.state.panels.explorer.focused
+      ? message(c.state, "hunks act on a window's cursor; focus a window first")
+      : run(c);
+
 export const gitCommands: readonly AppCommand[] = [
   { id: "git.tool", title: "Lazygit (full screen)", run: openTool },
-  { id: "git.stageHunk", title: "Stage hunk", run: stageHunk },
-  { id: "git.resetHunk", title: "Reset hunk", run: resetHunk },
-  { id: "git.previewHunk", title: "Preview hunk", run: previewHunk },
-  { id: "git.nextHunk", title: "Git: next hunk", run: (c) => gotoHunk(c, 1) },
+  { id: "git.stageHunk", title: "Stage hunk", run: atEditorCursor(stageHunk) },
+  { id: "git.resetHunk", title: "Reset hunk", run: atEditorCursor(resetHunk) },
+  {
+    id: "git.previewHunk",
+    title: "Preview hunk",
+    run: atEditorCursor(previewHunk),
+  },
+  {
+    id: "git.nextHunk",
+    title: "Git: next hunk",
+    run: atEditorCursor((c) => gotoHunk(c, 1)),
+  },
   {
     id: "git.prevHunk",
     title: "Git: previous hunk",
-    run: (c) => gotoHunk(c, -1),
+    run: atEditorCursor((c) => gotoHunk(c, -1)),
   },
-  { id: "git.blameLine", title: "Blame line", run: blameLine },
+  { id: "git.blameLine", title: "Blame line", run: atEditorCursor(blameLine) },
 ];
 
 export const gitBindings: readonly Binding[] = [

@@ -62,12 +62,14 @@ export function keymapFor(reg: Registries, config: AppConfig): Keymap {
   return km;
 }
 
-/** Where keys resolve now: the explorer's mode, or the vim mode and the active buffer's file type. */
+/**
+ * Where keys resolve now: the explorer's mode, whose leader keys fall back to
+ * Normal mode's, or the vim mode and the active buffer's file type.
+ */
 export function keyScope(s: AppState): KeyScope {
+  if (s.panels.explorer.focused)
+    return { mode: "explorer", leaderFrom: "normal" };
   const b = activeBuffer(s);
-  const inExplorer = s.panels.explorer.focused;
-  const mode = inExplorer ? "explorer" : s.vim.mode;
-  return b === undefined || inExplorer
-    ? { mode }
-    : { mode, filetype: b.fileType };
+  const mode = s.vim.mode;
+  return b === undefined ? { mode } : { mode, filetype: b.fileType };
 }

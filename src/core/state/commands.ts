@@ -19,6 +19,7 @@ import {
 import { reloadConfig } from "./config";
 import {
   collapse,
+  collapseAll,
   EXPLORER_WIDTH_STEP,
   expandOrOpen,
   explorerWidth,
@@ -466,6 +467,11 @@ const builtins: AppCommand[] = [
     id: "explorer.collapse",
     title: "Collapse folder",
     run: (c) => collapse(c.state),
+  },
+  {
+    id: "explorer.collapseAll",
+    title: "Collapse all folders",
+    run: (c) => collapseAll(c.state),
   },
   {
     id: "explorer.create",

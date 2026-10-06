@@ -37,6 +37,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "<CR>", id: "explorer.open" },
   { scope: { mode: "explorer" }, seq: "l", id: "explorer.expand" },
   { scope: { mode: "explorer" }, seq: "h", id: "explorer.collapse" },
+  { scope: { mode: "explorer" }, seq: "Z", id: "explorer.collapseAll" },
   { scope: { mode: "explorer" }, seq: "a", id: "explorer.create" },
   { scope: { mode: "explorer" }, seq: "r", id: "explorer.rename" },
   { scope: { mode: "explorer" }, seq: "m", id: "explorer.move" },

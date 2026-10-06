@@ -41,3 +41,27 @@ test("no leader option keeps space as the leader for the default bindings", () =
     id: "window.vsplit",
   });
 });
+
+test("leaderFrom resolves leader sequences in that mode after the scope's own", () => {
+  const km = new Keymap();
+  km.bind(normal, "<leader>ff", "find.files");
+  km.bind(normal, "<leader>e", "explorer.toggle");
+  km.bind(normal, "gd", "lsp.definition");
+  km.bind({ mode: "normal", filetype: "markdown" }, "<leader>m", "view.cycle");
+  const explorer = { mode: "explorer", leaderFrom: "normal" } as const;
+  km.bind({ mode: "explorer" }, "<leader>e", "explorer.close");
+  expect(km.lookup(explorer, [" ", "f", "f"])).toEqual({
+    kind: "command",
+    id: "find.files",
+  });
+  // The explorer's own binding wins; file-type and non-leader keys stay out.
+  expect(km.lookup(explorer, [" ", "e"])).toEqual({
+    kind: "command",
+    id: "explorer.close",
+  });
+  expect(km.lookup(explorer, ["g", "d"])).toEqual({ kind: "none" });
+  expect(km.lookup(explorer, [" "])).toEqual({
+    kind: "prefix",
+    next: [{ key: "e", id: "explorer.close" }, { key: "f" }],
+  });
+});

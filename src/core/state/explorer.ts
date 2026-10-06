@@ -357,6 +357,12 @@ export function collapse(s: AppState): Result {
   return parent === "" ? none(s) : none(setExplorer(s, { cursor: parent }));
 }
 
+/** `Z`: close every folder and select the top-level entry holding the selection. */
+export function collapseAll(s: AppState): Result {
+  const top = s.panels.explorer.cursor.split("/")[0] ?? "";
+  return none(setExplorer(s, { expanded: [], cursor: top }));
+}
+
 const openPrompt = (s: AppState, prompt: PromptState): Result =>
   none({ ...s, overlay: { kind: "prompt", prompt } });
 
