@@ -35,7 +35,7 @@ Versions are exact pins from `package.json`; `bunfig.toml` sets `[install] exact
 
 ## Repository and Component Map
 
-Default branch: `main`. One package, no monorepo.
+Default branch: `master`. One package, no monorepo.
 
 | Path | Role |
 |---|---|
@@ -244,7 +244,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `lspKeystrokeP95` | 16 | `lsp-keystroke.bench.ts` — the source key mix in a 5,000-line TypeScript file with the real host attached to the fake server, which publishes 200 diagnostics on every change |
   | `gitDiffKeystrokeP95` | 24 | `git-diff.bench.ts` — 200 keys in a 5,000-line note whose every line differs from the index, each followed by the 100 ms diff |
 
-- **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `main` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
+- **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `master` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
 - **Release:** Nothing is released automatically; a release happens only when the user asks. A pushed `v*` tag runs `release.yml`, which builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes a GitHub Release with generated notes only after every smoke job passes. Tags containing `-` publish as prereleases. A manual run (`gh workflow run release.yml`) is a dry run: the same build and smoke tests with version `0.0.0-dev+<short sha>`, publish skipped. Phase exits use the dry run.
 
 ## Sources and Open Questions

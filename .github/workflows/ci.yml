@@ -1,7 +1,7 @@
 name: ci
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
 concurrency:
   group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
