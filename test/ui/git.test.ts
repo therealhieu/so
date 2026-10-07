@@ -677,9 +677,12 @@ test("explorer rows colour names by git state and right-align the marker", async
   expect(style(cells("2026-10-01.md").name)).toEqual(
     styleOf(themes.dark, "explorer"),
   );
-  // The selected row paints its name and marker in the row's own style.
+  // The selected row keeps its name's and marker's colour on the selection background.
   const linh = cells("linh.md");
-  expect(style(linh.glyph)).toEqual(styleOf(themes.dark, "treeSelFocus"));
+  const conflict = styleOf(themes.dark, "explorerGitConflict");
+  const selected = { ...conflict, bg: styleOf(themes.dark, "treeSelFocus").bg };
+  expect(style(linh.name)).toEqual(selected);
+  expect(style(linh.glyph)).toEqual(selected);
 
   // A collapsed folder shows its marker.
   m.keys("k");

@@ -19,7 +19,7 @@ import type {
 import { fileIcon, folderIcon } from "../icons";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass } from "../shell";
-import { drawCells, themeOf } from "../theme";
+import { drawCells, type Style, themeOf } from "../theme";
 
 /** Docked beside the windows when open on a terminal of 100 columns or more. */
 export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
@@ -303,6 +303,13 @@ export class ExplorerView extends Renderable {
           ? "treeSelFocus"
           : "treeSel"
         : "explorer";
+      // A selected row keeps each part's colour on the selection background.
+      const paint = (token: string): Style => {
+        const own = theme.style(token);
+        if (!selected) return own;
+        const sel = theme.style(base);
+        return { ...own, bg: sel.bg, attrs: own.attrs | sel.attrs };
+      };
       const set = s.config.explorer.icons;
       const icon = row.dir
         ? { glyph: folderIcon(row.open, set), token: "explorerDir" }
@@ -315,7 +322,7 @@ export class ExplorerView extends Renderable {
         if (room <= 0) return;
         drawCells(
           buf,
-          theme.style(selected ? base : token),
+          paint(token),
           x,
           y,
           text,
@@ -350,15 +357,13 @@ export class ExplorerView extends Renderable {
       if (room > 0) {
         drawCells(
           buf,
-          theme.style(
-            selected
-              ? base
-              : (git?.[1] ??
-                  (isIgnoredPath(s, row.path)
-                    ? "explorerDim"
-                    : row.dir
-                      ? "explorerDir"
-                      : "explorer")),
+          paint(
+            git?.[1] ??
+              (isIgnoredPath(s, row.path)
+                ? "explorerDim"
+                : row.dir
+                  ? "explorerDir"
+                  : "explorer"),
           ),
           x,
           y,
@@ -369,14 +374,7 @@ export class ExplorerView extends Renderable {
       }
       if (dirty.has(row.path) && end - x >= 2) put(" ●", "explorerDirty");
       if (glyph !== undefined && box.w >= 3)
-        drawCells(
-          buf,
-          theme.style(selected ? base : glyph[1]),
-          x0 + box.w - 2,
-          y,
-          glyph[0],
-          1,
-        );
+        drawCells(buf, paint(glyph[1]), x0 + box.w - 2, y, glyph[0], 1);
     }
   }
 }
