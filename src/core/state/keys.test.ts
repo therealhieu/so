@@ -180,6 +180,27 @@ test("a search with no match shows E486 on the message line", () => {
   expect(cursorOf(found.state)).toEqual({ line: 0, col: 4 });
 });
 
+test("a search that comes round the buffer's end says so on the message line", () => {
+  const s = open("a.md", "cat\ndog cat\n");
+  const first = keys(s, "/cat<CR>");
+  expect(cursorOf(first.state)).toEqual({ line: 1, col: 4 });
+  expect(first.state.notifications.message).toBeUndefined();
+  const wrapped = keys(first.state, "n");
+  expect(cursorOf(wrapped.state)).toEqual({ line: 0, col: 0 });
+  expect(wrapped.state.notifications.message).toEqual({
+    text: "search hit BOTTOM, continuing at TOP",
+    level: "warn",
+  });
+  const back = keys(wrapped.state, "N");
+  expect(cursorOf(back.state)).toEqual({ line: 1, col: 4 });
+  expect(back.state.notifications.message).toEqual({
+    text: "search hit TOP, continuing at BOTTOM",
+    level: "warn",
+  });
+  const ahead = keys(first.state, "N");
+  expect(ahead.state.notifications.message).toBeUndefined();
+});
+
 test("typing autosaves after the delay and leaving Insert saves at once", () => {
   const typed = keys(open("a.md", "hello\n"), "ix", 100);
   expect(typed.state.buffers[1]?.dirty).toBe(true);

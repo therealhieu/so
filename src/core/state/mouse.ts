@@ -17,7 +17,12 @@ import {
 } from "./buffers";
 import { selectCalendarDay } from "./calendar";
 import { runCommand } from "./commands";
-import { moveCursor, resizeExplorer, visiblePaths } from "./explorer";
+import {
+  hoverExplorer,
+  moveCursor,
+  resizeExplorer,
+  visiblePaths,
+} from "./explorer";
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
 import { onPointerMove } from "./lsp";
@@ -51,7 +56,8 @@ export function onMouse(
   reg: Registries,
 ): Result {
   const e = a.event;
-  if (e.kind === "move") return onPointerMove(state, e.target);
+  if (e.kind === "move")
+    return onPointerMove(hoverExplorer(state, e.target), e.target);
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
@@ -70,7 +76,15 @@ export function onMouse(
         : none(s);
     }
     case "wheel":
-      return wheel(s, e.target, e.dx, e.dy, a.now, reg);
+      // Scrolling moves the rows under a resting pointer, so the hover ends.
+      return wheel(
+        hoverExplorer(s, { kind: "inert" }),
+        e.target,
+        e.dx,
+        e.dy,
+        a.now,
+        reg,
+      );
     case "middle":
       // A middle click closes a tab, as `:bd` would, unless something floats over it.
       return e.target.kind === "bufferTab" && s.overlay.kind === "none"

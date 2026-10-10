@@ -764,3 +764,48 @@ test("the shipped config docks the explorer on the right", async () => {
   expect(m.store.get().config.explorer.position).toBe("right");
   expect(row.lastIndexOf("│")).toBe(89);
 });
+
+test("hovering a cut name in the explorer shows it whole over the windows", async () => {
+  m = await mountShell({
+    cols: 120,
+    rows: 16,
+    config: "[explorer]\nwidth = 16\n",
+  });
+  const long = "private-non-functional-requirements.md";
+  m.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: long, kind: "file" }],
+  });
+  expect(await m.frame()).not.toContain(long);
+  const row = await find(m, "private-");
+  await m.mouse.moveTo(row.x + 1, row.y);
+  expect(m.store.get().panels.explorer.hover).toBe(long);
+  expect(await m.row(row.y)).toContain(` ${long} `);
+  await m.mouse.scroll(row.x + 1, row.y, "down");
+  expect(m.store.get().panels.explorer.hover).toBeUndefined();
+  await m.mouse.moveTo(row.x + 1, row.y);
+  expect(m.store.get().panels.explorer.hover).toBe(long);
+  await m.mouse.moveTo(row.x + 1, row.y + 3);
+  expect(m.store.get().panels.explorer.hover).toBeUndefined();
+  expect(await m.frame()).not.toContain(long);
+});
+
+test("on a right explorer the whole name reaches left over the windows", async () => {
+  m = await mountShell({
+    cols: 120,
+    rows: 16,
+    config: '[explorer]\nwidth = 16\nposition = "right"\n',
+  });
+  const long = "private-non-functional-requirements.md";
+  m.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: long, kind: "file" }],
+  });
+  const row = await find(m, "private-");
+  await m.mouse.moveTo(row.x + 1, row.y);
+  const line = await m.row(row.y);
+  expect(line).toContain(` ${long} `);
+  expect(line.trimEnd().endsWith(long)).toBe(true);
+});

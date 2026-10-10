@@ -527,3 +527,29 @@ test("Enter on a note that is already open focuses its window", () => {
     expect.objectContaining({ kind: "read" }),
   );
 });
+
+test("O opens the selected entry in the system's default app", () => {
+  const entries = [
+    { name: "notes", kind: "dir" as const },
+    { name: "page.html", kind: "file" as const },
+  ];
+  const listed = update(fresh(), { type: "dirListed", dir: "", entries });
+  const root = listed.state.workspace.root;
+  const opened = pressKeys(listed.state, "jO");
+  expect(opened.effects).toEqual([
+    { kind: "openUrl", url: `${root}/page.html` },
+  ]);
+  expect(opened.state.buffers).toEqual(listed.state.buffers);
+  expect(pressKeys(listed.state, "O").effects).toEqual([
+    { kind: "openUrl", url: `${root}/notes` },
+  ]);
+  const failed = update(opened.state, {
+    type: "openUrlFailed",
+    url: `${root}/page.html`,
+    reason: "xdg-open failed",
+  });
+  expect(failed.state.notifications.toasts.at(-1)).toMatchObject({
+    level: "error",
+    text: `could not open ${root}/page.html`,
+  });
+});

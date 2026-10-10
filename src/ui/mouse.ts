@@ -113,6 +113,8 @@ export function createMouseRouter(o: {
           const step = WHEEL[e.scroll?.direction ?? ""];
           const hit = resolve(e.x, e.y, true);
           if (step === undefined || hit === undefined) return;
+          // Scrolling moves what is under the pointer, so the next move counts.
+          lastMove = undefined;
           send({ kind: "wheel", target: hit.target, ...step });
           return;
         }

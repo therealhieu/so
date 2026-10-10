@@ -578,6 +578,11 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "22,22,30,255",
       "fg": "115,122,162,255",
     },
+    "searchCurrent": {
+      "attrs": 1,
+      "bg": "224,175,104,255",
+      "fg": "21,22,30,255",
+    },
     "searchMatch": {
       "attrs": 0,
       "bg": "61,89,161,255",
@@ -1265,6 +1270,11 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "208,213,227,255",
       "fg": "97,114,176,255",
     },
+    "searchCurrent": {
+      "attrs": 1,
+      "bg": "140,108,62,255",
+      "fg": "233,233,237,255",
+    },
     "searchMatch": {
       "attrs": 0,
       "bg": "168,192,245,255",
@@ -1949,6 +1959,11 @@ exports[`existing tokens keep their values 1`] = `
     },
     "panelMuted": {
       "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "searchCurrent": {
+      "attrs": 33,
       "bg": "default",
       "fg": "default",
     },

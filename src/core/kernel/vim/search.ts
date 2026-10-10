@@ -133,3 +133,41 @@ function findOne(
   }
   return undefined;
 }
+
+/** Where the cursor sits among a pattern's matches, Neovim's `[current/total]`. */
+export type SearchCount = {
+  /** Matches starting at or before the cursor. */
+  current: number;
+  total: number;
+  /** More than `cap` matches; `total` stops at `cap + 1`. */
+  capped: boolean;
+};
+
+/** Match starts in buffer order, stopping after `limit`. */
+export function matchStarts(buf: TextBuffer, re: RegExp, limit: number): Pos[] {
+  const out: Pos[] = [];
+  for (let line = 0; line < buf.lineCount && out.length < limit; line++)
+    for (const m of matchesInLine(buf.line(line), re)) {
+      out.push({ line, col: m.col });
+      if (out.length === limit) break;
+    }
+  return out;
+}
+
+/** The cursor's place among `starts` (from `matchStarts` with `cap + 1`). */
+export function searchCount(
+  starts: readonly Pos[],
+  at: Pos,
+  cap: number,
+): SearchCount {
+  let lo = 0;
+  let hi = starts.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    const p = starts[mid] as Pos;
+    if (p.line < at.line || (p.line === at.line && p.col <= at.col))
+      lo = mid + 1;
+    else hi = mid;
+  }
+  return { current: lo, total: starts.length, capped: starts.length > cap };
+}

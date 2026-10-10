@@ -138,6 +138,7 @@ export const TOKENS: Readonly<
   cursorline: ["fg", "cursorline", 0, 0],
   selection: ["fg", "bg-sel", 0, INVERSE],
   searchMatch: ["fg", "match-bg", 0, UNDERLINE],
+  searchCurrent: ["mode-fg", "warn", BOLD, BOLD | INVERSE],
   codeKeyword: ["kw", "bg", BOLD, BOLD],
   codeBuiltin: ["type", "bg", 0, 0],
   codeType: ["type", "bg", 0, 0],

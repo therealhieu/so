@@ -5,8 +5,11 @@ import type { Pos } from "../text/pos";
 import type { TextBuffer } from "../text/text-buffer";
 import type { Key } from "./keys";
 
-/** The last search: pattern in Vim syntax and direction (`/` = 1, `?` = -1). */
-export type SearchState = { pattern: string; dir: 1 | -1 };
+/**
+ * The last search: pattern in Vim syntax and direction (`/` = 1, `?` = -1).
+ * `hidden` after `:noh`: no highlights or count until the next `n` or `N`.
+ */
+export type SearchState = { pattern: string; dir: 1 | -1; hidden?: true };
 
 /** What `.` repeats: the change's keys without the count, and its Visual size. */
 export type LastChange = {
@@ -63,4 +66,6 @@ export type VimEffect =
   | { kind: "modeChanged"; mode: Mode }
   | { kind: "ex"; line: string }
   | { kind: "search"; pattern: string; dir: 1 | -1 }
+  /** A search motion went past the buffer's end (`dir` 1) or start and came round. */
+  | { kind: "searchWrapped"; dir: 1 | -1 }
   | { kind: "jumped"; from: Pos };

@@ -66,6 +66,14 @@ function lspSegment(l: NonNullable<StatusSegments["lsp"]>[number]): Seg {
 
 const cells = (text: string) => [...text].length;
 
+/** `[3/17]`; past the cap the unknown parts read `>999`. */
+function searchText(c: NonNullable<StatusSegments["search"]>): string {
+  const over = `>${c.total - 1}`;
+  const total = c.capped ? over : String(c.total);
+  const current = c.capped && c.current === c.total ? over : String(c.current);
+  return `[${current}/${total}]`;
+}
+
 /** The folder part dim and the file name bold. */
 function pathParts(text: string, named: boolean): NonNullable<Seg["parts"]> {
   if (!named) return [{ text, token: "statusDim" }];
@@ -95,7 +103,7 @@ function gitSegment(g: NonNullable<StatusSegments["git"]>): Seg {
 
 /**
  * The last row: `MODE  view  path ●  ⎇ ref  ✗ save failed…  ✗ deleted on disk…` on the left, and
- * `jump i/n  ← N backlinks  N words  preview  index  servers  keys  Ln:Col` on the right. Segments are
+ * `[i/n]  jump i/n  ← N backlinks  N words  preview  index  servers  keys  Ln:Col` on the right. Segments are
  * padded by one space instead of divided by bars; the view and `Ln:Col` sit on a raised background.
  * Narrow terminals drop the server, git, view, word, and preview segments; a row too long for the full
  * path drops servers, then git, then preview, then words, then view, and the path is cut in the middle
@@ -171,6 +179,8 @@ export class Statusline extends Renderable {
         text: "✗ deleted on disk · :w to recreate",
         token: "statusError",
       });
+    if (seg.search !== undefined)
+      right.push({ text: searchText(seg.search), token: "statusline" });
     if (seg.jump !== undefined)
       right.push({ text: seg.jump, token: "statusDim" });
     if (seg.backlinks !== undefined)

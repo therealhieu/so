@@ -190,6 +190,28 @@ export class ExplorerView extends Renderable {
     return Math.max(0, this.inner().h - 1);
   }
 
+  /**
+   * A cut name in full: from the name's column toward the windows on a left
+   * tree, or ending at the tree's edge and reaching left on a right tree.
+   */
+  private paintFullName(
+    buf: OptimizedBuffer,
+    theme: ReturnType<typeof themeOf>,
+    token: string,
+    name: string,
+    nameX: number,
+    y: number,
+  ): void {
+    const cols = this.s?.terminal.cols ?? 0;
+    const box = this.inner();
+    const text = ` ${name} `;
+    const w = Math.min(cols, cells(text));
+    const x = this.onRight
+      ? Math.max(0, this.x0 + box.x + box.w - w)
+      : Math.max(0, Math.min(nameX - 1, cols - w));
+    drawCells(buf, fullNameStrip(theme, token), x, y, text, w);
+  }
+
   private rows(s: AppState): Row[] {
     const ex = s.panels.explorer;
     const rows: Row[] = visiblePaths(s).map((path) => ({
@@ -353,18 +375,19 @@ export class ExplorerView extends Renderable {
       // The name stops short of the glyph column: a space, the glyph, a space.
       const end = x0 + box.w - (glyph === undefined ? 0 : 3);
       const name = basename(row.path);
+      const nameToken =
+        git?.[1] ??
+        (isIgnoredPath(s, row.path)
+          ? "explorerDim"
+          : row.dir
+            ? "explorerDir"
+            : "explorer");
+      const nameX = x;
       const room = end - x;
       if (room > 0) {
         drawCells(
           buf,
-          paint(
-            git?.[1] ??
-              (isIgnoredPath(s, row.path)
-                ? "explorerDim"
-                : row.dir
-                  ? "explorerDir"
-                  : "explorer"),
-          ),
+          paint(nameToken),
           x,
           y,
           name,
@@ -375,8 +398,18 @@ export class ExplorerView extends Renderable {
       if (dirty.has(row.path) && end - x >= 2) put(" ●", "explorerDirty");
       if (glyph !== undefined && box.w >= 3)
         drawCells(buf, paint(glyph[1]), x0 + box.w - 2, y, glyph[0], 1);
+      if (row.path === ex.hover && room < cells(name))
+        this.paintFullName(buf, theme, nameToken, name, nameX, y);
     }
   }
+}
+
+/** The hovered row's whole name in a float-coloured strip over the windows beside the tree. */
+function fullNameStrip(
+  theme: ReturnType<typeof themeOf>,
+  token: string,
+): Style {
+  return { ...theme.style(token), bg: theme.style("float").bg };
 }
 
 /** The highlighted row: the name field while one is open, else the selection. */

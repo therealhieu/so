@@ -22,6 +22,7 @@ import type {
   ExplorerPrompt,
   ExplorerState,
   FsOp,
+  MouseTarget,
   PromptState,
   Result,
 } from "./types";
@@ -126,6 +127,21 @@ function setExplorer(s: AppState, patch: Partial<ExplorerState>): AppState {
   return {
     ...s,
     panels: { ...s.panels, explorer: { ...s.panels.explorer, ...patch } },
+  };
+}
+
+/** Track the entry under the pointer; anywhere else clears it. */
+export function hoverExplorer(s: AppState, t: MouseTarget): AppState {
+  const path = t.kind === "explorer" && t.path !== "" ? t.path : undefined;
+  const ex = s.panels.explorer;
+  if (ex.hover === path) return s;
+  const { hover: _, ...rest } = ex;
+  return {
+    ...s,
+    panels: {
+      ...s.panels,
+      explorer: path === undefined ? rest : { ...rest, hover: path },
+    },
   };
 }
 
@@ -372,6 +388,16 @@ export function openSelected(s: AppState, now: number): Result {
   if (kindOf(s, path) === "dir" && s.panels.explorer.expanded.includes(path))
     return collapse(s);
   return expandOrOpen(s, now);
+}
+
+/** `O`: open the selected entry in the system's default app (`open`, `xdg-open`). */
+export function systemOpenSelected(s: AppState): Result {
+  const path = s.panels.explorer.cursor;
+  const root = s.workspace.root;
+  return {
+    state: s,
+    effects: [{ kind: "openUrl", url: path === "" ? root : `${root}/${path}` }],
+  };
 }
 
 /** `h`: collapse the selected folder, or select its parent. */

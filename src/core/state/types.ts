@@ -177,6 +177,8 @@ export type ExplorerState = {
   trash: "unknown" | "available" | "unavailable";
   /** Columns of the tree after a resize; unset follows `[explorer] width`. */
   width?: number;
+  /** The entry under the pointer; the tree shows its whole name. */
+  hover?: string;
 };
 
 /** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */

@@ -26,6 +26,7 @@ import {
   openSelected,
   resizeExplorer,
   startOp,
+  systemOpenSelected,
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
@@ -79,6 +80,8 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   files: "buffer.list",
   wa: "file.saveAll",
   wall: "file.saveAll",
+  noh: "search.clear",
+  nohlsearch: "search.clear",
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
@@ -353,6 +356,19 @@ const builtins: AppCommand[] = [
     run: (c) => openPicker(c, "recent"),
   },
   {
+    id: "search.clear",
+    title: "Clear search highlight",
+    run: (c) => {
+      const search = c.state.vim.search;
+      return search === undefined || search.hidden === true
+        ? none(c.state)
+        : none({
+            ...c.state,
+            vim: { ...c.state.vim, search: { ...search, hidden: true } },
+          });
+    },
+  },
+  {
     id: "search.grep",
     title: "Search text in workspace",
     run: (c) => openPicker(c, "grep"),
@@ -439,6 +455,11 @@ const builtins: AppCommand[] = [
     id: "explorer.open",
     title: "Open entry",
     run: (c) => openSelected(c.state, c.now),
+  },
+  {
+    id: "explorer.systemOpen",
+    title: "Open with system app",
+    run: (c) => systemOpenSelected(c.state),
   },
   {
     id: "explorer.expand",

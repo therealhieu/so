@@ -372,6 +372,14 @@ function applyVimEffects(
             const error = searchError(b.text, e.pattern);
             return error === undefined ? none(st) : message(st, error, "error");
           }
+          case "searchWrapped":
+            return message(
+              st,
+              e.dir === 1
+                ? "search hit BOTTOM, continuing at TOP"
+                : "search hit TOP, continuing at BOTTOM",
+              "warn",
+            );
           case "jumped":
             return none({
               ...st,

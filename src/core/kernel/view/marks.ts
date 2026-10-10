@@ -1,4 +1,4 @@
-import type { Range } from "../text/pos";
+import type { Pos, Range } from "../text/pos";
 import { matchesInLine, searchPattern } from "../vim/search";
 import type { SearchState } from "../vim/types";
 import type { Decoration, DecorationProvider } from "./decorations";
@@ -38,19 +38,35 @@ export function highlightMarks(h: Highlighter | undefined): DecorationProvider {
   };
 }
 
-/** Matches of the last search on the visible lines. */
+/** Matches of the last search on the visible lines; the one under `cursor` stands out. */
 export function searchMarks(
   search: SearchState | undefined,
+  cursor?: Pos,
 ): DecorationProvider {
   return (v) => {
-    const re = search === undefined ? undefined : searchPattern(search.pattern);
+    const re =
+      search === undefined || search.hidden === true
+        ? undefined
+        : searchPattern(search.pattern);
     if (re === undefined) return [];
     const out: Decoration[] = [];
     const last = Math.min(v.visible.to, v.buf.lineCount);
     for (let line = v.visible.from; line < last; line++)
       for (const m of matchesInLine(v.buf.line(line), re))
-        if (m.length > 0)
-          out.push(mark(line, m.col, m.col + m.length, "searchMatch"));
+        if (m.length > 0) {
+          const current =
+            cursor?.line === line &&
+            cursor.col >= m.col &&
+            cursor.col < m.col + m.length;
+          out.push(
+            mark(
+              line,
+              m.col,
+              m.col + m.length,
+              current ? "searchCurrent" : "searchMatch",
+            ),
+          );
+        }
     return out;
   };
 }
