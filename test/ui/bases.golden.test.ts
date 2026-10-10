@@ -128,6 +128,35 @@ describe("base table", () => {
   });
 });
 
+describe("base filters", () => {
+  test("the filter input sits on the last row with its caret, and the toolbar shows the filters", async () => {
+    m = await baseShell({ cols: 120, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys("/do");
+    const typing = await m.frame();
+    const lines = typing.split("\n");
+    expect(lines.at(-3)).toMatch(/^ \/do +⏎ keep · esc clear $/);
+    expect(lines.at(-2)).toMatch(/^ INSERT /);
+    expect(cursorAt(m)).toMatchObject({ x: 4, y: lines.length - 3 });
+    expect(lines.find((l) => l.includes("▦"))).toContain("⌕ do");
+    expect(typing).toMatchSnapshot();
+    m.keys("<CR>jlF");
+    const pinned = await m.frame();
+    expect(pinned.split("\n").find((l) => l.includes("▦"))).toContain(
+      "⊜ Status = ",
+    );
+    expect(pinned).toMatchSnapshot();
+  });
+
+  test("filters that hide every row say how to clear them", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys("/zzz<CR>");
+    const frame = await m.frame();
+    expect(frame).toContain("No notes match this view's filters");
+    expect(frame).toContain("c clears the text filter and pins");
+    expect(frame).toMatchSnapshot();
+  });
+});
+
 describe("base board", () => {
   for (const v of variants)
     test(`matches the ${v.name} golden with a focused card`, async () => {

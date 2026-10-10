@@ -1,7 +1,4 @@
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
-import { formatDate } from "../../time/format";
-import { localDateTime } from "../../time/local";
-import { stringifyGroupKey } from "./evaluator";
 import {
   type PropertyType,
   type PropertyTypes,
@@ -9,6 +6,7 @@ import {
 } from "./property-types";
 import { summarize } from "./summaries";
 import type { BaseCell, BaseDiagnostic, BaseEvaluation, BaseUi } from "./types";
+import { cellText, stringifyGroupKey } from "./values";
 
 export type TableColumn = {
   id: string;
@@ -124,24 +122,6 @@ export function orderedGroups(
         { key: null, label: "None", rowIndexes: none?.rowIndexes ?? [] },
       ]
     : valued;
-}
-
-/** A cell as display text; file times are local "YYYY-MM-DD HH:mm". */
-export function cellText(c: BaseCell): string {
-  switch (c.type) {
-    case "null":
-      return "";
-    case "date":
-      return typeof c.value === "number"
-        ? formatDate(localDateTime(c.value), "YYYY-MM-DD HH:mm")
-        : c.value;
-    case "list":
-      return c.value.map((v) => stringifyGroupKey(v)).join(", ");
-    case "link":
-      return c.display ?? c.value;
-    default:
-      return String(c.value);
-  }
 }
 
 /**

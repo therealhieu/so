@@ -110,13 +110,15 @@ function startsOf(text: TextBuffer, pattern: string): Pos[] {
 
 /**
  * The mode the badge names: the explorer, a base window (`insert` while one
- * of its cells is edited), or the vim mode.
+ * of its cells is edited or its filter input is open), or the vim mode.
  */
 function modeOf(s: AppState): string {
   if (s.panels.explorer.focused) return "explorer";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
-  return base.edit === undefined ? "base" : "insert";
+  return base.edit === undefined && base.search === undefined
+    ? "base"
+    : "insert";
 }
 
 /** What the statusline shows; the file-type decision lives here, not in the UI. */

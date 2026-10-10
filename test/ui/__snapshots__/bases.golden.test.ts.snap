@@ -23,7 +23,7 @@ exports[`base table matches the colour golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -51,7 +51,7 @@ exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -79,7 +79,35 @@ exports[`base table matches the light golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · Status: doing 
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
+ BASE  tasks.base                                                           1:1 
+"
+`;
+
+exports[`base table resized columns keep their widths and cut longer text 1`] = `
+"▎ tasks.base                                                                    
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                    │ St… │ due ↑      │ done                            
+   ────────────────────────┼─────┼────────────┼─────                            
+▌  ship-release.md         │ do… │ 2026-10-01 │ ☑                               
+   review-pr.md            │ do… │ 2026-10-03 │ ☐                               
+   write-report.md         │ to… │ 2026-10-05 │ ☐                               
+   inbox.md                │ —   │ 2026-10-08 │ ☐                               
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────────────┴─────┴────────────┴─────                            
+ Σ                                 2026-10-01   1                               
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -109,6 +137,90 @@ exports[`base table an edited cell shows its text, caret, and inline error 1`] =
  Σ                            2026-10-01     1                                  
  editing — ⏎ write to frontmatter · esc cancel                                  
  INSERT  tasks.base                                                         1:1 
+"
+`;
+
+exports[`base filters the filter input sits on the last row with its caret, and the toolbar shows the filters 1`] = `
+"▎ tasks.base                                                                                                    ~/notes 
+ ▦ tasks.base   1 All tasks  2 By status  3 Late  4 Cards                                       ⌕ do · ⇅ due ↑ · 3 rows 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   name            │ Status │ due ↑      │ done                                                                         
+   ────────────────┼────────┼────────────┼─────                                                                         
+▌  ship-release.md │ done   │ 2026-10-01 │ ☑                                                                            
+   review-pr.md    │ doing  │ 2026-10-03 │ ☐                                                                            
+   write-report.md │ todo   │ 2026-10-05 │ ☐                                                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+   ────────────────┴────────┴────────────┴─────                                                                         
+ Σ                            2026-10-01   1                                                                            
+ /do                                                                                                 ⏎ keep · esc clear 
+ INSERT  base  tasks.base                                                                              preview off  1:1 
+"
+`;
+
+exports[`base filters the filter input sits on the last row with its caret, and the toolbar shows the filters 2`] = `
+"▎ tasks.base                                                                                                    ~/notes 
+ ▦ tasks.base   1 All tasks  2 By status  3 Late  4 Cards                     ⌕ do · ⊜ Status = doing · ⇅ due ↑ · 1 row 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   name         │ Status │ due ↑      │ done                                                                            
+   ─────────────┼────────┼────────────┼─────                                                                            
+▌  review-pr.md │ doing  │ 2026-10-03 │ ☐                                                                               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+   ─────────────┴────────┴────────────┴─────                                                                            
+ Σ                         2026-10-03   0                                                                               
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open   pinned Status = doing (this window only) 
+ BASE  base  tasks.base                                                                                preview off  1:1 
+"
+`;
+
+exports[`base filters filters that hide every row say how to clear them 1`] = `
+"▎ tasks.base                                                                    
+ ▦ tasks.base   1/4 All tasks                          ⌕ zzz · ⇅ due ↑ · 0 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name │ Status │ due ↑ │ done                                                 
+   ─────┼────────┼───────┼─────                                                 
+  No notes match this view's filters                                            
+  c clears the text filter and pins                                             
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ─────┴────────┴───────┴─────                                                 
+ Σ                         0                                                    
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
+ BASE  tasks.base                                                           1:1 
 "
 `;
 
@@ -247,7 +359,7 @@ exports[`base states waiting and empty states match their goldens 2`] = `
                                                                                 
                                                                                 
                                                                                 
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
  BASE  empty.base                                                           1:1 
 "
 `;
@@ -303,7 +415,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
                                                                                 
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -337,7 +449,7 @@ exports[`base states a wide window shows every view tab 1`] = `
                                                                                                                         
    ────────────────┴────────┴────────────┴─────                                                                         
  Σ                            2026-10-01   1                                                                            
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open                                                
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open                                            
  BASE  base  tasks.base                                                                                preview off  1:1 
 "
 `;
@@ -526,33 +638,5 @@ exports[`base embed a note paints an embedded board read-only, with one-line car
                                                                                 
                                                                                 
  NORMAL  today.md                                                           1:1 
-"
-`;
-
-exports[`base table resized columns keep their widths and cut longer text 1`] = `
-"▎ tasks.base                                                                    
- ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
-────────────────────────────────────────────────────────────────────────────────
-   name                    │ St… │ due ↑      │ done                            
-   ────────────────────────┼─────┼────────────┼─────                            
-▌  ship-release.md         │ do… │ 2026-10-01 │ ☑                               
-   review-pr.md            │ do… │ 2026-10-03 │ ☐                               
-   write-report.md         │ to… │ 2026-10-05 │ ☐                               
-   inbox.md                │ —   │ 2026-10-08 │ ☐                               
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-   ────────────────────────┴─────┴────────────┴─────                            
- Σ                                 2026-10-01   1                               
- h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
- BASE  tasks.base                                                           1:1 
 "
 `;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { evaluateBase } from "./evaluator";
+import { evaluateBase, pinKeys } from "./evaluator";
 import { parseBase } from "./parser";
 
 const duneCandidate = {
@@ -1767,5 +1767,60 @@ describe("Obsidian semantics", () => {
       ["2", 2],
       ["3", 3],
     ]);
+  });
+
+  test("a text filter keeps rows with a cell containing it, ignoring case, before the limit", () => {
+    const base = parsed(
+      "views:\n  - type: table\n    name: T\n    order: [file.name, status]\n    limit: 1\n    sort:\n      - property: due\n        direction: ASC\n",
+    );
+    const paths = (query: string) =>
+      evaluateBase({ base, candidates: notes, ui: { query } }).rows.map(
+        (r) => r.file.path,
+      );
+    expect(paths("")).toEqual(["Projects/b.md"]);
+    expect(paths("TODO")).toEqual(["Other/c.md"]);
+    expect(paths("a.md")).toEqual(["Projects/2026/a.md"]);
+    // A value outside the shown columns does not match.
+    expect(paths("3")).toEqual([]);
+  });
+
+  test("pins keep rows holding every pinned value and stack across properties", () => {
+    const base = parsed("views:\n  - type: table\n    name: T\n");
+    const candidates = [
+      ...notes,
+      note("x.md", { status: "todo", labels: ["red", "blue"] }),
+      note("y.md", { labels: ["red"] }),
+    ];
+    const paths = (pins: { property: string; keys: string[] }[]) =>
+      evaluateBase({ base, candidates, ui: { pins } }).rows.map(
+        (r) => r.file.path,
+      );
+    expect(paths([{ property: "status", keys: ["todo"] }])).toEqual([
+      "Projects/2026/a.md",
+      "Other/c.md",
+      "x.md",
+    ]);
+    expect(paths([{ property: "note.labels", keys: ["red"] }])).toEqual([
+      "x.md",
+      "y.md",
+    ]);
+    expect(
+      paths([
+        { property: "status", keys: ["todo"] },
+        { property: "labels", keys: ["red", "blue"] },
+      ]),
+    ).toEqual(["x.md"]);
+    expect(paths([{ property: "status", keys: [""] }])).toEqual(["y.md"]);
+    expect(paths([{ property: "due", keys: ["2"] }])).toEqual(["Other/c.md"]);
+    expect(paths([{ property: "missing", keys: [""] }])).toHaveLength(5);
+    expect(paths([{ property: "missing", keys: ["x"] }])).toEqual([]);
+  });
+
+  test("pin keys are a value's group keys, empty for none", () => {
+    expect(pinKeys("todo")).toEqual(["todo"]);
+    expect(pinKeys(2)).toEqual(["2"]);
+    expect(pinKeys(["a", "b"])).toEqual(["a", "b"]);
+    expect(pinKeys([])).toEqual([""]);
+    expect(pinKeys(null)).toEqual([""]);
   });
 });

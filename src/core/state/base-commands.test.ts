@@ -487,3 +487,91 @@ test("a board grouped by a file property refuses moves with an explanation", () 
     "Moves are off: this board groups by a file property",
   );
 });
+
+test("/ filters rows by text as it is typed; Enter keeps the filter and Esc clears it", () => {
+  const s = openPlan();
+  const text = planText(s);
+  const paths = (st: AppState) => model(st)?.table?.rows.map((r) => r.path);
+  const typing = press(s, "/DOI");
+  expect(ws(typing.state).search).toEqual({ value: "DOI", caret: 3 });
+  expect(ws(typing.state).query).toBe("DOI");
+  expect(paths(typing.state)).toEqual(["tasks/b.md"]);
+  expect(typing.state.vim.mode).toBe("normal");
+  // Keys typed into the input never run base commands.
+  const more = press(typing.state, "s<BS>");
+  expect(ws(more.state).sort).toBeUndefined();
+  expect(ws(more.state).search?.value).toBe("DOI");
+  const kept = press(typing.state, "<CR>");
+  expect(ws(kept.state).search).toBeUndefined();
+  expect(ws(kept.state).query).toBe("DOI");
+  expect(model(kept.state)?.query).toBe("DOI");
+  expect(ws(press(kept.state, "/").state).search).toEqual({
+    value: "DOI",
+    caret: 3,
+  });
+  const cleared = press(typing.state, "<Esc>");
+  expect(ws(cleared.state).search).toBeUndefined();
+  expect(ws(cleared.state).query).toBeUndefined();
+  expect(paths(cleared.state)).toEqual(["tasks/a.md", "tasks/b.md"]);
+  for (const r of [typing, kept, cleared]) {
+    expect(writes(r.effects)).toEqual([]);
+    expect(planText(r.state)).toBe(text);
+  }
+});
+
+test("F pins the focused cell's value, F again unpins it, and c clears the filters", () => {
+  const s = openPlan();
+  const paths = (st: AppState) => model(st)?.table?.rows.map((r) => r.path);
+  const pinned = press(s, "lF");
+  expect(ws(pinned.state).pins).toEqual([
+    { property: "status", keys: ["todo"] },
+  ]);
+  expect(paths(pinned.state)).toEqual(["tasks/a.md"]);
+  expect(model(pinned.state)?.pins).toEqual([
+    { label: "status", text: "todo" },
+  ]);
+  expect(pinned.state.notifications.message?.text).toBe(
+    "pinned status = todo (this window only)",
+  );
+  expect(writes(pinned.effects)).toEqual([]);
+  const unpinned = press(pinned.state, "F");
+  expect(ws(unpinned.state).pins).toBeUndefined();
+  expect(paths(unpinned.state)).toEqual(["tasks/a.md", "tasks/b.md"]);
+  // A pin on another column stacks.
+  const stacked = press(pinned.state, "lF");
+  expect(ws(stacked.state).pins).toEqual([
+    { property: "status", keys: ["todo"] },
+    { property: "est", keys: ["3"] },
+  ]);
+  const filtered = press(stacked.state, "/a<CR>");
+  const cleared = press(filtered.state, "c");
+  expect(ws(cleared.state).pins).toBeUndefined();
+  expect(ws(cleared.state).query).toBeUndefined();
+  expect(paths(cleared.state)).toEqual(["tasks/a.md", "tasks/b.md"]);
+  expect(press(s, "c").state.notifications.message?.text).toBe(
+    "no filters to clear",
+  );
+});
+
+test("focus follows the focused note through a filter, and a view switch drops the filters", () => {
+  const s = press(openPlan(), "j").state;
+  const filtered = press(s, "/doing<CR>");
+  expect(model(filtered.state)?.focus.row).toBe(0);
+  expect(ws(filtered.state).focus.path).toBe("tasks/b.md");
+  const pinned = press(filtered.state, "lF");
+  const switched = press(pinned.state, "2");
+  expect(ws(switched.state).query).toBeUndefined();
+  expect(ws(switched.state).pins).toBeUndefined();
+});
+
+test("F on a board pins the focused lane's value", () => {
+  const board = press(openPlan(), "2");
+  const pinned = press(board.state, "F");
+  expect(ws(pinned.state).pins).toEqual([
+    { property: "status", keys: ["doing"] },
+  ]);
+  const lanes = model(pinned.state)?.board?.lanes ?? [];
+  expect(lanes.flatMap((l) => l.cards.map((c) => c.path))).toEqual([
+    "tasks/b.md",
+  ]);
+});

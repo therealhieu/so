@@ -6,7 +6,12 @@ import { exCompletions } from "../kernel/vim/ex";
 import { type Key, splitKeys } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
-import { cellEditKey, editingCell } from "./base-commands";
+import {
+  cellEditKey,
+  editingCell,
+  searchingBase,
+  searchKey,
+} from "./base-commands";
 import {
   activeBuffer,
   activeWindow,
@@ -110,6 +115,7 @@ function routeKey(
     }
   }
   if (editingCell(s)) return cellEditKey(s, a, reg);
+  if (searchingBase(s)) return searchKey(s, a);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
   return bindingOrVim(s, a, reg);

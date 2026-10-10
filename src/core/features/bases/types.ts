@@ -180,6 +180,16 @@ export type BaseUi = {
   readonly filtered?: boolean;
   /** Column widths in cells by column id; they replace the view's `columnSize`. */
   readonly widths?: Readonly<Record<string, number>>;
+  /** Keeps rows with a cell whose text contains it, ignoring case. */
+  readonly query?: string;
+  /** Keeps rows whose property holds every one of the pin's keys. */
+  readonly pins?: readonly BasePin[];
+};
+
+/** A property pinned to values: `keys` are group keys, `""` meaning no value. */
+export type BasePin = {
+  readonly property: string;
+  readonly keys: readonly string[];
 };
 
 export type BaseEvaluation = {

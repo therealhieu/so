@@ -49,6 +49,10 @@ export type BaseViewModel = {
   filters: "on" | "off" | "none";
   /** The filters in effect as one expression; absent when none apply. */
   filter?: string;
+  /** The window's text filter. */
+  query?: string;
+  /** The window's pins as `label` (the column or property) and value text. */
+  pins?: { label: string; text: string }[];
   /** Existing values of the text cell being edited that start with its text. */
   suggestions?: string[];
   /** Table: row and column. Board: lane and card. */
@@ -198,7 +202,14 @@ const uiOf = (ws: BaseWindowState): BaseUi => ({
   ...(ws.grouped === false ? { grouped: false } : {}),
   ...(ws.filtered === false ? { filtered: false } : {}),
   ...(ws.widths === undefined ? {} : { widths: ws.widths }),
+  ...(ws.query === undefined || ws.query.trim() === ""
+    ? {}
+    : { query: ws.query }),
+  ...(ws.pins === undefined || ws.pins.length === 0 ? {} : { pins: ws.pins }),
 });
+
+/** A pin's key as shown: "—" for no value. */
+const keyText = (key: string) => (key === "" ? "—" : key);
 
 /**
  * The model of base window `windowId`, derived from the base text, the
@@ -338,6 +349,17 @@ function derive(
     ...(notice === undefined ? {} : { notice }),
     ...(sort === undefined ? {} : { sort }),
     ...(filter === undefined ? {} : { filter }),
+    ...(ui.query === undefined ? {} : { query: ui.query }),
+    ...(ui.pins === undefined
+      ? {}
+      : {
+          pins: ui.pins.map((p) => ({
+            label:
+              e.columns.find((c) => c.id === p.property)?.displayName ??
+              p.property.replace(/^note\./, ""),
+            text: p.keys.map(keyText).join(", "),
+          })),
+        }),
     ...(edit?.type === "text"
       ? { suggestions: suggestionsFor(candidates, edit.property, edit.value) }
       : {}),

@@ -141,7 +141,14 @@ export class BaseView extends Renderable implements WindowView {
     this.frame = frame;
     const focused =
       id === s.windows.active && !s.panels.explorer.focused && !panelFocused(s);
-    if (focused && at !== undefined)
+    const search = ws?.search;
+    if (focused && search !== undefined && r.h > 3)
+      this.cursorAt = {
+        x: r.x + 2 + cells(search.value.slice(0, search.caret)),
+        y: hintY,
+        style: "line",
+      };
+    else if (focused && at !== undefined)
       this.cursorAt = {
         ...at,
         style: ws?.edit === undefined ? "block" : "line",
@@ -221,28 +228,43 @@ export class BaseView extends Renderable implements WindowView {
       );
     for (const [i, n] of f.notices.entries())
       drawCells(buf, theme.style(n.token), r.x, r.y + 2 + i, ` ${n.text}`, r.w);
-    if (r.h > 3)
-      drawCells(
-        buf,
-        theme.style("dim"),
-        r.x,
-        r.y + r.h - 1,
-        ` ${hintOf(m, f.ws)}`,
-        r.w,
-      );
+    if (r.h > 3) this.paintHint(buf, theme, m, f.ws);
     if (m.status !== "ok") return;
     if (m.table !== undefined)
       paintBaseTable(buf, theme, body, m.table, {
         ...(f.focus === undefined ? {} : { focus: f.focus }),
         scroll: { top: this.rowTop, col: f.ws?.scroll.col ?? 0 },
-        ...(m.filters === "on"
-          ? { empty: "f shows the notes this view's filters hide" }
-          : {}),
+        ...(m.query !== undefined || m.pins !== undefined
+          ? { empty: "c clears the text filter and pins" }
+          : m.filters === "on"
+            ? { empty: "f shows the notes this view's filters hide" }
+            : {}),
       });
     else if (m.board !== undefined)
       paintBaseBoard(buf, theme, body, m.board, {
         focus: { lane: m.focus.lane, card: m.focus.card },
       });
+  }
+
+  /** The last row: the open filter input as `/text`, else the keys that apply. */
+  private paintHint(
+    buf: OptimizedBuffer,
+    theme: Theme,
+    m: BaseViewModel,
+    ws: BaseWindowState | undefined,
+  ): void {
+    const r = this.rect;
+    const y = r.y + r.h - 1;
+    if (ws?.search === undefined) {
+      drawCells(buf, theme.style("dim"), r.x, y, ` ${hintOf(m, ws)}`, r.w);
+      return;
+    }
+    const input = ` /${ws.search.value}`;
+    drawCells(buf, theme.style("text"), r.x, y, input, r.w);
+    const keys = "⏎ keep · esc clear ";
+    const kx = r.w - cells(keys);
+    if (kx > cells(input) + 1)
+      drawCells(buf, theme.style("dim"), r.x + kx, y, keys, cells(keys));
   }
 
   /** ` ▦ name  tabs` on the left, what the view shows on the right. */
@@ -374,6 +396,10 @@ function statusOf(
   if (m.filter !== undefined && fit === "full")
     parts.push(`⧩ ${clip(m.filter, MAX_FILTER)}`);
   if (m.filters === "off") parts.push("view filters off");
+  if (m.query !== undefined && !short)
+    parts.push(`⌕ ${clip(m.query, MAX_FILTER)}`);
+  for (const p of short ? [] : (m.pins ?? []))
+    parts.push(`⊜ ${clip(`${p.label} = ${p.text}`, MAX_FILTER)}`);
   if (m.board !== undefined) {
     const cards = m.board.lanes.reduce((n, l) => n + l.cards.length, 0);
     parts.push(
@@ -431,5 +457,5 @@ function hintOf(m: BaseViewModel, ws: BaseWindowState | undefined): string {
     return m.board.movable
       ? "h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next"
       : "h/l j/k focus · H/L off · ⏎ open note · v views · Tab next";
-  return "h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open";
+  return "h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open";
 }
