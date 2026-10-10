@@ -4,6 +4,7 @@ import {
   propertyType,
   validates,
 } from "../features/bases/property-types";
+import { resizedWidth } from "../features/bases/table";
 import type { Binding } from "../kernel/commands/defaults";
 import type { Command } from "../kernel/commands/registry";
 import type { Key } from "../kernel/vim/keys";
@@ -336,6 +337,45 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
   );
 }
 
+/** Columns one `>` or `<` adds or takes away. */
+const WIDTH_STEP = 4;
+
+/**
+ * Give table column `column` of the active base window `width` cells, at
+ * least 3 cells; `undefined` returns it to the view's width. The base file
+ * is never written.
+ */
+export function resizeBaseColumn(
+  c: CommandContext,
+  column: number,
+  width: number | undefined,
+): Result {
+  const a = active(c);
+  const id = a?.m.table?.columns[column]?.id;
+  if (a === undefined || id === undefined) return none(c.state);
+  const { [id]: was, ...rest } = a.ws.widths ?? {};
+  if (width === undefined) {
+    if (was === undefined) return none(a.s);
+    const { widths: _, ...ws } = a.ws;
+    return none(
+      setWs(a, Object.keys(rest).length > 0 ? { ...ws, widths: rest } : ws),
+    );
+  }
+  const next = resizedWidth(width);
+  return next === was
+    ? none(a.s)
+    : none(setWs(a, { ...a.ws, widths: { ...rest, [id]: next } }));
+}
+
+/** `>`/`<`: widen or narrow the focused table column by `WIDTH_STEP`. */
+function stepWidth(c: CommandContext, step: -1 | 1): Result {
+  const a = active(c);
+  const col = a?.m.table?.columns[a.m.focus.column];
+  return a === undefined || col === undefined
+    ? none(c.state)
+    : resizeBaseColumn(c, a.m.focus.column, col.width + step * WIDTH_STEP);
+}
+
 function openFocused(c: CommandContext): Result {
   const a = active(c);
   if (a === undefined) return none(c.state);
@@ -383,6 +423,14 @@ export const baseCommands: readonly BaseCommand[] = [
     moveCard(c, 1),
   ),
   cmd("base.open", "Open the focused note", openFocused),
+  cmd("base.wider", "Widen the focused column", (c) => stepWidth(c, 1)),
+  cmd("base.narrower", "Narrow the focused column", (c) => stepWidth(c, -1)),
+  cmd("base.resetWidth", "Return the focused column to its width", (c) => {
+    const a = active(c);
+    return a === undefined
+      ? none(c.state)
+      : resizeBaseColumn(c, a.m.focus.column, undefined);
+  }),
 ];
 
 const KEYS: readonly (readonly [string, string])[] = [
@@ -404,6 +452,9 @@ const KEYS: readonly (readonly [string, string])[] = [
   ["H", "base.moveLeft"],
   ["L", "base.moveRight"],
   ["<CR>", "base.open"],
+  [">", "base.wider"],
+  ["<lt>", "base.narrower"],
+  ["=", "base.resetWidth"],
 ];
 
 export const baseBindings: readonly Binding[] = KEYS.map(([seq, id]) => ({

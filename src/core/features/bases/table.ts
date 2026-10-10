@@ -19,6 +19,8 @@ export type TableColumn = {
   type: PropertyType;
   /** The direction the rows are sorted by this column, if they are. */
   sort?: "ASC" | "DESC";
+  /** Cells the column takes: the window's width, else the view's `columnSize`, else its content's. */
+  width: number;
 };
 
 export type TableCell = { text: string; value: BaseCell };
@@ -50,6 +52,37 @@ export type OrderedGroup = {
   label: string;
   rowIndexes: readonly number[];
 };
+
+/** The widest column sized by its content. */
+const MAX_COL = 24;
+/** The narrowest a column can be resized to. */
+const MIN_COL = 3;
+/** The widest a column can be resized to. */
+const MAX_RESIZED_COL = 200;
+/** Obsidian's `columnSize` is in pixels; one terminal cell stands for this many. */
+const PX_PER_CELL = 8;
+
+const len = (t: string) => [...t].length;
+
+/** A width clamped to the resizable range. */
+export const resizedWidth = (w: number) =>
+  Math.max(MIN_COL, Math.min(Math.round(w), MAX_RESIZED_COL));
+
+/** A cell as shown: checkboxes as boxes, empty values as a dim dash. */
+export function shown(c: TableCell | undefined): {
+  text: string;
+  empty: boolean;
+} {
+  if (c === undefined || c.value.type === "null" || c.text === "")
+    return { text: "—", empty: true };
+  if (c.value.type === "boolean")
+    return { text: c.value.value ? "☑" : "☐", empty: false };
+  return { text: c.text, empty: false };
+}
+
+/** A column's header: its label and, when the rows are sorted by it, the arrow. */
+export const headerOf = (c: Pick<TableColumn, "label" | "sort">) =>
+  c.sort === undefined ? c.label : `${c.label} ${c.sort === "ASC" ? "↑" : "↓"}`;
 
 /** The property without its `note.` prefix, as columns and summaries name it. */
 const bare = (property: string) => property.replace(/^note\./, "");
@@ -112,16 +145,17 @@ export function cellText(c: BaseCell): string {
 }
 
 /**
- * The render-ready table for one evaluated view. The window's overrides are
- * already applied by `evaluateBase`; `_ui` keeps the layout contract.
+ * The render-ready table for one evaluated view. The window's sort, grouping,
+ * and filter overrides are already applied by `evaluateBase`; its column
+ * widths come from `ui`.
  */
 export function tableModel(
   e: BaseEvaluation,
-  _ui: BaseUi,
+  ui: BaseUi,
   types: PropertyTypes,
 ): TableModel {
   const sort = e.selectedView.sort?.[0];
-  const columns = e.columns.map((c): TableColumn => {
+  const headers = e.columns.map((c): Omit<TableColumn, "width"> => {
     const first = e.rows.find((r) => r.cells[c.id]?.type !== "null")?.cells[
       c.id
     ];
@@ -152,11 +186,11 @@ export function tableModel(
   const rows: TableRow[] = [];
   const groups: TableGroup[] = [];
   /** The evaluation rows the table shows, each once; hidden groups' rows are left out. */
-  const shown = new Set<number>();
+  const listed = new Set<number>();
   if (e.groups === undefined) {
     for (let i = 0; i < e.rows.length; i++) {
       rows.push(toRow(i));
-      shown.add(i);
+      listed.add(i);
     }
   } else {
     for (const g of orderedGroups(e, false)) {
@@ -168,7 +202,7 @@ export function tableModel(
       });
       for (const i of g.rowIndexes) {
         rows.push(toRow(i));
-        shown.add(i);
+        listed.add(i);
       }
     }
   }
@@ -183,7 +217,7 @@ export function tableModel(
     if (name === undefined) return undefined;
     const r = summarize(
       name,
-      [...shown].map(
+      [...listed].map(
         (i) => e.rows[i]?.cells[c.id] ?? { type: "null", value: null },
       ),
     );
@@ -194,12 +228,23 @@ export function tableModel(
     return { name, text: cellText(r), value: r };
   });
 
+  const columns = headers.map((c, i): TableColumn => {
+    const set = ui.widths?.[c.id];
+    const px = e.columns[i]?.width;
+    if (set !== undefined) return { ...c, width: resizedWidth(set) };
+    if (px !== undefined)
+      return { ...c, width: resizedWidth(px / PX_PER_CELL) };
+    let w = len(headerOf(c));
+    for (const r of rows) w = Math.max(w, len(shown(r.cells[i]).text));
+    return { ...c, width: Math.max(1, Math.min(w, MAX_COL)) };
+  });
+
   return {
     columns,
     rows,
     groups,
     summaries,
-    total: shown.size,
+    total: listed.size,
     diagnostics,
   };
 }

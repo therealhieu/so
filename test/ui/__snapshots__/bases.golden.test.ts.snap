@@ -528,3 +528,31 @@ exports[`base embed a note paints an embedded board read-only, with one-line car
  NORMAL  today.md                                                           1:1 
 "
 `;
+
+exports[`base table resized columns keep their widths and cut longer text 1`] = `
+"▎ tasks.base                                                                    
+ ▦ tasks.base   1/4 All tasks                                  ⇅ due ↑ · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                    │ St… │ due ↑      │ done                            
+   ────────────────────────┼─────┼────────────┼─────                            
+▌  ship-release.md         │ do… │ 2026-10-01 │ ☑                               
+   review-pr.md            │ do… │ 2026-10-03 │ ☐                               
+   write-report.md         │ to… │ 2026-10-05 │ ☐                               
+   inbox.md                │ —   │ 2026-10-08 │ ☐                               
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+   ────────────────────────┴─────┴────────────┴─────                            
+ Σ                                 2026-10-01   1                               
+ h/j/k/l cell · i edit · x toggle · s sort · g group · f filter · ⏎ open        
+ BASE  tasks.base                                                           1:1 
+"
+`;

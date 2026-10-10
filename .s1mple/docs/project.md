@@ -116,7 +116,7 @@ Notes are created only through the `createNote` effect, whose adapter expands th
    → runner (serial): read template → expandTemplate → createExclusive → noteCreated → open, cursor on first unchecked task
 ```
 
-`.base` files are file type and editor kind `base` by registration only (`src/core/features/bases/file-type.ts`): the buffer is `readOnly` (the save gate refuses it), keys never reach vim, and `EditorKindSpec.open` creates the window's `kindState`. `baseViewModel` (`src/core/state/base-model.ts`) derives the table or board from the index's candidates and memoizes it. A cell edit or card move writes one frontmatter key:
+`.base` files are file type and editor kind `base` by registration only (`src/core/features/bases/file-type.ts`): the buffer is `readOnly` (the save gate refuses it), keys never reach vim, and `EditorKindSpec.open` creates the window's `kindState`. `baseViewModel` (`src/core/state/base-model.ts`) derives the table or board from the index's candidates and memoizes it. A table column's width (`TableColumn.width`, cells) is the window's resized width, else the view's `columnSize` (Obsidian pixels ÷ 8; keys with or without `note.`), else its widest header or cell up to 24, never under 3; `>`/`<` widen or narrow the focused column by 4, `=` returns it, and a drag on a header separator (the `baseEdge` window spot) resizes the column to its left, a double click returning it. Resized widths live only in the window state (`BaseWindowState.widths`), are dropped when the view changes, and never reach the file; embeds use `columnSize` and content widths. A cell edit or card move writes one frontmatter key:
 
 ```text
 open note   → applyBufferEdits (one undo step)

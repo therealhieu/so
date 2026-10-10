@@ -597,7 +597,8 @@ function buildColumns(
         : readSemanticType(propertyConfig?.type)) ??
       defaultSemanticTypeForProperty(property);
     const options = readColumnOptions(propertyConfig?.options);
-    const width = view.columnSize?.[property];
+    const width =
+      view.columnSize?.[property] ?? view.columnSize?.[`note.${property}`];
     const wrap = view.wrapText?.includes(property) ?? false;
     const firstSample = candidates.find((c) => {
       if (property === "file.name") return true;

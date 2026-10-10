@@ -174,11 +174,29 @@ export class BaseView extends Renderable implements WindowView {
       f === undefined
         ? undefined
         : f.table !== undefined
-          ? cellAt(f.body, f.table, x, y)
+          ? (edgeAt(f.body, f.table, x, y) ?? cellAt(f.body, f.table, x, y))
           : f.board !== undefined
             ? cardAt(f.body, f.board, x, y)
             : undefined;
     return at(spot ?? { kind: "base" });
+  }
+
+  /** A header separator dragged to column `x` leaves its column the cells left of `x`. */
+  dragAt(x: number, _y: number, from: WindowSpot): MouseTarget | undefined {
+    const f = this.frame;
+    const col = f?.table?.cols.find(
+      (c) => from.kind === "baseEdge" && c.index === from.column,
+    );
+    if (f === undefined || col === undefined) return undefined;
+    return {
+      kind: "window",
+      window: this.windowId,
+      spot: {
+        kind: "baseEdge",
+        column: col.index,
+        width: Math.max(1, x - (f.body.x + col.x) - 1),
+      },
+    };
   }
 
   protected renderSelf(buf: OptimizedBuffer): void {
@@ -283,6 +301,20 @@ export class BaseView extends Renderable implements WindowView {
       rx += cells(p.text);
     }
   }
+}
+
+/** The header separator right of a shown column at screen cell (x, y). */
+function edgeAt(
+  body: Rect,
+  l: TableLayout,
+  x: number,
+  y: number,
+): WindowSpot | undefined {
+  if (y !== body.y) return undefined;
+  const col = l.cols.find((c) => x === body.x + c.x + c.w + 1);
+  return col === undefined
+    ? undefined
+    : { kind: "baseEdge", column: col.index, width: col.w };
 }
 
 /** The table cell at screen cell (x, y), from the layout painted in `body`. */

@@ -148,7 +148,7 @@ export type BaseColumn = {
   readonly formulaExpression?: string;
   readonly semanticType?: BaseSemanticType;
   readonly options?: readonly BaseColumnOption[];
-  /** Column width from the view's columnSize; absent = default. */
+  /** Column width in pixels from the view's columnSize; absent = default. */
   readonly width?: number;
   /** Whether cells in this column wrap text, from the view's wrapText list. */
   readonly wrap?: boolean;
@@ -178,6 +178,8 @@ export type BaseUi = {
   readonly grouped?: boolean;
   /** `false` ignores the view's own filters (the base's global filters still apply). */
   readonly filtered?: boolean;
+  /** Column widths in cells by column id; they replace the view's `columnSize`. */
+  readonly widths?: Readonly<Record<string, number>>;
 };
 
 export type BaseEvaluation = {

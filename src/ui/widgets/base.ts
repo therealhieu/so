@@ -1,7 +1,11 @@
 import type { OptimizedBuffer } from "@opentui/core";
 import type { BaseEmbedData } from "../../core/features/bases/embed";
 import type { KanbanModel } from "../../core/features/bases/kanban";
-import type { TableCell, TableModel } from "../../core/features/bases/table";
+import {
+  headerOf,
+  shown,
+  type TableModel,
+} from "../../core/features/bases/table";
 import type { Rect } from "../editors/text-view";
 import { drawCells, type Theme } from "../theme";
 import type { WidgetPainter } from "./registry";
@@ -42,7 +46,6 @@ export type TableLayout = {
 /** Marker, two spaces, then the cells. */
 const LEAD = 3;
 const SEP = " │ ";
-const MAX_COL = 24;
 const MORE_COLS = 11;
 
 const len = (t: string) => [...t].length;
@@ -58,21 +61,9 @@ function fit(text: string, w: number): string {
     : `${cells.slice(0, w - 1).join("")}…`;
 }
 
-/** A cell as shown: checkboxes as boxes, empty values as a dim dash. */
-function shown(c: TableCell | undefined): { text: string; empty: boolean } {
-  if (c === undefined || c.value.type === "null" || c.text === "")
-    return { text: "—", empty: true };
-  if (c.value.type === "boolean")
-    return { text: c.value.value ? "☑" : "☐", empty: false };
-  return { text: c.text, empty: false };
-}
-
 const labelOf = (m: TableModel, i: number) => {
   const c = m.columns[i];
-  if (c === undefined) return "";
-  return c.sort === undefined
-    ? c.label
-    : `${c.label} ${c.sort === "ASC" ? "↑" : "↓"}`;
+  return c === undefined ? "" : headerOf(c);
 };
 
 /**
@@ -87,13 +78,11 @@ export function layoutBaseTable(
   scroll: TableScroll = { top: 0, col: 0 },
 ): TableLayout {
   const n = m.columns.length;
-  const widths = m.columns.map((_, i) => {
-    let w = len(labelOf(m, i));
-    for (const r of m.rows) w = Math.max(w, len(shown(r.cells[i]).text));
-    w = Math.min(w, MAX_COL);
+  const widths = m.columns.map((c, i) => {
+    let w = c.width;
     if (focus?.edit !== undefined && focus.column === i)
-      w = Math.max(w, Math.min(len(focus.edit.value) + 1, rect.w - LEAD));
-    return Math.max(1, w);
+      w = Math.max(w, len(focus.edit.value) + 1);
+    return clamp(w, 1, Math.max(1, rect.w - LEAD));
   });
   const fitFrom = (off: number, room: number) => {
     const out: number[] = [];

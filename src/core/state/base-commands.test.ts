@@ -323,6 +323,30 @@ test("a board grouped by a formula refuses moves with an explanation", () => {
   );
 });
 
+test("> and < resize the focused column, = returns it, and the file is untouched", () => {
+  const s = openPlan();
+  const width = (st: AppState) => model(st)?.table?.columns[0]?.width;
+  expect(width(s)).toBe(4);
+  const wider = press(s, ">>");
+  expect(ws(wider.state).widths).toEqual({ "file.name": 12 });
+  expect(width(wider.state)).toBe(12);
+  expect(width(press(wider.state, "<lt>").state)).toBe(8);
+  expect(width(press(s, "<lt><lt><lt>").state)).toBe(3);
+  const reset = press(wider.state, "=");
+  expect(ws(reset.state).widths).toBeUndefined();
+  expect(width(reset.state)).toBe(4);
+  expect(ws(press(wider.state, "l>").state).widths).toEqual({
+    "file.name": 12,
+    status: 10,
+  });
+  expect(ws(press(wider.state, "2").state).widths).toBeUndefined();
+  for (const r of [wider, reset]) {
+    expect(writes(r.effects)).toEqual([]);
+    expect(planText(r.state)).toBe(planText(s));
+    expect(activeBuffer(r.state)?.dirty).toBe(false);
+  }
+});
+
 test("views switch by number, Tab, and the view list", () => {
   const s = openPlan();
   expect(ws(press(s, "4").state).view).toBe("Gallery");

@@ -140,7 +140,7 @@ export class WindowTree extends Renderable {
   /** A drag stays with the window it started in. */
   dragAt(x: number, y: number, from: MouseTarget): MouseTarget | undefined {
     return from.kind === "window"
-      ? this.views.get(from.window)?.dragAt?.(x, y)
+      ? this.views.get(from.window)?.dragAt?.(x, y, from.spot)
       : undefined;
   }
 

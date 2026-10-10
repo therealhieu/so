@@ -86,6 +86,14 @@ describe("base table", () => {
       expect(frame).toMatchSnapshot();
     });
 
+  test("resized columns keep their widths and cut longer text", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys(">>l<lt><lt>");
+    const frame = await m.frame();
+    expect(frame).toContain("name                    │ St… │ due ↑");
+    expect(frame).toMatchSnapshot();
+  });
+
   test("the focused cell is reversed and the frame has no colour under NO_COLOR", async () => {
     m = await baseShell(
       { cols: 80, rows: 24, color: "nocolor" },

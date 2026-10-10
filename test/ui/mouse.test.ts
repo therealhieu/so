@@ -809,3 +809,24 @@ test("on a right explorer the whole name reaches left over the windows", async (
   expect(line).toContain(` ${long} `);
   expect(line.trimEnd().endsWith(long)).toBe(true);
 });
+
+test("a drag on a Base table's header separator resizes the column to its left", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.store.dispatch(indexed());
+  m.keys("<leader>e");
+  m.open("tasks.base", TASKS_BASE);
+  const widths = () => {
+    const s = m?.store.get();
+    return s && baseWindow(s, s.windows.active)?.widths;
+  };
+  const header = await find(m, "│ Status");
+  await m.mouse.drag(header.x, header.y, header.x + 10, header.y);
+  expect(widths()).toEqual({ "file.name": 25 });
+  expect((await find(m, "│ Status")).x).toBe(header.x + 10);
+  // A double click on the separator returns the column to its own width.
+  const moved = await find(m, "│ Status");
+  await m.mouse.click(moved.x, moved.y);
+  await m.mouse.click(moved.x, moved.y);
+  expect(widths()).toBeUndefined();
+  expect((await find(m, "│ Status")).x).toBe(header.x);
+});

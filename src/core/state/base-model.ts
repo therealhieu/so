@@ -197,6 +197,7 @@ const uiOf = (ws: BaseWindowState): BaseUi => ({
   ...(ws.sort === undefined ? {} : { sort: ws.sort }),
   ...(ws.grouped === false ? { grouped: false } : {}),
   ...(ws.filtered === false ? { filtered: false } : {}),
+  ...(ws.widths === undefined ? {} : { widths: ws.widths }),
 });
 
 /**

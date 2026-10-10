@@ -520,6 +520,8 @@ export type WindowSpot =
   | { kind: "winbar" }
   | { kind: "baseTab"; view: number }
   | { kind: "baseCell"; row: number; column: number }
+  /** The header separator right of table column `column`, which is `width` cells wide. */
+  | { kind: "baseEdge"; column: number; width: number }
   | { kind: "baseCard"; lane: number; card: number }
   | { kind: "base" };
 

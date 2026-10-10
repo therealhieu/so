@@ -45,9 +45,10 @@ const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   right: { dx: 1, dy: 0 },
 };
 
-/** Targets a drag can start on: window text (a selection), the zoom float (a pan), and the explorer's separator (a resize). */
+/** Targets a drag can start on: window text (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
 const draggable = (t: MouseTarget) =>
-  (t.kind === "window" && t.spot.kind === "text") ||
+  (t.kind === "window" &&
+    (t.spot.kind === "text" || t.spot.kind === "baseEdge")) ||
   t.kind === "zoomPoint" ||
   t.kind === "explorerEdge";
 

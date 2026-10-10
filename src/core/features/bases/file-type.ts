@@ -41,6 +41,8 @@ export type BaseWindowState = {
   focus: { path?: string; column: number; index?: number };
   /** The first table column shown. */
   scroll: { col: number };
+  /** Table column widths in cells by column id, set by resizing in this window. */
+  widths?: Record<string, number>;
   edit?: CellEdit;
 };
 

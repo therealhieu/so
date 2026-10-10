@@ -228,3 +228,29 @@ test("file times show as local dates and times", () => {
     `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
   );
 });
+
+test("columns are as wide as their widest header or cell, at most 24", () => {
+  const m = model("workspace/tasks.base");
+  // "ship-release.md" (15), "Status" vs "doing", "due ↑" vs "2026-10-01", "done" vs a box.
+  expect(m.columns.map((c) => c.width)).toEqual([15, 6, 10, 4]);
+});
+
+test("the view's columnSize sets widths in cells, prefixed keys included", () => {
+  const text = read("workspace/tasks.base").replace(
+    "    sort:\n      - property: due",
+    "    columnSize:\n      file.name: 200\n      note.status: 4\n    sort:\n      - property: due",
+  );
+  const r = parseBase(text);
+  if (!r.ok) throw new Error(r.diagnostic.message);
+  const ui: BaseUi = { widths: { "file.name": 40 } };
+  const sized = (u: BaseUi) =>
+    tableModel(
+      evaluateBase({ base: r.base, candidates: tasks(), ui: u }),
+      u,
+      {},
+    ).columns.map((c) => c.width);
+  // 200 px is 25 cells; 4 px is under the 3-cell floor.
+  expect(sized({})).toEqual([25, 3, 10, 4]);
+  // The window's width replaces the view's.
+  expect(sized(ui)).toEqual([40, 3, 10, 4]);
+});
