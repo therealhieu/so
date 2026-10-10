@@ -15,6 +15,7 @@ export type ToWorker =
   | { t: "scan"; root: string; ignore: string[] }
   | { t: "changed"; paths: string[] }
   | { t: "removed"; paths: string[] }
+  | { t: "moved"; from: string; to: string }
   | {
       t: "search";
       id: number;
@@ -77,10 +78,13 @@ async function factsOf(path: string): Promise<FileFacts | undefined> {
 }
 
 /**
- * Every file below `root` the explorer would show, and the facts of those that
- * are not notes; symlinked folders are not entered.
+ * Every file below `from` (the workspace root by default) the explorer would
+ * show, and the facts of those that are not notes; symlinked folders are not
+ * entered.
  */
-async function walk(): Promise<{ paths: string[]; facts: FileFacts[] }> {
+async function walk(
+  from = "",
+): Promise<{ paths: string[]; facts: FileFacts[] }> {
   const matcher = createExclusionMatcher(root, readOrNull);
   const out: string[] = [];
   const facts: FileFacts[] = [];
@@ -105,7 +109,7 @@ async function walk(): Promise<{ paths: string[]; facts: FileFacts[] }> {
       if (f !== undefined) facts.push(f);
     }
   };
-  await visit("");
+  await visit(from);
   return { paths: out.sort(), facts };
 }
 
@@ -173,10 +177,34 @@ async function scan(): Promise<void> {
   post({ t: "ready" });
 }
 
+const knownUnder = (dir: string) => {
+  for (const f of files) if (f.startsWith(`${dir}/`)) return true;
+  return false;
+};
+
+/**
+ * Summarize changed notes and refresh other files' facts. A folder the index
+ * holds nothing under, such as one renamed by another program, is walked and
+ * its files join the index; any other folder event is ignored.
+ */
 async function changed(paths: string[]): Promise<void> {
   const summaries: NoteSummary[] = [];
   const facts: FileFacts[] = [];
+  const added: string[] = [];
   for (const path of paths) {
+    const st = await stat(join(root, path)).catch(() => null);
+    if (st?.isDirectory() === true) {
+      if (knownUnder(path)) continue;
+      const found = await walk(path);
+      for (const f of found.paths) files.add(f);
+      added.push(...found.paths);
+      facts.push(...found.facts);
+      for (const note of found.paths.filter(isNote)) {
+        const s = await summarizeFile(note);
+        if (s !== undefined) summaries.push(s);
+      }
+      continue;
+    }
     files.add(path);
     if (isNote(path)) {
       const s = await summarizeFile(path);
@@ -186,12 +214,13 @@ async function changed(paths: string[]): Promise<void> {
       if (f !== undefined) facts.push(f);
     }
   }
-  if (summaries.length > 0 || facts.length > 0)
+  if (summaries.length > 0 || facts.length > 0 || added.length > 0)
     post({
       t: "batch",
       summaries,
       done: 0,
       total: 0,
+      ...(added.length > 0 ? { files: added } : {}),
       ...(facts.length > 0 ? { facts } : {}),
     });
 }
@@ -203,6 +232,19 @@ function removed(paths: string[]): void {
         files.delete(f);
         cache.delete(f);
       }
+}
+
+/** A file or folder `so` renamed or moved: its paths, and cached texts, follow it. */
+function moved(from: string, to: string): void {
+  for (const f of [...files])
+    if (f === from || f.startsWith(`${from}/`)) {
+      const next = to + f.slice(from.length);
+      files.delete(f);
+      files.add(next);
+      const text = cache.get(f);
+      cache.delete(f);
+      if (text !== undefined) cache.set(next, text);
+    }
 }
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -313,6 +355,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
         root = m.root;
         await scan();
       } else if (m.t === "changed") await changed(m.paths);
+      else if (m.t === "moved") moved(m.from, m.to);
       else removed(m.paths);
     })
     .catch(fail);

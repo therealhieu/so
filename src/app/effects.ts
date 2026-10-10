@@ -1,5 +1,5 @@
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { lstat, mkdir, readdir } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
 import { parseConfig } from "../core/config/toml";
 import { setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
@@ -60,7 +60,7 @@ export type RunnerDeps = {
    * Answers `search`; without one, every search finds nothing. Own writes
    * are reported to it, since the watcher keeps them silent.
    */
-  index?: Pick<IndexHost, "search" | "notify">;
+  index?: Pick<IndexHost, "search" | "notify" | "moved">;
   /** Runs language-server effects; without one, every request fails at once. */
   lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
@@ -120,6 +120,18 @@ type ListDirEffect = Extract<Effect, { kind: "listDir" }>;
 export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const now = d.now ?? wallClock;
   const abs = (p: string) => join(d.root, p);
+
+  /** The watched files at or below `rel`: itself when it is a file, none when it is missing. */
+  async function watchedFiles(rel: string): Promise<string[]> {
+    const st = await lstat(abs(rel)).catch(() => null);
+    if (st === null) return [];
+    const found = st.isDirectory()
+      ? (await readdir(abs(rel), { recursive: true, withFileTypes: true }))
+          .filter((e) => !e.isDirectory())
+          .map((e) => relative(d.root, join(e.parentPath, e.name)))
+      : [rel];
+    return found.filter((p) => !d.matcher.isExcludedPath(p)).sort();
+  }
   let tail: Promise<unknown> = Promise.resolve();
   const unreported = new Set<PathOp>();
   /** Per path, the stamp this runner's last write replaced and the one it left. */
@@ -464,10 +476,32 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
         const pathOp: PathOp = { op: e.op, ok: false };
         unreported.add(pathOp);
         void serial(async () => {
+          const { from, to } = e.op;
+          // Trashed files are listed while they still exist.
+          const trashed =
+            d.lsp !== undefined && e.op.kind === "trash"
+              ? await watchedFiles(from).catch(() => [])
+              : [];
           const result = await runFsOp(e.op);
           pathOp.ok = result.ok;
           unreported.delete(pathOp);
           d.dispatch(result);
+          if (!result.ok) return;
+          if (to === undefined) {
+            d.index?.notify({ kind: "removed", path: from });
+            for (const path of trashed)
+              d.lsp?.notify({ kind: "removed", path });
+            return;
+          }
+          d.index?.moved(from, to);
+          if (d.lsp === undefined) return;
+          for (const path of await watchedFiles(to).catch(() => [])) {
+            d.lsp.notify({
+              kind: "removed",
+              path: from + path.slice(to.length),
+            });
+            d.lsp.notify({ kind: "changed", path, isDir: false });
+          }
         });
         return;
       }

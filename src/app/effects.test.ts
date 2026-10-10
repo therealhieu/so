@@ -204,7 +204,7 @@ test("each file operation answers once with its result", async () => {
 test("a created file is sent to the index; a failed create or a folder is not", async () => {
   const events: unknown[] = [];
   const r = runner({
-    index: { search: () => {}, notify: (e) => events.push(e) },
+    index: { search: () => {}, notify: (e) => events.push(e), moved: () => {} },
   });
   r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
   r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
@@ -216,6 +216,68 @@ test("a created file is sent to the index; a failed create or a folder is not", 
     true,
   ]);
   expect(events).toEqual([{ kind: "changed", path: "made.csv", isDir: false }]);
+});
+
+test("a finished rename or move moves the index paths; a finished trash removes them", async () => {
+  await writeFile(join(root, "from.md"), "x\n");
+  await writeFile(join(root, "gone.md"), "x\n");
+  const sent: unknown[] = [];
+  const r = runner({
+    index: {
+      search: () => {},
+      notify: (e) => sent.push(e),
+      moved: (from, to) => sent.push({ from, to }),
+    },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "from.md", to: "to.md" },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "absent.md", to: "x.md" },
+  });
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "gone.md", permanent: true },
+  });
+  await waitFor(() => r.actions.length === 3);
+  expect(sent).toEqual([
+    { from: "from.md", to: "to.md" },
+    { kind: "removed", path: "gone.md" },
+  ]);
+  await rm(join(root, "to.md"), { force: true });
+});
+
+test("language servers hear of each file a finished move or trash touches", async () => {
+  await mkdir(join(root, "src/deep"), { recursive: true });
+  await mkdir(join(root, "src/.cache"), { recursive: true });
+  await writeFile(join(root, "src/a.ts"), "x\n");
+  await writeFile(join(root, "src/deep/b.ts"), "x\n");
+  await writeFile(join(root, "src/.cache/c.ts"), "x\n");
+  await writeFile(join(root, "drop.ts"), "x\n");
+  const sent: unknown[] = [];
+  const r = runner({
+    lsp: { run: () => {}, notify: (e) => sent.push(e) },
+  });
+  r.run({ kind: "move", op: { kind: "move", from: "src", to: "lib" } });
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "drop.ts", permanent: true },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "absent.ts", to: "x.ts" },
+  });
+  await waitFor(() => r.actions.length === 3);
+  expect(sent).toEqual([
+    { kind: "removed", path: "src/a.ts" },
+    { kind: "changed", path: "lib/a.ts", isDir: false },
+    { kind: "removed", path: "src/deep/b.ts" },
+    { kind: "changed", path: "lib/deep/b.ts", isDir: false },
+    { kind: "removed", path: "drop.ts" },
+  ]);
+  await rm(join(root, "lib"), { recursive: true, force: true });
 });
 
 test("reads and listings answer with their result or refusal", async () => {
@@ -486,7 +548,11 @@ test("a frontmatter patch is written only while the property still holds the sho
   await writeFile(join(root, "task.md"), note);
   const notified: string[] = [];
   const r = runner({
-    index: { search: () => {}, notify: (e) => notified.push(e.path) },
+    index: {
+      search: () => {},
+      notify: (e) => notified.push(e.path),
+      moved: () => {},
+    },
   });
   r.run({
     kind: "patchFrontmatter",

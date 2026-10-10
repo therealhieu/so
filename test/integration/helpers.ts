@@ -205,6 +205,7 @@ export async function startApp(
           index: {
             search: (e) => index?.search(e),
             notify: (e) => index?.notify(e),
+            moved: (from, to) => index?.moved(from, to),
           },
         }),
   });
