@@ -528,6 +528,19 @@ test("Enter on a note that is already open focuses its window", () => {
   );
 });
 
+test("<leader>fo opens the current file in the system's default app", () => {
+  const s = openBuffer(fresh(), "page.html", "<p>hi</p>");
+  const opened = pressKeys(s, `${s.config.leader}fo`);
+  expect(opened.effects).toEqual([
+    { kind: "openUrl", url: `${s.workspace.root}/page.html` },
+  ]);
+  expect(opened.state.buffers).toEqual(s.buffers);
+  expect(
+    pressKeys(fresh(), `${s.config.leader}fo`).state.notifications.message
+      ?.text,
+  ).toBe("E32: No file name");
+});
+
 test("O opens the selected entry in the system's default app", () => {
   const entries = [
     { name: "notes", kind: "dir" as const },

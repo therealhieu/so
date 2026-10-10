@@ -22,6 +22,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<C-w>v", id: "window.vsplit" },
   { scope: { mode: "normal" }, seq: "<leader>ff", id: "file.find" },
   { scope: { mode: "normal" }, seq: "<leader>fr", id: "file.recent" },
+  { scope: { mode: "normal" }, seq: "<leader>fo", id: "file.systemOpen" },
   { scope: { mode: "normal" }, seq: "<leader>sg", id: "search.grep" },
   { scope: { mode: "normal" }, seq: "<Esc>", id: "search.clear" },
   { scope: { mode: "normal" }, seq: "<leader>st", id: "search.tags" },

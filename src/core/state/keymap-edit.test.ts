@@ -219,7 +219,7 @@ test("Enter changes a built-in binding's keys after confirming: the old keys go 
     title: "Change keys",
     value: "<leader>ff",
   });
-  const asked = keys(type(keys(open, "<BS>").state, "o"), "<CR>").state;
+  const asked = keys(type(keys(open, "<BS>").state, "p"), "<CR>").state;
   expect(prompt(asked).binding?.notice).toEqual([
     '<leader>ff stops running "Find file"',
   ]);
@@ -228,16 +228,16 @@ test("Enter changes a built-in binding's keys after confirming: the old keys go 
     kind: "writeBindings",
     edits: [
       { path: ["keys", "normal", "<leader>ff"], id: "" },
-      { path: ["keys", "normal", "<leader>fo"], id: "file.find" },
+      { path: ["keys", "normal", "<leader>fp"], id: "file.find" },
     ],
     previous: { keys: {}, filetypes: {} },
   });
-  expect(lookup(r.state, "normal", "<leader>fo")).toEqual({
+  expect(lookup(r.state, "normal", "<leader>fp")).toEqual({
     kind: "command",
     id: "file.find",
   });
   expect(lookup(r.state, "normal", "<leader>ff").kind).not.toBe("command");
-  expect(labels(r.state)).toContainEqual("<leader>fo  Find file");
+  expect(labels(r.state)).toContainEqual("<leader>fp  Find file");
 });
 
 test("new keys that take over a built-in binding ask first; your own bindings save at once", () => {

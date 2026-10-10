@@ -86,6 +86,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   jumps: "jump.list",
   help: "help.keymap",
   Settings: "settings.open",
+  Open: "file.systemOpen",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
   Today: "note.today",
@@ -350,6 +351,21 @@ const builtins: AppCommand[] = [
   },
   { id: "jump.list", title: "Jump list", run: (c) => showJumps(c.state) },
   { id: "file.find", title: "Find file", run: (c) => openPicker(c, "files") },
+  {
+    id: "file.systemOpen",
+    title: "Open file with system app",
+    run: (c) => {
+      const b = activeBuffer(c.state);
+      return b === undefined
+        ? message(c.state, "E32: No file name", "error")
+        : {
+            state: c.state,
+            effects: [
+              { kind: "openUrl", url: `${c.state.workspace.root}/${b.path}` },
+            ],
+          };
+    },
+  },
   {
     id: "file.recent",
     title: "Recent files",
