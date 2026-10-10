@@ -36,7 +36,8 @@ import {
   onIndexReady,
   onPropertyTypesLoaded,
 } from "./index";
-import { handleKeyAction, onClipboardText } from "./keys";
+import { onBindingsFailed } from "./keymap-edit";
+import { handleKeyAction, onClipboardText, onKeyTimeout } from "./keys";
 import { onEditsApplied } from "./link-edits";
 import {
   onLspApplyEdit,
@@ -192,6 +193,8 @@ export function createUpdate(reg: Registries): Update {
         return onConfigLoaded(state, action, reg);
       case "settingFailed":
         return onSettingFailed(state, action);
+      case "bindingsFailed":
+        return onBindingsFailed(state, action);
       case "indexBatch":
         return onIndexBatch(state, action);
       case "indexReady":
@@ -330,13 +333,14 @@ function withGitDiffTimers(prev: AppState, r: Result): Result {
     : { state: r.state, effects: [...r.effects, ...timers] };
 }
 
-/** A timer fired: which-key, grep, the session save, git, or a buffer or toast timer. */
+/** A timer fired: which-key, a held Insert-mode key, grep, the session save, git, or a buffer or toast timer. */
 function onTimerAction(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
   reg: Registries,
 ): Result {
   if (a.id === "whichKey") return onWhichKeyTimer(s, reg);
+  if (a.id === "keyTimeout") return onKeyTimeout(s, a.now, reg);
   if (a.id === "search") return onSearchTimer(s);
   if (a.id === "saveState")
     return {

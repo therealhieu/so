@@ -77,6 +77,7 @@ test("a valid file parses with binding lines", () => {
       "tabWidth = 4",
       "wrap = false",
       "relativeNumbers = false",
+      "keyTimeout = 300",
       "[keys.normal]",
       '"<leader>w" = "file.save"',
       "[filetypes.markdown.keys.normal]",
@@ -92,7 +93,12 @@ test("a valid file parses with binding lines", () => {
       theme: "light",
       color: "never",
       mouse: true,
-      editor: { tabWidth: 4, wrap: false, relativeNumbers: false },
+      editor: {
+        tabWidth: 4,
+        wrap: false,
+        relativeNumbers: false,
+        keyTimeout: 300,
+      },
       explorer: {
         position: "right",
         icons: "nerd",
@@ -121,13 +127,13 @@ test("a valid file parses with binding lines", () => {
       },
     },
     bindings: [
-      { mode: "normal", seq: "<leader>w", id: "file.save", line: 13 },
+      { mode: "normal", seq: "<leader>w", id: "file.save", line: 14 },
       {
         mode: "normal",
         filetype: "markdown",
         seq: "<leader>w",
         id: "link.backlinks",
-        line: 15,
+        line: 16,
       },
     ],
   });
@@ -139,6 +145,7 @@ test("an empty file gives the defaults", () => {
     tabWidth: 8,
     wrap: true,
     relativeNumbers: true,
+    keyTimeout: 1000,
   });
   expect(defaults.leader).toBe(" ");
 });

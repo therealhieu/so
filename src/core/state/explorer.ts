@@ -468,6 +468,8 @@ export function promptKey(
   if (key === "<Esc>") return none(closed);
   if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
   if (p.rename !== undefined) return renamePromptKey(s, p, key);
+  // The settings and keymap pickers handle their own prompts.
+  if (p.setting !== undefined || p.binding !== undefined) return none(s);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);
@@ -482,7 +484,7 @@ export function promptKey(
 }
 
 /** The edited value of a text prompt: `<BS>` drops a character, a printable key adds one. */
-const typed = (value: string, key: string): string =>
+export const typed = (value: string, key: string): string =>
   key === "<BS>"
     ? value.slice(0, -1)
     : [...key].length === 1

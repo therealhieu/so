@@ -14,7 +14,8 @@ export const THEME_NAMES = [
 export type ThemeName = (typeof THEME_NAMES)[number];
 
 /** `"<key-seq>" = "<command-id>"` */
-const KeyTable = z.record(z.string().min(1), z.string().min(1));
+/** Key sequence → command id or keys; `""` unbinds a built-in binding. */
+const KeyTable = z.record(z.string().min(1), z.string());
 /** Mode → key table; modes are checked against the registered bindings when applied. */
 const KeyBindingsSchema = z.record(z.string().min(1), KeyTable);
 
@@ -78,6 +79,8 @@ export const ConfigSchema = z.strictObject({
       tabWidth: z.number().int().min(1).max(16).default(8),
       wrap: z.boolean().default(true),
       relativeNumbers: z.boolean().default(true),
+      /** Milliseconds an Insert-mode binding's first keys wait for the rest. */
+      keyTimeout: z.number().int().min(50).max(10000).default(1000),
     })
     .prefault({}),
   /** The docked explorer's edge; the side panel docks on the other one. */

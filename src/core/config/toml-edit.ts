@@ -1,13 +1,18 @@
 import { type AST, parseTOML } from "toml-eslint-parser";
 import { parseConfig } from "./toml";
 
-export type SettingValue = string | boolean;
+export type SettingValue = string | boolean | number;
 export type ConfigEdit =
   | { ok: true; text: string }
   | { ok: false; reason: string };
 
-/** A key and the table it sits in, by full key path. */
-type Entry = { path: string[]; base: string[]; kv: AST.TOMLKeyValue };
+/** A key and the table it sits in, by full key path; `siblings` is the inline table holding it. */
+type Entry = {
+  path: string[];
+  base: string[];
+  kv: AST.TOMLKeyValue;
+  siblings?: readonly AST.TOMLKeyValue[];
+};
 
 const names = (key: AST.TOMLKey) =>
   key.keys.map((k) => (k.type === "TOMLBare" ? k.name : k.value));
@@ -43,6 +48,91 @@ export function setConfigValue(
 const toml = (value: SettingValue) =>
   typeof value === "string" ? JSON.stringify(value) : String(value);
 
+/** A key as TOML writes it: bare when it can be, quoted otherwise (`"<leader>w"`). */
+const keyName = (k: string) =>
+  /^[A-Za-z0-9_-]+$/.test(k) ? k : JSON.stringify(k);
+const dottedKey = (path: readonly string[]) => path.map(keyName).join(".");
+
+/**
+ * config.toml `text` without the key at `path`: its line goes, or its entry
+ * in an inline table. A missing key leaves the text as it is; a file with
+ * errors is never edited.
+ */
+export function removeConfigValue(
+  text: string,
+  path: readonly string[],
+): ConfigEdit {
+  const before = parseConfig(text);
+  if (!before.ok)
+    return {
+      ok: false,
+      reason: `config.toml:${before.errors[0]?.line ?? 1} has an error; fix it before changing settings`,
+    };
+  const hit = collect(parseTOML(text)).entries.find((e) => same(e.path, path));
+  if (hit === undefined) return { ok: true, text };
+  const next = cut(text, hit);
+  const after = parseConfig(next);
+  return after.ok && valueAt(after.config, path) === undefined
+    ? { ok: true, text: next }
+    : { ok: false, reason: "config.toml could not be updated safely" };
+}
+
+/** `text` without `hit`: its whole line, or its entry and one comma in an inline table. */
+function cut(text: string, hit: Entry): string {
+  const [from, to] = hit.kv.range;
+  const siblings = hit.siblings;
+  if (siblings !== undefined) {
+    const i = siblings.indexOf(hit.kv);
+    const next = siblings[i + 1];
+    const prev = siblings[i - 1];
+    if (next !== undefined)
+      return text.slice(0, from) + text.slice(next.range[0]);
+    if (prev !== undefined)
+      return text.slice(0, prev.range[1]) + text.slice(to);
+    return (
+      text.slice(0, from).replace(/\s*$/, " ") +
+      text.slice(to).replace(/^\s*/, "")
+    );
+  }
+  const start = text.lastIndexOf("\n", from - 1) + 1;
+  const nl = text.indexOf("\n", to);
+  return text.slice(0, start) + (nl < 0 ? "" : text.slice(nl + 1));
+}
+
+/** Every key with its full path, the tables, and the top-level keys. */
+function collect(ast: AST.TOMLProgram) {
+  const entries: Entry[] = [];
+  const tables: AST.TOMLTable[] = [];
+  const topLevel: AST.TOMLKeyValue[] = [];
+  const visit = (
+    base: string[],
+    scope: string[],
+    kv: AST.TOMLKeyValue,
+    siblings?: readonly AST.TOMLKeyValue[],
+  ) => {
+    const full = [...base, ...names(kv.key)];
+    entries.push(
+      siblings === undefined
+        ? { path: full, base: scope, kv }
+        : { path: full, base: scope, kv, siblings },
+    );
+    if (kv.value.type === "TOMLInlineTable") {
+      const body = kv.value.body;
+      for (const child of body) visit(full, full, child, body);
+    }
+  };
+  for (const node of ast.body[0].body)
+    if (node.type === "TOMLKeyValue") {
+      topLevel.push(node);
+      visit([], [], node);
+    } else {
+      tables.push(node);
+      const key = node.resolvedKey.map(String);
+      for (const kv of node.body) visit(key, key, kv);
+    }
+  return { entries, tables, topLevel };
+}
+
 function valueAt(config: unknown, path: readonly string[]): unknown {
   let at = config;
   for (const k of path)
@@ -54,26 +144,8 @@ function valueAt(config: unknown, path: readonly string[]): unknown {
 }
 
 function edit(text: string, path: readonly string[], literal: string): string {
-  const ast = parseTOML(text);
   const eol = text.includes("\r\n") ? "\r\n" : "\n";
-  const entries: Entry[] = [];
-  const tables: AST.TOMLTable[] = [];
-  const topLevel: AST.TOMLKeyValue[] = [];
-  const visit = (base: string[], scope: string[], kv: AST.TOMLKeyValue) => {
-    const full = [...base, ...names(kv.key)];
-    entries.push({ path: full, base: scope, kv });
-    if (kv.value.type === "TOMLInlineTable")
-      for (const child of kv.value.body) visit(full, full, child);
-  };
-  for (const node of ast.body[0].body)
-    if (node.type === "TOMLKeyValue") {
-      topLevel.push(node);
-      visit([], [], node);
-    } else {
-      tables.push(node);
-      const key = node.resolvedKey.map(String);
-      for (const kv of node.body) visit(key, key, kv);
-    }
+  const { entries, tables, topLevel } = collect(parseTOML(text));
 
   const splice = (at: number, end: number, s: string) =>
     text.slice(0, at) + s + text.slice(end);
@@ -90,7 +162,7 @@ function edit(text: string, path: readonly string[], literal: string): string {
 
   const section = path.slice(0, -1);
   const key = path.at(-1) ?? "";
-  const line = `${key} = ${literal}`;
+  const line = `${keyName(key)} = ${literal}`;
   if (section.length === 0) {
     const last = topLevel.at(-1);
     if (last !== undefined) return lineAfter(last.range[1], line);
@@ -122,10 +194,10 @@ function edit(text: string, path: readonly string[], literal: string): string {
   if (sibling !== undefined)
     return lineAfter(
       sibling.kv.range[1],
-      `${path.slice(sibling.base.length).join(".")} = ${literal}`,
+      `${dottedKey(path.slice(sibling.base.length))} = ${literal}`,
     );
 
   const head = text === "" || text.endsWith("\n") ? text : `${text}${eol}`;
   const gap = head.trim() === "" ? "" : eol;
-  return `${head}${gap}[${section.join(".")}]${eol}${line}${eol}`;
+  return `${head}${gap}[${dottedKey(section)}]${eol}${line}${eol}`;
 }

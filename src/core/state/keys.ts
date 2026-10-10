@@ -3,7 +3,7 @@ import type { Command } from "../kernel/commands/registry";
 import type { Register } from "../kernel/editor/registers";
 import { handleKey } from "../kernel/vim/engine";
 import { exCompletions } from "../kernel/vim/ex";
-import type { Key } from "../kernel/vim/keys";
+import { type Key, splitKeys } from "../kernel/vim/keys";
 import { searchError } from "../kernel/vim/search";
 import type { VimEffect, VimEnv, VimState } from "../kernel/vim/types";
 import { cellEditKey, editingCell } from "./base-commands";
@@ -27,12 +27,14 @@ import { completionKey, maybeCompletion } from "./completion";
 import { resolveConflict } from "./disk";
 import { promptKey } from "./explorer";
 import { pushJump } from "./jumps";
-import { keymapFor, keyScope } from "./keymap";
+import { isKeySequence, keymapFor, keyScope } from "./keymap";
+import { bindingPromptKey } from "./keymap-edit";
 import { bodyRows } from "./layout";
 import { withoutFloat } from "./lsp";
-import { pickerKey } from "./picker";
+import { pickerKey, refreshPicker } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
+import { settingPromptKey } from "./settings";
 import { panelFocused, sidePanelKey } from "./side-panel";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
@@ -76,8 +78,16 @@ function routeKey(
   switch (s.overlay.kind) {
     case "conflict":
       return conflictKey(s, a, reg);
-    case "prompt":
-      return promptKey(s, a.key, a.now, reg);
+    case "prompt": {
+      const p = s.overlay.prompt;
+      if (p.binding !== undefined)
+        return chain(bindingPromptKey(s, p, a.key, reg), (st) =>
+          refreshPicker(st, reg, "help"),
+        );
+      return p.setting === undefined
+        ? promptKey(s, a.key, a.now, reg)
+        : settingPromptKey(s, p, a.key);
+    }
     case "whichKey":
       return (
         whichKeyKey(s, a, reg) ??
@@ -123,10 +133,38 @@ function bindingOrVim(
   const keymap = keymapFor(reg, s.config);
   const seq = [...s.vim.pending, a.key];
   const hit = keymap.lookup(scope, seq);
-  if (hit.kind === "command")
-    return runCommand(setVim(s, { pending: [] }), hit.id, a.now, reg);
+  // Insert mode holds a binding's first keys back from the text until it completes or misses.
+  const held = mode === "insert" ? s.vim.pending : [];
+  if (hit.kind === "command") {
+    const r = runBinding(setVim(s, { pending: [] }), hit.id, a.now, reg);
+    return held.length === 0
+      ? r
+      : { ...r, effects: [CANCEL_KEY_TIMEOUT, ...r.effects] };
+  }
   if (hit.kind === "prefix")
-    return armWhichKey(setVim(s, { pending: seq }), scope);
+    return mode === "insert"
+      ? {
+          state: setVim(s, { pending: seq }),
+          effects: [
+            {
+              kind: "startTimer",
+              id: "keyTimeout",
+              ms: s.config.editor.keyTimeout,
+            },
+          ],
+        }
+      : armWhichKey(setVim(s, { pending: seq }), scope);
+  if (held.length > 0)
+    return chain(
+      {
+        state: setVim(s, { pending: [] }),
+        effects: [CANCEL_KEY_TIMEOUT],
+      },
+      (st) =>
+        chain(typeKeys(st, held, a.now, reg), (typed) =>
+          bindingOrVim(typed, a, reg),
+        ),
+    );
   // A leader prefix has no vim meaning, so its unbound continuation stops here.
   if (
     s.vim.pending[0] === s.config.leader &&
@@ -145,6 +183,45 @@ function bindingOrVim(
   )
     return none(setVim(s, { pending: [] }));
   return runVim(s, a.key, a.now, reg);
+}
+
+const CANCEL_KEY_TIMEOUT = { kind: "cancelTimer", id: "keyTimeout" } as const;
+
+/** Whether keys typed now reach the vim engine: a text window has focus. */
+function engineFocused(s: AppState): boolean {
+  return (
+    !s.panels.explorer.focused &&
+    !panelFocused(s) &&
+    activeBuffer(s) !== undefined &&
+    activeWindow(s)?.content.editor === "text"
+  );
+}
+
+/** A bound key sequence types its keys into the engine, past the keymap; any other id runs its command. */
+function runBinding(
+  s: AppState,
+  id: string,
+  now: number,
+  reg: Registries,
+): Result {
+  if (!isKeySequence(id)) return runCommand(s, id, now, reg);
+  return engineFocused(s)
+    ? typeKeys(s, splitKeys(id, s.config.leader), now, reg)
+    : none(s);
+}
+
+/** The held start of an Insert-mode binding waited too long: it is typed as text. */
+export function onKeyTimeout(
+  s: AppState,
+  now: number,
+  reg: Registries,
+): Result {
+  const held = s.vim.pending;
+  if (s.vim.mode !== "insert" || held.length === 0) return none(s);
+  const cleared = setVim(s, { pending: [] });
+  return s.overlay.kind === "none" || s.overlay.kind === "completion"
+    ? typeKeys(cleared, held, now, reg)
+    : none(cleared);
 }
 
 /** `k` keep, `t` take, `d` toggle the diff, `q` back from the diff; other keys wait. */

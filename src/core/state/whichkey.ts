@@ -2,7 +2,7 @@ import type { KeyScope } from "../kernel/commands/keymap";
 import { type Key, splitKeys } from "../kernel/vim/keys";
 import { parseKeys } from "../kernel/vim/parser";
 import { runCommand } from "./commands";
-import { keymapFor, keyScope } from "./keymap";
+import { isKeySequence, keymapFor, keyScope } from "./keymap";
 import { message, none } from "./result";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -100,6 +100,8 @@ export function whichKeyKey(
   }
   const seq = [...prefix, a.key];
   const hit = keymapFor(reg, s.config).lookup(scope, seq);
+  // A bound key sequence goes back to the keymap, which types it into the engine.
+  if (hit.kind === "command" && isKeySequence(hit.id)) return undefined;
   if (hit.kind === "command") return runCommand(close(s), hit.id, a.now, reg);
   if (hit.kind === "prefix")
     return none({
@@ -148,7 +150,9 @@ export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
     if (item.id !== undefined)
       return {
         key: item.key,
-        label: reg.commands.get(item.id)?.title ?? item.id,
+        label: isKeySequence(item.id)
+          ? `→ ${item.id}`
+          : (reg.commands.get(item.id)?.title ?? item.id),
         group: false,
       };
     const label = groups.get([...prefix, item.key].join("\u0000")) ?? "…";

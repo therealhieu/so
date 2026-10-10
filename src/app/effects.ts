@@ -1,7 +1,7 @@
 import { lstat, mkdir, readdir } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { parseConfig } from "../core/config/toml";
-import { setConfigValue } from "../core/config/toml-edit";
+import { removeConfigValue, setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
 import { expandTemplate } from "../core/features/notes/template";
 import {
@@ -146,6 +146,20 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     if (!edit.ok) throw new Error(edit.reason);
     await mkdir(dirname(d.configPath), { recursive: true });
     await atomicWrite(d.configPath, edit.text);
+  }
+  /** Set or remove key bindings in config.toml with one write. */
+  async function writeBindings(e: Extract<Effect, { kind: "writeBindings" }>) {
+    let text = (await readConfigText(d.configPath)) ?? "";
+    for (const b of e.edits) {
+      const edit =
+        b.id === undefined
+          ? removeConfigValue(text, b.path)
+          : setConfigValue(text, b.path, b.id);
+      if (!edit.ok) throw new Error(edit.reason);
+      text = edit.text;
+    }
+    await mkdir(dirname(d.configPath), { recursive: true });
+    await atomicWrite(d.configPath, text);
   }
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
@@ -684,6 +698,18 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "lspReply":
       case "lspRestart":
         d.lsp?.run(e);
+        return;
+      case "writeBindings":
+        settingWrites = settingWrites
+          .then(() => writeBindings(e))
+          .catch((x) => {
+            d.logger.error("config.writeFailed", { reason: msg(x) });
+            d.dispatch({
+              type: "bindingsFailed",
+              previous: e.previous,
+              reason: msg(x),
+            });
+          });
         return;
       case "writeSetting":
         settingWrites = settingWrites

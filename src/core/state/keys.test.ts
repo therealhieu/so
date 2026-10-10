@@ -448,3 +448,104 @@ test("every note binding is scoped to markdown", () => {
   for (const id of new Set(linkBindings.map((b) => b.id)))
     expect(reg.commands.get(id)).toBeDefined();
 });
+
+function withConfig(...lines: string[]): AppState {
+  return update(fresh(), {
+    type: "configLoaded",
+    result: parseConfig(lines.join("\n")),
+    reload: false,
+  }).state;
+}
+const JJ = withConfig("[keys.insert]", 'jj = "<Esc>"');
+const keyTimeout = (s: AppState) =>
+  update(s, { type: "timer", id: "keyTimeout", now: 0 });
+
+test("jj bound to <Esc> leaves Insert like Esc, for undo and repeat too", () => {
+  const s = open("a.txt", "\n", JJ);
+  const left = keys(s, "iabjj");
+  expect(left.state.vim.mode).toBe("normal");
+  expect(left.state.vim.pending).toEqual([]);
+  expect(textOf(left.state)).toBe("ab");
+  expect(cursorOf(left.state)).toEqual({ line: 0, col: 1 });
+  expect(left.state.overlay.kind).toBe("none");
+  expect(left.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "keyTimeout",
+  });
+  const esc = keys(s, "iab<Esc>").state;
+  expect(textOf(keys(left.state, ".").state)).toBe(
+    textOf(keys(esc, ".").state),
+  );
+  expect(textOf(keys(left.state, "u").state)).toBe("");
+});
+
+test("a held j waits without a popup, and is typed when the next key misses", () => {
+  const s = open("a.txt", "\n", JJ);
+  const held = keys(s, "ij");
+  expect(textOf(held.state)).toBe("");
+  expect(held.state.vim.pending).toEqual(["j"]);
+  expect(held.effects).toContainEqual({
+    kind: "startTimer",
+    id: "keyTimeout",
+    ms: 1000,
+  });
+  expect(
+    held.effects.some((e) => e.kind === "startTimer" && e.id === "whichKey"),
+  ).toBe(false);
+  const missed = keys(held.state, "x");
+  expect(textOf(missed.state)).toBe("jx");
+  expect(missed.state.vim).toMatchObject({ mode: "insert", pending: [] });
+  expect(missed.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "keyTimeout",
+  });
+});
+
+test("the key after a miss can start the binding again", () => {
+  const s = open("a.txt", "\n", JJ);
+  const r = keys(s, "ikjj");
+  expect(textOf(r.state)).toBe("k");
+  expect(r.state.vim.mode).toBe("normal");
+  const again = keys(s, "ijxjj");
+  expect(textOf(again.state)).toBe("jx");
+  expect(again.state.vim.mode).toBe("normal");
+});
+
+test("a held j is typed when the key timeout fires, and Esc after it still leaves", () => {
+  const s = open("a.txt", "\n", JJ);
+  const timedOut = keyTimeout(keys(s, "ij").state).state;
+  expect(textOf(timedOut)).toBe("j");
+  expect(timedOut.vim).toMatchObject({ mode: "insert", pending: [] });
+
+  const escaped = keys(s, "ij<Esc>").state;
+  expect(textOf(escaped)).toBe("j");
+  expect(escaped.vim).toMatchObject({ mode: "normal", pending: [] });
+});
+
+test("a key timeout outside Insert leaves pending keys alone", () => {
+  const s = keys(open("a.txt", "a\nb\n", JJ), "g").state;
+  expect(keyTimeout(s).state.vim.pending).toEqual(["g"]);
+});
+
+test("the key timeout follows editor.keyTimeout", () => {
+  const s = open(
+    "a.txt",
+    "\n",
+    withConfig("[editor]", "keyTimeout = 250", "[keys.insert]", 'jk = "<Esc>"'),
+  );
+  expect(keys(s, "ij").effects).toContainEqual({
+    kind: "startTimer",
+    id: "keyTimeout",
+    ms: 250,
+  });
+  expect(keys(s, "ijk").state.vim.mode).toBe("normal");
+});
+
+test("a Normal-mode key sequence binding types its keys", () => {
+  const s = open(
+    "a.txt",
+    "hello\n",
+    withConfig("[keys.normal]", 'U = "<C-r>"'),
+  );
+  expect(textOf(keys(s, "xuU").state)).toBe("ello");
+});

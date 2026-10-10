@@ -216,3 +216,33 @@ test("the explorer's leader popup lists Normal mode's leader keys too", () => {
     "jump list is empty",
   );
 });
+
+test("a bound key sequence shows its keys in the popup and types them when chosen", () => {
+  const withKeys: Registries = {
+    ...base,
+    bindings: [
+      ...base.bindings,
+      { scope: { mode: "normal" }, seq: "<leader>zd", id: "<C-d>" },
+    ],
+  };
+  const u = createUpdate(withKeys);
+  let s = u(fresh(), {
+    type: "fileLoaded",
+    path: "a.txt",
+    file: textFile(`${"line\n".repeat(80)}`),
+  }).state;
+  for (const key of splitKeys("<leader>z"))
+    s = u(s, { type: "key", key, now: 0 }).state;
+  s = u(s, TIMER).state;
+  expect(whichKeyRows(s, withKeys)).toContainEqual({
+    key: "d",
+    label: "→ <C-d>",
+    group: false,
+  });
+  s = u(s, { type: "key", key: "d", now: 0 }).state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.vim.pending).toEqual([]);
+  expect(s.windows.byId[s.windows.active]?.content.cursor.line).toBeGreaterThan(
+    0,
+  );
+});

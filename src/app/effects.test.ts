@@ -483,6 +483,48 @@ test("writeSetting edits config.toml in order, creating it and its folder", asyn
   expect(r.actions).toEqual([]);
 });
 
+test("writeBindings applies every edit in one write; a failure reports the previous keymaps", async () => {
+  const configPath = join(root, "keys", "config.toml");
+  await mkdir(join(root, "keys"), { recursive: true });
+  await writeFile(configPath, '[keys.insert]\nkj = "<Esc>"\n');
+  const r = runner({ configPath });
+  r.run({
+    kind: "writeBindings",
+    edits: [
+      { path: ["keys", "insert", "kj"] },
+      { path: ["keys", "insert", "jj"], id: "<Esc>" },
+      { path: ["keys", "normal", "<leader>ff"], id: "" },
+    ],
+    previous: { keys: {}, filetypes: {} },
+  });
+  const until = performance.now() + 3000;
+  let text = "";
+  while (performance.now() < until) {
+    text = await readFile(configPath, "utf8");
+    if (text.includes("<leader>ff")) break;
+    await Bun.sleep(5);
+  }
+  expect(text).toBe(
+    '[keys.insert]\njj = "<Esc>"\n\n[keys.normal]\n"<leader>ff" = ""\n',
+  );
+
+  await writeFile(configPath, '[explorer]\nposition = "up"\n');
+  const previous = { keys: { insert: { jj: "<Esc>" } }, filetypes: {} };
+  r.run({
+    kind: "writeBindings",
+    edits: [{ path: ["keys", "insert", "kk"], id: "<Esc>" }],
+    previous,
+  });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions).toEqual([
+    {
+      type: "bindingsFailed",
+      previous,
+      reason: "config.toml:2 has an error; fix it before changing settings",
+    },
+  ]);
+});
+
 test("writeSetting leaves a broken config.toml alone and reports why", async () => {
   const configPath = join(root, "broken.toml");
   await writeFile(configPath, '[explorer]\nposition = "up"\n');

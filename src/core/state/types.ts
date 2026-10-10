@@ -80,6 +80,7 @@ export type TimerId =
   | `retry:${BufferId}`
   | `toast:${number}`
   | "whichKey"
+  | "keyTimeout"
   | "saveState"
   | "search"
   | "completion"
@@ -199,12 +200,16 @@ export type ExplorerPrompt = PromptBase & {
   op: FsOp;
   newNote?: never;
   rename?: never;
+  setting?: never;
+  binding?: never;
 };
 /** A new note's title, before its template is chosen. */
 type NewNotePrompt = PromptBase & {
   newNote: true;
   op?: never;
   rename?: never;
+  setting?: never;
+  binding?: never;
 };
 /** A new name for the symbol `name` at `pos`, asked of the server `key`. */
 type RenamePrompt = PromptBase & {
@@ -217,8 +222,50 @@ type RenamePrompt = PromptBase & {
   };
   op?: never;
   newNote?: never;
+  setting?: never;
+  binding?: never;
 };
-export type PromptState = ExplorerPrompt | NewNotePrompt | RenamePrompt;
+/** A typed value for the setting at `path`; the settings `picker` comes back after it. */
+type SettingPrompt = PromptBase & {
+  setting: { path: string[]; picker: PickerState };
+  op?: never;
+  newNote?: never;
+  rename?: never;
+  binding?: never;
+};
+/**
+ * One step of editing a key binding in the keymap `picker`, which comes back
+ * after it. Adding asks the mode, then the keys, then what they run;
+ * changing asks only the keys, and unbinds `from`. A change to a built-in
+ * binding waits for `y` at a `confirm` step.
+ */
+type BindingPrompt = PromptBase & {
+  binding: {
+    step: "mode" | "keys" | "target" | "confirm";
+    mode: string;
+    filetype?: string;
+    /** The keys being replaced, when changing a binding. */
+    from?: string;
+    seq?: string;
+    /** What the keys run: a command id or a key sequence. */
+    id?: string;
+    /** Confirming: the table changes waiting for `y`, what they do to built-in bindings, and the message after. */
+    entries?: { seq: string; id?: string }[];
+    notice?: string[];
+    done?: string;
+    picker: PickerState;
+  };
+  op?: never;
+  newNote?: never;
+  rename?: never;
+  setting?: never;
+};
+export type PromptState =
+  | ExplorerPrompt
+  | NewNotePrompt
+  | RenamePrompt
+  | SettingPrompt
+  | BindingPrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {
@@ -597,6 +644,11 @@ export type Action =
   | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
   | {
+      type: "bindingsFailed";
+      previous: Pick<AppConfig, "keys" | "filetypes">;
+      reason: string;
+    }
+  | {
       type: "settingFailed";
       path: string[];
       previous: SettingValue;
@@ -741,6 +793,15 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
+  /**
+   * Set or (`id` undefined) remove key bindings in config.toml in one write;
+   * the `previous` keymaps are restored if it fails.
+   */
+  | {
+      kind: "writeBindings";
+      edits: { path: string[]; id?: string }[];
+      previous: Pick<AppConfig, "keys" | "filetypes">;
+    }
   /** Write one config.toml value; `previous` is restored if the write fails. */
   | {
       kind: "writeSetting";

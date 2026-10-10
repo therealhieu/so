@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { setConfigValue } from "./toml-edit";
+import { removeConfigValue, setConfigValue } from "./toml-edit";
 
 const set = (text: string, path: string[], value: string | boolean) => {
   const r = setConfigValue(text, path, value);
@@ -82,4 +82,64 @@ test("a file with errors is never edited", () => {
     reason: "config.toml:2 has an error; fix it before changing settings",
   });
   expect(setConfigValue("[explorer\n", ["theme"], "light").ok).toBe(false);
+});
+
+test("a number is written as a TOML integer", () => {
+  expect(
+    setConfigValue("[editor]\nwrap = true\n", ["editor", "keyTimeout"], 300),
+  ).toEqual({
+    ok: true,
+    text: "[editor]\nwrap = true\nkeyTimeout = 300\n",
+  });
+});
+
+const remove = (text: string, path: string[]) => {
+  const r = removeConfigValue(text, path);
+  if (!r.ok) throw new Error(r.reason);
+  return r.text;
+};
+
+test("a key that is not a bare TOML key is written quoted, in its table and in a new one", () => {
+  expect(set("", ["keys", "normal", "<leader>w"], "file.save")).toBe(
+    '[keys.normal]\n"<leader>w" = "file.save"\n',
+  );
+  expect(
+    set('[keys.insert]\njj = "<Esc>"\n', ["keys", "insert", "<C-s>"], ""),
+  ).toBe('[keys.insert]\njj = "<Esc>"\n"<C-s>" = ""\n');
+  expect(
+    set("", ["filetypes", "markdown", "keys", "normal", "gd"], "link.follow"),
+  ).toBe('[filetypes.markdown.keys.normal]\ngd = "link.follow"\n');
+});
+
+test("removing a key drops its line and keeps the rest", () => {
+  const text =
+    '# keys\n[keys.insert]\njj = "<Esc>"  # escape\n"<C-s>" = "file.save"\n\n[editor]\nwrap = false\n';
+  expect(remove(text, ["keys", "insert", "jj"])).toBe(
+    '# keys\n[keys.insert]\n"<C-s>" = "file.save"\n\n[editor]\nwrap = false\n',
+  );
+  expect(remove(text, ["keys", "insert", "<C-s>"])).toBe(
+    '# keys\n[keys.insert]\njj = "<Esc>"  # escape\n\n[editor]\nwrap = false\n',
+  );
+  expect(remove(text, ["keys", "insert", "kk"])).toBe(text);
+});
+
+test("removing a key from an inline table keeps the table valid", () => {
+  const text = 'keys = { insert = { jj = "<Esc>", kj = "<Esc>" } }\n';
+  expect(remove(text, ["keys", "insert", "jj"])).toBe(
+    'keys = { insert = { kj = "<Esc>" } }\n',
+  );
+  expect(remove(text, ["keys", "insert", "kj"])).toBe(
+    'keys = { insert = { jj = "<Esc>" } }\n',
+  );
+  expect(
+    remove('keys = { insert = { jj = "<Esc>" } }\n', ["keys", "insert", "jj"]),
+  ).toBe("keys = { insert = { } }\n");
+});
+
+test("a broken config.toml is never edited by a removal", () => {
+  const r = removeConfigValue('[explorer]\nposition = "up"\n', ["theme"]);
+  expect(r).toEqual({
+    ok: false,
+    reason: "config.toml:2 has an error; fix it before changing settings",
+  });
 });

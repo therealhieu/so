@@ -171,6 +171,25 @@ describe("in a note", () => {
     ).toBe("link.followOrTag  markdown");
   });
 
+  test("the keymap asks before switching off a built-in binding and shows how to undo it", async () => {
+    m = await opened("notes/plan.md");
+    m.keys("<leader>?");
+    m.keys("Find file");
+    const listed = await m.frame();
+    expect(listed).toContain("C-a add");
+    expect(listed).toContain("C-r restore");
+    expect(listed).toContain("C-x unbind");
+    m.keys("<C-x>");
+    const asked = await m.frame();
+    expect(asked).toContain("Change built-in keys?");
+    expect(asked).toContain('<leader>ff stops running "Find file"');
+    expect(asked).toContain("press C-r");
+    expect(asked).toContain("y change");
+    m.keys("y");
+    const off = await m.frame();
+    expect(off).toMatch(/<leader>ff {2}Find file +file\.find {2}off/);
+  });
+
   test("a picker resized to 80×24 drops its preview pane", async () => {
     m = await opened("notes/plan.md");
     m.keys("<leader>ff");
