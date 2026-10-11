@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Action, Effect, RepoInfo } from "../core/state/types";
+import { localDateTime } from "../core/time/local";
 import { atomicWrite } from "../workspace/fs";
 import type { Git } from "../workspace/git";
 import type { GitWatcher } from "../workspace/git-watcher";
@@ -216,6 +217,40 @@ test("a created file is sent to the index; a failed create or a folder is not", 
     true,
   ]);
   expect(events).toEqual([{ kind: "changed", path: "made.csv", isDir: false }]);
+});
+
+test("a new note with frontmatter is written with it once, indexed, and answered with its text", async () => {
+  await mkdir(join(root, "rows"), { recursive: true });
+  const events: unknown[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => events.push(e), moved: () => {} },
+  });
+  const note = {
+    kind: "createNote" as const,
+    path: "rows/new.md",
+    vars: { title: "new", at: localDateTime(0) },
+    frontmatter: { status: "todo", tags: ["reading"] },
+    after: "insert" as const,
+    reason: "row" as const,
+  };
+  r.run(note);
+  r.run({ ...note, frontmatter: { status: "other" } });
+  await waitFor(() => r.actions.length === 2);
+  const text = "---\nstatus: todo\ntags:\n  - reading\n---\n";
+  expect(await readFile(join(root, "rows/new.md"), "utf8")).toBe(text);
+  expect(r.actions[0]).toMatchObject({
+    type: "noteCreated",
+    path: "rows/new.md",
+    outcome: "created",
+    reason: "row",
+    text,
+  });
+  expect(r.actions[1]).toMatchObject({ outcome: "exists" });
+  expect(r.actions[1]).not.toHaveProperty("text");
+  expect(events).toEqual([
+    { kind: "changed", path: "rows/new.md", isDir: false },
+  ]);
+  await rm(join(root, "rows"), { recursive: true, force: true });
 });
 
 test("a finished rename or move moves the index paths; a finished trash removes them", async () => {

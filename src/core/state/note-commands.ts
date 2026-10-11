@@ -9,6 +9,7 @@ import type { Binding } from "../kernel/commands/defaults";
 import type { Command } from "../kernel/commands/registry";
 import type { Pos } from "../kernel/text/pos";
 import {
+  type FrontmatterValue,
   mergeFrontmatter,
   splitFrontmatter,
 } from "../lang/markdown/frontmatter-patch";
@@ -18,6 +19,7 @@ import {
   localDateTime,
   withDate,
 } from "../time/local";
+import { baseWindow, setBaseWindow } from "./base-model";
 import {
   activeBuffer,
   activeWindow,
@@ -30,9 +32,10 @@ import {
 } from "./buffers";
 import { openCalendar } from "./calendar";
 import type { CommandContext, CommandResult } from "./commands";
+import { summarizeWritten } from "./index";
 import { noteTitle, openPicker } from "./picker";
 import { chain, message, none, toast } from "./result";
-import type { Action, AppState, Result, TextFile } from "./types";
+import type { Action, AppState, Result, TextFile, WindowId } from "./types";
 import type { Registries } from "./update";
 
 type AppCommand = Command<CommandContext, CommandResult>;
@@ -112,8 +115,13 @@ export function onNoteCreated(
       "error",
       `cannot create ${a.path}: ${a.failure ?? "error"}`,
     );
-  if (a.outcome === "exists" && a.reason === "new")
+  if (a.outcome === "exists" && a.reason !== "daily")
     return toast(s, "error", `E13: File exists (${a.path})`);
+  if (a.reason === "row") {
+    const indexed =
+      a.text === undefined ? s : summarizeWritten(s, a.path, a.text, a.stamp);
+    return createdToasts(indexed, a);
+  }
   const notified = a.outcome === "created" ? createdToasts(s, a) : none(s);
   return chain(notified, (st) =>
     openPath(st, a.path, now, { after: a.after, reg }),
@@ -217,6 +225,36 @@ export function startNewNote(c: CommandContext): Result {
       prompt: { kind: "input", title: "New note", value: "", newNote: true },
     },
   });
+}
+
+/**
+ * A base row's name is valid: create the note blank with `row.properties`,
+ * and focus it in base window `row.window` once the base shows it.
+ */
+export function submitNewRow(
+  s: AppState,
+  path: string,
+  row: { window: WindowId; properties: Record<string, FrontmatterValue> },
+  now: number,
+): Result {
+  const ws = baseWindow(s, row.window);
+  const state =
+    ws === undefined
+      ? s
+      : setBaseWindow(s, row.window, { ...ws, focus: { ...ws.focus, path } });
+  return {
+    state,
+    effects: [
+      {
+        kind: "createNote",
+        path,
+        vars: { title: noteTitle(path), at: localDateTime(now) },
+        frontmatter: row.properties,
+        after: "insert",
+        reason: "row",
+      },
+    ],
+  };
 }
 
 /** The title is valid: choose the new note's template, "(blank note)" first. */

@@ -1,5 +1,7 @@
 import { pinKeys } from "../features/bases/evaluator";
 import type { BaseWindowState, CellEdit } from "../features/bases/file-type";
+import { newNoteSeed } from "../features/bases/new-note";
+import { parseBase } from "../features/bases/parser";
 import {
   type PropertyType,
   propertyType,
@@ -20,7 +22,7 @@ import {
   setBaseWindow,
 } from "./base-model";
 import { writeProperty } from "./base-write";
-import { openPath } from "./buffers";
+import { fullText, openPath } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { recordJump } from "./jumps";
 import { openPicker } from "./picker";
@@ -475,6 +477,67 @@ function openFocused(c: CommandContext): Result {
 /** Open the focused row's or card's note, as `<CR>` does. */
 export const openBaseFocused = openFocused;
 
+/** The focused lane of a board, or the focused row's group of a grouped table. */
+function focusedGroup(
+  a: Active,
+  groupBy: string | undefined,
+): { property: string; key: FrontmatterValue } | undefined {
+  const { board, table, focus } = a.m;
+  if (board !== undefined) {
+    const lane = board.lanes[focus.lane];
+    return board.movable && lane !== undefined
+      ? { property: board.property, key: lane.key }
+      : undefined;
+  }
+  const g = table?.groups.find(
+    (x) => focus.row >= x.start && focus.row < x.start + x.count,
+  );
+  return a.m.grouped && g !== undefined && groupBy !== undefined
+    ? { property: groupBy, key: g.key }
+    : undefined;
+}
+
+/**
+ * `o`: ask for a new note's name, prefilled with the folder the view's
+ * filters ask for, to create it blank with the properties that make it a
+ * row here (see `newNoteSeed`).
+ */
+function newRow(c: CommandContext): Result {
+  const a = active(c);
+  if (a === undefined) return none(c.state);
+  const w = a.s.windows.byId[a.id];
+  const b = w && a.s.buffers[w.content.bufferId];
+  if (b === undefined) return none(a.s);
+  const parsed = parseBase(fullText(b.text));
+  if (!parsed.ok) return toast(a.s, "error", "the base file is not valid YAML");
+  const view =
+    parsed.base.views.find((v) => v.name === a.m.selected) ??
+    parsed.base.views[0];
+  const group = focusedGroup(a, view?.groupBy?.property);
+  const seed = newNoteSeed({
+    base: parsed.base,
+    view,
+    viewFilters: a.ws.filtered !== false,
+    basePath: b.path,
+    ...(a.ws.pins === undefined ? {} : { pins: a.ws.pins }),
+    ...(group === undefined ? {} : { group }),
+    types: a.s.index.types,
+  });
+  return none({
+    ...a.s,
+    overlay: {
+      kind: "prompt",
+      prompt: {
+        kind: "input",
+        title: "New row",
+        value: seed.folder === "" ? "" : `${seed.folder}/`,
+        newNote: true,
+        row: { window: a.id, properties: seed.properties },
+      },
+    },
+  });
+}
+
 const BASE = ["base"] as const;
 const cmd = (
   id: string,
@@ -511,6 +574,7 @@ export const baseCommands: readonly BaseCommand[] = [
     moveCard(c, 1),
   ),
   cmd("base.open", "Open the focused note", openFocused),
+  cmd("base.newRow", "New note in this view", newRow),
   cmd("base.wider", "Widen the focused column", (c) => stepWidth(c, 1)),
   cmd("base.narrower", "Narrow the focused column", (c) => stepWidth(c, -1)),
   cmd("base.resetWidth", "Return the focused column to its width", (c) => {
@@ -543,6 +607,7 @@ const KEYS: readonly (readonly [string, string])[] = [
   ["H", "base.moveLeft"],
   ["L", "base.moveRight"],
   ["<CR>", "base.open"],
+  ["o", "base.newRow"],
   [">", "base.wider"],
   ["<lt>", "base.narrower"],
   ["=", "base.resetWidth"],

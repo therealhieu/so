@@ -23,7 +23,7 @@ exports[`base table matches the colour golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f  Status: doing 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -51,7 +51,7 @@ exports[`base table matches the NO_COLOR golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f  Status: doing 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -79,7 +79,7 @@ exports[`base table matches the light golden with a focused cell 1`] = `
                                                                                 
    ────────────────┴────────┴────────────┴─────                                 
  Σ                            2026-10-01   1                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filt Status: doing 
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f  Status: doing 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -107,8 +107,64 @@ exports[`base table resized columns keep their widths and cut longer text 1`] = 
                                                                                 
    ────────────────────────┴─────┴────────────┴─────                            
  Σ                                 2026-10-01   1                               
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ 
  BASE  tasks.base                                                           1:1 
+"
+`;
+
+exports[`base table a wide table pins the note name and scrolls the columns after it 1`] = `
+"▎ wide.base                                                                     
+ ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                 │ status                         │ due         +4 cols ›
+   ─────────────────────┼────────────────────────────────┼───────────           
+▌  inbox.md             │ —                              │ 2026-10-08           
+   review-pr.md         │ doing                          │ 2026-10-03           
+   ship-release.md      │ done                           │ 2026-10-01           
+   write-report.md      │ todo                           │ 2026-10-05           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · H/L scroll · i edit · o new · x toggle · s sort · g group · f / 
+ BASE  wide.base                                                            1:1 
+"
+`;
+
+exports[`base table a wide table pins the note name and scrolls the columns after it 2`] = `
+"▎ wide.base                                                                     
+ ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                 ‹ +1  │ due                                    +3 cols ›
+   ───────────────────────────┼───────────────────────────────                  
+▌  inbox.md                   │ 2026-10-08                                      
+   review-pr.md               │ 2026-10-03                                      
+   ship-release.md            │ 2026-10-01                                      
+   write-report.md            │ 2026-10-05                                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · H/L scroll · i edit · o new · x toggle · s sort · g group · f / 
+ BASE  wide.base                                                            1:1 
 "
 `;
 
@@ -191,7 +247,7 @@ exports[`base filters the filter input sits on the last row with its caret, and 
                                                                                                                         
    ─────────────┴────────┴────────────┴─────                                                                            
  Σ                         2026-10-03   0                                                                               
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open   pinned Status = doing (this window only) 
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter ·  pinned Status = doing (this window only) 
  BASE  base  tasks.base                                                                                preview off  1:1 
 "
 `;
@@ -219,7 +275,7 @@ exports[`base filters filters that hide every row say how to clear them 1`] = `
                                                                                 
    ─────┴────────┴───────┴─────                                                 
  Σ                         0                                                    
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -247,7 +303,7 @@ exports[`base board matches the colour golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
+ h/l j/k focus · H/L move card · o new · ⏎ open note · v vi todo · write-report 
  BASE  board.base                                                           1:1 
 "
 `;
@@ -275,7 +331,7 @@ exports[`base board matches the NO_COLOR golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
+ h/l j/k focus · H/L move card · o new · ⏎ open note · v vi todo · write-report 
  BASE  board.base                                                           1:1 
 "
 `;
@@ -303,7 +359,7 @@ exports[`base board matches the light golden with a focused card 1`] = `
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L move card · ⏎ open note · v views · Ta todo · write-report 
+ h/l j/k focus · H/L move card · o new · ⏎ open note · v vi todo · write-report 
  BASE  board.base                                                           1:1 
 "
 `;
@@ -359,7 +415,7 @@ exports[`base states waiting and empty states match their goldens 2`] = `
                                                                                 
                                                                                 
                                                                                 
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ 
  BASE  empty.base                                                           1:1 
 "
 `;
@@ -387,7 +443,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
                                                                                 
- h/l j/k focus · H/L off · ⏎ open note · v views · Tab next                     
+ h/l j/k focus · H/L off · o new · ⏎ open note · v views · Tab next             
  BASE  board.base                                                           1:1 
 "
 `;
@@ -415,7 +471,7 @@ exports[`base states toolbar notices explain disabled moves and the cards fallba
                                                                                 
                                                                                 
                                                                                 
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open    
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ 
  BASE  tasks.base                                                           1:1 
 "
 `;
@@ -449,7 +505,7 @@ exports[`base states a wide window shows every view tab 1`] = `
                                                                                                                         
    ────────────────┴────────┴────────────┴─────                                                                         
  Σ                            2026-10-01   1                                                                            
- h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open                                            
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ open                                    
  BASE  base  tasks.base                                                                                preview off  1:1 
 "
 `;
@@ -641,16 +697,14 @@ exports[`base embed a note paints an embedded board read-only, with one-line car
 "
 `;
 
-exports[`base table a wide table pins the note name and scrolls the columns after it 1`] = `
-"▎ wide.base                                                                     
- ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
-────────────────────────────────────────────────────────────────────────────────
-   name                 │ status                         │ due         +4 cols ›
-   ─────────────────────┼────────────────────────────────┼───────────           
-▌  inbox.md             │ —                              │ 2026-10-08           
-   review-pr.md         │ doing                          │ 2026-10-03           
-   ship-release.md      │ done                           │ 2026-10-01           
-   write-report.md      │ todo                           │ 2026-10-05           
+exports[`base table o names a new row in the filtered folder and focuses it once created 1`] = `
+"▎ todo.base                                                                     
+ ▦ todo.base   1 Todo               ⧩ f╭──────────────────────────────────────╮ 
+───────────────────────────────────────│ ✓ Created tasks/next.md              │─
+   name                                ╰──────────────────────────────────────╯ 
+   ───────────────                                                              
+▌  next.md                                                                      
+   write-report.md                                                              
                                                                                 
                                                                                 
                                                                                 
@@ -664,35 +718,9 @@ exports[`base table a wide table pins the note name and scrolls the columns afte
                                                                                 
                                                                                 
                                                                                 
- h/j/k/l cell · H/L scroll · i edit · x toggle · s sort · g group · f / F filter
- BASE  wide.base                                                            1:1 
-"
-`;
-
-exports[`base table a wide table pins the note name and scrolls the columns after it 2`] = `
-"▎ wide.base                                                                     
- ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
-────────────────────────────────────────────────────────────────────────────────
-   name                 ‹ +1  │ due                                    +3 cols ›
-   ───────────────────────────┼───────────────────────────────                  
-▌  inbox.md                   │ 2026-10-08                                      
-   review-pr.md               │ 2026-10-03                                      
-   ship-release.md            │ 2026-10-01                                      
-   write-report.md            │ 2026-10-05                                      
                                                                                 
                                                                                 
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
- h/j/k/l cell · H/L scroll · i edit · x toggle · s sort · g group · f / F filter
- BASE  wide.base                                                            1:1 
+ h/j/k/l cell · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ 
+ BASE  todo.base                                                            1:1 
 "
 `;

@@ -599,3 +599,89 @@ test("F on a board pins the focused lane's value", () => {
     "tasks/b.md",
   ]);
 });
+
+const ROWS = `filters:
+  and:
+    - file.inFolder("tasks")
+    - 'status == "todo"'
+views:
+  - type: table
+    name: Todo
+`;
+const openRows = () =>
+  run(fresh(), loaded("rows.base", ROWS), indexed(NOTES)).state;
+const created = (path: string, text: string): Action => ({
+  type: "noteCreated",
+  path,
+  outcome: "created",
+  template: "none",
+  after: "insert",
+  reason: "row",
+  text,
+  stamp: { mtimeMs: 5, size: text.length, hash: "h" },
+});
+
+test("o names a new row in the filtered folder; Enter creates it blank with the filters' properties and focuses it in the base", () => {
+  const asked = press(openRows(), "o").state;
+  expect(asked.overlay).toMatchObject({
+    kind: "prompt",
+    prompt: { title: "New row", value: "tasks/" },
+  });
+  const entered = press(asked, "c<CR>");
+  expect(entered.effects).toEqual([
+    {
+      kind: "createNote",
+      path: "tasks/c.md",
+      vars: { title: "c", at: expect.anything() },
+      frontmatter: { status: "todo" },
+      after: "insert",
+      reason: "row",
+    },
+  ]);
+  expect(entered.state.overlay.kind).toBe("none");
+  const done = run(
+    entered.state,
+    created("tasks/c.md", "---\nstatus: todo\n---\n"),
+  ).state;
+  expect(activeBuffer(done)?.path).toBe("rows.base");
+  const m = model(done);
+  expect(m?.table?.rows.map((r) => r.path)).toEqual([
+    "tasks/a.md",
+    "tasks/c.md",
+  ]);
+  expect(m?.focus.row).toBe(1);
+  expect(done.notifications.toasts.at(-1)?.text).toBe("Created tasks/c.md");
+});
+
+test("a new row whose note exists says so and stays in the base", () => {
+  const entered = press(openRows(), "oa<CR>").state;
+  const r = run(entered, {
+    type: "noteCreated",
+    path: "tasks/a.md",
+    outcome: "exists",
+    template: "none",
+    after: "insert",
+    reason: "row",
+  }).state;
+  expect(r.notifications.toasts.at(-1)?.text).toBe(
+    "E13: File exists (tasks/a.md)",
+  );
+  expect(activeBuffer(r)?.path).toBe("rows.base");
+});
+
+test("a new row on a board takes the focused lane's value", () => {
+  const board = press(openPlan(), "2").state;
+  expect(model(board)?.board?.lanes[0]?.key).toBe("doing");
+  const entered = press(board, "ox<CR>");
+  expect(entered.effects).toMatchObject([
+    { kind: "createNote", path: "x.md", frontmatter: { status: "doing" } },
+  ]);
+});
+
+test("a new row needs a name after the folder", () => {
+  const r = press(openRows(), "o<CR>");
+  expect(r.effects).toEqual([]);
+  expect(r.state.overlay).toMatchObject({
+    prompt: { invalid: "invalid path" },
+  });
+});

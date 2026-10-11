@@ -12,7 +12,7 @@ import {
   submitRename,
 } from "./link-edits";
 import { request } from "./lsp";
-import { submitNewNote } from "./note-commands";
+import { submitNewNote, submitNewRow } from "./note-commands";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
@@ -580,14 +580,17 @@ function newNotePromptKey(
 ): Result {
   if (key === "<CR>") {
     const invalid = newNoteTitleError(p.value);
-    return invalid === undefined
-      ? submitNewNote(
-          { ...s, overlay: { kind: "none" } },
-          newNotePath(p.value),
-          now,
-          reg,
-        )
-      : none({ ...s, overlay: { kind: "prompt", prompt: { ...p, invalid } } });
+    if (invalid !== undefined)
+      return none({
+        ...s,
+        overlay: { kind: "prompt", prompt: { ...p, invalid } },
+      });
+    const closed: AppState = { ...s, overlay: { kind: "none" } };
+    const path = newNotePath(p.value);
+    const row = "row" in p ? p.row : undefined;
+    return row === undefined
+      ? submitNewNote(closed, path, now, reg)
+      : submitNewRow(closed, path, row, now);
   }
   const value = typed(p.value, key);
   if (value === p.value) return none(s);

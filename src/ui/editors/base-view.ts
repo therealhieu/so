@@ -481,7 +481,7 @@ function hintOf(
       : "editing — ⏎ write to frontmatter · esc cancel";
   if (m.board !== undefined)
     return m.board.movable
-      ? "h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next"
-      : "h/l j/k focus · H/L off · ⏎ open note · v views · Tab next";
-  return `h/j/k/l cell${scrolls ? " · H/L scroll" : ""} · i edit · x toggle · s sort · g group · f / F filter · ⏎ open`;
+      ? "h/l j/k focus · H/L move card · o new · ⏎ open note · v views · Tab next"
+      : "h/l j/k focus · H/L off · o new · ⏎ open note · v views · Tab next";
+  return `h/j/k/l cell${scrolls ? " · H/L scroll" : ""} · i edit · o new · x toggle · s sort · g group · f / F filter · ⏎ open`;
 }

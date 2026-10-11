@@ -38,6 +38,14 @@ views:
       file.folder: 240
       file.ext: 240
 `;
+const TODO = `filters:
+  and:
+    - file.inFolder("tasks")
+    - 'status == "todo"'
+views:
+  - type: table
+    name: Todo
+`;
 const NOTHING = `views:
   - type: table
     name: Archived
@@ -131,6 +139,39 @@ describe("base table", () => {
     expect(await m.frame()).toContain("‹ +3");
     m.keys("L");
     expect(await m.frame()).toContain("‹ +4");
+  });
+
+  test("o names a new row in the filtered folder and focuses it once created", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "todo.base", TODO);
+    expect(await m.frame()).toContain("o new");
+    m.keys("o");
+    const asked = await m.frame();
+    expect(asked).toContain("New row");
+    expect(asked).toContain("tasks/");
+    m.keys("next<CR>");
+    expect(m.effects.at(-1)).toMatchObject({
+      kind: "createNote",
+      path: "tasks/next.md",
+      frontmatter: { status: "todo" },
+      reason: "row",
+    });
+    const text = "---\nstatus: todo\n---\n";
+    m.store.dispatch({
+      type: "noteCreated",
+      path: "tasks/next.md",
+      outcome: "created",
+      template: "none",
+      after: "insert",
+      reason: "row",
+      text,
+      stamp: { mtimeMs: 1, size: text.length, hash: "h" },
+    });
+    const frame = await m.frame();
+    // The toast above names the note too.
+    const row = await find(m, "next.md", 4);
+    expect(cursorAt(m)).toEqual({ x: row.x, y: row.y, visible: true });
+    expect(frame).toContain("▦ todo.base");
+    expect(frame).toMatchSnapshot();
   });
 
   test("the focused cell is reversed and the frame has no colour under NO_COLOR", async () => {

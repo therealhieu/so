@@ -7,6 +7,7 @@ import { expandTemplate } from "../core/features/notes/template";
 import {
   frontmatterValue,
   patchFrontmatter,
+  seedFrontmatter,
 } from "../core/lang/markdown/frontmatter-patch";
 import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
@@ -449,12 +450,13 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             ...(e.template === undefined ? {} : { templatePath: e.template }),
           };
           const { text, template } = await templateText(e);
+          const expanded = expandTemplate(text, e.vars);
+          const written =
+            e.frontmatter === undefined
+              ? expanded
+              : seedFrontmatter(expanded, e.frontmatter);
           try {
-            const r = await createExclusive(
-              d.root,
-              e.path,
-              expandTemplate(text, e.vars),
-            );
+            const r = await createExclusive(d.root, e.path, written);
             if (r.created) {
               d.ownOps.noteWrite(e.path, r.stamp);
               d.index?.notify({ kind: "changed", path: e.path, isDir: false });
@@ -467,8 +469,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             });
             d.dispatch({
               ...answer,
-              outcome: r.created ? "created" : "exists",
               template,
+              ...(r.created
+                ? { outcome: "created", text: written, stamp: r.stamp }
+                : { outcome: "exists" }),
             });
           } catch (x) {
             d.logger.error("notes.createFailed", {

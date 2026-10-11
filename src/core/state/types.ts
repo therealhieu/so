@@ -159,6 +159,8 @@ export type WindowState = {
  * first unchecked task (else the end), or the end in Insert mode.
  */
 export type AfterOpen = "firstTask" | "insert";
+/** Why a note is created: a daily note, a new note, or a new row of a base (which stays in view). */
+export type NoteReason = "daily" | "new" | "row";
 
 export type TerminalState = {
   cols: number;
@@ -203,9 +205,16 @@ export type ExplorerPrompt = PromptBase & {
   setting?: never;
   binding?: never;
 };
-/** A new note's title, before its template is chosen. */
+/**
+ * A new note's title, before its template is chosen; `row` makes it a row of
+ * base window `window`, blank with `properties`, and keeps that window.
+ */
 type NewNotePrompt = PromptBase & {
   newNote: true;
+  row?: {
+    window: WindowId;
+    properties: Record<string, FrontmatterValue>;
+  };
   op?: never;
   rename?: never;
   setting?: never;
@@ -698,8 +707,11 @@ export type Action =
       template: "used" | "missing" | "unreadable" | "none";
       templatePath?: string;
       after: AfterOpen;
-      reason: "daily" | "new";
+      reason: NoteReason;
       failure?: string;
+      /** What was written, when created. */
+      text?: string;
+      stamp?: Stamp;
     }
   /** `.obsidian/types.json` was read; `{}` when absent or malformed. */
   | { type: "propertyTypesLoaded"; types: PropertyTypes }
@@ -818,9 +830,9 @@ export type Effect =
   | { kind: "stopPreview" }
   | { kind: "openUrl"; url: string }
   /**
-   * Create `path` from `template` (workspace-relative) expanded with `vars`,
-   * never replacing an entry; `fallback` is the template text when the
-   * template file does not exist.
+   * Create `path` from `template` (workspace-relative) expanded with `vars`
+   * and `frontmatter` set, never replacing an entry; `fallback` is the
+   * template text when the template file does not exist.
    */
   | {
       kind: "createNote";
@@ -828,8 +840,9 @@ export type Effect =
       template?: string;
       fallback?: string;
       vars: TemplateVars;
+      frontmatter?: Record<string, FrontmatterValue>;
       after: AfterOpen;
-      reason: "daily" | "new";
+      reason: NoteReason;
     }
   /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
   | { kind: "readPropertyTypes" }
