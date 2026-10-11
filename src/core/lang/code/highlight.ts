@@ -51,8 +51,11 @@ type HastNode = {
   children?: HastNode[];
 };
 
-/** Walk the tree and split its text on newlines into one span list per line. */
-function lineSpans(tree: HastNode): Span[][] {
+/**
+ * Walk the tree and split its text on newlines into one span list per line.
+ * A scope in `plain` gives its whole subtree the enclosing token.
+ */
+function lineSpans(tree: HastNode, plain: ReadonlySet<string>): Span[][] {
   const lines: Span[][] = [[]];
   const add = (text: string, style: StyleToken) => {
     const line = lines[lines.length - 1] as Span[];
@@ -60,7 +63,7 @@ function lineSpans(tree: HastNode): Span[][] {
     if (prev?.style === style) prev.text += text;
     else line.push({ text, style });
   };
-  const walk = (node: HastNode, style: StyleToken) => {
+  const walk = (node: HastNode, style: StyleToken, locked: boolean) => {
     if (node.type === "text") {
       (node.value ?? "").split("\n").forEach((part, i) => {
         if (i > 0) lines.push([]);
@@ -70,10 +73,11 @@ function lineSpans(tree: HastNode): Span[][] {
     }
     const classes = node.properties?.className;
     const scope = Array.isArray(classes) ? String(classes[0]) : undefined;
-    const own = scope === undefined ? undefined : HLJS_TOKENS[scope];
-    for (const child of node.children ?? []) walk(child, own ?? style);
+    const inherit = locked || (scope !== undefined && plain.has(scope));
+    const own = inherit || scope === undefined ? undefined : HLJS_TOKENS[scope];
+    for (const child of node.children ?? []) walk(child, own ?? style, inherit);
   };
-  walk(tree, "text");
+  walk(tree, "text", false);
   return lines;
 }
 
@@ -92,7 +96,10 @@ type Highlighted = { from: number; to: number; spans: Span[][] };
  * tries while fitting the cursor, and the next scroll steps, reuse it; the
  * same range twice gets the same spans.
  */
-export function lowlightHighlighter(language: string): Highlighter {
+export function lowlightHighlighter(
+  language: string,
+  plain: ReadonlySet<string> = new Set(),
+): Highlighter {
   const cache = new WeakMap<
     TextBuffer,
     { whole: Highlighted; last: Highlighted }
@@ -116,7 +123,7 @@ export function lowlightHighlighter(language: string): Highlighter {
         whole = {
           from: lines.from,
           to: end,
-          spans: lineSpans(tree as HastNode).slice(
+          spans: lineSpans(tree as HastNode, plain).slice(
             lines.from - from,
             end - from,
           ),

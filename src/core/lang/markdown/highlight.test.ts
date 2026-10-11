@@ -38,3 +38,24 @@ test("the same range twice gets the same spans", () => {
     h.highlight(buf, { from: 0, to: 9 }),
   );
 });
+
+test("raw HTML takes the colour around it", () => {
+  const buf = createTextBuffer(
+    [
+      "<How the snippet shows the problem.>",
+      'A <b class="x">b</b> c',
+      "### CR-1 — <Major | Minor> — <Category>",
+    ].join("\n"),
+  );
+  const [tag, inline, heading] = markdownHighlighter().highlight(buf, {
+    from: 0,
+    to: 3,
+  });
+  expect(tag).toEqual([
+    { text: "<How the snippet shows the problem.>", style: "text" },
+  ]);
+  expect(inline).toEqual([{ text: 'A <b class="x">b</b> c', style: "text" }]);
+  expect(heading).toEqual([
+    { text: "### CR-1 — <Major | Minor> — <Category>", style: "mdHeading3" },
+  ]);
+});

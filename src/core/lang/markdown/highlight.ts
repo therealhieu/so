@@ -19,10 +19,11 @@ function headingLevel(buf: TextBuffer, line: number): number | undefined {
 
 /**
  * Markdown source colours: lowlight's grammar, with heading text styled by
- * level (`mdHeading1`–`mdHeading4`) instead of one title colour.
+ * level (`mdHeading1`–`mdHeading4`) instead of one title colour, and raw HTML
+ * in the colour around it instead of the HTML grammar's tag and attribute colours.
  */
 export function markdownHighlighter(): Highlighter {
-  const inner = lowlightHighlighter("markdown");
+  const inner = lowlightHighlighter("markdown", new Set(["xml"]));
   const leveled = new WeakMap<Span[][], Span[][]>();
   return {
     language: inner.language,
