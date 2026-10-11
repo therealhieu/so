@@ -640,3 +640,59 @@ exports[`base embed a note paints an embedded board read-only, with one-line car
  NORMAL  today.md                                                           1:1 
 "
 `;
+
+exports[`base table a wide table pins the note name and scrolls the columns after it 1`] = `
+"▎ wide.base                                                                     
+ ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                 │ status                         │ due         +4 cols ›
+   ─────────────────────┼────────────────────────────────┼───────────           
+▌  inbox.md             │ —                              │ 2026-10-08           
+   review-pr.md         │ doing                          │ 2026-10-03           
+   ship-release.md      │ done                           │ 2026-10-01           
+   write-report.md      │ todo                           │ 2026-10-05           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · H/L scroll · i edit · x toggle · s sort · g group · f / F filter
+ BASE  wide.base                                                            1:1 
+"
+`;
+
+exports[`base table a wide table pins the note name and scrolls the columns after it 2`] = `
+"▎ wide.base                                                                     
+ ▦ wide.base   1 Wide                         ⧩ file.inFolder("tasks") · 4 rows 
+────────────────────────────────────────────────────────────────────────────────
+   name                 ‹ +1  │ due                                    +3 cols ›
+   ───────────────────────────┼───────────────────────────────                  
+▌  inbox.md                   │ 2026-10-08                                      
+   review-pr.md               │ 2026-10-03                                      
+   ship-release.md            │ 2026-10-01                                      
+   write-report.md            │ 2026-10-05                                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ h/j/k/l cell · H/L scroll · i edit · x toggle · s sort · g group · f / F filter
+ BASE  wide.base                                                            1:1 
+"
+`;

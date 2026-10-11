@@ -354,7 +354,8 @@ const EXPLAIN_FIXED = {
 /**
  * `H`/`L`: on a board, move the focused card to the next lane by writing the
  * group property (removing it for None); the card keeps focus. On a table,
- * scroll the columns.
+ * scroll the columns after the pinned first one; unless it is on the pinned
+ * column, the focus goes along so it never holds the columns in place.
  */
 function moveCard(c: CommandContext, step: -1 | 1): Result {
   const a = active(c);
@@ -362,12 +363,21 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
   const board = a.m.board;
   if (board === undefined) {
     const cols = a.m.table?.columns.length ?? 0;
-    const col = clamp(a.ws.scroll.col + step, cols - 1);
+    const col = clamp(a.ws.scroll.col + step, cols - 2);
+    const column = a.m.focus.column;
     return none(
       setWs(a, {
         ...a.ws,
         scroll: { col },
-        focus: { ...a.ws.focus, column: Math.max(a.m.focus.column, col) },
+        focus: {
+          ...a.ws.focus,
+          column:
+            column === 0
+              ? 0
+              : step > 0
+                ? Math.max(column, col + 1)
+                : Math.min(column, col + 1),
+        },
       }),
     );
   }

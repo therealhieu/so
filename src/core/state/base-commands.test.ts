@@ -323,6 +323,21 @@ test("a board grouped by a formula refuses moves with an explanation", () => {
   );
 });
 
+test("H and L scroll the table columns after the pinned first one", () => {
+  const s = openPlan();
+  const at = (st: AppState) => [ws(st).scroll.col, model(st)?.focus.column];
+  expect(at(press(s, "H").state)).toEqual([0, 0]);
+  // Focus on the pinned column stays there.
+  expect(at(press(s, "L").state)).toEqual([1, 0]);
+  // Six columns: five scroll, so at most four are scrolled off.
+  expect(at(press(s, "LLLLLL").state)).toEqual([4, 0]);
+  // Focus on a scrolled column goes along with the columns.
+  const right = press(s, "lLL").state;
+  expect(at(right)).toEqual([2, 3]);
+  expect(at(press(right, "lllH").state)).toEqual([1, 2]);
+  expect(planText(right)).toBe(planText(s));
+});
+
 test("> and < resize the focused column, = returns it, and the file is untouched", () => {
   const s = openPlan();
   const width = (st: AppState) => model(st)?.table?.columns[0]?.width;

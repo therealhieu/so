@@ -60,7 +60,7 @@ const draggable = (t: MouseTarget) =>
  * target, count clicks on one cell (a repeated click keeps the first one's
  * target), and keep a drag with the source its press landed on, sending
  * each new drag target once. A press that `stops` says only closes
- * something starts no drag.
+ * something starts no drag. Shift turns a vertical wheel notch sideways.
  */
 export function createMouseRouter(o: {
   sources: readonly MouseSource[];
@@ -111,9 +111,13 @@ export function createMouseRouter(o: {
           return;
         }
         case "scroll": {
-          const step = WHEEL[e.scroll?.direction ?? ""];
+          const notch = WHEEL[e.scroll?.direction ?? ""];
           const hit = resolve(e.x, e.y, true);
-          if (step === undefined || hit === undefined) return;
+          if (notch === undefined || hit === undefined) return;
+          const step =
+            e.modifiers?.shift && notch.dy !== 0
+              ? { dx: notch.dy, dy: 0 as const }
+              : notch;
           // Scrolling moves what is under the pointer, so the next move counts.
           lastMove = undefined;
           send({ kind: "wheel", target: hit.target, ...step });

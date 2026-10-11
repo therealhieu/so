@@ -40,7 +40,7 @@ export type BaseWindowState = {
    * when the note leaves the view.
    */
   focus: { path?: string; column: number; index?: number };
-  /** The first table column shown. */
+  /** Table columns scrolled off after the pinned first column. */
   scroll: { col: number };
   /** Table column widths in cells by column id, set by resizing in this window. */
   widths?: Record<string, number>;

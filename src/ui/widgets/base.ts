@@ -23,7 +23,10 @@ export type CellEditView = {
   suggestions?: string[];
 };
 export type TableFocus = { row: number; column: number; edit?: CellEditView };
-/** The first body line and the first column the window prefers to show. */
+/**
+ * The first body line the window prefers to show, and how many columns after
+ * the pinned first one are scrolled off.
+ */
 export type TableScroll = { top: number; col: number };
 
 type Line =
@@ -31,9 +34,15 @@ type Line =
   | { kind: "row"; row: number };
 
 export type TableLayout = {
-  /** Shown columns: model index, x from the rect's left, width in cells. */
-  cols: { index: number; x: number; w: number }[];
-  hidden: number;
+  /**
+   * Shown columns: model index, x from the rect's left, and width in cells;
+   * `clipped` marks the right-edge column cut to the room left.
+   */
+  cols: { index: number; x: number; w: number; clipped?: true }[];
+  /** Columns scrolled off between the pinned first column and the shown ones. */
+  left: number;
+  /** Columns not shown whole right of the shown ones. */
+  right: number;
   lines: Line[];
   /** The first body line shown. */
   top: number;
@@ -46,7 +55,12 @@ export type TableLayout = {
 /** Marker, two spaces, then the cells. */
 const LEAD = 3;
 const SEP = " │ ";
+/** Cells kept at the right edge for `+N cols ›`. */
 const MORE_COLS = 11;
+/** Cells after the pinned column for `‹ +N`. */
+const LEFT_MORE = 6;
+/** The fewest cells a clipped right-edge column is drawn in. */
+const MIN_CLIP = 6;
 
 const len = (t: string) => [...t].length;
 const clamp = (n: number, lo: number, hi: number) =>
@@ -67,9 +81,12 @@ const labelOf = (m: TableModel, i: number) => {
 };
 
 /**
- * Where a table's parts go in `rect`: the columns that fit from the
- * preferred first column (moved so the focused column shows), the body lines
- * with group headers, and the first line shown so the focused row shows.
+ * Where a table's parts go in `rect`. When every column fits, all show.
+ * Otherwise the first column stays pinned (at most half the width), the
+ * columns after it start `scroll.col` columns in (moved so the focused column
+ * shows whole), and the next column is drawn clipped in the room left. The
+ * body lines come with group headers, from the first line shown so the
+ * focused row shows.
  */
 export function layoutBaseTable(
   rect: Rect,
@@ -78,44 +95,69 @@ export function layoutBaseTable(
   scroll: TableScroll = { top: 0, col: 0 },
 ): TableLayout {
   const n = m.columns.length;
+  const room = Math.max(1, rect.w - LEAD);
   const widths = m.columns.map((c, i) => {
     let w = c.width;
     if (focus?.edit !== undefined && focus.column === i)
       w = Math.max(w, len(focus.edit.value) + 1);
-    return clamp(w, 1, Math.max(1, rect.w - LEAD));
+    return clamp(w, 1, room);
   });
-  const fitFrom = (off: number, room: number) => {
+  /** Whole columns from `from` in `budget` cells, each at most `budget` wide. */
+  const fitFrom = (from: number, budget: number) => {
     const out: number[] = [];
     let used = 0;
-    for (let i = off; i < n; i++) {
-      const w = (widths[i] ?? 1) + (out.length > 0 ? SEP.length : 0);
-      if (out.length > 0 && used + w > room) break;
+    for (let i = from; i < n; i++) {
+      const w =
+        Math.min(widths[i] ?? 1, budget) + (out.length > 0 ? SEP.length : 0);
+      if (out.length > 0 && used + w > budget) break;
       out.push(i);
       used += w;
     }
-    return out;
+    return { shown: out, used, budget };
   };
-  const visibleFrom = (off: number) => {
-    const all = fitFrom(off, rect.w - LEAD);
-    return off === 0 && all.length === n
-      ? all
-      : fitFrom(off, rect.w - LEAD - MORE_COLS);
-  };
-  let off = clamp(scroll.col, 0, Math.max(0, n - 1));
-  if (focus !== undefined && focus.column < off) off = focus.column;
-  let vis = visibleFrom(off);
-  while (
-    focus !== undefined &&
-    off < focus.column &&
-    !vis.includes(focus.column)
-  )
-    vis = visibleFrom(++off);
   const cols: TableLayout["cols"] = [];
-  let x = LEAD;
-  for (const index of vis) {
-    const w = widths[index] ?? 1;
+  let left = 0;
+  let right = 0;
+  const place = (index: number, x: number, w: number) => {
     cols.push({ index, x, w });
-    x += w + SEP.length;
+    return x + w + SEP.length;
+  };
+  const all = fitFrom(0, room);
+  if (all.shown.length === n) {
+    let x = LEAD;
+    for (const index of all.shown) x = place(index, x, widths[index] ?? 1);
+  } else {
+    const pin = Math.min(widths[0] ?? 1, Math.floor(room / 2));
+    const budget = (off: number, more: boolean) =>
+      Math.max(
+        1,
+        room -
+          pin -
+          SEP.length -
+          (off > 1 ? LEFT_MORE : 0) -
+          (more ? MORE_COLS : 0),
+      );
+    const shownFrom = (off: number) => {
+      const whole = fitFrom(off, budget(off, false));
+      return whole.shown.at(-1) === n - 1
+        ? whole
+        : fitFrom(off, budget(off, true));
+    };
+    const target = focus?.column ?? 0;
+    let off = 1 + clamp(scroll.col, 0, n - 2);
+    if (target >= 1 && target < off) off = target;
+    let vis = shownFrom(off);
+    while (target > off && !vis.shown.includes(target)) vis = shownFrom(++off);
+    let x = place(0, LEAD, pin);
+    if (off > 1) x += LEFT_MORE;
+    for (const index of vis.shown)
+      x = place(index, x, Math.min(widths[index] ?? 1, vis.budget));
+    const next = off + vis.shown.length;
+    const rest = vis.budget - vis.used - SEP.length;
+    if (next < n && rest >= MIN_CLIP)
+      cols.push({ index: next, x, w: rest, clipped: true });
+    left = off - 1;
+    right = n - next;
   }
 
   const lines: Line[] = [];
@@ -139,7 +181,7 @@ export function layoutBaseTable(
     top = at > 0 && lines[at - 1]?.kind === "group" ? at - 1 : at;
   if (at >= 0 && at >= top + bodyRows) top = at - bodyRows + 1;
 
-  const col = cols.find((c) => c.index === focus?.column);
+  const col = cols.find((c) => c.index === focus?.column && !c.clipped);
   const caret = focus?.edit === undefined ? 0 : focus.edit.caret;
   const cursor =
     at >= top && at < top + bodyRows && col !== undefined
@@ -150,7 +192,8 @@ export function layoutBaseTable(
       : undefined;
   return {
     cols,
-    hidden: n - cols.length,
+    left,
+    right,
     lines,
     top,
     bodyRows,
@@ -210,8 +253,9 @@ function put(
 }
 
 /**
- * Paint a table model in `rect` and nowhere else: header with sort arrows
- * and `› +N cols`, group headers, rows with the focused cell reversed and
+ * Paint a table model in `rect` and nowhere else: header with sort arrows,
+ * `‹ +N` after the pinned column when columns are scrolled off and
+ * `+N cols ›` at the right edge when more follow, group headers, rows with the focused cell reversed and
  * its row marked `▌`, an edited cell's text with its inline error, chips,
  * or suggestions below, and the summary row. Without rows it says so, with `empty` below.
  */
@@ -227,16 +271,20 @@ export function paintBaseTable(
     put(buf, theme, rect, "text", 0, rect.y + i, "", rect.w);
   if (rect.h <= 0) return l;
   const sepRow = (y: number, join: string) => {
-    for (const [k, c] of l.cols.entries())
+    let end = 0;
+    for (const [k, c] of l.cols.entries()) {
+      const gap = k === 0 ? "" : "─".repeat(c.x - SEP.length - end) + join;
       put(
         buf,
         theme,
         rect,
         "separator",
-        k === 0 ? c.x : c.x - SEP.length,
+        k === 0 ? c.x : end,
         y,
-        `${k === 0 ? "" : join}${"─".repeat(c.w)}`,
+        `${gap}${"─".repeat(c.w)}`,
       );
+      end = c.x + c.w;
+    }
   };
   // Header.
   for (const [k, c] of l.cols.entries()) {
@@ -253,17 +301,21 @@ export function paintBaseTable(
       c.w,
     );
   }
-  const last = l.cols.at(-1);
-  if (l.hidden > 0 && last !== undefined)
+  const pinned = l.cols[0];
+  if (l.left > 0 && pinned !== undefined)
     put(
       buf,
       theme,
       rect,
       "dim",
-      last.x + last.w + 1,
+      pinned.x + pinned.w + 1,
       rect.y,
-      ` › +${l.hidden} col${l.hidden > 1 ? "s" : ""}`,
+      `‹ +${l.left}`,
     );
+  if (l.right > 0) {
+    const more = `+${l.right} col${l.right > 1 ? "s" : ""} ›`;
+    put(buf, theme, rect, "dim", rect.w - len(more), rect.y, more);
+  }
   if (rect.h > 1) sepRow(rect.y + 1, "─┼─");
   // Body.
   const focus = o.focus;

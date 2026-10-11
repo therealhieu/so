@@ -155,6 +155,23 @@ test("the wheel dispatches one notch for the source under the pointer", () => {
   ]);
 });
 
+test("Shift turns a vertical wheel notch sideways and leaves a sideways one alone", () => {
+  const r = setup([editor]);
+  const shift = { shift: true, alt: false, ctrl: false };
+  for (const direction of ["up", "down", "right"] as const)
+    r.handle(
+      ev("scroll", 4, 2, {
+        scroll: { direction, delta: 1 },
+        modifiers: shift,
+      }),
+    );
+  expect(r.events()).toEqual([
+    { kind: "wheel", target: text(2, 4), dx: -1, dy: 0 },
+    { kind: "wheel", target: text(2, 4), dx: 1, dy: 0 },
+    { kind: "wheel", target: text(2, 4), dx: 1, dy: 0 },
+  ]);
+});
+
 test("a wheel-only source answers the wheel and lets presses through", () => {
   const toast: MouseSource = {
     wheelOnly: true,

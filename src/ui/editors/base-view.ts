@@ -228,7 +228,14 @@ export class BaseView extends Renderable implements WindowView {
       );
     for (const [i, n] of f.notices.entries())
       drawCells(buf, theme.style(n.token), r.x, r.y + 2 + i, ` ${n.text}`, r.w);
-    if (r.h > 3) this.paintHint(buf, theme, m, f.ws);
+    if (r.h > 3)
+      this.paintHint(
+        buf,
+        theme,
+        m,
+        f.ws,
+        (f.table?.left ?? 0) + (f.table?.right ?? 0) > 0,
+      );
     if (m.status !== "ok") return;
     if (m.table !== undefined)
       paintBaseTable(buf, theme, body, m.table, {
@@ -252,11 +259,19 @@ export class BaseView extends Renderable implements WindowView {
     theme: Theme,
     m: BaseViewModel,
     ws: BaseWindowState | undefined,
+    scrolls: boolean,
   ): void {
     const r = this.rect;
     const y = r.y + r.h - 1;
     if (ws?.search === undefined) {
-      drawCells(buf, theme.style("dim"), r.x, y, ` ${hintOf(m, ws)}`, r.w);
+      drawCells(
+        buf,
+        theme.style("dim"),
+        r.x,
+        y,
+        ` ${hintOf(m, ws, scrolls)}`,
+        r.w,
+      );
       return;
     }
     const input = ` /${ws.search.value}`;
@@ -325,7 +340,7 @@ export class BaseView extends Renderable implements WindowView {
   }
 }
 
-/** The header separator right of a shown column at screen cell (x, y). */
+/** The header separator right of a shown, unclipped column at screen cell (x, y). */
 function edgeAt(
   body: Rect,
   l: TableLayout,
@@ -333,7 +348,7 @@ function edgeAt(
   y: number,
 ): WindowSpot | undefined {
   if (y !== body.y) return undefined;
-  const col = l.cols.find((c) => x === body.x + c.x + c.w + 1);
+  const col = l.cols.find((c) => !c.clipped && x === body.x + c.x + c.w + 1);
   return col === undefined
     ? undefined
     : { kind: "baseEdge", column: col.index, width: col.w };
@@ -444,8 +459,12 @@ function noticesOf(m: BaseViewModel): Part[] {
   return out;
 }
 
-/** The keys that apply to what the window shows. */
-function hintOf(m: BaseViewModel, ws: BaseWindowState | undefined): string {
+/** The keys that apply to what the window shows; `scrolls` when columns are hidden. */
+function hintOf(
+  m: BaseViewModel,
+  ws: BaseWindowState | undefined,
+  scrolls: boolean,
+): string {
   if (m.status !== "ok") return "Tab next view · 1-4 switch view";
   if (ws?.edit?.items !== undefined)
     return "editing — ⏎ add · ⏎ on empty writes · ⌫ removes · esc cancel";
@@ -457,5 +476,5 @@ function hintOf(m: BaseViewModel, ws: BaseWindowState | undefined): string {
     return m.board.movable
       ? "h/l j/k focus · H/L move card · ⏎ open note · v views · Tab next"
       : "h/l j/k focus · H/L off · ⏎ open note · v views · Tab next";
-  return "h/j/k/l cell · i edit · x toggle · s sort · g group · f / F filter · ⏎ open";
+  return `h/j/k/l cell${scrolls ? " · H/L scroll" : ""} · i edit · x toggle · s sort · g group · f / F filter · ⏎ open`;
 }

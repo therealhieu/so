@@ -23,6 +23,21 @@ views:
       property: formula.late
       direction: ASC
 `;
+const WIDE = `filters:
+  and:
+    - file.inFolder("tasks")
+views:
+  - type: table
+    name: Wide
+    order: [file.name, status, due, done, file.folder, file.ext]
+    columnSize:
+      file.name: 160
+      note.status: 240
+      note.due: 240
+      note.done: 240
+      file.folder: 240
+      file.ext: 240
+`;
 const NOTHING = `views:
   - type: table
     name: Archived
@@ -92,6 +107,20 @@ describe("base table", () => {
     const frame = await m.frame();
     expect(frame).toContain("name                    │ St… │ due ↑");
     expect(frame).toMatchSnapshot();
+  });
+
+  test("a wide table pins the note name and scrolls the columns after it", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "wide.base", WIDE);
+    const first = await m.frame();
+    expect(first).toContain("+4 cols ›");
+    expect(first).toContain("H/L scroll");
+    expect(first).toMatchSnapshot();
+    m.keys("L");
+    const scrolled = await m.frame();
+    expect(scrolled).toContain("‹ +1");
+    expect(scrolled).toContain("review-pr");
+    expect(scrolled).toContain("+3 cols ›");
+    expect(scrolled).toMatchSnapshot();
   });
 
   test("the focused cell is reversed and the frame has no colour under NO_COLOR", async () => {
