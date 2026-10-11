@@ -189,6 +189,8 @@ type PromptBase = {
   kind: "confirm" | "input" | "typed";
   title: string;
   value: string;
+  /** Where in `value` typing goes; absent means its end. */
+  caret?: number;
   /** Rename and move: the links the operation will update, or why it will not. */
   impact?: string;
   /** Why `value` cannot be submitted; Enter does nothing while it is set. */

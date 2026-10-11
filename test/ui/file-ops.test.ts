@@ -148,6 +148,26 @@ describe("explorer prompts", () => {
     expect(m.store.get().overlay.kind).toBe("none");
   });
 
+  test("arrows move the caret in the tree's name field and in a floating prompt, and typing goes in at it", async () => {
+    indexed({ "todo.md": "" });
+    select("todo.md");
+    m.keys("r<Left><Left><Left>");
+    expect(await cursorAt()).toEqual({ x: 7, y: 5 });
+    m.keys("-2");
+    expect((await tree())[3]).toBe("✎ todo-2.md");
+    expect(await cursorAt()).toEqual({ x: 9, y: 5 });
+    m.keys("<Esc>m");
+    const end = await cursorAt();
+    m.keys("<Home>");
+    expect(await cursorAt()).toEqual({ x: (end?.x ?? 0) - 7, y: end?.y ?? 0 });
+    m.keys("a/<End><Left><Del>");
+    expect(await m.frame()).toContain("❯ a/todo.m");
+    m.keys("<CR>");
+    expect(effectsOf("move")).toEqual([
+      { kind: "move", op: { kind: "move", from: "todo.md", to: "a/todo.m" } },
+    ]);
+  });
+
   test("explorer move shows the link impact before Enter", async () => {
     indexed({
       "notes/ideas.md": "[[plan]] and [[plan|the plan]]\n",

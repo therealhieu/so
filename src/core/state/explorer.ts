@@ -2,6 +2,7 @@ import { bufferForPath, buffersUnder, openPath, removeBuffer } from "./buffers";
 import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
 import { indexAfterFsOp } from "./index";
+import { editField, type LineField, promptField } from "./line-field";
 import {
   awaitsOp,
   beginRewrite,
@@ -473,9 +474,10 @@ export function promptKey(
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
-  const edited = { ...p, value };
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
+  const edited = { ...p, ...f };
   const prompt =
     p.op.kind === "rename" || p.op.kind === "move"
       ? promptImpact(s, edited)
@@ -483,13 +485,19 @@ export function promptKey(
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
 
-/** The edited value of a text prompt: `<BS>` drops a character, a printable key adds one. */
-export const typed = (value: string, key: string): string =>
-  key === "<BS>"
-    ? value.slice(0, -1)
-    : [...key].length === 1
-      ? value + key
-      : value;
+/** A text prompt's field after `key`; `undefined` when the key does not edit it. */
+export const typed = (p: PromptState, key: string): LineField | undefined =>
+  editField(promptField(p), key);
+
+/** The open prompt with its caret at `caret`, the value unchanged. */
+export function movedCaret(s: AppState, caret: number): AppState {
+  return s.overlay.kind === "prompt"
+    ? {
+        ...s,
+        overlay: { kind: "prompt", prompt: { ...s.overlay.prompt, caret } },
+      }
+    : s;
+}
 
 /**
  * Typing edits the new name; it cannot be submitted while empty or equal to
@@ -510,8 +518,10 @@ function renamePromptKey(
           { kind: "rename", pos: rename.pos, newName: p.value },
           { key: rename.key },
         );
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
+  const { value, caret } = f;
   const { invalid: _, ...rest } = p;
   const invalid =
     value.trim() === ""
@@ -522,6 +532,7 @@ function renamePromptKey(
   const prompt = {
     ...rest,
     value,
+    caret,
     ...(invalid === undefined ? {} : { invalid }),
   };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
@@ -592,11 +603,12 @@ function newNotePromptKey(
       ? submitNewNote(closed, path, now, reg)
       : submitNewRow(closed, path, row, now);
   }
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
   const { invalid: _, ...rest } = p;
-  const invalid = newNoteTitleError(value);
+  const invalid = newNoteTitleError(f.value);
   const prompt: PromptState =
-    invalid === undefined ? { ...rest, value } : { ...rest, value, invalid };
+    invalid === undefined ? { ...rest, ...f } : { ...rest, ...f, invalid };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }

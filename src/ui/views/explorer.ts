@@ -10,6 +10,7 @@ import {
   visiblePaths,
 } from "../../core/state/explorer";
 import { bodyRows } from "../../core/state/layout";
+import { promptField } from "../../core/state/line-field";
 import type {
   AppState,
   ExplorerPrompt,
@@ -142,11 +143,16 @@ export class ExplorerView extends Renderable {
     const x = this.x0 + box.x + 1 + 2 * (row?.depth ?? 0);
     const y = 1 + box.y + 1 + at - this.first;
     // Only the name field shows a cursor; the selected row marks the tree's focus.
+    const field = treeField(s);
+    const caret = field === undefined ? 0 : promptField(field).caret;
     this.cursorAt =
       !ex.open || row?.edit === undefined
         ? undefined
         : {
-            x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
+            x: Math.min(
+              this.x0 + box.x + box.w - 1,
+              x + 2 + cells(row.edit.slice(0, caret)),
+            ),
             y,
             style: "line",
           };

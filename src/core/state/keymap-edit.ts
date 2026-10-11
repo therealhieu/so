@@ -3,7 +3,7 @@ import type { Binding } from "../kernel/commands/defaults";
 import { splitKeys } from "../kernel/vim/keys";
 import { activeBuffer } from "./buffers";
 import { MODES, validateBindings } from "./config";
-import { typed } from "./explorer";
+import { movedCaret, typed } from "./explorer";
 import { effectiveBindings, isKeySequence } from "./keymap";
 import { message, none, toast } from "./result";
 import type {
@@ -465,17 +465,18 @@ export function bindingPromptKey(
       b.picker,
     );
   }
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
   const { invalid: _, impact: __, ...rest } = p;
-  const invalid = invalidAnswer(s, reg, b, value);
+  const invalid = invalidAnswer(s, reg, b, f.value);
   if (invalid !== undefined)
-    return none(prompting(s, { ...rest, value, invalid }));
-  const impact = bindingImpact(s, reg, b, value);
+    return none(prompting(s, { ...rest, ...f, invalid }));
+  const impact = bindingImpact(s, reg, b, f.value);
   return none(
     prompting(
       s,
-      impact === undefined ? { ...rest, value } : { ...rest, value, impact },
+      impact === undefined ? { ...rest, ...f } : { ...rest, ...f, impact },
     ),
   );
 }

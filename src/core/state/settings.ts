@@ -1,7 +1,7 @@
 import { type AppConfig, ConfigSchema, THEME_NAMES } from "../config/schema";
 import type { SettingValue } from "../config/toml-edit";
 import { rankBy } from "../kernel/text/fuzzy";
-import { relistShown, resizeExplorer, typed } from "./explorer";
+import { movedCaret, relistShown, resizeExplorer, typed } from "./explorer";
 import { chain, message, none, toast } from "./result";
 import type {
   Action,
@@ -424,13 +424,12 @@ export function settingPromptKey(
       ? none(back)
       : setSetting(back, x.path, r.value);
   }
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
   const { invalid: _, ...rest } = p;
-  const r = parseSettingValue(x, value);
+  const r = parseSettingValue(x, f.value);
   const prompt =
-    "invalid" in r
-      ? { ...rest, value, invalid: r.invalid }
-      : { ...rest, value };
+    "invalid" in r ? { ...rest, ...f, invalid: r.invalid } : { ...rest, ...f };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }

@@ -4,6 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { newNotePath } from "../../core/state/explorer";
+import { promptField } from "../../core/state/line-field";
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -211,8 +212,9 @@ export class PromptView extends Renderable {
     const { field } = layout(p);
     if (field === undefined) return;
     const box = this.box(s, p);
+    const typedPart = p.value.slice(0, promptField(p).caret);
     this.cursorAt = {
-      x: Math.min(box.x + box.w - 2, box.x + 1 + cells(` ❯ ${p.value}`)),
+      x: Math.min(box.x + box.w - 2, box.x + 1 + cells(` ❯ ${typedPart}`)),
       y: box.y + 2 + field,
       style: "line",
     };
