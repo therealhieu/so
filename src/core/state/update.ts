@@ -5,6 +5,7 @@ import type {
 } from "../filetypes/registry";
 import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
+import { onBaseScrolled } from "./base-commands";
 import { onFrontmatterPatched } from "./base-write";
 import {
   fullText,
@@ -187,6 +188,8 @@ export function createUpdate(reg: Registries): Update {
         return onResize(state, action);
       case "zoomFill":
         return onZoomFill(state, action);
+      case "baseScrolled":
+        return onBaseScrolled(state, action);
       case "mouse":
         return onMouse(state, action, reg);
       case "configLoaded":

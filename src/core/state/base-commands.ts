@@ -352,6 +352,20 @@ const EXPLAIN_FIXED = {
 } as const;
 
 /**
+ * The UI laid out window `window`'s table `col` columns past the pinned
+ * one, which moving the focus may change; keep it so `H`/`L` scroll from
+ * what is shown.
+ */
+export function onBaseScrolled(
+  s: AppState,
+  a: { window: WindowId; col: number },
+): Result {
+  const ws = baseWindow(s, a.window);
+  if (ws === undefined || ws.scroll.col === a.col) return none(s);
+  return none(setBaseWindow(s, a.window, { ...ws, scroll: { col: a.col } }));
+}
+
+/**
  * `H`/`L`: on a board, move the focused card to the next lane by writing the
  * group property (removing it for None); the card keeps focus. On a table,
  * scroll the columns after the pinned first one; unless it is on the pinned

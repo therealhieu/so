@@ -129,6 +129,13 @@ export class BaseView extends Renderable implements WindowView {
         col: ws?.scroll.col ?? 0,
       });
       this.rowTop = l.top;
+      if (ws !== undefined && ws.scroll.col !== l.left) {
+        const col = l.left;
+        // Moving the focus can scroll the columns; the core follows after this frame.
+        queueMicrotask(() =>
+          this.deps.dispatch({ type: "baseScrolled", window: id, col }),
+        );
+      }
       frame.table = l;
       at = l.cursor;
     } else if (m.status === "ok" && m.board !== undefined) {

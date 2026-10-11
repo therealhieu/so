@@ -123,6 +123,16 @@ describe("base table", () => {
     expect(scrolled).toMatchSnapshot();
   });
 
+  test("H and L scroll one column from where moving the focus left the columns", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "wide.base", WIDE);
+    m.keys("lllll");
+    expect(await m.frame()).toContain("‹ +4");
+    m.keys("H");
+    expect(await m.frame()).toContain("‹ +3");
+    m.keys("L");
+    expect(await m.frame()).toContain("‹ +4");
+  });
+
   test("the focused cell is reversed and the frame has no colour under NO_COLOR", async () => {
     m = await baseShell(
       { cols: 80, rows: 24, color: "nocolor" },

@@ -622,6 +622,8 @@ export type Action =
   | { type: "resize"; cols: number; rows: number }
   /** How much of the zoom float the shown image covers at fit, per axis (0..1]. */
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
+  /** How many columns after the pinned first one a base table window shows scrolled off. */
+  | { type: "baseScrolled"; window: WindowId; col: number }
   /** `embed` answers a read a note's embed sent (see the `read` effect). */
   | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
   | {

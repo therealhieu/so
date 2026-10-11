@@ -338,6 +338,15 @@ test("H and L scroll the table columns after the pinned first one", () => {
   expect(planText(right)).toBe(planText(s));
 });
 
+test("H scrolls one column left of where the UI shows the columns scrolled", () => {
+  const s = press(openPlan(), "lll").state;
+  const window = s.windows.active;
+  const shown = run(s, { type: "baseScrolled", window, col: 2 }).state;
+  expect(ws(shown).scroll.col).toBe(2);
+  const left = press(shown, "H").state;
+  expect([ws(left).scroll.col, model(left)?.focus.column]).toEqual([1, 2]);
+});
+
 test("> and < resize the focused column, = returns it, and the file is untouched", () => {
   const s = openPlan();
   const width = (st: AppState) => model(st)?.table?.columns[0]?.width;
