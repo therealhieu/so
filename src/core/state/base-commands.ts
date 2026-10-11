@@ -532,7 +532,11 @@ function newRow(c: CommandContext): Result {
         title: "New row",
         value: seed.folder === "" ? "" : `${seed.folder}/`,
         newNote: true,
-        row: { window: a.id, properties: seed.properties },
+        row: {
+          window: a.id,
+          properties: seed.properties,
+          stamp: seed.stamp,
+        },
       },
     },
   });

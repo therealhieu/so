@@ -216,6 +216,8 @@ type NewNotePrompt = PromptBase & {
   row?: {
     window: WindowId;
     properties: Record<string, FrontmatterValue>;
+    /** Properties set to the time the note is created. */
+    stamp: readonly string[];
   };
   op?: never;
   rename?: never;

@@ -1,5 +1,4 @@
-import { formatDate } from "../../time/format";
-import { localDateTime } from "../../time/local";
+import { dateText } from "./dates";
 import type { BaseCell } from "./types";
 
 /** A value as its group key: the text it groups under, "" for no value. */
@@ -12,15 +11,13 @@ export function stringifyGroupKey(value: unknown): string {
   return JSON.stringify(value) ?? String(value);
 }
 
-/** A cell as display text; file times are local "YYYY-MM-DD HH:mm". */
+/** A cell as display text; dates and times are local "YYYY-MM-DD HH:mm:ss". */
 export function cellText(c: BaseCell): string {
   switch (c.type) {
     case "null":
       return "";
     case "date":
-      return typeof c.value === "number"
-        ? formatDate(localDateTime(c.value), "YYYY-MM-DD HH:mm")
-        : c.value;
+      return dateText(c.value) ?? String(c.value);
     case "list":
       return c.value.map((v) => stringifyGroupKey(v)).join(", ");
     case "link":

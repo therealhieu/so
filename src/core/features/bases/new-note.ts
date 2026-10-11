@@ -1,11 +1,15 @@
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
-import type { PropertyTypes } from "./property-types";
+import { type PropertyTypes, propertyType } from "./property-types";
 import type { Base, BaseFilter, BasePin, BaseView } from "./types";
 
-/** Where a note made from a base goes, and the properties it starts with. */
+/**
+ * Where a note made from a base goes, the properties it starts with, and
+ * which of them take the time it is created.
+ */
 export type NoteSeed = {
   folder: string;
   properties: Record<string, FrontmatterValue>;
+  stamp: string[];
 };
 
 export type SeedInput = {
@@ -25,6 +29,14 @@ const STRING = /^"((?:[^"\\]|\\.)*)"$|^'((?:[^'\\]|\\.)*)'$/;
 const NUMBER = /^-?\d+(?:\.\d+)?$/;
 const NOTE_PROPERTY = /^(?:note\.)?([A-Za-z_][\w-]*)$/;
 const FILE_CALL = /^file\.(inFolder|hasTag|hasProperty)\((.*)\)$/s;
+/** Base property types, and the names, that mean "when the note was made". */
+const CREATED = new Set(["created_at", "created_time"]);
+/**
+ * ...and "when it last changed": left out, so the column shows the file's
+ * modified time, which nothing written once would keep up with.
+ */
+const UPDATED = new Set(["updated_at", "last_edited"]);
+const LISTS = new Set(["list", "tags", "aliases"]);
 
 /** A note property a filter or a group names, without `note.`; `undefined` for `file.*`, `formula.*`, and the like. */
 const noteProperty = (name: string): string | undefined =>
@@ -117,6 +129,8 @@ const folderOf = (path: string) => {
  * base's own folder), `file.hasTag`, `file.hasProperty`, and `property ==
  * literal`; then the window's pins and the focused group. Filters that hold
  * no single value (`or`, `not`, `!=`, comparisons, formulas) add nothing.
+ * The view's other note-property columns start empty, its `created_at`
+ * columns are stamped, and its `updated_at` columns are left out.
  */
 export function newNoteSeed(input: SeedInput): NoteSeed {
   let folder: string | undefined;
@@ -162,10 +176,22 @@ export function newNoteSeed(input: SeedInput): NoteSeed {
   const groupName = group && noteProperty(group.property);
   if (group !== undefined && groupName !== undefined && group.key !== null)
     properties[groupName] = group.key;
+  const stamp: string[] = [];
+  for (const column of input.view?.order ?? []) {
+    const name = noteProperty(column);
+    if (name === undefined || properties[name] !== undefined) continue;
+    const config = input.base.properties[column] ?? input.base.properties[name];
+    const type = String(config?.type);
+    if (UPDATED.has(name) || UPDATED.has(type)) continue;
+    if (CREATED.has(name) || CREATED.has(type)) stamp.push(name);
+    properties[name] = LISTS.has(propertyType(name, null, input.types))
+      ? []
+      : null;
+  }
   if (tags.length > 0) {
     const had = properties.tags;
     const list = Array.isArray(had) ? had : had == null ? [] : [had];
     properties.tags = [...list, ...tags.filter((t) => !list.includes(t))];
   }
-  return { folder: folder ?? folderOf(input.basePath), properties };
+  return { folder: folder ?? folderOf(input.basePath), properties, stamp };
 }

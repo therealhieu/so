@@ -137,3 +137,60 @@ describe("the properties", () => {
     ).toEqual({ tags: ["a", "b"] });
   });
 });
+
+describe("the view's columns", () => {
+  const withColumns = (
+    order: string[],
+    properties: Base["properties"] = {},
+  ) => {
+    const b: Base = {
+      ...base('status == "todo"'),
+      properties,
+      views: [{ type: "table", name: "T", order }],
+    };
+    return newNoteSeed({
+      base: b,
+      view: b.views[0],
+      viewFilters: true,
+      basePath: "daily/0-daily.base",
+      types: { cssclasses: "list" },
+    });
+  };
+
+  test("start empty, lists as [], after what the filters seed", () => {
+    const s = withColumns([
+      "file.name",
+      "tags",
+      "note.plan",
+      "status",
+      "cssclasses",
+      "formula.late",
+    ]);
+    expect(s.properties).toEqual({
+      status: "todo",
+      tags: [],
+      plan: null,
+      cssclasses: [],
+    });
+    expect(Object.keys(s.properties)).toEqual([
+      "status",
+      "tags",
+      "plan",
+      "cssclasses",
+    ]);
+    expect(s.stamp).toEqual([]);
+  });
+
+  test("created_at, by name or by base type, takes the creation time; updated_at is left to the file's", () => {
+    const s = withColumns(
+      ["created_at", "updated_at", "made", "edited", "status"],
+      { made: { type: "created_time" }, edited: { type: "last_edited" } },
+    );
+    expect(s.properties).toEqual({
+      status: "todo",
+      created_at: null,
+      made: null,
+    });
+    expect(s.stamp).toEqual(["created_at", "made"]);
+  });
+});

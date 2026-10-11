@@ -1,3 +1,4 @@
+import { datetimeProperty } from "../features/bases/dates";
 import type { NoteIndex } from "../features/links/note-index";
 import type { SpanEdit } from "../features/links/rename";
 import { dailyPath, parseDailyDate } from "../features/notes/daily";
@@ -234,9 +235,18 @@ export function startNewNote(c: CommandContext): Result {
 export function submitNewRow(
   s: AppState,
   path: string,
-  row: { window: WindowId; properties: Record<string, FrontmatterValue> },
+  row: {
+    window: WindowId;
+    properties: Record<string, FrontmatterValue>;
+    stamp: readonly string[];
+  },
   now: number,
 ): Result {
+  const at = datetimeProperty(now);
+  const frontmatter = {
+    ...row.properties,
+    ...Object.fromEntries(row.stamp.map((name) => [name, at])),
+  };
   const ws = baseWindow(s, row.window);
   const state =
     ws === undefined
@@ -249,7 +259,7 @@ export function submitNewRow(
         kind: "createNote",
         path,
         vars: { title: noteTitle(path), at: localDateTime(now) },
-        frontmatter: row.properties,
+        frontmatter,
         after: "insert",
         reason: "row",
       },

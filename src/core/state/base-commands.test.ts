@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { indexed } from "../../../test/support/bases";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import { datetimeProperty } from "../features/bases/dates";
 import {
   type BaseWindowState,
   isBaseWindowState,
@@ -651,6 +652,36 @@ test("o names a new row in the filtered folder; Enter creates it blank with the 
   ]);
   expect(m?.focus.row).toBe(1);
   expect(done.notifications.toasts.at(-1)?.text).toBe("Created tasks/c.md");
+});
+
+test("a new row starts with the view's columns: empty, created_at stamped at Enter, updated_at left to the file", () => {
+  const daily = `filters:
+  and:
+    - file.inFolder("daily")
+views:
+  - type: table
+    name: All
+    order: [file.name, tags, plan, created_at, updated_at]
+`;
+  const s = run(fresh(), loaded("daily.base", daily), indexed(NOTES)).state;
+  const entered = press(s, "ox<CR>");
+  expect(entered.effects).toMatchObject([
+    {
+      kind: "createNote",
+      path: "daily/x.md",
+      frontmatter: {
+        tags: [],
+        plan: null,
+        created_at: datetimeProperty(NOW),
+      },
+    },
+  ]);
+  const [e] = entered.effects;
+  expect(e?.kind === "createNote" && Object.keys(e.frontmatter ?? {})).toEqual([
+    "tags",
+    "plan",
+    "created_at",
+  ]);
 });
 
 test("a new row whose note exists says so and stays in the base", () => {

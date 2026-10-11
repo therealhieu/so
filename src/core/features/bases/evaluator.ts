@@ -1,4 +1,5 @@
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
+import { dateInstant } from "./dates";
 import { type ExpressionContext, evaluateExpression } from "./expression";
 import type {
   Base,
@@ -405,6 +406,11 @@ function groupValue(value: unknown): FrontmatterValue {
 }
 
 function compareValues(left: unknown, right: unknown): number {
+  // Dates compare as instants whatever way each was written.
+  const leftAt = dateInstant(left);
+  const rightAt = dateInstant(right);
+  if (leftAt !== undefined && rightAt !== undefined)
+    return leftAt === rightAt ? 0 : leftAt < rightAt ? -1 : 1;
   const leftRank = valueRank(left);
   const rightRank = valueRank(right);
   if (leftRank !== rightRank) return leftRank - rightRank;
