@@ -1,7 +1,7 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
 import type { ThemeName } from "../core/config/schema";
 import type { AppState } from "../core/state/types";
-import { catppuccin, FLAVORS } from "./catppuccin";
+import { catppuccin } from "./catppuccin";
 
 /** Terminal attributes for one token. */
 export type Style = { fg: RGBA; bg: RGBA; attrs: number };
@@ -22,6 +22,7 @@ const DARK: Palette = {
   "bg-hl": "#292e42",
   "bg-sel": "#2d3f76",
   fg: "#c0caf5",
+  bold: "#c0caf5",
   "fg-dim": "#565f89",
   "fg-muted": "#737aa2",
   border: "#3b4261",
@@ -75,6 +76,7 @@ const LIGHT: Palette = {
   "bg-hl": "#c4c8da",
   "bg-sel": "#b7c5f0",
   fg: "#3760bf",
+  bold: "#3760bf",
   "fg-dim": "#8990b3",
   "fg-muted": "#6172b0",
   border: "#a8aecb",
@@ -225,7 +227,7 @@ export const TOKENS: Readonly<
   mdHeading2: ["h2", "h2-bg", BOLD, BOLD | UNDERLINE],
   mdHeading3: ["h3", "h3-bg", BOLD, BOLD],
   mdHeading4: ["h4", "bg", BOLD, BOLD],
-  mdBold: ["fg", "bg", BOLD, BOLD],
+  mdBold: ["bold", "bg", BOLD, BOLD],
   mdItalic: ["fg", "bg", ITALIC, ITALIC],
   mdStrike: ["fg-muted", "bg", STRIKETHROUGH, STRIKETHROUGH],
   mdHighlight: ["hl-fg", "hl-bg", 0, BOLD | UNDERLINE],
@@ -329,16 +331,13 @@ const nocolorTheme: Theme = {
 export const themes: Readonly<Record<Theme["name"], Theme>> = {
   dark: colorTheme("dark", DARK),
   light: colorTheme("light", LIGHT),
-  "catppuccin-latte": colorTheme("catppuccin-latte", catppuccin(FLAVORS.latte)),
-  "catppuccin-frappe": colorTheme(
-    "catppuccin-frappe",
-    catppuccin(FLAVORS.frappe),
-  ),
+  "catppuccin-latte": colorTheme("catppuccin-latte", catppuccin("latte")),
+  "catppuccin-frappe": colorTheme("catppuccin-frappe", catppuccin("frappe")),
   "catppuccin-macchiato": colorTheme(
     "catppuccin-macchiato",
-    catppuccin(FLAVORS.macchiato),
+    catppuccin("macchiato"),
   ),
-  "catppuccin-mocha": colorTheme("catppuccin-mocha", catppuccin(FLAVORS.mocha)),
+  "catppuccin-mocha": colorTheme("catppuccin-mocha", catppuccin("mocha")),
   nocolor: nocolorTheme,
 };
 

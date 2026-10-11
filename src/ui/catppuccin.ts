@@ -164,8 +164,12 @@ export function blend(fg: string, bg: string, alpha: number): string {
 }
 
 /** The theme palette for one flavor. */
-export function catppuccin(c: Colors): Record<string, string> {
+export function catppuccin(flavor: Flavor): Record<string, string> {
+  const c = FLAVORS[flavor];
   const tint = (color: string, alpha: number) => blend(color, c.base, alpha);
+  // Yellow text on Latte's light base is unreadable (2.3:1), so Latte keeps its
+  // text colour for highlights and darkens yellow for bold.
+  const light = flavor === "latte";
   return {
     bg: c.base,
     "bg-dark": c.mantle,
@@ -173,17 +177,19 @@ export function catppuccin(c: Colors): Record<string, string> {
     "bg-hl": c.surface0,
     "bg-sel": c.surface1,
     fg: c.text,
+    bold: light ? blend(c.yellow, c.text, 0.4) : c.yellow,
     "fg-dim": c.overlay0,
     "fg-muted": c.subtext0,
     border: c.surface1,
     "border-hl": c.blue,
     h1: c.red,
     h2: c.peach,
-    h3: c.yellow,
-    h4: c.green,
+    // Bold text is yellow, so H3 and H4 take the next rainbow colours.
+    h3: c.green,
+    h4: c.sapphire,
     "h1-bg": tint(c.red, 0.15),
     "h2-bg": tint(c.peach, 0.15),
-    "h3-bg": tint(c.yellow, 0.15),
+    "h3-bg": tint(c.green, 0.15),
     link: c.blue,
     wikilink: c.lavender,
     code: c.green,
@@ -193,8 +199,8 @@ export function catppuccin(c: Colors): Record<string, string> {
     warning: c.yellow,
     danger: c.red,
     quote: c.overlay2,
-    "hl-bg": tint(c.yellow, 0.25),
-    "hl-fg": c.text,
+    "hl-bg": tint(c.yellow, light ? 0.25 : 0.18),
+    "hl-fg": light ? c.text : c.yellow,
     kw: c.mauve,
     str: c.green,
     num: c.peach,
