@@ -1,8 +1,45 @@
-import { common, createLowlight } from "lowlight";
+import { common, createLowlight, type LanguageFn } from "lowlight";
 import type { TextBuffer } from "../../kernel/text/text-buffer";
 import type { Highlighter, Span, StyleToken } from "../../kernel/view/types";
 
-const low = createLowlight(common);
+type Mode = {
+  className?: string;
+  scope?: string;
+  contains?: unknown[];
+  [key: string]: unknown;
+};
+
+const isMode = (value: unknown): value is Mode =>
+  typeof value === "object" && value !== null;
+
+/**
+ * highlight.js's Markdown grammar without emphasis and strong. Its `_`
+ * opens emphasis inside a word (`created_at`, `snake_case`) and runs to
+ * the next `_`, swallowing the headings and links between, and neither
+ * scope has a colour; rendered views style them from the Markdown tree.
+ */
+const markdown: LanguageFn = (hljs) => {
+  const grammar = common.markdown?.(hljs);
+  if (grammar === undefined) throw new Error("no markdown grammar");
+  const seen = new Set<Mode>();
+  // Modes nest under `contains`, `variants`, and `starts`, so walk every value.
+  const strip = (mode: Mode) => {
+    if (seen.has(mode)) return;
+    seen.add(mode);
+    if (mode.contains !== undefined)
+      mode.contains = mode.contains.filter((child) => {
+        const scope = isMode(child) ? (child.className ?? child.scope) : "";
+        return scope !== "emphasis" && scope !== "strong";
+      });
+    for (const value of Object.values(mode))
+      if (Array.isArray(value)) value.filter(isMode).forEach(strip);
+      else if (isMode(value)) strip(value);
+  };
+  strip(grammar as Mode);
+  return grammar;
+};
+
+const low = createLowlight({ ...common, markdown });
 
 /** Lines above the window that are highlighted too, so open comments and strings carry over. */
 const LOOK_BACK = 200;

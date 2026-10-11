@@ -19,7 +19,7 @@ test("heading text takes its level's style, capped at four", () => {
   const lines = markdownHighlighter().highlight(buf, { from: 0, to: 9 });
   const styles = lines.map((spans) => spans.map((s) => s.style));
   expect(styles[0]).toEqual(["mdHeading1"]);
-  expect(styles[1]).toEqual(["mdHeading2", "codeStrong"]);
+  expect(styles[1]).toEqual(["mdHeading2"]);
   expect(styles[2]).toEqual(["mdHeading3"]);
   expect(styles[3]).toEqual(["mdHeading4"]);
   expect(styles.slice(4, 8)).toEqual([
@@ -58,4 +58,15 @@ test("raw HTML takes the colour around it", () => {
   expect(heading).toEqual([
     { text: "### CR-1 — <Major | Minor> — <Category>", style: "mdHeading3" },
   ]);
+});
+
+test("an underscore inside a word does not swallow the headings after it", () => {
+  const buf = createTextBuffer(
+    ["created_at: today", "", "# One", "", "snake_case text", "## Two"].join(
+      "\n",
+    ),
+  );
+  const lines = markdownHighlighter().highlight(buf, { from: 0, to: 6 });
+  expect(lines[2]).toEqual([{ text: "# One", style: "mdHeading1" }]);
+  expect(lines[5]).toEqual([{ text: "## Two", style: "mdHeading2" }]);
 });
