@@ -130,8 +130,12 @@ export class ExplorerView extends Renderable {
     this.paths = rows.map((r) => r.path);
     const at = selectedRow(rows, ex.cursor);
     const room = this.listRows();
+    // A name field keeps the lines under it in view.
+    let end = at;
+    if (rows[at]?.edit !== undefined)
+      while (rows[end + 1]?.note !== undefined) end++;
+    if (end >= this.first + room) this.first = end - room + 1;
     if (at >= 0 && at < this.first) this.first = at;
-    if (at >= this.first + room) this.first = at - room + 1;
     this.first = Math.max(0, Math.min(this.first, rows.length - room));
     const row = rows[at];
     const box = this.inner();
@@ -223,34 +227,46 @@ export class ExplorerView extends Renderable {
       open: ex.expanded.includes(path),
     }));
     const field = treeField(s);
-    if (field?.op.kind === "create") {
+    if (field === undefined) return rows;
+    let at: number;
+    let depth: number;
+    if (field.op.kind === "create") {
       const folder = field.op.from;
-      rows.splice(rows.findIndex((r) => r.path === ex.cursor) + 1, 0, {
+      at = rows.findIndex((r) => r.path === ex.cursor) + 1;
+      depth = folder === "" ? 0 : depthOf(folder) + 1;
+      rows.splice(at, 0, {
         path: "",
-        depth: folder === "" ? 0 : depthOf(folder) + 1,
+        depth,
         dir: false,
         open: false,
         edit: field.value,
       });
-    } else if (field !== undefined) {
-      const at = rows.findIndex((r) => r.path === field.op.from);
+    } else {
+      at = rows.findIndex((r) => r.path === field.op.from);
       const row = rows[at];
-      if (row !== undefined) {
-        row.edit = field.value;
-        const note = impactLine(field, {
-          warn: "explorerWarn",
-          error: "explorerError",
-        });
-        if (note !== undefined)
-          rows.splice(at + 1, 0, {
-            path: "",
-            depth: row.depth + 1,
-            dir: false,
-            open: false,
-            note,
-          });
-      }
+      if (row === undefined) return rows;
+      row.edit = field.value;
+      depth = row.depth;
     }
+    // Under the field: its keys, then why Enter is off or the links it updates.
+    const notes = [
+      {
+        text: `⏎ ${field.op.kind === "create" ? "create" : "rename"} · esc cancel`,
+        token: "explorerDim",
+      },
+      impactLine(field, { warn: "explorerWarn", error: "explorerError" }),
+    ].filter((n) => n !== undefined);
+    rows.splice(
+      at + 1,
+      0,
+      ...notes.map((note) => ({
+        path: "",
+        depth: depth + 1,
+        dir: false,
+        open: false,
+        note,
+      })),
+    );
     return rows;
   }
 
@@ -355,20 +371,15 @@ export class ExplorerView extends Renderable {
         x += [...text].length;
       };
       put(indent, "explorer");
-      put(`${icon.glyph} `, icon.token);
       if (row.edit !== undefined) {
+        // The name field: a pencil, then the text on a strip to the edge.
+        put("✎ ", "explorerWarn");
         const room = x0 + box.w - x;
         if (room > 0)
-          drawCells(
-            buf,
-            theme.style("treeField"),
-            x,
-            y,
-            row.edit,
-            Math.min(room, cells(row.edit)),
-          );
+          drawCells(buf, theme.style("treeField"), x, y, row.edit, room);
         continue;
       }
+      put(`${icon.glyph} `, icon.token);
       const marker = markers?.get(row.path);
       const git = marker === undefined ? undefined : GIT_MARKERS[marker];
       // An open folder's changes show on the rows below it.

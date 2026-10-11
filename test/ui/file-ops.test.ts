@@ -67,7 +67,7 @@ const text = () => {
 };
 
 describe("explorer prompts", () => {
-  test("a opens a name field in the tree under the target folder", async () => {
+  test("a opens a marked name field in the tree under the target folder, with its keys below", async () => {
     select("config.yaml");
     m.keys("a");
     let frame = await m.frame();
@@ -76,7 +76,8 @@ describe("explorer prompts", () => {
       `${DIR} notes`,
       `${DIR} scripts`,
       `${YAML} config.yaml`,
-      NOTE,
+      "✎",
+      "  ⏎ create · esc cancel",
       `${NOTE} todo.md`,
     ]);
     m.keys("ide");
@@ -88,7 +89,8 @@ describe("explorer prompts", () => {
     expect(frame).not.toContain("❯");
     expect(await tree()).toEqual([
       `${DIR} notes`,
-      `  ${NOTE} draft`,
+      "  ✎ draft",
+      "    ⏎ create · esc cancel",
       `${DIR} scripts`,
       `${YAML} config.yaml`,
       `${NOTE} todo.md`,
@@ -114,7 +116,7 @@ describe("explorer prompts", () => {
     ]);
   });
 
-  test("r edits the name in place; m asks for the new path", async () => {
+  test("r edits the name in a marked field with its keys and link impact below; m asks for the new path", async () => {
     indexed({ "todo.md": "" });
     select("todo.md");
     m.keys("r");
@@ -124,12 +126,13 @@ describe("explorer prompts", () => {
       `${DIR} notes`,
       `${DIR} scripts`,
       `${YAML} config.yaml`,
-      `${NOTE} todo.md`,
+      "✎ todo.md",
+      "  ⏎ rename · esc cancel",
       "  No links to update",
     ]);
     expect(await cursorAt()).toEqual({ x: 10, y: 5 });
     m.keys("<BS><BS>txt");
-    expect((await tree())[3]).toBe(`${NOTE} todo.txt`);
+    expect((await tree())[3]).toBe("✎ todo.txt");
     m.keys("<CR>");
     expect(effectsOf("rename")).toEqual([
       {
