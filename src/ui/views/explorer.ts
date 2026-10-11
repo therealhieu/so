@@ -6,6 +6,7 @@ import {
 import { explorerMarkers, type Marker } from "../../core/features/git/status";
 import {
   explorerWidth,
+  isCutPath,
   isIgnoredPath,
   visiblePaths,
 } from "../../core/state/explorer";
@@ -93,8 +94,8 @@ export function impactLine(
  * The file tree: docked on its configured edge with a `│` separator toward
  * the windows, or a rounded float on that edge on narrow terminals. Each row starts with an
  * icon for its folder state or file type (`explorer.icons` picks Nerd Font or
- * plain symbols); `●` marks a file with unsaved changes, and a gitignored name
- * is dimmed. Create and rename edit the name in the tree: a new row under the
+ * plain symbols); `●` marks a file with unsaved changes, and a gitignored
+ * name, or one cut and not yet pasted, is dimmed. Create and rename edit the name in the tree: a new row under the
  * target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
@@ -396,7 +397,7 @@ export class ExplorerView extends Renderable {
       const name = basename(row.path);
       const nameToken =
         git?.[1] ??
-        (isIgnoredPath(s, row.path)
+        (isIgnoredPath(s, row.path) || isCutPath(s, row.path)
           ? "explorerDim"
           : row.dir
             ? "explorerDir"

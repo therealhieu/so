@@ -90,7 +90,12 @@ import {
   statePath,
 } from "../workspace/state-file";
 import { createSvgRasterizer } from "../workspace/svg";
-import { detectClipboard, openUrl } from "../workspace/system";
+import {
+  detectClipboard,
+  detectFileClipboard,
+  noFileClipboard,
+  openUrl,
+} from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
 import {
@@ -345,6 +350,7 @@ async function main(argv: string[]): Promise<void> {
       move: () => Promise.reject(new Error("trash not ready")),
     },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: noFileClipboard,
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
     now: clock,
@@ -447,6 +453,11 @@ async function main(argv: string[]): Promise<void> {
       shell.copyOsc52,
     ).then((clipboard) => {
       deps.clipboard = clipboard;
+    });
+    deps.fileClipboard = detectFileClipboard({
+      platform: process.platform,
+      env: process.env,
+      which: (cmd) => Bun.which(cmd),
     });
     void git
       .detect(ws.root)

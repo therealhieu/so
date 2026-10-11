@@ -11,7 +11,7 @@ import {
   startPreviewServer,
 } from "../../src/preview/server";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
-import { openUrl } from "../../src/workspace/system";
+import { noFileClipboard, openUrl } from "../../src/workspace/system";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { type App, gitOff, startApp, tmpWorkspace } from "./helpers";
 
@@ -302,6 +302,7 @@ test("a failed browser launch is reported with its address and logged", async ()
     ownOps: createOwnOps(),
     trash: { available: false, move: () => Promise.reject(new Error("no")) },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: noFileClipboard,
     dispatch: (a) => actions.push(a),
     exit: () => {},
     logger: {

@@ -12,6 +12,7 @@ import {
   createTarget,
   explorerOp,
   explorerWidth,
+  freeName,
   resizeExplorer,
   toggleExplorer,
 } from "./explorer";
@@ -565,4 +566,219 @@ test("O opens the selected entry in the system's default app", () => {
     level: "error",
     text: `could not open ${root}/page.html`,
   });
+});
+
+test("a taken name gets copy, then a number, before a file's extension", () => {
+  const taken = new Set(["a.md", "a copy.md", "dir", "v1.2", ".env"]);
+  expect(freeName("new.md", false, taken)).toBe("new.md");
+  expect(freeName("a.md", false, taken)).toBe("a copy 2.md");
+  expect(freeName("dir", true, taken)).toBe("dir copy");
+  expect(freeName("v1.2", true, taken)).toBe("v1.2 copy");
+  expect(freeName(".env", false, taken)).toBe(".env copy");
+});
+
+const clipTree = (): AppState =>
+  update(
+    update(fresh(), {
+      type: "dirListed",
+      dir: "",
+      entries: [
+        { name: "notes", kind: "dir" },
+        { name: "a.md", kind: "file" },
+        { name: "b.png", kind: "file" },
+      ],
+    }).state,
+    {
+      type: "dirListed",
+      dir: "notes",
+      entries: [{ name: "one.md", kind: "file" }],
+    },
+  ).state;
+
+const select = (s: AppState, cursor: string): AppState => ({
+  ...s,
+  panels: {
+    ...s.panels,
+    explorer: { ...s.panels.explorer, focused: true, cursor },
+  },
+});
+
+const pasted = (
+  s: AppState,
+  target: string,
+  clip: { op: "copy" | "cut"; paths: string[] } | null,
+  dirs: string[] = [],
+) => update(s, { type: "fileClip", target, clip, dirs, now: 7 });
+
+const fsOps = (effects: Effect[]) =>
+  effects.flatMap((e) =>
+    e.kind === "copy" || e.kind === "move" ? [e.op] : [],
+  );
+
+test("y and x take the selection here and on the system clipboard", () => {
+  const s = select(clipTree(), "a.md");
+  const copied = pressKeys(s, "y");
+  expect(copied.state.panels.explorer.clip).toEqual({
+    op: "copy",
+    paths: ["a.md"],
+  });
+  expect(copied.effects).toEqual([
+    { kind: "fileClipboardWrite", clip: { op: "copy", paths: ["/ws/a.md"] } },
+  ]);
+  expect(copied.state.notifications.message?.text).toBe("Copied a.md");
+  const cut = pressKeys(select(s, "notes"), "x");
+  expect(cut.state.panels.explorer.clip).toEqual({
+    op: "cut",
+    paths: ["notes"],
+  });
+  expect(cut.state.notifications.message?.text).toBe("Cut notes");
+});
+
+test("p reads the clipboard for the selected folder, or the selected file's folder", () => {
+  const s = clipTree();
+  expect(pressKeys(select(s, "notes"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+  expect(pressKeys(select(s, "notes/one.md"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+  expect(pressKeys(select(s, "a.md"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "" },
+  ]);
+});
+
+test("files copied in another program are copied in, a taken name getting copy", () => {
+  const r = pasted(
+    clipTree(),
+    "",
+    {
+      op: "copy",
+      paths: ["/Users/u/Downloads/a.md", "/Users/u/Downloads/pics"],
+    },
+    ["/Users/u/Downloads/pics"],
+  );
+  expect(fsOps(r.effects)).toEqual([
+    {
+      kind: "copy",
+      from: "/Users/u/Downloads/a.md",
+      to: "a copy.md",
+      outside: true,
+    },
+    {
+      kind: "copy",
+      from: "/Users/u/Downloads/pics",
+      to: "pics",
+      dir: true,
+      outside: true,
+    },
+  ]);
+  const done = update(r.state, {
+    type: "fsResult",
+    op: { kind: "copy", from: "/x/a.md", to: "a copy.md", outside: true },
+    ok: true,
+  });
+  expect(done.state.panels.explorer.cursor).toBe("a copy.md");
+  expect(done.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
+});
+
+test("a cut from another file manager moves the files in", () => {
+  const r = pasted(clipTree(), "notes", {
+    op: "cut",
+    paths: ["/home/u/x.md"],
+  });
+  expect(fsOps(r.effects)).toEqual([
+    { kind: "move", from: "/home/u/x.md", to: "notes/x.md", outside: true },
+  ]);
+});
+
+test("the explorer's cut decides when the clipboard holds what x took", () => {
+  const tree = clipTree();
+  const indexed = {
+    ...tree,
+    index: { ...tree.index, status: "ready" as const },
+  };
+  const s = pressKeys(select(indexed, "a.md"), "x").state;
+  const own = pasted(s, "notes", { op: "copy", paths: ["/ws/a.md"] });
+  expect(fsOps(own.effects)).toEqual([
+    { kind: "move", from: "a.md", to: "notes/a.md" },
+  ]);
+  expect(own.state.panels.explorer.clip).toBeUndefined();
+  const other = pasted(s, "notes", { op: "copy", paths: ["/ws/b.png"] });
+  expect(fsOps(other.effects)).toEqual([
+    { kind: "copy", from: "b.png", to: "notes/b.png" },
+  ]);
+  expect(other.state.panels.explorer.clip).toEqual({
+    op: "cut",
+    paths: ["a.md"],
+  });
+});
+
+test("without files on the clipboard, what y took is pasted", () => {
+  const s = pressKeys(select(clipTree(), "a.md"), "y").state;
+  const r = pasted(s, "", null);
+  expect(fsOps(r.effects)).toEqual([
+    { kind: "copy", from: "a.md", to: "a copy.md" },
+  ]);
+  expect(r.state.panels.explorer.clip).toEqual({ op: "copy", paths: ["a.md"] });
+  const empty = pasted(clipTree(), "", null);
+  expect(empty.effects).toEqual([]);
+  expect(empty.state.notifications.message?.text).toBe("nothing to paste");
+  const failed = update(clipTree(), {
+    type: "fileClip",
+    target: "",
+    clip: null,
+    dirs: [],
+    now: 7,
+    error: "osascript failed",
+  });
+  expect(failed.state.notifications.message).toMatchObject({
+    text: "clipboard unavailable: osascript failed",
+    level: "error",
+  });
+});
+
+test("a folder never goes into itself, and a cut entry already in place stays", () => {
+  const s = clipTree();
+  const into = pasted(s, "notes", { op: "copy", paths: ["/ws/notes"] });
+  expect(fsOps(into.effects)).toEqual([]);
+  expect(into.state.notifications.message).toMatchObject({
+    text: "cannot paste a folder into itself",
+    level: "error",
+  });
+  const inPlace = pasted(s, "notes", {
+    op: "cut",
+    paths: ["/ws/notes/one.md"],
+  });
+  expect(fsOps(inPlace.effects)).toEqual([]);
+});
+
+test("a copy flushes the source's unsaved text first", () => {
+  const s = select(dirtyA(), "a.md");
+  const r = pasted(s, "notes", { op: "copy", paths: ["/ws/a.md"] });
+  expect(ops(r.effects)).toEqual([
+    { kind: "write", path: "a.md", text: "xhello\n", expected: stamp(1) },
+    { kind: "copy", op: { kind: "copy", from: "a.md", to: "notes/a.md" } },
+  ]);
+});
+
+test("a long paste shows its progress, then what was pasted", () => {
+  const going = update(clipTree(), {
+    type: "copyProgress",
+    to: "notes/pics",
+    done: 120,
+    total: 3400,
+  });
+  expect(going.state.notifications.message?.text).toBe(
+    "Copying pics… 120/3400",
+  );
+  const done = update(going.state, {
+    type: "fsResult",
+    op: { kind: "copy", from: "/x/pics", to: "notes/pics", outside: true },
+    ok: true,
+  });
+  expect(done.state.notifications.message?.text).toBe("Pasted pics");
 });

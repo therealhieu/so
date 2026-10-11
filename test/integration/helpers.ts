@@ -27,6 +27,10 @@ import {
   readStateFile,
   saveStateFileSync,
 } from "../../src/workspace/state-file";
+import {
+  type FileClipboard,
+  noFileClipboard,
+} from "../../src/workspace/system";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
 import { editingNotes, testRegistries } from "../support/state";
@@ -114,6 +118,8 @@ export async function startApp(
   root: string,
   opts: {
     trash?: Trash;
+    /** The system file clipboard; none by default. */
+    fileClipboard?: FileClipboard;
     /** Run the real index host and worker; `spawn` may wrap the worker. */
     index?: { spawn?: () => Worker };
     /** The environment the debug log reads (`SO_LOG`, `XDG_STATE_HOME`). */
@@ -184,6 +190,7 @@ export async function startApp(
       move: () => Promise.reject(new Error("no trash")),
     },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: opts.fileClipboard ?? noFileClipboard,
     dispatch: (a) => store.dispatch(a),
     exit: () => saveSession(),
     logger,

@@ -103,9 +103,12 @@ export function indexAfterFsOp(s: AppState, op: FsOp): AppState {
             ])
           : addFiles(ix, [op.from]),
       );
+    case "copy":
+      // The worker reads the copy when the runner reports it.
+      return s;
     case "rename":
     case "move":
-      return op.to === undefined
+      return op.to === undefined || op.outside === true
         ? s
         : withIx(s, movePaths(ix, [{ from: op.from, to: op.to }]));
     case "trash":

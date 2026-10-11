@@ -3,7 +3,7 @@ import { summarize } from "../../src/core/features/links/summarize";
 import { scanDoc } from "../../src/core/lang/markdown/scan";
 import { fullText } from "../../src/core/state/buffers";
 import type { DirEntry, FsOp } from "../../src/core/state/types";
-import { type Mounted, mountShell, TREE } from "../support/ui";
+import { cellStyle, type Mounted, mountShell, TREE } from "../support/ui";
 
 let m: Mounted;
 
@@ -412,4 +412,22 @@ test("the focused tree hides the cursor, and its name field shows a line cursor"
     visible: true,
     style: "line",
   });
+});
+
+test("an entry cut with x is dimmed until it is pasted", async () => {
+  const nameStyle = async () => {
+    const lines = (await m.frame()).split("\n");
+    const y = lines.findIndex((l) => l.includes("todo.md"));
+    const x = [...(lines[y] ?? "")].indexOf("t");
+    return cellStyle(m.t.captureSpans().lines, x, y);
+  };
+  select("todo.md");
+  const plain = await nameStyle();
+  m.keys("x");
+  expect(effectsOf("fileClipboardWrite")).toHaveLength(1);
+  const cut = await nameStyle();
+  expect(cut?.fg).not.toBe(plain?.fg);
+  m.keys("ky");
+  expect(m.store.get().panels.explorer.cursor).toBe("config.yaml");
+  expect((await nameStyle())?.fg).toBe(plain?.fg);
 });

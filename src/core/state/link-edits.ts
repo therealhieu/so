@@ -156,8 +156,37 @@ export function submitRename(
   const t = targetOf(s, p);
   if ("invalid" in t) return none(open);
   if (t.to === p.op.from) return none(s);
-  const op: FsOp = { kind: p.op.kind, from: p.op.from, to: t.to };
-  const edits = s.index.status === "ready" ? planFor(s, op.from, t.to) : [];
+  const kind = p.op.kind === "rename" ? "rename" : "move";
+  return moveWithLinks(s, kind, p.op.from, t.to, now);
+}
+
+/**
+ * A paste of an entry cut in the workspace: a move whose links are updated,
+ * refused like `m` while the index builds or another rewrite runs.
+ */
+export function pasteMove(
+  s: AppState,
+  from: string,
+  to: string,
+  now: number,
+): Result {
+  return (
+    requireIndex(s) ??
+    refuseWhileRewriting(s) ??
+    moveWithLinks(s, "move", from, to, now)
+  );
+}
+
+/** Plan the link edits now, keep them until the file operation reports back, and emit it. */
+function moveWithLinks(
+  s: AppState,
+  kind: "rename" | "move",
+  from: string,
+  to: string,
+  now: number,
+): Result {
+  const op: FsOp = { kind, from, to };
+  const edits = s.index.status === "ready" ? planFor(s, from, to) : [];
   const { rewrite: _, ...index } = s.index;
   const batch = nextEditBatch(s, now);
   const rewrite: LinkRewrite = {

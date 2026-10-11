@@ -26,7 +26,9 @@ import {
   openSelected,
   resizeExplorer,
   startOp,
+  startPaste,
   systemOpenSelected,
+  takeSelected,
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
@@ -503,6 +505,21 @@ const builtins: AppCommand[] = [
     run: (c) => startOp(c, "rename"),
   },
   { id: "explorer.move", title: "Move", run: (c) => startOp(c, "move") },
+  {
+    id: "explorer.copy",
+    title: "Copy",
+    run: (c) => takeSelected(c.state, "copy"),
+  },
+  {
+    id: "explorer.cut",
+    title: "Cut",
+    run: (c) => takeSelected(c.state, "cut"),
+  },
+  {
+    id: "explorer.paste",
+    title: "Paste",
+    run: (c) => startPaste(c.state),
+  },
   {
     id: "explorer.delete",
     title: "Delete",

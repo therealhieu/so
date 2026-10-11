@@ -55,14 +55,21 @@ export type TextFile = {
 /** One listed folder entry; symlinks report their target's kind. */
 /** `ignored`: a `.gitignore` matches it; listed only while gitignored entries are shown. */
 export type DirEntry = { name: string; kind: "file" | "dir"; ignored?: true };
-/** A file-system operation; `permanent` turns "trash" into a deletion. Paths are workspace-relative. */
+/**
+ * A file-system operation; `permanent` turns "trash" into a deletion. Paths
+ * are workspace-relative, except that `outside` makes a copy's or move's
+ * `from` an absolute path outside the workspace.
+ */
 export type FsOp = {
-  kind: "create" | "rename" | "move" | "trash";
+  kind: "create" | "rename" | "move" | "trash" | "copy";
   from: string;
   to?: string;
   dir?: boolean;
   permanent?: true;
+  outside?: true;
 };
+/** Files on a clipboard and whether pasting copies or moves them. */
+export type FileClip = { op: "copy" | "cut"; paths: string[] };
 /** `explorerOnly`: a dot or gitignored path, watched only for the explorer. */
 export type FileEvent =
   | { kind: "changed"; path: string; isDir: boolean; explorerOnly?: true }
@@ -182,6 +189,8 @@ export type ExplorerState = {
   width?: number;
   /** The entry under the pointer; the tree shows its whole name. */
   hover?: string;
+  /** What `y` or `x` last took, by workspace path; a paste falls back to it. */
+  clip?: FileClip;
 };
 
 /** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */
@@ -658,6 +667,21 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
+  | { type: "fileClipboardFailed"; reason: string }
+  /** A long copy or move into `to` has started `done` of its `total` entries. */
+  | { type: "copyProgress"; to: string; done: number; total: number }
+  /**
+   * The system clipboard's files for a paste into `target` (`null`: none),
+   * paths inside the workspace spelled from its root; `dirs` are the folders.
+   */
+  | {
+      type: "fileClip";
+      target: string;
+      clip: FileClip | null;
+      dirs: string[];
+      now: number;
+      error?: string;
+    }
   | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
   | {
@@ -793,13 +817,16 @@ export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
   | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
-  | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
+  | { kind: "create" | "rename" | "move" | "trash" | "copy"; op: FsOp }
   /** `dotfiles` lists dot entries other than `.git`; `gitignored` lists names a `.gitignore` matches. */
   | { kind: "listDir"; dir: string; dotfiles?: true; gitignored?: true }
   | { kind: "startTimer"; id: TimerId; ms: number }
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
+  /** Put files, by absolute path, on the system clipboard. */
+  | { kind: "fileClipboardWrite"; clip: FileClip }
+  | { kind: "fileClipboardRead"; target: string }
   | { kind: "exit"; code: number }
   | { kind: "saveState"; state: PersistedState }
   | {

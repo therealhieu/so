@@ -8,6 +8,7 @@ import {
   beginRewrite,
   dropRewrite,
   followMove,
+  pasteMove,
   promptImpact,
   startRename,
   submitRename,
@@ -22,6 +23,7 @@ import type {
   Effect,
   ExplorerPrompt,
   ExplorerState,
+  FileClip,
   FsOp,
   MouseTarget,
   PromptState,
@@ -36,6 +38,12 @@ export const dirname = (path: string): string => {
 
 const under = (path: string, root: string) =>
   path === root || path.startsWith(`${root}/`);
+
+/** Whether `path` is, or is below, an entry `x` cut and not yet pasted. */
+export const isCutPath = (s: AppState, path: string): boolean => {
+  const clip = s.panels.explorer.clip;
+  return clip?.op === "cut" && clip.paths.some((p) => under(path, p));
+};
 
 /** The root is always listed; other folders while expanded. */
 export const isListed = (s: AppState, dir: string) =>
@@ -203,6 +211,11 @@ function fsResultTree(
         )
       : message(prev, a.reason ?? "operation failed", "error");
   const s = indexAfterFsOp(prev, op);
+  if (op.kind === "copy" || op.outside === true) {
+    const to = op.to ?? op.from;
+    const done = message(s, `Pasted ${basename(to)}`).state;
+    return relist(setExplorer(done, { cursor: to }), ancestors(to));
+  }
   switch (op.kind) {
     case "rename":
     case "move": {
@@ -416,6 +429,145 @@ export function collapse(s: AppState): Result {
 export function collapseAll(s: AppState): Result {
   const top = s.panels.explorer.cursor.split("/")[0] ?? "";
   return none(setExplorer(s, { expanded: [], cursor: top }));
+}
+
+/** The selection's absolute path, as other programs name it. */
+const absPath = (s: AppState, path: string) =>
+  path === "" ? s.workspace.root : `${s.workspace.root}/${path}`;
+
+/** The workspace path of an absolute path, or `undefined` outside the workspace. */
+function workspacePath(s: AppState, abs: string): string | undefined {
+  const root = s.workspace.root;
+  if (abs === root) return "";
+  return abs.startsWith(`${root}/`) ? abs.slice(root.length + 1) : undefined;
+}
+
+/** `y` / `x`: take the selection for a paste, in so and on the system clipboard. */
+export function takeSelected(s: AppState, op: FileClip["op"]): Result {
+  const path = s.panels.explorer.cursor;
+  if (path === "") return none(s);
+  const taken = setExplorer(s, { clip: { op, paths: [path] } });
+  const verb = op === "copy" ? "Copied" : "Cut";
+  return withEffect(message(taken, `${verb} ${basename(path)}`), {
+    kind: "fileClipboardWrite",
+    clip: { op, paths: [absPath(s, path)] },
+  });
+}
+
+/** A long paste's progress on the message line, until its result replaces it. */
+export const onCopyProgress = (
+  s: AppState,
+  a: Extract<Action, { type: "copyProgress" }>,
+): Result => message(s, `Copying ${basename(a.to)}… ${a.done}/${a.total}`);
+
+/** `p`: paste into the selected folder, or the selected file's folder. */
+export function startPaste(s: AppState): Result {
+  const at = s.panels.explorer.cursor;
+  const target = kindOf(s, at) === "dir" ? at : dirname(at);
+  return { state: s, effects: [{ kind: "fileClipboardRead", target }] };
+}
+
+/**
+ * `name`, or the first of "name copy", "name copy 2", … that is not taken;
+ * a file keeps its extension last.
+ */
+export function freeName(
+  name: string,
+  dir: boolean,
+  taken: ReadonlySet<string>,
+): string {
+  if (!taken.has(name)) return name;
+  const ext = dir ? "" : extname(name);
+  const stem = name.slice(0, name.length - ext.length);
+  for (let n = 1; ; n++) {
+    const next = `${stem} copy${n === 1 ? "" : ` ${n}`}${ext}`;
+    if (!taken.has(next)) return next;
+  }
+}
+
+/** Names in `dir` the tree lists or the index holds a path under. */
+function namesIn(s: AppState, dir: string): Set<string> {
+  const names = new Set(
+    (s.panels.explorer.entries[dir] ?? []).map((e) => e.name),
+  );
+  const prefix = dir === "" ? "" : `${dir}/`;
+  for (const f of s.index.ix.files)
+    if (f.startsWith(prefix))
+      names.add(f.slice(prefix.length).split("/")[0] ?? "");
+  return names;
+}
+
+function dropClip(s: AppState): AppState {
+  const { clip: _, ...explorer } = s.panels.explorer;
+  return { ...s, panels: { ...s.panels, explorer } };
+}
+
+const samePaths = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((p, i) => p === b[i]);
+
+/**
+ * The system clipboard answered a paste. Its files win, but when they are the
+ * ones `y`/`x` took, the explorer's copy or cut decides (Finder cannot cut);
+ * with no files there, what `y`/`x` took is pasted. Entries from the workspace
+ * are copied, or moved with their links updated; entries from outside are
+ * copied, or moved in when another file manager cut them. A taken name gets
+ * " copy"; a cut entry already in the target stays; a folder never goes into
+ * itself. A cut pasted once is done.
+ */
+export function onFileClip(
+  s: AppState,
+  a: Extract<Action, { type: "fileClip" }>,
+): Result {
+  const { now } = a;
+  const own = s.panels.explorer.clip;
+  const ownAbs = own?.paths.map((p) => absPath(s, p));
+  const clip: FileClip | undefined =
+    a.clip === null
+      ? own && ownAbs && { op: own.op, paths: ownAbs }
+      : own && ownAbs && samePaths(a.clip.paths, ownAbs)
+        ? { op: own.op, paths: a.clip.paths }
+        : a.clip;
+  if (clip === undefined)
+    return a.error === undefined
+      ? message(s, "nothing to paste")
+      : message(s, `clipboard unavailable: ${a.error}`, "error");
+  const target = a.target;
+  const taken = namesIn(s, target);
+  const ops: FsOp[] = [];
+  const moves: { from: string; to: string }[] = [];
+  for (const abs of clip.paths) {
+    const rel = workspacePath(s, abs);
+    if (rel !== undefined && under(target, rel))
+      return message(s, "cannot paste a folder into itself", "error");
+    if (rel !== undefined && clip.op === "cut" && dirname(rel) === target)
+      continue;
+    const dir =
+      a.dirs.includes(abs) || (rel !== undefined && kindOf(s, rel) === "dir");
+    const name = freeName(basename(abs), dir, taken);
+    taken.add(name);
+    const to = join(target, name);
+    const kind = clip.op === "copy" ? "copy" : "move";
+    if (rel === undefined)
+      ops.push({ kind, from: abs, to, ...(dir ? { dir } : {}), outside: true });
+    else if (kind === "copy")
+      ops.push({ kind, from: rel, to, ...(dir ? { dir } : {}) });
+    else moves.push({ from: rel, to });
+  }
+  const start = clip.op === "cut" ? dropClip(s) : s;
+  const copied = ops.reduce<Result>(
+    (r, op) => chain(r, (st) => explorerOp(st, op, now)),
+    none(start),
+  );
+  const [only] = moves;
+  if (only !== undefined && moves.length === 1)
+    return chain(copied, (st) => pasteMove(st, only.from, only.to, now));
+  const moved = moves.reduce<Result>(
+    (r, m) => chain(r, (st) => explorerOp(st, { kind: "move", ...m }, now)),
+    copied,
+  );
+  return moves.length > 1
+    ? chain(moved, (st) => message(st, "links not updated for several entries"))
+    : moved;
 }
 
 const openPrompt = (s: AppState, prompt: PromptState): Result =>

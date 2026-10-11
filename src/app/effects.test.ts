@@ -1,15 +1,23 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Action, Effect, RepoInfo } from "../core/state/types";
+import type { Action, Effect, FileEvent, RepoInfo } from "../core/state/types";
 import { localDateTime } from "../core/time/local";
 import { atomicWrite } from "../workspace/fs";
 import type { Git } from "../workspace/git";
 import type { GitWatcher } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createLogger } from "../workspace/log";
-import type { ClipboardProvider } from "../workspace/system";
+import { type ClipboardProvider, noFileClipboard } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import { createOwnOps } from "../workspace/watcher";
 import { createEffectRunner, type RunnerDeps } from "./effects";
@@ -53,6 +61,7 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     ownOps: createOwnOps(),
     trash: noTrash,
     clipboard: memoryClipboard,
+    fileClipboard: noFileClipboard,
     dispatch: (a) => actions.push(a),
     exit: (code) => exits.push(code),
     logger: createLogger({}, root),
@@ -875,4 +884,141 @@ test("running the tool dispatches its result once", async () => {
   expect(broken.actions).toEqual([
     { type: "toolExited", result: { kind: "failed", reason: "no tool here" } },
   ]);
+});
+
+test("a copy runs on the queue and the index learns of the new entry", async () => {
+  const outside = await mkdtemp(join(tmpdir(), "so-effects-outside-"));
+  const told: FileEvent[] = [];
+  const moved: string[] = [];
+  const r = runner({
+    index: {
+      search: () => {},
+      notify: (e) => told.push(e),
+      moved: (from, to) => moved.push(`${from}>${to}`),
+    },
+  });
+  try {
+    await writeFile(join(root, "src.md"), "src\n");
+    await writeFile(join(outside, "in.md"), "in\n");
+    r.run({ kind: "copy", op: { kind: "copy", from: "src.md", to: "dup.md" } });
+    const inOp = {
+      kind: "move" as const,
+      from: join(outside, "in.md"),
+      to: "in.md",
+      outside: true as const,
+    };
+    r.run({ kind: "move", op: inOp });
+    await waitFor(() => r.actions.length === 2);
+    expect(r.actions).toEqual([
+      {
+        type: "fsResult",
+        op: { kind: "copy", from: "src.md", to: "dup.md" },
+        ok: true,
+      },
+      { type: "fsResult", op: inOp, ok: true },
+    ]);
+    expect(await readFile(join(root, "dup.md"), "utf8")).toBe("src\n");
+    expect(await readFile(join(root, "in.md"), "utf8")).toBe("in\n");
+    expect(await Bun.file(join(outside, "in.md")).exists()).toBe(false);
+    expect(told).toEqual([
+      { kind: "changed", path: "dup.md", isDir: false },
+      { kind: "changed", path: "in.md", isDir: false },
+    ]);
+    expect(moved).toEqual([]);
+  } finally {
+    await rm(outside, { recursive: true });
+  }
+});
+
+test("a clipboard paste names workspace files from its root, even through a link", async () => {
+  const real = await realpath(
+    await mkdtemp(join(tmpdir(), "so-effects-real-")),
+  );
+  const linked = `${real}-link`;
+  await symlink(real, linked);
+  try {
+    await mkdir(join(real, "notes"));
+    const r = runner({
+      root: linked,
+      fileClipboard: {
+        name: "fake",
+        write: async () => {},
+        read: async () => ({
+          op: "copy",
+          paths: [join(real, "notes"), "/elsewhere/x.md"],
+        }),
+      },
+      now: () => 42,
+    });
+    r.run({ kind: "fileClipboardRead", target: "" });
+    await waitFor(() => r.actions.length === 1);
+    expect(r.actions).toEqual([
+      {
+        type: "fileClip",
+        target: "",
+        clip: {
+          op: "copy",
+          paths: [join(linked, "notes"), "/elsewhere/x.md"],
+        },
+        dirs: [join(linked, "notes")],
+        now: 42,
+      },
+    ]);
+  } finally {
+    await rm(linked);
+    await rm(real, { recursive: true });
+  }
+});
+
+test("clipboard failures are reported: a read as no files, a write once", async () => {
+  const r = runner({
+    fileClipboard: {
+      name: "broken",
+      write: () => Promise.reject(new Error("osascript failed")),
+      read: () => Promise.reject(new Error("osascript failed")),
+    },
+    now: () => 1,
+  });
+  r.run({ kind: "fileClipboardRead", target: "notes" });
+  r.run({
+    kind: "fileClipboardWrite",
+    clip: { op: "copy", paths: ["/ws/a.md"] },
+  });
+  await waitFor(() => r.actions.length === 2);
+  await Bun.sleep(20);
+  expect(r.actions).toContainEqual({
+    type: "fileClip",
+    target: "notes",
+    clip: null,
+    dirs: [],
+    now: 1,
+    error: "osascript failed",
+  });
+  expect(r.actions).toContainEqual({
+    type: "fileClipboardFailed",
+    reason: "osascript failed",
+  });
+  expect(r.actions.length).toBe(2);
+});
+
+test("a long copy reports progress after a quiet start, a quick one none", async () => {
+  await mkdir(join(root, "many"), { recursive: true });
+  for (const n of ["a", "b", "c"]) await writeFile(join(root, "many", n), n);
+  let t = 0;
+  const slow = runner({ now: () => (t += 150) });
+  slow.run({ kind: "copy", op: { kind: "copy", from: "many", to: "many2" } });
+  await waitFor(() => slow.actions.some((a) => a.type === "fsResult"));
+  const progress = slow.actions.filter((a) => a.type === "copyProgress");
+  expect(progress.length).toBeGreaterThan(0);
+  expect(progress.at(-1)).toEqual({
+    type: "copyProgress",
+    to: "many2",
+    done: 4,
+    total: 4,
+  });
+  expect(slow.actions.at(-1)?.type).toBe("fsResult");
+  const quick = runner({ now: () => 0 });
+  quick.run({ kind: "copy", op: { kind: "copy", from: "many", to: "many3" } });
+  await waitFor(() => quick.actions.length > 0);
+  expect(quick.actions.map((a) => a.type)).toEqual(["fsResult"]);
 });

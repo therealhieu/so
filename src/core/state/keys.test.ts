@@ -79,7 +79,7 @@ test("explorer keys resolve in explorer mode and never edit the buffer", () => {
   }).state;
   s = keys(s, " e").state;
   expect(s.panels.explorer.cursor).toBe("a.md");
-  const moved = keys(s, "jx");
+  const moved = keys(s, "jJ");
   expect(moved.state.panels.explorer.cursor).toBe("b.md");
   expect(textOf(moved.state)).toBe("hello");
   expect(moved.effects).toEqual([]);

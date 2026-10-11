@@ -18,7 +18,13 @@ import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
 import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
-import { onDirListed, onFsResult, withTrash } from "./explorer";
+import {
+  onCopyProgress,
+  onDirListed,
+  onFileClip,
+  onFsResult,
+  withTrash,
+} from "./explorer";
 import {
   onGitBlamed,
   onGitDetected,
@@ -67,7 +73,7 @@ import {
   onPreviewStarted,
   onPreviewStopped,
 } from "./preview";
-import { clearMessage, none, notifyError } from "./result";
+import { clearMessage, message, none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
   onStateLoaded,
@@ -176,6 +182,16 @@ export function createUpdate(reg: Registries): Update {
         return onDirListed(state, action);
       case "fsResult":
         return onFsResult(state, action, reg);
+      case "fileClip":
+        return onFileClip(state, action);
+      case "copyProgress":
+        return onCopyProgress(state, action);
+      case "fileClipboardFailed":
+        return message(
+          state,
+          `system clipboard unavailable: ${action.reason}`,
+          "error",
+        );
       case "trashAvailable":
         return none(withTrash(state, action.available));
       case "timer":
