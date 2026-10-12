@@ -2,7 +2,7 @@ import { z } from "zod";
 import { splitKeys } from "../kernel/vim/keys";
 import { LspConfigSchema } from "./lsp";
 
-/** Colour themes: `dark` and `light` are Tokyo Night (night and day). */
+/** Colour themes: `dark` and `light` are Tokyo Night (night and day); `paper` and `sepia` are warm reading themes. */
 export const THEME_NAMES = [
   "dark",
   "light",
@@ -10,6 +10,9 @@ export const THEME_NAMES = [
   "catppuccin-frappe",
   "catppuccin-macchiato",
   "catppuccin-mocha",
+  "paper",
+  "sepia",
+  "rose-pine-dawn",
 ] as const;
 export type ThemeName = (typeof THEME_NAMES)[number];
 

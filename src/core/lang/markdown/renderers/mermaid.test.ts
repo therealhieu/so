@@ -120,3 +120,11 @@ test("a diagram as SVG sits on each catppuccin flavor's base colour", () => {
     ).map((theme) => mermaidSvg(FLOWCHART, theme)?.background),
   ).toEqual(["#eff1f5", "#303446", "#24273a", "#1e1e2e"]);
 });
+
+test("a diagram as SVG sits on each warm theme's page colour", () => {
+  expect(
+    (["paper", "sepia", "rose-pine-dawn"] as const).map(
+      (theme) => mermaidSvg(FLOWCHART, theme)?.background,
+    ),
+  ).toEqual(["#fbf8f1", "#f2e8d0", "#faf4ed"]);
+});
