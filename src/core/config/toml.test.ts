@@ -113,6 +113,7 @@ test("a valid file parses with binding lines", () => {
         template: "templates/daily.md",
       },
       templates: { folder: "templates" },
+      index: { exclude: [".obsidian", ".trash"] },
       git: { tool: ["lazygit"] },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {

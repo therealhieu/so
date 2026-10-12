@@ -8,11 +8,15 @@ import { splitBlocks } from "../core/lang/markdown/blocks";
 import { linesOf, scanDoc } from "../core/lang/markdown/scan";
 import type { SearchHit } from "../core/state/types";
 import { readTextFile } from "./fs";
-import { createExclusionMatcher } from "./ignore";
+import { createExclusionMatcher, hasNamedSegment } from "./ignore";
 
 /** Messages to the index worker. Paths are workspace-relative. */
 export type ToWorker =
-  | { t: "scan"; root: string; ignore: string[] }
+  /**
+   * `dotfiles` takes in dot entries other than `.git`, as the explorer lists
+   * them; `exclude` names entries skipped at any depth.
+   */
+  | { t: "scan"; root: string; dotfiles: boolean; exclude: string[] }
   | { t: "changed"; paths: string[] }
   | { t: "removed"; paths: string[] }
   | { t: "moved"; from: string; to: string }
@@ -36,6 +40,8 @@ export type FromWorker =
       files?: string[];
       /** Size and times of files that are not notes. */
       facts?: FileFacts[];
+      /** Files a rescan no longer finds, such as dot entries once hidden. */
+      removed?: string[];
     }
   | { t: "ready" }
   | { t: "results"; id: number; hits: SearchHit[]; capped?: boolean }
@@ -50,6 +56,8 @@ const CACHE_MAX_CHARS = 1024 * 1024;
 const isNote = (path: string) => /\.md$/i.test(path);
 
 let root = "";
+let dotfiles = false;
+let exclude: readonly string[] = [];
 /** Every non-excluded file, notes included. */
 const files = new Set<string>();
 /** Note texts up to 1 MiB, so searches do not read every note again. */
@@ -86,6 +94,9 @@ async function walk(
   from = "",
 ): Promise<{ paths: string[]; facts: FileFacts[] }> {
   const matcher = createExclusionMatcher(root, readOrNull);
+  const skipped = (rel: string, isDir: boolean) =>
+    matcher.isExcluded(rel, isDir, { dotfiles }) ||
+    hasNamedSegment(rel, exclude);
   const out: string[] = [];
   const facts: FileFacts[] = [];
   const visit = async (dir: string) => {
@@ -95,14 +106,14 @@ async function walk(
     for (const d of entries) {
       const rel = dir === "" ? d.name : `${dir}/${d.name}`;
       if (d.isDirectory()) {
-        if (!matcher.isExcluded(rel, true)) await visit(rel);
+        if (!skipped(rel, true)) await visit(rel);
         continue;
       }
       const isFile =
         d.isFile() ||
         (d.isSymbolicLink() &&
           (await stat(join(root, rel)).catch(() => null))?.isFile() === true);
-      if (!isFile || matcher.isExcluded(rel, false)) continue;
+      if (!isFile || skipped(rel, false)) continue;
       out.push(rel);
       if (isNote(rel)) continue;
       const f = await factsOf(rel);
@@ -144,6 +155,8 @@ async function summarizeFile(path: string): Promise<NoteSummary | undefined> {
 
 async function scan(): Promise<void> {
   const { paths: listed, facts } = await walk();
+  const found = new Set(listed);
+  const removed = [...files].filter((f) => !found.has(f));
   files.clear();
   cache.clear();
   for (const f of listed) files.add(f);
@@ -157,7 +170,9 @@ async function scan(): Promise<void> {
       summaries: pending,
       done,
       total: notes.length,
-      ...(filesSent ? {} : { files: listed, facts }),
+      ...(filesSent
+        ? {}
+        : { files: listed, facts, ...(removed.length > 0 ? { removed } : {}) }),
     });
     filesSent = true;
     pending = [];
@@ -353,6 +368,8 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
     .then(async () => {
       if (m.t === "scan") {
         root = m.root;
+        dotfiles = m.dotfiles;
+        exclude = m.exclude;
         await scan();
       } else if (m.t === "changed") await changed(m.paths);
       else if (m.t === "moved") moved(m.from, m.to);

@@ -80,6 +80,22 @@ test("an update batch after the scan keeps the status and progress", () => {
   expect(sources(s, "a.md")).toEqual(["c.md"]);
 });
 
+test("a rescan batch drops the files it no longer finds", () => {
+  let s = indexed({ "a.md": "", ".notes/b.md": "[[a]]" }, [".notes/x.png"]);
+  expect(sources(s, "a.md")).toEqual([".notes/b.md"]);
+  s = run(s, {
+    type: "indexBatch",
+    summaries: [note("a.md", "")],
+    files: ["a.md"],
+    removed: [".notes/b.md", ".notes/x.png"],
+    done: 1,
+    total: 1,
+  });
+  expect([...s.index.ix.files].sort()).toEqual(["a.md"]);
+  expect(s.index.ix.summaries.has(".notes/b.md")).toBe(false);
+  expect(sources(s, "a.md")).toEqual([]);
+});
+
 test("a saved link reaches backlinks without the worker", () => {
   let s = indexed({ "a.md": "", "b.md": "" });
   s = run(s, { type: "fileLoaded", path: "a.md", file: textFile("") });

@@ -184,3 +184,51 @@ test("a file created in the explorer gets its size and times in the index", asyn
     ),
   ).toBe(true);
 });
+
+test("dot entries join the index and search while shown, and leave once hidden", async () => {
+  app = await startApp(
+    await tmpWorkspace({
+      "a.md": "# A\n",
+      ".notes/todo.md": "the dot needle\n",
+      ".obsidian/plugins/p/main.js": "const needle = 1;\n",
+      ".trash/old.md": "a deleted needle\n",
+    }),
+    { index: {} },
+  );
+  await waitFor(() => status() === "ready");
+  const files = () => state().index.ix.files;
+  expect(files().has(".notes/todo.md")).toBe(false);
+
+  app.keys("H");
+  await waitFor(() => files().has(".notes/todo.md"));
+  await waitFor(() => status() === "ready");
+  await appendFile(join(app.root, ".notes/later.md"), "later\n");
+  await appendFile(join(app.root, ".trash/gone.md"), "needle\n");
+  await waitFor(() => files().has(".notes/later.md"));
+  // Names in `[index] exclude` stay out even while dot entries are shown.
+  expect(
+    [...files()].filter(
+      (f) => f.startsWith(".obsidian/") || f.startsWith(".trash/"),
+    ),
+  ).toEqual([]);
+
+  app.keys(" sgneedle");
+  await waitFor(() => {
+    const o = state().overlay;
+    return o.kind === "picker" && o.picker.search?.pending === false;
+  });
+  const o = state().overlay;
+  expect(o.kind === "picker" ? o.picker.items.map((i) => i.label) : []).toEqual(
+    [".notes/todo.md:1  the dot needle"],
+  );
+  app.keys("<Esc>");
+  await waitFor(() => state().overlay.kind === "none");
+
+  app.keys("H");
+  await waitFor(
+    () =>
+      !files().has(".notes/todo.md") &&
+      !files().has(".notes/later.md") &&
+      status() === "ready",
+  );
+});

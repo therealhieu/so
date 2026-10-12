@@ -111,6 +111,14 @@ test("the explorer hides dot entries unless dotfiles is on", () => {
   expect(e?.message).toStartWith("explorer.dotfiles: ");
 });
 
+test("index.exclude takes entry names and skips Obsidian's folders by default", () => {
+  expect(defaults.index.exclude).toEqual([".obsidian", ".trash"]);
+  const r = parseConfig(lines("[index]", 'exclude = ["archive"]'));
+  expect(r.ok && r.config.index.exclude).toEqual(["archive"]);
+  const [e] = errors(lines("[index]", 'exclude = ["notes/old"]'));
+  expect(e?.message).toStartWith("index.exclude.0: must be a name");
+});
+
 test("the explorer docks left unless configured right", () => {
   expect(defaults.explorer).toEqual({
     position: "right",
