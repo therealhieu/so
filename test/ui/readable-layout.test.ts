@@ -56,7 +56,7 @@ function rowsOfFirstLine(frame: string[], gutterX: number, number = 1) {
 }
 
 test("a note's text is capped at the readable width and centered with its gutter", async () => {
-  await mount(`[preview]\nreadableWidth = ${WIDTH}\n`);
+  await mount(`[preview]\nreadable = true\nreadableWidth = ${WIDTH}\n`);
   m.open("notes/long.md", `${PARA}\n`);
   const { y0, rows } = rowsOfFirstLine(await lines(), GUTTER_X);
   expect(y0).toBeGreaterThanOrEqual(0);
@@ -77,7 +77,7 @@ test("a note's text is capped at the readable width and centered with its gutter
 });
 
 test("clicks in the column and in its margins land on the row's text", async () => {
-  await mount(`[preview]\nreadableWidth = ${WIDTH}\n`);
+  await mount(`[preview]\nreadable = true\nreadableWidth = ${WIDTH}\n`);
   m.open("notes/long.md", `${PARA}\n`);
   const { y0, rows } = rowsOfFirstLine(await lines(), GUTTER_X);
   const texts = rows.map((r) => r.slice(TEXT_X).trimEnd());
@@ -95,7 +95,9 @@ test("clicks in the column and in its margins land on the row's text", async () 
 });
 
 test("the source view is centered too, and a code file fills the window", async () => {
-  await mount(`[preview]\nreadableWidth = ${WIDTH}\nmode = "source"\n`);
+  await mount(
+    `[preview]\nreadable = true\nreadableWidth = ${WIDTH}\nmode = "source"\n`,
+  );
   m.open("notes/long.md", `${PARA}\n`);
   let frame = await lines();
   expect(rowsOfFirstLine(frame, GUTTER_X).y0).toBeGreaterThanOrEqual(0);
@@ -107,7 +109,7 @@ test("the source view is centered too, and a code file fills the window", async 
   expect(rows[0]?.trimEnd().length).toBeGreaterThan(TEXT_X + WIDTH);
 });
 
-const JUSTIFY = `[preview]\nreadableWidth = ${WIDTH}\njustify = true\n`;
+const JUSTIFY = `[preview]\nreadable = true\nreadableWidth = ${WIDTH}\njustify = true\n`;
 
 /** The column's text of each row, stretched rows keeping their inner spaces. */
 const textsOf = (rows: string[]) =>

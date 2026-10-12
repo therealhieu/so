@@ -110,7 +110,7 @@ test("a valid file parses with binding lines", () => {
         mode: "reading",
         embedMaxRows: 10,
         images: "auto",
-        readable: true,
+        readable: false,
         readableWidth: 100,
         justify: false,
       },

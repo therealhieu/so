@@ -120,7 +120,7 @@ export const SETTINGS: readonly Setting[] = [
   {
     kind: "choice",
     path: ["preview", "readable"],
-    choices: [true, false],
+    choices: [false, true],
     about: [
       "Cap a note's text at the",
       "readable width and center it;",
