@@ -30,6 +30,7 @@ import {
 import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
+import { pdfPickerSources } from "./pdf-pickers";
 import { chain, message, none } from "./result";
 import { closeBuffer } from "./save";
 import {
@@ -588,6 +589,7 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     restore: (s, item, reg) => restoreBinding(s, item, reg),
   },
   ...lspPickerSources,
+  ...pdfPickerSources,
 };
 
 const pickerOf = (s: AppState): PickerState | undefined =>

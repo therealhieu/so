@@ -107,7 +107,8 @@ export class OverlayHost extends Renderable {
   /**
    * What the open overlay has under the cell. Outside its float the cell is
    * `outside`, so nothing below answers, except for completion, which leaves
-   * the cell to the body. Overlays without `itemAt` are `outside` everywhere.
+   * the cell to the body, and so does the PDF action float. Overlays without
+   * `itemAt` are `outside` everywhere.
    * The non-modal float answers where the body would: with no overlay
    * open, or outside the completion popup.
    */
@@ -117,9 +118,9 @@ export class OverlayHost extends Renderable {
       const t = v.visible ? v.itemAt?.(x, y) : undefined;
       if (t !== undefined) return t;
     }
-    return this.open === "completion"
-      ? this.float?.targetAt?.(x, y)
-      : { kind: "outside" };
+    if (this.open === "completion") return this.float?.targetAt?.(x, y);
+    // The PDF action float leaves the page around it to the PDF window.
+    return this.open === "pdfMenu" ? undefined : { kind: "outside" };
   }
 
   /** What a drag that started in the open overlay is over, anywhere on screen. */

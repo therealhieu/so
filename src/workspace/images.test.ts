@@ -143,3 +143,20 @@ test("workspace image reads stay inside the workspace and under 32 MiB", async (
   await expect(readImage(root, "images/huge.png")).rejects.toThrow("too large");
   await expect(readImage(root, "images/none.png")).rejects.toThrow();
 });
+
+const PAGE = { rgba: new Uint8Array([7, 7, 7, 255]), width: 1, height: 1 };
+
+test("a PDF page reference draws through the PDF renderer", async () => {
+  const asked: unknown[] = [];
+  const load = createImageLoader(root, {
+    pdfPage: async (r) => {
+      asked.push(r);
+      return PAGE;
+    },
+  });
+  expect(await load("docs/paper.pdf#page=3")).toBe(PAGE);
+  expect(asked).toEqual([{ path: "docs/paper.pdf", page: 3, width: 1024 }]);
+  await expect(createImageLoader(root)("a.pdf#page=1")).rejects.toThrow(
+    "no PDF renderer",
+  );
+});

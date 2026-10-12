@@ -36,6 +36,8 @@ import { isKeySequence, keymapFor, keyScope } from "./keymap";
 import { bindingPromptKey } from "./keymap-edit";
 import { bodyRows } from "./layout";
 import { withoutFloat } from "./lsp";
+import { notePromptKey, pdfMenuKey } from "./pdf-annotate";
+import { pdfSearching, pdfSearchKey } from "./pdf-tools";
 import { pickerKey, refreshPicker } from "./picker";
 import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
@@ -89,6 +91,7 @@ function routeKey(
         return chain(bindingPromptKey(s, p, a.key, reg), (st) =>
           refreshPicker(st, reg, "help"),
         );
+      if (p.pdfNote !== undefined) return notePromptKey(s, p, a.key, a.now);
       return p.setting === undefined
         ? promptKey(s, a.key, a.now, reg)
         : settingPromptKey(s, p, a.key);
@@ -113,11 +116,18 @@ function routeKey(
         ? none(closed)
         : routeKey(closed, a, reg);
     }
+    case "pdfMenu":
+      // Its own keys act; any other key closes it and runs.
+      return (
+        pdfMenuKey(s, a.key, a.now) ??
+        routeKey({ ...s, overlay: { kind: "none" } }, a, reg)
+      );
   }
   if (editingCell(s)) return cellEditKey(s, a, reg);
   if (searchingBase(s)) return searchKey(s, a);
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
+  if (pdfSearching(s)) return pdfSearchKey(s, a);
   return bindingOrVim(s, a, reg);
 }
 

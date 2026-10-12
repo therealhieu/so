@@ -6,6 +6,7 @@ import {
 import { newNotePath } from "../../core/state/explorer";
 import { promptField } from "../../core/state/line-field";
 import type { AppState, PromptState } from "../../core/state/types";
+import type { Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 import { impactLine, treeField } from "../views/explorer";
@@ -74,6 +75,20 @@ function layout(p: PromptState): {
       footer: `⏎ ${last ? "save" : "next"} · esc back`,
     };
   }
+  if (p.pdfNote !== undefined)
+    return {
+      title: p.title,
+      border: "floatBorder",
+      lines: [
+        field,
+        {
+          text: ` “${p.pdfNote.item.quote.replace(/\s+/g, " ")}”`,
+          token: "floatDim",
+        },
+      ],
+      field: 0,
+      footer: "⏎ save · esc cancel",
+    };
   if (p.setting !== undefined)
     return {
       title: p.title,
@@ -180,6 +195,19 @@ function layout(p: PromptState): {
   };
 }
 
+/** The float's box for prompt `p`. */
+function boxOf(s: AppState, p: PromptState) {
+  const { lines } = layout(p);
+  return centered(s, Math.min(64, s.terminal.cols - 4), lines.length + 3);
+}
+
+/** Where the open prompt's centred float is; nothing while none is, or it edits in the tree. */
+export function promptBox(s: AppState): Rect | undefined {
+  return s.overlay.kind === "prompt" && treeField(s) === undefined
+    ? boxOf(s, s.overlay.prompt)
+    : undefined;
+}
+
 /**
  * File prompts as a centred float: a `[y/N]` confirm for the Trash or for
  * creating a missing link target, a path field for move, and the typed
@@ -195,10 +223,8 @@ export class PromptView extends Renderable {
     super(ctx, { position: "absolute", left: 0, top: 0 });
   }
 
-  /** The float's box for the open prompt. */
   private box(s: AppState, p: PromptState) {
-    const { lines } = layout(p);
-    return centered(s, Math.min(64, s.terminal.cols - 4), lines.length + 3);
+    return boxOf(s, p);
   }
 
   update(s: AppState, _lc: LayoutClass): void {

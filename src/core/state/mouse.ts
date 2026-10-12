@@ -27,6 +27,9 @@ import {
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
 import { onPointerMove } from "./lsp";
+import { panPdf, wheelPdf } from "./pdf";
+import { hoverPdf, pdfMenuItems, releasePdf, runPdfMenu } from "./pdf-annotate";
+import { dragPdf, pressPdf } from "./pdf-select";
 import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
 import { autosaveNow, closeBuffer } from "./save";
@@ -48,7 +51,7 @@ const WHEEL_LINES = 3;
 /**
  * One mouse gesture, run as its keyboard equivalent: a press focuses what it
  * is over and then acts on it, a drag extends a charwise selection from the
- * press (or, in the zoom float, pans it; on the explorer's separator, resizes
+ * press (on a PDF page, a selection of its words; in the zoom float, pans it; on the explorer's separator, resizes
  * the explorer like `<C-w>>`; on a base table's header separator, resizes the
  * column to its left like `>`), and the wheel scrolls what it is over.
  */
@@ -59,7 +62,16 @@ export function onMouse(
 ): Result {
   const e = a.event;
   if (e.kind === "move")
-    return onPointerMove(hoverExplorer(state, e.target), e.target);
+    return onPointerMove(
+      hoverPdf(hoverExplorer(state, e.target), e.target),
+      e.target,
+    );
+  if (e.kind === "release")
+    return e.target.kind === "window" &&
+      e.target.window === state.windows.active &&
+      state.overlay.kind === "none"
+      ? releasePdf(state)
+      : none(state);
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
@@ -77,9 +89,10 @@ export function onMouse(
           t.spot.column,
           t.spot.width,
         );
-      return t.kind === "window" &&
-        t.spot.kind === "text" &&
-        t.window === s.windows.active
+      if (t.kind !== "window" || t.window !== s.windows.active) return none(s);
+      if (t.spot.kind === "pdf")
+        return t.spot.at === undefined ? none(s) : dragPdf(s, t.spot.at);
+      return t.spot.kind === "text"
         ? dragText(s, t.spot.pos, t.spot.edge, a.now, reg)
         : none(s);
     }
@@ -104,13 +117,13 @@ export function onMouse(
 /**
  * Whether a press on `t` stops at the gate without reaching `t`: any press
  * while a prompt or conflict dialog is open, a press outside any other
- * overlay but completion, and a press anywhere but the command line while
+ * overlay but completion and the PDF action float, and a press anywhere but the command line while
  * it is open.
  */
 export function pressStops(s: AppState, t: MouseTarget): boolean {
   const open = s.overlay.kind;
   if (open === "prompt" || open === "conflict") return true;
-  if (open === "completion") return false;
+  if (open === "completion" || open === "pdfMenu") return false;
   if (open !== "none") return !onOverlay(t);
   return s.vim.mode === "cmdline" && t.kind !== "inert";
 }
@@ -119,7 +132,8 @@ export function pressStops(s: AppState, t: MouseTarget): boolean {
  * Prompt and conflict dialogs take no mouse input. A press outside any
  * other overlay, or anywhere but the command line while it is open, closes
  * it like `<Esc>` and goes no further. Completion gives way to a press in
- * the body: it closes, Insert stays, and the press goes on.
+ * the body: it closes, Insert stays, and the press goes on. So does the
+ * PDF action float.
  */
 function overlayGate(
   s: AppState,
@@ -131,7 +145,7 @@ function overlayGate(
   if (open === "prompt" || open === "conflict") return { stop: none(s) };
   if (e.kind !== "press") return { go: s };
   const t = e.target;
-  if (open === "completion")
+  if (open === "completion" || open === "pdfMenu")
     return { go: inBody(t) ? { ...s, overlay: { kind: "none" } } : s };
   return pressStops(s, t)
     ? { stop: feedKeys(none(s), ["<Esc>"], now, reg) }
@@ -148,7 +162,7 @@ const repeat = (key: Key, n: number): Key[] => Array<Key>(n).fill(key);
 
 /**
  * One wheel notch over `t`, never moving focus or changing mode: a text
- * window scrolls without moving its cursor; a Base moves its focus three
+ * window scrolls without moving its cursor; a PDF scrolls its page; a Base moves its focus three
  * rows, or for a sideways notch scrolls its columns (table) or moves to the
  * next lane (board); the explorer and the side panel move their selection;
  * an open list moves its selection, stopping at either end; the calendar
@@ -163,10 +177,18 @@ function wheel(
   reg: Registries,
 ): Result {
   switch (t.kind) {
-    case "window":
-      return s.windows.byId[t.window]?.content.editor === "base"
-        ? withFocus(s, t, (f) => wheelBase(f, dx, dy, now, reg))
-        : scrollWindow(s, t.window, dy);
+    case "window": {
+      const editor = s.windows.byId[t.window]?.content.editor;
+      if (editor === "base")
+        return withFocus(s, t, (f) => wheelBase(f, dx, dy, now, reg));
+      if (editor === "pdf")
+        return withFocus(s, t, (f) =>
+          dx !== 0
+            ? panPdf(f, dx * WHEEL_LINES * 2)
+            : wheelPdf(f, dy * WHEEL_LINES, now),
+        );
+      return scrollWindow(s, t.window, dy);
+    }
     case "explorer":
       return dy === 0 ? none(s) : moveCursor(s, dy * WHEEL_LINES);
     case "sidePanel":
@@ -391,6 +413,10 @@ function press(
   const idle = mode === "normal" && pending.length === 0;
   const left = idle ? none(s) : feedKeys(none(s), ["<Esc>"], now, reg);
   const focused = { ...left, state: focusTarget(left.state, t) };
+  if (t.kind === "window" && t.spot.kind === "pdf") {
+    const { at } = t.spot;
+    return chain(focused, (st) => pressPdf(st, at, e.clicks));
+  }
   return t.kind === "window" && t.spot.kind === "text"
     ? pressText(focused, t.spot, e.clicks, e.ctrl, reinsert, now, reg)
     : pressChrome(focused, t, e.clicks, now, reg);
@@ -617,6 +643,12 @@ function pressItem(
 ): Result {
   const s = r.state;
   switch (s.overlay.kind) {
+    case "pdfMenu": {
+      const item = pdfMenuItems(s)[index];
+      return item === undefined
+        ? r
+        : chain(r, (st) => runPdfMenu(st, item.key, now));
+    }
     case "picker":
     case "palette":
     case "help":

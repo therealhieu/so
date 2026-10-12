@@ -317,3 +317,29 @@ test("a repeated click acts on what the first click hit", () => {
     { kind: "press", target: text(3, 7), clicks: 1, ctrl: false },
   ]);
 });
+
+test("letting go after a press on a PDF page reports a release on it, once", () => {
+  const page = (x: number): MouseTarget => ({
+    kind: "window",
+    window: 1,
+    spot: { kind: "pdf", at: { x: x / 10, y: 0.5 } },
+  });
+  const pdf: MouseSource = {
+    targetAt: (x) => page(x),
+    dragAt: (x) => page(x),
+  };
+  const r = setup([pdf]);
+  r.handle(ev("down", 1, 1));
+  r.handle(ev("drag", 3, 1));
+  // OpenTUI sends drag-end, then up (twice: to the captured view and below).
+  r.handle(ev("drag-end", 3, 1));
+  r.handle(ev("up", 3, 1));
+  r.handle(ev("up", 3, 1));
+  expect(r.events().map((e) => e?.kind)).toEqual(["press", "drag", "release"]);
+  expect(r.events().at(-1)).toEqual({ kind: "release", target: page(1) });
+  // Letting go after a press elsewhere reports nothing.
+  const t = setup([editor]);
+  t.handle(ev("down", 2, 2));
+  t.handle(ev("up", 2, 2));
+  expect(t.events().map((e) => e?.kind)).toEqual(["press"]);
+});

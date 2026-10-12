@@ -20,6 +20,8 @@ export type WindowView = Renderable & {
   cursor(): Cursor | undefined;
   /** Where the view paints text, for floats anchored to it. */
   textArea?(): Rect;
+  /** Where the view placed the PDF action float this frame, if it shows one. */
+  floatBox?(): Rect | undefined;
   targetAt(x: number, y: number): MouseTarget | undefined;
   dragAt?(x: number, y: number, from: WindowSpot): MouseTarget | undefined;
 };

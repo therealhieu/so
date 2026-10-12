@@ -129,6 +129,14 @@ export class WindowTree extends Renderable {
       : { text, cursorY: c.y };
   }
 
+  /** The PDF action float's box, from the window it is about. */
+  pdfMenuBox(): Rect | undefined {
+    const o = this.s?.overlay;
+    return o?.kind === "pdfMenu"
+      ? this.views.get(o.window)?.floatBox?.()
+      : undefined;
+  }
+
   /** The target from the window whose rect holds the cell; separators have none. */
   targetAt(x: number, y: number): MouseTarget | undefined {
     for (const [id, r] of this.rects)

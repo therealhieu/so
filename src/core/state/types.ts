@@ -10,6 +10,9 @@ import type { FileFacts, NoteIndex } from "../features/links/note-index";
 import type { FileEdit } from "../features/links/rename";
 import type { NoteSummary } from "../features/links/summarize";
 import type { TemplateVars } from "../features/notes/template";
+import type { PdfAnnotation } from "../features/pdf/annotations";
+import type { PdfPageLayout, PdfPoint } from "../features/pdf/layout";
+import type { PdfOutlineItem } from "../features/pdf/outline";
 import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { Registers } from "../kernel/editor/registers";
@@ -110,6 +113,52 @@ export type SaveState =
   | { kind: "writing"; version: number; at: number; attempt: number }
   | { kind: "failed"; reason: string; attempt: number; retryAt: number };
 
+/** What `pdfinfo` answered about a PDF: its page count, no Poppler, or why it failed. */
+export type PdfInfoResult =
+  | { kind: "ok"; pages: number }
+  | { kind: "missing" }
+  | { kind: "failed"; reason: string };
+
+/** A PDF buffer's page count as known for the file version `stamp`. */
+export type PdfInfo = { stamp: Stamp } & (
+  | { status: "loading" }
+  | { status: "missing" }
+  | { status: "ready"; pages: number }
+  | { status: "failed"; reason: string }
+);
+
+/** What `pdftotext` answered: each page's text, in page order. */
+export type PdfTextResult =
+  | { kind: "ok"; pages: string[] }
+  | { kind: "missing" }
+  | { kind: "failed"; reason: string };
+
+/** What `pdftotext -bbox-layout` answered for one page. */
+export type PdfLayoutResult =
+  | { kind: "ok"; layout: PdfPageLayout }
+  | { kind: "missing" }
+  | { kind: "failed"; reason: string };
+
+/** What `pdftohtml` answered: the PDF's table of contents. */
+export type PdfOutlineResult =
+  | { kind: "ok"; items: PdfOutlineItem[] }
+  | { kind: "missing" }
+  | { kind: "failed"; reason: string };
+
+/** Data read from a PDF for the file version `stamp`, loaded on first use. */
+export type PdfLoad<T> = { stamp: Stamp } & (
+  | { status: "loading" }
+  | { status: "ready"; value: T }
+  | { status: "failed"; reason: string }
+);
+
+/** A PDF's highlights and notes, read from its annotations file. Never persisted. */
+export type AnnotationLoad =
+  | { status: "loading" }
+  /** `detached` lists items whose quote is no longer on their page. */
+  | { status: "ready"; items: PdfAnnotation[]; detached?: string[] }
+  | { status: "failed"; reason: string };
+
 export type BufferState = {
   id: BufferId;
   path: string;
@@ -135,12 +184,29 @@ export type BufferState = {
   embeds?: { requested: string[]; refused: string[] };
   /** Its file type is never written: no save, autosave, or recreate. */
   readOnly?: true;
+  /** Its file type has its own viewer: `text` stays empty and is never diffed. */
+  binary?: true;
+  /** A PDF's page count for the bytes `stamp` names. Never persisted. */
+  pdf?: PdfInfo;
+  /** A PDF's text per page, read for search. Never persisted. */
+  pdfText?: PdfLoad<string[]>;
+  /** A PDF's table of contents. Never persisted. */
+  pdfOutline?: PdfLoad<PdfOutlineItem[]>;
+  /** Words and their boxes of the PDF pages read so far, by page. Never persisted. */
+  pdfLayout?: Record<number, PdfLoad<PdfPageLayout>>;
   /** Kept at the front of the bufferline and out of bulk closes. */
   pinned?: true;
 };
 
-/** Where a window last showed a buffer. */
-export type BufferView = { cursor: Pos; scroll: number };
+/**
+ * Where a window last showed a buffer; `kind` is the editor kind's state
+ * there (a PDF's page, a base's view), so returning keeps it.
+ */
+export type BufferView = {
+  cursor: Pos;
+  scroll: number;
+  kind?: { editor: string; state: unknown };
+};
 
 export type WindowState = {
   id: WindowId;
@@ -215,6 +281,7 @@ export type ExplorerPrompt = PromptBase & {
   rename?: never;
   setting?: never;
   binding?: never;
+  pdfNote?: never;
 };
 /**
  * A new note's title, before its template is chosen; `row` makes it a row of
@@ -232,6 +299,7 @@ type NewNotePrompt = PromptBase & {
   rename?: never;
   setting?: never;
   binding?: never;
+  pdfNote?: never;
 };
 /** A new name for the symbol `name` at `pos`, asked of the server `key`. */
 type RenamePrompt = PromptBase & {
@@ -246,6 +314,7 @@ type RenamePrompt = PromptBase & {
   newNote?: never;
   setting?: never;
   binding?: never;
+  pdfNote?: never;
 };
 /** A typed value for the setting at `path`; the settings `picker` comes back after it. */
 type SettingPrompt = PromptBase & {
@@ -254,6 +323,7 @@ type SettingPrompt = PromptBase & {
   newNote?: never;
   rename?: never;
   binding?: never;
+  pdfNote?: never;
 };
 /**
  * One step of editing a key binding in the keymap `picker`, which comes back
@@ -281,13 +351,24 @@ type BindingPrompt = PromptBase & {
   newNote?: never;
   rename?: never;
   setting?: never;
+  pdfNote?: never;
+};
+/** The text of a note on PDF `pdf`'s annotation `item`, new or being changed. */
+type PdfNotePrompt = PromptBase & {
+  pdfNote: { pdf: string; item: PdfAnnotation };
+  op?: never;
+  newNote?: never;
+  rename?: never;
+  setting?: never;
+  binding?: never;
 };
 export type PromptState =
   | ExplorerPrompt
   | NewNotePrompt
   | RenamePrompt
   | SettingPrompt
-  | BindingPrompt;
+  | BindingPrompt
+  | PdfNotePrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {
@@ -335,7 +416,16 @@ export type Overlay =
   | { kind: "completion"; completion: CompletionState }
   | { kind: "calendar"; calendar: CalendarState }
   | { kind: "zoom"; zoom: ZoomState }
-  | { kind: "gitHunk"; bufferId: BufferId; hunk: Hunk };
+  | { kind: "gitHunk"; bufferId: BufferId; hunk: Hunk }
+  | { kind: "pdfMenu"; window: WindowId; on: PdfMenuSubject };
+
+/**
+ * What the PDF action float is about: the selection, or an annotation, shown
+ * because the pointer rests on it (`hover`) or after a click on it.
+ */
+export type PdfMenuSubject =
+  | { kind: "selection" }
+  | { kind: "annotation"; id: string; hover?: true };
 
 /**
  * The zoom float. An image keeps its zoom `level` (times the fitted size),
@@ -545,7 +635,9 @@ export type WindowSpot =
   /** The header separator right of table column `column`, which is `width` cells wide. */
   | { kind: "baseEdge"; column: number; width: number }
   | { kind: "baseCard"; lane: number; card: number }
-  | { kind: "base" };
+  | { kind: "base" }
+  /** On a PDF page; `at` is the point under the pointer, absent off the page. */
+  | { kind: "pdf"; at?: PdfPoint };
 
 /**
  * What a pointer is over, in model terms. `explorer` with path "" and
@@ -576,7 +668,9 @@ export type MouseEvent =
   /** A middle-button press. */
   | { kind: "middle"; target: MouseTarget }
   /** The pointer moved onto `target` with no button held. */
-  | { kind: "move"; target: MouseTarget };
+  | { kind: "move"; target: MouseTarget }
+  /** The left button came up after a press on a PDF page that started on `target`. */
+  | { kind: "release"; target: MouseTarget };
 
 export type AppState = {
   workspace: { root: string };
@@ -637,6 +731,8 @@ export type AppState = {
   preview: PreviewState;
   lsp: LspState;
   git: GitState;
+  /** Highlights and notes by PDF path, for the PDFs opened so far. */
+  annotations: Record<string, AnnotationLoad>;
 };
 
 export type Action =
@@ -646,6 +742,38 @@ export type Action =
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
   /** How many columns after the pinned first one a base table window shows scrolled off. */
   | { type: "baseScrolled"; window: WindowId; col: number }
+  /** Answers the `pdfInfo` effect for the file version `stamp`. */
+  | { type: "pdfInfo"; path: string; stamp: Stamp; result: PdfInfoResult }
+  /** How many rows a PDF window drew its page in and how many it shows. */
+  /** Answers the `pdfText` effect for the file version `stamp`. */
+  | { type: "pdfText"; path: string; stamp: Stamp; result: PdfTextResult }
+  /** Answers the `pdfLayout` effect for page `page` of the file version `stamp`. */
+  | {
+      type: "pdfLayout";
+      path: string;
+      stamp: Stamp;
+      page: number;
+      result: PdfLayoutResult;
+    }
+  /** Answers the `pdfOutline` effect for the file version `stamp`. */
+  | { type: "pdfOutline"; path: string; stamp: Stamp; result: PdfOutlineResult }
+  /** Answers `readAnnotations`: the file's text, `null` when there is none. */
+  | {
+      type: "annotationsRead";
+      pdf: string;
+      text: string | null;
+      reason?: string;
+    }
+  /** A `writeAnnotations` or `moveAnnotations` failed. */
+  | { type: "annotationsFailed"; pdf: string; reason: string }
+  | {
+      type: "pdfLaidOut";
+      window: WindowId;
+      pageRows: number;
+      viewRows: number;
+      pageCols: number;
+      viewCols: number;
+    }
   /** `embed` answers a read a note's embed sent (see the `read` effect). */
   | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
   | {
@@ -877,6 +1005,20 @@ export type Effect =
     }
   /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
   | { kind: "readPropertyTypes" }
+  /** Count the pages of the PDF at `path`; answered by `pdfInfo` with the same stamp. */
+  | { kind: "pdfInfo"; path: string; stamp: Stamp }
+  /** Read the PDF's text per page; answered by `pdfText`. */
+  | { kind: "pdfText"; path: string; stamp: Stamp }
+  /** Read one page's words and boxes; answered by `pdfLayout`. */
+  | { kind: "pdfLayout"; path: string; stamp: Stamp; page: number }
+  /** Read the PDF's table of contents; answered by `pdfOutline`. */
+  | { kind: "pdfOutline"; path: string; stamp: Stamp }
+  /** Read the annotations file of PDF `pdf`; answered by `annotationsRead`. */
+  | { kind: "readAnnotations"; pdf: string }
+  /** Replace the annotations file of PDF `pdf`; only a failure is answered. */
+  | { kind: "writeAnnotations"; pdf: string; text: string }
+  /** Move the annotations of a PDF or folder from `from` to `to`, if any. */
+  | { kind: "moveAnnotations"; from: string; to: string; dir: boolean }
   /**
    * Change one frontmatter property of a closed note on disk, only while the
    * property still holds `expected` (`undefined`: absent); answered by

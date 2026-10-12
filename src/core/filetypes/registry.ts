@@ -43,6 +43,8 @@ export type FileType<S = unknown> = {
   analyze?: (buf: TextBuffer, prev?: S) => S;
   /** Files of this type are never written. */
   readOnly?: true;
+  /** Files of this type are never read as text; their editor kind draws them. */
+  binary?: true;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: file types differ in their analysis type.

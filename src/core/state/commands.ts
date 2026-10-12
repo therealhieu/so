@@ -89,6 +89,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   help: "help.keymap",
   Settings: "settings.open",
   Open: "file.systemOpen",
+  Page: "pdf.page",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
   Today: "note.today",

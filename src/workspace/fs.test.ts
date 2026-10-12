@@ -23,6 +23,7 @@ import {
   listDir,
   moveEntry,
   moveInto,
+  readBinaryFile,
   readTextFile,
   removeEntry,
   stampOfFile,
@@ -116,6 +117,18 @@ test("a read error refuses the file as io", async () => {
     refused: "io",
   });
   expect(await readTextFile(join(root, "notes"))).toEqual({ refused: "io" });
+});
+
+test("a binary file reads as an empty body stamped like its bytes", async () => {
+  const p = join(root, "doc.pdf");
+  await writeFile(p, new Uint8Array([0x25, 0x50, 0x44, 0x46, 0, 0xff]));
+  const r = await readBinaryFile(p);
+  expect(r).toMatchObject({ text: "", bom: false, eol: "\n" });
+  expect("stamp" in r && r.stamp).toEqual(await stampOfFile(p, await stat(p)));
+  expect(await readBinaryFile(join(root, "missing.pdf"))).toEqual({
+    refused: "io",
+  });
+  expect(await readBinaryFile(join(root, "notes"))).toEqual({ refused: "io" });
 });
 
 test("a read and a later write of the same bytes give equal stamps", async () => {

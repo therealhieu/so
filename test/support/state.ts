@@ -10,6 +10,10 @@ import {
   tableLayout,
 } from "../../src/core/features/bases/views";
 import {
+  pdfEditorKind,
+  pdfFileType,
+} from "../../src/core/features/pdf/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -57,6 +61,20 @@ import {
   noteCommands,
   noteGroups,
 } from "../../src/core/state/note-commands";
+import { pdfBindings, pdfCommands } from "../../src/core/state/pdf";
+import {
+  pdfAnnotateBindings,
+  pdfAnnotateCommands,
+} from "../../src/core/state/pdf-annotate";
+import {
+  pdfSelectBindings,
+  pdfSelectCommands,
+} from "../../src/core/state/pdf-select";
+import {
+  pdfGroups,
+  pdfToolBindings,
+  pdfToolCommands,
+} from "../../src/core/state/pdf-tools";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
 import { ViewContextRegistry } from "../../src/core/state/view-context";
@@ -74,14 +92,20 @@ export function testRegistries(): Registries {
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
   fileTypes.register(baseFileType);
+  fileTypes.register(pdfFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
+  editorKinds.register(pdfEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of pdfCommands) commands.register(c);
+  for (const c of pdfToolCommands) commands.register(c);
+  for (const c of pdfSelectCommands) commands.register(c);
+  for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -103,6 +127,10 @@ export function testRegistries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...pdfBindings,
+      ...pdfToolBindings,
+      ...pdfSelectBindings,
+      ...pdfAnnotateBindings,
       ...lspBindings,
       ...gitBindings,
     ],
@@ -112,6 +140,7 @@ export function testRegistries(): Registries {
       ...noteGroups,
       ...lspGroups,
       ...gitGroups,
+      ...pdfGroups,
     },
     viewContexts,
     embedModels,

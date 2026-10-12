@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
+import { existsSync } from "node:fs";
 import {
   mkdir,
   mkdtemp,
@@ -1021,4 +1022,41 @@ test("a long copy reports progress after a quiet start, a quick one none", async
   quick.run({ kind: "copy", op: { kind: "copy", from: "many", to: "many3" } });
   await waitFor(() => quick.actions.length > 0);
   expect(quick.actions.map((a) => a.type)).toEqual(["fsResult"]);
+});
+
+test("a PDF's annotations are read from, written to, and moved under .so/annotations", async () => {
+  const r = runner();
+  r.run({ kind: "readAnnotations", pdf: "papers/a.pdf" });
+  await waitFor(() => r.actions.length === 1);
+  expect(r.actions).toEqual([
+    { type: "annotationsRead", pdf: "papers/a.pdf", text: null },
+  ]);
+  r.run({ kind: "writeAnnotations", pdf: "papers/a.pdf", text: "one\n" });
+  await r.flush([
+    { kind: "writeAnnotations", pdf: "papers/a.pdf", text: "two\n" },
+  ]);
+  const file = join(root, ".so/annotations/papers/a.pdf.json");
+  expect(await readFile(file, "utf8")).toBe("two\n");
+  r.run({
+    kind: "moveAnnotations",
+    from: "papers",
+    to: "old/papers",
+    dir: true,
+  });
+  r.run({
+    kind: "moveAnnotations",
+    from: "missing.pdf",
+    to: "gone.pdf",
+    dir: false,
+  });
+  const moved = join(root, ".so/annotations/old/papers/a.pdf.json");
+  await waitFor(() => existsSync(moved));
+  expect(await readFile(moved, "utf8")).toBe("two\n");
+  r.run({ kind: "readAnnotations", pdf: "old/papers/a.pdf" });
+  await waitFor(() => r.actions.length === 2);
+  expect(r.actions[1]).toEqual({
+    type: "annotationsRead",
+    pdf: "old/papers/a.pdf",
+    text: "two\n",
+  });
 });

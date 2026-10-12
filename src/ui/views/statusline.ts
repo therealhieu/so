@@ -17,6 +17,7 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
   cmdline: ["COMMAND", "modeCmd"],
   explorer: ["EXPLORER", "modeNormal"],
   base: ["BASE", "modeNormal"],
+  pdf: ["PDF", "modeNormal"],
   conflict: ["CONFLICT", "modeCmd"],
 };
 
@@ -191,9 +192,11 @@ export class Statusline extends Renderable {
     const servers = (seg.lsp ?? []).map(lspSegment);
     right.push(...servers);
     const position =
-      seg.position === undefined
-        ? ""
-        : ` ${seg.position.line + 1}:${seg.position.col + 1} `;
+      seg.page !== undefined
+        ? ` ${seg.page} `
+        : seg.position === undefined
+          ? ""
+          : ` ${seg.position.line + 1}:${seg.position.col + 1} `;
     const pending = s.vim.pending.join("");
     const keys = pending === "" ? "" : ` ${pending} `;
     const dirty = seg.dirty ? " ●" : "";

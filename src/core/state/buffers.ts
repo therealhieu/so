@@ -175,7 +175,18 @@ export function showIn(
       ? w.views
       : {
           ...w.views,
-          [left]: { cursor: w.content.cursor, scroll: w.content.scroll },
+          [left]: {
+            cursor: w.content.cursor,
+            scroll: w.content.scroll,
+            ...(w.content.kindState === undefined
+              ? {}
+              : {
+                  kind: {
+                    editor: w.content.editor,
+                    state: w.content.kindState,
+                  },
+                }),
+          },
         };
   return views === undefined ? { id, content } : { id, views, content };
 }
@@ -485,16 +496,24 @@ export function splitFile(f: TextFile): {
   return { body: finalNewline ? text.slice(0, -1) : text, finalNewline };
 }
 
-/** Show buffer `id` in the active window where it last was there; a shown buffer is listed. */
+/**
+ * Show buffer `id` in the active window where it last was there, in the
+ * editor kind state it had; a shown buffer is listed.
+ */
 export function showBuffer(s: AppState, id: BufferId): AppState {
   const listed = listBuffer(s, id);
   const w = activeWindow(listed);
   const b = listed.buffers[id];
   if (w?.content.bufferId === id || b === undefined) return listed;
-  const view = clampView(b, w?.views?.[id]);
+  const saved = w?.views?.[id];
+  const view = clampView(b, saved);
+  const kind =
+    saved?.kind === undefined
+      ? { editor: "text" }
+      : { editor: saved.kind.editor, kindState: saved.kind.state };
   return setWindow(
     listed,
-    showIn(w, listed.windows.active, { editor: "text", bufferId: id, ...view }),
+    showIn(w, listed.windows.active, { ...kind, bufferId: id, ...view }),
   );
 }
 
@@ -691,6 +710,7 @@ export function onFileLoaded(
       save: { kind: "idle" },
       ...(embedOnlyRead ? { listed: false as const } : {}),
       ...(ft.readOnly === true ? { readOnly: true as const } : {}),
+      ...(ft.binary === true ? { binary: true as const } : {}),
     },
     ft,
   );

@@ -139,6 +139,9 @@ export const TOKENS: Readonly<
   gutterCursor: ["h2", "cursorline", BOLD, BOLD | UNDERLINE],
   cursorline: ["fg", "cursorline", 0, 0],
   selection: ["fg", "bg-sel", 0, INVERSE],
+  // Tints blended over a PDF page: highlights and notes.
+  pdfHighlight: ["fg", "mode-cmd", 0, 0],
+  pdfNote: ["fg", "mode-insert", 0, 0],
   searchMatch: ["fg", "match-bg", 0, UNDERLINE],
   searchCurrent: ["mode-fg", "warn", BOLD, BOLD | INVERSE],
   codeKeyword: ["kw", "bg", BOLD, BOLD],

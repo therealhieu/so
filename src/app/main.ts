@@ -12,6 +12,7 @@ import {
   boardLayout,
   tableLayout,
 } from "../core/features/bases/views";
+import { pdfEditorKind, pdfFileType } from "../core/features/pdf/file-type";
 import {
   EditorKindRegistry,
   FileTypeRegistry,
@@ -64,12 +65,24 @@ import {
   noteCommands,
   noteGroups,
 } from "../core/state/note-commands";
+import { pdfBindings, pdfCommands } from "../core/state/pdf";
+import {
+  pdfAnnotateBindings,
+  pdfAnnotateCommands,
+} from "../core/state/pdf-annotate";
+import { pdfSelectBindings, pdfSelectCommands } from "../core/state/pdf-select";
+import {
+  pdfGroups,
+  pdfToolBindings,
+  pdfToolCommands,
+} from "../core/state/pdf-tools";
 import { parsePersisted, snapshotSession } from "../core/state/session";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { ViewContextRegistry } from "../core/state/view-context";
 import { BaseView } from "../ui/editors/base-view";
+import { PdfView } from "../ui/editors/pdf-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
@@ -84,6 +97,7 @@ import { watchGitDirs } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createImageLoader } from "../workspace/images";
 import { createLogger, type Logger } from "../workspace/log";
+import { createPdfRasterizer, popplerEnv, soCacheDir } from "../workspace/pdf";
 import {
   readStateFile,
   saveStateFileSync,
@@ -142,14 +156,20 @@ function registries(): Registries {
   for (const ft of codeFileTypes) fileTypes.register(ft);
   fileTypes.register(markdownFileType);
   fileTypes.register(baseFileType);
+  fileTypes.register(pdfFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
+  editorKinds.register(pdfEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
   for (const c of markdownCommands) commands.register(c);
   for (const c of noteCommands) commands.register(c);
   for (const c of baseCommands) commands.register(c);
+  for (const c of pdfCommands) commands.register(c);
+  for (const c of pdfToolCommands) commands.register(c);
+  for (const c of pdfSelectCommands) commands.register(c);
+  for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -170,6 +190,10 @@ function registries(): Registries {
       ...markdownBindings,
       ...noteBindings,
       ...baseBindings,
+      ...pdfBindings,
+      ...pdfToolBindings,
+      ...pdfSelectBindings,
+      ...pdfAnnotateBindings,
       ...lspBindings,
       ...gitBindings,
     ],
@@ -179,6 +203,7 @@ function registries(): Registries {
       ...noteGroups,
       ...lspGroups,
       ...gitGroups,
+      ...pdfGroups,
     },
     viewContexts,
     embedModels,
@@ -307,17 +332,30 @@ async function main(argv: string[]): Promise<void> {
   const reg = registries();
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
+  registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
   registerWidgetPainter("image", paintImage);
   registerWidgetPainter("base", paintBaseEmbed);
+  const pdf = createPdfRasterizer({
+    root: ws.root,
+    which: (c) => Bun.which(c),
+    env: popplerEnv(
+      process.platform,
+      homedir(),
+      soCacheDir(process.env, homedir()),
+      logger,
+    ),
+    logger,
+  });
   const renderer = await createRenderer();
   const shell = createShell(renderer, {
     reg,
     now: clock,
-    loadImage: createImageLoader(ws.root),
+    loadImage: createImageLoader(ws.root, { pdfPage: (r) => pdf.page(r) }),
     rasterizeSvg: createSvgRasterizer(),
+    rasterizePdf: (r) => pdf.page(r),
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
@@ -343,6 +381,8 @@ async function main(argv: string[]): Promise<void> {
   // constructed; the runner reads them at call time.
   const deps: RunnerDeps = {
     root: ws.root,
+    binaryFile: (path) => reg.fileTypes.forPath(path).binary === true,
+    pdf,
     matcher,
     ownOps,
     trash: {

@@ -61,6 +61,16 @@ import {
 } from "./lsp";
 import { onMouse } from "./mouse";
 import { onNoteCreated } from "./note-commands";
+import { onPdfInfo, onPdfLaidOut, syncPdfInfo } from "./pdf";
+import {
+  moveAnnotations,
+  onAnnotationsFailed,
+  onAnnotationsRead,
+  onPageLaidOut,
+  syncAnnotations,
+} from "./pdf-annotate";
+import { onPdfLayout, syncPdfLayout } from "./pdf-select";
+import { onPdfOutline, onPdfText } from "./pdf-tools";
 import {
   onPickerResize,
   onPreviewLoaded,
@@ -73,7 +83,7 @@ import {
   onPreviewStarted,
   onPreviewStopped,
 } from "./preview";
-import { clearMessage, message, none, notifyError } from "./result";
+import { chain, clearMessage, message, none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
   onStateLoaded,
@@ -181,7 +191,9 @@ export function createUpdate(reg: Registries): Update {
       case "dirListed":
         return onDirListed(state, action);
       case "fsResult":
-        return onFsResult(state, action, reg);
+        return chain(onFsResult(state, action, reg), (st) =>
+          action.ok ? moveAnnotations(st, action.op) : none(st),
+        );
       case "fileClip":
         return onFileClip(state, action);
       case "copyProgress":
@@ -206,6 +218,22 @@ export function createUpdate(reg: Registries): Update {
         return onZoomFill(state, action);
       case "baseScrolled":
         return onBaseScrolled(state, action);
+      case "pdfInfo":
+        return onPdfInfo(state, action);
+      case "pdfLaidOut":
+        return onPdfLaidOut(state, action);
+      case "pdfText":
+        return onPdfText(state, action);
+      case "pdfOutline":
+        return onPdfOutline(state, action, reg);
+      case "pdfLayout":
+        return chain(onPdfLayout(state, action), (st) =>
+          onPageLaidOut(st, action),
+        );
+      case "annotationsRead":
+        return onAnnotationsRead(state, action);
+      case "annotationsFailed":
+        return onAnnotationsFailed(state, action);
       case "mouse":
         return onMouse(state, action, reg);
       case "configLoaded":
@@ -279,26 +307,35 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncGitFiles(
+      const r = syncAnnotations(
         state,
-        syncHighlight(
+        syncPdfLayout(
           state,
-          syncFloat(
+          syncPdfInfo(
             state,
-            syncDiagnostics(
+            syncGitFiles(
               state,
-              syncLineShift(
+              syncHighlight(
                 state,
-                syncEmbeds(
+                syncFloat(
                   state,
-                  followShownNote(
+                  syncDiagnostics(
                     state,
-                    syncEditorKinds(
-                      syncBufferLists(state, step(state, action)),
-                      reg,
+                    syncLineShift(
+                      state,
+                      syncEmbeds(
+                        state,
+                        followShownNote(
+                          state,
+                          syncEditorKinds(
+                            syncBufferLists(state, step(state, action)),
+                            reg,
+                          ),
+                        ),
+                        reg,
+                      ),
                     ),
                   ),
-                  reg,
                 ),
               ),
             ),

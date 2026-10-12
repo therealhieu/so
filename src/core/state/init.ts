@@ -54,6 +54,7 @@ export function initialState(boot: {
     },
     jumps: { entries: [], at: 0 },
     recent: [],
+    annotations: {},
     preview: { status: "off" },
     lsp: {
       servers: {},
