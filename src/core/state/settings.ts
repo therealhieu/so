@@ -122,7 +122,7 @@ export const SETTINGS: readonly Setting[] = [
     path: ["preview", "readable"],
     choices: [false, true],
     about: [
-      "Cap a note's text at the",
+      "Cap a file's text at the",
       "readable width and center it;",
       "<leader>ur toggles it.",
     ],
@@ -175,7 +175,7 @@ export const SETTINGS: readonly Setting[] = [
   {
     kind: "number",
     path: ["preview", "readableWidth"],
-    about: ["Text columns a readable note", "shows, 20–500."],
+    about: ["Text columns a readable file", "shows, 20–500."],
   },
   {
     kind: "number",

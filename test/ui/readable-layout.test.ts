@@ -94,17 +94,29 @@ test("clicks in the column and in its margins land on the row's text", async () 
   expect(cursor()).toEqual({ line: 0, col: 0 });
 });
 
-test("the source view is centered too, and a code file fills the window", async () => {
+test("the source view, code files, and plain text files are centered too", async () => {
   await mount(
     `[preview]\nreadable = true\nreadableWidth = ${WIDTH}\nmode = "source"\n`,
   );
-  m.open("notes/long.md", `${PARA}\n`);
-  let frame = await lines();
-  expect(rowsOfFirstLine(frame, GUTTER_X).y0).toBeGreaterThanOrEqual(0);
+  for (const [path, text] of [
+    ["notes/long.md", PARA],
+    ["scripts/long.ts", `const s = "${PARA}";`],
+    ["notes/long.txt", PARA],
+  ] as const) {
+    m.open(path, `${text}\n`);
+    const { y0, rows } = rowsOfFirstLine(await lines(), GUTTER_X);
+    expect(y0).toBeGreaterThanOrEqual(0);
+    for (const row of rows) {
+      expect(row.slice(0, GUTTER_X).trim()).toBe("");
+      expect(row.slice(TEXT_X + WIDTH).trim()).toBe("");
+    }
+  }
+});
 
+test("with the readable width off, a file fills the window", async () => {
+  await mount(`[preview]\nreadableWidth = ${WIDTH}\n`);
   m.open("scripts/long.ts", `const s = "${PARA}";\n`);
-  frame = await lines();
-  const { rows } = rowsOfFirstLine(frame, 0);
+  const { rows } = rowsOfFirstLine(await lines(), 0);
   expect(rows[0]?.startsWith("   1  const s")).toBe(true);
   expect(rows[0]?.trimEnd().length).toBeGreaterThan(TEXT_X + WIDTH);
 });
@@ -194,4 +206,13 @@ test("a justified callout body keeps its bar on every row and reaches the right 
   expect(body.length).toBeGreaterThanOrEqual(5);
   for (const t of body.slice(0, -1)) expect([...t].length).toBe(WIDTH);
   expect([...(body.at(-1) ?? "")].length).toBeLessThan(WIDTH);
+});
+
+test("<leader>ur toggles the column in a code file too", async () => {
+  await mount(`[preview]\nreadableWidth = ${WIDTH}\n`);
+  m.open("scripts/long.ts", `const s = "${PARA}";\n`);
+  m.keys("<leader>ur");
+  const frame = await lines();
+  expect(rowsOfFirstLine(frame, GUTTER_X).y0).toBeGreaterThanOrEqual(0);
+  expect(frame.join("\n")).toContain("readable width on");
 });

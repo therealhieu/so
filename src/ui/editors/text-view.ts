@@ -518,22 +518,19 @@ export class EditorView extends Renderable implements WindowView {
 
   /**
    * This frame's gutter and text columns for `b`: with `preview.readable`
-   * on, a readable view caps its text at the readable width, centered with
-   * the gutter.
+   * on, the text is capped at the readable width, centered with the gutter.
    */
   private columnsOf(
     s: AppState | undefined,
     b: BufferState | undefined,
   ): Columns {
     const gw = gutterWidth(b?.text.lineCount ?? 0, this.change);
-    const capped =
-      s?.config.preview.readable === true &&
-      b !== undefined &&
-      this.specOf(b)?.readable === true;
     return columns(
       this.rect,
       gw,
-      capped ? s.config.preview.readableWidth : Number.POSITIVE_INFINITY,
+      s?.config.preview.readable === true
+        ? s.config.preview.readableWidth
+        : Number.POSITIVE_INFINITY,
     );
   }
 

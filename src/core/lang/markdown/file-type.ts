@@ -12,7 +12,6 @@ const rendered = (
   id: "live" | "reading",
 ): ViewSpec<Doc, MarkdownViewInput, PreviewCtx> => ({
   id,
-  readable: true,
   ...(id === "reading" ? { readOnly: true } : {}),
   decorations: [livePreview],
   input: (doc, ctx) => ({ doc, view: id, ctx }),
@@ -32,7 +31,7 @@ export const markdownFileType: FileType<Doc> = {
   views: [
     rendered("reading") as unknown as ViewSpec<Doc>,
     rendered("live") as unknown as ViewSpec<Doc>,
-    { id: "source", readable: true, decorations: [] },
+    { id: "source", decorations: [] },
   ],
   highlighter: markdownHighlighter(),
   analyze: parseDoc,

@@ -147,7 +147,6 @@ export const markdownCommands: readonly AppCommand[] = [
   {
     id: "view.toggleReadable",
     title: "Toggle readable width",
-    filetypes: ["markdown"],
     run: (c) => toggleReadable(c.state),
   },
   {
@@ -166,6 +165,6 @@ export const markdownBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "za", id: "fold.toggle" },
   { scope: md("normal"), seq: "<CR>", id: "note.enter" },
   { scope: md("normal"), seq: "<leader>z", id: "image.zoom" },
-  { scope: md("normal"), seq: "<leader>ur", id: "view.toggleReadable" },
+  { scope: { mode: "normal" }, seq: "<leader>ur", id: "view.toggleReadable" },
   { scope: md("normal"), seq: "<leader>uj", id: "view.toggleJustify" },
 ];
