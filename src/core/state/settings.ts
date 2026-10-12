@@ -154,6 +154,15 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "number",
+    path: ["preview", "readableWidth"],
+    about: [
+      "Text columns a note shows,",
+      "centered; 0 fills the window,",
+      "up to 500.",
+    ],
+  },
+  {
+    kind: "number",
     path: ["escTimeoutMs"],
     about: [
       "Milliseconds the terminal's",

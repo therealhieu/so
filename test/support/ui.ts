@@ -1,5 +1,6 @@
 import type { CapturedSpan } from "@opentui/core";
 import { createTestRenderer, TestRecorder } from "@opentui/core/testing";
+import type { AppConfig } from "../../src/core/config/schema";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { initialState } from "../../src/core/state/init";
@@ -49,6 +50,11 @@ export type MountOptions = {
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
   reg?: Registries;
+  /**
+   * `preview.readableWidth`, unless `config` sets it; 0 by default, so a
+   * note fills the window as the layout tests expect.
+   */
+  readableWidth?: number;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -95,9 +101,15 @@ export async function mountShell(o: MountOptions) {
     color: o.color ?? "color",
   });
   const editing = editingNotes(base);
+  const readable = (c: AppConfig): AppConfig => ({
+    ...c,
+    preview: { ...c.preview, readableWidth: o.readableWidth ?? 0 },
+  });
   const initial: AppState = {
     ...editing,
-    config: explorerLeft({ ...editing.config, theme: o.theme ?? "dark" }),
+    config: readable(
+      explorerLeft({ ...editing.config, theme: o.theme ?? "dark" }),
+    ),
   };
   const store = createStore(initial, createUpdate(reg), (e) => {
     effects.push(e);
@@ -107,12 +119,14 @@ export async function mountShell(o: MountOptions) {
   if (o.config !== undefined) {
     const result = parseConfig(o.config);
     const pinned = /^\s*position\s*=/m.test(o.config);
+    const width = /^\s*readableWidth\s*=/m.test(o.config);
+    const config = (c: AppConfig) => {
+      const placed = pinned ? c : explorerLeft(c);
+      return width ? placed : readable(placed);
+    };
     store.dispatch({
       type: "configLoaded",
-      result:
-        result.ok && !pinned
-          ? { ...result, config: explorerLeft(result.config) }
-          : result,
+      result: result.ok ? { ...result, config: config(result.config) } : result,
       reload: false,
     });
   }

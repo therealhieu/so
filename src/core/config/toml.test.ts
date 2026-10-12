@@ -106,7 +106,13 @@ test("a valid file parses with binding lines", () => {
         dotfiles: false,
         gitignored: true,
       },
-      preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
+      preview: {
+        mode: "reading",
+        embedMaxRows: 10,
+        images: "auto",
+        readableWidth: 100,
+        justify: false,
+      },
       daily: {
         folder: "daily",
         format: "YYYY-MM-DD",

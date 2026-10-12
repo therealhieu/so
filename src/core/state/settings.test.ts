@@ -50,6 +50,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "editor.keyTimeout 1000",
       "explorer.width 30",
       "preview.embedMaxRows 10",
+      "preview.readableWidth 100",
       "escTimeoutMs 50",
       "daily.folder daily",
       "daily.format YYYY-MM-DD",
