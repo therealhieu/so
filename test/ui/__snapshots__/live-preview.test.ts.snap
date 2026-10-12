@@ -34,7 +34,12 @@ exports[`the tour at width 60 matches its golden, base embed included 1`] = `
   26                                                        
   27  ● Reveal rule                                         
   28  ▎ Inline syntax shows on the cursor line; whole       
-      ▎ blocks show while the cursor is inside.             
+      ▎ blocks show while the cursor is inside. Move the    
+      ▎ cursor into a table, a code fence, or this callout  
+      ▎ and its source appears; move it out and the         
+      ▎ rendered view returns. Long lines like this one     
+      ▎ wrap, and the bar on the left runs down every       
+      ▎ wrapped row.                                        
   29                                                        
   30  ★ Folded tip (za to open) ▸                           
   32                                                        
@@ -135,11 +140,6 @@ exports[`the tour at width 60 matches its golden, base embed included 1`] = `
                                                             
                                                             
                                                             
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
  NORMAL  tour.md                                        1:1"
 `;
 
@@ -172,7 +172,10 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
   25  ▎ Simplicity is prerequisite for reliability. — Dijkstra                                      
   26                                                                                                
   27  ● Reveal rule                                                                                 
-  28  ▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.       
+  28  ▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move  
+      ▎ the cursor into a table, a code fence, or this callout and its source appears; move it out  
+      ▎ and the rendered view returns. Long lines like this one wrap, and the bar on the left runs  
+      ▎ down every wrapped row.                                                                     
   29                                                                                                
   30  ★ Folded tip (za to open) ▸                                                                   
   32                                                                                                
@@ -280,10 +283,7 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
-                                                                                                    
-                                                                                                    
-                                                                                                    
- NORMAL  live  tour.md                                                  252 words  preview off  1:1"
+ NORMAL  live  tour.md                                                  293 words  preview off  1:1"
 `;
 
 exports[`with images off the zoom float draws a diagram too wide for the note as text 1`] = `

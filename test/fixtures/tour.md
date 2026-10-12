@@ -26,7 +26,7 @@ Tags like #reference and #so/ui are coloured. A footnote[^1] stays small.
 > Simplicity is prerequisite for reliability. — Dijkstra
 
 > [!note] Reveal rule
-> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
 
 > [!tip]- Folded tip (za to open)
 > Callouts with a minus sign start folded.

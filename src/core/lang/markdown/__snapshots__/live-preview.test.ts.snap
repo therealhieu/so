@@ -28,7 +28,7 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -135,7 +135,7 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -242,7 +242,7 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -349,7 +349,7 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28 ▕ │> [!note] Reveal rule
- 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -456,7 +456,7 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -565,7 +565,7 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -672,7 +672,7 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -767,7 +767,7 @@ exports[`tour note at width 60 in reading view 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -875,7 +875,7 @@ exports[`tour note at width 60 in source view 1`] = `
  26   │> Simplicity is prerequisite for reliability. — Dijkstra
  27   │
  28   │> [!note] Reveal rule
- 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │> [!tip]- Folded tip (za to open)
  32   │> Callouts with a minus sign start folded.
@@ -957,7 +957,7 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1064,7 +1064,7 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1171,7 +1171,7 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1278,7 +1278,7 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28 ▕ │> [!note] Reveal rule
- 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1385,7 +1385,7 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1494,7 +1494,7 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1601,7 +1601,7 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1696,7 +1696,7 @@ exports[`tour note at width 100 in reading view 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1804,7 +1804,7 @@ exports[`tour note at width 100 in source view 1`] = `
  26   │> Simplicity is prerequisite for reliability. — Dijkstra
  27   │
  28   │> [!note] Reveal rule
- 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │> [!tip]- Folded tip (za to open)
  32   │> Callouts with a minus sign start folded.
