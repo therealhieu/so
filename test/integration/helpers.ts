@@ -27,6 +27,7 @@ import { bunGitSpawn, createGit } from "../../src/workspace/git";
 import { type GitWatcher, watchGitDirs } from "../../src/workspace/git-watcher";
 import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createLogger } from "../../src/workspace/log";
+import { createPdfRasterizer } from "../../src/workspace/pdf";
 import {
   readStateFile,
   saveStateFileSync,
@@ -151,6 +152,8 @@ export async function startApp(
     git?: { env: Record<string, string> };
     /** Stands in for the git tool; without one, running it fails. */
     tool?: ToolHost;
+    /** Finds Poppler for PDFs in place of `PATH`. */
+    pdfWhich?: (cmd: string) => string | null;
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -185,8 +188,15 @@ export async function startApp(
     logger,
   });
   const gitWatchers: GitWatcher[] = [];
+  const reg = testRegistries();
   const runner = createEffectRunner({
     root,
+    binaryFile: (path) => reg.fileTypes.forPath(path).binary === true,
+    pdf: createPdfRasterizer({
+      root,
+      which: opts.pdfWhich ?? ((c) => Bun.which(c)),
+      logger,
+    }),
     matcher,
     ownOps,
     trash: opts.trash ?? {
@@ -224,7 +234,7 @@ export async function startApp(
     if (opts.state !== undefined)
       saveStateFileSync(opts.state.path, snapshotSession(store.get()));
   };
-  const update = createUpdate(testRegistries());
+  const update = createUpdate(reg);
   const store: Store = createStore(
     editingNotes(initialState({ root, cols: 100, rows: 30, color: "nocolor" })),
     (s, a) => {

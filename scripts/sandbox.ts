@@ -44,7 +44,7 @@ export function parseSandboxArgs(argv: readonly string[]): SandboxArgs {
   return args;
 }
 
-/** Where a profile lives: the vault, so's config and state, and the staged marker. */
+/** Where a profile lives: the vault, so's config, state, and cache, and the staged marker. */
 export function profilePaths(sandbox: string, name: string) {
   const dir = join(sandbox, name);
   return {
@@ -52,6 +52,7 @@ export function profilePaths(sandbox: string, name: string) {
     vault: join(dir, "vault"),
     xdgConfig: join(dir, "xdg/config"),
     xdgState: join(dir, "xdg/state"),
+    xdgCache: join(dir, "xdg/cache"),
     config: join(dir, "xdg/config/so/config.toml"),
     staged: join(dir, ".staged"),
   };
@@ -143,6 +144,7 @@ async function main(): Promise<number> {
         ...process.env,
         XDG_CONFIG_HOME: paths.xdgConfig,
         XDG_STATE_HOME: paths.xdgState,
+        XDG_CACHE_HOME: paths.xdgCache,
         // Git stops at the profile folder instead of finding this repository.
         GIT_CEILING_DIRECTORIES: paths.dir,
       },

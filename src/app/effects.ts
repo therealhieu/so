@@ -1,9 +1,17 @@
-import { lstat, mkdir, readdir, realpath, stat } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  realpath,
+  stat,
+} from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
 import { parseConfig } from "../core/config/toml";
 import { removeConfigValue, setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
 import { expandTemplate } from "../core/features/notes/template";
+import { annotationsPath } from "../core/features/pdf/annotations";
 import {
   frontmatterValue,
   patchFrontmatter,
@@ -22,6 +30,7 @@ import {
   listDir,
   moveEntry,
   moveInto,
+  readBinaryFile,
   readTextFile,
   removeEntry,
   sameStamp,
@@ -30,6 +39,7 @@ import type { Git } from "../workspace/git";
 import type { GitWatcher } from "../workspace/git-watcher";
 import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
+import type { PdfRasterizer } from "../workspace/pdf";
 import { readPropertyTypes } from "../workspace/property-types";
 import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider, FileClipboard } from "../workspace/system";
@@ -78,12 +88,21 @@ export type RunnerDeps = {
   watchGit: (dirs: string[], onChange: () => void) => GitWatcher;
   /** Hands the terminal to the git tool; bound once the lifecycle exists. */
   tool: ToolHost;
+  /** Paths whose file type is never read as text; without one, every file is. */
+  binaryFile?: (path: string) => boolean;
+  /** Counts PDF pages; without one, every PDF answers that Poppler is missing. */
+  pdf?: Pick<PdfRasterizer, "info" | "text" | "layout" | "outline">;
 };
 
 export type EffectRunner = {
   run(e: Effect): void;
-  /** Write through the same serial queue, e.g. on shutdown; no actions are dispatched. */
-  flush(writes: Extract<Effect, { kind: "write" }>[]): Promise<void>;
+  /**
+   * Write through the same serial queue, e.g. on shutdown; no actions are
+   * dispatched. Resolves once everything queued before it has run too.
+   */
+  flush(
+    writes: Extract<Effect, { kind: "write" | "writeAnnotations" }>[],
+  ): Promise<void>;
 };
 
 const wallClock = () => performance.timeOrigin + performance.now();
@@ -212,6 +231,12 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     }
     await mkdir(dirname(d.configPath), { recursive: true });
     await atomicWrite(d.configPath, text);
+  }
+  /** Replace a PDF's annotations file, creating its folders. */
+  async function writeAnnotations(pdf: string, text: string): Promise<void> {
+    const path = abs(annotationsPath(pdf));
+    await mkdir(dirname(path), { recursive: true });
+    await atomicWrite(path, text);
   }
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
@@ -348,7 +373,9 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const run = (e: Effect): void => {
     switch (e.kind) {
       case "read":
-        void readTextFile(abs(e.path))
+        void (d.binaryFile?.(e.path) === true ? readBinaryFile : readTextFile)(
+          abs(e.path),
+        )
           .catch((x) => {
             d.logger.error("fs.readFailed", { path: e.path, reason: msg(x) });
             return { refused: "io" as const };
@@ -837,6 +864,86 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             });
           });
         return;
+      case "pdfInfo": {
+        const info =
+          d.pdf?.info(e.path) ?? Promise.resolve({ kind: "missing" as const });
+        void info.then((result) =>
+          d.dispatch({ type: "pdfInfo", path: e.path, stamp: e.stamp, result }),
+        );
+        return;
+      }
+      case "pdfText": {
+        const text =
+          d.pdf?.text(e.path) ?? Promise.resolve({ kind: "missing" as const });
+        void text.then((result) =>
+          d.dispatch({ type: "pdfText", path: e.path, stamp: e.stamp, result }),
+        );
+        return;
+      }
+      case "pdfLayout": {
+        const layout =
+          d.pdf?.layout(e.path, e.page) ??
+          Promise.resolve({ kind: "missing" as const });
+        void layout.then((result) =>
+          d.dispatch({
+            type: "pdfLayout",
+            path: e.path,
+            stamp: e.stamp,
+            page: e.page,
+            result,
+          }),
+        );
+        return;
+      }
+      case "pdfOutline": {
+        const outline =
+          d.pdf?.outline(e.path) ??
+          Promise.resolve({ kind: "missing" as const });
+        void outline.then((result) =>
+          d.dispatch({
+            type: "pdfOutline",
+            path: e.path,
+            stamp: e.stamp,
+            result,
+          }),
+        );
+        return;
+      }
+      case "readAnnotations": {
+        const path = abs(annotationsPath(e.pdf));
+        void readFile(path, "utf8").then(
+          (text) => d.dispatch({ type: "annotationsRead", pdf: e.pdf, text }),
+          (x: unknown) =>
+            d.dispatch(
+              (x as NodeJS.ErrnoException).code === "ENOENT"
+                ? { type: "annotationsRead", pdf: e.pdf, text: null }
+                : {
+                    type: "annotationsRead",
+                    pdf: e.pdf,
+                    text: null,
+                    reason: msg(x),
+                  },
+            ),
+        );
+        return;
+      }
+      case "writeAnnotations": {
+        void serial(() => writeAnnotations(e.pdf, e.text)).catch((x: unknown) =>
+          d.dispatch({ type: "annotationsFailed", pdf: e.pdf, reason: msg(x) }),
+        );
+        return;
+      }
+      case "moveAnnotations": {
+        const of = (p: string) =>
+          e.dir ? `.so/annotations/${p}` : annotationsPath(p);
+        void serial(async () => {
+          if (!(await exists(abs(of(e.from))))) return;
+          await moveEntry(d.root, of(e.from), of(e.to));
+        }).catch((x: unknown) =>
+          d.dispatch({ type: "annotationsFailed", pdf: e.to, reason: msg(x) }),
+        );
+        return;
+      }
     }
     const unhandled: never = e;
     throw new Error(`unknown effect: ${JSON.stringify(unhandled)}`);
@@ -849,11 +956,13 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       return Promise.all(
         writes.map((w) =>
           serial(async () => {
+            if (w.kind === "writeAnnotations")
+              return writeAnnotations(w.pdf, w.text);
             const path = follow(w.path, before);
             if (path !== null) await write(path, w.text, w.expected);
           }),
         ),
-      ).then(() => {});
+      ).then(() => serial(async () => {}));
     },
   };
 }

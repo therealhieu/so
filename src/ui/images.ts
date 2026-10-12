@@ -39,7 +39,7 @@ export class ImageCache {
 
   constructor(
     private readonly o: {
-      load: (ref: string) => Promise<Uint8Array>;
+      load: (ref: string) => Promise<Uint8Array | RgbaImage>;
       repaint: () => void;
       now: () => number;
       /** A cell's size in pixels, when the terminal reports it. */

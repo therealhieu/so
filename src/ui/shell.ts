@@ -6,6 +6,7 @@ import {
   type Renderable,
   type TerminalCapabilities,
 } from "@opentui/core";
+import type { PdfPageRequest } from "../core/features/pdf/page";
 import { pressStops } from "../core/state/mouse";
 import type { Store } from "../core/state/store";
 import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
@@ -25,6 +26,7 @@ import { OverlayHost } from "./overlays/host";
 import { HunkView } from "./overlays/hunk";
 import { LspFloatView } from "./overlays/lsp-float";
 import { ToastStack } from "./overlays/notify";
+import { PdfMenuView } from "./overlays/pdf-menu";
 import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
 import { WhichKeyView } from "./overlays/whichkey";
@@ -79,9 +81,11 @@ export type ShellDeps = {
   reg: Registries;
   now: () => number;
   /** Bytes for a workspace path or an http(s) URL. */
-  loadImage: (ref: string) => Promise<Uint8Array>;
+  loadImage: (ref: string) => Promise<Uint8Array | RgbaImage>;
   /** Pixels of part of an SVG; the zoom float draws diagrams with it. */
   rasterizeSvg: (r: SvgRaster) => Promise<RgbaImage>;
+  /** PNG bytes of one page of a workspace PDF; PDF windows draw pages with it. */
+  rasterizePdf: (r: PdfPageRequest) => Promise<Uint8Array | RgbaImage>;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
   /**
@@ -188,6 +192,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           new CalendarOverlay(renderer),
           new ZoomOverlay(renderer, ctx),
           new HunkView(renderer, () => windows.anchor()),
+          new PdfMenuView(renderer, () => windows.pdfMenuBox()),
         ],
         new LspFloatView(renderer, (f) =>
           f.pointer === true ? router?.pointer() : windows.cursor(),

@@ -621,8 +621,13 @@ export function promptKey(
   if (key === "<Esc>") return none(closed);
   if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
   if (p.rename !== undefined) return renamePromptKey(s, p, key);
-  // The settings and keymap pickers handle their own prompts.
-  if (p.setting !== undefined || p.binding !== undefined) return none(s);
+  // The settings and keymap pickers and the PDF view handle their own prompts.
+  if (
+    p.setting !== undefined ||
+    p.binding !== undefined ||
+    p.pdfNote !== undefined
+  )
+    return none(s);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);

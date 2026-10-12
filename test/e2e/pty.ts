@@ -141,6 +141,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
       TERM: "xterm-256color",
       XDG_STATE_HOME: state,
       XDG_CONFIG_HOME: join(state, "config"),
+      XDG_CACHE_HOME: join(state, "cache"),
       ...o.env,
     },
     terminal: {

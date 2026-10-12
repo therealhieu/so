@@ -578,6 +578,16 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "22,22,30,255",
       "fg": "115,122,162,255",
     },
+    "pdfHighlight": {
+      "attrs": 0,
+      "bg": "224,175,104,255",
+      "fg": "192,202,245,255",
+    },
+    "pdfNote": {
+      "attrs": 0,
+      "bg": "158,206,106,255",
+      "fg": "192,202,245,255",
+    },
     "searchCurrent": {
       "attrs": 1,
       "bg": "224,175,104,255",
@@ -1270,6 +1280,16 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "208,213,227,255",
       "fg": "97,114,176,255",
     },
+    "pdfHighlight": {
+      "attrs": 0,
+      "bg": "140,108,62,255",
+      "fg": "55,96,191,255",
+    },
+    "pdfNote": {
+      "attrs": 0,
+      "bg": "88,117,57,255",
+      "fg": "55,96,191,255",
+    },
     "searchCurrent": {
       "attrs": 1,
       "bg": "140,108,62,255",
@@ -1958,6 +1978,16 @@ exports[`existing tokens keep their values 1`] = `
       "fg": "default",
     },
     "panelMuted": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "pdfHighlight": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "pdfNote": {
       "attrs": 0,
       "bg": "default",
       "fg": "default",

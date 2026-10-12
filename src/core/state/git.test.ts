@@ -102,6 +102,17 @@ test("discovery stores the repo, watches its git dirs, and reads open buffers", 
   ]);
 });
 
+test("a PDF buffer is never diffed against the index", () => {
+  const r = run(fresh(), load("notes/a.md", "a"), load("docs/a.pdf", ""), {
+    type: "gitDetected",
+    repo: REPO,
+  });
+  expect(Object.keys(r.state.git.files)).toEqual(["notes/a.md"]);
+  expect(
+    r.effects.filter((e) => e.kind === "gitReadIndex").map((e) => e.path),
+  ).toEqual(["notes/a.md"]);
+});
+
 test("an old git shows a warning and keeps git off", () => {
   const r = update(fresh(), {
     type: "gitDetected",

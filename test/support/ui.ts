@@ -1,6 +1,7 @@
 import type { CapturedSpan } from "@opentui/core";
 import { createTestRenderer, TestRecorder } from "@opentui/core/testing";
 import { parseConfig } from "../../src/core/config/toml";
+import { pdfPageRef } from "../../src/core/features/pdf/page";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { initialState } from "../../src/core/state/init";
 import { createStore } from "../../src/core/state/store";
@@ -12,6 +13,7 @@ import type {
 } from "../../src/core/state/types";
 import { createUpdate, type Registries } from "../../src/core/state/update";
 import { BaseView } from "../../src/ui/editors/base-view";
+import { PdfView } from "../../src/ui/editors/pdf-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { EditorView } from "../../src/ui/editors/text-view";
 import {
@@ -45,6 +47,8 @@ export type MountOptions = {
   files?: Record<string, Uint8Array>;
   /** Draws SVG in place of the real rasterizer. */
   rasterizeSvg?: ShellDeps["rasterizeSvg"];
+  /** Draws PDF pages; otherwise a page is the `files` entry `path#page=N`. */
+  rasterizePdf?: ShellDeps["rasterizePdf"];
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
@@ -74,6 +78,7 @@ export const TREE: Record<string, DirEntry[]> = {
 export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
+  registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -132,6 +137,8 @@ export async function mountShell(o: MountOptions) {
     now: () => now,
     loadImage,
     rasterizeSvg: o.rasterizeSvg ?? rasterizeSvg,
+    rasterizePdf:
+      o.rasterizePdf ?? ((r) => loadImage(pdfPageRef(r.path, r.page))),
     write: (bytes) => writes.push(bytes),
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });

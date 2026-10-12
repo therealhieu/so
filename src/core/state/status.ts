@@ -15,6 +15,8 @@ import { baseWindow } from "./base-model";
 import { activeBuffer, activeWindow } from "./buffers";
 import { gitSegment } from "./git";
 import { jumpSegment } from "./jumps";
+import { pdfPages, pdfWindow } from "./pdf";
+import { pdfSearchCount } from "./pdf-tools";
 import type { AppState, BufferState } from "./types";
 
 export type StatusSegments = {
@@ -28,6 +30,8 @@ export type StatusSegments = {
   /** The file was removed outside so; edits are kept but not autosaved. */
   deletedOnDisk?: true;
   position?: Pos;
+  /** PDFs only, in place of `position`: "3/12", or "3/?" until the count is known, then the zoom ("3/12 156%"). */
+  page?: string;
   /** Notes only, once the index has finished a scan. */
   backlinks?: number;
   /** Absent until the first batch. */
@@ -109,11 +113,14 @@ function startsOf(text: TextBuffer, pattern: string): Pos[] {
 }
 
 /**
- * The mode the badge names: the explorer, a base window (`insert` while one
- * of its cells is edited or its filter input is open), or the vim mode.
+ * The mode the badge names: the explorer, a PDF window, a base window
+ * (`insert` while one of its cells is edited or its filter input is open),
+ * or the vim mode.
  */
 function modeOf(s: AppState): string {
   if (s.panels.explorer.focused) return "explorer";
+  if (pdfWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
+    return "pdf";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
   return base.edit === undefined && base.search === undefined
@@ -138,6 +145,15 @@ export function statusSegments(s: AppState): StatusSegments {
           position: w.content.cursor,
           preview: previewSegment(s),
         };
+  const pdf = pdfWindow(s, s.windows.active);
+  if (b !== undefined && pdf !== undefined) {
+    delete seg.position;
+    seg.page = `${pdf.page}/${pdfPages(b) ?? "?"}`;
+    if (pdf.fit === "width" && pdf.zoom !== undefined)
+      seg.page += ` ${Math.round(pdf.zoom * 100)}%`;
+    const found = pdfSearchCount(s);
+    if (found !== undefined) seg.search = found;
+  }
   if (b !== undefined && w !== undefined) {
     if (b.fileType === markdownFileType.id) {
       seg.words = countWords(b.text, b.analysis as Doc | undefined);

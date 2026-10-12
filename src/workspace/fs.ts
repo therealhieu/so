@@ -90,6 +90,28 @@ export async function readTextFile(
   };
 }
 
+/**
+ * A file shown by its own viewer, never as text: an empty body with the
+ * stamp of its bytes, so disk changes are noticed. A read error refuses it as io.
+ */
+export async function readBinaryFile(
+  path: string,
+): Promise<TextFile | { refused: "io" }> {
+  try {
+    const st = await stat(path);
+    if (!st.isFile()) return { refused: "io" };
+    return {
+      text: "",
+      bom: false,
+      eol: "\n",
+      stamp: await stampOfFile(path, st),
+      createdMs: st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
+    };
+  } catch {
+    return { refused: "io" };
+  }
+}
+
 const statOrNull = (p: string) => stat(p).catch(() => null);
 const realpathOrSelf = (p: string) => realpath(p).catch(() => p);
 

@@ -42,14 +42,16 @@ export function installLifecycle(d: {
     done = true;
     const writes = flush ? pendingWrites(d.store.get()) : [];
     const saved = new Set<string>();
-    const all = Promise.all(
-      writes.map((w) =>
+    const all = Promise.all([
+      ...writes.map((w) =>
         d.runner.flush([w]).then(
           () => saved.add(w.path),
           () => {},
         ),
       ),
-    );
+      // Writes already queued, such as an annotations file, finish too.
+      d.runner.flush([]),
+    ]);
     await Promise.race([all, Bun.sleep(FLUSH_BOUND_MS)]);
     try {
       d.saveSession?.(d.store.get());

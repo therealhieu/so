@@ -10,6 +10,7 @@ import { gitUnborn } from "./git-unborn";
 import { gitWorktree } from "./git-worktree";
 import { large } from "./large";
 import { lsp } from "./lsp";
+import { pdf } from "./pdf";
 import { tour } from "./tour";
 
 /** Every profile, in `--list` order. */
@@ -26,6 +27,7 @@ export const PROFILES: readonly Profile[] = [
   gitWorktree,
   gitEol,
   lsp,
+  pdf,
 ];
 
 export const DEFAULT_PROFILE = tour.name;

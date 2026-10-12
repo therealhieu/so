@@ -23,7 +23,7 @@ import type {
 import { paintPreview, type Rect } from "../editors/text-view";
 import type { Cursor, LayoutClass, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
-import { centered, drawFrame } from "./host";
+import { centered, drawFrame, wrap as wrapText } from "./host";
 
 const REFUSED = {
   binary: "binary file — no preview",
@@ -147,7 +147,7 @@ export class PickerView extends Renderable {
       footer:
         p.browse !== undefined
           ? "C-j/C-k move · Enter open · C-h back · Esc close"
-          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${source?.add ? " · C-a add" : ""}${source?.restore ? " · C-r restore" : ""}${source?.remove ? ` · C-x ${source.removeAction ?? "close"}` : ""}${tab} · Esc ${p.back === undefined ? "close" : "back"}`,
+          : `C-j/C-k move · ${accept}${source?.notes ? " · C-l notes" : ""}${source?.add ? " · C-a add" : ""}${source?.restore ? " · C-r restore" : ""}${source?.edit ? ` · C-e ${source.editAction ?? "edit"}` : ""}${source?.copy ? " · C-y copy" : ""}${source?.remove ? ` · C-x ${source.removeAction ?? "close"}` : ""}${tab} · Esc ${p.back === undefined ? "close" : "back"}`,
     });
     if (narrowPreview(s, p)) {
       this.paintPreviewPane(
@@ -317,7 +317,11 @@ export class PickerView extends Renderable {
     const target = p.preview;
     const describe = pickerSources[p.source]?.describe;
     if (target === undefined && describe !== undefined) {
-      const lines = describe(s, item, p.browse);
+      const lines = describe(s, item, p.browse).flatMap((l) =>
+        l.wrap === true
+          ? wrapText(l.text, r.w - 1).map((text) => ({ ...l, text }))
+          : [l],
+      );
       // Scroll just enough to keep the selected note in view.
       const at = lines.findIndex((l) => l.selected === true);
       const first = Math.max(0, at - r.h + 1);

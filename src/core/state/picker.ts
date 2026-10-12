@@ -31,6 +31,7 @@ import {
 import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
+import { pdfPickerSources } from "./pdf-pickers";
 import { chain, message, none } from "./result";
 import { closeBuffer } from "./save";
 import {
@@ -71,6 +72,8 @@ export type PreviewLines = {
   selected?: true;
   /** Code-point ranges of `text` drawn in their own style. */
   ranges?: { from: number; to: number; style: string }[];
+  /** Wrap at the pane's width instead of cutting at it. */
+  wrap?: true;
 }[];
 
 export type PickerSource = {
@@ -97,6 +100,13 @@ export type PickerSource = {
   remove?(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
   /** What `C-x` does, for the footer ("close" when absent). */
   removeAction?: string;
+  /** What `C-e` does to the selected item, and its footer label. */
+  edit?(s: AppState, item: PickerItem): Result;
+  editAction?: string;
+  /** What `C-y` does to the selected item. */
+  copy?(s: AppState, item: PickerItem): Result;
+  /** The row selected when the picker opens, given its unfiltered items. */
+  initial?(s: AppState, items: readonly PickerItem[]): number;
   /** What `C-a` does, given the selected item if any. */
   add?(s: AppState, item: PickerItem | undefined): Result;
   /** What `C-r` does to the selected item; the list is listed again after it. */
@@ -601,6 +611,7 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     restore: (s, item, reg) => restoreBinding(s, item, reg),
   },
   ...lspPickerSources,
+  ...pdfPickerSources,
 };
 
 const pickerOf = (s: AppState): PickerState | undefined =>
@@ -685,7 +696,7 @@ export function openPicker(
     query: "",
     items,
     total: source.total?.(s, c.reg, arg) ?? items.length,
-    selected: 0,
+    selected: source.initial?.(s, items) ?? 0,
     ...(arg === undefined ? {} : { arg }),
     ...(source.render === undefined ? {} : { time: c.now }),
     ...(source.indexed && s.index.status === "unavailable"
@@ -858,6 +869,15 @@ export function pickerKey(
         : chain(restore(s, item, reg), (st) =>
             refreshPicker(st, reg, p.source),
           );
+    }
+    case "<C-e>":
+    case "<C-y>": {
+      const item = p.items[p.selected];
+      const source = pickerSources[p.source];
+      const run = a.key === "<C-e>" ? source?.edit : source?.copy;
+      return item === undefined || run === undefined
+        ? none(s)
+        : chain(run(s, item), (st) => refreshPicker(st, reg, p.source));
     }
     case "<C-a>": {
       const add = pickerSources[p.source]?.add;

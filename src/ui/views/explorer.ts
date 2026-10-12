@@ -58,6 +58,7 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
     p.rename === undefined &&
     p.setting === undefined &&
     p.binding === undefined &&
+    p.pdfNote === undefined &&
     p.kind === "input" &&
     (p.op.kind === "create" ||
       (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))

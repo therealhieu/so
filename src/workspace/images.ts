@@ -1,6 +1,12 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, sep } from "node:path";
+import {
+  type PdfPageRequest,
+  parsePdfPageRef,
+} from "../core/features/pdf/page";
 import { isWebUrl } from "../core/lang/markdown/renderers/image";
+import type { RgbaImage } from "../core/state/types";
+import { createLimiter } from "./limit";
 
 /** Limits for downloading images referenced by URL. */
 export const WEB_IMAGE = {
@@ -13,13 +19,13 @@ export const WEB_IMAGE = {
 const MAX_FILE_BYTES = 32 * 2 ** 20;
 
 /**
- * The bytes of `rel` in the workspace. The real path must stay inside the
+ * The real path of the file `rel` in the workspace. It must stay inside the
  * workspace's real path, so `..` and symlinks cannot reach other files.
  */
-export async function readImage(
+export async function containedFile(
   root: string,
   rel: string,
-): Promise<Uint8Array> {
+): Promise<{ path: string; size: number }> {
   const realRoot = await realpath(root);
   const path = await realpath(join(realRoot, rel));
   const r = relative(realRoot, path);
@@ -27,7 +33,16 @@ export async function readImage(
     throw new Error(`${rel}: outside the workspace`);
   const st = await stat(path);
   if (!st.isFile()) throw new Error(`${rel}: not a file`);
-  if (st.size > MAX_FILE_BYTES) throw new Error(`${rel}: image too large`);
+  return { path, size: st.size };
+}
+
+/** The bytes of the workspace image `rel` (see `containedFile`). */
+export async function readImage(
+  root: string,
+  rel: string,
+): Promise<Uint8Array> {
+  const { path, size } = await containedFile(root, rel);
+  if (size > MAX_FILE_BYTES) throw new Error(`${rel}: image too large`);
   return new Uint8Array(await readFile(path));
 }
 
@@ -82,39 +97,31 @@ export async function fetchImage(
   return readCapped(res, WEB_IMAGE.maxBytes);
 }
 
+/** The width PDF pages embedded in notes are drawn at. */
+const PDF_EMBED_WIDTH = 1024;
+
 /**
- * Image bytes by reference: URLs download through `fetchImage`, at most four
- * at a time; anything else is a workspace path read with `readImage`.
+ * Image bytes or pixels by reference: URLs download through `fetchImage`, at most four
+ * at a time; a PDF page (`paper.pdf#page=3`) draws through `pdfPage`; anything
+ * else is a workspace path read with `readImage`.
  */
 export function createImageLoader(
   root: string,
-  o: { fetch?: typeof fetch } = {},
-): (ref: string) => Promise<Uint8Array> {
-  let active = 0;
-  const waiting: (() => void)[] = [];
-  const acquire = () => {
-    if (active < WEB_IMAGE.maxInFlight) {
-      active++;
-      return Promise.resolve();
-    }
-    return new Promise<void>((resolve) => waiting.push(resolve));
-  };
-  // A finished download hands its slot straight to the next one waiting.
-  const release = () => {
-    const next = waiting.shift();
-    if (next === undefined) active--;
-    else next();
-  };
+  o: {
+    fetch?: typeof fetch;
+    pdfPage?: (r: PdfPageRequest) => Promise<RgbaImage>;
+  } = {},
+): (ref: string) => Promise<Uint8Array | RgbaImage> {
+  const limited = createLimiter(WEB_IMAGE.maxInFlight);
   return async (ref) => {
-    if (!isWebUrl(ref)) return readImage(root, ref);
-    await acquire();
-    try {
-      return await fetchImage(
-        ref,
-        o.fetch === undefined ? {} : { fetch: o.fetch },
-      );
-    } finally {
-      release();
+    const pdf = parsePdfPageRef(ref);
+    if (pdf !== undefined) {
+      if (o.pdfPage === undefined) throw new Error(`${ref}: no PDF renderer`);
+      return o.pdfPage({ ...pdf, width: PDF_EMBED_WIDTH });
     }
+    if (!isWebUrl(ref)) return readImage(root, ref);
+    return limited(() =>
+      fetchImage(ref, o.fetch === undefined ? {} : { fetch: o.fetch }),
+    );
   };
 }

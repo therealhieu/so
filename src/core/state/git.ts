@@ -264,7 +264,7 @@ export function onGitDiffTimer(s: AppState, id: BufferId): Result {
 }
 
 /**
- * Keep `files` to the open listed buffers inside a repository: a buffer that
+ * Keep `files` to the open listed text buffers inside a repository: a buffer that
  * appears (opened, or renamed to a new path) gets an entry and an index
  * read, and one that went away loses its entry in the same transition.
  */
@@ -273,7 +273,11 @@ export function syncGitFiles(prev: AppState, r: Result): Result {
   const s = dropClosed(r.state);
   const repo = s.git.repo;
   const open = new Set(
-    repo === null ? [] : listedBuffers(s).map((b) => b.path),
+    repo === null
+      ? []
+      : listedBuffers(s)
+          .filter((b) => b.binary !== true)
+          .map((b) => b.path),
   );
   const reads: Effect[] = [];
   let files: GitState["files"] | undefined;

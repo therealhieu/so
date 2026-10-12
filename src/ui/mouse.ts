@@ -45,10 +45,12 @@ const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   right: { dx: 1, dy: 0 },
 };
 
-/** Targets a drag can start on: window text (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
+/** Targets a drag can start on: window text or a PDF page (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
 const draggable = (t: MouseTarget) =>
   (t.kind === "window" &&
-    (t.spot.kind === "text" || t.spot.kind === "baseEdge")) ||
+    (t.spot.kind === "text" ||
+      t.spot.kind === "baseEdge" ||
+      (t.spot.kind === "pdf" && t.spot.at !== undefined))) ||
   t.kind === "zoomPoint" ||
   t.kind === "explorerEdge";
 
@@ -169,11 +171,19 @@ export function createMouseRouter(o: {
           send({ kind: "drag", target });
           return;
         }
-        case "up":
         case "drag-end":
-          origin = undefined;
+          // OpenTUI sends "up" right after; the gesture ends there.
           lastDrag = undefined;
           return;
+        case "up": {
+          const from = origin?.target;
+          origin = undefined;
+          lastDrag = undefined;
+          // A PDF page acts once the button is up: the selection is final.
+          if (from?.kind === "window" && from.spot.kind === "pdf")
+            send({ kind: "release", target: from });
+          return;
+        }
       }
     },
   };

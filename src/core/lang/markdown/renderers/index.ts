@@ -10,6 +10,7 @@ import { imageRenderer } from "./image";
 import { listRenderer } from "./list";
 import { mathRenderer } from "./math";
 import { mermaidRenderer } from "./mermaid";
+import { pdfRenderer } from "./pdf";
 import { ruleRenderer } from "./rule";
 import { tableRenderer } from "./table";
 
@@ -31,4 +32,5 @@ export function builtinRenderers(): void {
   ]);
   registerBlockRenderer("embed", embedRenderer);
   registerBlockRenderer("image", imageRenderer);
+  registerBlockRenderer("pdf", pdfRenderer);
 }
