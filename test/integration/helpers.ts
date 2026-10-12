@@ -3,7 +3,11 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
-import { createIndexHost, type IndexHost } from "../../src/app/index-host";
+import {
+  createIndexHost,
+  type IndexHost,
+  indexSkips,
+} from "../../src/app/index-host";
 import { createLspHost, type LspHost } from "../../src/app/lsp-host";
 import type { ToolHost } from "../../src/app/tool-host";
 import { parseConfig } from "../../src/core/config/toml";
@@ -257,14 +261,13 @@ export async function startApp(
     );
   };
   const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
-    const explorerOnly = matcher.isExcludedPath(event.path);
+    const explorerOnly = indexSkips(matcher, store.get(), event.path);
     store.dispatch({
       type: "fileChanged",
       event: explorerOnly ? { ...event, explorerOnly: true } : event,
     });
-    if (explorerOnly) return;
-    index?.notify(event);
-    lsp?.notify(event);
+    if (!explorerOnly) index?.notify(event);
+    if (!matcher.isExcludedPath(event.path)) lsp?.notify(event);
   });
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);
@@ -287,7 +290,10 @@ export async function startApp(
   runner.run(listDirEffect(store.get(), ""));
   // Without a worker, an empty index is ready, so renames are not refused.
   if (index === undefined) store.dispatch({ type: "indexReady" });
-  else index.start(root, []);
+  else {
+    store.subscribe(index.observe);
+    index.start(root, store.get().config);
+  }
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
   await settle();
   if (opts.git !== undefined)

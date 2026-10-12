@@ -21,14 +21,17 @@ const withIx = (s: AppState, ix: NoteIndex): AppState => ({
 });
 
 /**
- * A worker batch. Scan batches report progress; an update batch after the
- * scan (`done = total = 0`) only refreshes summaries.
+ * A worker batch. Scan batches report progress and drop files a rescan no
+ * longer finds; an update batch after the scan (`done = total = 0`) only
+ * refreshes summaries.
  */
 export function onIndexBatch(
   s: AppState,
   a: Extract<Action, { type: "indexBatch" }>,
 ): Result {
-  const ix = applySummaries(s.index.ix, a.summaries, a.files, a.facts);
+  const kept =
+    a.removed === undefined ? s.index.ix : removePaths(s.index.ix, a.removed);
+  const ix = applySummaries(kept, a.summaries, a.files, a.facts);
   if (a.done === 0 && a.total === 0) return none(withIx(s, ix));
   return none({
     ...s,
