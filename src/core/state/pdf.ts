@@ -174,15 +174,16 @@ export function onPdfLaidOut(
   );
 }
 
-export const PDF_ZOOM = { max: 4, step: 1.25 } as const;
+export const PDF_ZOOM = { min: 0.25, max: 4, step: 1.25 } as const;
 
 /**
- * Window `ws` at zoom `z` (1 to `PDF_ZOOM.max`, fit width), with the point
+ * Window `ws` at zoom `z` (`PDF_ZOOM.min` to `PDF_ZOOM.max`, fit width), with the point
  * at the window's centre kept there; the page's size follows from the last
  * layout until the view draws it.
  */
 function zoomed(ws: PdfWindowState, z: number): PdfWindowState {
-  const to = Math.round(Math.max(1, Math.min(z, PDF_ZOOM.max)) * 100) / 100;
+  const to =
+    Math.round(Math.max(PDF_ZOOM.min, Math.min(z, PDF_ZOOM.max)) * 100) / 100;
   const from = ws.fit === "width" ? (ws.zoom ?? 1) : 1;
   const ratio = to / from;
   const { zoom: _, pan: __, pageRows, pageCols, ...rest } = ws;
@@ -193,7 +194,7 @@ function zoomed(ws: PdfWindowState, z: number): PdfWindowState {
       ? Math.round(pageRows * ratio)
       : undefined;
   const cols =
-    viewCols > 0 ? Math.max(viewCols, Math.round(viewCols * to)) : undefined;
+    viewCols > 0 ? Math.max(1, Math.round(viewCols * to)) : undefined;
   const scroll =
     ws.fit === "width"
       ? Math.round((ws.scroll + viewRows / 2) * ratio - viewRows / 2)
@@ -206,7 +207,8 @@ function zoomed(ws: PdfWindowState, z: number): PdfWindowState {
     ...(rows === undefined ? {} : { pageRows: rows }),
     ...(cols === undefined ? {} : { pageCols: cols }),
   };
-  if (to <= 1) return out;
+  if (to === 1) return out;
+  if (to < 1) return { ...out, zoom: to };
   const maxPan = Math.max(0, (cols ?? 0) - viewCols);
   const p = Math.max(0, Math.min(pan, maxPan));
   return { ...out, zoom: to, ...(p > 0 ? { pan: p } : {}) };
