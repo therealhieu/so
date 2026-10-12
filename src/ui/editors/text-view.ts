@@ -24,6 +24,7 @@ import {
   type InlayHint,
   inlayHintMarks,
 } from "../../core/kernel/view/inlay-hints";
+import { justifyRow } from "../../core/kernel/view/justify";
 import {
   highlightMarks,
   referenceMarks,
@@ -73,6 +74,20 @@ const hintsOf = (s: AppState, path: string): InlayHint[] =>
  */
 const gutterWidth = (lineCount: number, change: boolean) =>
   (change ? 1 : 0) + Math.max(4, String(lineCount).length) + 2;
+
+/** Where a window paints its gutter and its text, in screen cells. */
+type Columns = { gutterX: number; textX: number; textW: number };
+
+/**
+ * The gutter and text columns of `r`: the text takes at most `maxWidth`
+ * cells, and the gutter and text are centered together in the window.
+ */
+export function columns(r: Rect, gutterW: number, maxWidth: number): Columns {
+  const room = Math.max(1, r.w - gutterW);
+  const textW = Math.min(room, maxWidth);
+  const gutterX = r.x + Math.floor((room - textW) / 2);
+  return { gutterX, textX: gutterX + gutterW, textW };
+}
 
 /**
  * The screen row where `line` starts in `lines`: its own text row, else the
@@ -149,6 +164,8 @@ export function paintLine(
     endCol?: number;
     tabWidth: number;
     cursorline: boolean;
+    /** A stretched row's `justifyRow` cells: extra spaces after a gap. */
+    shift?: readonly number[];
   },
 ): void {
   const line = theme.style("cursorline");
@@ -170,7 +187,12 @@ export function paintLine(
     for (const ch of span.text) {
       const w = cellWidth(ch, v, o.tabWidth);
       for (let i = 0; i < w; i++, v++)
-        if (v >= o.leftCol && v < end) run += ch === "\t" ? " " : ch;
+        if (v >= o.leftCol && v < end) {
+          run += ch === "\t" ? " " : ch;
+          const at = v - o.leftCol;
+          if (o.shift !== undefined)
+            run += " ".repeat((o.shift[at + 1] ?? 0) - (o.shift[at] ?? 0));
+        }
     }
     const room = at.width - x;
     if (run === "" || room <= 0) continue;
@@ -359,11 +381,11 @@ export class EditorView extends Renderable implements WindowView {
     const rawCol = insert
       ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
       : cursorDisplayCol(text, col, tabWidth);
-    const gw = gutterWidth(b.text.lineCount, this.change);
-    const textW = Math.max(1, r.w - gw);
+    const { textX, textW } = this.columnsOf(s, b);
     /**
-     * The cursor's wrap row and cell in `lines`. A row with virtual text
-     * places it among its spans; any other row uses the buffer line.
+     * The cursor's wrap row and cell in `lines`. A row with virtual text or
+     * stretched rows places it among its spans; any other row uses the
+     * buffer line.
      */
     const place = (lines: readonly RenderLine[]) => {
       const shown = lines.find(
@@ -371,22 +393,35 @@ export class EditorView extends Renderable implements WindowView {
           l.sourceLine === line &&
           !(l.widget !== undefined && l.spans.length === 0),
       );
-      const virtual = shown?.spans.some((sp) => sp.virtual !== undefined);
+      const bySpans =
+        shown?.spans.some((sp) => sp.virtual !== undefined) === true ||
+        (wrap && shown?.justify === true);
       const dc =
-        shown !== undefined && virtual === true
+        shown !== undefined && bySpans
           ? displayColOf(shown.spans, col, tabWidth, insert)
           : rawCol;
       if (!wrap) return { k: 0, x: dc, dc };
       const prefix = shown === undefined ? 0 : prefixCells(shown);
       const starts = wrapLine(
-        shown !== undefined && virtual === true ? wrapText(shown.spans) : text,
+        shown !== undefined && bySpans ? wrapText(shown.spans) : text,
         textW,
         tabWidth,
         prefix,
       );
       const k = rowOf(starts, dc);
       const indent = k === 0 ? 0 : prefix;
-      const x = dc - (starts[k] ?? 0) + indent;
+      const start = starts[k] ?? 0;
+      const shift =
+        shown?.justify === true
+          ? justifyRow(
+              shown.spans,
+              start,
+              starts[k + 1],
+              Math.max(1, textW - indent),
+              tabWidth,
+            )
+          : undefined;
+      const x = dc - start + indent + (shift?.[dc - start] ?? 0);
       // An Insert cursor just past a full row sits at the start of the next.
       return x >= textW ? { k: k + 1, x: prefix, dc } : { k, x, dc };
     };
@@ -426,7 +461,7 @@ export class EditorView extends Renderable implements WindowView {
       visible;
     if (focused)
       this.cursorAt = {
-        x: r.x + gw + x,
+        x: textX + x,
         y: r.y + (winbar ? 1 : 0) + row,
         style: s.vim.mode === "insert" ? "line" : "block",
       };
@@ -465,14 +500,41 @@ export class EditorView extends Renderable implements WindowView {
     const s = this.s;
     const w = s?.windows.byId[this.windowId];
     const b = w && s?.buffers[w.content.bufferId];
-    const gw = gutterWidth(b?.text.lineCount ?? 0, this.change);
+    const { textX, textW } = this.columnsOf(s, b);
     const top = this.winbar ? 1 : 0;
     return {
-      x: r.x + gw,
+      x: textX,
       y: r.y + top,
-      w: Math.max(0, r.w - gw),
+      w: Math.min(textW, Math.max(0, r.x + r.w - textX)),
       h: this.textRows(),
     };
+  }
+
+  /** The view `b` shows: its file type's view by id, else the first. */
+  private specOf(b: BufferState) {
+    const ft = this.deps.reg.fileTypes.get(b.fileType);
+    return ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
+  }
+
+  /**
+   * This frame's gutter and text columns for `b`: with `preview.readable`
+   * on, a readable view caps its text at the readable width, centered with
+   * the gutter.
+   */
+  private columnsOf(
+    s: AppState | undefined,
+    b: BufferState | undefined,
+  ): Columns {
+    const gw = gutterWidth(b?.text.lineCount ?? 0, this.change);
+    const capped =
+      s?.config.preview.readable === true &&
+      b !== undefined &&
+      this.specOf(b)?.readable === true;
+    return columns(
+      this.rect,
+      gw,
+      capped ? s.config.preview.readableWidth : Number.POSITIVE_INFINITY,
+    );
   }
 
   private textRows(): number {
@@ -527,11 +589,10 @@ export class EditorView extends Renderable implements WindowView {
     const rows = this.textRows();
     if (s === undefined || b === undefined || rows <= 0) return undefined;
     const { tabWidth, wrap } = s.config.editor;
-    const gw = gutterWidth(b.text.lineCount, this.change);
-    const textX = this.rect.x + gw;
+    const { textX, textW } = this.columnsOf(s, b);
     const row = y - this.rect.y - (this.winbar ? 1 : 0);
     const shown = rowAt(this.lines, row, {
-      width: Math.max(1, this.rect.w - gw),
+      width: textW,
       tabWidth,
       wrap,
       skipRows: this.skipRows,
@@ -592,7 +653,15 @@ export class EditorView extends Renderable implements WindowView {
     const rows = this.textRows();
     const change = this.change;
     const gw = gutterWidth(b?.text.lineCount ?? 0, change);
-    const textW = Math.max(1, this.width - gw);
+    const cols = this.columnsOf(s, b);
+    const textW = cols.textW;
+    // Cells count from this renderable, which sits where the rect starts.
+    const gx = this.x + cols.gutterX - this.rect.x;
+    const tx = gx + gw;
+    // A capped text column leaves margins, painted as plain background.
+    if (tx + textW < this.x + this.width || gx > this.x)
+      for (let r = 0; r < rows; r++)
+        drawCells(buf, theme.style("text"), this.x, y + r, "", this.width);
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
@@ -623,12 +692,12 @@ export class EditorView extends Renderable implements WindowView {
           drawCells(
             buf,
             theme.style(changeSign?.style ?? "gutter"),
-            this.x,
+            gx,
             y + at,
             changeSign?.text ?? "",
             1,
           );
-        const nx = this.x + (change ? 1 : 0);
+        const nx = gx + (change ? 1 : 0);
         drawCells(
           buf,
           theme.style(isCursor && text !== "" ? "gutterCursor" : "gutter"),
@@ -640,7 +709,7 @@ export class EditorView extends Renderable implements WindowView {
         drawCells(
           buf,
           theme.style(sign?.style ?? "gutter"),
-          this.x + gw - 1,
+          tx - 1,
           y + at,
           sign?.text ?? "",
           1,
@@ -655,7 +724,7 @@ export class EditorView extends Renderable implements WindowView {
           {
             buf,
             theme,
-            x: this.x + gw,
+            x: tx,
             y: y + i,
             width: textW,
             rows: height,
@@ -683,31 +752,29 @@ export class EditorView extends Renderable implements WindowView {
           paintLine(
             buf,
             theme,
-            { x: this.x + gw, y: y + i, width: indent },
+            { x: tx, y: y + i, width: indent },
             row.wrapPrefix ?? [],
             { leftCol: 0, tabWidth, cursorline: isCursor && active },
           );
+        const shift =
+          wrap && row.justify
+            ? justifyRow(row.spans, start, end, textW - indent, tabWidth)
+            : undefined;
         paintLine(
           buf,
           theme,
-          { x: this.x + gw + indent, y: y + i, width: textW - indent },
+          { x: tx + indent, y: y + i, width: textW - indent },
           row.spans,
           {
             leftCol: start,
             ...(end === undefined ? {} : { endCol: end }),
+            ...(shift === undefined ? {} : { shift }),
             tabWidth,
             cursorline: isCursor && active,
           },
         );
         if (!wrap && displayWidth(text, tabWidth) > start + textW)
-          drawCells(
-            buf,
-            theme.style("dim"),
-            this.x + gw + textW - 1,
-            y + i,
-            "›",
-            1,
-          );
+          drawCells(buf, theme.style("dim"), tx + textW - 1, y + i, "›", 1);
       }
     }
     for (; i < rows; i++)
@@ -741,7 +808,7 @@ export class EditorView extends Renderable implements WindowView {
     };
     try {
       const ft = this.deps.reg.fileTypes.get(b.fileType);
-      const spec = ft?.views.find((v) => v.id === b.view) ?? ft?.views[0];
+      const spec = this.specOf(b);
       const host: ViewHost = {
         width,
         rows,

@@ -105,6 +105,12 @@ export const ConfigSchema = z.strictObject({
       mode: z.enum(["reading", "live", "source"]).default("reading"),
       embedMaxRows: z.number().int().min(1).max(200).default(10),
       images: z.enum(["auto", "blocks", "off"]).default("auto"),
+      /** Cap a note's text at `readableWidth` and center it with its gutter. */
+      readable: z.boolean().default(false),
+      /** Text columns a readable note shows. */
+      readableWidth: z.number().int().min(20).max(500).default(100),
+      /** Spread wrapped prose rows to both edges in the rendered views. */
+      justify: z.boolean().default(false),
     })
     .prefault({}),
   daily: z

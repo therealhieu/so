@@ -77,3 +77,7 @@ flowchart LR
 [^1]: Footnotes render at the bottom, dimmed.
 
 ![[tasks.base#All tasks]]
+
+## Reading layout
+
+A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.

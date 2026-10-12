@@ -344,3 +344,41 @@ test("the reveal sign marks exactly the revealed rows", () => {
     layoutNote(tour(100, 41), "reading", tourCtx).some((r) => r.sign),
   ).toBe(false);
 });
+
+test("justify marks rendered paragraph, list, and callout and quote body lines, not titles, revealed lines, or other blocks", () => {
+  builtinRenderers();
+  const note = [
+    "# Title",
+    "",
+    "First paragraph line",
+    "second line",
+    "",
+    "- item one",
+    "- item two",
+    "",
+    "```",
+    "code",
+    "```",
+    "",
+    "> [!note] Title",
+    "> Body line",
+    "",
+    "> A plain quote",
+    "",
+    "| a | b |",
+    "| - | - |",
+    "| 1 | 2 |",
+  ].join("\n");
+  const justified = (view: "live" | "reading", line: number, on = true) =>
+    layoutNote(
+      noteView(note, { cursor: { line, col: 0 } }),
+      view,
+      stubCtx({ justify: on }),
+    )
+      .filter((r) => r.justify)
+      .map((r) => r.sourceLine);
+  expect(justified("reading", 0)).toEqual([2, 3, 5, 6, 13, 15]);
+  // The live cursor reveals its line, which keeps its source ragged.
+  expect(justified("live", 3)).toEqual([2, 5, 6, 13, 15]);
+  expect(justified("reading", 0, false)).toEqual([]);
+});

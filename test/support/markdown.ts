@@ -25,6 +25,7 @@ export function stubCtx(over: Partial<PreviewCtx> = {}): PreviewCtx {
     folds: new Set(),
     embedMaxRows: 10,
     images: "auto",
+    justify: false,
     ...over,
   };
 }

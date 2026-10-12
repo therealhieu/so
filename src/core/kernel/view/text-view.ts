@@ -120,8 +120,10 @@ function layoutLine(
   let changeSign: Sign | undefined;
   let wrapPrefix: Span[] | undefined;
   let widget: Widget | undefined;
+  let justify = false;
   for (const d of decos)
     if (d.kind === "line" && d.line === line) {
+      if (d.justify) justify = true;
       if (d.style !== undefined) base = d.style;
       if (d.sign !== undefined) sign = d.sign;
       if (d.changeSign !== undefined) changeSign = d.changeSign;
@@ -150,7 +152,9 @@ function layoutLine(
   const row: RenderLine = withWidget({ sourceLine: line, spans }, widget);
   const signed = sign === undefined ? row : { ...row, sign };
   const changed = changeSign === undefined ? signed : { ...signed, changeSign };
-  return wrapPrefix === undefined ? changed : { ...changed, wrapPrefix };
+  const prefixed =
+    wrapPrefix === undefined ? changed : { ...changed, wrapPrefix };
+  return justify ? { ...prefixed, justify: true } : prefixed;
 }
 
 function spansOf(

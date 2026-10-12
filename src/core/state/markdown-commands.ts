@@ -18,6 +18,7 @@ import type { CommandContext, CommandResult } from "./commands";
 import { followLink } from "./link-commands";
 import { startPreview, stopPreview } from "./preview";
 import { message, none } from "./result";
+import { toggleJustify, toggleReadable } from "./settings";
 import type { Result } from "./types";
 import { openZoom } from "./zoom";
 
@@ -143,6 +144,18 @@ export const markdownCommands: readonly AppCommand[] = [
     filetypes: ["markdown"],
     run: openZoom,
   },
+  {
+    id: "view.toggleReadable",
+    title: "Toggle readable width",
+    filetypes: ["markdown"],
+    run: (c) => toggleReadable(c.state),
+  },
+  {
+    id: "view.toggleJustify",
+    title: "Toggle justified text",
+    filetypes: ["markdown"],
+    run: (c) => toggleJustify(c.state),
+  },
 ];
 
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
@@ -153,4 +166,6 @@ export const markdownBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "za", id: "fold.toggle" },
   { scope: md("normal"), seq: "<CR>", id: "note.enter" },
   { scope: md("normal"), seq: "<leader>z", id: "image.zoom" },
+  { scope: md("normal"), seq: "<leader>ur", id: "view.toggleReadable" },
+  { scope: md("normal"), seq: "<leader>uj", id: "view.toggleJustify" },
 ];

@@ -826,7 +826,7 @@ exports[`the settings picker moves the explorer to the other edge at once 1`] = 
  NOTES  ~/notes               │   1 ▕# Ideas                                                                            
   notes                      │   1                                                                                     
   scripts  ╭─ Settings ───────────────────────────────────────────────────────────────────────────────────╮            
-  config.ya│ ❯                                                22/22 │ explorer.position                   │            
+  config.ya│ ❯                                                25/25 │ explorer.position                   │            
   todo.md  │ ────────────────────────────────────────────────────── │                                     │            
             │ ▸ explorer.position                               left │ The edge the explorer docks on;     │            
             │   explorer.icons                                  nerd │ the side panel takes the other.     │            
@@ -839,12 +839,12 @@ exports[`the settings picker moves the explorer to the other edge at once 1`] = 
             │   editor.relativeNumbers                            on │                                     │            
             │   preview.mode                                    live │                                     │            
             │   preview.images                                  auto │                                     │            
+            │   preview.readable                                 off │                                     │            
+            │   preview.justify                                  off │                                     │            
             │   autosave.enabled                                  on │                                     │            
             │   autosave.delayMs                                1000 │                                     │            
             │   editor.tabWidth                                    8 │                                     │            
             │   editor.keyTimeout                               1000 │                                     │            
-            │   explorer.width                                    30 │                                     │            
-            │   preview.embedMaxRows                              10 │                                     │            
             ╰─ C-j/C-k move · Enter change · Esc close ────────────────────────────────────────────────────╯            
                               │                                                                                         
                               │                                                                                         
