@@ -9,6 +9,8 @@ export type EditorKind = string;
 export type ViewSpec<S, I = S, C = unknown> = {
   id: string;
   readOnly?: boolean;
+  /** Prose: the window caps its text at the readable width and centers it. */
+  readable?: true;
   decorations: readonly DecorationProvider<I>[];
   input?: (analysis: S, ctx: C) => I;
 };

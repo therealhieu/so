@@ -122,6 +122,28 @@ test("a click on a wrapped row or the gutter lands on the shown source column", 
   expect(cursorOf(m)?.line).toBe(2);
 });
 
+test("a wrapped callout body shows its bar on every row and clicks past the bar land on the word", async () => {
+  m = await mountShell({ cols: 40, rows: 12 });
+  m.keys("<leader>e");
+  const body = "> aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll";
+  m.open("callout.md", `top\n\n> [!note]\n${body}\n\nlast line\n`);
+  const frame = (await m.frame()).split("\n");
+  const title = frame.findIndex((r) => r.includes("● Note"));
+  const end = frame.findIndex((r) => r.includes("last line"));
+  const barAt = frame[title + 1]?.indexOf("▎ aaaa") ?? -1;
+  expect(barAt).toBeGreaterThan(0);
+  const rows = frame
+    .slice(title + 1, end)
+    .filter((r) => r.slice(barAt).trim() !== "");
+  expect(rows.length).toBeGreaterThan(1);
+  for (const r of rows) expect(r.slice(barAt, barAt + 2)).toBe("▎ ");
+
+  const y = frame.findIndex((r) => r.includes("kkkk"));
+  expect(y).toBeGreaterThan(title + 1);
+  await m.mouse.click(frame[y]?.indexOf("kkkk") ?? -1, y);
+  expect(cursorOf(m)).toEqual({ line: 3, col: body.indexOf("kkkk") });
+});
+
 test("a click right of a word-wrapped row stays on that row", async () => {
   m = await mountShell({ cols: 40, rows: 12 });
   m.keys("<leader>e");

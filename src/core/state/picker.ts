@@ -1,3 +1,4 @@
+import { THEME_NAMES } from "../config/schema";
 import {
   backlinksOf,
   notesWithTag,
@@ -35,9 +36,12 @@ import { chain, message, none } from "./result";
 import { closeBuffer } from "./save";
 import {
   changeSetting,
+  chooseTheme,
   describeSetting,
+  describeTheme,
   SETTINGS,
   settingItems,
+  themeItems,
 } from "./settings";
 import type {
   Action,
@@ -560,6 +564,15 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     accept: (s, item) => changeSetting(s, item),
     describe: describeSetting,
   },
+  themes: {
+    id: "themes",
+    title: "Theme",
+    action: "apply",
+    items: (s, _r, q) => themeItems(s, q),
+    total: () => THEME_NAMES.length,
+    accept: (s, item) => chooseTheme(s, item),
+    describe: describeTheme,
+  },
   commands: {
     id: "commands",
     title: "Commands",
@@ -823,7 +836,13 @@ export function pickerKey(
     }
     case "<Esc>":
       return {
-        state: { ...s, overlay: { kind: "none" } },
+        state: {
+          ...s,
+          overlay:
+            p.back === undefined
+              ? { kind: "none" }
+              : { kind: "picker", picker: p.back },
+        },
         effects: [{ kind: "cancelTimer", id: "search" }],
       };
     case "<C-x>": {

@@ -214,6 +214,24 @@ test("line decoration sets the line style and sign", () => {
   ]);
 });
 
+test("line decoration gives the line a wrap prefix alongside its style", () => {
+  const wrapPrefix = [{ text: "▎ ", style: "mdQuote" }];
+  const rows = layoutText(
+    view(["quoted", "plain"]),
+    [
+      fixed({ kind: "line", line: 0, style: "mdQuote" }),
+      fixed({ kind: "line", line: 0, wrapPrefix }),
+    ],
+    undefined,
+  );
+  expect(rows[0]).toEqual({
+    sourceLine: 0,
+    spans: [{ text: "quoted", style: "mdQuote", col: 0 }],
+    wrapPrefix,
+  });
+  expect(rows[1]?.wrapPrefix).toBeUndefined();
+});
+
 test("viewport only", () => {
   const lines = Array.from({ length: 5000 }, (_, i) => `line ${i}`);
   const v = view(lines, { from: 100, to: 130 });
@@ -335,4 +353,12 @@ test("sign and change sign merge independently, the later provider winning per c
     { sourceLine: 1, spans: [{ text: "two", style: "text", col: 0 }] },
   ]);
   expect(Object.keys(rows[1] ?? {})).toEqual(["sourceLine", "spans"]);
+});
+
+test("a justify line decoration marks its row, and only its row", () => {
+  const justify: DecorationProvider = () => [
+    { kind: "line", line: 1, justify: true },
+  ];
+  const rows = layoutText(view(["one", "two", "three"]), [justify], undefined);
+  expect(rows.map((r) => r.justify)).toEqual([undefined, true, undefined]);
 });

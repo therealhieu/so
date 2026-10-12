@@ -1,10 +1,20 @@
-import type { Action, Effect, FileEvent, SearchHit } from "../core/state/types";
+import type { AppConfig } from "../core/config/schema";
+import type {
+  Action,
+  AppState,
+  Effect,
+  FileEvent,
+  SearchHit,
+} from "../core/state/types";
+import { type ExclusionMatcher, hasNamedSegment } from "../workspace/ignore";
 import type { FromWorker, ToWorker } from "../workspace/index-worker";
 import type { Logger } from "../workspace/log";
 
 /** The index worker's lifecycle as seen by `main`: start, watcher events, and shutdown. */
 export type IndexHost = {
-  start(root: string, ignore: string[]): void;
+  start(root: string, config: AppConfig): void;
+  /** Rescan when `[explorer] dotfiles` or `[index] exclude` changes, so entries join or leave the index. */
+  observe(s: AppState): void;
   /** Forward a watcher event, so other programs' changes reach the index. */
   notify(e: FileEvent): void;
   /** A rename or move `so` made, which the watcher stays silent about. */
@@ -29,6 +39,24 @@ export const workerUrl = (here: string): URL =>
     here,
   );
 
+/**
+ * A path the index skips: excluded, with dot entries let through while
+ * `[explorer] dotfiles` is on, or under a name in `[index] exclude`.
+ */
+export const indexSkips = (
+  m: ExclusionMatcher,
+  s: AppState,
+  path: string,
+): boolean =>
+  m.isExcludedPath(path, { dotfiles: s.config.explorer.dotfiles }) ||
+  hasNamedSegment(path, s.config.index.exclude);
+
+/** What the index takes in under `config`. */
+const scopeOf = (config: AppConfig) => ({
+  dotfiles: config.explorer.dotfiles,
+  exclude: config.index.exclude,
+});
+
 const spawnWorker = () => new Worker(workerUrl(import.meta.url));
 
 /**
@@ -44,7 +72,7 @@ export function createIndexHost(d: {
   spawn?: () => Worker;
 }): IndexHost {
   const spawn = d.spawn ?? spawnWorker;
-  let scan: ToWorker | undefined;
+  let scan: Extract<ToWorker, { t: "scan" }> | undefined;
   let worker: Worker | undefined;
   let crashes = 0;
   let stopped = false;
@@ -84,6 +112,7 @@ export function createIndexHost(d: {
           summaries: m.summaries,
           files: m.files ?? [],
           ...(m.facts === undefined ? {} : { facts: m.facts }),
+          ...(m.removed === undefined ? {} : { removed: m.removed }),
           done: m.done,
           total: m.total,
         });
@@ -105,10 +134,21 @@ export function createIndexHost(d: {
   }
 
   return {
-    start(root, ignore) {
+    start(root, config) {
       if (scan !== undefined) return;
-      scan = { t: "scan", root, ignore };
+      scan = { t: "scan", root, ...scopeOf(config) };
       launch();
+    },
+    observe(s) {
+      if (scan === undefined) return;
+      const next = scopeOf(s.config);
+      if (
+        next.dotfiles === scan.dotfiles &&
+        next.exclude.join("/") === scan.exclude.join("/")
+      )
+        return;
+      scan = { ...scan, ...next };
+      send(scan);
     },
     notify(e) {
       if (e.kind === "removed") send({ t: "removed", paths: [e.path] });

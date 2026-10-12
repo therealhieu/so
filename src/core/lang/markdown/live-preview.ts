@@ -29,7 +29,21 @@ export type PreviewCtx = {
   folds: ReadonlySet<number>;
   embedMaxRows: number;
   images: "auto" | "blocks" | "off";
+  /** Stretch the wrapped rows of paragraphs, list items, callouts, and quotes to both edges. */
+  justify: boolean;
 };
+
+/** Render keys whose rows are prose that may be justified. */
+const PROSE = new Set(["paragraph", "list", "callout", "quote"]);
+
+/** A `justify` line decoration on each visible line of `block`'s content. */
+function justified(block: Block, v: TextView): Decoration[] {
+  const out: Decoration[] = [];
+  const last = Math.min(contentEnd(v.buf, block), v.visible.to - 1);
+  for (let l = Math.max(block.startLine, v.visible.from); l <= last; l++)
+    out.push({ kind: "line", line: l, justify: true });
+  return out;
+}
 export type MarkdownViewInput = {
   doc: Doc;
   view: "live" | "reading";
@@ -129,6 +143,7 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
       const own = [
         ...r(block, v, input),
         ...inlineDecorations(block, v, input, shown.lines),
+        ...(input.ctx.justify && PROSE.has(key) ? justified(block, v) : []),
       ];
       out.push(...(lines.length === 0 ? own : own.filter(keep)));
     } catch {

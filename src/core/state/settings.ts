@@ -71,7 +71,11 @@ export const SETTINGS: readonly Setting[] = [
     kind: "choice",
     path: ["theme"],
     choices: THEME_NAMES,
-    about: ["The colour theme: `dark`/`light`", "are Tokyo Night."],
+    about: [
+      "The colour theme: `dark`/`light`",
+      "are Tokyo Night; `paper` and",
+      "`sepia` are warm, for reading.",
+    ],
   },
   {
     kind: "choice",
@@ -115,6 +119,26 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "choice",
+    path: ["preview", "readable"],
+    choices: [false, true],
+    about: [
+      "Cap a note's text at the",
+      "readable width and center it;",
+      "<leader>ur toggles it.",
+    ],
+  },
+  {
+    kind: "choice",
+    path: ["preview", "justify"],
+    choices: [false, true],
+    about: [
+      "Spread wrapped prose rows to",
+      "both edges in the reading and",
+      "live views; <leader>uj.",
+    ],
+  },
+  {
+    kind: "choice",
     path: ["autosave", "enabled"],
     choices: [true, false],
     about: ["Save a changed note after a", "pause in typing."],
@@ -147,6 +171,11 @@ export const SETTINGS: readonly Setting[] = [
     kind: "number",
     path: ["preview", "embedMaxRows"],
     about: ["Rows an embedded note shows", "in a preview, 1–200."],
+  },
+  {
+    kind: "number",
+    path: ["preview", "readableWidth"],
+    about: ["Text columns a readable note", "shows, 20–500."],
   },
   {
     kind: "number",
@@ -242,23 +271,48 @@ export function describeSetting(s: AppState, item: PickerItem) {
     ];
   return [
     ...head,
-    {
-      text: x.choices.map(shown).join(" · "),
-      ranges: x.choices.flatMap((c, i) => {
-        if (c !== now) return [];
-        const from = [
-          ...x.choices
-            .slice(0, i)
-            .map((v) => `${shown(v)} · `)
-            .join(""),
-        ].length;
-        return [{ from, to: from + [...shown(c)].length, style: "floatTitle" }];
-      }),
-    },
+    ...choiceLines(x.choices, now),
     { text: "" },
-    { text: "Enter: next choice", style: "floatDim" },
+    {
+      text:
+        item.key === "theme" ? "Enter: choose a theme" : "Enter: next choice",
+      style: "floatDim",
+    },
     { text: "Saved to config.toml", style: "floatDim" },
   ];
+}
+
+/** Columns a line of choices fills before the next choice wraps. */
+const CHOICE_WIDTH = 32;
+
+/** The choices joined by ` · `, wrapped between choices, with the current one marked. */
+function choiceLines(choices: readonly SettingValue[], now: SettingValue) {
+  const lines: {
+    text: string;
+    ranges: { from: number; to: number; style: string }[];
+  }[] = [];
+  for (const c of choices) {
+    const name = shown(c);
+    let line = lines.at(-1);
+    if (
+      line !== undefined &&
+      [...`${line.text} · ${name}`].length <= CHOICE_WIDTH
+    )
+      line.text += " · ";
+    else {
+      line = { text: "", ranges: [] };
+      lines.push(line);
+    }
+    const from = [...line.text].length;
+    line.text += name;
+    if (c === now)
+      line.ranges.push({
+        from,
+        to: from + [...name].length,
+        style: "floatTitle",
+      });
+  }
+  return lines;
 }
 
 /** Settings that change which entries the explorer lists. */
@@ -296,13 +350,14 @@ function setSetting(
 
 /**
  * Enter: a choice setting's next choice applies now and is written to
- * config.toml, and the picker stays open; a number or text setting opens a
- * prompt holding its value.
+ * config.toml, and the picker stays open; `theme` opens the theme list; a
+ * number or text setting opens a prompt holding its value.
  */
 export function changeSetting(s: AppState, item: PickerItem): Result {
   const x = settingOf(item.key);
   if (x === undefined) return { state: s, effects: [] };
   const previous = currentValue(s.config, x.path);
+  if (item.key === "theme") return openThemes(s);
   if (x.kind !== "choice") {
     if (s.overlay.kind !== "picker") return none(s);
     const prompt: PromptState = {
@@ -316,6 +371,87 @@ export function changeSetting(s: AppState, item: PickerItem): Result {
   const at = x.choices.indexOf(previous);
   const value = x.choices[(at + 1) % x.choices.length] ?? previous;
   return setSetting(s, x.path, value);
+}
+
+/** The theme list for `query`, the theme in use marked. */
+export function themeItems(s: AppState, query: string): PickerItem[] {
+  return rankBy(THEME_NAMES, query, (name) => name).map(({ item, match }) => ({
+    key: item,
+    label: item,
+    matches: match.positions,
+    ...(item === s.config.theme ? { detail: "current" } : {}),
+  }));
+}
+
+/** Enter on `theme`: a list of the themes to filter, with the one in use selected. */
+function openThemes(s: AppState): Result {
+  if (s.overlay.kind !== "picker") return none(s);
+  const items = themeItems(s, "");
+  const picker: PickerState = {
+    source: "themes",
+    query: "",
+    items,
+    total: items.length,
+    selected: Math.max(0, THEME_NAMES.indexOf(s.config.theme)),
+    back: s.overlay.picker,
+  };
+  return none({ ...s, overlay: { kind: "picker", picker } });
+}
+
+/** Enter in the theme list: the theme applies, is saved, and the settings come back. */
+export function chooseTheme(s: AppState, item: PickerItem): Result {
+  const p = s.overlay.kind === "picker" ? s.overlay.picker : undefined;
+  const back: AppState =
+    p?.back === undefined
+      ? { ...s, overlay: { kind: "none" } }
+      : { ...s, overlay: { kind: "picker", picker: p.back } };
+  const theme = THEME_NAMES.find((name) => name === item.key);
+  if (theme === undefined || theme === s.config.theme) return none(back);
+  return setSetting(back, ["theme"], theme);
+}
+
+/** The theme list's preview: sample text in the selected theme, which the screen shows meanwhile. */
+export function describeTheme(_s: AppState, item: PickerItem) {
+  const sample = (parts: [string, string][]) => {
+    let from = 0;
+    const ranges = parts.map(([text, style]) => {
+      const r = { from, to: from + [...text].length, style };
+      from = r.to;
+      return r;
+    });
+    return { text: parts.map(([text]) => text).join(""), ranges };
+  };
+  return [
+    { text: item.key, style: "floatTitle" },
+    { text: "" },
+    sample([["# On Reading Slowly", "mdHeading1"]]),
+    { text: "" },
+    sample([
+      ["A book read ", "float"],
+      ["slowly", "mdBold"],
+      [" is read ", "float"],
+      ["twice", "mdItalic"],
+      [".", "float"],
+    ]),
+    sample([
+      ["See ", "float"],
+      ["The Library", "mdLink"],
+      [" and ", "float"],
+      ["#reading", "mdTag"],
+      [".", "float"],
+    ]),
+    sample([
+      ["Keep a ", "float"],
+      ["pencil", "mdHighlight"],
+      [" and ", "float"],
+      ["`notes`", "mdCode"],
+      [".", "float"],
+    ]),
+    sample([["> Read in order to live.", "mdQuote"]]),
+    { text: "" },
+    { text: "Enter: apply · Esc: back", style: "floatDim" },
+    { text: "Saved to config.toml", style: "floatDim" },
+  ];
 }
 
 /** `H` in the explorer: show or hide dot entries, saved like the setting. */
@@ -334,6 +470,22 @@ export function toggleGitignored(s: AppState): Result {
       st,
       shown ? "gitignored entries shown" : "gitignored entries hidden",
     ),
+  );
+}
+
+/** `<leader>ur` in a note: cap and center its text, or fill the window; saved like the setting. */
+export function toggleReadable(s: AppState): Result {
+  const on = !s.config.preview.readable;
+  return chain(setSetting(s, ["preview", "readable"], on), (st) =>
+    message(st, on ? "readable width on" : "readable width off"),
+  );
+}
+
+/** `<leader>uj` in a note: justify wrapped prose rows or leave them ragged; saved like the setting. */
+export function toggleJustify(s: AppState): Result {
+  const on = !s.config.preview.justify;
+  return chain(setSetting(s, ["preview", "justify"], on), (st) =>
+    message(st, on ? "justify on" : "justify off"),
   );
 }
 

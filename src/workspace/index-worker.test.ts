@@ -84,12 +84,21 @@ function startWorker() {
     inbox,
     send: (m: ToWorker) => worker.postMessage(m),
     until,
-    async scanned() {
-      worker.postMessage({ t: "scan", root, ignore: [] } satisfies ToWorker);
-      await until((m) => m.t === "ready");
-      const batches = inbox.filter(
-        (m): m is Extract<FromWorker, { t: "batch" }> => m.t === "batch",
-      );
+    /** Scan, and collect the batches since the last scan. */
+    async scanned(dotfiles = false, exclude: string[] = []) {
+      const from = inbox.length;
+      worker.postMessage({
+        t: "scan",
+        root,
+        dotfiles,
+        exclude,
+      } satisfies ToWorker);
+      await until((m) => inbox.indexOf(m) >= from && m.t === "ready");
+      const batches = inbox
+        .slice(from)
+        .filter(
+          (m): m is Extract<FromWorker, { t: "batch" }> => m.t === "batch",
+        );
       return {
         files: batches.flatMap((b) => b.files ?? []),
         facts: batches.flatMap((b) => b.facts ?? []),
@@ -131,6 +140,44 @@ test("scan lists visible files and summarizes notes only", async () => {
     const last = batches.at(-1);
     expect(last?.done).toBe(2);
     expect(last?.total).toBe(2);
+  } finally {
+    w.stop();
+  }
+});
+
+test("dotfiles indexes dot entries, and a rescan without them removes them", async () => {
+  const w = startWorker();
+  try {
+    const shown = await w.scanned(true);
+    expect(shown.files).toContain(".hidden/secret.md");
+    expect(shown.files).toContain(".gitignore");
+    expect(shown.files.some((f) => f.startsWith("node_modules/"))).toBe(false);
+    expect(shown.files.some((f) => f.startsWith("ignored/"))).toBe(false);
+    expect(shown.batches[0]?.removed).toBeUndefined();
+    const found = await w.search({ id: 1, query: "TODO hidden", limit: 100 });
+    expect(paths(found.hits)).toEqual([".hidden/secret.md"]);
+
+    const hidden = await w.scanned(false);
+    expect(hidden.files).not.toContain(".hidden/secret.md");
+    expect(hidden.batches[0]?.removed?.sort()).toEqual([
+      ".gitignore",
+      ".hidden/secret.md",
+    ]);
+    const gone = await w.search({ id: 2, query: "TODO hidden", limit: 100 });
+    expect(gone.hits).toEqual([]);
+  } finally {
+    w.stop();
+  }
+});
+
+test("excluded names are skipped at any depth, dot or not", async () => {
+  const w = startWorker();
+  try {
+    const { files } = await w.scanned(true, [".hidden", "src"]);
+    expect(files).toContain(".gitignore");
+    expect(files).toContain("notes/plan.md");
+    expect(files.some((f) => f.startsWith(".hidden/"))).toBe(false);
+    expect(files.some((f) => f.startsWith("src/"))).toBe(false);
   } finally {
     w.stop();
   }

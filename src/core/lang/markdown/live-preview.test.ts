@@ -8,12 +8,16 @@ import {
 } from "../../../../test/support/markdown";
 import { baseEmbedRenderer } from "../../features/bases/embed";
 import { createTextBuffer } from "../../kernel/text/text-buffer";
+import type { DecorationProvider } from "../../kernel/view/decorations";
+import { highlightMarks } from "../../kernel/view/marks";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
 import { type Block, parseDoc } from "./doc";
+import { markdownFileType } from "./file-type";
 import {
   type BlockRenderer,
   blocksIn,
+  livePreview,
   registerBlockRenderer,
 } from "./live-preview";
 import type { EmbedData } from "./renderers/embed";
@@ -292,6 +296,41 @@ test("a warning callout icon differs from the render-error sign", () => {
   expect(rowText(rows[0])).toBe("▲ Careful");
 });
 
+test("callout and quote bodies keep their text styles over source highlighting and repeat the bar on wrap rows", () => {
+  builtinRenderers();
+  const { v, doc } = noteView(
+    "> [!note]\n> Body with [a link](https://x.y).\n\n> Plain quote\n\nAfter",
+    { cursor: { line: 5, col: 0 } },
+  );
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "reading", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  expect(styles(1)).toEqual([
+    ["mdCalloutNote", "▎ "],
+    ["text", "Body with "],
+    ["mdLink", "a link"],
+    ["text", "."],
+  ]);
+  expect(styles(3)).toEqual([
+    ["mdQuote", "▎ "],
+    ["mdQuote", "Plain quote"],
+  ]);
+  const prefix = (line: number) =>
+    rows.find((r) => r.sourceLine === line)?.wrapPrefix;
+  expect(prefix(1)).toEqual([{ text: "▎ ", style: "mdCalloutNote" }]);
+  expect(prefix(3)).toEqual([{ text: "▎ ", style: "mdQuote" }]);
+  expect(prefix(5)).toBeUndefined();
+});
+
 test("the reveal sign marks exactly the revealed rows", () => {
   builtinRenderers();
   const signed = (line: number) =>
@@ -304,4 +343,42 @@ test("the reveal sign marks exactly the revealed rows", () => {
   expect(
     layoutNote(tour(100, 41), "reading", tourCtx).some((r) => r.sign),
   ).toBe(false);
+});
+
+test("justify marks rendered paragraph, list, and callout and quote body lines, not titles, revealed lines, or other blocks", () => {
+  builtinRenderers();
+  const note = [
+    "# Title",
+    "",
+    "First paragraph line",
+    "second line",
+    "",
+    "- item one",
+    "- item two",
+    "",
+    "```",
+    "code",
+    "```",
+    "",
+    "> [!note] Title",
+    "> Body line",
+    "",
+    "> A plain quote",
+    "",
+    "| a | b |",
+    "| - | - |",
+    "| 1 | 2 |",
+  ].join("\n");
+  const justified = (view: "live" | "reading", line: number, on = true) =>
+    layoutNote(
+      noteView(note, { cursor: { line, col: 0 } }),
+      view,
+      stubCtx({ justify: on }),
+    )
+      .filter((r) => r.justify)
+      .map((r) => r.sourceLine);
+  expect(justified("reading", 0)).toEqual([2, 3, 5, 6, 13, 15]);
+  // The live cursor reveals its line, which keeps its source ragged.
+  expect(justified("live", 3)).toEqual([2, 5, 6, 13, 15]);
+  expect(justified("reading", 0, false)).toEqual([]);
 });

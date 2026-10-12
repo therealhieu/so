@@ -128,11 +128,13 @@ test("rowAt follows wrapped lines, widget rows, and skipped rows like the painte
   expect(rowAt(lines, 0, o)).toEqual({
     line: lines[0] as RenderLine,
     startCol: 0,
+    indent: 0,
     endCol: starts[1] ?? -1,
   });
   expect(rowAt(lines, 1, o)).toEqual({
     line: lines[0] as RenderLine,
     startCol: starts[1] ?? -1,
+    indent: 0,
     endCol: starts[2] ?? -1,
   });
   const afterWrap = starts.length;
@@ -141,6 +143,7 @@ test("rowAt follows wrapped lines, widget rows, and skipped rows like the painte
   expect(rowAt(lines, afterWrap + 2, o)).toEqual({
     line: lines[2] as RenderLine,
     startCol: 0,
+    indent: 0,
   });
   expect(rowAt(lines, 99, o)?.line.sourceLine).toBe(1);
   expect(rowAt(lines, 99, o)?.line.widget).toBeUndefined();
@@ -149,6 +152,7 @@ test("rowAt follows wrapped lines, widget rows, and skipped rows like the painte
   expect(skipped).toEqual({
     line: lines[0] as RenderLine,
     startCol: starts[2] ?? -1,
+    indent: 0,
   });
 
   const unwrapped = rowAt(lines, 1, { ...o, wrap: false });
@@ -236,6 +240,31 @@ test("end-of-line virtual text neither wraps nor moves the cursor", () => {
   expect(rows?.startCol).toBe(0);
 });
 
+test("rows after the first make room for the wrap prefix, and its cells map to the row start", () => {
+  const text = "alpha bravo charlie";
+  const prefixed: Decoration = {
+    kind: "line",
+    line: 0,
+    wrapPrefix: [{ text: "▎ ", style: "mdQuote" }],
+  };
+  const lines = layout([text], prefixed);
+  const o = { width: 8, tabWidth: 4, wrap: true, skipRows: 0 };
+  expect(wrapLine(text, 8, 4, 2)).toEqual([0, 6, 12, 18]);
+  expect(rowAt(lines, 3, o)).toEqual({
+    line: lines[0] as RenderLine,
+    startCol: 18,
+    indent: 2,
+  });
+  const at = (y: number, x: number) => {
+    const row = rowAt(lines, y, o);
+    if (row === undefined) throw new Error("expected a screen row");
+    return sourceColAt(row.line.spans, displayColAt(row, x), 4, text.length);
+  };
+  expect(at(0, 0)).toBe(0);
+  for (const x of [0, 1, 2]) expect(at(1, x)).toBe(6);
+  expect(at(1, 3)).toBe(7);
+});
+
 test("a tab after inline text keeps the cursor on its last cell", () => {
   const [line] = layout(["a\tb"], virtualAt(1, "::", "inline"));
   const spans = line?.spans ?? [];
@@ -243,4 +272,28 @@ test("a tab after inline text keeps the cursor on its last cell", () => {
   expect(displayColOf(spans, 1, 4, false)).toBe(3);
   expect(displayColOf(spans, 1, 4, true)).toBe(3);
   expect(displayColOf(spans, 2, 4, false)).toBe(4);
+});
+
+test("a stretched row maps its cells back through the extra gap cells", () => {
+  const lines = layout(["aa bb cc dd ee"], {
+    kind: "line",
+    line: 0,
+    justify: true,
+  });
+  // Width 10 wraps after "aa bb cc " (9 cells, 8 used): two extra cells.
+  const row = rowAt(lines, 0, {
+    width: 10,
+    tabWidth: 8,
+    wrap: true,
+    skipRows: 0,
+  });
+  expect(row?.shift).toBeDefined();
+  // Painted "aa  bb  cc": "bb" starts at cell 4, "cc" at cell 8.
+  expect(row && displayColAt(row, 4)).toBe(3);
+  expect(row && displayColAt(row, 3)).toBe(2);
+  expect(row && displayColAt(row, 8)).toBe(6);
+  // The last row stays ragged.
+  expect(
+    rowAt(lines, 1, { width: 10, tabWidth: 8, wrap: true, skipRows: 0 })?.shift,
+  ).toBeUndefined();
 });

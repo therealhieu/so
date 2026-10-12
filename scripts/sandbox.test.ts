@@ -100,6 +100,9 @@ test("tour stages the demo vault without today's daily note or skipped fixtures"
   const files = filesUnder(vault);
   expect(files).toContain("tour.md");
   expect(files).toContain("so-roadmap.md");
+  expect(files).toContain(".notes/hidden-idea.md");
+  expect(files).toContain(".obsidian/plugins/demo/main.js");
+  expect(files).toContain(".trash/old-idea.md");
   expect(files).toContain(`daily/${localDay(1)}.md`);
   expect(files).not.toContain(`daily/${localDay(0)}.md`);
   for (const name of SKIP)

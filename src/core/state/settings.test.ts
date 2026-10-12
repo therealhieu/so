@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
+import { describeSetting } from "./settings";
 import type { AppState, Effect, PickerState, Result } from "./types";
 import { createUpdate } from "./update";
 
@@ -43,12 +44,15 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "editor.relativeNumbers on",
       "preview.mode live",
       "preview.images auto",
+      "preview.readable off",
+      "preview.justify off",
       "autosave.enabled on",
       "autosave.delayMs 1000",
       "editor.tabWidth 8",
       "editor.keyTimeout 1000",
       "explorer.width 30",
       "preview.embedMaxRows 10",
+      "preview.readableWidth 100",
       "escTimeoutMs 50",
       "daily.folder daily",
       "daily.format YYYY-MM-DD",
@@ -136,22 +140,48 @@ test("cycling explorer.gitignored hides gitignored entries and lists the shown f
   ]);
 });
 
-test("Enter cycles theme through every colour theme and wraps around", () => {
-  let s = keys(editing(), " ustheme").state;
-  const seen: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    s = keys(s, "<CR>").state;
-    seen.push(s.config.theme);
-  }
-  expect(seen).toEqual([
+test("Enter on theme opens the theme list with the theme in use selected", () => {
+  const s = keys(editing(), " ustheme<CR>").state;
+  expect(picker(s).source).toBe("themes");
+  expect(picker(s).items.map((i) => i.key)).toEqual([
+    "dark",
     "light",
     "catppuccin-latte",
     "catppuccin-frappe",
     "catppuccin-macchiato",
     "catppuccin-mocha",
-    "dark",
+    "paper",
+    "sepia",
+    "rose-pine-dawn",
   ]);
-  expect(rows(s)).toEqual(["theme dark"]);
+  expect(picker(s).items[picker(s).selected]?.detail).toBe("current");
+});
+
+test("typing filters the theme list and Enter applies, saves, and returns to the settings", () => {
+  const r = keys(editing(), " ustheme<CR>sepia<CR>");
+  expect(r.state.config.theme).toBe("sepia");
+  expect(r.effects).toContainEqual({
+    kind: "writeSetting",
+    path: ["theme"],
+    value: "sepia",
+    previous: "dark",
+  });
+  expect(picker(r.state).source).toBe("settings");
+  expect(rows(r.state)).toEqual(["theme sepia"]);
+});
+
+test("Esc leaves the theme list for the settings without changing the theme", () => {
+  const r = keys(editing(), " ustheme<CR><Down><Down><Esc>");
+  expect(r.state.config.theme).toBe("dark");
+  expect(r.effects.some((e) => e.kind === "writeSetting")).toBe(false);
+  expect(picker(r.state).source).toBe("settings");
+  expect(rows(r.state)).toEqual(["theme dark"]);
+});
+
+test("Enter on the theme in use returns to the settings without a write", () => {
+  const r = keys(editing(), " ustheme<CR><CR>");
+  expect(r.effects.some((e) => e.kind === "writeSetting")).toBe(false);
+  expect(picker(r.state).source).toBe("settings");
 });
 
 const prompt = (s: AppState) => {
@@ -226,4 +256,21 @@ test("saving explorer.width replaces a resized width", () => {
   const r = keys(open, "<BS><BS>40<CR>").state;
   expect(r.config.explorer.width).toBe(40);
   expect(r.panels.explorer.width).toBeUndefined();
+});
+
+test("the theme preview wraps its choices so every theme shows", () => {
+  const s = fresh();
+  const lines = describeSetting(s, {
+    key: "theme",
+    label: "theme",
+    matches: [],
+  }).filter((l) => "ranges" in l);
+  expect(lines.map((l) => l.text)).toEqual([
+    "dark · light · catppuccin-latte",
+    "catppuccin-frappe",
+    "catppuccin-macchiato",
+    "catppuccin-mocha · paper · sepia",
+    "rose-pine-dawn",
+  ]);
+  expect(lines[0]?.ranges).toEqual([{ from: 0, to: 4, style: "floatTitle" }]);
 });

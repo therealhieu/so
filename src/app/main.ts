@@ -117,7 +117,7 @@ import {
   type EffectRunner,
   type RunnerDeps,
 } from "./effects";
-import { createIndexHost } from "./index-host";
+import { createIndexHost, indexSkips } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 import { createLspHost } from "./lsp-host";
 import { createPreviewHost } from "./preview-host";
@@ -420,6 +420,7 @@ async function main(argv: string[]): Promise<void> {
     runner.run,
   );
   store.subscribe(lspHost.observe);
+  store.subscribe(indexHost.observe);
   if (config !== undefined) store.dispatch(config);
   if (stateFile !== undefined)
     store.dispatch({
@@ -461,17 +462,16 @@ async function main(argv: string[]): Promise<void> {
       );
     };
     watchWorkspace(ws.root, ownOps, excluded, (event) => {
-      // Dot and gitignored paths are watched only for the explorer.
-      const explorerOnly = matcher.isExcludedPath(event.path);
+      // Gitignored paths, and dot paths unless shown, are watched only for the explorer.
+      const explorerOnly = indexSkips(matcher, store.get(), event.path);
       store.dispatch({
         type: "fileChanged",
         event: explorerOnly ? { ...event, explorerOnly: true } : event,
       });
-      if (explorerOnly) return;
-      indexHost.notify(event);
-      lspHost.notify(event);
+      if (!explorerOnly) indexHost.notify(event);
+      if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
     });
-    indexHost.start(ws.root, []);
+    indexHost.start(ws.root, store.get().config);
     runner.run({ kind: "readPropertyTypes" });
     logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
     void detectTrash({

@@ -28,7 +28,7 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -104,7 +104,11 @@ exports[`tour note at width 60 with the cursor on a blank line 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor on a bold line 1`] = `
@@ -135,7 +139,7 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -211,7 +215,11 @@ exports[`tour note at width 60 with the cursor on a bold line 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the table 1`] = `
@@ -242,7 +250,7 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -318,7 +326,11 @@ exports[`tour note at width 60 with the cursor inside the table 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a callout 1`] = `
@@ -349,7 +361,7 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28 ▕ │> [!note] Reveal rule
- 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -425,7 +437,11 @@ exports[`tour note at width 60 with the cursor inside a callout 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
@@ -456,7 +472,7 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -534,7 +550,11 @@ exports[`tour note at width 60 with the cursor inside a code fence 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
@@ -565,7 +585,7 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -641,7 +661,11 @@ exports[`tour note at width 60 with the cursor inside the frontmatter 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = `
@@ -672,7 +696,7 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -736,7 +760,11 @@ exports[`tour note at width 60 with the cursor inside the mermaid diagram 1`] = 
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 in reading view 1`] = `
@@ -767,7 +795,7 @@ exports[`tour note at width 60 in reading view 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -843,7 +871,11 @@ exports[`tour note at width 60 in reading view 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 60 in source view 1`] = `
@@ -875,10 +907,10 @@ exports[`tour note at width 60 in source view 1`] = `
  26   │> Simplicity is prerequisite for reliability. — Dijkstra
  27   │
  28   │> [!note] Reveal rule
- 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │> [!tip]- Folded tip (za to open)
- 32   │> Callouts with a minus sign start folded.
+ 32   │> Callouts with a minus sign start folded. Press za on the title, or click the arrow, to open or close one; a plus sign starts it open but still foldable. While it is open, long lines like this one wrap, and the bar on the left runs down every wrapped row.
  33   │
  34   │> [!danger] Data safety
  35   │> Saves are atomic: temp file, fsync, rename.
@@ -926,7 +958,11 @@ exports[`tour note at width 60 in source view 1`] = `
  77   │[^1]: Footnotes render at the bottom, dimmed.
  78   │
  79   │![[tasks.base#All tasks]]
- 80   │"
+ 80   │
+ 81   │## Reading layout
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a blank line 1`] = `
@@ -957,7 +993,7 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1033,7 +1069,11 @@ exports[`tour note at width 100 with the cursor on a blank line 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor on a bold line 1`] = `
@@ -1064,7 +1104,7 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1140,7 +1180,11 @@ exports[`tour note at width 100 with the cursor on a bold line 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the table 1`] = `
@@ -1171,7 +1215,7 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1247,7 +1291,11 @@ exports[`tour note at width 100 with the cursor inside the table 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a callout 1`] = `
@@ -1278,7 +1326,7 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28 ▕ │> [!note] Reveal rule
- 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29 ▕ │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1354,7 +1402,11 @@ exports[`tour note at width 100 with the cursor inside a callout 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
@@ -1385,7 +1437,7 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1463,7 +1515,11 @@ exports[`tour note at width 100 with the cursor inside a code fence 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
@@ -1494,7 +1550,7 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1570,7 +1626,11 @@ exports[`tour note at width 100 with the cursor inside the frontmatter 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] = `
@@ -1601,7 +1661,7 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1665,7 +1725,11 @@ exports[`tour note at width 100 with the cursor inside the mermaid diagram 1`] =
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 in reading view 1`] = `
@@ -1696,7 +1760,7 @@ exports[`tour note at width 100 in reading view 1`] = `
  26   │▎ Simplicity is prerequisite for reliability. — Dijkstra  ⟦mdQuote@0+2 mdQuote@2+54⟧
  27   │
  28   │● Reveal rule  ⟦mdCalloutNote@0+13⟧
- 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.  ⟦mdCalloutNote@0+2⟧
+ 29   │▎ Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.  ⟦mdCalloutNote@0+2⟧
  30   │
  31   │★ Folded tip (za to open) ▸  ⟦mdCalloutTip@0+25 mdCalloutTip@25+2⟧
  33   │
@@ -1772,7 +1836,11 @@ exports[`tour note at width 100 in reading view 1`] = `
  79   │
       ↳ base ×3
       │{"title":"tasks.base#All tasks","state":"loading"}
- 80   │"
+ 80   │
+ 81   │▊ Reading layout  ⟦mdHeading2@0+2 mdHeading2@2+14⟧
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;
 
 exports[`tour note at width 100 in source view 1`] = `
@@ -1804,10 +1872,10 @@ exports[`tour note at width 100 in source view 1`] = `
  26   │> Simplicity is prerequisite for reliability. — Dijkstra
  27   │
  28   │> [!note] Reveal rule
- 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside.
+ 29   │> Inline syntax shows on the cursor line; whole blocks show while the cursor is inside. Move the cursor into a table, a code fence, or this callout and its source appears; move it out and the rendered view returns. Long lines like this one wrap, and the bar on the left runs down every wrapped row.
  30   │
  31   │> [!tip]- Folded tip (za to open)
- 32   │> Callouts with a minus sign start folded.
+ 32   │> Callouts with a minus sign start folded. Press za on the title, or click the arrow, to open or close one; a plus sign starts it open but still foldable. While it is open, long lines like this one wrap, and the bar on the left runs down every wrapped row.
  33   │
  34   │> [!danger] Data safety
  35   │> Saves are atomic: temp file, fsync, rename.
@@ -1855,5 +1923,9 @@ exports[`tour note at width 100 in source view 1`] = `
  77   │[^1]: Footnotes render at the bottom, dimmed.
  78   │
  79   │![[tasks.base#All tasks]]
- 80   │"
+ 80   │
+ 81   │## Reading layout
+ 82   │
+ 83   │A long paragraph shows the reading layout. In a wide window the text stays in a centered column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads every wrapped row of a paragraph, a list item, or a callout body to both edges, while the last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
+ 84   │"
 `;

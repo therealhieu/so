@@ -1,11 +1,20 @@
+import { colAtCell, justifyRow } from "./justify";
 import type { RenderLine, Span } from "./types";
-import { cellWidth, wrapLine, wrapText } from "./wrap";
+import { cellWidth, prefixCells, wrapLine, wrapText } from "./wrap";
 
 /**
  * One screen row of text: the rendered line, the display column it starts
- * at, and, on a wrap row followed by another, the column the next row starts at.
+ * at, the cells its wrap prefix takes before the text, on a wrap row
+ * followed by another, the column the next row starts at, and, when the row
+ * is stretched, its `justifyRow` cells.
  */
-export type ScreenRow = { line: RenderLine; startCol: number; endCol?: number };
+export type ScreenRow = {
+  line: RenderLine;
+  startCol: number;
+  indent: number;
+  endCol?: number;
+  shift?: number[];
+};
 
 const isWidgetRow = (r: RenderLine) =>
   r.widget !== undefined && r.spans.length === 0;
@@ -25,21 +34,37 @@ export function rowAt(
   let row = 0;
   for (const line of lines) {
     if (isWidgetRow(line)) {
-      last = { line, startCol: 0 };
+      last = { line, startCol: 0, indent: 0 };
       const height = Math.max(1, line.widget?.rows ?? 1);
       if (y < row + height) return last;
       row += height;
       continue;
     }
+    const prefix = prefixCells(line);
     const starts = o.wrap
-      ? wrapLine(wrapText(line.spans), o.width, o.tabWidth)
+      ? wrapLine(wrapText(line.spans), o.width, o.tabWidth, prefix)
       : [0];
     const skip = line.sourceLine === lines[0]?.sourceLine ? o.skipRows : 0;
     for (let k = skip; k < starts.length; k++, row++) {
       const startCol = starts[k] ?? 0;
       const endCol = starts[k + 1];
+      const indent = k === 0 ? 0 : prefix;
+      const shift =
+        o.wrap && line.justify
+          ? justifyRow(
+              line.spans,
+              startCol,
+              endCol,
+              Math.max(1, o.width - indent),
+              o.tabWidth,
+            )
+          : undefined;
       last =
-        endCol === undefined ? { line, startCol } : { line, startCol, endCol };
+        endCol === undefined
+          ? { line, startCol, indent }
+          : shift === undefined
+            ? { line, startCol, indent, endCol }
+            : { line, startCol, indent, endCol, shift };
       if (y === row) return last;
     }
   }
@@ -48,11 +73,15 @@ export function rowAt(
 
 /**
  * Display column, from the line start, shown at cell `x` of `row`, with `x`
- * counted from the row's first text cell. A word-wrapped row can end before
- * the window edge, so a cell past its last character maps to that character.
+ * counted from the row's first cell. A cell on the wrap prefix maps to the
+ * row's first character; a word-wrapped row can end before the window edge,
+ * so a cell past its last character maps to that character; on a stretched
+ * row, an extra cell maps to the space before it.
  */
 export function displayColAt(row: ScreenRow, x: number): number {
-  const dc = row.startCol + x;
+  const tx = Math.max(0, x - row.indent);
+  const dc =
+    row.startCol + (row.shift === undefined ? tx : colAtCell(row.shift, tx));
   return row.endCol === undefined ? dc : Math.min(dc, row.endCol - 1);
 }
 

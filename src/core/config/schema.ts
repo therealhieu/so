@@ -2,7 +2,7 @@ import { z } from "zod";
 import { splitKeys } from "../kernel/vim/keys";
 import { LspConfigSchema } from "./lsp";
 
-/** Colour themes: `dark` and `light` are Tokyo Night (night and day). */
+/** Colour themes: `dark` and `light` are Tokyo Night (night and day); `paper` and `sepia` are warm reading themes. */
 export const THEME_NAMES = [
   "dark",
   "light",
@@ -10,6 +10,9 @@ export const THEME_NAMES = [
   "catppuccin-frappe",
   "catppuccin-macchiato",
   "catppuccin-mocha",
+  "paper",
+  "sepia",
+  "rose-pine-dawn",
 ] as const;
 export type ThemeName = (typeof THEME_NAMES)[number];
 
@@ -91,7 +94,7 @@ export const ConfigSchema = z.strictObject({
       icons: z.enum(["nerd", "unicode"]).default("nerd"),
       /** Columns of the tree until it is resized; the session keeps a resized width. */
       width: z.number().int().min(15).max(200).default(30),
-      /** List dot entries other than `.git`; search and the index skip them either way. */
+      /** List dot entries other than `.git`; the index and search take them in too, except names in `index.exclude`. */
       dotfiles: z.boolean().default(false),
       /** List names a `.gitignore` matches, dimmed; search and the index skip them either way. */
       gitignored: z.boolean().default(true),
@@ -102,6 +105,12 @@ export const ConfigSchema = z.strictObject({
       mode: z.enum(["reading", "live", "source"]).default("reading"),
       embedMaxRows: z.number().int().min(1).max(200).default(10),
       images: z.enum(["auto", "blocks", "off"]).default("auto"),
+      /** Cap a note's text at `readableWidth` and center it with its gutter. */
+      readable: z.boolean().default(false),
+      /** Text columns a readable note shows. */
+      readableWidth: z.number().int().min(20).max(500).default(100),
+      /** Spread wrapped prose rows to both edges in the rendered views. */
+      justify: z.boolean().default(false),
     })
     .prefault({}),
   daily: z
@@ -114,6 +123,19 @@ export const ConfigSchema = z.strictObject({
   templates: z
     .strictObject({
       folder: workspacePath({ root: "deny" }).default("templates"),
+    })
+    .prefault({}),
+  index: z
+    .strictObject({
+      /** Entry names the index and search skip at any depth, even while the explorer lists them. */
+      exclude: z
+        .array(
+          z
+            .string()
+            .min(1)
+            .refine((n) => !n.includes("/"), "must be a name, not a path"),
+        )
+        .default([".obsidian", ".trash"]),
     })
     .prefault({}),
   git: z

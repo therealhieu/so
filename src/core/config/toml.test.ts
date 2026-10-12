@@ -106,13 +106,21 @@ test("a valid file parses with binding lines", () => {
         dotfiles: false,
         gitignored: true,
       },
-      preview: { mode: "reading", embedMaxRows: 10, images: "auto" },
+      preview: {
+        mode: "reading",
+        embedMaxRows: 10,
+        images: "auto",
+        readable: false,
+        readableWidth: 100,
+        justify: false,
+      },
       daily: {
         folder: "daily",
         format: "YYYY-MM-DD",
         template: "templates/daily.md",
       },
       templates: { folder: "templates" },
+      index: { exclude: [".obsidian", ".trash"] },
       git: { tool: ["lazygit"] },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {

@@ -34,14 +34,31 @@ tags: [so, planning]
 2. Obsidian experience — [[tasks/inbox]]
 `;
 
-/** The demo vault: the fixture workspace, the Markdown tour, images, and past daily notes. */
+/**
+ * Dot folders for `[explorer] dotfiles`: a note the index takes in once dot
+ * entries are shown, and Obsidian's plugin code and trash, which
+ * `[index] exclude` keeps out. Each holds the word "zebracorn".
+ */
+const DOT_FOLDERS: Record<string, string> = {
+  ".notes/hidden-idea.md":
+    "# Hidden idea\n\nA zebracorn lives here, see [[dot-links]].\n",
+  ".obsidian/plugins/demo/main.js": "const zebracorn = 1;\n",
+  ".trash/old-idea.md": "# Old idea\n\nThe zebracorn was deleted.\n",
+  "dot-links.md":
+    "# Dot links\n\n- [[hidden-idea]] lives in .notes/\n- [[old-idea]] lives in .trash/\n",
+};
+
+/** The demo vault: the fixture workspace, the Markdown tour, images, past daily notes, and dot folders. */
 export function stageTour(vault: string): void {
   copyFixture("workspace", vault, SKIP);
   copyFixture("tour.md", join(vault, "tour.md"));
   for (const png of readdirSync(join(fixtures, "images")))
     if (png.endsWith(".png"))
       copyFixture(join("images", png), join(vault, png));
-  const files: Record<string, string> = { "so-roadmap.md": ROADMAP };
+  const files: Record<string, string> = {
+    "so-roadmap.md": ROADMAP,
+    ...DOT_FOLDERS,
+  };
   // Today is left out so `:Today` can create it from the template.
   for (const daysAgo of [1, 2, 5]) {
     const day = localDay(daysAgo);
@@ -53,7 +70,7 @@ export function stageTour(vault: string): void {
 export const tour: Profile = {
   name: "tour",
   summary:
-    "Demo vault: Markdown tour, links, images, daily notes, templates, a base",
+    "Demo vault: Markdown tour, links, images, daily notes, templates, a base, dot folders",
   journeys: [
     {
       title: "Views",
@@ -111,6 +128,36 @@ export const tour: Profile = {
         "A browser page opens on 127.0.0.1 with the rendered note",
         "The page follows the edit",
         "The page shows that the preview stopped",
+      ],
+    },
+    {
+      title: "Dot folders in search and links",
+      steps: [
+        "Press <leader>sg and search zebracorn",
+        "In dot-links.md, press gd on [[hidden-idea]] and decline creating it",
+        "Focus the explorer (<leader>e) and press H",
+        "Search zebracorn again, press gd on both links in dot-links.md, then <leader>lb there",
+        "Press H in the explorer again",
+      ],
+      expect: [
+        "Before H: no hits, and [[hidden-idea]] is unresolved",
+        "After H: the search hits only .notes/hidden-idea.md, not .obsidian/ or .trash/",
+        "gd on [[hidden-idea]] opens .notes/hidden-idea.md; [[old-idea]] stays unresolved",
+        "Backlinks of dot-links.md list .notes/hidden-idea.md",
+        "After H again: no hits, and [[hidden-idea]] is unresolved again",
+      ],
+    },
+    {
+      title: "Index exclude",
+      steps: [
+        "With dot entries shown (H), add [index] exclude = [] to the sandbox config.toml and run :ConfigReload",
+        "Search zebracorn",
+        'Set exclude = ["notes/old"] and run :ConfigReload',
+      ],
+      expect: [
+        "The index rescans",
+        "Hits now include .obsidian/plugins/demo/main.js and .trash/old-idea.md",
+        "A toast says index.exclude.0: must be a name, not a path",
       ],
     },
     {

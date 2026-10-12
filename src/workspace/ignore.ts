@@ -17,6 +17,12 @@ export type ExclusionMatcher = {
   isIgnored(rel: string, isDir: boolean): boolean;
 };
 
+/** Whether any segment of `rel` is one of `names`. */
+export const hasNamedSegment = (
+  rel: string,
+  names: readonly string[],
+): boolean => names.length > 0 && rel.split("/").some((p) => names.includes(p));
+
 /** `.git` and `node_modules` are never shown. */
 const NEVER_SHOWN = (name: string): boolean =>
   name === ".git" || name === "node_modules";

@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { RGBA, TextAttributes } from "@opentui/core";
-import { type Style, type Theme, TOKENS, themes } from "./theme";
+import { fresh } from "../../test/support/state";
+import type { AppState } from "../core/state/types";
+import { type Style, type Theme, TOKENS, themeOf, themes } from "./theme";
 
 const { BOLD, DIM, UNDERLINE } = TextAttributes;
 
@@ -95,4 +97,25 @@ test("existing tokens keep their values", () => {
     light: resolve(themes.light),
     nocolor: resolve(themes.nocolor),
   }).toMatchSnapshot();
+});
+
+test("the theme list's selected theme shows until it closes", () => {
+  const base: AppState = {
+    ...fresh(),
+    terminal: { ...fresh().terminal, color: "color" },
+  };
+  const items = ["dark", "paper"].map((key) => ({
+    key,
+    label: key,
+    matches: [],
+  }));
+  const listing: AppState = {
+    ...base,
+    overlay: {
+      kind: "picker",
+      picker: { source: "themes", query: "", items, total: 2, selected: 1 },
+    },
+  };
+  expect(themeOf(listing).name).toBe("paper");
+  expect(themeOf(base).name).toBe("dark");
 });
