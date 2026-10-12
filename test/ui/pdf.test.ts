@@ -264,6 +264,28 @@ test("<leader>pz zooms the page in its own window, and l pans across it", async 
   expect(await drawn(m)).toEqual({ cols: 80, srcX: 0, srcW: 200 });
 });
 
+test("zoomed out, the page draws narrower than the window, centred across", async () => {
+  m = await openPaper({ capabilities: KITTY });
+  await settled(m);
+  const full = await drawnAt(m);
+  m.keys("-");
+  await settled(m);
+  expect(await drawn(m)).toEqual({ cols: 64, srcX: 0, srcW: 200 });
+  expect(await drawnAt(m)).toBe(full + 8);
+  expect(await m.status()).toContain("1/2 80%");
+});
+
+/** The column the PDF view's next frame draws the page from. */
+async function drawnAt(x: Mounted): Promise<number> {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    await x.frame();
+    return draw.mock.calls.at(-1)?.[1] as number;
+  } finally {
+    draw.mockRestore();
+  }
+}
+
 test("with kitty the page and the next one are PNG-encoded ahead of sending", async () => {
   const encode = spyOn(NativeImage.prototype, "ensureEncodedPng");
   try {

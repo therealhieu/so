@@ -9,8 +9,8 @@ import { pageOf } from "./page";
  * `wheel` is the wheel gesture under way: when its last event came and
  * whether it has turned a page. `search` is the last text search, `pending`
  * until the PDF's text has loaded; `dark` draws the page in theme colours.
- * `zoom` (over 1, fit width only) draws the page that many times the
- * window's width, `pan` columns scrolled across; `pageCols` and `viewCols`
+ * `zoom` (not 1, fit width only) draws the page that many times the
+ * window's width (centred across below 1), `pan` columns scrolled across; `pageCols` and `viewCols`
  * are that layout's widths. `select` is the text selected on the page shown.
  */
 export type PdfWindowState = {

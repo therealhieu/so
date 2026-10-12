@@ -663,7 +663,7 @@ export function punch<P extends Piece>(pieces: readonly P[], hole: Rect): P[] {
 /** How many columns wide the page draws: the window's width times the zoom. */
 const pageColsOf = (ws: PdfWindowState, cols: number) =>
   ws.fit === "width" && ws.zoom !== undefined
-    ? Math.max(cols, Math.round(cols * ws.zoom))
+    ? Math.max(1, Math.round(cols * ws.zoom))
     : cols;
 
 /** Rows a page `cols` cells wide takes at its aspect ratio. */
@@ -671,8 +671,9 @@ const fullRows = (image: NativeImage, cols: number, aspect: number) =>
   Math.max(1, Math.round((cols * aspect * image.height) / image.width));
 
 /**
- * Fit width: the page fills the window's width (times the zoom) and the
- * rows from `scroll` and the columns from `pan` show. Fit page: the whole page, as large as fits, centred across.
+ * Fit width: the page fills the window's width (times the zoom; centred
+ * across when zoomed out) and the rows from `scroll` and the columns from
+ * `pan` show. Fit page: the whole page, as large as fits, centred across.
  */
 function place(
   image: NativeImage,
@@ -704,15 +705,16 @@ function place(
   const scroll = Math.max(0, Math.min(ws.scroll, full - r.h));
   const rows = Math.min(r.h, full - scroll);
   const pan = Math.max(0, Math.min(ws.pan ?? 0, wide - r.w));
+  const cols = Math.min(r.w, wide);
   return {
     image,
-    x: r.x,
+    x: r.x + Math.floor((r.w - cols) / 2),
     y: r.y,
-    cols: r.w,
+    cols,
     rows,
     srcX: Math.round((image.width * pan) / wide),
     srcY: Math.round((image.height * scroll) / full),
-    srcW: Math.max(1, Math.round((image.width * r.w) / wide)),
+    srcW: Math.max(1, Math.round((image.width * cols) / wide)),
     srcH: Math.max(1, Math.round((image.height * rows) / full)),
     tier,
   };

@@ -226,8 +226,19 @@ test("zoom grows the page in the window around its centre, and h and l pan it", 
   expect(statusSegments(out).page).toBe("2/3");
   expect(page(run(s, ...keys("a")).state)).toMatchObject({ fit: "page" });
   expect(page(run(s, ...keys("a")).state)?.zoom).toBeUndefined();
-  expect(page(run(openPaper(3), ...keys("-h")).state)?.zoom).toBeUndefined();
   expect(page(run(openPaper(3), ...keys("+++++++++")).state)?.zoom).toBe(4);
+});
+
+test("zoom out shrinks the page below the window's width, down to a quarter", () => {
+  let s = run(openPaper(3), ...keys("-")).state;
+  expect(page(s)).toMatchObject({ fit: "width", zoom: 0.8, pageCols: 32 });
+  expect(page(s)?.pan).toBeUndefined();
+  expect(statusSegments(s).page).toBe("1/3 80%");
+  expect(page(run(s, ...keys("h")).state)?.pan).toBeUndefined();
+  expect(page(run(s, ...keys("+")).state)?.zoom).toBeUndefined();
+  s = run(s, ...keys("---------")).state;
+  expect(page(s)?.zoom).toBe(0.25);
+  expect(page(s)?.pageCols).toBe(10);
 });
 
 test("fit page turns pages with j and k", () => {
