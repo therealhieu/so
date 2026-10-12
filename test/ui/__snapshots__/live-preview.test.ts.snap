@@ -30,11 +30,11 @@ exports[`the tour at width 60 matches its golden, base embed included 1`] = `
   23  ▊ Quotes and callouts                                 
   24                                                        
   25  ▎ Simplicity is prerequisite for reliability. —       
-      Dijkstra                                              
+      ▎ Dijkstra                                            
   26                                                        
   27  ● Reveal rule                                         
   28  ▎ Inline syntax shows on the cursor line; whole       
-      blocks show while the cursor is inside.               
+      ▎ blocks show while the cursor is inside.             
   29                                                        
   30  ★ Folded tip (za to open) ▸                           
   32                                                        

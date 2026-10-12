@@ -57,6 +57,13 @@ export const markCols = (
   style,
 });
 
+/** `spans` drawn at the start of each wrap row of `line` after the first. */
+export const wrapPrefix = (line: number, spans: Span[]): Decoration => ({
+  kind: "line",
+  line,
+  wrapPrefix: spans,
+});
+
 export const lineStyle = (line: number, style: string): Decoration => ({
   kind: "line",
   line,

@@ -296,7 +296,7 @@ test("a warning callout icon differs from the render-error sign", () => {
   expect(rowText(rows[0])).toBe("▲ Careful");
 });
 
-test("callout and quote bodies keep their own text styles over source highlighting", () => {
+test("callout and quote bodies keep their text styles over source highlighting and repeat the bar on wrap rows", () => {
   builtinRenderers();
   const { v, doc } = noteView(
     "> [!note]\n> Body with [a link](https://x.y).\n\n> Plain quote\n\nAfter",
@@ -324,6 +324,11 @@ test("callout and quote bodies keep their own text styles over source highlighti
     ["mdQuote", "▎ "],
     ["mdQuote", "Plain quote"],
   ]);
+  const prefix = (line: number) =>
+    rows.find((r) => r.sourceLine === line)?.wrapPrefix;
+  expect(prefix(1)).toEqual([{ text: "▎ ", style: "mdCalloutNote" }]);
+  expect(prefix(3)).toEqual([{ text: "▎ ", style: "mdQuote" }]);
+  expect(prefix(5)).toBeUndefined();
 });
 
 test("the reveal sign marks exactly the revealed rows", () => {

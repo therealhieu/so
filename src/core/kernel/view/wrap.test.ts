@@ -87,3 +87,12 @@ test("display width expands tabs from the line start", () => {
   expect(displayWidth("ab\tx", 8)).toBe(9);
   expect(displayWidth("", 8)).toBe(0);
 });
+
+test("an indent narrows every row after the first", () => {
+  expect(wrapLine("aaaa bbbb cccc", 5, 8)).toEqual([0, 5, 10]);
+  expect(wrapLine("aaaa bb cc dd", 5, 8, 2)).toEqual([0, 5, 8, 11]);
+});
+
+test("an indent as wide as the row still leaves one cell per row", () => {
+  expect(wrapLine("abcdef", 3, 8, 5)).toEqual([0, 3, 4, 5]);
+});

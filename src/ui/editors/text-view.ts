@@ -40,6 +40,7 @@ import type {
 import {
   cellWidth,
   displayWidth,
+  prefixCells,
   rowOf,
   wrapLine,
   wrapText,
@@ -83,7 +84,7 @@ function rowOfLine(
   line: number,
   laidTo: number,
   rows: number,
-  height: (text: string) => number,
+  height: (row: RenderLine) => number,
 ): number {
   const missing = Number.POSITIVE_INFINITY;
   if (line >= laidTo) return missing;
@@ -94,9 +95,7 @@ function rowOfLine(
     const widget = row.widget !== undefined && row.spans.length === 0;
     if (row.sourceLine === line && !widget) return y;
     covering = y;
-    y += widget
-      ? Math.max(1, row.widget?.rows ?? 1)
-      : height(wrapText(row.spans));
+    y += widget ? Math.max(1, row.widget?.rows ?? 1) : height(row);
   }
   // Every row came before `line`: it is hidden at the end, or ran out of room.
   return y < rows ? (covering ?? missing) : missing;
@@ -378,19 +377,25 @@ export class EditorView extends Renderable implements WindowView {
           ? displayColOf(shown.spans, col, tabWidth, insert)
           : rawCol;
       if (!wrap) return { k: 0, x: dc, dc };
+      const prefix = shown === undefined ? 0 : prefixCells(shown);
       const starts = wrapLine(
         shown !== undefined && virtual === true ? wrapText(shown.spans) : text,
         textW,
         tabWidth,
+        prefix,
       );
       const k = rowOf(starts, dc);
-      const x = dc - (starts[k] ?? 0);
+      const indent = k === 0 ? 0 : prefix;
+      const x = dc - (starts[k] ?? 0) + indent;
       // An Insert cursor just past a full row sits at the start of the next.
-      return x >= textW ? { k: k + 1, x: 0, dc } : { k, x, dc };
+      return x >= textW ? { k: k + 1, x: prefix, dc } : { k, x, dc };
     };
     const at = (lines: RenderLine[]) =>
-      rowOfLine(lines, line, this.laidTo, rows, (t) =>
-        wrap ? wrapLine(t, textW, tabWidth).length : 1,
+      rowOfLine(lines, line, this.laidTo, rows, (row) =>
+        wrap
+          ? wrapLine(wrapText(row.spans), textW, tabWidth, prefixCells(row))
+              .length
+          : 1,
       );
     this.lines = followsCursor
       ? this.fitCursor(
@@ -663,17 +668,29 @@ export class EditorView extends Renderable implements WindowView {
         continue;
       }
       const text = wrapText(row.spans);
-      const starts = wrap ? wrapLine(text, textW, tabWidth) : [this.leftCol];
+      const prefix = prefixCells(row);
+      const starts = wrap
+        ? wrapLine(text, textW, tabWidth, prefix)
+        : [this.leftCol];
       const skip = row.sourceLine === this.topLine ? this.skipRows : 0;
       for (let k = skip; k < starts.length && i < rows; k++, i++) {
         const start = starts[k] ?? 0;
         if (k === 0) gutter(number(), i, row.sign, row.changeSign);
         else gutter("", i);
         const end = starts[k + 1];
+        const indent = k === 0 ? 0 : Math.min(prefix, textW - 1);
+        if (indent > 0)
+          paintLine(
+            buf,
+            theme,
+            { x: this.x + gw, y: y + i, width: indent },
+            row.wrapPrefix ?? [],
+            { leftCol: 0, tabWidth, cursorline: isCursor && active },
+          );
         paintLine(
           buf,
           theme,
-          { x: this.x + gw, y: y + i, width: textW },
+          { x: this.x + gw + indent, y: y + i, width: textW - indent },
           row.spans,
           {
             leftCol: start,
