@@ -492,3 +492,50 @@ test("with half-blocks the float draws over the page, which stays whole", async 
     draw.mockRestore();
   }
 });
+
+test("<leader>pa opens the highlights and notes over the page; the preview wraps the whole quote and note", async () => {
+  m = await openPaper({ cols: 120 });
+  await settled(m);
+  const at = (y: number) => ({ x: 0.1, y });
+  m.store.dispatch({
+    type: "annotationsRead",
+    pdf: "docs/paper.pdf",
+    text: JSON.stringify({
+      version: 1,
+      file: "docs/paper.pdf",
+      items: [
+        {
+          id: "n1",
+          kind: "note",
+          page: 2,
+          anchor: at(0.2),
+          head: at(0.2),
+          quote: "Attention matters",
+          note: "compare RNN with attention across many long sequences and report the end",
+          created: "2026-10-12T08:00:00.000Z",
+        },
+        {
+          id: "h1",
+          kind: "highlight",
+          page: 1,
+          anchor: at(0.1),
+          head: at(0.1),
+          quote: "Hello brave",
+          created: "2026-10-12T08:00:00.000Z",
+        },
+      ],
+    }),
+  });
+  m.keys("<leader>pa<C-n>");
+  const screen = await m.frame();
+  expect(screen).toContain("Highlights and notes");
+  expect(screen).toContain("▍ Hello brave");
+  expect(screen).toContain("✎ Attention matters — compare RNN");
+  expect(screen).toContain("Note · page 2");
+  expect(screen).toContain("report the end");
+  expect(screen).toContain("C-e note · C-y copy · C-x delete");
+  m.keys("<CR>");
+  await m.frame();
+  expect(page(m)?.page).toBe(2);
+  expect(m.store.get().overlay.kind).toBe("none");
+});

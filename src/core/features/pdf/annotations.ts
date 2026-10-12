@@ -204,3 +204,14 @@ function indexOfChars(hay: readonly string[], needle: readonly string[]) {
   }
   return -1;
 }
+
+/** The top of annotation `a` on its page, as a fraction of the page's height. */
+export const annotationTop = (a: PdfAnnotation): number =>
+  Math.min(a.anchor.y, a.head.y);
+
+/** Reading order: by page, then from the top of the page down. */
+export const byReading = (a: PdfAnnotation, b: PdfAnnotation): number =>
+  a.page - b.page ||
+  annotationTop(a) - annotationTop(b) ||
+  Math.min(a.anchor.x, a.head.x) - Math.min(b.anchor.x, b.head.x) ||
+  a.id.localeCompare(b.id);

@@ -71,6 +71,29 @@ export function showPdfPage(s: AppState, id: WindowId, page: number): AppState {
 }
 
 /**
+ * Window `id` shows `page` with the point `y` (a fraction of the page's
+ * height) a third of the way down the window, when the page is taller than
+ * the window; the last layout's size stands in until the page is drawn.
+ */
+export function showPdfAt(
+  s: AppState,
+  id: WindowId,
+  page: number,
+  y: number,
+): AppState {
+  const shown = showPdfPage(s, id, page);
+  const ws = pdfWindow(shown, id);
+  if (ws?.pageRows === undefined || ws.viewRows === undefined) return shown;
+  const max = ws.pageRows - ws.viewRows;
+  if (max <= 0) return shown;
+  const scroll = Math.round(y * ws.pageRows - ws.viewRows / 3);
+  return setPdfWindow(shown, id, {
+    ...ws,
+    scroll: Math.max(0, Math.min(scroll, max)),
+  });
+}
+
+/**
  * Every PDF buffer on disk knows its page count for its current bytes: one
  * whose count is missing or for older bytes asks again, so opening,
  * restoring, and a change on disk are handled alike.

@@ -20,6 +20,7 @@ import {
   withoutSelection,
 } from "./pdf-select";
 import { yankText } from "./pdf-tools";
+import { openPicker } from "./picker";
 import { chain, message, none } from "./result";
 import type {
   Action,
@@ -435,7 +436,11 @@ function note(s: AppState, now: number): Result {
 }
 
 /** The note prompt for annotation `item` of PDF `pdf`, holding its note. */
-const askNote = (s: AppState, pdf: string, item: PdfAnnotation): Result =>
+export const askNote = (
+  s: AppState,
+  pdf: string,
+  item: PdfAnnotation,
+): Result =>
   none({
     ...s,
     overlay: {
@@ -492,7 +497,7 @@ export function notePromptKey(
   );
 }
 
-function removeAnnotation(
+export function removeAnnotation(
   s: AppState,
   pdf: string,
   item: PdfAnnotation,
@@ -562,6 +567,9 @@ export const pdfAnnotateCommands = [
   cmd("pdf.annotate.note", "Write a note on the selected text", (c) =>
     note(c.state, c.now),
   ),
+  cmd("pdf.annotations", "PDF highlights and notes", (c) =>
+    openPicker(c, "pdfAnnotations"),
+  ),
 ];
 
 export const pdfAnnotateBindings: readonly Binding[] = [
@@ -569,5 +577,10 @@ export const pdfAnnotateBindings: readonly Binding[] = [
     scope: { mode: "normal", filetype: "pdf" },
     seq: "ga",
     id: "pdf.annotate.menu",
+  },
+  {
+    scope: { mode: "normal", filetype: "pdf" },
+    seq: "<leader>pa",
+    id: "pdf.annotations",
   },
 ];
