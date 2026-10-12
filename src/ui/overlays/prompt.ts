@@ -4,6 +4,7 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { newNotePath } from "../../core/state/explorer";
+import { promptField } from "../../core/state/line-field";
 import type { AppState, PromptState } from "../../core/state/types";
 import type { Cursor, LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
@@ -20,6 +21,13 @@ function impactLines(p: PromptState): Line[] {
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const cells = (text: string) => [...text].length;
 
+/** What each step of a binding prompt asks for. */
+const BINDING_HINT = {
+  mode: "normal, insert, visual, visualLine, cmdline, or explorer",
+  keys: "Vim notation: jj, <leader>w, <C-s>",
+  target: "a command id (file.save) or keys (<Esc>)",
+} as const;
+
 /** Title, border token, body lines, and the field's line index, per prompt kind. */
 function layout(p: PromptState): {
   title: string;
@@ -29,6 +37,56 @@ function layout(p: PromptState): {
   footer: string;
 } {
   const field = { text: ` ❯ ${p.value}`, token: "float" };
+  if (p.binding?.step === "confirm")
+    return {
+      title: p.title,
+      border: "floatWarn",
+      lines: [
+        ...(p.binding.notice ?? []).map((text) => ({
+          text: ` ${text}`,
+          token: "floatTitle",
+        })),
+        { text: "", token: "float" },
+        {
+          text: " To undo it later: select its keys in the keymap and press C-r,",
+          token: "floatDim",
+        },
+        { text: " or delete its line from config.toml.", token: "floatDim" },
+        { text: "", token: "float" },
+        { text: " y change   N cancel", token: "floatDim" },
+      ],
+      footer: "",
+    };
+  if (p.binding !== undefined) {
+    const step = p.binding.step;
+    const note: Line =
+      p.invalid !== undefined
+        ? { text: ` ✗ ${p.invalid}`, token: "floatError" }
+        : p.impact !== undefined
+          ? { text: ` ${p.impact}`, token: "floatWarn" }
+          : { text: ` ${BINDING_HINT[step]}`, token: "floatDim" };
+    const last = step === "target" || p.binding.from !== undefined;
+    return {
+      title: p.title,
+      border: "floatBorder",
+      lines: [field, note],
+      field: 0,
+      footer: `⏎ ${last ? "save" : "next"} · esc back`,
+    };
+  }
+  if (p.setting !== undefined)
+    return {
+      title: p.title,
+      border: "floatBorder",
+      lines: [
+        field,
+        p.invalid === undefined
+          ? { text: "", token: "float" }
+          : { text: ` ✗ ${p.invalid}`, token: "floatError" },
+      ],
+      field: 0,
+      footer: "⏎ save · esc back",
+    };
   if (p.newNote === true)
     return {
       title: p.title,
@@ -154,8 +212,9 @@ export class PromptView extends Renderable {
     const { field } = layout(p);
     if (field === undefined) return;
     const box = this.box(s, p);
+    const typedPart = p.value.slice(0, promptField(p).caret);
     this.cursorAt = {
-      x: Math.min(box.x + box.w - 2, box.x + 1 + cells(` ❯ ${p.value}`)),
+      x: Math.min(box.x + box.w - 2, box.x + 1 + cells(` ❯ ${typedPart}`)),
       y: box.y + 2 + field,
       style: "line",
     };

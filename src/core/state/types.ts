@@ -53,18 +53,27 @@ export type TextFile = {
   createdMs?: number;
 };
 /** One listed folder entry; symlinks report their target's kind. */
-export type DirEntry = { name: string; kind: "file" | "dir" };
-/** A file-system operation; `permanent` turns "trash" into a deletion. Paths are workspace-relative. */
+/** `ignored`: a `.gitignore` matches it; listed only while gitignored entries are shown. */
+export type DirEntry = { name: string; kind: "file" | "dir"; ignored?: true };
+/**
+ * A file-system operation; `permanent` turns "trash" into a deletion. Paths
+ * are workspace-relative, except that `outside` makes a copy's or move's
+ * `from` an absolute path outside the workspace.
+ */
 export type FsOp = {
-  kind: "create" | "rename" | "move" | "trash";
+  kind: "create" | "rename" | "move" | "trash" | "copy";
   from: string;
   to?: string;
   dir?: boolean;
   permanent?: true;
+  outside?: true;
 };
+/** Files on a clipboard and whether pasting copies or moves them. */
+export type FileClip = { op: "copy" | "cut"; paths: string[] };
+/** `explorerOnly`: a dot or gitignored path, watched only for the explorer. */
 export type FileEvent =
-  | { kind: "changed"; path: string; isDir: boolean }
-  | { kind: "removed"; path: string };
+  | { kind: "changed"; path: string; isDir: boolean; explorerOnly?: true }
+  | { kind: "removed"; path: string; explorerOnly?: true };
 /** One search match: a line of `path` with the match at `col`, `len` code units long. */
 export type SearchHit = {
   path: string;
@@ -78,6 +87,7 @@ export type TimerId =
   | `retry:${BufferId}`
   | `toast:${number}`
   | "whichKey"
+  | "keyTimeout"
   | "saveState"
   | "search"
   | "completion"
@@ -125,10 +135,17 @@ export type BufferState = {
   embeds?: { requested: string[]; refused: string[] };
   /** Its file type is never written: no save, autosave, or recreate. */
   readOnly?: true;
+  /** Kept at the front of the bufferline and out of bulk closes. */
+  pinned?: true;
 };
+
+/** Where a window last showed a buffer. */
+export type BufferView = { cursor: Pos; scroll: number };
 
 export type WindowState = {
   id: WindowId;
+  /** The view each buffer this window left had, restored when it shows it again. Never persisted. */
+  views?: Record<BufferId, BufferView>;
   content: {
     /** The editor kind showing the buffer: its file type's kind when registered, else "text". */
     editor: EditorKind;
@@ -149,6 +166,8 @@ export type WindowState = {
  * first unchecked task (else the end), or the end in Insert mode.
  */
 export type AfterOpen = "firstTask" | "insert";
+/** Why a note is created: a daily note, a new note, or a new row of a base (which stays in view). */
+export type NoteReason = "daily" | "new" | "row";
 
 export type TerminalState = {
   cols: number;
@@ -168,6 +187,10 @@ export type ExplorerState = {
   trash: "unknown" | "available" | "unavailable";
   /** Columns of the tree after a resize; unset follows `[explorer] width`. */
   width?: number;
+  /** The entry under the pointer; the tree shows its whole name. */
+  hover?: string;
+  /** What `y` or `x` last took, by workspace path; a paste falls back to it. */
+  clip?: FileClip;
 };
 
 /** A centred prompt; "typed" enables Enter only when `value` equals the selected name. */
@@ -175,6 +198,8 @@ type PromptBase = {
   kind: "confirm" | "input" | "typed";
   title: string;
   value: string;
+  /** Where in `value` typing goes; absent means its end. */
+  caret?: number;
   /** Rename and move: the links the operation will update, or why it will not. */
   impact?: string;
   /** Why `value` cannot be submitted; Enter does nothing while it is set. */
@@ -188,12 +213,25 @@ export type ExplorerPrompt = PromptBase & {
   op: FsOp;
   newNote?: never;
   rename?: never;
+  setting?: never;
+  binding?: never;
 };
-/** A new note's title, before its template is chosen. */
+/**
+ * A new note's title, before its template is chosen; `row` makes it a row of
+ * base window `window`, blank with `properties`, and keeps that window.
+ */
 type NewNotePrompt = PromptBase & {
   newNote: true;
+  row?: {
+    window: WindowId;
+    properties: Record<string, FrontmatterValue>;
+    /** Properties set to the time the note is created. */
+    stamp: readonly string[];
+  };
   op?: never;
   rename?: never;
+  setting?: never;
+  binding?: never;
 };
 /** A new name for the symbol `name` at `pos`, asked of the server `key`. */
 type RenamePrompt = PromptBase & {
@@ -206,8 +244,50 @@ type RenamePrompt = PromptBase & {
   };
   op?: never;
   newNote?: never;
+  setting?: never;
+  binding?: never;
 };
-export type PromptState = ExplorerPrompt | NewNotePrompt | RenamePrompt;
+/** A typed value for the setting at `path`; the settings `picker` comes back after it. */
+type SettingPrompt = PromptBase & {
+  setting: { path: string[]; picker: PickerState };
+  op?: never;
+  newNote?: never;
+  rename?: never;
+  binding?: never;
+};
+/**
+ * One step of editing a key binding in the keymap `picker`, which comes back
+ * after it. Adding asks the mode, then the keys, then what they run;
+ * changing asks only the keys, and unbinds `from`. A change to a built-in
+ * binding waits for `y` at a `confirm` step.
+ */
+type BindingPrompt = PromptBase & {
+  binding: {
+    step: "mode" | "keys" | "target" | "confirm";
+    mode: string;
+    filetype?: string;
+    /** The keys being replaced, when changing a binding. */
+    from?: string;
+    seq?: string;
+    /** What the keys run: a command id or a key sequence. */
+    id?: string;
+    /** Confirming: the table changes waiting for `y`, what they do to built-in bindings, and the message after. */
+    entries?: { seq: string; id?: string }[];
+    notice?: string[];
+    done?: string;
+    picker: PickerState;
+  };
+  op?: never;
+  newNote?: never;
+  rename?: never;
+  setting?: never;
+};
+export type PromptState =
+  | ExplorerPrompt
+  | NewNotePrompt
+  | RenamePrompt
+  | SettingPrompt
+  | BindingPrompt;
 
 /** The docked backlinks or outline panel of the active note. */
 export type SidePanelState = {
@@ -315,7 +395,7 @@ export type PickerItem = {
 };
 /** An open picker: its source, query, ranked rows, and the search and preview it waits for. */
 export type PickerState = {
-  /** "files" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
+  /** "files" | "buffers" | "recent" | "grep" | "headings" | "tags" | "tagNotes" | "backlinks" | "commands" | "help" */
   source: string;
   /** tagNotes: the tag; backlinks: the target path */
   arg?: string;
@@ -348,7 +428,8 @@ export type PersistedState = {
   version: 1;
   recent: string[];
   jumps: JumpList;
-  buffers: { path: string; view: string }[];
+  /** Open buffers in bufferline order. */
+  buffers: { path: string; view: string; pinned?: true | undefined }[];
   layout: {
     tree: WindowTree;
     active: WindowId;
@@ -461,6 +542,8 @@ export type WindowSpot =
   | { kind: "winbar" }
   | { kind: "baseTab"; view: number }
   | { kind: "baseCell"; row: number; column: number }
+  /** The header separator right of table column `column`, which is `width` cells wide. */
+  | { kind: "baseEdge"; column: number; width: number }
   | { kind: "baseCard"; lane: number; card: number }
   | { kind: "base" };
 
@@ -485,11 +568,13 @@ export type MouseTarget =
   | { kind: "outside" }
   | { kind: "inert" };
 
-/** One left-button gesture or wheel notch; the wheel repeats a vertical notch. */
+/** One left-button gesture, middle press, or wheel notch; the wheel repeats a vertical notch. */
 export type MouseEvent =
   | { kind: "press"; target: MouseTarget; clicks: 1 | 2 | 3; ctrl: boolean }
   | { kind: "drag"; target: MouseTarget }
   | { kind: "wheel"; target: MouseTarget; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
+  /** A middle-button press. */
+  | { kind: "middle"; target: MouseTarget }
   /** The pointer moved onto `target` with no button held. */
   | { kind: "move"; target: MouseTarget };
 
@@ -497,6 +582,10 @@ export type AppState = {
   workspace: { root: string };
   buffers: Record<BufferId, BufferState>;
   nextBufferId: BufferId;
+  /** Listed buffers in bufferline order, pinned ones first. */
+  bufferOrder: BufferId[];
+  /** Listed buffers, most recently shown first; the second is the alternate. */
+  bufferMru: BufferId[];
   /** A window without a `byId` entry is empty (nothing open). */
   windows: {
     tree: WindowTree;
@@ -507,6 +596,8 @@ export type AppState = {
      * Windows waiting for their file, and how many files of the last session
      * were not found. `navigated` marks a wait from a jump or link follow,
      * which reports its own refusal instead of counting as missing.
+     * `background` lists the last session's other buffers still being read,
+     * and `buffers` their saved order and pins, applied once all have answered.
      */
     restore?: {
       pending: Record<
@@ -523,6 +614,8 @@ export type AppState = {
         }
       >;
       missing: number;
+      background?: string[];
+      buffers?: { path: string; pinned?: true | undefined }[];
     };
   };
   vim: VimState & {
@@ -551,6 +644,8 @@ export type Action =
   | { type: "resize"; cols: number; rows: number }
   /** How much of the zoom float the shown image covers at fit, per axis (0..1]. */
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
+  /** How many columns after the pinned first one a base table window shows scrolled off. */
+  | { type: "baseScrolled"; window: WindowId; col: number }
   /** `embed` answers a read a note's embed sent (see the `read` effect). */
   | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
   | {
@@ -572,8 +667,28 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
+  | { type: "fileClipboardFailed"; reason: string }
+  /** A long copy or move into `to` has started `done` of its `total` entries. */
+  | { type: "copyProgress"; to: string; done: number; total: number }
+  /**
+   * The system clipboard's files for a paste into `target` (`null`: none),
+   * paths inside the workspace spelled from its root; `dirs` are the folders.
+   */
+  | {
+      type: "fileClip";
+      target: string;
+      clip: FileClip | null;
+      dirs: string[];
+      now: number;
+      error?: string;
+    }
   | { type: "mouse"; event: MouseEvent; now: number }
   | { type: "configLoaded"; result: ConfigResult; reload: boolean }
+  | {
+      type: "bindingsFailed";
+      previous: Pick<AppConfig, "keys" | "filetypes">;
+      reason: string;
+    }
   | {
       type: "settingFailed";
       path: string[];
@@ -620,8 +735,11 @@ export type Action =
       template: "used" | "missing" | "unreadable" | "none";
       templatePath?: string;
       after: AfterOpen;
-      reason: "daily" | "new";
+      reason: NoteReason;
       failure?: string;
+      /** What was written, when created. */
+      text?: string;
+      stamp?: Stamp;
     }
   /** `.obsidian/types.json` was read; `{}` when absent or malformed. */
   | { type: "propertyTypesLoaded"; types: PropertyTypes }
@@ -699,12 +817,16 @@ export type Effect =
   /** `embed` marks a read only a note's embed asked for; its answer carries it back. */
   | { kind: "read"; path: string; embed?: true }
   | { kind: "write"; path: string; text: string; expected?: Stamp }
-  | { kind: "create" | "rename" | "move" | "trash"; op: FsOp }
-  | { kind: "listDir"; dir: string }
+  | { kind: "create" | "rename" | "move" | "trash" | "copy"; op: FsOp }
+  /** `dotfiles` lists dot entries other than `.git`; `gitignored` lists names a `.gitignore` matches. */
+  | { kind: "listDir"; dir: string; dotfiles?: true; gitignored?: true }
   | { kind: "startTimer"; id: TimerId; ms: number }
   | { kind: "cancelTimer"; id: TimerId }
   | { kind: "clipboardWrite"; text: string }
   | { kind: "clipboardRead" }
+  /** Put files, by absolute path, on the system clipboard. */
+  | { kind: "fileClipboardWrite"; clip: FileClip }
+  | { kind: "fileClipboardRead"; target: string }
   | { kind: "exit"; code: number }
   | { kind: "saveState"; state: PersistedState }
   | {
@@ -718,6 +840,15 @@ export type Effect =
     }
   | { kind: "readPreview"; id: number; path: string }
   | { kind: "loadConfig" }
+  /**
+   * Set or (`id` undefined) remove key bindings in config.toml in one write;
+   * the `previous` keymaps are restored if it fails.
+   */
+  | {
+      kind: "writeBindings";
+      edits: { path: string[]; id?: string }[];
+      previous: Pick<AppConfig, "keys" | "filetypes">;
+    }
   /** Write one config.toml value; `previous` is restored if the write fails. */
   | {
       kind: "writeSetting";
@@ -730,9 +861,9 @@ export type Effect =
   | { kind: "stopPreview" }
   | { kind: "openUrl"; url: string }
   /**
-   * Create `path` from `template` (workspace-relative) expanded with `vars`,
-   * never replacing an entry; `fallback` is the template text when the
-   * template file does not exist.
+   * Create `path` from `template` (workspace-relative) expanded with `vars`
+   * and `frontmatter` set, never replacing an entry; `fallback` is the
+   * template text when the template file does not exist.
    */
   | {
       kind: "createNote";
@@ -740,8 +871,9 @@ export type Effect =
       template?: string;
       fallback?: string;
       vars: TemplateVars;
+      frontmatter?: Record<string, FrontmatterValue>;
       after: AfterOpen;
-      reason: "daily" | "new";
+      reason: NoteReason;
     }
   /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
   | { kind: "readPropertyTypes" }

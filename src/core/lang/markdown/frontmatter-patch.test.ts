@@ -7,6 +7,7 @@ import {
   mergeFrontmatter,
   type PatchResult,
   patchFrontmatter,
+  seedFrontmatter,
   splitFrontmatter,
   yamlScalar,
 } from "./frontmatter-patch";
@@ -328,4 +329,22 @@ test("merging properties the note already has changes nothing", () => {
   expect(r.edits).toEqual([]);
   expect(r.text).toBe(note);
   expect(ok(mergeFrontmatter("Body", {})).edits).toEqual([]);
+});
+
+test("seedFrontmatter gives a blank note a block with the seeded properties", () => {
+  expect(seedFrontmatter("", { status: "todo", tags: ["reading"] })).toBe(
+    "---\nstatus: todo\ntags:\n  - reading\n---\n",
+  );
+});
+
+test("seedFrontmatter replaces a template's value, adds to its lists, and keeps the body", () => {
+  const text = "---\nstatus: draft\ntags: [idea]\n---\n# {{title}}\n";
+  const out = seedFrontmatter(text, { status: "todo", tags: ["idea", "x"] });
+  expect(properties(out)).toEqual({ status: "todo", tags: ["idea", "x"] });
+  expect(out.endsWith("---\n# {{title}}\n")).toBe(true);
+});
+
+test("seedFrontmatter leaves text whose frontmatter cannot be read", () => {
+  const text = "---\n: [\n---\nbody\n";
+  expect(seedFrontmatter(text, { status: "todo" })).toBe(text);
 });

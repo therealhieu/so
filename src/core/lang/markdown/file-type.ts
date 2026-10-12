@@ -1,6 +1,6 @@
 import type { FileType, ViewSpec } from "../../filetypes/registry";
-import { lowlightHighlighter } from "../code/highlight";
 import { type Doc, parseDoc } from "./doc";
+import { markdownHighlighter } from "./highlight";
 import {
   livePreview,
   type MarkdownViewInput,
@@ -33,6 +33,6 @@ export const markdownFileType: FileType<Doc> = {
     rendered("live") as unknown as ViewSpec<Doc>,
     { id: "source", decorations: [] },
   ],
-  highlighter: lowlightHighlighter("markdown"),
+  highlighter: markdownHighlighter(),
   analyze: parseDoc,
 };

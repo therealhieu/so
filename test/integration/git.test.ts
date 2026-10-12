@@ -41,7 +41,7 @@ test("an external commit refreshes the ref and markers", async () => {
   const r = repo as GitRepo;
   await r.write("notes/b.md", "changed\n");
   await waitFor(() => markers(a).get("notes/b.md") === "modified");
-  expect(markers(a).get("notes")).toBe("contains");
+  expect(markers(a).get("notes")).toBe("modified");
 
   await r.run(["checkout", "-q", "-b", "feature"]);
   await r.run(["commit", "-qam", "external"]);

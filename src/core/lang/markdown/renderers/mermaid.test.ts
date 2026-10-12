@@ -107,3 +107,16 @@ test("a diagram as SVG carries plain colours and generic fonts a rasterizer can 
   expect(mermaidSvg("gantt\n  title x", "dark")).toBeUndefined();
   expect(mermaidSvg("flowchart SIDEWAYS\n  A --> B", "dark")).toBeUndefined();
 });
+
+test("a diagram as SVG sits on each catppuccin flavor's base colour", () => {
+  expect(
+    (
+      [
+        "catppuccin-latte",
+        "catppuccin-frappe",
+        "catppuccin-macchiato",
+        "catppuccin-mocha",
+      ] as const
+    ).map((theme) => mermaidSvg(FLOWCHART, theme)?.background),
+  ).toEqual(["#eff1f5", "#303446", "#24273a", "#1e1e2e"]);
+});

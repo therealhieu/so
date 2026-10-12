@@ -5,16 +5,19 @@ import {
   stamp,
   testRegistries,
 } from "../../../test/support/state";
+import { parseConfig } from "../config/toml";
 import { splitKeys } from "../kernel/vim/keys";
 import { setBuffer } from "./buffers";
 import {
   createTarget,
   explorerOp,
   explorerWidth,
+  freeName,
   resizeExplorer,
   toggleExplorer,
 } from "./explorer";
 import { scheduleAutosave } from "./save";
+import { SAVE_STATE_MS } from "./session";
 import type { Action, AppState, Effect, FsOp, Result } from "./types";
 import { createUpdate } from "./update";
 
@@ -58,7 +61,7 @@ test("rename flushes a dirty buffer first, then follows it to the new path", () 
   expect(done.state.buffers[1]).toMatchObject({ path: "c.md", dirty: true });
   expect(done.state.buffers[1]?.undo).toBe(undoBefore);
   expect(done.effects).toEqual([
-    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "", gitignored: true },
     { kind: "startTimer", id: "saveState", ms: 2000 },
   ]);
 });
@@ -137,9 +140,11 @@ test("moving a folder re-paths every buffer below it", () => {
     "archive",
   ]);
   expect(done.effects).toEqual([
-    { kind: "listDir", dir: "" },
-    { kind: "listDir", dir: "archive" },
-    { kind: "listDir", dir: "archive/notes" },
+    { kind: "listDir", dir: "", gitignored: true },
+    { kind: "listDir", dir: "archive", gitignored: true },
+    { kind: "listDir", dir: "archive/notes", gitignored: true },
+    // The open buffers' paths are part of the saved session.
+    { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
   ]);
 });
 
@@ -185,13 +190,13 @@ test("create adds .md only without an extension; a trailing slash makes a folder
   expect(explorerOp(fresh(), op, 0).effects).toEqual([{ kind: "create", op }]);
   const created = update(fresh(), { type: "fsResult", op, ok: true });
   expect(created.effects).toEqual([
-    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "", gitignored: true },
     { kind: "read", path: "projects/new/idea.md" },
   ]);
   const folder: FsOp = { kind: "create", from: "ideas", dir: true };
   expect(
     update(fresh(), { type: "fsResult", op: folder, ok: true }).effects,
-  ).toEqual([{ kind: "listDir", dir: "" }]);
+  ).toEqual([{ kind: "listDir", dir: "", gitignored: true }]);
 });
 
 test("a failed operation reports its reason; a failed trash turns trash off", () => {
@@ -252,7 +257,9 @@ test("toggle opens and focuses the explorer, then closes it", () => {
     open: true,
     focused: true,
   });
-  expect(reopened.effects).toEqual([{ kind: "listDir", dir: "" }]);
+  expect(reopened.effects).toEqual([
+    { kind: "listDir", dir: "", gitignored: true },
+  ]);
 });
 
 const pressKeys = (s: AppState, seq: string): Result => {
@@ -300,4 +307,478 @@ test("[explorer] width sets the width until the explorer is resized", () => {
   };
   expect(explorerWidth(configured)).toBe(22);
   expect(resizedTo(configured, "<C-w>>")).toBe(27);
+});
+
+const pressInExplorer = (s: AppState, seq: string): Result => {
+  const effects: Effect[] = [];
+  for (const key of splitKeys(seq)) {
+    const r = update(s, { type: "key", key, now: 0 });
+    s = r.state;
+    effects.push(...r.effects);
+  }
+  return { state: s, effects };
+};
+
+test("H shows dot entries in every listed folder and saves the choice", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "notes", kind: "dir" }],
+  }).state;
+  const expanded = pressInExplorer(s, "l").state;
+  const r = pressInExplorer(expanded, "H");
+  expect(r.state.config.explorer.dotfiles).toBe(true);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "dotfiles"],
+      value: true,
+      previous: false,
+    },
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
+    { kind: "listDir", dir: "notes", dotfiles: true, gitignored: true },
+  ]);
+  expect(r.state.notifications.message?.text).toBe("dot entries shown");
+});
+
+test("hiding dot entries collapses dot folders and moves a selection inside one to the top", () => {
+  let s = pressInExplorer(fresh(), "H").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: ".s1mple", kind: "dir" },
+      { name: "notes", kind: "dir" },
+    ],
+  }).state;
+  s = pressInExplorer(s, "l").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: ".s1mple",
+    entries: [{ name: "S1MPLE.md", kind: "file" }],
+  }).state;
+  s = pressInExplorer(s, "j").state;
+  expect(s.panels.explorer.cursor).toBe(".s1mple/S1MPLE.md");
+  const r = pressInExplorer(s, "H");
+  expect(r.state.panels.explorer.expanded).toEqual([]);
+  expect(r.state.panels.explorer.cursor).toBe("");
+  expect(r.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
+  const relisted = update(r.state, {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "notes", kind: "dir" }],
+  }).state;
+  expect(relisted.panels.explorer.cursor).toBe("notes");
+});
+
+test("I hides gitignored entries, collapses gitignored folders, and moves a selection inside one to the top", () => {
+  let s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [
+      { name: "build", kind: "dir", ignored: true },
+      { name: "notes", kind: "dir" },
+    ],
+  }).state;
+  s = pressInExplorer(s, "l").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "build",
+    entries: [{ name: "out", kind: "dir", ignored: true }],
+  }).state;
+  s = pressInExplorer(s, "jl").state;
+  s = update(s, {
+    type: "dirListed",
+    dir: "build/out",
+    entries: [{ name: "a.md", kind: "file", ignored: true }],
+  }).state;
+  s = pressInExplorer(s, "jjlk").state;
+  expect(s.panels.explorer.expanded).toEqual(["build", "build/out", "notes"]);
+  expect(s.panels.explorer.cursor).toBe("build/out/a.md");
+  const r = pressInExplorer(s, "I");
+  expect(r.state.config.explorer.gitignored).toBe(false);
+  expect(r.state.panels.explorer.expanded).toEqual(["notes"]);
+  expect(r.state.panels.explorer.cursor).toBe("");
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "gitignored"],
+      value: false,
+      previous: true,
+    },
+    { kind: "listDir", dir: "" },
+    { kind: "listDir", dir: "notes" },
+  ]);
+  expect(r.state.notifications.message?.text).toBe("gitignored entries hidden");
+  const back = pressInExplorer(r.state, "I");
+  expect(back.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
+});
+
+test("a reloaded config.toml that turns gitignored off lists the tree again", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  const result = parseConfig("[explorer]\ngitignored = false\n");
+  const r = update(s, { type: "configLoaded", result, reload: true });
+  expect(r.effects).toEqual([{ kind: "listDir", dir: "" }]);
+});
+
+test("a reloaded config.toml that turns dotfiles on lists the tree again", () => {
+  const s = update(fresh(), {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  const result = parseConfig("[explorer]\ndotfiles = true\n");
+  const r = update(s, { type: "configLoaded", result, reload: true });
+  expect(r.effects).toEqual([
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
+  ]);
+  const same = update(r.state, { type: "configLoaded", result, reload: true });
+  expect(same.effects).toEqual([]);
+});
+
+test("Z closes every folder and selects the top-level entry holding the selection", () => {
+  const listed = (
+    s: AppState,
+    dir: string,
+    entries: [string, "dir" | "file"][],
+  ) =>
+    update(s, {
+      type: "dirListed",
+      dir,
+      entries: entries.map(([name, kind]) => ({ name, kind })),
+    }).state;
+  let s = listed(fresh(), "", [
+    ["notes", "dir"],
+    ["todo.md", "file"],
+  ]);
+  s = listed(pressInExplorer(s, "l").state, "notes", [["deep", "dir"]]);
+  s = listed(pressInExplorer(s, "jl").state, "notes/deep", [["a.md", "file"]]);
+  s = pressInExplorer(s, "j").state;
+  expect(s.panels.explorer.cursor).toBe("notes/deep/a.md");
+  expect(s.panels.explorer.expanded).toEqual(["notes", "notes/deep"]);
+  const r = pressInExplorer(s, "Z");
+  expect(r.state.panels.explorer.expanded).toEqual([]);
+  expect(r.state.panels.explorer.cursor).toBe("notes");
+  expect(r.effects).toEqual([]);
+});
+
+const withA = (): AppState => {
+  const s = openBuffer(fresh(), "a.md", "hello");
+  const listed = update(s, {
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: "a.md", kind: "file" }],
+  }).state;
+  return {
+    ...listed,
+    panels: {
+      ...listed.panels,
+      explorer: { ...listed.panels.explorer, open: true, focused: true },
+    },
+  };
+};
+
+test("<C-w> toward the windows leaves the explorer, and toward its edge enters it again", () => {
+  const s = withA();
+  expect(pressInExplorer(s, "<C-w>h").state.panels.explorer.focused).toBe(true);
+  const left = pressInExplorer(s, "<C-w>l").state;
+  expect(left.panels.explorer.focused).toBe(false);
+  expect(left.panels.explorer.open).toBe(true);
+  expect(pressInExplorer(left, "<C-w>l").state.panels.explorer.focused).toBe(
+    false,
+  );
+  expect(pressInExplorer(left, "<C-w>h").state.panels.explorer.focused).toBe(
+    true,
+  );
+});
+
+test("<C-w> mirrors with the explorer on the right", () => {
+  const s = withA();
+  const right = {
+    ...s,
+    config: {
+      ...s.config,
+      explorer: { ...s.config.explorer, position: "right" as const },
+    },
+  };
+  const left = pressInExplorer(right, "<C-w>h").state;
+  expect(left.panels.explorer.focused).toBe(false);
+  expect(pressInExplorer(left, "<C-w>l").state.panels.explorer.focused).toBe(
+    true,
+  );
+});
+
+test("Enter on a note that is already open focuses its window", () => {
+  const r = pressInExplorer(withA(), "<CR>");
+  expect(r.state.panels.explorer.focused).toBe(false);
+  expect(r.state.panels.explorer.open).toBe(true);
+  expect(r.effects).not.toContainEqual(
+    expect.objectContaining({ kind: "read" }),
+  );
+});
+
+test("<leader>fo opens the current file in the system's default app", () => {
+  const s = openBuffer(fresh(), "page.html", "<p>hi</p>");
+  const opened = pressKeys(s, `${s.config.leader}fo`);
+  expect(opened.effects).toEqual([
+    { kind: "openUrl", url: `${s.workspace.root}/page.html` },
+  ]);
+  expect(opened.state.buffers).toEqual(s.buffers);
+  expect(
+    pressKeys(fresh(), `${s.config.leader}fo`).state.notifications.message
+      ?.text,
+  ).toBe("E32: No file name");
+});
+
+test("O opens the selected entry in the system's default app", () => {
+  const entries = [
+    { name: "notes", kind: "dir" as const },
+    { name: "page.html", kind: "file" as const },
+  ];
+  const listed = update(fresh(), { type: "dirListed", dir: "", entries });
+  const root = listed.state.workspace.root;
+  const opened = pressKeys(listed.state, "jO");
+  expect(opened.effects).toEqual([
+    { kind: "openUrl", url: `${root}/page.html` },
+  ]);
+  expect(opened.state.buffers).toEqual(listed.state.buffers);
+  expect(pressKeys(listed.state, "O").effects).toEqual([
+    { kind: "openUrl", url: `${root}/notes` },
+  ]);
+  const failed = update(opened.state, {
+    type: "openUrlFailed",
+    url: `${root}/page.html`,
+    reason: "xdg-open failed",
+  });
+  expect(failed.state.notifications.toasts.at(-1)).toMatchObject({
+    level: "error",
+    text: `could not open ${root}/page.html`,
+  });
+});
+
+test("a taken name gets copy, then a number, before a file's extension", () => {
+  const taken = new Set(["a.md", "a copy.md", "dir", "v1.2", ".env"]);
+  expect(freeName("new.md", false, taken)).toBe("new.md");
+  expect(freeName("a.md", false, taken)).toBe("a copy 2.md");
+  expect(freeName("dir", true, taken)).toBe("dir copy");
+  expect(freeName("v1.2", true, taken)).toBe("v1.2 copy");
+  expect(freeName(".env", false, taken)).toBe(".env copy");
+});
+
+const clipTree = (): AppState =>
+  update(
+    update(fresh(), {
+      type: "dirListed",
+      dir: "",
+      entries: [
+        { name: "notes", kind: "dir" },
+        { name: "a.md", kind: "file" },
+        { name: "b.png", kind: "file" },
+      ],
+    }).state,
+    {
+      type: "dirListed",
+      dir: "notes",
+      entries: [{ name: "one.md", kind: "file" }],
+    },
+  ).state;
+
+const select = (s: AppState, cursor: string): AppState => ({
+  ...s,
+  panels: {
+    ...s.panels,
+    explorer: { ...s.panels.explorer, focused: true, cursor },
+  },
+});
+
+const pasted = (
+  s: AppState,
+  target: string,
+  clip: { op: "copy" | "cut"; paths: string[] } | null,
+  dirs: string[] = [],
+) => update(s, { type: "fileClip", target, clip, dirs, now: 7 });
+
+const fsOps = (effects: Effect[]) =>
+  effects.flatMap((e) =>
+    e.kind === "copy" || e.kind === "move" ? [e.op] : [],
+  );
+
+test("y and x take the selection here and on the system clipboard", () => {
+  const s = select(clipTree(), "a.md");
+  const copied = pressKeys(s, "y");
+  expect(copied.state.panels.explorer.clip).toEqual({
+    op: "copy",
+    paths: ["a.md"],
+  });
+  expect(copied.effects).toEqual([
+    { kind: "fileClipboardWrite", clip: { op: "copy", paths: ["/ws/a.md"] } },
+  ]);
+  expect(copied.state.notifications.message?.text).toBe("Copied a.md");
+  const cut = pressKeys(select(s, "notes"), "x");
+  expect(cut.state.panels.explorer.clip).toEqual({
+    op: "cut",
+    paths: ["notes"],
+  });
+  expect(cut.state.notifications.message?.text).toBe("Cut notes");
+});
+
+test("p reads the clipboard for the selected folder, or the selected file's folder", () => {
+  const s = clipTree();
+  expect(pressKeys(select(s, "notes"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+  expect(pressKeys(select(s, "notes/one.md"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+  expect(pressKeys(select(s, "a.md"), "p").effects).toEqual([
+    { kind: "fileClipboardRead", target: "" },
+  ]);
+});
+
+test("files copied in another program are copied in, a taken name getting copy", () => {
+  const r = pasted(
+    clipTree(),
+    "",
+    {
+      op: "copy",
+      paths: ["/Users/u/Downloads/a.md", "/Users/u/Downloads/pics"],
+    },
+    ["/Users/u/Downloads/pics"],
+  );
+  expect(fsOps(r.effects)).toEqual([
+    {
+      kind: "copy",
+      from: "/Users/u/Downloads/a.md",
+      to: "a copy.md",
+      outside: true,
+    },
+    {
+      kind: "copy",
+      from: "/Users/u/Downloads/pics",
+      to: "pics",
+      dir: true,
+      outside: true,
+    },
+  ]);
+  const done = update(r.state, {
+    type: "fsResult",
+    op: { kind: "copy", from: "/x/a.md", to: "a copy.md", outside: true },
+    ok: true,
+  });
+  expect(done.state.panels.explorer.cursor).toBe("a copy.md");
+  expect(done.effects).toContainEqual({
+    kind: "listDir",
+    dir: "",
+    gitignored: true,
+  });
+});
+
+test("a cut from another file manager moves the files in", () => {
+  const r = pasted(clipTree(), "notes", {
+    op: "cut",
+    paths: ["/home/u/x.md"],
+  });
+  expect(fsOps(r.effects)).toEqual([
+    { kind: "move", from: "/home/u/x.md", to: "notes/x.md", outside: true },
+  ]);
+});
+
+test("the explorer's cut decides when the clipboard holds what x took", () => {
+  const tree = clipTree();
+  const indexed = {
+    ...tree,
+    index: { ...tree.index, status: "ready" as const },
+  };
+  const s = pressKeys(select(indexed, "a.md"), "x").state;
+  const own = pasted(s, "notes", { op: "copy", paths: ["/ws/a.md"] });
+  expect(fsOps(own.effects)).toEqual([
+    { kind: "move", from: "a.md", to: "notes/a.md" },
+  ]);
+  expect(own.state.panels.explorer.clip).toBeUndefined();
+  const other = pasted(s, "notes", { op: "copy", paths: ["/ws/b.png"] });
+  expect(fsOps(other.effects)).toEqual([
+    { kind: "copy", from: "b.png", to: "notes/b.png" },
+  ]);
+  expect(other.state.panels.explorer.clip).toEqual({
+    op: "cut",
+    paths: ["a.md"],
+  });
+});
+
+test("without files on the clipboard, what y took is pasted", () => {
+  const s = pressKeys(select(clipTree(), "a.md"), "y").state;
+  const r = pasted(s, "", null);
+  expect(fsOps(r.effects)).toEqual([
+    { kind: "copy", from: "a.md", to: "a copy.md" },
+  ]);
+  expect(r.state.panels.explorer.clip).toEqual({ op: "copy", paths: ["a.md"] });
+  const empty = pasted(clipTree(), "", null);
+  expect(empty.effects).toEqual([]);
+  expect(empty.state.notifications.message?.text).toBe("nothing to paste");
+  const failed = update(clipTree(), {
+    type: "fileClip",
+    target: "",
+    clip: null,
+    dirs: [],
+    now: 7,
+    error: "osascript failed",
+  });
+  expect(failed.state.notifications.message).toMatchObject({
+    text: "clipboard unavailable: osascript failed",
+    level: "error",
+  });
+});
+
+test("a folder never goes into itself, and a cut entry already in place stays", () => {
+  const s = clipTree();
+  const into = pasted(s, "notes", { op: "copy", paths: ["/ws/notes"] });
+  expect(fsOps(into.effects)).toEqual([]);
+  expect(into.state.notifications.message).toMatchObject({
+    text: "cannot paste a folder into itself",
+    level: "error",
+  });
+  const inPlace = pasted(s, "notes", {
+    op: "cut",
+    paths: ["/ws/notes/one.md"],
+  });
+  expect(fsOps(inPlace.effects)).toEqual([]);
+});
+
+test("a copy flushes the source's unsaved text first", () => {
+  const s = select(dirtyA(), "a.md");
+  const r = pasted(s, "notes", { op: "copy", paths: ["/ws/a.md"] });
+  expect(ops(r.effects)).toEqual([
+    { kind: "write", path: "a.md", text: "xhello\n", expected: stamp(1) },
+    { kind: "copy", op: { kind: "copy", from: "a.md", to: "notes/a.md" } },
+  ]);
+});
+
+test("a long paste shows its progress, then what was pasted", () => {
+  const going = update(clipTree(), {
+    type: "copyProgress",
+    to: "notes/pics",
+    done: 120,
+    total: 3400,
+  });
+  expect(going.state.notifications.message?.text).toBe(
+    "Copying pics… 120/3400",
+  );
+  const done = update(going.state, {
+    type: "fsResult",
+    op: { kind: "copy", from: "/x/pics", to: "notes/pics", outside: true },
+    ok: true,
+  });
+  expect(done.state.notifications.message?.text).toBe("Pasted pics");
 });

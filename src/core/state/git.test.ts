@@ -954,3 +954,25 @@ test("blame of uncommitted lines says not committed yet without running git when
     expect(msg(leader(outside, seq))?.text).toBe("not a git repository");
   expect(msg(keys(outside, "]", "h"))?.text).toBe("not a git repository");
 });
+
+test("hunk commands refuse from the explorer, whose selection may be another file", () => {
+  const s = keys(inRepo(NOTE, "a\nb\nX", tracked("a\nb\nc")), "G").state;
+  const focused: AppState = {
+    ...s,
+    panels: {
+      ...s.panels,
+      explorer: { ...s.panels.explorer, open: true, focused: true },
+    },
+  };
+  for (const seq of ["ghr", "ghs", "ghp", "ghb"]) {
+    const r = leader(focused, seq);
+    expect(gitEffects(r)).toEqual([]);
+    expect(textOf(r.state)).toEqual(["a", "b", "X"]);
+    expect(r.state.overlay.kind).toBe("none");
+    expect(r.state.notifications.message?.text).toBe(
+      "hunks act on a window's cursor; focus a window first",
+    );
+  }
+  // The same keys still work from the window.
+  expect(textOf(leader(s, "ghr").state)).toEqual(["a", "b", "c"]);
+});

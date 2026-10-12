@@ -88,10 +88,25 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "26,27,38,255",
       "fg": "192,202,245,255",
     },
+    "bufferActiveDirty": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "224,175,104,255",
+    },
     "bufferDirty": {
       "attrs": 0,
       "bg": "22,22,30,255",
       "fg": "224,175,104,255",
+    },
+    "bufferIndicator": {
+      "attrs": 0,
+      "bg": "26,27,38,255",
+      "fg": "122,162,247,255",
+    },
+    "bufferSep": {
+      "attrs": 0,
+      "bg": "22,22,30,255",
+      "fg": "59,66,97,255",
     },
     "bufferline": {
       "attrs": 0,
@@ -563,6 +578,11 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "22,22,30,255",
       "fg": "115,122,162,255",
     },
+    "searchCurrent": {
+      "attrs": 1,
+      "bg": "224,175,104,255",
+      "fg": "21,22,30,255",
+    },
     "searchMatch": {
       "attrs": 0,
       "bg": "61,89,161,255",
@@ -760,10 +780,25 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "225,226,231,255",
       "fg": "55,96,191,255",
     },
+    "bufferActiveDirty": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "140,108,62,255",
+    },
     "bufferDirty": {
       "attrs": 0,
       "bg": "208,213,227,255",
       "fg": "140,108,62,255",
+    },
+    "bufferIndicator": {
+      "attrs": 0,
+      "bg": "225,226,231,255",
+      "fg": "46,125,233,255",
+    },
+    "bufferSep": {
+      "attrs": 0,
+      "bg": "208,213,227,255",
+      "fg": "168,174,203,255",
     },
     "bufferline": {
       "attrs": 0,
@@ -1235,6 +1270,11 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "208,213,227,255",
       "fg": "97,114,176,255",
     },
+    "searchCurrent": {
+      "attrs": 1,
+      "bg": "140,108,62,255",
+      "fg": "233,233,237,255",
+    },
     "searchMatch": {
       "attrs": 0,
       "bg": "168,192,245,255",
@@ -1432,7 +1472,22 @@ exports[`existing tokens keep their values 1`] = `
       "bg": "default",
       "fg": "default",
     },
+    "bufferActiveDirty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
     "bufferDirty": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "bufferIndicator": {
+      "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "bufferSep": {
       "attrs": 0,
       "bg": "default",
       "fg": "default",
@@ -1904,6 +1959,11 @@ exports[`existing tokens keep their values 1`] = `
     },
     "panelMuted": {
       "attrs": 0,
+      "bg": "default",
+      "fg": "default",
+    },
+    "searchCurrent": {
+      "attrs": 33,
       "bg": "default",
       "fg": "default",
     },

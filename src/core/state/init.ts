@@ -15,6 +15,8 @@ export function initialState(boot: {
     workspace: { root: boot.root },
     buffers: {},
     nextBufferId: 1,
+    bufferOrder: [],
+    bufferMru: [],
     windows: {
       tree: { kind: "leaf", id: 1 },
       byId: {},

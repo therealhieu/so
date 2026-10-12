@@ -1,275 +1,241 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`the settings picker moves the explorer to the other edge at once 1`] = `
-" ideas.md                                                                                                       ~/notes 
- NOTES  ~/notes               │   1 ▕# Ideas                                                                            
-  notes                      │   1                                                                                     
-  scripts  ╭─ Settings ───────────────────────────────────────────────────────────────────────────────────╮            
-  config.ya│ ❯                                                10/10 │ explorer.position                   │            
-  todo.md  │ ────────────────────────────────────────────────────── │                                     │            
-            │ ▸ explorer.position                               left │ The edge the explorer docks on;     │            
-            │   explorer.icons                                  nerd │ the side panel takes the other.     │            
-            │   theme                                           dark │                                     │            
-            │   color                                           auto │ left · right                        │            
-            │   mouse                                             on │                                     │            
-            │   editor.wrap                                       on │ Enter: next choice                  │            
-            │   editor.relativeNumbers                            on │ Saved to config.toml                │            
-            │   preview.mode                                    live │                                     │            
-            │   preview.images                                  auto │                                     │            
-            │   autosave.enabled                                  on │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            │                                                        │                                     │            
-            ╰─ C-j/C-k move · Enter change · Esc close ────────────────────────────────────────────────────╯            
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
- EXPLORER  live  notes/ideas.md                                                              11 words  preview off  1:1 
-"
-`;
-
 exports[`shell at 120×36 startup shows the explorer focused and an empty window 1`] = `
 "                                                                                                                ~/notes 
- NOTES  ~/notes               │    ~                                                                                    
-  notes                      │    ~                                                                                    
-  scripts                    │    ~                                                                                    
-  config.yaml                │    ~                                                                                    
-  todo.md                    │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
-                              │    ~                                                                                    
+ NOTES  ~/notes               │                                                                                         
+  notes                      │                                                                                         
+  scripts                    │                                                                                         
+  config.yaml                │                                                                                         
+  todo.md                    │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
  EXPLORER  [No Name]                                                                                        preview off 
 "
 `;
 
 exports[`shell at 120×36 explorer hidden with a note open 1`] = `
-" ideas.md                                                                                                       ~/notes 
+"▎ ideas.md                                                                                                      ~/notes 
    1 ▕# Ideas                                                                                                           
    1                                                                                                                    
    2  A terminal editor for notes.                                                                                      
    3  • keep files plain                                                                                                
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  live  notes/ideas.md                                                                11 words  preview off  1:1 
 "
 `;
 
 exports[`shell at 120×36 a vertical split shows winbars and a separator 1`] = `
-" ideas.md                                                                                                       ~/notes 
+"▎ ideas.md                                                                                                      ~/notes 
  notes/ideas.md                                            │ notes/ideas.md                                             
    1 ▕# Ideas                                              │   1 ▕# Ideas                                               
    1                                                       │   1                                                        
    2  A terminal editor for notes.                         │   2  A terminal editor for notes.                          
    3  • keep files plain                                   │   3  • keep files plain                                    
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
-    ~                                                      │    ~                                                       
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
+                                                           │                                                            
  NORMAL  live  notes/ideas.md                                                                11 words  preview off  1:1 
 "
 `;
 
 exports[`shell at 120×36 a failed save shows its reason and retry time 1`] = `
-" ideas.md ●                                                                                                     ~/notes 
+"▎ ideas.md ●                                                                                                    ~/notes 
    1 ▕# Ideasx                                                                                                          
    1                                                                                                                    
    2  A terminal editor for notes.                                                                                      
    3  • keep files plain                                                                                                
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                               save failed: EACCES 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                    save failed: EACCES 
  NORMAL  live  notes/ideas.md ●  ✗ save failed: EACCES · retry in 1s                         11 words  preview off  1:8 
 "
 `;
 
 exports[`shell at 120×36 info and error toasts stack at the top right 1`] = `
-" ideas.md ●                                                                                                     ~/notes 
+"▎ ideas.md ●                                                                                                    ~/notes 
    1 ▕# Ideasy                                                                 ╭──────────────────────────────────────╮ 
    1                                                                           │ ✗ Move to Trash failed: permission   │ 
    2  A terminal editor for notes.                                             │ denied                               │ 
    3  • keep files plain                                                       ╰──────────────────────────────────────╯ 
-    ~                                                                          ╭──────────────────────────────────────╮ 
-    ~                                                                          │ ✓ Kept your version — saved          │ 
-    ~                                                                          ╰──────────────────────────────────────╯ 
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                               ╭──────────────────────────────────────╮ 
+                                                                               │ ✓ Kept your version — saved          │ 
+                                                                               ╰──────────────────────────────────────╯ 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  live  notes/ideas.md ●                                                              11 words  preview off  1:8 
 "
 `;
 
 exports[`shell at 120×36 a code file shows the source view and no word count 1`] = `
-" sync.ts                                                                                                        ~/notes 
+"▎ sync.ts                                                                                                       ~/notes 
    1  import { readFile } from "node:fs/promises";                                                                      
    1                                                                                                                    
    2  export async function sync(dir: string): Promise<number> {                                                        
    3          const text = await readFile(dir, "utf8"); // whole file                                                   
    4          return text.length;                                                                                       
    5  }                                                                                                                 
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  source  scripts/sync.ts                                                                       preview off  1:1 
 "
 `;
@@ -303,169 +269,169 @@ exports[`shell at 80×24 startup shows the explorer focused and an empty window 
 `;
 
 exports[`shell at 80×24 explorer hidden with a note open 1`] = `
-" ideas.md                                                                       
+"▎ ideas.md                                                                      
    1 ▕# Ideas                                                                   
    1                                                                            
    2  A terminal editor for notes.                                              
    3  • keep files plain                                                        
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
  NORMAL  notes/ideas.md                                                     1:1 
 "
 `;
 
 exports[`shell at 80×24 a vertical split shows winbars and a separator 1`] = `
-" ideas.md                                                                       
+"▎ ideas.md                                                                      
  notes/ideas.md                        │ notes/ideas.md                         
    1 ▕# Ideas                          │   1 ▕# Ideas                           
    1                                   │   1                                    
    2  A terminal editor for notes.     │   2  A terminal editor for notes.      
    3  • keep files plain               │   3  • keep files plain                
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
-    ~                                  │    ~                                   
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
+                                       │                                        
  NORMAL  notes/ideas.md                                                     1:1 
 "
 `;
 
 exports[`shell at 80×24 a failed save shows its reason and retry time 1`] = `
-" ideas.md ●                                                                     
+"▎ ideas.md ●                                                                    
    1 ▕# Ideasx                                                                  
    1                                                                            
    2  A terminal editor for notes.                                              
    3  • keep files plain                                                        
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                       save failed: EACCES 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                            save failed: EACCES 
  NORMAL  notes/ideas.md ●  ✗ save failed: EACCES · retry in 1s              1:8 
 "
 `;
 
 exports[`shell at 80×24 info and error toasts stack at the top right 1`] = `
-" ideas.md ●                                                                     
+"▎ ideas.md ●                                                                    
    1 ▕# Ideasy                         ╭──────────────────────────────────────╮ 
    1                                   │ ✗ Move to Trash failed: permission   │ 
    2  A terminal editor for notes.     │ denied                               │ 
    3  • keep files plain               ╰──────────────────────────────────────╯ 
-    ~                                  ╭──────────────────────────────────────╮ 
-    ~                                  │ ✓ Kept your version — saved          │ 
-    ~                                  ╰──────────────────────────────────────╯ 
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
+                                       ╭──────────────────────────────────────╮ 
+                                       │ ✓ Kept your version — saved          │ 
+                                       ╰──────────────────────────────────────╯ 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
  NORMAL  notes/ideas.md ●                                                   1:8 
 "
 `;
 
 exports[`shell at 80×24 a code file shows the source view and no word count 1`] = `
-" sync.ts                                                                        
+"▎ sync.ts                                                                       
    1  import { readFile } from "node:fs/promises";                              
    1                                                                            
    2  export async function sync(dir: string): Promise<number> {                
    3          const text = await readFile(dir, "utf8"); // whole file           
    4          return text.length;                                               
    5  }                                                                         
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
-    ~                                                                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
  NORMAL  scripts/sync.ts                                                    1:1 
 "
 `;
 
 exports[`on a narrow terminal the explorer floats on its configured edge 1`] = `
 "                                                                                
-    ~                                           ╭──────────────────────────────╮
-    ~                                           │ NOTES  ~/notes               │
-    ~                                           │  notes                      │
-    ~                                           │  scripts                    │
-    ~                                           │  config.yaml                │
-    ~                                           │  todo.md                    │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           │                              │
-    ~                                           ╰──────────────────────────────╯
+                                                ╭──────────────────────────────╮
+                                                │ NOTES  ~/notes               │
+                                                │  notes                      │
+                                                │  scripts                    │
+                                                │  config.yaml                │
+                                                │  todo.md                    │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                │                              │
+                                                ╰──────────────────────────────╯
  EXPLORER  [No Name]                                                            
 "
 `;
@@ -473,13 +439,13 @@ exports[`on a narrow terminal the explorer floats on its configured edge 1`] = `
 exports[`themes dark: badges, selection, cursorline, dirty marker, error toast 1`] = `
 {
   "cursorline": {
-    "attrs": 0,
+    "attrs": 1,
     "bg": "35,36,51,255",
     "fg": "122,162,247,255",
   },
   "dirtyMarker": {
     "attrs": 0,
-    "bg": "22,22,30,255",
+    "bg": "26,27,38,255",
     "fg": "224,175,104,255",
   },
   "errorToast": {
@@ -508,13 +474,13 @@ exports[`themes dark: badges, selection, cursorline, dirty marker, error toast 1
 exports[`themes light: badges, selection, cursorline, dirty marker, error toast 1`] = `
 {
   "cursorline": {
-    "attrs": 0,
+    "attrs": 1,
     "bg": "213,215,225,255",
     "fg": "46,125,233,255",
   },
   "dirtyMarker": {
     "attrs": 0,
-    "bg": "208,213,227,255",
+    "bg": "225,226,231,255",
     "fg": "140,108,62,255",
   },
   "errorToast": {
@@ -543,7 +509,7 @@ exports[`themes light: badges, selection, cursorline, dirty marker, error toast 
 exports[`themes nocolor: badges, selection, cursorline, dirty marker, error toast 1`] = `
 {
   "cursorline": {
-    "attrs": 0,
+    "attrs": 9,
     "bg": "default",
     "fg": "default",
   },
@@ -576,47 +542,47 @@ exports[`themes nocolor: badges, selection, cursorline, dirty marker, error toas
 `;
 
 exports[`index and panels at 120×36 indexing progress shows in the statusline 1`] = `
-" ideas.md                                                                                                       ~/notes 
+"▎ ideas.md                                                                                                      ~/notes 
    1 ▕# Ideas                                                                                                           
    1                                                                                                                    
    2  A terminal editor for notes.                                                                                      
    3  • keep files plain                                                                                                
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  live  notes/ideas.md                                       11 words  preview off  ◌ indexing 4,210/10,000  1:1 
 "
 `;
 
 exports[`index and panels at 120×36 the index-ready toast and the statusline segments 1`] = `
-" plan.md                                                                                                        ~/notes 
+"▎ plan.md                                                                                                       ~/notes 
    1 ▕# Plan                                                                   ╭──────────────────────────────────────╮ 
    1                                                                           │ ✓ index ready                        │ 
    2  Why this exists.                                                         ╰──────────────────────────────────────╯ 
@@ -628,35 +594,35 @@ exports[`index and panels at 120×36 the index-ready toast and the statusline se
    8  ▊ Risks                                                                                                           
    9                                                                                                                    
   10  Scope.                                                                                                            
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
 
 exports[`index and panels at 120×36 the outline panel marks the current heading 1`] = `
-" plan.md                                                                                                        ~/notes 
+"▎ plan.md                                                                                                       ~/notes 
    4  █ Plan                                                                       │ OUTLINE                            
    3                                                                               │   Plan                             
    2  Why this exists.                                                             │   ▸ Goals                          
@@ -668,35 +634,35 @@ exports[`index and panels at 120×36 the outline panel marks the current heading
    4  ▊ Risks                                                                      │                                    
    5                                                                               │                                    
    6  Scope.                                                                       │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │ ⏎ jump · q close                   
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │ ⏎ jump · q close                   
  NORMAL  live  notes/plan.md                        jump 2/2  ← 31 backlinks  14 words  preview off  ◆ index ready  5:1 
 "
 `;
 
 exports[`index and panels at 120×36 with the explorer on the right, the backlinks panel docks left 1`] = `
-" plan.md                                                                                                        ~/notes 
+"▎ plan.md                                                                                                       ~/notes 
  BACKLINKS · plan                   │   1 ▕# Plan                                        │ NOTES  ~/notes               
 ▾ Linked mentions (31)              │   1                                                │  notes                      
  ◇ log/day-01:3                     │   2  Why this exists.                              │  scripts                    
@@ -708,75 +674,75 @@ exports[`index and panels at 120×36 with the explorer on the right, the backlin
  ◇ log/day-02:3                     │   8  ▊ Risks                                       │                              
    - [[plan]] today                 │   9                                                │                              
  ◇ log/day-02:4                     │  10  Scope.                                        │                              
-   - [[plan#Goals]] today           │    ~                                               │                              
- ◇ log/day-02:5                     │    ~                                               │                              
-   - [[plan|the plan]] today        │    ~                                               │                              
- ◇ log/day-03:3                     │    ~                                               │                              
-   - [[plan]] today                 │    ~                                               │                              
- ◇ log/day-03:4                     │    ~                                               │                              
-   - [[plan#Goals]] today           │    ~                                               │                              
- ◇ log/day-03:5                     │    ~                                               │                              
-   - [[plan|the plan]] today        │    ~                                               │                              
- ◇ log/day-04:3                     │    ~                                               │                              
-   - [[plan]] today                 │    ~                                               │                              
- ◇ log/day-04:4                     │    ~                                               │                              
-   - [[plan#Goals]] today           │    ~                                               │                              
- ◇ log/day-04:5                     │    ~                                               │                              
-   - [[plan|the plan]] today        │    ~                                               │                              
- ◇ log/day-05:3                     │    ~                                               │                              
-   - [[plan]] today                 │    ~                                               │                              
- ◇ log/day-05:4                     │    ~                                               │                              
-   - [[plan#Goals]] today           │    ~                                               │                              
- ◇ log/day-05:5                     │    ~                                               │                              
-   - [[plan|the plan]] today        │    ~                                               │                              
- j/k move · ⏎ open · l link it      │    ~                                               │                              
- C-w l back to the editor           │    ~                                               │                              
+   - [[plan#Goals]] today           │                                                    │                              
+ ◇ log/day-02:5                     │                                                    │                              
+   - [[plan|the plan]] today        │                                                    │                              
+ ◇ log/day-03:3                     │                                                    │                              
+   - [[plan]] today                 │                                                    │                              
+ ◇ log/day-03:4                     │                                                    │                              
+   - [[plan#Goals]] today           │                                                    │                              
+ ◇ log/day-03:5                     │                                                    │                              
+   - [[plan|the plan]] today        │                                                    │                              
+ ◇ log/day-04:3                     │                                                    │                              
+   - [[plan]] today                 │                                                    │                              
+ ◇ log/day-04:4                     │                                                    │                              
+   - [[plan#Goals]] today           │                                                    │                              
+ ◇ log/day-04:5                     │                                                    │                              
+   - [[plan|the plan]] today        │                                                    │                              
+ ◇ log/day-05:3                     │                                                    │                              
+   - [[plan]] today                 │                                                    │                              
+ ◇ log/day-05:4                     │                                                    │                              
+   - [[plan#Goals]] today           │                                                    │                              
+ ◇ log/day-05:5                     │                                                    │                              
+   - [[plan|the plan]] today        │                                                    │                              
+ j/k move · ⏎ open · l link it      │                                                    │                              
+ C-w l back to the editor           │                                                    │                              
  NORMAL  live  notes/plan.md                                  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
 
 exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlinked mentions 1`] = `
-" ideas.md  so-roadmap.md                                                                                        ~/notes 
+"  ideas.md ▎ so-roadmap.md                                                                                      ~/notes 
    1 ▕# So roadmap                                                                 │ BACKLINKS · so-roadmap             
-    ~                                                                              │▾ Linked mentions (0)               
-    ~                                                                              │ No backlinks                       
-    ~                                                                              │                                    
-    ~                                                                              │▾ Unlinked mentions (1)             
-    ~                                                                              │ ◇ notes/ideas:3                    
-    ~                                                                              │   …The so roadmap is next.         
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │                                    
-    ~                                                                              │ j/k move · ⏎ open · l link it      
-    ~                                                                              │ C-w h back to the editor           
+                                                                                   │▾ Linked mentions (0)               
+                                                                                   │ No backlinks                       
+                                                                                   │                                    
+                                                                                   │▾ Unlinked mentions (1)             
+                                                                                   │ ◇ notes/ideas:3                    
+                                                                                   │   …The so roadmap is next.         
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │                                    
+                                                                                   │ j/k move · ⏎ open · l link it      
+                                                                                   │ C-w h back to the editor           
  NORMAL  live  projects/so-roadmap.md                 jump 2/2  ← 0 backlinks  3 words  preview off  ◆ index ready  1:1 
 "
 `;
 
 exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlinked mentions 2`] = `
-" ideas.md  so-roadmap.md  plan.md                                                                               ~/notes 
+"  ideas.md │ so-roadmap.md ▎ plan.md                                                                            ~/notes 
    1 ▕# Plan                                                                       │ BACKLINKS · plan                   
    1                                                                               │▾ Linked mentions (31)              
    2  Why this exists.                                                             │ ◇ log/day-01:3                     
@@ -788,69 +754,103 @@ exports[`index and panels at 120×36 the backlinks panel shows Linked then Unlin
    8  ▊ Risks                                                                      │ ◇ log/day-02:3                     
    9                                                                               │   - [[plan]] today                 
   10  Scope.                                                                       │ ◇ log/day-02:4                     
-    ~                                                                              │   - [[plan#Goals]] today           
-    ~                                                                              │ ◇ log/day-02:5                     
-    ~                                                                              │   - [[plan|the plan]] today        
-    ~                                                                              │ ◇ log/day-03:3                     
-    ~                                                                              │   - [[plan]] today                 
-    ~                                                                              │ ◇ log/day-03:4                     
-    ~                                                                              │   - [[plan#Goals]] today           
-    ~                                                                              │ ◇ log/day-03:5                     
-    ~                                                                              │   - [[plan|the plan]] today        
-    ~                                                                              │ ◇ log/day-04:3                     
-    ~                                                                              │   - [[plan]] today                 
-    ~                                                                              │ ◇ log/day-04:4                     
-    ~                                                                              │   - [[plan#Goals]] today           
-    ~                                                                              │ ◇ log/day-04:5                     
-    ~                                                                              │   - [[plan|the plan]] today        
-    ~                                                                              │ ◇ log/day-05:3                     
-    ~                                                                              │   - [[plan]] today                 
-    ~                                                                              │ ◇ log/day-05:4                     
-    ~                                                                              │   - [[plan#Goals]] today           
-    ~                                                                              │ ◇ log/day-05:5                     
-    ~                                                                              │   - [[plan|the plan]] today        
-    ~                                                                              │ j/k move · ⏎ open · l link it      
-    ~                                                                              │ C-w h back to the editor           
+                                                                                   │   - [[plan#Goals]] today           
+                                                                                   │ ◇ log/day-02:5                     
+                                                                                   │   - [[plan|the plan]] today        
+                                                                                   │ ◇ log/day-03:3                     
+                                                                                   │   - [[plan]] today                 
+                                                                                   │ ◇ log/day-03:4                     
+                                                                                   │   - [[plan#Goals]] today           
+                                                                                   │ ◇ log/day-03:5                     
+                                                                                   │   - [[plan|the plan]] today        
+                                                                                   │ ◇ log/day-04:3                     
+                                                                                   │   - [[plan]] today                 
+                                                                                   │ ◇ log/day-04:4                     
+                                                                                   │   - [[plan#Goals]] today           
+                                                                                   │ ◇ log/day-04:5                     
+                                                                                   │   - [[plan|the plan]] today        
+                                                                                   │ ◇ log/day-05:3                     
+                                                                                   │   - [[plan]] today                 
+                                                                                   │ ◇ log/day-05:4                     
+                                                                                   │   - [[plan#Goals]] today           
+                                                                                   │ ◇ log/day-05:5                     
+                                                                                   │   - [[plan|the plan]] today        
+                                                                                   │ j/k move · ⏎ open · l link it      
+                                                                                   │ C-w h back to the editor           
  NORMAL  live  notes/plan.md                        jump 3/3  ← 31 backlinks  14 words  preview off  ◆ index ready  1:1 
 "
 `;
 
 exports[`index and panels at 120×36 a code file shows source, path, preview, index, and position only 1`] = `
-" sync.ts                                                                                                        ~/notes 
+"▎ sync.ts                                                                                                       ~/notes 
    1  import { readFile } from "node:fs/promises";                                                                      
    1                                                                                                                    
    2  export async function sync(dir: string): Promise<number> {                                                        
    3          const text = await readFile(dir, "utf8"); // whole file                                                   
    4          return text.length;                                                                                       
    5  }                                                                                                                 
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
-    ~                                                                                                                   
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
  NORMAL  source  scripts/sync.ts                                                        preview off  ◆ index ready  1:1 
+"
+`;
+
+exports[`the settings picker moves the explorer to the other edge at once 1`] = `
+"▎ ideas.md                                                                                                      ~/notes 
+ NOTES  ~/notes               │   1 ▕# Ideas                                                                            
+  notes                      │   1                                                                                     
+  scripts  ╭─ Settings ───────────────────────────────────────────────────────────────────────────────────╮            
+  config.ya│ ❯                                                22/22 │ explorer.position                   │            
+  todo.md  │ ────────────────────────────────────────────────────── │                                     │            
+            │ ▸ explorer.position                               left │ The edge the explorer docks on;     │            
+            │   explorer.icons                                  nerd │ the side panel takes the other.     │            
+            │   explorer.dotfiles                                off │                                     │            
+            │   explorer.gitignored                               on │ left · right                        │            
+            │   theme                                           dark │                                     │            
+            │   color                                           auto │ Enter: next choice                  │            
+            │   mouse                                             on │ Saved to config.toml                │            
+            │   editor.wrap                                       on │                                     │            
+            │   editor.relativeNumbers                            on │                                     │            
+            │   preview.mode                                    live │                                     │            
+            │   preview.images                                  auto │                                     │            
+            │   autosave.enabled                                  on │                                     │            
+            │   autosave.delayMs                                1000 │                                     │            
+            │   editor.tabWidth                                    8 │                                     │            
+            │   editor.keyTimeout                               1000 │                                     │            
+            │   explorer.width                                    30 │                                     │            
+            │   preview.embedMaxRows                              10 │                                     │            
+            ╰─ C-j/C-k move · Enter change · Esc close ────────────────────────────────────────────────────╯            
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+                              │                                                                                         
+ EXPLORER  live  notes/ideas.md                                                              11 words  preview off  1:1 
 "
 `;

@@ -9,6 +9,11 @@ import type { ToolHost } from "../../src/app/tool-host";
 import { parseConfig } from "../../src/core/config/toml";
 import { splitKeys } from "../../src/core/kernel/vim/keys";
 import { fullText } from "../../src/core/state/buffers";
+import {
+  dirname as folderOf,
+  isListed,
+  listDirEffect,
+} from "../../src/core/state/explorer";
 import { initialState } from "../../src/core/state/init";
 import { parsePersisted, snapshotSession } from "../../src/core/state/session";
 import { createStore, type Store } from "../../src/core/state/store";
@@ -22,6 +27,10 @@ import {
   readStateFile,
   saveStateFileSync,
 } from "../../src/workspace/state-file";
+import {
+  type FileClipboard,
+  noFileClipboard,
+} from "../../src/workspace/system";
 import type { Trash } from "../../src/workspace/trash";
 import { createOwnOps, watchWorkspace } from "../../src/workspace/watcher";
 import { editingNotes, testRegistries } from "../support/state";
@@ -109,6 +118,8 @@ export async function startApp(
   root: string,
   opts: {
     trash?: Trash;
+    /** The system file clipboard; none by default. */
+    fileClipboard?: FileClipboard;
     /** Run the real index host and worker; `spawn` may wrap the worker. */
     index?: { spawn?: () => Worker };
     /** The environment the debug log reads (`SO_LOG`, `XDG_STATE_HOME`). */
@@ -179,6 +190,7 @@ export async function startApp(
       move: () => Promise.reject(new Error("no trash")),
     },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: opts.fileClipboard ?? noFileClipboard,
     dispatch: (a) => store.dispatch(a),
     exit: () => saveSession(),
     logger,
@@ -200,6 +212,7 @@ export async function startApp(
           index: {
             search: (e) => index?.search(e),
             notify: (e) => index?.notify(e),
+            moved: (from, to) => index?.moved(from, to),
           },
         }),
   });
@@ -235,8 +248,21 @@ export async function startApp(
           logger,
           ...opts.index,
         });
-  const stopWatch = watchWorkspace(root, ownOps, matcher, (event) => {
-    store.dispatch({ type: "fileChanged", event });
+  const excluded = (rel: string) => {
+    const s = store.get();
+    if (matcher.isExcludedPath(rel, s.config.explorer)) return true;
+    return (
+      matcher.isExcludedPath(rel, { dotfiles: true }) &&
+      !isListed(s, folderOf(rel))
+    );
+  };
+  const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
+    const explorerOnly = matcher.isExcludedPath(event.path);
+    store.dispatch({
+      type: "fileChanged",
+      event: explorerOnly ? { ...event, explorerOnly: true } : event,
+    });
+    if (explorerOnly) return;
     index?.notify(event);
     lsp?.notify(event);
   });
@@ -258,7 +284,7 @@ export async function startApp(
       state: parsePersisted(readStateFile(opts.state.path)),
       restore: opts.state.restore,
     });
-  runner.run({ kind: "listDir", dir: "" });
+  runner.run(listDirEffect(store.get(), ""));
   // Without a worker, an empty index is ready, so renames are not refused.
   if (index === undefined) store.dispatch({ type: "indexReady" });
   else index.start(root, []);

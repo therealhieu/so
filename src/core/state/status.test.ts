@@ -7,9 +7,10 @@ import {
 } from "../../../test/support/state";
 import { normalizeIndexText } from "../features/git/index-text";
 import { summarize } from "../features/links/summarize";
+import { splitKeys } from "../kernel/vim/keys";
 import { scanDoc } from "../lang/markdown/scan";
 import type { ServerView } from "./lsp-types";
-import { statusSegments } from "./status";
+import { SEARCH_COUNT_CAP, statusSegments } from "./status";
 import type { Action, AppState, RepoInfo } from "./types";
 import { createUpdate } from "./update";
 
@@ -319,4 +320,64 @@ test("git segment shows a detached head by short sha and the operation in progre
     changed: 0,
     removed: 0,
   });
+});
+
+const keys = (s: AppState, seq: string) =>
+  splitKeys(seq).reduce(
+    (st, key) => update(st, { type: "key", key, now: 0 }).state,
+    s,
+  );
+
+test("status counts the last search's matches up to the cursor", () => {
+  const s = open("a.md", "cat cat\nno\ncat\n");
+  expect(statusSegments(s).search).toBeUndefined();
+  const found = keys(s, "/cat<CR>");
+  expect(statusSegments(found).search).toEqual({
+    current: 2,
+    total: 3,
+    capped: false,
+  });
+  expect(statusSegments(keys(found, "n")).search?.current).toBe(3);
+  expect(statusSegments(keys(found, "j")).search?.current).toBe(2);
+  expect(statusSegments(keys(s, "/dog<CR>")).search).toBeUndefined();
+});
+
+test("the search count follows edits", () => {
+  const found = keys(open("a.md", "cat\n"), "/cat<CR>");
+  expect(statusSegments(found).search?.total).toBe(1);
+  expect(statusSegments(keys(found, "yyp")).search?.total).toBe(2);
+});
+
+test("the search count stops past the cap", () => {
+  const many = "x\n".repeat(SEARCH_COUNT_CAP + 50);
+  const found = keys(open("a.md", many), "/x<CR>");
+  expect(statusSegments(found).search).toEqual({
+    current: 2,
+    total: SEARCH_COUNT_CAP + 1,
+    capped: true,
+  });
+  expect(statusSegments(keys(found, "G")).search?.current).toBe(
+    SEARCH_COUNT_CAP + 1,
+  );
+});
+
+test("<Esc> and :noh hide the search count until the next n", () => {
+  const found = keys(open("a.md", "cat\ncat\n"), "/cat<CR>");
+  for (const clear of ["<Esc>", ":noh<CR>", ":nohlsearch<CR>"]) {
+    const cleared = keys(found, clear);
+    expect(cleared.vim.search).toEqual({
+      pattern: "cat",
+      dir: 1,
+      hidden: true,
+    });
+    expect(statusSegments(cleared).search).toBeUndefined();
+    const again = keys(cleared, "n");
+    expect(again.vim.search?.hidden).toBeUndefined();
+    expect(statusSegments(again).search?.current).toBe(1);
+  }
+});
+
+test("<Esc> after a pending operator cancels it without hiding the search", () => {
+  const found = keys(open("a.md", "cat\ncat\n"), "/cat<CR>");
+  expect(keys(found, "d<Esc>").vim.search?.hidden).toBeUndefined();
 });

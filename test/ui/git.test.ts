@@ -609,10 +609,14 @@ async function treeRows(x: Mounted): Promise<string[]> {
     .filter((r) => r !== "");
 }
 
-const rowEnding = (rows: readonly string[], end: string) =>
-  rows.find((r) => r.split("│")[0]?.trimEnd().endsWith(end));
+/** A tree row's text, with the gap before its right-aligned marker closed up. */
+const treeText = (r: string) =>
+  (r.split("│")[0] ?? "").trimEnd().replace(/ {2,}/g, " ");
 
-test("explorer rows show git markers after the name", async () => {
+const rowEnding = (rows: readonly string[], end: string) =>
+  rows.find((r) => treeText(r).endsWith(end));
+
+test("explorer rows colour names by git state and right-align the marker", async () => {
   m = await markerTree({ cols: 120, rows: 36 });
   let rows = await treeRows(m);
   for (const end of [
@@ -621,40 +625,66 @@ test("explorer rows show git markers after the name", async () => {
     "ideas.md ?",
     "kanban.md ?",
     "linh.md U",
-    "daily •",
-    "people •",
-    "projects •",
-    "ideas •",
   ])
     expect(rowEnding(rows, end)).toBeDefined();
-  for (const plain of ["2026-10-01.md", "garden-app.md"])
+  // Open folders leave their markers to the rows below them.
+  for (const plain of [
+    "2026-10-01.md",
+    "garden-app.md",
+    "daily",
+    "people",
+    "projects",
+    "ideas",
+  ])
     expect(rowEnding(rows, plain)).toBeDefined();
   expect(rows.join("\n")).not.toContain("2026-10-03.md");
-  expect(rows.some((r) => r.split("│")[0]?.trimEnd().endsWith(" D"))).toBe(
-    false,
-  );
 
-  // The selected row paints its marker in the row's own style.
   const frame = (await rowsOf(m)).map((r) => [...r]);
   const spans = m.t.captureSpans().lines;
-  const cellOf = (text: string) => {
-    const y = frame.findIndex((r) => r.join("").includes(text));
-    return { x: (frame[y] ?? []).join("").indexOf(text) + text.length - 1, y };
+  // Tree rows start below the bufferline and the explorer title.
+  const y = (name: string) =>
+    frame.findIndex(
+      (r, i) => i >= 2 && treeText(r.join("")).includes(` ${name}`),
+    );
+  /** The first cell of `name` and of the marker after it. */
+  const cells = (name: string) => {
+    const row = frame[y(name)] ?? [];
+    const at = row.join("").indexOf(` ${name}`) + 1;
+    let glyph = at + [...name].length;
+    while (row[glyph] === " " || row[glyph] === "●") glyph++;
+    return { name: { x: at, y: y(name) }, glyph: { x: glyph, y: y(name) } };
   };
-  const u = cellOf("linh.md U");
-  expect(cellStyle(spans, u.x, u.y)).toEqual(
-    styleOf(themes.dark, "treeSelFocus"),
+  const style = (c: { x: number; y: number }) => cellStyle(spans, c.x, c.y);
+  const roadmap = cells("so-roadmap.md");
+  expect(frame[roadmap.glyph.y]?.[roadmap.glyph.x]).toBe("M");
+  // The marker sits in the column before the panel's right edge.
+  const staged = cells("2026-10-02.md");
+  expect(staged.glyph.x).toBe(roadmap.glyph.x);
+  for (const [name, token] of [
+    ["so-roadmap.md", "explorerGitModified"],
+    ["2026-10-02.md", "explorerGitStaged"],
+    ["ideas.md", "explorerGitUntracked"],
+  ] as const) {
+    expect(style(cells(name).name)).toEqual(styleOf(themes.dark, token));
+    expect(style(cells(name).glyph)).toEqual(styleOf(themes.dark, token));
+  }
+  // A folder takes the strongest state below it; a deleted file reads modified.
+  for (const [name, token] of [
+    ["daily", "explorerGitModified"],
+    ["projects", "explorerGitUntracked"],
+  ] as const)
+    expect(style(cells(name).name)).toEqual(styleOf(themes.dark, token));
+  expect(style(cells("2026-10-01.md").name)).toEqual(
+    styleOf(themes.dark, "explorer"),
   );
-  const mod = cellOf("so-roadmap.md ● M");
-  expect(cellStyle(spans, mod.x, mod.y)).toEqual(
-    styleOf(themes.dark, "explorerGitModified"),
-  );
-  const s = cellOf("2026-10-02.md S");
-  expect(cellStyle(spans, s.x, s.y)).toEqual(
-    styleOf(themes.dark, "explorerGitStaged"),
-  );
+  // The selected row keeps its name's and marker's colour on the selection background.
+  const linh = cells("linh.md");
+  const conflict = styleOf(themes.dark, "explorerGitConflict");
+  const selected = { ...conflict, bg: styleOf(themes.dark, "treeSelFocus").bg };
+  expect(style(linh.name)).toEqual(selected);
+  expect(style(linh.glyph)).toEqual(selected);
 
-  // A collapsed new folder shows only its own mark.
+  // A collapsed folder shows its marker.
   m.keys("k");
   for (
     let i = 0;
@@ -666,7 +696,7 @@ test("explorer rows show git markers after the name", async () => {
   }
   m.keys("h");
   rows = await treeRows(m);
-  expect(rowEnding(rows, "ideas •")).toBeDefined();
+  expect(rowEnding(rows, "ideas ?")).toBeDefined();
   expect(rows.join("\n")).not.toContain("ideas.md");
 });
 
@@ -683,7 +713,6 @@ test("the floating explorer shows the same markers, also without colour", async 
       "so-roadmap.md ● M",
       "ideas.md ?",
       "linh.md U",
-      "daily •",
     ])
       expect(rowEnding(rows, end)).toBeDefined();
   }
@@ -698,7 +727,7 @@ test("outside a repository the explorer and statusline show no git state", async
   m.open("notes/plan.md", textOf(COUNT_BUFFER));
   const frame = await m.frame();
   expect(frame).not.toContain("⎇");
-  expect(frame).not.toMatch(/ [MSU?•]\s*│/);
+  expect(frame).not.toMatch(/ [MSU?]\s*│/);
 });
 
 test("warnings and errors use their own message styles", async () => {
@@ -1042,7 +1071,8 @@ test("staging updates gutter, statusline, and explorer together", async () => {
         .slice(2)
         .find((r) => r.includes("so-roadmap.md"))
         ?.split("│")[0]
-        ?.trim(),
+        ?.trim()
+        .replace(/ {2,}/g, " "),
       message: await x.message(),
     };
   };

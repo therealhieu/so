@@ -5,14 +5,26 @@ import type {
 } from "../filetypes/registry";
 import type { Binding } from "../kernel/commands/defaults";
 import type { CommandRegistry } from "../kernel/commands/registry";
+import { onBaseScrolled } from "./base-commands";
 import { onFrontmatterPatched } from "./base-write";
-import { fullText, onFileLoaded, onFileRefused } from "./buffers";
+import {
+  fullText,
+  onFileLoaded,
+  onFileRefused,
+  syncBufferLists,
+} from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { onConfigLoaded } from "./config";
 import { onFileChanged } from "./disk";
 import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
-import { onDirListed, onFsResult, withTrash } from "./explorer";
+import {
+  onCopyProgress,
+  onDirListed,
+  onFileClip,
+  onFsResult,
+  withTrash,
+} from "./explorer";
 import {
   onGitBlamed,
   onGitDetected,
@@ -31,7 +43,8 @@ import {
   onIndexReady,
   onPropertyTypesLoaded,
 } from "./index";
-import { handleKeyAction, onClipboardText } from "./keys";
+import { onBindingsFailed } from "./keymap-edit";
+import { handleKeyAction, onClipboardText, onKeyTimeout } from "./keys";
 import { onEditsApplied } from "./link-edits";
 import {
   onLspApplyEdit,
@@ -60,7 +73,7 @@ import {
   onPreviewStarted,
   onPreviewStopped,
 } from "./preview";
-import { clearMessage, none, notifyError } from "./result";
+import { clearMessage, message, none, notifyError } from "./result";
 import { onSaved, onSaveFailed, onTimer } from "./save";
 import {
   onStateLoaded,
@@ -148,8 +161,8 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
  * A pure reducer over the given registries; a thrown error keeps the
  * previous state. A change to the persisted session (re)starts the save
  * debounce, the backlinks panel follows the active note, notes' embed
- * targets stay loaded while they are embedded, and each window's editor
- * kind follows its file type.
+ * targets stay loaded while they are embedded, the buffer lists follow the
+ * buffers, and each window's editor kind follows its file type.
  */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
@@ -169,6 +182,16 @@ export function createUpdate(reg: Registries): Update {
         return onDirListed(state, action);
       case "fsResult":
         return onFsResult(state, action, reg);
+      case "fileClip":
+        return onFileClip(state, action);
+      case "copyProgress":
+        return onCopyProgress(state, action);
+      case "fileClipboardFailed":
+        return message(
+          state,
+          `system clipboard unavailable: ${action.reason}`,
+          "error",
+        );
       case "trashAvailable":
         return none(withTrash(state, action.available));
       case "timer":
@@ -181,12 +204,16 @@ export function createUpdate(reg: Registries): Update {
         return onResize(state, action);
       case "zoomFill":
         return onZoomFill(state, action);
+      case "baseScrolled":
+        return onBaseScrolled(state, action);
       case "mouse":
         return onMouse(state, action, reg);
       case "configLoaded":
         return onConfigLoaded(state, action, reg);
       case "settingFailed":
         return onSettingFailed(state, action);
+      case "bindingsFailed":
+        return onBindingsFailed(state, action);
       case "indexBatch":
         return onIndexBatch(state, action);
       case "indexReady":
@@ -266,7 +293,10 @@ export function createUpdate(reg: Registries): Update {
                   state,
                   followShownNote(
                     state,
-                    syncEditorKinds(step(state, action), reg),
+                    syncEditorKinds(
+                      syncBufferLists(state, step(state, action)),
+                      reg,
+                    ),
                   ),
                   reg,
                 ),
@@ -322,13 +352,14 @@ function withGitDiffTimers(prev: AppState, r: Result): Result {
     : { state: r.state, effects: [...r.effects, ...timers] };
 }
 
-/** A timer fired: which-key, grep, the session save, git, or a buffer or toast timer. */
+/** A timer fired: which-key, a held Insert-mode key, grep, the session save, git, or a buffer or toast timer. */
 function onTimerAction(
   s: AppState,
   a: Extract<Action, { type: "timer" }>,
   reg: Registries,
 ): Result {
   if (a.id === "whichKey") return onWhichKeyTimer(s, reg);
+  if (a.id === "keyTimeout") return onKeyTimeout(s, a.now, reg);
   if (a.id === "search") return onSearchTimer(s);
   if (a.id === "saveState")
     return {

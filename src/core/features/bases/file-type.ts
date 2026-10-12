@@ -2,7 +2,7 @@ import type { EditorKindSpec, FileType } from "../../filetypes/registry";
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
 import { parseBase } from "./parser";
 import type { PropertyType } from "./property-types";
-import type { BaseSort } from "./types";
+import type { BasePin, BaseSort } from "./types";
 
 /** A cell being edited: the text typed so far and the value the note held when editing began. */
 export type CellEdit = {
@@ -22,8 +22,9 @@ export type CellEdit = {
 
 /**
  * What one base window remembers beyond the file: the selected view, the
- * window's own sort, grouping, and filter overrides (never written to the
- * file), the focused row or card, the first column shown, and an open cell edit.
+ * window's own sort, grouping, and filter overrides, text filter, and pins
+ * (never written to the file), the focused row or card, the first column
+ * shown, and an open filter input or cell edit.
  */
 export type BaseWindowState = {
   view: string;
@@ -39,8 +40,16 @@ export type BaseWindowState = {
    * when the note leaves the view.
    */
   focus: { path?: string; column: number; index?: number };
-  /** The first table column shown. */
+  /** Table columns scrolled off after the pinned first column. */
   scroll: { col: number };
+  /** Table column widths in cells by column id, set by resizing in this window. */
+  widths?: Record<string, number>;
+  /** Keeps rows with a cell containing this text, ignoring case. */
+  query?: string;
+  /** Keeps rows whose property holds the pinned values. */
+  pins?: BasePin[];
+  /** The open filter input; `query` follows its text while it is open. */
+  search?: { value: string; caret: number };
   edit?: CellEdit;
 };
 

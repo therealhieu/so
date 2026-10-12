@@ -1,18 +1,20 @@
-import { buffersUnder, openPath, removeBuffer } from "./buffers";
+import { bufferForPath, buffersUnder, openPath, removeBuffer } from "./buffers";
 import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
 import { indexAfterFsOp } from "./index";
+import { editField, type LineField, promptField } from "./line-field";
 import {
   awaitsOp,
   beginRewrite,
   dropRewrite,
   followMove,
+  pasteMove,
   promptImpact,
   startRename,
   submitRename,
 } from "./link-edits";
 import { request } from "./lsp";
-import { submitNewNote } from "./note-commands";
+import { submitNewNote, submitNewRow } from "./note-commands";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
 import type {
@@ -21,7 +23,9 @@ import type {
   Effect,
   ExplorerPrompt,
   ExplorerState,
+  FileClip,
   FsOp,
+  MouseTarget,
   PromptState,
   Result,
 } from "./types";
@@ -35,16 +39,68 @@ export const dirname = (path: string): string => {
 const under = (path: string, root: string) =>
   path === root || path.startsWith(`${root}/`);
 
+/** Whether `path` is, or is below, an entry `x` cut and not yet pasted. */
+export const isCutPath = (s: AppState, path: string): boolean => {
+  const clip = s.panels.explorer.clip;
+  return clip?.op === "cut" && clip.paths.some((p) => under(path, p));
+};
+
 /** The root is always listed; other folders while expanded. */
-const isListed = (s: AppState, dir: string) =>
+export const isListed = (s: AppState, dir: string) =>
   dir === "" || s.panels.explorer.expanded.includes(dir);
+
+/** Whether a path has a dot-prefixed segment, which only the explorer may show. */
+const hasDotSegment = (path: string): boolean =>
+  path.split("/").some((p) => p.startsWith("."));
+
+/** Whether the tree lists `path`, or a folder above it, as gitignored. */
+export function isIgnoredPath(s: AppState, path: string): boolean {
+  const parts = path.split("/");
+  return parts.some((name, i) =>
+    s.panels.explorer.entries[parts.slice(0, i).join("/")]?.some(
+      (e) => e.name === name && e.ignored === true,
+    ),
+  );
+}
+
+/**
+ * Read one folder for the tree, with dot entries when `[explorer] dotfiles`
+ * is on and gitignored ones when `[explorer] gitignored` is.
+ */
+export const listDirEffect = (s: AppState, dir: string): Effect => {
+  const { dotfiles, gitignored } = s.config.explorer;
+  return {
+    kind: "listDir",
+    dir,
+    ...(dotfiles ? { dotfiles: true as const } : {}),
+    ...(gitignored ? { gitignored: true as const } : {}),
+  };
+};
 
 /** List again every given folder the explorer shows, once each. */
 export function relist(s: AppState, dirs: string[]): Result {
   const effects: Effect[] = [...new Set(dirs)]
     .filter((d) => isListed(s, d))
-    .map((dir) => ({ kind: "listDir", dir }));
+    .map((dir) => listDirEffect(s, dir));
   return { state: s, effects };
+}
+
+/**
+ * `[explorer] dotfiles` or `gitignored` changed: list every shown folder
+ * again. Hiding entries also collapses the hidden folders and moves a
+ * selection inside one to the top.
+ */
+export function relistShown(s: AppState): Result {
+  const ex = s.panels.explorer;
+  const { dotfiles, gitignored } = s.config.explorer;
+  const hidden = (path: string) =>
+    (!dotfiles && hasDotSegment(path)) ||
+    (!gitignored && isIgnoredPath(s, path));
+  const next = setExplorer(s, {
+    expanded: ex.expanded.filter((d) => !hidden(d)),
+    cursor: hidden(ex.cursor) ? "" : ex.cursor,
+  });
+  return relist(next, ["", ...next.panels.explorer.expanded]);
 }
 
 /** Forget the listing and expansion of a removed folder and everything below it. */
@@ -80,6 +136,21 @@ function setExplorer(s: AppState, patch: Partial<ExplorerState>): AppState {
   return {
     ...s,
     panels: { ...s.panels, explorer: { ...s.panels.explorer, ...patch } },
+  };
+}
+
+/** Track the entry under the pointer; anywhere else clears it. */
+export function hoverExplorer(s: AppState, t: MouseTarget): AppState {
+  const path = t.kind === "explorer" && t.path !== "" ? t.path : undefined;
+  const ex = s.panels.explorer;
+  if (ex.hover === path) return s;
+  const { hover: _, ...rest } = ex;
+  return {
+    ...s,
+    panels: {
+      ...s.panels,
+      explorer: path === undefined ? rest : { ...rest, hover: path },
+    },
   };
 }
 
@@ -140,6 +211,11 @@ function fsResultTree(
         )
       : message(prev, a.reason ?? "operation failed", "error");
   const s = indexAfterFsOp(prev, op);
+  if (op.kind === "copy" || op.outside === true) {
+    const to = op.to ?? op.from;
+    const done = message(s, `Pasted ${basename(to)}`).state;
+    return relist(setExplorer(done, { cursor: to }), ancestors(to));
+  }
   switch (op.kind) {
     case "rename":
     case "move": {
@@ -234,7 +310,7 @@ export function toggleExplorer(s: AppState): Result {
     { open: true, focused: true },
   );
   return ex.entries[""] === undefined
-    ? { state: opened, effects: [{ kind: "listDir", dir: "" }] }
+    ? { state: opened, effects: [listDirEffect(opened, "")] }
     : none(opened);
 }
 
@@ -301,16 +377,23 @@ function expand(s: AppState, dir: string): Result {
   if (s.panels.explorer.expanded.includes(dir)) return none(s);
   return {
     state: setExplorer(s, { expanded: [...s.panels.explorer.expanded, dir] }),
-    effects: [{ kind: "listDir", dir }],
+    effects: [listDirEffect(s, dir)],
   };
 }
 
-/** `l`: expand the selected folder, or open the selected file. */
+/**
+ * `l`: expand the selected folder, or open the selected file. The file's
+ * window takes focus: at once when it is already open, else once it is read.
+ */
 export function expandOrOpen(s: AppState, now: number): Result {
   const path = s.panels.explorer.cursor;
   const kind = kindOf(s, path);
   if (kind === "dir") return expand(s, path);
-  return kind === "file" ? openPath(s, path, now) : none(s);
+  if (kind !== "file") return none(s);
+  const r = openPath(s, path, now);
+  return bufferForPath(s, path) === undefined
+    ? r
+    : { ...r, state: setExplorer(r.state, { focused: false }) };
 }
 
 /** `Enter`: toggle the selected folder, or open the selected file. */
@@ -319,6 +402,16 @@ export function openSelected(s: AppState, now: number): Result {
   if (kindOf(s, path) === "dir" && s.panels.explorer.expanded.includes(path))
     return collapse(s);
   return expandOrOpen(s, now);
+}
+
+/** `O`: open the selected entry in the system's default app (`open`, `xdg-open`). */
+export function systemOpenSelected(s: AppState): Result {
+  const path = s.panels.explorer.cursor;
+  const root = s.workspace.root;
+  return {
+    state: s,
+    effects: [{ kind: "openUrl", url: path === "" ? root : `${root}/${path}` }],
+  };
 }
 
 /** `h`: collapse the selected folder, or select its parent. */
@@ -330,6 +423,151 @@ export function collapse(s: AppState): Result {
     );
   const parent = dirname(ex.cursor);
   return parent === "" ? none(s) : none(setExplorer(s, { cursor: parent }));
+}
+
+/** `Z`: close every folder and select the top-level entry holding the selection. */
+export function collapseAll(s: AppState): Result {
+  const top = s.panels.explorer.cursor.split("/")[0] ?? "";
+  return none(setExplorer(s, { expanded: [], cursor: top }));
+}
+
+/** The selection's absolute path, as other programs name it. */
+const absPath = (s: AppState, path: string) =>
+  path === "" ? s.workspace.root : `${s.workspace.root}/${path}`;
+
+/** The workspace path of an absolute path, or `undefined` outside the workspace. */
+function workspacePath(s: AppState, abs: string): string | undefined {
+  const root = s.workspace.root;
+  if (abs === root) return "";
+  return abs.startsWith(`${root}/`) ? abs.slice(root.length + 1) : undefined;
+}
+
+/** `y` / `x`: take the selection for a paste, in so and on the system clipboard. */
+export function takeSelected(s: AppState, op: FileClip["op"]): Result {
+  const path = s.panels.explorer.cursor;
+  if (path === "") return none(s);
+  const taken = setExplorer(s, { clip: { op, paths: [path] } });
+  const verb = op === "copy" ? "Copied" : "Cut";
+  return withEffect(message(taken, `${verb} ${basename(path)}`), {
+    kind: "fileClipboardWrite",
+    clip: { op, paths: [absPath(s, path)] },
+  });
+}
+
+/** A long paste's progress on the message line, until its result replaces it. */
+export const onCopyProgress = (
+  s: AppState,
+  a: Extract<Action, { type: "copyProgress" }>,
+): Result => message(s, `Copying ${basename(a.to)}… ${a.done}/${a.total}`);
+
+/** `p`: paste into the selected folder, or the selected file's folder. */
+export function startPaste(s: AppState): Result {
+  const at = s.panels.explorer.cursor;
+  const target = kindOf(s, at) === "dir" ? at : dirname(at);
+  return { state: s, effects: [{ kind: "fileClipboardRead", target }] };
+}
+
+/**
+ * `name`, or the first of "name copy", "name copy 2", … that is not taken;
+ * a file keeps its extension last.
+ */
+export function freeName(
+  name: string,
+  dir: boolean,
+  taken: ReadonlySet<string>,
+): string {
+  if (!taken.has(name)) return name;
+  const ext = dir ? "" : extname(name);
+  const stem = name.slice(0, name.length - ext.length);
+  for (let n = 1; ; n++) {
+    const next = `${stem} copy${n === 1 ? "" : ` ${n}`}${ext}`;
+    if (!taken.has(next)) return next;
+  }
+}
+
+/** Names in `dir` the tree lists or the index holds a path under. */
+function namesIn(s: AppState, dir: string): Set<string> {
+  const names = new Set(
+    (s.panels.explorer.entries[dir] ?? []).map((e) => e.name),
+  );
+  const prefix = dir === "" ? "" : `${dir}/`;
+  for (const f of s.index.ix.files)
+    if (f.startsWith(prefix))
+      names.add(f.slice(prefix.length).split("/")[0] ?? "");
+  return names;
+}
+
+function dropClip(s: AppState): AppState {
+  const { clip: _, ...explorer } = s.panels.explorer;
+  return { ...s, panels: { ...s.panels, explorer } };
+}
+
+const samePaths = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((p, i) => p === b[i]);
+
+/**
+ * The system clipboard answered a paste. Its files win, but when they are the
+ * ones `y`/`x` took, the explorer's copy or cut decides (Finder cannot cut);
+ * with no files there, what `y`/`x` took is pasted. Entries from the workspace
+ * are copied, or moved with their links updated; entries from outside are
+ * copied, or moved in when another file manager cut them. A taken name gets
+ * " copy"; a cut entry already in the target stays; a folder never goes into
+ * itself. A cut pasted once is done.
+ */
+export function onFileClip(
+  s: AppState,
+  a: Extract<Action, { type: "fileClip" }>,
+): Result {
+  const { now } = a;
+  const own = s.panels.explorer.clip;
+  const ownAbs = own?.paths.map((p) => absPath(s, p));
+  const clip: FileClip | undefined =
+    a.clip === null
+      ? own && ownAbs && { op: own.op, paths: ownAbs }
+      : own && ownAbs && samePaths(a.clip.paths, ownAbs)
+        ? { op: own.op, paths: a.clip.paths }
+        : a.clip;
+  if (clip === undefined)
+    return a.error === undefined
+      ? message(s, "nothing to paste")
+      : message(s, `clipboard unavailable: ${a.error}`, "error");
+  const target = a.target;
+  const taken = namesIn(s, target);
+  const ops: FsOp[] = [];
+  const moves: { from: string; to: string }[] = [];
+  for (const abs of clip.paths) {
+    const rel = workspacePath(s, abs);
+    if (rel !== undefined && under(target, rel))
+      return message(s, "cannot paste a folder into itself", "error");
+    if (rel !== undefined && clip.op === "cut" && dirname(rel) === target)
+      continue;
+    const dir =
+      a.dirs.includes(abs) || (rel !== undefined && kindOf(s, rel) === "dir");
+    const name = freeName(basename(abs), dir, taken);
+    taken.add(name);
+    const to = join(target, name);
+    const kind = clip.op === "copy" ? "copy" : "move";
+    if (rel === undefined)
+      ops.push({ kind, from: abs, to, ...(dir ? { dir } : {}), outside: true });
+    else if (kind === "copy")
+      ops.push({ kind, from: rel, to, ...(dir ? { dir } : {}) });
+    else moves.push({ from: rel, to });
+  }
+  const start = clip.op === "cut" ? dropClip(s) : s;
+  const copied = ops.reduce<Result>(
+    (r, op) => chain(r, (st) => explorerOp(st, op, now)),
+    none(start),
+  );
+  const [only] = moves;
+  if (only !== undefined && moves.length === 1)
+    return chain(copied, (st) => pasteMove(st, only.from, only.to, now));
+  const moved = moves.reduce<Result>(
+    (r, m) => chain(r, (st) => explorerOp(st, { kind: "move", ...m }, now)),
+    copied,
+  );
+  return moves.length > 1
+    ? chain(moved, (st) => message(st, "links not updated for several entries"))
+    : moved;
 }
 
 const openPrompt = (s: AppState, prompt: PromptState): Result =>
@@ -383,12 +621,15 @@ export function promptKey(
   if (key === "<Esc>") return none(closed);
   if (p.newNote === true) return newNotePromptKey(s, p, key, now, reg);
   if (p.rename !== undefined) return renamePromptKey(s, p, key);
+  // The settings and keymap pickers handle their own prompts.
+  if (p.setting !== undefined || p.binding !== undefined) return none(s);
   if (p.kind === "confirm")
     return key === "y" ? explorerOp(closed, p.op, now) : none(closed);
   if (key === "<CR>") return submit(closed, p, now);
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
-  const edited = { ...p, value };
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
+  const edited = { ...p, ...f };
   const prompt =
     p.op.kind === "rename" || p.op.kind === "move"
       ? promptImpact(s, edited)
@@ -396,13 +637,19 @@ export function promptKey(
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }
 
-/** The edited value of a text prompt: `<BS>` drops a character, a printable key adds one. */
-const typed = (value: string, key: string): string =>
-  key === "<BS>"
-    ? value.slice(0, -1)
-    : [...key].length === 1
-      ? value + key
-      : value;
+/** A text prompt's field after `key`; `undefined` when the key does not edit it. */
+export const typed = (p: PromptState, key: string): LineField | undefined =>
+  editField(promptField(p), key);
+
+/** The open prompt with its caret at `caret`, the value unchanged. */
+export function movedCaret(s: AppState, caret: number): AppState {
+  return s.overlay.kind === "prompt"
+    ? {
+        ...s,
+        overlay: { kind: "prompt", prompt: { ...s.overlay.prompt, caret } },
+      }
+    : s;
+}
 
 /**
  * Typing edits the new name; it cannot be submitted while empty or equal to
@@ -423,8 +670,10 @@ function renamePromptKey(
           { kind: "rename", pos: rename.pos, newName: p.value },
           { key: rename.key },
         );
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
+  const { value, caret } = f;
   const { invalid: _, ...rest } = p;
   const invalid =
     value.trim() === ""
@@ -435,6 +684,7 @@ function renamePromptKey(
   const prompt = {
     ...rest,
     value,
+    caret,
     ...(invalid === undefined ? {} : { invalid }),
   };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
@@ -493,20 +743,24 @@ function newNotePromptKey(
 ): Result {
   if (key === "<CR>") {
     const invalid = newNoteTitleError(p.value);
-    return invalid === undefined
-      ? submitNewNote(
-          { ...s, overlay: { kind: "none" } },
-          newNotePath(p.value),
-          now,
-          reg,
-        )
-      : none({ ...s, overlay: { kind: "prompt", prompt: { ...p, invalid } } });
+    if (invalid !== undefined)
+      return none({
+        ...s,
+        overlay: { kind: "prompt", prompt: { ...p, invalid } },
+      });
+    const closed: AppState = { ...s, overlay: { kind: "none" } };
+    const path = newNotePath(p.value);
+    const row = "row" in p ? p.row : undefined;
+    return row === undefined
+      ? submitNewNote(closed, path, now, reg)
+      : submitNewRow(closed, path, row, now);
   }
-  const value = typed(p.value, key);
-  if (value === p.value) return none(s);
+  const f = typed(p, key);
+  if (f === undefined) return none(s);
+  if (f.value === p.value) return none(movedCaret(s, f.caret));
   const { invalid: _, ...rest } = p;
-  const invalid = newNoteTitleError(value);
+  const invalid = newNoteTitleError(f.value);
   const prompt: PromptState =
-    invalid === undefined ? { ...rest, value } : { ...rest, value, invalid };
+    invalid === undefined ? { ...rest, ...f } : { ...rest, ...f, invalid };
   return none({ ...s, overlay: { kind: "prompt", prompt } });
 }

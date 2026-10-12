@@ -179,23 +179,50 @@ export type MermaidSvg = {
   background: string;
 };
 
+/** Diagram colours per theme: a beautiful-mermaid theme name, or colours for a flavor it lacks. */
+const DIAGRAM_COLORS = {
+  dark: "tokyo-night",
+  light: "tokyo-night-light",
+  "catppuccin-latte": "catppuccin-latte",
+  "catppuccin-frappe": {
+    bg: "#303446",
+    fg: "#c6d0f5",
+    line: "#626880",
+    accent: "#ca9ee6",
+    muted: "#737994",
+  },
+  "catppuccin-macchiato": {
+    bg: "#24273a",
+    fg: "#cad3f5",
+    line: "#5b6078",
+    accent: "#c6a0f6",
+    muted: "#6e738d",
+  },
+  "catppuccin-mocha": "catppuccin-mocha",
+} satisfies Record<string, string | BeautifulMermaid.DiagramColors>;
+
+/** A colour theme a diagram can be drawn in. */
+export type DiagramTheme = keyof typeof DIAGRAM_COLORS;
+
 /**
  * A diagram as SVG that a plain SVG rasterizer draws as the browser would:
- * Tokyo Night colours (`light` picks the light variant) written out in
- * place of CSS variables, web font imports dropped, and font lists reduced
- * to `sans-serif` or `monospace`. Undefined when it cannot be drawn.
+ * the theme's colours written out in place of CSS variables, web font
+ * imports dropped, and font lists reduced to `sans-serif` or `monospace`.
+ * Undefined when it cannot be drawn.
  */
 export function mermaidSvg(
   source: string,
-  theme: "dark" | "light",
+  theme: DiagramTheme,
 ): MermaidSvg | undefined {
   const p = prepare(source);
   if (!TEXT_LAYOUT.has(p.type)) return undefined;
   try {
     if (GRAPHS.has(p.type) && mermaid().parseMermaid(p.source).nodes.size === 0)
       return undefined;
+    const chosen: string | BeautifulMermaid.DiagramColors =
+      DIAGRAM_COLORS[theme];
     const colors =
-      mermaid().THEMES[theme === "dark" ? "tokyo-night" : "tokyo-night-light"];
+      typeof chosen === "string" ? mermaid().THEMES[chosen] : chosen;
     const drawn = withoutWindow(() =>
       mermaid().renderMermaidSVG(p.source, colors),
     );

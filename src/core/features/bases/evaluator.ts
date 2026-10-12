@@ -1,4 +1,5 @@
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
+import { dateInstant } from "./dates";
 import { type ExpressionContext, evaluateExpression } from "./expression";
 import type {
   Base,
@@ -16,6 +17,7 @@ import type {
   BaseUi,
   BaseView,
 } from "./types";
+import { cellText, stringifyGroupKey } from "./values";
 
 type FormulaEvaluationStatus = "ok" | "failed" | "cyclic";
 
@@ -213,6 +215,30 @@ export function evaluateBase(input: EvaluateBaseInput): BaseEvaluation {
         return [];
       }
 
+      const cells = Object.fromEntries(
+        columns.map((column) => {
+          const rawValue = resolveColumnValue(
+            column.property,
+            candidate,
+            formulaState.values,
+          );
+          validateDeclaredCellValue({
+            column,
+            rawValue,
+            candidate,
+            diagnostics,
+          });
+          return [column.id, toCellValue(rawValue, column)];
+        }),
+      );
+      const pinned = (input.ui?.pins ?? []).every((pin) => {
+        const keys = pinKeys(
+          resolveColumnValue(pin.property, candidate, formulaState.values),
+        );
+        return pin.keys.every((key) => keys.includes(key));
+      });
+      if (!pinned || !matchesQuery(cells, input.ui?.query)) return [];
+
       return [
         {
           candidate,
@@ -223,22 +249,7 @@ export function evaluateBase(input: EvaluateBaseInput): BaseEvaluation {
               name: candidate.name,
               ext: candidate.ext,
             },
-            cells: Object.fromEntries(
-              columns.map((column) => {
-                const rawValue = resolveColumnValue(
-                  column.property,
-                  candidate,
-                  formulaState.values,
-                );
-                validateDeclaredCellValue({
-                  column,
-                  rawValue,
-                  candidate,
-                  diagnostics,
-                });
-                return [column.id, toCellValue(rawValue, column)];
-              }),
-            ),
+            cells,
           },
         },
       ];
@@ -368,6 +379,24 @@ function groupKeys(
   return keys.length > 0 ? keys : [{ key: "", value: null }];
 }
 
+/** The keys a pin on `value` holds: its group keys, `[""]` when it has none. */
+export const pinKeys = (value: unknown): string[] =>
+  groupKeys(value).map(({ key }) => key);
+
+/** Whether a cell's text contains `query`, ignoring case; no query keeps every row. */
+function matchesQuery(
+  cells: Readonly<Record<string, BaseCell>>,
+  query: string | undefined,
+): boolean {
+  const q = query?.trim().toLowerCase() ?? "";
+  return (
+    q === "" ||
+    Object.values(cells).some((cell) =>
+      cellText(cell).toLowerCase().includes(q),
+    )
+  );
+}
+
 /** The typed value a group stands for, so a move can write it back as written. */
 function groupValue(value: unknown): FrontmatterValue {
   if (value === null || value === undefined) return null;
@@ -376,17 +405,12 @@ function groupValue(value: unknown): FrontmatterValue {
   return stringifyGroupKey(value);
 }
 
-/** A value as its group key: the text it groups under, "" for no value. */
-export function stringifyGroupKey(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number")
-    return Number.isFinite(value) ? String(value) : "";
-  if (typeof value === "boolean") return String(value);
-  return JSON.stringify(value) ?? String(value);
-}
-
 function compareValues(left: unknown, right: unknown): number {
+  // Dates compare as instants whatever way each was written.
+  const leftAt = dateInstant(left);
+  const rightAt = dateInstant(right);
+  if (leftAt !== undefined && rightAt !== undefined)
+    return leftAt === rightAt ? 0 : leftAt < rightAt ? -1 : 1;
   const leftRank = valueRank(left);
   const rightRank = valueRank(right);
   if (leftRank !== rightRank) return leftRank - rightRank;
@@ -597,7 +621,8 @@ function buildColumns(
         : readSemanticType(propertyConfig?.type)) ??
       defaultSemanticTypeForProperty(property);
     const options = readColumnOptions(propertyConfig?.options);
-    const width = view.columnSize?.[property];
+    const width =
+      view.columnSize?.[property] ?? view.columnSize?.[`note.${property}`];
     const wrap = view.wrapText?.includes(property) ?? false;
     const firstSample = candidates.find((c) => {
       if (property === "file.name") return true;

@@ -6,6 +6,9 @@ import { activeBuffer } from "./buffers";
 import type { AppState } from "./types";
 import type { Registries } from "./update";
 
+/** A binding value that starts with `<` is keys typed into the engine (`"<Esc>"`), not a command id. */
+export const isKeySequence = (id: string): boolean => id.startsWith("<");
+
 /** The config's `[keys.<mode>]` and `[filetypes.<id>.keys.<mode>]` entries as bindings. */
 function configBindings(config: AppConfig): Binding[] {
   const from = (keys: AppConfig["keys"], filetype?: string): Binding[] =>
@@ -26,7 +29,8 @@ function configBindings(config: AppConfig): Binding[] {
 
 /**
  * The registered bindings with the config's merged in: a config binding
- * replaces a registered one with the same scope and key sequence.
+ * replaces a registered one with the same scope and key sequence, and one
+ * bound to `""` only removes it.
  */
 export function effectiveBindings(
   reg: Pick<Registries, "bindings">,
@@ -40,7 +44,10 @@ export function effectiveBindings(
     ].join("\u0000");
   const own = configBindings(config);
   const replaced = new Set(own.map(slot));
-  return [...own, ...reg.bindings.filter((b) => !replaced.has(slot(b)))];
+  return [
+    ...own.filter((b) => b.id !== ""),
+    ...reg.bindings.filter((b) => !replaced.has(slot(b))),
+  ];
 }
 
 const memo = new WeakMap<Registries, WeakMap<AppConfig, Keymap>>();
@@ -62,12 +69,14 @@ export function keymapFor(reg: Registries, config: AppConfig): Keymap {
   return km;
 }
 
-/** Where keys resolve now: the explorer's mode, or the vim mode and the active buffer's file type. */
+/**
+ * Where keys resolve now: the explorer's mode, whose leader keys fall back to
+ * Normal mode's, or the vim mode and the active buffer's file type.
+ */
 export function keyScope(s: AppState): KeyScope {
+  if (s.panels.explorer.focused)
+    return { mode: "explorer", leaderFrom: "normal" };
   const b = activeBuffer(s);
-  const inExplorer = s.panels.explorer.focused;
-  const mode = inExplorer ? "explorer" : s.vim.mode;
-  return b === undefined || inExplorer
-    ? { mode }
-    : { mode, filetype: b.fileType };
+  const mode = s.vim.mode;
+  return b === undefined ? { mode } : { mode, filetype: b.fileType };
 }

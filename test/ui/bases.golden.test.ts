@@ -23,6 +23,29 @@ views:
       property: formula.late
       direction: ASC
 `;
+const WIDE = `filters:
+  and:
+    - file.inFolder("tasks")
+views:
+  - type: table
+    name: Wide
+    order: [file.name, status, due, done, file.folder, file.ext]
+    columnSize:
+      file.name: 160
+      note.status: 240
+      note.due: 240
+      note.done: 240
+      file.folder: 240
+      file.ext: 240
+`;
+const TODO = `filters:
+  and:
+    - file.inFolder("tasks")
+    - 'status == "todo"'
+views:
+  - type: table
+    name: Todo
+`;
 const NOTHING = `views:
   - type: table
     name: Archived
@@ -86,6 +109,71 @@ describe("base table", () => {
       expect(frame).toMatchSnapshot();
     });
 
+  test("resized columns keep their widths and cut longer text", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys(">>l<lt><lt>");
+    const frame = await m.frame();
+    expect(frame).toContain("name                    │ St… │ due ↑");
+    expect(frame).toMatchSnapshot();
+  });
+
+  test("a wide table pins the note name and scrolls the columns after it", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "wide.base", WIDE);
+    const first = await m.frame();
+    expect(first).toContain("+4 cols ›");
+    expect(first).toContain("H/L scroll");
+    expect(first).toMatchSnapshot();
+    m.keys("L");
+    const scrolled = await m.frame();
+    expect(scrolled).toContain("‹ +1");
+    expect(scrolled).toContain("review-pr");
+    expect(scrolled).toContain("+3 cols ›");
+    expect(scrolled).toMatchSnapshot();
+  });
+
+  test("H and L scroll one column from where moving the focus left the columns", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "wide.base", WIDE);
+    m.keys("lllll");
+    expect(await m.frame()).toContain("‹ +4");
+    m.keys("H");
+    expect(await m.frame()).toContain("‹ +3");
+    m.keys("L");
+    expect(await m.frame()).toContain("‹ +4");
+  });
+
+  test("o names a new row in the filtered folder and focuses it once created", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "todo.base", TODO);
+    expect(await m.frame()).toContain("o new");
+    m.keys("o");
+    const asked = await m.frame();
+    expect(asked).toContain("New row");
+    expect(asked).toContain("tasks/");
+    m.keys("next<CR>");
+    expect(m.effects.at(-1)).toMatchObject({
+      kind: "createNote",
+      path: "tasks/next.md",
+      frontmatter: { status: "todo" },
+      reason: "row",
+    });
+    const text = "---\nstatus: todo\n---\n";
+    m.store.dispatch({
+      type: "noteCreated",
+      path: "tasks/next.md",
+      outcome: "created",
+      template: "none",
+      after: "insert",
+      reason: "row",
+      text,
+      stamp: { mtimeMs: 1, size: text.length, hash: "h" },
+    });
+    const frame = await m.frame();
+    // The toast above names the note too.
+    const row = await find(m, "next.md", 4);
+    expect(cursorAt(m)).toEqual({ x: row.x, y: row.y, visible: true });
+    expect(frame).toContain("▦ todo.base");
+    expect(frame).toMatchSnapshot();
+  });
+
   test("the focused cell is reversed and the frame has no colour under NO_COLOR", async () => {
     m = await baseShell(
       { cols: 80, rows: 24, color: "nocolor" },
@@ -117,6 +205,35 @@ describe("base table", () => {
     const typed = await find(m, "2026-10-01x");
     expect(cursorAt(m)).toMatchObject({ x: typed.x + 11, y: typed.y });
     expect(after).toMatchSnapshot();
+  });
+});
+
+describe("base filters", () => {
+  test("the filter input sits on the last row with its caret, and the toolbar shows the filters", async () => {
+    m = await baseShell({ cols: 120, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys("/do");
+    const typing = await m.frame();
+    const lines = typing.split("\n");
+    expect(lines.at(-3)).toMatch(/^ \/do +⏎ keep · esc clear $/);
+    expect(lines.at(-2)).toMatch(/^ INSERT /);
+    expect(cursorAt(m)).toMatchObject({ x: 4, y: lines.length - 3 });
+    expect(lines.find((l) => l.includes("▦"))).toContain("⌕ do");
+    expect(typing).toMatchSnapshot();
+    m.keys("<CR>jlF");
+    const pinned = await m.frame();
+    expect(pinned.split("\n").find((l) => l.includes("▦"))).toContain(
+      "⊜ Status = ",
+    );
+    expect(pinned).toMatchSnapshot();
+  });
+
+  test("filters that hide every row say how to clear them", async () => {
+    m = await baseShell({ cols: 80, rows: 24 }, "tasks.base", TASKS_BASE);
+    m.keys("/zzz<CR>");
+    const frame = await m.frame();
+    expect(frame).toContain("No notes match this view's filters");
+    expect(frame).toContain("c clears the text filter and pins");
+    expect(frame).toMatchSnapshot();
   });
 });
 

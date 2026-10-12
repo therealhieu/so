@@ -80,6 +80,41 @@ test("each binding problem names its line", () => {
   ]);
 });
 
+test("a key-sequence binding is valid in a vim mode and an error elsewhere", () => {
+  const result = parseConfig(
+    lines(
+      "[keys.insert]",
+      'jj = "<Esc>"',
+      "[keys.normal]",
+      '"<leader>d" = "<C-d>"',
+      "[keys.explorer]",
+      'jj = "<Esc>"',
+      "[keys.visual]",
+      'x = "no.such"',
+    ),
+  );
+  if (!result.ok) throw new Error("expected a parsed config");
+  expect(validateBindings(reg, result.bindings)).toEqual([
+    { line: 6, message: 'key sequence "<Esc>" needs a vim mode' },
+    { line: 8, message: 'unknown command id "no.such"' },
+  ]);
+});
+
+test("an empty value unbinds a built-in binding", () => {
+  const s = load(
+    fresh(),
+    lines("[keys.normal]", '"<leader>ff" = ""'),
+    false,
+  ).state;
+  expect(s.notifications.toasts).toEqual([]);
+  expect(
+    keymapFor(reg, s.config).lookup({ mode: "normal" }, [" ", "f", "f"]).kind,
+  ).toBe("none");
+  expect(
+    keymapFor(reg, s.config).lookup({ mode: "normal" }, [" ", "f", "r"]),
+  ).toEqual({ kind: "command", id: "file.recent" });
+});
+
 test("a syntax error at startup applies defaults and names the line", () => {
   const r = load(fresh(), lines("a = 1", "", "", "", "", "", "e = = 5"), false);
   expect(r.state.config).toBe(defaults);

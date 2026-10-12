@@ -23,12 +23,17 @@ export type RepoStatus = {
   files: Map<string, FileStatus>;
 };
 
-export type Marker =
-  | "modified"
-  | "staged"
-  | "untracked"
-  | "conflict"
-  | "contains";
+export type Marker = "modified" | "staged" | "untracked" | "conflict";
+
+/** Strongest first: a folder shows the strongest marker below it. */
+const STRENGTH: readonly Marker[] = [
+  "conflict",
+  "untracked",
+  "modified",
+  "staged",
+];
+const stronger = (a: Marker | undefined, b: Marker): Marker =>
+  a !== undefined && STRENGTH.indexOf(a) <= STRENGTH.indexOf(b) ? a : b;
 
 /** How many space-separated fields come between each record kind and its path. */
 const FIELDS = { "1": 7, "2": 8, u: 9, "?": 0 } as const;
@@ -110,31 +115,31 @@ const markerCache = new WeakMap<RepoStatus, ReadonlyMap<string, Marker>>();
 
 /**
  * One marker per explorer row: conflict > untracked > modified > staged on
- * files, and `contains` on every folder above a changed path. A deleted file
- * has no row, so it only marks its folders.
+ * files, and on each folder the strongest marker below it. A deleted file has
+ * no row, so it marks its folders as modified (or staged, when only staged).
  */
 export function explorerMarkers(st: RepoStatus): ReadonlyMap<string, Marker> {
   const cached = markerCache.get(st);
   if (cached !== undefined) return cached;
-  const own = new Map<string, Marker>();
-  const folders = new Set<string>();
-  for (const [path, f] of st.files) {
-    for (let i = path.indexOf("/"); i >= 0; i = path.indexOf("/", i + 1))
-      folders.add(path.slice(0, i));
-    const marker = markerOf(f);
-    if (marker !== undefined) own.set(path, marker);
-  }
   const out = new Map<string, Marker>();
-  for (const dir of folders) if (!own.has(dir)) out.set(dir, "contains");
-  for (const [path, m] of own) out.set(path, m);
+  for (const [path, f] of st.files) {
+    const marker = markerOf(f);
+    if (marker === undefined) continue;
+    if (!deleted(f)) out.set(path, stronger(out.get(path), marker));
+    for (let i = path.indexOf("/"); i >= 0; i = path.indexOf("/", i + 1)) {
+      const dir = path.slice(0, i);
+      out.set(dir, stronger(out.get(dir), marker));
+    }
+  }
   markerCache.set(st, out);
   return out;
 }
 
+const deleted = (f: FileStatus) => f.index === "D" || f.worktree === "D";
+
 function markerOf(f: FileStatus): Marker | undefined {
   if (f.conflict) return "conflict";
   if (f.untracked) return "untracked";
-  if (f.index === "D" || f.worktree === "D") return undefined;
   if (f.worktree !== ".") return "modified";
   if (f.index !== ".") return "staged";
   return undefined;

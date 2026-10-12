@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readdir, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { NoteSummary } from "../core/features/links/summarize";
@@ -218,6 +226,44 @@ test("changed notes are summarized again and removed ones leave the search", asy
     ).toEqual([]);
   } finally {
     await rm(join(root, "notes/new.md"), { force: true });
+    w.stop();
+  }
+});
+
+test("a moved file or folder is searched under its new path", async () => {
+  const w = startWorker();
+  try {
+    await w.scanned();
+    await rename(join(root, "notes"), join(root, "docs"));
+    w.send({ t: "moved", from: "notes", to: "docs" });
+    expect(
+      paths((await w.search({ id: 21, query: "The plan", limit: 10 })).hits),
+    ).toEqual(["docs/plan.md"]);
+  } finally {
+    await rename(join(root, "docs"), join(root, "notes"));
+    w.stop();
+  }
+});
+
+test("a folder the index holds nothing under is walked and joins the index", async () => {
+  const w = startWorker();
+  try {
+    await w.scanned();
+    await mkdir(join(root, "fresh/deep"), { recursive: true });
+    await writeFile(join(root, "fresh/deep/idea.md"), "# Idea\nTODO walked\n");
+    await writeFile(join(root, "fresh/data.csv"), "a,b\n");
+    w.send({ t: "changed", paths: ["fresh"] });
+    const update = (await w.until(
+      (m) => m.t === "batch" && (m.files ?? []).includes("fresh/data.csv"),
+    )) as Extract<FromWorker, { t: "batch" }>;
+    expect(update.files).toEqual(["fresh/data.csv", "fresh/deep/idea.md"]);
+    expect(update.summaries.map((x) => x.path)).toEqual(["fresh/deep/idea.md"]);
+    expect(update.facts?.map((f) => f.path)).toEqual(["fresh/data.csv"]);
+    expect(
+      paths((await w.search({ id: 22, query: "walked", limit: 10 })).hits),
+    ).toEqual(["fresh/deep/idea.md"]);
+  } finally {
+    await rm(join(root, "fresh"), { recursive: true, force: true });
     w.stop();
   }
 });

@@ -79,7 +79,7 @@ test("explorer keys resolve in explorer mode and never edit the buffer", () => {
   }).state;
   s = keys(s, " e").state;
   expect(s.panels.explorer.cursor).toBe("a.md");
-  const moved = keys(s, "jx");
+  const moved = keys(s, "jJ");
   expect(moved.state.panels.explorer.cursor).toBe("b.md");
   expect(textOf(moved.state)).toBe("hello");
   expect(moved.effects).toEqual([]);
@@ -178,6 +178,27 @@ test("a search with no match shows E486 on the message line", () => {
   const found = keys(open("a.md", "the cat sat\n"), "/cat<CR>");
   expect(found.state.notifications.message).toBeUndefined();
   expect(cursorOf(found.state)).toEqual({ line: 0, col: 4 });
+});
+
+test("a search that comes round the buffer's end says so on the message line", () => {
+  const s = open("a.md", "cat\ndog cat\n");
+  const first = keys(s, "/cat<CR>");
+  expect(cursorOf(first.state)).toEqual({ line: 1, col: 4 });
+  expect(first.state.notifications.message).toBeUndefined();
+  const wrapped = keys(first.state, "n");
+  expect(cursorOf(wrapped.state)).toEqual({ line: 0, col: 0 });
+  expect(wrapped.state.notifications.message).toEqual({
+    text: "search hit BOTTOM, continuing at TOP",
+    level: "warn",
+  });
+  const back = keys(wrapped.state, "N");
+  expect(cursorOf(back.state)).toEqual({ line: 1, col: 4 });
+  expect(back.state.notifications.message).toEqual({
+    text: "search hit TOP, continuing at BOTTOM",
+    level: "warn",
+  });
+  const ahead = keys(first.state, "N");
+  expect(ahead.state.notifications.message).toBeUndefined();
 });
 
 test("typing autosaves after the delay and leaving Insert saves at once", () => {
@@ -426,4 +447,105 @@ test("every note binding is scoped to markdown", () => {
   for (const b of linkBindings) expect(b.scope.filetype).toBe("markdown");
   for (const id of new Set(linkBindings.map((b) => b.id)))
     expect(reg.commands.get(id)).toBeDefined();
+});
+
+function withConfig(...lines: string[]): AppState {
+  return update(fresh(), {
+    type: "configLoaded",
+    result: parseConfig(lines.join("\n")),
+    reload: false,
+  }).state;
+}
+const JJ = withConfig("[keys.insert]", 'jj = "<Esc>"');
+const keyTimeout = (s: AppState) =>
+  update(s, { type: "timer", id: "keyTimeout", now: 0 });
+
+test("jj bound to <Esc> leaves Insert like Esc, for undo and repeat too", () => {
+  const s = open("a.txt", "\n", JJ);
+  const left = keys(s, "iabjj");
+  expect(left.state.vim.mode).toBe("normal");
+  expect(left.state.vim.pending).toEqual([]);
+  expect(textOf(left.state)).toBe("ab");
+  expect(cursorOf(left.state)).toEqual({ line: 0, col: 1 });
+  expect(left.state.overlay.kind).toBe("none");
+  expect(left.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "keyTimeout",
+  });
+  const esc = keys(s, "iab<Esc>").state;
+  expect(textOf(keys(left.state, ".").state)).toBe(
+    textOf(keys(esc, ".").state),
+  );
+  expect(textOf(keys(left.state, "u").state)).toBe("");
+});
+
+test("a held j waits without a popup, and is typed when the next key misses", () => {
+  const s = open("a.txt", "\n", JJ);
+  const held = keys(s, "ij");
+  expect(textOf(held.state)).toBe("");
+  expect(held.state.vim.pending).toEqual(["j"]);
+  expect(held.effects).toContainEqual({
+    kind: "startTimer",
+    id: "keyTimeout",
+    ms: 1000,
+  });
+  expect(
+    held.effects.some((e) => e.kind === "startTimer" && e.id === "whichKey"),
+  ).toBe(false);
+  const missed = keys(held.state, "x");
+  expect(textOf(missed.state)).toBe("jx");
+  expect(missed.state.vim).toMatchObject({ mode: "insert", pending: [] });
+  expect(missed.effects).toContainEqual({
+    kind: "cancelTimer",
+    id: "keyTimeout",
+  });
+});
+
+test("the key after a miss can start the binding again", () => {
+  const s = open("a.txt", "\n", JJ);
+  const r = keys(s, "ikjj");
+  expect(textOf(r.state)).toBe("k");
+  expect(r.state.vim.mode).toBe("normal");
+  const again = keys(s, "ijxjj");
+  expect(textOf(again.state)).toBe("jx");
+  expect(again.state.vim.mode).toBe("normal");
+});
+
+test("a held j is typed when the key timeout fires, and Esc after it still leaves", () => {
+  const s = open("a.txt", "\n", JJ);
+  const timedOut = keyTimeout(keys(s, "ij").state).state;
+  expect(textOf(timedOut)).toBe("j");
+  expect(timedOut.vim).toMatchObject({ mode: "insert", pending: [] });
+
+  const escaped = keys(s, "ij<Esc>").state;
+  expect(textOf(escaped)).toBe("j");
+  expect(escaped.vim).toMatchObject({ mode: "normal", pending: [] });
+});
+
+test("a key timeout outside Insert leaves pending keys alone", () => {
+  const s = keys(open("a.txt", "a\nb\n", JJ), "g").state;
+  expect(keyTimeout(s).state.vim.pending).toEqual(["g"]);
+});
+
+test("the key timeout follows editor.keyTimeout", () => {
+  const s = open(
+    "a.txt",
+    "\n",
+    withConfig("[editor]", "keyTimeout = 250", "[keys.insert]", 'jk = "<Esc>"'),
+  );
+  expect(keys(s, "ij").effects).toContainEqual({
+    kind: "startTimer",
+    id: "keyTimeout",
+    ms: 250,
+  });
+  expect(keys(s, "ijk").state.vim.mode).toBe("normal");
+});
+
+test("a Normal-mode key sequence binding types its keys", () => {
+  const s = open(
+    "a.txt",
+    "hello\n",
+    withConfig("[keys.normal]", 'U = "<C-r>"'),
+  );
+  expect(textOf(keys(s, "xuU").state)).toBe("ello");
 });

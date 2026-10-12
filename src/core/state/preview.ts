@@ -131,7 +131,12 @@ export function onPreviewFailed(s: AppState, a: { reason: string }): Result {
   );
 }
 
-/** No browser could be opened; the server keeps serving, so show where it is. */
+/**
+ * The system opener failed. For the preview the server keeps serving, so
+ * show where it is; for a file, name it.
+ */
 export function onOpenUrlFailed(s: AppState, a: { url: string }): Result {
-  return toast(s, "info", `could not open a browser — ${a.url}`);
+  return a.url.startsWith("http")
+    ? toast(s, "info", `could not open a browser — ${a.url}`)
+    : toast(s, "error", `could not open ${a.url}`);
 }

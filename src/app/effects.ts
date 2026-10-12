@@ -1,24 +1,27 @@
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { lstat, mkdir, readdir, realpath, stat } from "node:fs/promises";
+import { basename, dirname, join, relative } from "node:path";
 import { parseConfig } from "../core/config/toml";
-import { setConfigValue } from "../core/config/toml-edit";
+import { removeConfigValue, setConfigValue } from "../core/config/toml-edit";
 import { applySpanEdits } from "../core/features/links/rename";
 import { expandTemplate } from "../core/features/notes/template";
 import {
   frontmatterValue,
   patchFrontmatter,
+  seedFrontmatter,
 } from "../core/lang/markdown/frontmatter-patch";
 import { restoreFile } from "../core/state/buffers";
 import type { Action, Effect, FsOp, Stamp, TimerId } from "../core/state/types";
 import { readConfigText } from "../workspace/config-file";
 import {
   atomicWrite,
+  copyEntry,
   createEntry,
   createExclusive,
   exists,
   FsError,
   listDir,
   moveEntry,
+  moveInto,
   readTextFile,
   removeEntry,
   sameStamp,
@@ -29,7 +32,7 @@ import type { ExclusionMatcher } from "../workspace/ignore";
 import type { Logger } from "../workspace/log";
 import { readPropertyTypes } from "../workspace/property-types";
 import { saveStateFile } from "../workspace/state-file";
-import type { ClipboardProvider } from "../workspace/system";
+import type { ClipboardProvider, FileClipboard } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
@@ -47,6 +50,8 @@ export type RunnerDeps = {
   ownOps: OwnOps;
   trash: Trash;
   clipboard: ClipboardProvider;
+  /** The system clipboard's files, for the explorer's copy, cut, and paste. */
+  fileClipboard: FileClipboard;
   dispatch: (a: Action) => void;
   exit: (code: number) => void;
   now?: () => number;
@@ -60,7 +65,7 @@ export type RunnerDeps = {
    * Answers `search`; without one, every search finds nothing. Own writes
    * are reported to it, since the watcher keeps them silent.
    */
-  index?: Pick<IndexHost, "search" | "notify">;
+  index?: Pick<IndexHost, "search" | "notify" | "moved">;
   /** Runs language-server effects; without one, every request fails at once. */
   lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
@@ -82,6 +87,11 @@ export type EffectRunner = {
 };
 
 const wallClock = () => performance.timeOrigin + performance.now();
+
+/** A copy shorter than this shows no progress. */
+const COPY_QUIET_MS = 300;
+/** The shortest gap between two progress reports of one copy. */
+const COPY_TICK_MS = 100;
 
 /** A failure's user-facing reason. */
 const msg = (x: unknown): string => FsError.from(x).message;
@@ -115,9 +125,65 @@ const REMOVED = "deleted on disk — :w to recreate";
  * A write emitted before an earlier rename, move, or trash reported back
  * still names the old path, so it follows that operation's outcome.
  */
+type ListDirEffect = Extract<Effect, { kind: "listDir" }>;
+
 export function createEffectRunner(d: RunnerDeps): EffectRunner {
   const now = d.now ?? wallClock;
   const abs = (p: string) => join(d.root, p);
+
+  let realRoot: Promise<string> | undefined;
+  /**
+   * A clipboard path inside the workspace spelled from `root`, which may be
+   * reached through a symlink (`/tmp` is `/private/tmp` on macOS); any other
+   * path as given. The entry itself is not resolved, so a link stays a link.
+   */
+  async function spelled(path: string): Promise<string> {
+    realRoot ??= realpath(d.root).catch(() => d.root);
+    const real = join(
+      await realpath(dirname(path)).catch(() => dirname(path)),
+      basename(path),
+    );
+    const rootReal = await realRoot;
+    return under(real, rootReal)
+      ? join(d.root, relative(rootReal, real))
+      : path;
+  }
+
+  /**
+   * Progress of a copy into `to`, told only once it has run 300 ms and then
+   * at most every 100 ms, so a quick copy shows nothing.
+   */
+  function copyProgress(to: string) {
+    const start = now();
+    let last = Number.NEGATIVE_INFINITY;
+    return (done: number, total: number) => {
+      const t = now();
+      if (t - start < COPY_QUIET_MS || t - last < COPY_TICK_MS) return;
+      last = t;
+      d.dispatch({ type: "copyProgress", to, done, total });
+    };
+  }
+
+  /** A copied or moved-in entry: the index and language servers learn of its files. */
+  async function announceAdded(op: FsOp): Promise<void> {
+    if (op.to === undefined) return;
+    d.index?.notify({ kind: "changed", path: op.to, isDir: op.dir === true });
+    if (d.lsp === undefined) return;
+    for (const path of await watchedFiles(op.to).catch(() => []))
+      d.lsp.notify({ kind: "changed", path, isDir: false });
+  }
+
+  /** The watched files at or below `rel`: itself when it is a file, none when it is missing. */
+  async function watchedFiles(rel: string): Promise<string[]> {
+    const st = await lstat(abs(rel)).catch(() => null);
+    if (st === null) return [];
+    const found = st.isDirectory()
+      ? (await readdir(abs(rel), { recursive: true, withFileTypes: true }))
+          .filter((e) => !e.isDirectory())
+          .map((e) => relative(d.root, join(e.parentPath, e.name)))
+      : [rel];
+    return found.filter((p) => !d.matcher.isExcludedPath(p)).sort();
+  }
   let tail: Promise<unknown> = Promise.resolve();
   const unreported = new Set<PathOp>();
   /** Per path, the stamp this runner's last write replaced and the one it left. */
@@ -133,6 +199,20 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     await mkdir(dirname(d.configPath), { recursive: true });
     await atomicWrite(d.configPath, edit.text);
   }
+  /** Set or remove key bindings in config.toml with one write. */
+  async function writeBindings(e: Extract<Effect, { kind: "writeBindings" }>) {
+    let text = (await readConfigText(d.configPath)) ?? "";
+    for (const b of e.edits) {
+      const edit =
+        b.id === undefined
+          ? removeConfigValue(text, b.path)
+          : setConfigValue(text, b.path, b.id);
+      if (!edit.ok) throw new Error(edit.reason);
+      text = edit.text;
+    }
+    await mkdir(dirname(d.configPath), { recursive: true });
+    await atomicWrite(d.configPath, text);
+  }
   const serial = <T>(job: () => Promise<T>): Promise<T> => {
     const next = tail.then(job, job);
     tail = next.catch(() => {});
@@ -140,6 +220,41 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
   };
 
   let gitWatcher: GitWatcher | undefined;
+
+  /**
+   * One listing per folder at a time: listings asked for meanwhile become
+   * one more after it, with the latest options, so a burst of file events
+   * reads a growing folder a few times instead of once per event.
+   */
+  const listings = new Map<string, ListDirEffect | null>();
+  const listFolder = (e: ListDirEffect) => {
+    if (listings.has(e.dir)) {
+      listings.set(e.dir, e);
+      return;
+    }
+    listings.set(e.dir, null);
+    void listDir(d.root, e.dir, d.matcher, {
+      dotfiles: e.dotfiles === true,
+      gitignored: e.gitignored === true,
+    })
+      .then(
+        (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
+        (x) => {
+          d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
+          d.dispatch({
+            type: "dirListed",
+            dir: e.dir,
+            entries: null,
+            reason: msg(x),
+          });
+        },
+      )
+      .finally(() => {
+        const again = listings.get(e.dir);
+        listings.delete(e.dir);
+        if (again) listFolder(again);
+      });
+  };
 
   const timers = new Map<TimerId, Timer>();
   const startTimer = (id: TimerId, due: number) => {
@@ -198,7 +313,13 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     try {
       if (op.kind === "create")
         await createEntry(d.root, op.from, op.dir === true);
-      else if (op.kind === "trash") {
+      else if (op.kind === "copy" || op.outside === true) {
+        if (op.to === undefined) throw new FsError(`no target for ${op.kind}`);
+        const src = op.outside === true ? op.from : abs(op.from);
+        const progress = copyProgress(op.to);
+        if (op.kind === "copy") await copyEntry(d.root, src, op.to, progress);
+        else await moveInto(d.root, src, op.to, progress);
+      } else if (op.kind === "trash") {
         if (op.permanent) await removeEntry(d.root, op.from);
         else await d.trash.move(abs(op.from));
         d.ownOps.noteRemove(op.from);
@@ -247,18 +368,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           });
         return;
       case "listDir":
-        void listDir(d.root, e.dir, d.matcher).then(
-          (entries) => d.dispatch({ type: "dirListed", dir: e.dir, entries }),
-          (x) => {
-            d.logger.error("fs.listFailed", { path: e.dir, reason: msg(x) });
-            d.dispatch({
-              type: "dirListed",
-              dir: e.dir,
-              entries: null,
-              reason: msg(x),
-            });
-          },
-        );
+        listFolder(e);
         return;
       case "write": {
         const before = [...unreported];
@@ -397,12 +507,13 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             ...(e.template === undefined ? {} : { templatePath: e.template }),
           };
           const { text, template } = await templateText(e);
+          const expanded = expandTemplate(text, e.vars);
+          const written =
+            e.frontmatter === undefined
+              ? expanded
+              : seedFrontmatter(expanded, e.frontmatter);
           try {
-            const r = await createExclusive(
-              d.root,
-              e.path,
-              expandTemplate(text, e.vars),
-            );
+            const r = await createExclusive(d.root, e.path, written);
             if (r.created) {
               d.ownOps.noteWrite(e.path, r.stamp);
               d.index?.notify({ kind: "changed", path: e.path, isDir: false });
@@ -415,8 +526,10 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             });
             d.dispatch({
               ...answer,
-              outcome: r.created ? "created" : "exists",
               template,
+              ...(r.created
+                ? { outcome: "created", text: written, stamp: r.stamp }
+                : { outcome: "exists" }),
             });
           } catch (x) {
             d.logger.error("notes.createFailed", {
@@ -432,16 +545,53 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           }
         });
         return;
+      case "copy":
+        void serial(async () => {
+          const result = await runFsOp(e.op);
+          d.dispatch(result);
+          if (result.ok) await announceAdded(e.op);
+        });
+        return;
       case "rename":
       case "move":
       case "trash": {
+        if (e.op.outside === true) {
+          void serial(async () => {
+            const result = await runFsOp(e.op);
+            d.dispatch(result);
+            if (result.ok) await announceAdded(e.op);
+          });
+          return;
+        }
         const pathOp: PathOp = { op: e.op, ok: false };
         unreported.add(pathOp);
         void serial(async () => {
+          const { from, to } = e.op;
+          // Trashed files are listed while they still exist.
+          const trashed =
+            d.lsp !== undefined && e.op.kind === "trash"
+              ? await watchedFiles(from).catch(() => [])
+              : [];
           const result = await runFsOp(e.op);
           pathOp.ok = result.ok;
           unreported.delete(pathOp);
           d.dispatch(result);
+          if (!result.ok) return;
+          if (to === undefined) {
+            d.index?.notify({ kind: "removed", path: from });
+            for (const path of trashed)
+              d.lsp?.notify({ kind: "removed", path });
+            return;
+          }
+          d.index?.moved(from, to);
+          if (d.lsp === undefined) return;
+          for (const path of await watchedFiles(to).catch(() => [])) {
+            d.lsp.notify({
+              kind: "removed",
+              path: from + path.slice(to.length),
+            });
+            d.lsp.notify({ kind: "changed", path, isDir: false });
+          }
         });
         return;
       }
@@ -466,6 +616,43 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             (text) => d.dispatch({ type: "clipboardText", text }),
             (x) =>
               d.dispatch({ type: "clipboardText", text: "", error: msg(x) }),
+          );
+        return;
+      case "fileClipboardWrite":
+        void Promise.resolve()
+          .then(() => d.fileClipboard.write(e.clip))
+          .catch((x) =>
+            d.dispatch({ type: "fileClipboardFailed", reason: msg(x) }),
+          );
+        return;
+      case "fileClipboardRead":
+        void Promise.resolve()
+          .then(() => d.fileClipboard.read())
+          .then(
+            async (clip) => {
+              const paths =
+                clip === null ? [] : await Promise.all(clip.paths.map(spelled));
+              const dirs: string[] = [];
+              for (const p of paths)
+                if ((await stat(p).catch(() => null))?.isDirectory())
+                  dirs.push(p);
+              d.dispatch({
+                type: "fileClip",
+                target: e.target,
+                clip: clip === null ? null : { op: clip.op, paths },
+                dirs,
+                now: now(),
+              });
+            },
+            (x) =>
+              d.dispatch({
+                type: "fileClip",
+                target: e.target,
+                clip: null,
+                dirs: [],
+                now: now(),
+                error: msg(x),
+              }),
           );
         return;
       case "exit":
@@ -624,6 +811,18 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "lspReply":
       case "lspRestart":
         d.lsp?.run(e);
+        return;
+      case "writeBindings":
+        settingWrites = settingWrites
+          .then(() => writeBindings(e))
+          .catch((x) => {
+            d.logger.error("config.writeFailed", { reason: msg(x) });
+            d.dispatch({
+              type: "bindingsFailed",
+              previous: e.previous,
+              reason: msg(x),
+            });
+          });
         return;
       case "writeSetting":
         settingWrites = settingWrites

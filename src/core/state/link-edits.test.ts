@@ -325,3 +325,32 @@ test("a rename while links are still updating is refused and keeps the first pla
   const again = keys(selecting(st, "notes/other.md"), "r");
   expect(prompt(again.state)?.title).toBe("Rename");
 });
+
+test("a cut note pasted into another folder moves with its links updated", () => {
+  const cut = keys(selecting(ready(), "notes/plan.md"), "x").state;
+  const r = update(cut, {
+    type: "fileClip",
+    target: "refs",
+    clip: { op: "copy", paths: ["/ws/notes/plan.md"] },
+    dirs: [],
+    now: 9,
+  });
+  const op: FsOp = { kind: "move", from: "notes/plan.md", to: "refs/plan.md" };
+  expect(r.effects).toContainEqual({ kind: "move", op });
+  // The name stays "plan", so only the five path links change.
+  expect(r.state.index.rewrite?.edits.length).toBe(5);
+  const refused = update(
+    keys(selecting(indexing(), "notes/plan.md"), "x").state,
+    {
+      type: "fileClip",
+      target: "refs",
+      clip: null,
+      dirs: [],
+      now: 9,
+    },
+  );
+  expect(kinds(refused.effects)).toEqual([]);
+  expect(refused.state.notifications.message?.text).toBe(
+    "index not ready — try again when indexing finishes",
+  );
+});

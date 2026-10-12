@@ -273,6 +273,13 @@ export function requestQuit(
   );
 }
 
+/** `:wa`: write every buffer with unsaved changes that can be written. */
+export function writeAll(s: AppState, now: number): Result {
+  return Object.values(s.buffers)
+    .filter((b) => writable(s, b))
+    .reduce((r, b) => chain(r, (st) => writeBuffer(st, b.id, now)), none(s));
+}
+
 /** `:bd` and `:bd!`: `:bd` flushes first and closes once the write succeeds. */
 export function closeBuffer(
   s: AppState,

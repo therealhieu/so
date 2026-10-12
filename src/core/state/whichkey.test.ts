@@ -61,6 +61,8 @@ test("which-key opens only after the prefix idles 300 ms", () => {
 test("direct actions list before groups and backspace pops a key", () => {
   let s = update(keys(opened(), " ").state, TIMER).state;
   expect(whichKeyRows(s, reg)).toEqual([
+    { key: ",", label: "Find buffer", group: false },
+    { key: "1-9", label: "Go to buffer N", group: false },
     { key: ":", label: "Command palette", group: false },
     { key: "?", label: "Help: keymap", group: false },
     { key: "a", label: "Split window", group: false },
@@ -69,6 +71,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "o", label: "Toggle outline", group: false },
     { key: "x", label: "Toggle task", group: false },
     { key: "z", label: "Zoom image or diagram", group: false },
+    { key: "b", label: "+buffer", group: true },
     { key: "f", label: "+find", group: true },
     { key: "g", label: "+git", group: true },
     { key: "l", label: "+links", group: true },
@@ -80,7 +83,7 @@ test("direct actions list before groups and backspace pops a key", () => {
 
   s = keys(s, "f").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" ", "f"] } });
-  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual(["f", "r"]);
+  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual(["b", "f", "o", "r"]);
 
   s = keys(s, "<BS>").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" "] } });
@@ -118,7 +121,7 @@ test("an unmapped key closes with a notice", () => {
 
 test("groups without bindings in the scope are not shown", () => {
   const s = update(keys(opened(), " ").state, TIMER).state;
-  expect(whichKeyRows(s, reg).some((r) => r.label === "+buffer")).toBe(false);
+  expect(whichKeyRows(s, reg).some((r) => r.label === "+window")).toBe(false);
 });
 
 const note = (): AppState =>
@@ -192,4 +195,54 @@ test("<leader>qq quits from a window and from the explorer", () => {
   const tree = fresh();
   expect(tree.panels.explorer.focused).toBe(true);
   expect(keys(tree, " qq").effects).toContainEqual({ kind: "exit", code: 0 });
+});
+
+test("the explorer's leader popup lists Normal mode's leader keys too", () => {
+  const tree = fresh();
+  expect(tree.panels.explorer.focused).toBe(true);
+  const s = update(keys(tree, " ").state, TIMER).state;
+  const rows = whichKeyRows(s, reg);
+  for (const row of [
+    { key: "a", label: "Split window", group: false },
+    { key: "e", label: "Toggle explorer", group: false },
+    { key: "f", label: "+find", group: true },
+    { key: "g", label: "+git", group: true },
+    { key: "s", label: "+search", group: true },
+  ])
+    expect(rows).toContainEqual(row);
+  // A file-type binding of the active buffer stays out of the explorer.
+  expect(rows.map((r) => r.key)).not.toContain("m");
+  expect(keys(tree, " ff").state.notifications.message?.text).toBe(
+    "jump list is empty",
+  );
+});
+
+test("a bound key sequence shows its keys in the popup and types them when chosen", () => {
+  const withKeys: Registries = {
+    ...base,
+    bindings: [
+      ...base.bindings,
+      { scope: { mode: "normal" }, seq: "<leader>zd", id: "<C-d>" },
+    ],
+  };
+  const u = createUpdate(withKeys);
+  let s = u(fresh(), {
+    type: "fileLoaded",
+    path: "a.txt",
+    file: textFile(`${"line\n".repeat(80)}`),
+  }).state;
+  for (const key of splitKeys("<leader>z"))
+    s = u(s, { type: "key", key, now: 0 }).state;
+  s = u(s, TIMER).state;
+  expect(whichKeyRows(s, withKeys)).toContainEqual({
+    key: "d",
+    label: "→ <C-d>",
+    group: false,
+  });
+  s = u(s, { type: "key", key: "d", now: 0 }).state;
+  expect(s.overlay.kind).toBe("none");
+  expect(s.vim.pending).toEqual([]);
+  expect(s.windows.byId[s.windows.active]?.content.cursor.line).toBeGreaterThan(
+    0,
+  );
 });

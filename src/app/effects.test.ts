@@ -1,14 +1,23 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Action, Effect, RepoInfo } from "../core/state/types";
+import type { Action, Effect, FileEvent, RepoInfo } from "../core/state/types";
+import { localDateTime } from "../core/time/local";
 import { atomicWrite } from "../workspace/fs";
 import type { Git } from "../workspace/git";
 import type { GitWatcher } from "../workspace/git-watcher";
 import { createExclusionMatcher } from "../workspace/ignore";
 import { createLogger } from "../workspace/log";
-import type { ClipboardProvider } from "../workspace/system";
+import { type ClipboardProvider, noFileClipboard } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import { createOwnOps } from "../workspace/watcher";
 import { createEffectRunner, type RunnerDeps } from "./effects";
@@ -52,6 +61,7 @@ function runner(patch: Partial<RunnerDeps> = {}) {
     ownOps: createOwnOps(),
     trash: noTrash,
     clipboard: memoryClipboard,
+    fileClipboard: noFileClipboard,
     dispatch: (a) => actions.push(a),
     exit: (code) => exits.push(code),
     logger: createLogger({}, root),
@@ -204,7 +214,7 @@ test("each file operation answers once with its result", async () => {
 test("a created file is sent to the index; a failed create or a folder is not", async () => {
   const events: unknown[] = [];
   const r = runner({
-    index: { search: () => {}, notify: (e) => events.push(e) },
+    index: { search: () => {}, notify: (e) => events.push(e), moved: () => {} },
   });
   r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
   r.run({ kind: "create", op: { kind: "create", from: "made.csv" } });
@@ -216,6 +226,102 @@ test("a created file is sent to the index; a failed create or a folder is not", 
     true,
   ]);
   expect(events).toEqual([{ kind: "changed", path: "made.csv", isDir: false }]);
+});
+
+test("a new note with frontmatter is written with it once, indexed, and answered with its text", async () => {
+  await mkdir(join(root, "rows"), { recursive: true });
+  const events: unknown[] = [];
+  const r = runner({
+    index: { search: () => {}, notify: (e) => events.push(e), moved: () => {} },
+  });
+  const note = {
+    kind: "createNote" as const,
+    path: "rows/new.md",
+    vars: { title: "new", at: localDateTime(0) },
+    frontmatter: { status: "todo", tags: ["reading"] },
+    after: "insert" as const,
+    reason: "row" as const,
+  };
+  r.run(note);
+  r.run({ ...note, frontmatter: { status: "other" } });
+  await waitFor(() => r.actions.length === 2);
+  const text = "---\nstatus: todo\ntags:\n  - reading\n---\n";
+  expect(await readFile(join(root, "rows/new.md"), "utf8")).toBe(text);
+  expect(r.actions[0]).toMatchObject({
+    type: "noteCreated",
+    path: "rows/new.md",
+    outcome: "created",
+    reason: "row",
+    text,
+  });
+  expect(r.actions[1]).toMatchObject({ outcome: "exists" });
+  expect(r.actions[1]).not.toHaveProperty("text");
+  expect(events).toEqual([
+    { kind: "changed", path: "rows/new.md", isDir: false },
+  ]);
+  await rm(join(root, "rows"), { recursive: true, force: true });
+});
+
+test("a finished rename or move moves the index paths; a finished trash removes them", async () => {
+  await writeFile(join(root, "from.md"), "x\n");
+  await writeFile(join(root, "gone.md"), "x\n");
+  const sent: unknown[] = [];
+  const r = runner({
+    index: {
+      search: () => {},
+      notify: (e) => sent.push(e),
+      moved: (from, to) => sent.push({ from, to }),
+    },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "from.md", to: "to.md" },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "absent.md", to: "x.md" },
+  });
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "gone.md", permanent: true },
+  });
+  await waitFor(() => r.actions.length === 3);
+  expect(sent).toEqual([
+    { from: "from.md", to: "to.md" },
+    { kind: "removed", path: "gone.md" },
+  ]);
+  await rm(join(root, "to.md"), { force: true });
+});
+
+test("language servers hear of each file a finished move or trash touches", async () => {
+  await mkdir(join(root, "src/deep"), { recursive: true });
+  await mkdir(join(root, "src/.cache"), { recursive: true });
+  await writeFile(join(root, "src/a.ts"), "x\n");
+  await writeFile(join(root, "src/deep/b.ts"), "x\n");
+  await writeFile(join(root, "src/.cache/c.ts"), "x\n");
+  await writeFile(join(root, "drop.ts"), "x\n");
+  const sent: unknown[] = [];
+  const r = runner({
+    lsp: { run: () => {}, notify: (e) => sent.push(e) },
+  });
+  r.run({ kind: "move", op: { kind: "move", from: "src", to: "lib" } });
+  r.run({
+    kind: "trash",
+    op: { kind: "trash", from: "drop.ts", permanent: true },
+  });
+  r.run({
+    kind: "rename",
+    op: { kind: "rename", from: "absent.ts", to: "x.ts" },
+  });
+  await waitFor(() => r.actions.length === 3);
+  expect(sent).toEqual([
+    { kind: "removed", path: "src/a.ts" },
+    { kind: "changed", path: "lib/a.ts", isDir: false },
+    { kind: "removed", path: "src/deep/b.ts" },
+    { kind: "changed", path: "lib/deep/b.ts", isDir: false },
+    { kind: "removed", path: "drop.ts" },
+  ]);
+  await rm(join(root, "lib"), { recursive: true, force: true });
 });
 
 test("reads and listings answer with their result or refusal", async () => {
@@ -240,6 +346,25 @@ test("reads and listings answer with their result or refusal", async () => {
       entries: null,
     }),
   );
+});
+
+test("listings asked for while a folder is read become one more, with the latest options", async () => {
+  await mkdir(join(root, "burst"), { recursive: true });
+  await writeFile(join(root, "burst/.hidden"), "x\n");
+  const r = runner();
+  r.run({ kind: "listDir", dir: "burst" });
+  for (let i = 0; i < 50; i++) r.run({ kind: "listDir", dir: "burst" });
+  r.run({ kind: "listDir", dir: "burst", dotfiles: true });
+  await waitFor(() => r.actions.length === 2);
+  await Bun.sleep(50);
+  expect(r.actions).toEqual([
+    { type: "dirListed", dir: "burst", entries: [] },
+    {
+      type: "dirListed",
+      dir: "burst",
+      entries: [{ name: ".hidden", kind: "file" }],
+    },
+  ]);
 });
 
 test("a timer fires once, never before its delay on the runner's clock", async () => {
@@ -402,6 +527,48 @@ test("writeSetting edits config.toml in order, creating it and its folder", asyn
   expect(r.actions).toEqual([]);
 });
 
+test("writeBindings applies every edit in one write; a failure reports the previous keymaps", async () => {
+  const configPath = join(root, "keys", "config.toml");
+  await mkdir(join(root, "keys"), { recursive: true });
+  await writeFile(configPath, '[keys.insert]\nkj = "<Esc>"\n');
+  const r = runner({ configPath });
+  r.run({
+    kind: "writeBindings",
+    edits: [
+      { path: ["keys", "insert", "kj"] },
+      { path: ["keys", "insert", "jj"], id: "<Esc>" },
+      { path: ["keys", "normal", "<leader>ff"], id: "" },
+    ],
+    previous: { keys: {}, filetypes: {} },
+  });
+  const until = performance.now() + 3000;
+  let text = "";
+  while (performance.now() < until) {
+    text = await readFile(configPath, "utf8");
+    if (text.includes("<leader>ff")) break;
+    await Bun.sleep(5);
+  }
+  expect(text).toBe(
+    '[keys.insert]\njj = "<Esc>"\n\n[keys.normal]\n"<leader>ff" = ""\n',
+  );
+
+  await writeFile(configPath, '[explorer]\nposition = "up"\n');
+  const previous = { keys: { insert: { jj: "<Esc>" } }, filetypes: {} };
+  r.run({
+    kind: "writeBindings",
+    edits: [{ path: ["keys", "insert", "kk"], id: "<Esc>" }],
+    previous,
+  });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions).toEqual([
+    {
+      type: "bindingsFailed",
+      previous,
+      reason: "config.toml:2 has an error; fix it before changing settings",
+    },
+  ]);
+});
+
 test("writeSetting leaves a broken config.toml alone and reports why", async () => {
   const configPath = join(root, "broken.toml");
   await writeFile(configPath, '[explorer]\nposition = "up"\n');
@@ -467,7 +634,11 @@ test("a frontmatter patch is written only while the property still holds the sho
   await writeFile(join(root, "task.md"), note);
   const notified: string[] = [];
   const r = runner({
-    index: { search: () => {}, notify: (e) => notified.push(e.path) },
+    index: {
+      search: () => {},
+      notify: (e) => notified.push(e.path),
+      moved: () => {},
+    },
   });
   r.run({
     kind: "patchFrontmatter",
@@ -713,4 +884,141 @@ test("running the tool dispatches its result once", async () => {
   expect(broken.actions).toEqual([
     { type: "toolExited", result: { kind: "failed", reason: "no tool here" } },
   ]);
+});
+
+test("a copy runs on the queue and the index learns of the new entry", async () => {
+  const outside = await mkdtemp(join(tmpdir(), "so-effects-outside-"));
+  const told: FileEvent[] = [];
+  const moved: string[] = [];
+  const r = runner({
+    index: {
+      search: () => {},
+      notify: (e) => told.push(e),
+      moved: (from, to) => moved.push(`${from}>${to}`),
+    },
+  });
+  try {
+    await writeFile(join(root, "src.md"), "src\n");
+    await writeFile(join(outside, "in.md"), "in\n");
+    r.run({ kind: "copy", op: { kind: "copy", from: "src.md", to: "dup.md" } });
+    const inOp = {
+      kind: "move" as const,
+      from: join(outside, "in.md"),
+      to: "in.md",
+      outside: true as const,
+    };
+    r.run({ kind: "move", op: inOp });
+    await waitFor(() => r.actions.length === 2);
+    expect(r.actions).toEqual([
+      {
+        type: "fsResult",
+        op: { kind: "copy", from: "src.md", to: "dup.md" },
+        ok: true,
+      },
+      { type: "fsResult", op: inOp, ok: true },
+    ]);
+    expect(await readFile(join(root, "dup.md"), "utf8")).toBe("src\n");
+    expect(await readFile(join(root, "in.md"), "utf8")).toBe("in\n");
+    expect(await Bun.file(join(outside, "in.md")).exists()).toBe(false);
+    expect(told).toEqual([
+      { kind: "changed", path: "dup.md", isDir: false },
+      { kind: "changed", path: "in.md", isDir: false },
+    ]);
+    expect(moved).toEqual([]);
+  } finally {
+    await rm(outside, { recursive: true });
+  }
+});
+
+test("a clipboard paste names workspace files from its root, even through a link", async () => {
+  const real = await realpath(
+    await mkdtemp(join(tmpdir(), "so-effects-real-")),
+  );
+  const linked = `${real}-link`;
+  await symlink(real, linked);
+  try {
+    await mkdir(join(real, "notes"));
+    const r = runner({
+      root: linked,
+      fileClipboard: {
+        name: "fake",
+        write: async () => {},
+        read: async () => ({
+          op: "copy",
+          paths: [join(real, "notes"), "/elsewhere/x.md"],
+        }),
+      },
+      now: () => 42,
+    });
+    r.run({ kind: "fileClipboardRead", target: "" });
+    await waitFor(() => r.actions.length === 1);
+    expect(r.actions).toEqual([
+      {
+        type: "fileClip",
+        target: "",
+        clip: {
+          op: "copy",
+          paths: [join(linked, "notes"), "/elsewhere/x.md"],
+        },
+        dirs: [join(linked, "notes")],
+        now: 42,
+      },
+    ]);
+  } finally {
+    await rm(linked);
+    await rm(real, { recursive: true });
+  }
+});
+
+test("clipboard failures are reported: a read as no files, a write once", async () => {
+  const r = runner({
+    fileClipboard: {
+      name: "broken",
+      write: () => Promise.reject(new Error("osascript failed")),
+      read: () => Promise.reject(new Error("osascript failed")),
+    },
+    now: () => 1,
+  });
+  r.run({ kind: "fileClipboardRead", target: "notes" });
+  r.run({
+    kind: "fileClipboardWrite",
+    clip: { op: "copy", paths: ["/ws/a.md"] },
+  });
+  await waitFor(() => r.actions.length === 2);
+  await Bun.sleep(20);
+  expect(r.actions).toContainEqual({
+    type: "fileClip",
+    target: "notes",
+    clip: null,
+    dirs: [],
+    now: 1,
+    error: "osascript failed",
+  });
+  expect(r.actions).toContainEqual({
+    type: "fileClipboardFailed",
+    reason: "osascript failed",
+  });
+  expect(r.actions.length).toBe(2);
+});
+
+test("a long copy reports progress after a quiet start, a quick one none", async () => {
+  await mkdir(join(root, "many"), { recursive: true });
+  for (const n of ["a", "b", "c"]) await writeFile(join(root, "many", n), n);
+  let t = 0;
+  const slow = runner({ now: () => (t += 150) });
+  slow.run({ kind: "copy", op: { kind: "copy", from: "many", to: "many2" } });
+  await waitFor(() => slow.actions.some((a) => a.type === "fsResult"));
+  const progress = slow.actions.filter((a) => a.type === "copyProgress");
+  expect(progress.length).toBeGreaterThan(0);
+  expect(progress.at(-1)).toEqual({
+    type: "copyProgress",
+    to: "many2",
+    done: 4,
+    total: 4,
+  });
+  expect(slow.actions.at(-1)?.type).toBe("fsResult");
+  const quick = runner({ now: () => 0 });
+  quick.run({ kind: "copy", op: { kind: "copy", from: "many", to: "many3" } });
+  await waitFor(() => quick.actions.length > 0);
+  expect(quick.actions.map((a) => a.type)).toEqual(["fsResult"]);
 });

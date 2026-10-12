@@ -1,6 +1,7 @@
 import type { FrontmatterValue } from "../../lang/markdown/frontmatter-patch";
-import { cellText, orderedGroups } from "./table";
+import { orderedGroups } from "./table";
 import type { BaseEvaluation, BaseUi } from "./types";
+import { cellText } from "./values";
 
 export type KanbanCard = { path: string; title: string; fields: string[] };
 /** One lane: `key` is the group property's typed value, `null` for None. */

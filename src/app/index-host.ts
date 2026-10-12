@@ -7,6 +7,8 @@ export type IndexHost = {
   start(root: string, ignore: string[]): void;
   /** Forward a watcher event, so other programs' changes reach the index. */
   notify(e: FileEvent): void;
+  /** A rename or move `so` made, which the watcher stays silent about. */
+  moved(from: string, to: string): void;
   /**
    * Search the worker's texts; answers one `searchResults`, empty while the
    * worker is down or when it crashes before answering.
@@ -110,7 +112,10 @@ export function createIndexHost(d: {
     },
     notify(e) {
       if (e.kind === "removed") send({ t: "removed", paths: [e.path] });
-      else if (!e.isDir) send({ t: "changed", paths: [e.path] });
+      else send({ t: "changed", paths: [e.path] });
+    },
+    moved(from, to) {
+      send({ t: "moved", from, to });
     },
     search(e) {
       if (worker === undefined) {

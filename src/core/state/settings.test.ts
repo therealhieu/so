@@ -34,6 +34,8 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
     expect(rows(s)).toEqual([
       "explorer.position left",
       "explorer.icons nerd",
+      "explorer.dotfiles off",
+      "explorer.gitignored on",
       "theme dark",
       "color auto",
       "mouse on",
@@ -42,6 +44,16 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "preview.mode live",
       "preview.images auto",
       "autosave.enabled on",
+      "autosave.delayMs 1000",
+      "editor.tabWidth 8",
+      "editor.keyTimeout 1000",
+      "explorer.width 30",
+      "preview.embedMaxRows 10",
+      "escTimeoutMs 50",
+      "daily.folder daily",
+      "daily.format YYYY-MM-DD",
+      "daily.template templates/daily.md",
+      "templates.folder templates",
     ]);
   }
 });
@@ -82,4 +94,136 @@ test("a setting that could not be saved returns to its previous value", () => {
     level: "error",
     text: "Setting not saved: config.toml:2 has an error; fix it before changing settings",
   });
+});
+
+test("cycling explorer.dotfiles lists the shown folders again, and so does a failed save", () => {
+  const open = keys(editing(), " us").state;
+  const r = keys(open, "dotfiles<CR>");
+  expect(r.state.config.explorer.dotfiles).toBe(true);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "dotfiles"],
+      value: true,
+      previous: false,
+    },
+    { kind: "listDir", dir: "", dotfiles: true, gitignored: true },
+  ]);
+  const failed = update(r.state, {
+    type: "settingFailed",
+    path: ["explorer", "dotfiles"],
+    previous: false,
+    reason: "read-only",
+  });
+  expect(failed.state.config.explorer.dotfiles).toBe(false);
+  expect(failed.effects).toEqual([
+    { kind: "listDir", dir: "", gitignored: true },
+  ]);
+});
+
+test("cycling explorer.gitignored hides gitignored entries and lists the shown folders again", () => {
+  const open = keys(editing(), " us").state;
+  const r = keys(open, "gitignored<CR>");
+  expect(r.state.config.explorer.gitignored).toBe(false);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["explorer", "gitignored"],
+      value: false,
+      previous: true,
+    },
+    { kind: "listDir", dir: "" },
+  ]);
+});
+
+test("Enter cycles theme through every colour theme and wraps around", () => {
+  let s = keys(editing(), " ustheme").state;
+  const seen: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    s = keys(s, "<CR>").state;
+    seen.push(s.config.theme);
+  }
+  expect(seen).toEqual([
+    "light",
+    "catppuccin-latte",
+    "catppuccin-frappe",
+    "catppuccin-macchiato",
+    "catppuccin-mocha",
+    "dark",
+  ]);
+  expect(rows(s)).toEqual(["theme dark"]);
+});
+
+const prompt = (s: AppState) => {
+  if (s.overlay.kind !== "prompt") throw new Error("no prompt open");
+  return s.overlay.prompt;
+};
+
+test("Enter on a number setting opens a prompt holding its value; Enter saves a valid number", () => {
+  const open = keys(keys(editing(), " uskeyTimeout").state, "<CR>").state;
+  expect(prompt(open)).toMatchObject({
+    title: "editor.keyTimeout",
+    value: "1000",
+  });
+  const r = keys(open, "<BS><BS><BS><BS>300<CR>");
+  expect(r.state.config.editor.keyTimeout).toBe(300);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["editor", "keyTimeout"],
+      value: 300,
+      previous: 1000,
+    },
+  ]);
+  expect(picker(r.state).source).toBe("settings");
+  expect(rows(r.state)).toEqual(["editor.keyTimeout 300"]);
+});
+
+test("a number out of range or not a number says why, and Enter does nothing", () => {
+  const open = keys(keys(editing(), " uskeyTimeout").state, "<CR>").state;
+  const low = keys(open, "<BS><BS><BS><BS>5").state;
+  expect(prompt(low).invalid).toContain("50");
+  const stuck = keys(low, "<CR>");
+  expect(stuck.state.overlay.kind).toBe("prompt");
+  expect(stuck.effects).toEqual([]);
+  expect(prompt(keys(open, "x").state).invalid).toBe("must be a whole number");
+  expect(prompt(keys(low, "0").state).invalid).toBeUndefined();
+});
+
+test("Esc in a setting prompt goes back to the picker unchanged", () => {
+  const open = keys(keys(editing(), " ustabWidth").state, "<CR>").state;
+  const r = keys(open, "<BS>4<Esc>");
+  expect(r.state.config.editor.tabWidth).toBe(8);
+  expect(r.effects).toEqual([]);
+  expect(rows(r.state)).toEqual(["editor.tabWidth 8"]);
+});
+
+test("a text setting saves the value the config holds, and refuses a path outside the workspace", () => {
+  const open = keys(keys(editing(), " usdaily.folder").state, "<CR>").state;
+  const cleared = keys(open, "<BS>".repeat(5)).state;
+  expect(prompt(keys(cleared, "../x").state).invalid).toBe(
+    "must be a path inside the workspace",
+  );
+  const r = keys(cleared, "journal/<CR>");
+  expect(r.state.config.daily.folder).toBe("journal");
+  expect(r.effects).toContainEqual({
+    kind: "writeSetting",
+    path: ["daily", "folder"],
+    value: "journal",
+    previous: "daily",
+  });
+});
+
+test("saving explorer.width replaces a resized width", () => {
+  const resized: AppState = {
+    ...editing(),
+    panels: {
+      ...editing().panels,
+      explorer: { ...editing().panels.explorer, width: 50 },
+    },
+  };
+  const open = keys(keys(resized, " usexplorer.width").state, "<CR>").state;
+  const r = keys(open, "<BS><BS>40<CR>").state;
+  expect(r.config.explorer.width).toBe(40);
+  expect(r.panels.explorer.width).toBeUndefined();
 });

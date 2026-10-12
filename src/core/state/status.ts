@@ -2,6 +2,12 @@ import { resolveServers } from "../config/lsp";
 import { backlinksOf } from "../features/links/note-index";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
+import {
+  matchStarts,
+  type SearchCount,
+  searchCount,
+  searchPattern,
+} from "../kernel/vim/search";
 import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { RenderCache } from "../lang/markdown/render-cache";
@@ -27,6 +33,8 @@ export type StatusSegments = {
   /** Absent until the first batch. */
   index?: "indexing" | "ready" | "unavailable";
   indexProgress?: { done: number; total: number };
+  /** The cursor's place among the last search's matches, when there are any. */
+  search?: SearchCount;
   /** "jump i/n" once a jump is recorded. */
   jump?: string;
   /** The browser preview: "preview :<port>", "preview …" while it starts, or "preview off". */
@@ -81,15 +89,36 @@ function countWords(text: TextBuffer, doc: Doc | undefined): number {
   return n;
 }
 
+/** Counting stops past this many matches and shows `>999`, like Neovim's `maxcount`. */
+export const SEARCH_COUNT_CAP = 999;
+
+const searchStarts = new WeakMap<
+  TextBuffer,
+  { pattern: string; starts: Pos[] }
+>();
+
+/** Match starts of `pattern`; cached per immutable text version and pattern. */
+function startsOf(text: TextBuffer, pattern: string): Pos[] {
+  const cached = searchStarts.get(text);
+  if (cached?.pattern === pattern) return cached.starts;
+  const re = searchPattern(pattern);
+  const starts =
+    re === undefined ? [] : matchStarts(text, re, SEARCH_COUNT_CAP + 1);
+  searchStarts.set(text, { pattern, starts });
+  return starts;
+}
+
 /**
  * The mode the badge names: the explorer, a base window (`insert` while one
- * of its cells is edited), or the vim mode.
+ * of its cells is edited or its filter input is open), or the vim mode.
  */
 function modeOf(s: AppState): string {
   if (s.panels.explorer.focused) return "explorer";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
-  return base.edit === undefined ? "base" : "insert";
+  return base.edit === undefined && base.search === undefined
+    ? "base"
+    : "insert";
 }
 
 /** What the statusline shows; the file-type decision lives here, not in the UI. */
@@ -114,6 +143,11 @@ export function statusSegments(s: AppState): StatusSegments {
       seg.words = countWords(b.text, b.analysis as Doc | undefined);
       if (index === "ready" || index === "unavailable")
         seg.backlinks = backlinksOf(s.index.ix, b.path).length;
+    }
+    if (s.vim.search !== undefined && s.vim.search.hidden !== true) {
+      const starts = startsOf(b.text, s.vim.search.pattern);
+      if (starts.length > 0)
+        seg.search = searchCount(starts, w.content.cursor, SEARCH_COUNT_CAP);
     }
     if (b.save.kind === "failed")
       seg.saveError = { reason: b.save.reason, retryAt: b.save.retryAt };

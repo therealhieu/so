@@ -3,17 +3,21 @@ import {
   Renderable,
   type RenderContext,
 } from "@opentui/core";
-import { activeBuffer, listedBuffers } from "../../core/state/buffers";
+import { activeBuffer, orderedBuffers } from "../../core/state/buffers";
 import type { AppState, BufferId, MouseTarget } from "../../core/state/types";
 import type { LayoutClass } from "../shell";
 import { drawCells, themeOf } from "../theme";
 
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 const cells = (text: string) => [...text].length;
+/** The pinned-tab mark for the explorer's icon set (a Nerd Font pin, else a square). */
+const PIN = { nerd: "\uf435", unicode: "▪" } as const;
 
 /**
- * Row 0: one tab per open buffer, the active one raised, `●` on dirty ones,
- * and the workspace root on the right when the terminal is wide enough.
+ * Row 0: one tab per open buffer in bufferline order, the active one on the
+ * editor background behind an accent bar, a rule between inactive ones, a pin
+ * on pinned ones, `●` on dirty ones,
+ * and the workspace root on the right when every tab fits beside it.
  * Tabs that do not fit scroll so the active one stays visible (`‹ ›`).
  */
 export class Bufferline extends Renderable {
@@ -50,18 +54,22 @@ export class Bufferline extends Renderable {
     const theme = themeOf(s);
     const cols = s.terminal.cols;
     drawCells(buf, theme.style("bufferline"), 0, 0, "", cols);
-    const right = this.lc === "narrow" ? "" : `${s.workspace.root} `;
     const active = activeBuffer(s)?.id;
-    const tabs = listedBuffers(s)
-      .sort((a, b) => a.id - b.id)
-      .map((b) => ({
-        id: b.id,
-        name: ` ${basename(b.path)}`,
-        dirty: b.dirty,
-        active: b.id === active,
-      }));
+    const pin = PIN[s.config.explorer.icons];
+    const tabs = orderedBuffers(s).map((b) => ({
+      id: b.id,
+      name: `${b.pinned === true ? `${pin} ` : ""}${basename(b.path)}`,
+      dirty: b.dirty,
+      active: b.id === active,
+    }));
+    // A lead cell, a space, the name, " ●" when dirty, and a space.
     const widthOf = (t: (typeof tabs)[number]) =>
-      cells(t.name) + (t.dirty ? 2 : 0) + 1;
+      cells(t.name) + (t.dirty ? 2 : 0) + 3;
+    // The workspace root shows on the right only where every tab still fits beside it.
+    const total = tabs.reduce((n, t) => n + widthOf(t), 0);
+    const root = `${s.workspace.root} `;
+    const right =
+      this.lc !== "narrow" && total + cells(root) + 2 <= cols ? root : "";
     const room = cols - cells(right) - 2;
     let first = 0;
     const at = Math.max(
@@ -82,10 +90,21 @@ export class Bufferline extends Renderable {
       }
       const token = t.active ? "bufferActive" : "bufferline";
       const x0 = x;
-      x = this.text(buf, theme, x, t.name, token);
+      // The active tab leads with an accent bar; two inactive tabs are split by a rule.
+      const between = i > first && tabs[i - 1]?.active === false;
+      x = t.active
+        ? this.text(buf, theme, x, "▎", "bufferIndicator")
+        : this.text(buf, theme, x, between ? "│" : " ", "bufferSep");
+      x = this.text(buf, theme, x, ` ${t.name}`, token);
       if (t.dirty) {
         x = this.text(buf, theme, x, " ", token);
-        x = this.text(buf, theme, x, "●", "bufferDirty");
+        x = this.text(
+          buf,
+          theme,
+          x,
+          "●",
+          t.active ? "bufferActiveDirty" : "bufferDirty",
+        );
       }
       x = this.text(buf, theme, x, " ", token);
       this.tabs.push({ x0, x1: x, bufferId: t.id });

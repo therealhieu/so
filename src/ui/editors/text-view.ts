@@ -155,7 +155,10 @@ export function paintLine(
   const line = theme.style("cursorline");
   const styleOf = (token: string) => {
     const st = theme.style(token);
-    return o.cursorline && token !== "selection" && token !== "searchMatch"
+    return o.cursorline &&
+      token !== "selection" &&
+      token !== "searchMatch" &&
+      token !== "searchCurrent"
       ? { ...st, bg: line.bg }
       : st;
   };
@@ -691,14 +694,7 @@ export class EditorView extends Renderable implements WindowView {
       }
     }
     for (; i < rows; i++)
-      drawCells(
-        buf,
-        theme.style("dim"),
-        this.x,
-        y + i,
-        "~".padStart(gw - 1),
-        this.width,
-      );
+      drawCells(buf, theme.style("text"), this.x, y + i, "", this.width);
   }
 
   /**
@@ -771,7 +767,10 @@ export class EditorView extends Renderable implements WindowView {
         s.lsp.highlights.version === b.text.version
           ? [referenceMarks(s.lsp.highlights.ranges)]
           : []),
-        searchMarks(s.vim.search),
+        searchMarks(
+          s.vim.search,
+          this.windowId === s.windows.active ? cursor : undefined,
+        ),
         selectionMarks(selection),
         ...git,
       ];

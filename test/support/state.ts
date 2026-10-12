@@ -27,6 +27,7 @@ import { registerBlockRenderer } from "../../src/core/lang/markdown/live-preview
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../../src/core/state/base-model";
+import { bufferBindings } from "../../src/core/state/buffer-commands";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { EmbedModelRegistry } from "../../src/core/state/embed-models";
 import {
@@ -96,6 +97,7 @@ export function testRegistries(): Registries {
     commands,
     bindings: [
       ...defaultBindings,
+      ...bufferBindings,
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,

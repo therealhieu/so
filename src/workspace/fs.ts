@@ -1,5 +1,6 @@
 import type { Stats } from "node:fs";
 import {
+  cp,
   link,
   lstat,
   mkdir,
@@ -13,7 +14,7 @@ import {
 } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import type { DirEntry, Stamp, TextFile } from "../core/state/types";
-import type { ExclusionMatcher } from "./ignore";
+import type { ExclusionMatcher, Shown } from "./ignore";
 
 const MAX_TEXT_BYTES = 16 * 1024 * 1024;
 const SNIFF_BYTES = 8192;
@@ -143,11 +144,16 @@ export const exists = (p: string) =>
 
 const e13 = (rel: string) => new FsError(`E13: File exists (${rel})`);
 
-/** One folder's entries without excluded ones, folders first; symlinks report their target's kind. */
+/**
+ * One folder's entries without excluded ones, folders first; symlinks report
+ * their target's kind. `shown` lets dot or gitignored entries through, and a
+ * listed gitignored entry is marked `ignored`.
+ */
 export async function listDir(
   root: string,
   rel: string,
   matcher: ExclusionMatcher,
+  shown: Shown = {},
 ): Promise<DirEntry[]> {
   const dir = join(root, rel);
   const entries: DirEntry[] = [];
@@ -155,8 +161,14 @@ export async function listDir(
     const isDir = d.isSymbolicLink()
       ? ((await statOrNull(join(dir, d.name)))?.isDirectory() ?? false)
       : d.isDirectory();
-    if (matcher.isExcluded(rel ? `${rel}/${d.name}` : d.name, isDir)) continue;
-    entries.push({ name: d.name, kind: isDir ? "dir" : "file" });
+    const path = rel ? `${rel}/${d.name}` : d.name;
+    if (matcher.isExcluded(path, isDir, shown)) continue;
+    const kind = isDir ? "dir" : "file";
+    entries.push(
+      shown.gitignored === true && matcher.isIgnored(path, isDir)
+        ? { name: d.name, kind, ignored: true }
+        : { name: d.name, kind },
+    );
   }
   return entries.sort((a, b) =>
     a.kind !== b.kind
@@ -286,6 +298,68 @@ export async function moveEntry(
     await rename(join(root, from), join(root, to));
   } catch (e) {
     throw FsError.from(e);
+  }
+}
+
+/** Entries copied so far out of all of them, the copied entry included. */
+export type CopyProgress = (done: number, total: number) => void;
+
+/**
+ * Copy the file or folder at the absolute path `src` to `to`, creating missing
+ * parents; refuses an existing target (E13) and never replaces anything below
+ * it. `progress` hears each entry as it starts.
+ */
+export async function copyEntry(
+  root: string,
+  src: string,
+  to: string,
+  progress?: CopyProgress,
+): Promise<void> {
+  const dest = join(root, to);
+  if (await exists(dest)) throw e13(to);
+  try {
+    await mkdir(dirname(dest), { recursive: true });
+    const total =
+      progress === undefined || !(await lstat(src)).isDirectory()
+        ? 1
+        : (await readdir(src, { recursive: true })).length + 1;
+    let done = 0;
+    await cp(src, dest, {
+      recursive: true,
+      errorOnExist: true,
+      force: false,
+      filter: () => {
+        progress?.(++done, total);
+        return true;
+      },
+    });
+  } catch (e) {
+    throw FsError.from(e);
+  }
+}
+
+/**
+ * Move the entry at the absolute path `src`, outside the workspace, to `to`;
+ * across file systems it is copied and then removed. Refuses an existing
+ * target (E13).
+ */
+export async function moveInto(
+  root: string,
+  src: string,
+  to: string,
+  progress?: CopyProgress,
+): Promise<void> {
+  const dest = join(root, to);
+  if (await exists(dest)) throw e13(to);
+  try {
+    await mkdir(dirname(dest), { recursive: true });
+    await rename(src, dest);
+  } catch (e) {
+    if (errCode(e) !== "EXDEV") throw FsError.from(e);
+    await copyEntry(root, src, to, progress);
+    await rm(src, { recursive: true }).catch((x) => {
+      throw FsError.from(x);
+    });
   }
 }
 

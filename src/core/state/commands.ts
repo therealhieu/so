@@ -4,21 +4,21 @@ import type { Edit } from "../kernel/text/pos";
 import { parseEx } from "../kernel/vim/ex";
 import { firstNonBlank } from "../kernel/vim/motions";
 import { searchPattern } from "../kernel/vim/search";
+import { bufferCommands } from "./buffer-commands";
 import {
   activeBuffer,
   activeWindow,
-  listedBuffers,
   openPath,
   READ_ONLY_FILE,
   readOnlyHint,
   readOnlyView,
   setBuffer,
   setWindow,
-  showBuffer,
 } from "./buffers";
 import { reloadConfig } from "./config";
 import {
   collapse,
+  collapseAll,
   EXPLORER_WIDTH_STEP,
   expandOrOpen,
   explorerWidth,
@@ -26,20 +26,18 @@ import {
   openSelected,
   resizeExplorer,
   startOp,
+  startPaste,
+  systemOpenSelected,
+  takeSelected,
   toggleExplorer,
 } from "./explorer";
 import { jumpBack, jumpForward, recordJump, showJumps } from "./jumps";
 import { pickServer } from "./lsp";
 import { formatThenSave } from "./lsp-commands";
 import { openPicker } from "./picker";
-import { chain, message, none } from "./result";
-import {
-  autosaveNow,
-  closeBuffer,
-  requestQuit,
-  scheduleAutosave,
-  writeBuffer,
-} from "./save";
+import { message, none } from "./result";
+import { requestQuit, scheduleAutosave, writeBuffer } from "./save";
+import { toggleDotfiles, toggleGitignored } from "./settings";
 import { panelDocked, panelFocused, panelSide } from "./side-panel";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -77,10 +75,20 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   bdelete: "buffer.delete",
   "bd!": "buffer.deleteForce",
   "bdelete!": "buffer.deleteForce",
+  b: "buffer.go",
+  buffer: "buffer.go",
+  ls: "buffer.list",
+  buffers: "buffer.list",
+  files: "buffer.list",
+  wa: "file.saveAll",
+  wall: "file.saveAll",
+  noh: "search.clear",
+  nohlsearch: "search.clear",
   ConfigReload: "config.reload",
   jumps: "jump.list",
   help: "help.keymap",
   Settings: "settings.open",
+  Open: "file.systemOpen",
   Preview: "preview.start",
   PreviewStop: "preview.stop",
   Today: "note.today",
@@ -271,29 +279,6 @@ function writeActive(ctx: CommandContext): Result {
   });
 }
 
-function closeActive(ctx: CommandContext, force: boolean): Result {
-  const b = activeBuffer(ctx.state);
-  return b === undefined
-    ? none(ctx.state)
-    : closeBuffer(ctx.state, b.id, { force }, ctx.now);
-}
-
-/** `:bn` / `:bp`: show the next or previous open buffer, saving the one left. */
-function cycleBuffer(ctx: CommandContext, delta: 1 | -1): Result {
-  const s = ctx.state;
-  const ids = listedBuffers(s)
-    .map((b) => b.id)
-    .sort((a, b) => a - b);
-  const current = activeBuffer(s);
-  if (current === undefined || ids.length < 2) return none(s);
-  const at = ids.indexOf(current.id);
-  const next = ids[(at + delta + ids.length) % ids.length];
-  if (next === undefined) return none(s);
-  return chain(autosaveNow(s, current.id, ctx.now), (st) =>
-    none(showBuffer(st, next)),
-  );
-}
-
 /** `:sp` / `:vs`: the new window shows the same buffer and takes focus. */
 function split(s: AppState, dir: "row" | "column"): Result {
   const id = s.windows.nextWindowId;
@@ -309,21 +294,32 @@ function split(s: AppState, dir: "row" | "column"): Result {
 }
 
 /**
- * Move focus between windows; the docked side panel sits beside them:
- * moving toward its edge past the last window enters it, moving back leaves it.
+ * Move focus between windows; the docked side panel and the open explorer
+ * sit beside them on opposite edges: moving toward one's edge past the last
+ * window enters it, moving back leaves it.
  */
 function focus(s: AppState, dir: "h" | "j" | "k" | "l"): Result {
-  const side = s.panels.side;
-  const setSide = (focused: boolean): AppState => ({
+  const { side, explorer } = s.panels;
+  const panels = (
+    sideFocused: boolean,
+    explorerFocused: boolean,
+  ): AppState => ({
     ...s,
-    panels: { ...s.panels, side: { ...side, focused } },
+    panels: {
+      ...s.panels,
+      side: { ...side, focused: sideFocused },
+      explorer: { ...explorer, focused: explorerFocused },
+    },
   });
   const [enter, leave] = panelSide(s) === "left" ? ["h", "l"] : ["l", "h"];
-  if (panelFocused(s)) return none(dir === leave ? setSide(false) : s);
+  if (explorer.focused) return none(dir === enter ? panels(false, false) : s);
+  if (panelFocused(s)) return none(dir === leave ? panels(false, false) : s);
   const target = focusDirection(s.windows.tree, s.windows.active, dir);
-  if (target === undefined)
-    return none(dir === enter && panelDocked(s) ? setSide(true) : s);
-  return none({ ...s, windows: { ...s.windows, active: target } });
+  if (target !== undefined)
+    return none({ ...s, windows: { ...s.windows, active: target } });
+  if (dir === enter && panelDocked(s)) return none(panels(true, false));
+  if (dir === leave && explorer.open) return none(panels(false, true));
+  return none(s);
 }
 
 const builtins: AppCommand[] = [
@@ -340,20 +336,9 @@ const builtins: AppCommand[] = [
     run: (c) => requestQuit(c.state, { force: true }, c.now),
   },
   {
-    id: "buffer.delete",
-    title: "Close buffer",
-    run: (c) => closeActive(c, false),
-  },
-  {
-    id: "buffer.deleteForce",
-    title: "Close buffer without saving",
-    run: (c) => closeActive(c, true),
-  },
-  { id: "buffer.next", title: "Next buffer", run: (c) => cycleBuffer(c, 1) },
-  {
-    id: "buffer.prev",
-    title: "Previous buffer",
-    run: (c) => cycleBuffer(c, -1),
+    id: "buffer.list",
+    title: "List buffers",
+    run: (c) => openPicker(c, "buffers"),
   },
   { id: "file.edit", title: "Open file", run: editFile },
   {
@@ -369,9 +354,37 @@ const builtins: AppCommand[] = [
   { id: "jump.list", title: "Jump list", run: (c) => showJumps(c.state) },
   { id: "file.find", title: "Find file", run: (c) => openPicker(c, "files") },
   {
+    id: "file.systemOpen",
+    title: "Open file with system app",
+    run: (c) => {
+      const b = activeBuffer(c.state);
+      return b === undefined
+        ? message(c.state, "E32: No file name", "error")
+        : {
+            state: c.state,
+            effects: [
+              { kind: "openUrl", url: `${c.state.workspace.root}/${b.path}` },
+            ],
+          };
+    },
+  },
+  {
     id: "file.recent",
     title: "Recent files",
     run: (c) => openPicker(c, "recent"),
+  },
+  {
+    id: "search.clear",
+    title: "Clear search highlight",
+    run: (c) => {
+      const search = c.state.vim.search;
+      return search === undefined || search.hidden === true
+        ? none(c.state)
+        : none({
+            ...c.state,
+            vim: { ...c.state.vim, search: { ...search, hidden: true } },
+          });
+    },
   },
   {
     id: "search.grep",
@@ -437,6 +450,16 @@ const builtins: AppCommand[] = [
     run: (c) => none(resizeExplorer(c.state, undefined)),
   },
   {
+    id: "explorer.toggleDotfiles",
+    title: "Show or hide dot entries",
+    run: (c) => toggleDotfiles(c.state),
+  },
+  {
+    id: "explorer.toggleGitignored",
+    title: "Show or hide gitignored entries",
+    run: (c) => toggleGitignored(c.state),
+  },
+  {
     id: "explorer.down",
     title: "Next entry",
     run: (c) => moveCursor(c.state, 1),
@@ -452,6 +475,11 @@ const builtins: AppCommand[] = [
     run: (c) => openSelected(c.state, c.now),
   },
   {
+    id: "explorer.systemOpen",
+    title: "Open with system app",
+    run: (c) => systemOpenSelected(c.state),
+  },
+  {
     id: "explorer.expand",
     title: "Expand folder",
     run: (c) => expandOrOpen(c.state, c.now),
@@ -460,6 +488,11 @@ const builtins: AppCommand[] = [
     id: "explorer.collapse",
     title: "Collapse folder",
     run: (c) => collapse(c.state),
+  },
+  {
+    id: "explorer.collapseAll",
+    title: "Collapse all folders",
+    run: (c) => collapseAll(c.state),
   },
   {
     id: "explorer.create",
@@ -473,6 +506,21 @@ const builtins: AppCommand[] = [
   },
   { id: "explorer.move", title: "Move", run: (c) => startOp(c, "move") },
   {
+    id: "explorer.copy",
+    title: "Copy",
+    run: (c) => takeSelected(c.state, "copy"),
+  },
+  {
+    id: "explorer.cut",
+    title: "Cut",
+    run: (c) => takeSelected(c.state, "cut"),
+  },
+  {
+    id: "explorer.paste",
+    title: "Paste",
+    run: (c) => startPaste(c.state),
+  },
+  {
     id: "explorer.delete",
     title: "Delete",
     run: (c) => startOp(c, "delete"),
@@ -482,5 +530,5 @@ const builtins: AppCommand[] = [
 export function registerBuiltins(
   commands: CommandRegistry<CommandContext, CommandResult>,
 ): void {
-  for (const cmd of builtins) commands.register(cmd);
+  for (const cmd of [...builtins, ...bufferCommands]) commands.register(cmd);
 }

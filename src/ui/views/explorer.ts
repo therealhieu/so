@@ -4,8 +4,14 @@ import {
   type RenderContext,
 } from "@opentui/core";
 import { explorerMarkers, type Marker } from "../../core/features/git/status";
-import { explorerWidth, visiblePaths } from "../../core/state/explorer";
+import {
+  explorerWidth,
+  isCutPath,
+  isIgnoredPath,
+  visiblePaths,
+} from "../../core/state/explorer";
 import { bodyRows } from "../../core/state/layout";
+import { promptField } from "../../core/state/line-field";
 import type {
   AppState,
   ExplorerPrompt,
@@ -15,7 +21,7 @@ import type {
 import { fileIcon, folderIcon } from "../icons";
 import { drawFrame } from "../overlays/host";
 import type { Cursor, LayoutClass } from "../shell";
-import { drawCells, themeOf } from "../theme";
+import { drawCells, type Style, themeOf } from "../theme";
 
 /** Docked beside the windows when open on a terminal of 100 columns or more. */
 export const explorerDocked = (s: AppState, lc: LayoutClass): boolean =>
@@ -50,6 +56,8 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
   const p = s.overlay.prompt;
   return p.newNote !== true &&
     p.rename === undefined &&
+    p.setting === undefined &&
+    p.binding === undefined &&
     p.kind === "input" &&
     (p.op.kind === "create" ||
       (p.op.kind === "rename" && p.op.from === s.panels.explorer.cursor))
@@ -59,13 +67,12 @@ export function treeField(s: AppState): ExplorerPrompt | undefined {
 
 const cells = (text: string) => [...text].length;
 
-/** The git marker glyph after a row's name, and its token. */
+/** A git marker's glyph at the row's right edge, and the token for it and the name. */
 const GIT_MARKERS: Readonly<Record<Marker, readonly [string, string]>> = {
   modified: ["M", "explorerGitModified"],
   staged: ["S", "explorerGitStaged"],
   untracked: ["?", "explorerGitUntracked"],
   conflict: ["U", "explorerGitConflict"],
-  contains: ["•", "explorerGitContains"],
 };
 
 /**
@@ -87,8 +94,9 @@ export function impactLine(
  * The file tree: docked on its configured edge with a `│` separator toward
  * the windows, or a rounded float on that edge on narrow terminals. Each row starts with an
  * icon for its folder state or file type (`explorer.icons` picks Nerd Font or
- * plain symbols); `●` marks a file with unsaved changes. Create and rename edit
- * the name in the tree: a new row under the target folder, or the selected row.
+ * plain symbols); `●` marks a file with unsaved changes, and a gitignored
+ * name, or one cut and not yet pasted, is dimmed. Create and rename edit the name in the tree: a new row under the
+ * target folder, or the selected row.
  */
 export class ExplorerView extends Renderable {
   private s: AppState | undefined;
@@ -124,25 +132,31 @@ export class ExplorerView extends Renderable {
     this.paths = rows.map((r) => r.path);
     const at = selectedRow(rows, ex.cursor);
     const room = this.listRows();
+    // A name field keeps the lines under it in view.
+    let end = at;
+    if (rows[at]?.edit !== undefined)
+      while (rows[end + 1]?.note !== undefined) end++;
+    if (end >= this.first + room) this.first = end - room + 1;
     if (at >= 0 && at < this.first) this.first = at;
-    if (at >= this.first + room) this.first = at - room + 1;
     this.first = Math.max(0, Math.min(this.first, rows.length - room));
     const row = rows[at];
     const box = this.inner();
     const x = this.x0 + box.x + 1 + 2 * (row?.depth ?? 0);
     const y = 1 + box.y + 1 + at - this.first;
+    // Only the name field shows a cursor; the selected row marks the tree's focus.
+    const field = treeField(s);
+    const caret = field === undefined ? 0 : promptField(field).caret;
     this.cursorAt =
-      !ex.open || row === undefined
+      !ex.open || row?.edit === undefined
         ? undefined
-        : row.edit !== undefined
-          ? {
-              x: Math.min(this.x0 + box.x + box.w - 1, x + 2 + cells(row.edit)),
-              y,
-              style: "line",
-            }
-          : ex.focused
-            ? { x, y, style: "block" }
-            : undefined;
+        : {
+            x: Math.min(
+              this.x0 + box.x + box.w - 1,
+              x + 2 + cells(row.edit.slice(0, caret)),
+            ),
+            y,
+            style: "line",
+          };
   }
 
   cursor(): Cursor | undefined {
@@ -189,6 +203,28 @@ export class ExplorerView extends Renderable {
     return Math.max(0, this.inner().h - 1);
   }
 
+  /**
+   * A cut name in full: from the name's column toward the windows on a left
+   * tree, or ending at the tree's edge and reaching left on a right tree.
+   */
+  private paintFullName(
+    buf: OptimizedBuffer,
+    theme: ReturnType<typeof themeOf>,
+    token: string,
+    name: string,
+    nameX: number,
+    y: number,
+  ): void {
+    const cols = this.s?.terminal.cols ?? 0;
+    const box = this.inner();
+    const text = ` ${name} `;
+    const w = Math.min(cols, cells(text));
+    const x = this.onRight
+      ? Math.max(0, this.x0 + box.x + box.w - w)
+      : Math.max(0, Math.min(nameX - 1, cols - w));
+    drawCells(buf, fullNameStrip(theme, token), x, y, text, w);
+  }
+
   private rows(s: AppState): Row[] {
     const ex = s.panels.explorer;
     const rows: Row[] = visiblePaths(s).map((path) => ({
@@ -198,34 +234,46 @@ export class ExplorerView extends Renderable {
       open: ex.expanded.includes(path),
     }));
     const field = treeField(s);
-    if (field?.op.kind === "create") {
+    if (field === undefined) return rows;
+    let at: number;
+    let depth: number;
+    if (field.op.kind === "create") {
       const folder = field.op.from;
-      rows.splice(rows.findIndex((r) => r.path === ex.cursor) + 1, 0, {
+      at = rows.findIndex((r) => r.path === ex.cursor) + 1;
+      depth = folder === "" ? 0 : depthOf(folder) + 1;
+      rows.splice(at, 0, {
         path: "",
-        depth: folder === "" ? 0 : depthOf(folder) + 1,
+        depth,
         dir: false,
         open: false,
         edit: field.value,
       });
-    } else if (field !== undefined) {
-      const at = rows.findIndex((r) => r.path === field.op.from);
+    } else {
+      at = rows.findIndex((r) => r.path === field.op.from);
       const row = rows[at];
-      if (row !== undefined) {
-        row.edit = field.value;
-        const note = impactLine(field, {
-          warn: "explorerWarn",
-          error: "explorerError",
-        });
-        if (note !== undefined)
-          rows.splice(at + 1, 0, {
-            path: "",
-            depth: row.depth + 1,
-            dir: false,
-            open: false,
-            note,
-          });
-      }
+      if (row === undefined) return rows;
+      row.edit = field.value;
+      depth = row.depth;
     }
+    // Under the field: its keys, then why Enter is off or the links it updates.
+    const notes = [
+      {
+        text: `⏎ ${field.op.kind === "create" ? "create" : "rename"} · esc cancel`,
+        token: "explorerDim",
+      },
+      impactLine(field, { warn: "explorerWarn", error: "explorerError" }),
+    ].filter((n) => n !== undefined);
+    rows.splice(
+      at + 1,
+      0,
+      ...notes.map((note) => ({
+        path: "",
+        depth: depth + 1,
+        dir: false,
+        open: false,
+        note,
+      })),
+    );
     return rows;
   }
 
@@ -302,6 +350,13 @@ export class ExplorerView extends Renderable {
           ? "treeSelFocus"
           : "treeSel"
         : "explorer";
+      // A selected row keeps each part's colour on the selection background.
+      const paint = (token: string): Style => {
+        const own = theme.style(token);
+        if (!selected) return own;
+        const sel = theme.style(base);
+        return { ...own, bg: sel.bg, attrs: own.attrs | sel.attrs };
+      };
       const set = s.config.explorer.icons;
       const icon = row.dir
         ? { glyph: folderIcon(row.open, set), token: "explorerDir" }
@@ -314,7 +369,7 @@ export class ExplorerView extends Renderable {
         if (room <= 0) return;
         drawCells(
           buf,
-          theme.style(selected ? base : token),
+          paint(token),
           x,
           y,
           text,
@@ -323,29 +378,58 @@ export class ExplorerView extends Renderable {
         x += [...text].length;
       };
       put(indent, "explorer");
-      put(`${icon.glyph} `, icon.token);
       if (row.edit !== undefined) {
+        // The name field: a pencil, then the text on a strip to the edge.
+        put("✎ ", "explorerWarn");
         const room = x0 + box.w - x;
         if (room > 0)
-          drawCells(
-            buf,
-            theme.style("treeField"),
-            x,
-            y,
-            row.edit,
-            Math.min(room, cells(row.edit)),
-          );
+          drawCells(buf, theme.style("treeField"), x, y, row.edit, room);
         continue;
       }
-      put(basename(row.path), row.dir ? "explorerDir" : "explorer");
-      if (dirty.has(row.path)) put(" ●", "explorerDirty");
+      put(`${icon.glyph} `, icon.token);
       const marker = markers?.get(row.path);
-      if (marker !== undefined) {
-        const [glyph, token] = GIT_MARKERS[marker];
-        put(` ${glyph}`, token);
+      const git = marker === undefined ? undefined : GIT_MARKERS[marker];
+      // An open folder's changes show on the rows below it.
+      const glyph =
+        git !== undefined && !(row.dir && row.open) ? git : undefined;
+      // The name stops short of the glyph column: a space, the glyph, a space.
+      const end = x0 + box.w - (glyph === undefined ? 0 : 3);
+      const name = basename(row.path);
+      const nameToken =
+        git?.[1] ??
+        (isIgnoredPath(s, row.path) || isCutPath(s, row.path)
+          ? "explorerDim"
+          : row.dir
+            ? "explorerDir"
+            : "explorer");
+      const nameX = x;
+      const room = end - x;
+      if (room > 0) {
+        drawCells(
+          buf,
+          paint(nameToken),
+          x,
+          y,
+          name,
+          Math.min(room, cells(name)),
+        );
+        x += Math.min(room, cells(name));
       }
+      if (dirty.has(row.path) && end - x >= 2) put(" ●", "explorerDirty");
+      if (glyph !== undefined && box.w >= 3)
+        drawCells(buf, paint(glyph[1]), x0 + box.w - 2, y, glyph[0], 1);
+      if (row.path === ex.hover && room < cells(name))
+        this.paintFullName(buf, theme, nameToken, name, nameX, y);
     }
   }
+}
+
+/** The hovered row's whole name in a float-coloured strip over the windows beside the tree. */
+function fullNameStrip(
+  theme: ReturnType<typeof themeOf>,
+  token: string,
+): Style {
+  return { ...theme.style(token), bg: theme.style("float").bg };
 }
 
 /** The highlighted row: the name field while one is open, else the selection. */

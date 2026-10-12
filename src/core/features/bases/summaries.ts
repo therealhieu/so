@@ -1,3 +1,4 @@
+import { dateInstant } from "./dates";
 import type { BaseCell, BaseDiagnostic } from "./types";
 
 /** Obsidian's default summary names; a view's `summaries` maps a property to one of them. */
@@ -21,7 +22,6 @@ export const DEFAULT_SUMMARIES = [
 
 const DAY_MS = 86_400_000;
 const EMPTY: BaseCell = { type: "null", value: null };
-const DATE_TEXT = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/;
 
 const num = (value: number): BaseCell =>
   Number.isFinite(value) ? { type: "number", value } : EMPTY;
@@ -29,18 +29,9 @@ const num = (value: number): BaseCell =>
 const numbers = (values: readonly BaseCell[]) =>
   values.flatMap((c) => (c.type === "number" ? [c.value] : []));
 
-/**
- * A date cell's instant for comparison: epoch milliseconds as they are, and a
- * written date from its own fields, so no time zone is involved.
- */
-function instant(c: BaseCell): number | undefined {
-  if (c.type === "date" && typeof c.value === "number") return c.value;
-  if (c.type !== "date" && c.type !== "string") return undefined;
-  const m = DATE_TEXT.exec(String(c.value));
-  if (m === null) return undefined;
-  const [, y, mo, d, h, mi, s] = m.map(Number);
-  return Date.UTC(y as number, (mo as number) - 1, d, h || 0, mi || 0, s || 0);
-}
+/** A date cell's instant for comparison. */
+const instant = (c: BaseCell): number | undefined =>
+  c.type === "date" || c.type === "string" ? dateInstant(c.value) : undefined;
 
 const dates = (values: readonly BaseCell[]) =>
   values.flatMap((cell) => {

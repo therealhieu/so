@@ -1,9 +1,14 @@
+import { pinKeys } from "../features/bases/evaluator";
 import type { BaseWindowState, CellEdit } from "../features/bases/file-type";
+import { newNoteSeed } from "../features/bases/new-note";
+import { parseBase } from "../features/bases/parser";
 import {
   type PropertyType,
   propertyType,
   validates,
 } from "../features/bases/property-types";
+import { resizedWidth } from "../features/bases/table";
+import type { BasePin } from "../features/bases/types";
 import type { Binding } from "../kernel/commands/defaults";
 import type { Command } from "../kernel/commands/registry";
 import type { Key } from "../kernel/vim/keys";
@@ -17,7 +22,7 @@ import {
   setBaseWindow,
 } from "./base-model";
 import { writeProperty } from "./base-write";
-import { openPath } from "./buffers";
+import { fullText, openPath } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { recordJump } from "./jumps";
 import { openPicker } from "./picker";
@@ -267,6 +272,65 @@ function toggleFilter(c: CommandContext): Result {
   );
 }
 
+/** `/`: open the filter input at the window's text filter. */
+function startSearch(c: CommandContext): Result {
+  const a = active(c);
+  if (a === undefined) return none(c.state);
+  const value = a.ws.query ?? "";
+  return none(setWs(a, { ...a.ws, search: { value, caret: value.length } }));
+}
+
+const samePin = (x: BasePin, y: BasePin) =>
+  x.property === y.property &&
+  x.keys.length === y.keys.length &&
+  x.keys.every((k, i) => k === y.keys[i]);
+
+/**
+ * `F`: keep only rows whose focused column (table) or group property (board)
+ * holds the focused value; the same pin again removes it. Pins on other
+ * properties stay, and one on the same property is replaced.
+ */
+function togglePin(c: CommandContext): Result {
+  const a = active(c);
+  if (a === undefined) return none(c.state);
+  const { table, board, focus } = a.m;
+  const lane = board?.lanes[focus.lane];
+  const col = table?.columns[focus.column];
+  const cell = table?.rows[focus.row]?.cells[focus.column];
+  const target =
+    board !== undefined && lane !== undefined
+      ? { property: board.property, label: lane.label, value: lane.key }
+      : col !== undefined && cell !== undefined
+        ? { property: col.id, label: col.label, value: cell.value.value }
+        : undefined;
+  if (target === undefined) return message(a.s, "F pins the focused value");
+  const pin: BasePin = {
+    property: target.property,
+    keys: pinKeys(target.value),
+  };
+  const pins = a.ws.pins ?? [];
+  const had = pins.some((p) => samePin(p, pin));
+  const rest = pins.filter((p) => p.property !== pin.property);
+  const next = had ? rest : [...rest, { ...pin, keys: [...pin.keys] }];
+  const { pins: _, ...ws } = a.ws;
+  const name = board !== undefined ? bare(target.property) : target.label;
+  const text = pin.keys.map((k) => (k === "" ? "—" : k)).join(", ");
+  return message(
+    setWs(a, next.length === 0 ? ws : { ...ws, pins: next }),
+    `${had ? "unpinned" : "pinned"} ${name} = ${text} (this window only)`,
+  );
+}
+
+/** `c`: drop the window's text filter and pins. */
+function clearFilters(c: CommandContext): Result {
+  const a = active(c);
+  if (a === undefined) return none(c.state);
+  if (a.ws.query === undefined && a.ws.pins === undefined)
+    return message(a.s, "no filters to clear");
+  const { query: _q, pins: _p, search: _s, ...ws } = a.ws;
+  return message(setWs(a, ws), "filters cleared");
+}
+
 function switchView(c: CommandContext, pick: (a: Active) => number): Result {
   const a = active(c);
   if (a === undefined) return none(c.state);
@@ -290,9 +354,24 @@ const EXPLAIN_FIXED = {
 } as const;
 
 /**
+ * The UI laid out window `window`'s table `col` columns past the pinned
+ * one, which moving the focus may change; keep it so `H`/`L` scroll from
+ * what is shown.
+ */
+export function onBaseScrolled(
+  s: AppState,
+  a: { window: WindowId; col: number },
+): Result {
+  const ws = baseWindow(s, a.window);
+  if (ws === undefined || ws.scroll.col === a.col) return none(s);
+  return none(setBaseWindow(s, a.window, { ...ws, scroll: { col: a.col } }));
+}
+
+/**
  * `H`/`L`: on a board, move the focused card to the next lane by writing the
  * group property (removing it for None); the card keeps focus. On a table,
- * scroll the columns.
+ * scroll the columns after the pinned first one; unless it is on the pinned
+ * column, the focus goes along so it never holds the columns in place.
  */
 function moveCard(c: CommandContext, step: -1 | 1): Result {
   const a = active(c);
@@ -300,12 +379,21 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
   const board = a.m.board;
   if (board === undefined) {
     const cols = a.m.table?.columns.length ?? 0;
-    const col = clamp(a.ws.scroll.col + step, cols - 1);
+    const col = clamp(a.ws.scroll.col + step, cols - 2);
+    const column = a.m.focus.column;
     return none(
       setWs(a, {
         ...a.ws,
         scroll: { col },
-        focus: { ...a.ws.focus, column: Math.max(a.m.focus.column, col) },
+        focus: {
+          ...a.ws.focus,
+          column:
+            column === 0
+              ? 0
+              : step > 0
+                ? Math.max(column, col + 1)
+                : Math.min(column, col + 1),
+        },
       }),
     );
   }
@@ -336,6 +424,45 @@ function moveCard(c: CommandContext, step: -1 | 1): Result {
   );
 }
 
+/** Columns one `>` or `<` adds or takes away. */
+const WIDTH_STEP = 4;
+
+/**
+ * Give table column `column` of the active base window `width` cells, at
+ * least 3 cells; `undefined` returns it to the view's width. The base file
+ * is never written.
+ */
+export function resizeBaseColumn(
+  c: CommandContext,
+  column: number,
+  width: number | undefined,
+): Result {
+  const a = active(c);
+  const id = a?.m.table?.columns[column]?.id;
+  if (a === undefined || id === undefined) return none(c.state);
+  const { [id]: was, ...rest } = a.ws.widths ?? {};
+  if (width === undefined) {
+    if (was === undefined) return none(a.s);
+    const { widths: _, ...ws } = a.ws;
+    return none(
+      setWs(a, Object.keys(rest).length > 0 ? { ...ws, widths: rest } : ws),
+    );
+  }
+  const next = resizedWidth(width);
+  return next === was
+    ? none(a.s)
+    : none(setWs(a, { ...a.ws, widths: { ...rest, [id]: next } }));
+}
+
+/** `>`/`<`: widen or narrow the focused table column by `WIDTH_STEP`. */
+function stepWidth(c: CommandContext, step: -1 | 1): Result {
+  const a = active(c);
+  const col = a?.m.table?.columns[a.m.focus.column];
+  return a === undefined || col === undefined
+    ? none(c.state)
+    : resizeBaseColumn(c, a.m.focus.column, col.width + step * WIDTH_STEP);
+}
+
 function openFocused(c: CommandContext): Result {
   const a = active(c);
   if (a === undefined) return none(c.state);
@@ -349,6 +476,71 @@ function openFocused(c: CommandContext): Result {
 
 /** Open the focused row's or card's note, as `<CR>` does. */
 export const openBaseFocused = openFocused;
+
+/** The focused lane of a board, or the focused row's group of a grouped table. */
+function focusedGroup(
+  a: Active,
+  groupBy: string | undefined,
+): { property: string; key: FrontmatterValue } | undefined {
+  const { board, table, focus } = a.m;
+  if (board !== undefined) {
+    const lane = board.lanes[focus.lane];
+    return board.movable && lane !== undefined
+      ? { property: board.property, key: lane.key }
+      : undefined;
+  }
+  const g = table?.groups.find(
+    (x) => focus.row >= x.start && focus.row < x.start + x.count,
+  );
+  return a.m.grouped && g !== undefined && groupBy !== undefined
+    ? { property: groupBy, key: g.key }
+    : undefined;
+}
+
+/**
+ * `o`: ask for a new note's name, prefilled with the folder the view's
+ * filters ask for, to create it blank with the properties that make it a
+ * row here (see `newNoteSeed`).
+ */
+function newRow(c: CommandContext): Result {
+  const a = active(c);
+  if (a === undefined) return none(c.state);
+  const w = a.s.windows.byId[a.id];
+  const b = w && a.s.buffers[w.content.bufferId];
+  if (b === undefined) return none(a.s);
+  const parsed = parseBase(fullText(b.text));
+  if (!parsed.ok) return toast(a.s, "error", "the base file is not valid YAML");
+  const view =
+    parsed.base.views.find((v) => v.name === a.m.selected) ??
+    parsed.base.views[0];
+  const group = focusedGroup(a, view?.groupBy?.property);
+  const seed = newNoteSeed({
+    base: parsed.base,
+    view,
+    viewFilters: a.ws.filtered !== false,
+    basePath: b.path,
+    ...(a.ws.pins === undefined ? {} : { pins: a.ws.pins }),
+    ...(group === undefined ? {} : { group }),
+    types: a.s.index.types,
+  });
+  return none({
+    ...a.s,
+    overlay: {
+      kind: "prompt",
+      prompt: {
+        kind: "input",
+        title: "New row",
+        value: seed.folder === "" ? "" : `${seed.folder}/`,
+        newNote: true,
+        row: {
+          window: a.id,
+          properties: seed.properties,
+          stamp: seed.stamp,
+        },
+      },
+    },
+  });
+}
 
 const BASE = ["base"] as const;
 const cmd = (
@@ -371,6 +563,9 @@ export const baseCommands: readonly BaseCommand[] = [
   cmd("base.sort", "Sort by the focused column", cycleSort),
   cmd("base.group", "Toggle grouping", toggleGrouping),
   cmd("base.filter", "Toggle the view's filters", toggleFilter),
+  cmd("base.search", "Filter rows by text", startSearch),
+  cmd("base.pin", "Filter rows by the focused value", togglePin),
+  cmd("base.clearFilters", "Clear the text filter and pins", clearFilters),
   cmd("base.views", "List the base's views", (c) => openPicker(c, "baseViews")),
   cmd("base.nextView", "Show the next view", (c) => switchView(c, nextView)),
   ...[1, 2, 3, 4].map((n) =>
@@ -383,6 +578,15 @@ export const baseCommands: readonly BaseCommand[] = [
     moveCard(c, 1),
   ),
   cmd("base.open", "Open the focused note", openFocused),
+  cmd("base.newRow", "New note in this view", newRow),
+  cmd("base.wider", "Widen the focused column", (c) => stepWidth(c, 1)),
+  cmd("base.narrower", "Narrow the focused column", (c) => stepWidth(c, -1)),
+  cmd("base.resetWidth", "Return the focused column to its width", (c) => {
+    const a = active(c);
+    return a === undefined
+      ? none(c.state)
+      : resizeBaseColumn(c, a.m.focus.column, undefined);
+  }),
 ];
 
 const KEYS: readonly (readonly [string, string])[] = [
@@ -395,6 +599,9 @@ const KEYS: readonly (readonly [string, string])[] = [
   ["s", "base.sort"],
   ["g", "base.group"],
   ["f", "base.filter"],
+  ["/", "base.search"],
+  ["F", "base.pin"],
+  ["c", "base.clearFilters"],
   ["v", "base.views"],
   ["<Tab>", "base.nextView"],
   ["1", "base.view1"],
@@ -404,6 +611,10 @@ const KEYS: readonly (readonly [string, string])[] = [
   ["H", "base.moveLeft"],
   ["L", "base.moveRight"],
   ["<CR>", "base.open"],
+  ["o", "base.newRow"],
+  [">", "base.wider"],
+  ["<lt>", "base.narrower"],
+  ["=", "base.resetWidth"],
 ];
 
 export const baseBindings: readonly Binding[] = KEYS.map(([seq, id]) => ({
@@ -415,6 +626,60 @@ export const baseBindings: readonly Binding[] = KEYS.map(([seq, id]) => ({
 /** Whether the active window is editing a base cell; its keys go to `cellEditKey`. */
 export const editingCell = (s: AppState): boolean =>
   baseWindow(s, s.windows.active)?.edit !== undefined;
+
+/** Whether the active window's filter input is open; its keys go to `searchKey`. */
+export const searchingBase = (s: AppState): boolean =>
+  baseWindow(s, s.windows.active)?.search !== undefined;
+
+/**
+ * A key while the filter input is open: characters, Backspace, and the
+ * arrows edit the text, which filters the rows as it changes; Enter keeps
+ * the filter and Esc clears it, both closing the input. No other key reaches
+ * base commands or vim.
+ */
+export function searchKey(s: AppState, a: { key: Key }): Result {
+  const id = s.windows.active;
+  const ws = baseWindow(s, id);
+  const e = ws?.search;
+  if (ws === undefined || e === undefined) return none(s);
+  const { search: _, query: __, ...rest } = ws;
+  const set = (value: string, caret: number) =>
+    none(
+      setBaseWindow(s, id, {
+        ...rest,
+        search: { value, caret },
+        ...(value === "" ? {} : { query: value }),
+      }),
+    );
+  const { value, caret } = e;
+  switch (a.key) {
+    case "<Esc>":
+      return none(setBaseWindow(s, id, rest));
+    case "<CR>":
+      return none(
+        setBaseWindow(
+          s,
+          id,
+          value.trim() === "" ? rest : { ...rest, query: value },
+        ),
+      );
+    case "<BS>":
+      return caret === 0
+        ? none(s)
+        : set(value.slice(0, caret - 1) + value.slice(caret), caret - 1);
+    case "<Left>":
+      return set(value, Math.max(0, caret - 1));
+    case "<Right>":
+      return set(value, Math.min(value.length, caret + 1));
+    default:
+      return [...a.key].length === 1
+        ? set(
+            value.slice(0, caret) + a.key + value.slice(caret),
+            caret + a.key.length,
+          )
+        : none(s);
+  }
+}
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const pad = (n: number, w = 2) => String(n).padStart(w, "0");

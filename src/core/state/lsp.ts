@@ -1,3 +1,4 @@
+import { resolveServers } from "../config/lsp";
 import {
   type LineShift,
   lineRemoved,
@@ -21,11 +22,19 @@ import type {
   LspState,
   PendingRequest,
   ServerKey,
+  ServerView,
 } from "./lsp-types";
 import { openPicker, refreshPicker } from "./picker";
 import { chain, message, none, toast } from "./result";
 import { writeBuffer } from "./save";
-import type { Action, AppState, Effect, MouseTarget, Result } from "./types";
+import type {
+  Action,
+  AppState,
+  BufferState,
+  Effect,
+  MouseTarget,
+  Result,
+} from "./types";
 import type { Registries } from "./update";
 
 /** User requests that get no answer in this long report a timeout. */
@@ -52,6 +61,37 @@ const running = (s: AppState, key: ServerKey): boolean => {
   const state = s.lsp.servers[key]?.state;
   return state === "starting" || state === "ready";
 };
+
+/** What `:LspInfo` says about a server's binary or state. */
+export function serverDetail(v: ServerView): string {
+  if (v.state === "missing") return "not on PATH";
+  if (v.state === "unavailable") return `unavailable: ${v.reason ?? ""}`;
+  if (v.state === "failed") return v.reason ?? "stopped";
+  return v.progress ?? v.binary ?? "";
+}
+
+/** Why no language server answers for `b`, and what fixes it. */
+export function noServerMessage(
+  s: AppState,
+  b: BufferState | undefined,
+): string {
+  if (b === undefined) return "no language server for this window";
+  if (!s.config.lsp.enabled)
+    return "language servers are off: set [lsp] enabled = true in config.toml";
+  const names = new Set(
+    resolveServers(s.config.lsp)
+      .filter((spec) => spec.fileTypes.includes(b.fileType))
+      .map((spec) => spec.name),
+  );
+  if (names.size === 0)
+    return `no language server configured for ${b.fileType}`;
+  const stopped = Object.values(s.lsp.servers).filter(
+    (v) => names.has(v.name) && v.state !== "starting" && v.state !== "ready",
+  );
+  if (stopped.length === 0) return `no language server for ${b.fileType}`;
+  const why = stopped.map((v) => `${v.name} ${serverDetail(v)}`).join(", ");
+  return `${b.fileType}: ${why} (:LspInfo)`;
+}
 
 /** The first attached, ready server with `feature`, in table order. */
 export function pickServer(
@@ -117,10 +157,7 @@ export function request(
   if (b === undefined || key === undefined) {
     if (auto) return none(s);
     if (keys.length === 0 || o.key !== undefined)
-      return message(
-        s,
-        `no language server for ${b?.fileType ?? "this window"}`,
-      );
+      return message(s, noServerMessage(s, b));
     // A starting server's features are not known yet.
     const starting = keys.filter((k) => s.lsp.servers[k]?.state === "starting");
     const names = (ks: ServerKey[]) =>

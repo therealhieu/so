@@ -402,6 +402,29 @@ export function mergeFrontmatter(
   return result(noteText, lf, change);
 }
 
+/**
+ * Sets `props` in a new note's text: each value replaces the note's, except
+ * a list, which gains its missing items. Text whose frontmatter cannot be read
+ * comes back unchanged.
+ */
+export function seedFrontmatter(
+  text: string,
+  props: Readonly<Record<string, FrontmatterValue>>,
+): string {
+  let out = text;
+  for (const [key, value] of Object.entries(props)) {
+    const had = frontmatterValue(out, key);
+    const next =
+      Array.isArray(value) && Array.isArray(had)
+        ? [...had, ...value.filter((v) => !had.some((h) => sameValue(h, v)))]
+        : value;
+    const r = patchFrontmatter(out, { set: key, value: next, date: true });
+    if (!r.ok) return text;
+    out = r.text;
+  }
+  return out;
+}
+
 const DATE = /^\d{4}-[01]\d-[0-3]\d$/;
 const DATETIME = /^\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d(:[0-5]\d)?$/;
 

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries, textFile } from "../../../test/support/state";
+import { parseConfig } from "../config/toml";
 import { summarize } from "../features/links/summarize";
 import { splitKeys } from "../kernel/vim/keys";
 import { scanDoc } from "../lang/markdown/scan";
@@ -177,6 +178,29 @@ test("the popup closes when the cursor leaves the link or Insert ends", () => {
   expect(s.overlay.kind).toBe("none");
   s = keys(indexed(), "Go[[pl]").state;
   expect(s.overlay.kind).toBe("none");
+});
+
+const lastLine = (s: AppState) => {
+  const b = s.buffers[1];
+  return b && fullText(b.text).split("\n").at(-1);
+};
+
+test("an Insert-mode jj bound to <Esc> closes the popup like Esc; jx keeps typing in the link", () => {
+  const s = update(indexed(), {
+    type: "configLoaded",
+    result: parseConfig('[keys.insert]\njj = "<Esc>"'),
+    reload: false,
+  }).state;
+  const open = keys(s, "Go[[pl").state;
+  expect(open.overlay.kind).toBe("completion");
+  const left = keys(open, "jj").state;
+  expect(left.overlay.kind).toBe("none");
+  expect(left.vim.mode).toBe("normal");
+  expect(lastLine(left)).toBe("[[pl");
+
+  const typed = keys(open, "ja").state;
+  expect(typed.vim).toMatchObject({ mode: "insert", pending: [] });
+  expect(lastLine(typed)).toBe("[[plja");
 });
 
 const withTags = () =>

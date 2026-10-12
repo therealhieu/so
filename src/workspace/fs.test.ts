@@ -17,10 +17,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   atomicWrite,
+  copyEntry,
   createEntry,
   createExclusive,
   listDir,
   moveEntry,
+  moveInto,
   readTextFile,
   removeEntry,
   stampOfFile,
@@ -63,6 +65,32 @@ test("listing shows symlinks with their target kind and skips excluded entries",
     { name: "b-link.md", kind: "file" },
     { name: "b.md", kind: "file" },
   ]);
+});
+
+test("dotfiles lists dot entries but never .git", async () => {
+  await mkdir(join(root, ".git"), { recursive: true });
+  await mkdir(join(root, ".s1mple"), { recursive: true });
+  const names = (await listDir(root, "", matcher(), { dotfiles: true })).map(
+    (e) => e.name,
+  );
+  expect(names).toContain(".s1mple");
+  expect(names).toContain(".env");
+  expect(names).not.toContain(".git");
+  expect(names).not.toContain("build");
+  await rm(join(root, ".git"), { recursive: true });
+  await rm(join(root, ".s1mple"), { recursive: true });
+});
+
+test("gitignored lists ignored entries marked, and their contents too", async () => {
+  await writeFile(join(root, "build/out.js"), "x\n");
+  const top = await listDir(root, "", matcher(), { gitignored: true });
+  expect(top).toContainEqual({ name: "build", kind: "dir", ignored: true });
+  expect(top).toContainEqual({ name: "b.md", kind: "file" });
+  expect(top.map((e) => e.name)).not.toContain(".env");
+  expect(await listDir(root, "build", matcher(), { gitignored: true })).toEqual(
+    [{ name: "out.js", kind: "file", ignored: true }],
+  );
+  await rm(join(root, "build/out.js"));
 });
 
 test("a linked folder lists only when it is expanded", async () => {
@@ -246,4 +274,79 @@ test("a read reports the file's created time", async () => {
   expect("createdMs" in r && r.createdMs).toBe(
     st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs,
   );
+});
+
+test("copy duplicates a file or a whole folder and never overwrites", async () => {
+  const outside = await mkdtemp(join(tmpdir(), "so-fs-outside-"));
+  try {
+    await mkdir(join(outside, "pics/deep"), { recursive: true });
+    await writeFile(join(outside, "pics/deep/cat.txt"), "meow\n");
+    await writeFile(join(outside, "loose.md"), "loose\n");
+    await copyEntry(root, join(outside, "pics"), "copied/pics");
+    await copyEntry(root, join(outside, "loose.md"), "loose.md");
+    expect(await readFile(join(root, "copied/pics/deep/cat.txt"), "utf8")).toBe(
+      "meow\n",
+    );
+    expect(await readFile(join(root, "loose.md"), "utf8")).toBe("loose\n");
+    await expect(
+      copyEntry(root, join(root, "notes/a.md"), "b.md"),
+    ).rejects.toThrow("E13: File exists (b.md)");
+    expect(await readFile(join(root, "b.md"), "utf8")).toBe("b\n");
+    expect(await readFile(join(outside, "loose.md"), "utf8")).toBe("loose\n");
+  } finally {
+    await rm(outside, { recursive: true });
+    await rm(join(root, "copied"), { recursive: true, force: true });
+    await rm(join(root, "loose.md"), { force: true });
+  }
+});
+
+test("moving in from outside renames, or copies then removes across file systems", async () => {
+  const outside = await mkdtemp(join(tmpdir(), "so-fs-outside-"));
+  try {
+    await writeFile(join(outside, "near.md"), "near\n");
+    await moveInto(root, join(outside, "near.md"), "in/near.md");
+    expect(await readFile(join(root, "in/near.md"), "utf8")).toBe("near\n");
+    expect(await Bun.file(join(outside, "near.md")).exists()).toBe(false);
+
+    await mkdir(join(outside, "far"));
+    await writeFile(join(outside, "far/x.md"), "x\n");
+    const spy = spyOn(fsp, "rename").mockImplementation(async () => {
+      throw Object.assign(new Error("EXDEV: cross-device link not permitted"), {
+        code: "EXDEV",
+      });
+    });
+    try {
+      await moveInto(root, join(outside, "far"), "in/far");
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await readFile(join(root, "in/far/x.md"), "utf8")).toBe("x\n");
+    await expect(stat(join(outside, "far"))).rejects.toThrow();
+
+    await writeFile(join(outside, "b.md"), "other\n");
+    await expect(moveInto(root, join(outside, "b.md"), "b.md")).rejects.toThrow(
+      "E13: File exists (b.md)",
+    );
+    expect(await readFile(join(outside, "b.md"), "utf8")).toBe("other\n");
+  } finally {
+    await rm(outside, { recursive: true });
+    await rm(join(root, "in"), { recursive: true, force: true });
+  }
+});
+
+test("a folder copy reports each entry out of all of them", async () => {
+  const outside = await mkdtemp(join(tmpdir(), "so-fs-outside-"));
+  try {
+    await mkdir(join(outside, "box/inner"), { recursive: true });
+    await writeFile(join(outside, "box/one.txt"), "1");
+    await writeFile(join(outside, "box/inner/two.txt"), "2");
+    const seen: string[] = [];
+    await copyEntry(root, join(outside, "box"), "box", (done, total) =>
+      seen.push(`${done}/${total}`),
+    );
+    expect(seen).toEqual(["1/4", "2/4", "3/4", "4/4"]);
+  } finally {
+    await rm(outside, { recursive: true });
+    await rm(join(root, "box"), { recursive: true, force: true });
+  }
 });

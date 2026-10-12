@@ -3,8 +3,12 @@ import { type Key, splitKeys } from "../vim/keys";
 /** Editor modes; owners declare more ("explorer", "picker", "base"). */
 export type Mode = "normal" | "insert" | "visual" | "cmdline" | (string & {});
 
-/** Where a binding applies; `filetype` omitted = every file type. */
-export type KeyScope = { mode: Mode; filetype?: string };
+/**
+ * Where a binding applies; `filetype` omitted = every file type. A lookup
+ * scope's `leaderFrom` also resolves leader sequences in that mode's
+ * bindings for every file type, after the scope's own.
+ */
+export type KeyScope = { mode: Mode; filetype?: string; leaderFrom?: Mode };
 
 /** One continuation of a pending prefix; `id` is set when the key completes a binding. */
 export type WhichKeyItem = { key: Key; id?: string };
@@ -44,14 +48,15 @@ export class Keymap {
   }
 
   /**
-   * Resolve `pending`: `{mode, filetype}` bindings first, then `{mode}`.
-   * A complete binding wins over a longer one; which-key items merge both levels.
+   * Resolve `pending`: `{mode, filetype}` bindings first, then `{mode}`, then
+   * `{mode: leaderFrom}` for a leader sequence. A complete binding wins over
+   * a longer one; which-key items merge every level.
    */
   lookup(scope: KeyScope, pending: Key[]): Lookup {
-    const levels =
-      scope.filetype === undefined
-        ? [scope]
-        : [scope, { mode: scope.mode } satisfies KeyScope];
+    const levels: KeyScope[] = [scope];
+    if (scope.filetype !== undefined) levels.push({ mode: scope.mode });
+    if (scope.leaderFrom !== undefined && pending[0] === this.leader)
+      levels.push({ mode: scope.leaderFrom });
     const nodes = levels.flatMap((s) => {
       let node = this.roots.get(scopeKey(s));
       for (const k of pending) node = node?.next.get(k);

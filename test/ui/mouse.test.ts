@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import { MouseButtons } from "@opentui/core/testing";
 import { parseConfig } from "../../src/core/config/toml";
 import { baseWindow } from "../../src/core/state/base-model";
 import { activeBuffer } from "../../src/core/state/buffers";
@@ -298,6 +299,24 @@ test("clicks on the bufferline and explorer switch, expand, and open", async () 
     kind: "read",
     path: "notes/plan.md",
   });
+});
+
+test("the bufferline shows tabs in order with pins, and a middle click closes one", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.open("a.md", "alpha\n");
+  m.open("b.md", "bravo\n");
+  m.open("c.md", "charlie\n");
+  m.keys("<leader>bp");
+  const row0 = async () => (await m?.frame())?.split("\n")[0] ?? "";
+  expect(await row0()).toContain("▎ \uf435 c.md   a.md │ b.md ");
+  const tab = await find(m, " a.md ");
+  await m.mouse.click(tab.x + 2, 0, MouseButtons.MIDDLE);
+  expect(await row0()).toContain("▎ \uf435 c.md   b.md ");
+  expect(
+    Object.values(m.store.get().buffers)
+      .map((b) => b.path)
+      .sort(),
+  ).toEqual(["b.md", "c.md"]);
 });
 
 test("a click on an outline heading jumps there and the panel title only focuses", async () => {
@@ -744,4 +763,70 @@ test("the shipped config docks the explorer on the right", async () => {
   const row = [...((await m.frame()).split("\n")[5] ?? "")];
   expect(m.store.get().config.explorer.position).toBe("right");
   expect(row.lastIndexOf("│")).toBe(89);
+});
+
+test("hovering a cut name in the explorer shows it whole over the windows", async () => {
+  m = await mountShell({
+    cols: 120,
+    rows: 16,
+    config: "[explorer]\nwidth = 16\n",
+  });
+  const long = "private-non-functional-requirements.md";
+  m.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: long, kind: "file" }],
+  });
+  expect(await m.frame()).not.toContain(long);
+  const row = await find(m, "private-");
+  await m.mouse.moveTo(row.x + 1, row.y);
+  expect(m.store.get().panels.explorer.hover).toBe(long);
+  expect(await m.row(row.y)).toContain(` ${long} `);
+  await m.mouse.scroll(row.x + 1, row.y, "down");
+  expect(m.store.get().panels.explorer.hover).toBeUndefined();
+  await m.mouse.moveTo(row.x + 1, row.y);
+  expect(m.store.get().panels.explorer.hover).toBe(long);
+  await m.mouse.moveTo(row.x + 1, row.y + 3);
+  expect(m.store.get().panels.explorer.hover).toBeUndefined();
+  expect(await m.frame()).not.toContain(long);
+});
+
+test("on a right explorer the whole name reaches left over the windows", async () => {
+  m = await mountShell({
+    cols: 120,
+    rows: 16,
+    config: '[explorer]\nwidth = 16\nposition = "right"\n',
+  });
+  const long = "private-non-functional-requirements.md";
+  m.store.dispatch({
+    type: "dirListed",
+    dir: "",
+    entries: [{ name: long, kind: "file" }],
+  });
+  const row = await find(m, "private-");
+  await m.mouse.moveTo(row.x + 1, row.y);
+  const line = await m.row(row.y);
+  expect(line).toContain(` ${long} `);
+  expect(line.trimEnd().endsWith(long)).toBe(true);
+});
+
+test("a drag on a Base table's header separator resizes the column to its left", async () => {
+  m = await mountShell({ cols: 120, rows: 16 });
+  m.store.dispatch(indexed());
+  m.keys("<leader>e");
+  m.open("tasks.base", TASKS_BASE);
+  const widths = () => {
+    const s = m?.store.get();
+    return s && baseWindow(s, s.windows.active)?.widths;
+  };
+  const header = await find(m, "│ Status");
+  await m.mouse.drag(header.x, header.y, header.x + 10, header.y);
+  expect(widths()).toEqual({ "file.name": 25 });
+  expect((await find(m, "│ Status")).x).toBe(header.x + 10);
+  // A double click on the separator returns the column to its own width.
+  const moved = await find(m, "│ Status");
+  await m.mouse.click(moved.x, moved.y);
+  await m.mouse.click(moved.x, moved.y);
+  expect(widths()).toBeUndefined();
+  expect((await find(m, "│ Status")).x).toBe(header.x);
 });

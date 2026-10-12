@@ -265,7 +265,7 @@ test("a window whose layout throws still shows the file's raw lines", async () =
   const body = (await m.frame()).split("\n").slice(1, 4);
   expect(body[0]).toStartWith("   1  first line");
   expect(body[1]).toContain("second line");
-  expect(body[2]).toStartWith("    ~");
+  expect(body[2]?.trim()).toBe("");
 });
 
 test("an info toast expires after 3 s and an error toast stays", async () => {
@@ -304,7 +304,8 @@ describe("themes", () => {
       m.keys("<Esc>vj");
       styles.selection = await at(6, 1);
       m.keys("<Esc>Az<Esc>");
-      styles.dirtyMarker = await at(10, 0);
+      const tabs = (await m.frame()).split("\n")[0] ?? "";
+      styles.dirtyMarker = await at([...tabs].indexOf("●"), 0);
       m.store.dispatch({
         type: "fsResult",
         op: { kind: "trash", from: "todo.md" },

@@ -136,7 +136,7 @@ describe("live view states", () => {
     expect(lines.find((l) => l.includes("▕"))).toContain("# States");
     expect(lines.find((l) => l.includes("⚠"))).toContain("![[table.broken]]");
 
-    expect(lines[0]?.trim()).toBe("states.md");
+    expect(lines[0]?.trim()).toBe("▎ states.md");
     expect(lines[23]).toMatch(/^ NORMAL {2}notes\/states\.md +1:1 $/);
     expect(await m.frame()).toMatchSnapshot();
   });

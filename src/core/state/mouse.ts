@@ -4,6 +4,7 @@ import {
   focusBaseCard,
   focusBaseCell,
   openBaseFocused,
+  resizeBaseColumn,
   showBaseView,
 } from "./base-commands";
 import { baseViewModel } from "./base-model";
@@ -17,13 +18,18 @@ import {
 } from "./buffers";
 import { selectCalendarDay } from "./calendar";
 import { runCommand } from "./commands";
-import { moveCursor, resizeExplorer, visiblePaths } from "./explorer";
+import {
+  hoverExplorer,
+  moveCursor,
+  resizeExplorer,
+  visiblePaths,
+} from "./explorer";
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
 import { onPointerMove } from "./lsp";
 import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
-import { autosaveNow } from "./save";
+import { autosaveNow, closeBuffer } from "./save";
 import { sidePanelRows } from "./side-panel";
 import type {
   AppState,
@@ -43,7 +49,8 @@ const WHEEL_LINES = 3;
  * One mouse gesture, run as its keyboard equivalent: a press focuses what it
  * is over and then acts on it, a drag extends a charwise selection from the
  * press (or, in the zoom float, pans it; on the explorer's separator, resizes
- * the explorer like `<C-w>>`), and the wheel scrolls what it is over.
+ * the explorer like `<C-w>>`; on a base table's header separator, resizes the
+ * column to its left like `>`), and the wheel scrolls what it is over.
  */
 export function onMouse(
   state: AppState,
@@ -51,7 +58,8 @@ export function onMouse(
   reg: Registries,
 ): Result {
   const e = a.event;
-  if (e.kind === "move") return onPointerMove(state, e.target);
+  if (e.kind === "move")
+    return onPointerMove(hoverExplorer(state, e.target), e.target);
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
@@ -63,6 +71,12 @@ export function onMouse(
       const t = e.target;
       if (t.kind === "zoomPoint") return dragZoom(s, t);
       if (t.kind === "explorerEdge") return none(resizeExplorer(s, t.width));
+      if (t.kind === "window" && t.spot.kind === "baseEdge")
+        return resizeBaseColumn(
+          { state: s, now: a.now, reg },
+          t.spot.column,
+          t.spot.width,
+        );
       return t.kind === "window" &&
         t.spot.kind === "text" &&
         t.window === s.windows.active
@@ -70,7 +84,20 @@ export function onMouse(
         : none(s);
     }
     case "wheel":
-      return wheel(s, e.target, e.dx, e.dy, a.now, reg);
+      // Scrolling moves the rows under a resting pointer, so the hover ends.
+      return wheel(
+        hoverExplorer(s, { kind: "inert" }),
+        e.target,
+        e.dx,
+        e.dy,
+        a.now,
+        reg,
+      );
+    case "middle":
+      // A middle click closes a tab, as `:bd` would, unless something floats over it.
+      return e.target.kind === "bufferTab" && s.overlay.kind === "none"
+        ? closeBuffer(s, e.target.bufferId, { force: false }, a.now)
+        : none(s);
   }
 }
 
@@ -546,6 +573,10 @@ function pressBase(
   switch (spot.kind) {
     case "baseTab":
       return chain(r, () => showBaseView(c, spot.view));
+    case "baseEdge":
+      return clicks === 2
+        ? chain(r, () => resizeBaseColumn(c, spot.column, undefined))
+        : r;
     case "baseCell": {
       const t = m?.table;
       if (

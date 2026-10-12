@@ -4,7 +4,6 @@ import {
   tagCounts,
 } from "../features/links/note-index";
 import { expandTemplate } from "../features/notes/template";
-import type { Binding } from "../kernel/commands/defaults";
 import { rankBy } from "../kernel/text/fuzzy";
 import type { Key } from "../kernel/vim/keys";
 import type { Doc } from "../lang/markdown/doc";
@@ -16,16 +15,25 @@ import {
   fullText,
   listedBuffers,
   openPath,
+  recentBuffers,
 } from "./buffers";
 import { type CommandContext, runCommand } from "./commands";
 import { goTo, recordJump } from "./jumps";
 import { effectiveBindings } from "./keymap";
+import {
+  addBinding,
+  changeBinding,
+  keymapCandidates,
+  restoreBinding,
+  unbindBinding,
+} from "./keymap-edit";
 import { lspPickerSources } from "./lsp-pickers";
 import { unlinkedHits } from "./mentions";
 import { insertTemplate } from "./note-commands";
 import { chain, message, none } from "./result";
+import { closeBuffer } from "./save";
 import {
-  cycleSetting,
+  changeSetting,
   describeSetting,
   SETTINGS,
   settingItems,
@@ -81,6 +89,14 @@ export type PickerSource = {
   /** How many candidates there are before filtering. */
   total?(s: AppState, reg: Registries, arg?: string): number;
   accept(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
+  /** What `C-x` does to the selected item; the list is listed again after it. */
+  remove?(s: AppState, item: PickerItem, now: number, reg: Registries): Result;
+  /** What `C-x` does, for the footer ("close" when absent). */
+  removeAction?: string;
+  /** What `C-a` does, given the selected item if any. */
+  add?(s: AppState, item: PickerItem | undefined): Result;
+  /** What `C-r` does to the selected item; the list is listed again after it. */
+  restore?(s: AppState, item: PickerItem, reg: Registries): Result;
   /** File-based sources: the path and line to preview. */
   preview?(item: PickerItem): { path: string; line: number } | undefined;
   /** Display lines computed from the loaded preview file, instead of its raw lines. */
@@ -180,6 +196,26 @@ function baseViewCandidates(s: AppState, reg: Registries): Candidate[] {
   }));
 }
 
+/**
+ * Open buffers, the one shown before the current first and the current last,
+ * with their number, unsaved marker, and pin.
+ */
+function bufferCandidates(s: AppState): Candidate[] {
+  const current = activeBuffer(s)?.id;
+  const recent = recentBuffers(s);
+  return [
+    ...recent.filter((b) => b.id !== current),
+    ...recent.filter((b) => b.id === current),
+  ].map((b) => ({
+    key: String(b.id),
+    text: b.path,
+    path: b.path,
+    detail: [String(b.id), b.dirty ? "●" : "", b.pinned ? "pinned" : ""]
+      .filter((x) => x !== "")
+      .join(" "),
+  }));
+}
+
 /** Close the picker, record a jump, and open `path` (at `line`). */
 function openAt(s: AppState, path: string, now: number, line?: number): Result {
   const closed = recordJump({ ...s, overlay: { kind: "none" } });
@@ -205,9 +241,6 @@ function commandBindings(s: AppState, reg: Registries) {
   );
   return { commands: reg.commands.list(ft), bindings };
 }
-
-const scopeLabel = (b: Binding) =>
-  b.scope.filetype ?? (b.scope.mode === "normal" ? "" : b.scope.mode);
 
 /** `path:line  text`, the matched characters marked. */
 const grepItem = (h: SearchHit): PickerItem => {
@@ -337,6 +370,16 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     total: (s) => allFiles(s).length,
     accept: acceptFile,
     preview: previewFile,
+  },
+  buffers: {
+    id: "buffers",
+    title: "Buffers",
+    items: (s, _r, q) => ranked(bufferCandidates(s), q),
+    total: (s) => listedBuffers(s).length,
+    accept: acceptFile,
+    preview: previewFile,
+    remove: (s, item, now) =>
+      closeBuffer(s, Number(item.key), { force: false }, now),
   },
   recent: {
     id: "recent",
@@ -504,7 +547,7 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     action: "change",
     items: (s, _r, q) => settingItems(s, q),
     total: () => SETTINGS.length,
-    accept: (s, item) => cycleSetting(s, item),
+    accept: (s, item) => changeSetting(s, item),
     describe: describeSetting,
   },
   commands: {
@@ -534,32 +577,15 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
   },
   help: {
     id: "help",
-    title: "Help: keymap",
+    title: "Keymap",
     overlay: "help",
-    items: (s, reg, q) => {
-      const { commands, bindings } = commandBindings(s, reg);
-      const titles = new Map(commands.map((c) => [c.id, c.title]));
-      return ranked(
-        bindings
-          .filter((b) => titles.has(b.id))
-          .map((b) => {
-            const scope = scopeLabel(b);
-            return {
-              key: `${scope}\u0000${b.seq}`,
-              text: `${b.seq}  ${titles.get(b.id)}`,
-              detail: [b.id, scope, b.overridden ? "●" : ""]
-                .filter((x) => x !== "")
-                .join("  "),
-            };
-          }),
-        q,
-      );
-    },
-    accept: (s, item, now, reg) => {
-      const id = item.detail?.split("  ")[0];
-      const closed: AppState = { ...s, overlay: { kind: "none" } };
-      return id === undefined ? none(closed) : runCommand(closed, id, now, reg);
-    },
+    action: "change keys",
+    items: (s, reg, q) => ranked(keymapCandidates(s, reg), q),
+    accept: (s, item, _now, reg) => changeBinding(s, item, reg),
+    remove: (s, item, _now, reg) => unbindBinding(s, item, reg),
+    removeAction: "unbind",
+    add: (s, item) => addBinding(s, item),
+    restore: (s, item, reg) => restoreBinding(s, item, reg),
   },
   ...lspPickerSources,
 };
@@ -789,12 +815,34 @@ export function pickerKey(
         state: { ...s, overlay: { kind: "none" } },
         effects: [{ kind: "cancelTimer", id: "search" }],
       };
+    case "<C-x>": {
+      const item = p.items[p.selected];
+      const source = pickerSources[p.source];
+      return item === undefined || source?.remove === undefined
+        ? none(s)
+        : chain(source.remove(s, item, a.now, reg), (st) =>
+            refreshPicker(st, reg, p.source),
+          );
+    }
     case "<CR>": {
       const item = p.items[p.selected];
       const source = pickerSources[p.source];
       return item === undefined || source === undefined
         ? none(s)
         : source.accept(s, item, a.now, reg);
+    }
+    case "<C-r>": {
+      const item = p.items[p.selected];
+      const restore = pickerSources[p.source]?.restore;
+      return item === undefined || restore === undefined
+        ? none(s)
+        : chain(restore(s, item, reg), (st) =>
+            refreshPicker(st, reg, p.source),
+          );
+    }
+    case "<C-a>": {
+      const add = pickerSources[p.source]?.add;
+      return add === undefined ? none(s) : add(s, p.items[p.selected]);
     }
     case "<C-j>":
     case "<C-n>":

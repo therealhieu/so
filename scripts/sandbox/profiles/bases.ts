@@ -47,6 +47,19 @@ export const bases: Profile = {
       ],
     },
     {
+      title: "Filter in the UI",
+      steps: [
+        "In tasks.base, press / and type part of a status, then Enter",
+        "On a Status cell press F, then F on another column, then F again",
+        "Press c",
+      ],
+      expect: [
+        "Rows and the count narrow as you type; ⌕ shows the text",
+        "F keeps rows with the focused value (⊜ in the toolbar); pins stack and F again removes one",
+        "c shows every row again; tasks.base is unchanged",
+      ],
+    },
+    {
       title: "Write back",
       steps: [
         "In tasks.base, edit the status of a closed note",

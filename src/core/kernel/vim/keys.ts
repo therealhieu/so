@@ -1,6 +1,6 @@
 /**
  * One key in Vim notation: a printable character ("a", " ", "<") or a named
- * key ("<Esc>", "<CR>", "<BS>", "<Tab>", "<C-r>", "<C-w>").
+ * key ("<Esc>", "<CR>", "<BS>", "<Tab>", "<Left>", "<C-r>", "<C-w>").
  */
 export type Key = string;
 
@@ -13,6 +13,15 @@ const NAMED: Record<string, Key> = {
   "<bs>": "<BS>",
   "<tab>": "<Tab>",
   "<c-space>": "<C-Space>",
+  "<up>": "<Up>",
+  "<down>": "<Down>",
+  "<left>": "<Left>",
+  "<right>": "<Right>",
+  "<del>": "<Del>",
+  "<home>": "<Home>",
+  "<end>": "<End>",
+  "<pageup>": "<PageUp>",
+  "<pagedown>": "<PageDown>",
 };
 
 /**

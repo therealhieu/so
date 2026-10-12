@@ -225,6 +225,71 @@ test("file times show as local dates and times", () => {
   const d = new Date(ms);
   const pad = (n: number) => String(n).padStart(2, "0");
   expect(tableModel(e, {}, {}).rows[0]?.cells[1]?.text).toBe(
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
   );
+});
+
+test("dates written different ways sort by time and show alike; a missing created_at is the file's", () => {
+  const notes: Record<string, string> = {
+    "a.md": "---\ncreated_at: 2026-04-13 08:20:00\n---\n",
+    "b.md": "---\ncreated_at: 2026-04-13T08:19:00\n---\n",
+    "c.md": "---\ncreated_at: 2026-07-20T23:21:03.655Z\n---\n",
+    "d.md": "",
+  };
+  const ctime = new Date(2026, 9, 11, 11, 55, 7).getTime();
+  const summaries = Object.entries(notes).map(([p, t]) =>
+    summarize(p, { mtime: ctime, size: 1, ctime }, scanDoc(t)),
+  );
+  const r = parseBase(
+    "views:\n  - type: table\n    name: T\n    order: [file.name, created_at]\n    sort:\n      - property: created_at\n        direction: DESC\n",
+  );
+  if (!r.ok) throw new Error();
+  const candidates = candidatesFrom(
+    buildIndex(
+      summaries,
+      summaries.map((s) => s.path),
+    ),
+    new Map(),
+  );
+  const m = tableModel(evaluateBase({ base: r.base, candidates }), {}, {});
+  expect(m.rows.map((row) => row.path)).toEqual([
+    "d.md",
+    "c.md",
+    "a.md",
+    "b.md",
+  ]);
+  const texts = m.rows.map((row) => row.cells[1]?.text ?? "");
+  expect(texts[0]).toBe("2026-10-11 11:55:07");
+  expect(texts.slice(2)).toEqual([
+    "2026-04-13 08:20:00",
+    "2026-04-13 08:19:00",
+  ]);
+  for (const t of texts)
+    expect(t).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+});
+
+test("columns are as wide as their widest header or cell, at most 24", () => {
+  const m = model("workspace/tasks.base");
+  // "ship-release.md" (15), "Status" vs "doing", "due ↑" vs "2026-10-01", "done" vs a box.
+  expect(m.columns.map((c) => c.width)).toEqual([15, 6, 10, 4]);
+});
+
+test("the view's columnSize sets widths in cells, prefixed keys included", () => {
+  const text = read("workspace/tasks.base").replace(
+    "    sort:\n      - property: due",
+    "    columnSize:\n      file.name: 200\n      note.status: 4\n    sort:\n      - property: due",
+  );
+  const r = parseBase(text);
+  if (!r.ok) throw new Error(r.diagnostic.message);
+  const ui: BaseUi = { widths: { "file.name": 40 } };
+  const sized = (u: BaseUi) =>
+    tableModel(
+      evaluateBase({ base: r.base, candidates: tasks(), ui: u }),
+      u,
+      {},
+    ).columns.map((c) => c.width);
+  // 200 px is 25 cells; 4 px is under the 3-cell floor.
+  expect(sized({})).toEqual([25, 3, 10, 4]);
+  // The window's width replaces the view's.
+  expect(sized(ui)).toEqual([40, 3, 10, 4]);
 });

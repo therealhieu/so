@@ -27,7 +27,13 @@ const NOTE = "# Today\n\n![[tasks.base#Board]]\n\nAfter\n";
 function table(rows: number, groups: TableModel["groups"] = []): TableModel {
   return {
     columns: [
-      { id: "file.name", label: "file.name", editable: false, type: "text" },
+      {
+        id: "file.name",
+        label: "file.name",
+        editable: false,
+        type: "text",
+        width: 9,
+      },
     ],
     rows: Array.from({ length: rows }, (_, i) => ({
       path: `tasks/t${i}.md`,

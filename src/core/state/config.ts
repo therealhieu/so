@@ -1,12 +1,14 @@
 import { defaults } from "../config/schema";
 import type { BindingSource, ConfigError } from "../config/toml";
 import type { CommandContext } from "./commands";
+import { relistShown } from "./explorer";
+import { isKeySequence } from "./keymap";
 import { none, toast } from "./result";
 import type { Action, AppState, Result } from "./types";
 import type { Registries } from "./update";
 
 /** Modes a config binding may name: the vim modes and the explorer. */
-const MODES: ReadonlySet<string> = new Set([
+export const MODES: ReadonlySet<string> = new Set([
   "normal",
   "insert",
   "visual",
@@ -15,14 +17,33 @@ const MODES: ReadonlySet<string> = new Set([
   "explorer",
 ]);
 
-/** Each config binding naming an unknown command id, file type, or mode, at its line. */
+/** Modes whose keys reach the vim engine, so a key-sequence binding has somewhere to go. */
+const ENGINE_MODES: ReadonlySet<string> = new Set([
+  "normal",
+  "insert",
+  "visual",
+  "visualLine",
+]);
+
+/**
+ * Each config binding naming an unknown command id, file type, or mode, or a
+ * key sequence outside the engine's modes, at its line.
+ */
 export function validateBindings(
   reg: Pick<Registries, "commands" | "fileTypes">,
   bindings: readonly BindingSource[],
 ): ConfigError[] {
   return bindings.flatMap((b) => {
     const errors: ConfigError[] = [];
-    if (reg.commands.get(b.id) === undefined)
+    if (b.id === "") {
+      // Unbinds whatever the scope and keys held.
+    } else if (isKeySequence(b.id)) {
+      if (MODES.has(b.mode) && !ENGINE_MODES.has(b.mode))
+        errors.push({
+          line: b.line,
+          message: `key sequence "${b.id}" needs a vim mode`,
+        });
+    } else if (reg.commands.get(b.id) === undefined)
       errors.push({ line: b.line, message: `unknown command id "${b.id}"` });
     if (b.filetype !== undefined && reg.fileTypes.get(b.filetype) === undefined)
       errors.push({
@@ -48,8 +69,14 @@ export function onConfigLoaded(
   const errors = a.result.ok
     ? validateBindings(reg, a.result.bindings)
     : a.result.errors;
-  if (a.result.ok && errors.length === 0)
-    return none({ ...s, config: a.result.config });
+  if (a.result.ok && errors.length === 0) {
+    const next = { ...s, config: a.result.config };
+    const relisted =
+      (next.config.explorer.dotfiles !== s.config.explorer.dotfiles ||
+        next.config.explorer.gitignored !== s.config.explorer.gitignored) &&
+      s.panels.explorer.entries[""] !== undefined;
+    return relisted ? relistShown(next) : none(next);
+  }
   const [first] = errors;
   const more = errors.length > 1 ? ` (+${errors.length - 1} more)` : "";
   const text = `config.toml:${first?.line ?? 1}: ${first?.message ?? "invalid config"}${more}`;

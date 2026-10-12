@@ -708,6 +708,7 @@ test("prompt and conflict dialogs ignore every mouse gesture", () => {
         { kind: "drag", target } as const,
         wheel(target, 1),
         wheel(target, 0, -1),
+        { kind: "middle", target } as const,
       ]) {
         const r = mouse(start, event);
         expect(r.state).toBe(start);
@@ -916,4 +917,49 @@ test("dragging the explorer's separator resizes it like <C-w>>", () => {
     target: { kind: "explorerEdge", width: 90 },
   });
   expect(tooFar.state.panels.explorer.width).toBe(50);
+});
+
+test("a middle click on a tab closes that buffer as :bd does", () => {
+  const s = open("b.md", "bee\n", open("a.md", LINES));
+  const r = mouse(s, {
+    kind: "middle",
+    target: { kind: "bufferTab", bufferId: 1 },
+  });
+  expect(Object.values(r.state.buffers).map((b) => b.path)).toEqual(["b.md"]);
+  for (const target of ALL_TARGETS.filter((t) => t.kind !== "bufferTab"))
+    expect(mouse(s, { kind: "middle", target }).state).toBe(s);
+  const picking = keys(s, " sc").state;
+  const over = mouse(picking, {
+    kind: "middle",
+    target: { kind: "bufferTab", bufferId: 1 },
+  });
+  expect(Object.keys(over.state.buffers)).toHaveLength(2);
+});
+
+test("dragging a Base table's header separator resizes the column; a double click returns it", () => {
+  const s = noteAndBase();
+  const base = baseWindowOf(s);
+  if (base === undefined) throw new Error("expected a base window");
+  const edge = (width: number): MouseTarget => ({
+    kind: "window",
+    window: base.id,
+    spot: { kind: "baseEdge", column: 1, width },
+  });
+  const widths = (st: AppState) =>
+    (baseWindowOf(st)?.content.kindState as BaseWindowState | undefined)
+      ?.widths;
+  const pressed = mouse(s, press(edge(6)));
+  expect(pressed.state.windows.active).toBe(base.id);
+  expect(baseFocus(pressed.state)).toEqual(baseFocus(s));
+  expect(widths(pressed.state)).toBeUndefined();
+  const dragged = mouse(pressed.state, { kind: "drag", target: edge(20) });
+  expect(widths(dragged.state)).toEqual({ status: 20 });
+  expect(
+    baseViewModel(dragged.state, base.id, reg)?.table?.columns[1]?.width,
+  ).toBe(20);
+  const narrowest = mouse(pressed.state, { kind: "drag", target: edge(1) });
+  expect(widths(narrowest.state)).toEqual({ status: 3 });
+  const reset = mouse(dragged.state, press(edge(20), 2));
+  expect(widths(reset.state)).toBeUndefined();
+  expect(dragged.effects).toEqual([]);
 });

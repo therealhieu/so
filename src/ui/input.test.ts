@@ -137,3 +137,9 @@ test("ctrl+space is its own key and space stays a space", () => {
   );
   expect(toKey(key("space", { sequence: " " }))).toBe(" ");
 });
+
+test("Ctrl-^ from a legacy terminal or with modified keys", () => {
+  expect(toKey(key("^", { ctrl: true, sequence: "\x1e" }))).toBe("<C-^>");
+  expect(toKey(key("6", { ctrl: true, sequence: "6" }))).toBe("<C-^>");
+  expect(toKey(key("6", { sequence: "6" }))).toBe("6");
+});

@@ -68,10 +68,9 @@ const editor: MouseSource = {
     y < 0 ? text(0, x, -1) : y > 9 ? text(9, x, 1) : text(y, x),
 };
 
-test("right and middle buttons and a disabled mouse never dispatch", () => {
+test("the right button and a disabled mouse never dispatch", () => {
   const r = setup([editor]);
   r.handle(ev("down", 1, 1, { button: 2 }));
-  r.handle(ev("down", 1, 1, { button: 1 }));
   r.handle(ev("drag", 2, 2, { button: 2 }));
   expect(r.sent).toEqual([]);
 
@@ -84,6 +83,17 @@ test("right and middle buttons and a disabled mouse never dispatch", () => {
   on = true;
   off.handle(ev("down", 1, 1));
   expect(off.sent).toHaveLength(1);
+});
+
+test("a middle press is sent alone, without clicks or a drag", () => {
+  const r = setup([editor]);
+  r.handle(ev("down", 1, 1, { button: 1 }));
+  r.handle(ev("drag", 2, 2, { button: 1 }));
+  r.handle(ev("down", 1, 1, { button: 1 }));
+  expect(r.events()).toEqual([
+    { kind: "middle", target: text(1, 1) },
+    { kind: "middle", target: text(1, 1) },
+  ]);
 });
 
 test("the topmost source with a target answers the click", () => {
@@ -141,6 +151,23 @@ test("the wheel dispatches one notch for the source under the pointer", () => {
     { kind: "wheel", target: text(2, 4), dx: 0, dy: -1 },
     { kind: "wheel", target: text(2, 4), dx: 0, dy: 1 },
     { kind: "wheel", target: text(2, 4), dx: -1, dy: 0 },
+    { kind: "wheel", target: text(2, 4), dx: 1, dy: 0 },
+  ]);
+});
+
+test("Shift turns a vertical wheel notch sideways and leaves a sideways one alone", () => {
+  const r = setup([editor]);
+  const shift = { shift: true, alt: false, ctrl: false };
+  for (const direction of ["up", "down", "right"] as const)
+    r.handle(
+      ev("scroll", 4, 2, {
+        scroll: { direction, delta: 1 },
+        modifiers: shift,
+      }),
+    );
+  expect(r.events()).toEqual([
+    { kind: "wheel", target: text(2, 4), dx: -1, dy: 0 },
+    { kind: "wheel", target: text(2, 4), dx: 1, dy: 0 },
     { kind: "wheel", target: text(2, 4), dx: 1, dy: 0 },
   ]);
 });

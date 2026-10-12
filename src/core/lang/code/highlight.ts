@@ -1,8 +1,45 @@
-import { common, createLowlight } from "lowlight";
+import { common, createLowlight, type LanguageFn } from "lowlight";
 import type { TextBuffer } from "../../kernel/text/text-buffer";
 import type { Highlighter, Span, StyleToken } from "../../kernel/view/types";
 
-const low = createLowlight(common);
+type Mode = {
+  className?: string;
+  scope?: string;
+  contains?: unknown[];
+  [key: string]: unknown;
+};
+
+const isMode = (value: unknown): value is Mode =>
+  typeof value === "object" && value !== null;
+
+/**
+ * highlight.js's Markdown grammar without emphasis and strong. Its `_`
+ * opens emphasis inside a word (`created_at`, `snake_case`) and runs to
+ * the next `_`, swallowing the headings and links between, and neither
+ * scope has a colour; rendered views style them from the Markdown tree.
+ */
+const markdown: LanguageFn = (hljs) => {
+  const grammar = common.markdown?.(hljs);
+  if (grammar === undefined) throw new Error("no markdown grammar");
+  const seen = new Set<Mode>();
+  // Modes nest under `contains`, `variants`, and `starts`, so walk every value.
+  const strip = (mode: Mode) => {
+    if (seen.has(mode)) return;
+    seen.add(mode);
+    if (mode.contains !== undefined)
+      mode.contains = mode.contains.filter((child) => {
+        const scope = isMode(child) ? (child.className ?? child.scope) : "";
+        return scope !== "emphasis" && scope !== "strong";
+      });
+    for (const value of Object.values(mode))
+      if (Array.isArray(value)) value.filter(isMode).forEach(strip);
+      else if (isMode(value)) strip(value);
+  };
+  strip(grammar as Mode);
+  return grammar;
+};
+
+const low = createLowlight({ ...common, markdown });
 
 /** Lines above the window that are highlighted too, so open comments and strings carry over. */
 const LOOK_BACK = 200;
@@ -51,8 +88,11 @@ type HastNode = {
   children?: HastNode[];
 };
 
-/** Walk the tree and split its text on newlines into one span list per line. */
-function lineSpans(tree: HastNode): Span[][] {
+/**
+ * Walk the tree and split its text on newlines into one span list per line.
+ * A scope in `plain` gives its whole subtree the enclosing token.
+ */
+function lineSpans(tree: HastNode, plain: ReadonlySet<string>): Span[][] {
   const lines: Span[][] = [[]];
   const add = (text: string, style: StyleToken) => {
     const line = lines[lines.length - 1] as Span[];
@@ -60,7 +100,7 @@ function lineSpans(tree: HastNode): Span[][] {
     if (prev?.style === style) prev.text += text;
     else line.push({ text, style });
   };
-  const walk = (node: HastNode, style: StyleToken) => {
+  const walk = (node: HastNode, style: StyleToken, locked: boolean) => {
     if (node.type === "text") {
       (node.value ?? "").split("\n").forEach((part, i) => {
         if (i > 0) lines.push([]);
@@ -70,10 +110,11 @@ function lineSpans(tree: HastNode): Span[][] {
     }
     const classes = node.properties?.className;
     const scope = Array.isArray(classes) ? String(classes[0]) : undefined;
-    const own = scope === undefined ? undefined : HLJS_TOKENS[scope];
-    for (const child of node.children ?? []) walk(child, own ?? style);
+    const inherit = locked || (scope !== undefined && plain.has(scope));
+    const own = inherit || scope === undefined ? undefined : HLJS_TOKENS[scope];
+    for (const child of node.children ?? []) walk(child, own ?? style, inherit);
   };
-  walk(tree, "text");
+  walk(tree, "text", false);
   return lines;
 }
 
@@ -92,7 +133,10 @@ type Highlighted = { from: number; to: number; spans: Span[][] };
  * tries while fitting the cursor, and the next scroll steps, reuse it; the
  * same range twice gets the same spans.
  */
-export function lowlightHighlighter(language: string): Highlighter {
+export function lowlightHighlighter(
+  language: string,
+  plain: ReadonlySet<string> = new Set(),
+): Highlighter {
   const cache = new WeakMap<
     TextBuffer,
     { whole: Highlighted; last: Highlighted }
@@ -116,7 +160,7 @@ export function lowlightHighlighter(language: string): Highlighter {
         whole = {
           from: lines.from,
           to: end,
-          spans: lineSpans(tree as HastNode).slice(
+          spans: lineSpans(tree as HastNode, plain).slice(
             lines.from - from,
             end - from,
           ),

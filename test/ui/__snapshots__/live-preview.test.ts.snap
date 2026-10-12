@@ -1,7 +1,7 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`the tour at width 60 matches its golden, base embed included 1`] = `
-" tour.md                                                    
+"▎ tour.md                                                   
    1 ▕---                                                   
    1 ▕title: Markdown tour                                  
    2 ▕tags: [reference, so]                                 
@@ -104,47 +104,47 @@ exports[`the tour at width 60 matches its golden, base embed included 1`] = `
       │    review-pr.md    │ doing  │ 2026-10-03 │ ☐        
       │    write-report.md │ todo   │ 2026-10-05 │ ☐        
       │    inbox.md        │ —      │ 2026-10-08 │ ☐        
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
-    ~                                                       
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
  NORMAL  tour.md                                        1:1"
 `;
 
 exports[`the tour at width 100 matches its golden, base embed included 1`] = `
-" tour.md                                                                                    ~/notes 
+"▎ tour.md                                                                                   ~/notes 
    1 ▕---                                                                                           
    1 ▕title: Markdown tour                                                                          
    2 ▕tags: [reference, so]                                                                         
@@ -249,45 +249,45 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
       │    review-pr.md    │ doing  │ 2026-10-03 │ ☐                                                
       │    write-report.md │ todo   │ 2026-10-05 │ ☐                                                
       │    inbox.md        │ —      │ 2026-10-08 │ ☐                                                
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
-    ~                                                                                               
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
  NORMAL  live  tour.md                                                  252 words  preview off  1:1"
 `;
 
 exports[`with images off the zoom float draws a diagram too wide for the note as text 1`] = `
-" flow.md                                                                        
+"▎ flow.md                                                                       
    3╭─ mermaid · 165×5 ────────────────────────────────────────────────────╮    
    2│                                                                      │    
    1│                                                                      │    
@@ -309,6 +309,6 @@ exports[`with images off the zoom float draws a diagram too wide for the note as
     │                                                                      │    
     │                                                                      │    
     ╰─ +/- spacing · 0 reset · drag wheel hjkl scroll · q close ───────────╯    
-    ~                                                                           
+                                                                                
  NORMAL  notes/flow.md                                                      4:1"
 `;

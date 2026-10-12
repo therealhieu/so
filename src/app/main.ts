@@ -28,6 +28,7 @@ import { registerBlockRenderer } from "../core/lang/markdown/live-preview";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
+import { bufferBindings } from "../core/state/buffer-commands";
 import { activeBuffer } from "../core/state/buffers";
 import {
   type CommandContext,
@@ -35,6 +36,7 @@ import {
   registerBuiltins,
 } from "../core/state/commands";
 import { EmbedModelRegistry } from "../core/state/embed-models";
+import { dirname, isListed, listDirEffect } from "../core/state/explorer";
 import {
   gitBindings,
   gitCommands,
@@ -88,7 +90,12 @@ import {
   statePath,
 } from "../workspace/state-file";
 import { createSvgRasterizer } from "../workspace/svg";
-import { detectClipboard, openUrl } from "../workspace/system";
+import {
+  detectClipboard,
+  detectFileClipboard,
+  noFileClipboard,
+  openUrl,
+} from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
 import {
@@ -157,6 +164,7 @@ function registries(): Registries {
     commands,
     bindings: [
       ...defaultBindings,
+      ...bufferBindings,
       ...editorBindings,
       ...linkBindings,
       ...markdownBindings,
@@ -342,6 +350,7 @@ async function main(argv: string[]): Promise<void> {
       move: () => Promise.reject(new Error("trash not ready")),
     },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: noFileClipboard,
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
     now: clock,
@@ -397,13 +406,28 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
 
-  runner.run({ kind: "listDir", dir: "" });
+  runner.run(listDirEffect(store.get(), ""));
   if (ws.file !== undefined) runner.run({ kind: "read", path: ws.file });
 
   // Watching, indexing, and platform detection start after the first frame.
   setImmediate(() => {
-    watchWorkspace(ws.root, ownOps, matcher, (event) => {
-      store.dispatch({ type: "fileChanged", event });
+    const excluded = (rel: string) => {
+      const s = store.get();
+      if (matcher.isExcludedPath(rel, s.config.explorer)) return true;
+      // A gitignored path matters only in a folder the explorer lists.
+      return (
+        matcher.isExcludedPath(rel, { dotfiles: true }) &&
+        !isListed(s, dirname(rel))
+      );
+    };
+    watchWorkspace(ws.root, ownOps, excluded, (event) => {
+      // Dot and gitignored paths are watched only for the explorer.
+      const explorerOnly = matcher.isExcludedPath(event.path);
+      store.dispatch({
+        type: "fileChanged",
+        event: explorerOnly ? { ...event, explorerOnly: true } : event,
+      });
+      if (explorerOnly) return;
       indexHost.notify(event);
       lspHost.notify(event);
     });
@@ -429,6 +453,11 @@ async function main(argv: string[]): Promise<void> {
       shell.copyOsc52,
     ).then((clipboard) => {
       deps.clipboard = clipboard;
+    });
+    deps.fileClipboard = detectFileClipboard({
+      platform: process.platform,
+      env: process.env,
+      which: (cmd) => Bun.which(cmd),
     });
     void git
       .detect(ws.root)

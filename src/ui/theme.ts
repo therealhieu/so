@@ -1,11 +1,13 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
+import type { ThemeName } from "../core/config/schema";
 import type { AppState } from "../core/state/types";
+import { catppuccin } from "./catppuccin";
 
 /** Terminal attributes for one token. */
 export type Style = { fg: RGBA; bg: RGBA; attrs: number };
 
 export type Theme = {
-  name: "dark" | "light" | "nocolor";
+  name: ThemeName | "nocolor";
   /** Kernel style tokens ("codeKeyword", "selection") and chrome tokens ("modeNormal"). */
   style(token: string): Style;
 };
@@ -20,6 +22,7 @@ const DARK: Palette = {
   "bg-hl": "#292e42",
   "bg-sel": "#2d3f76",
   fg: "#c0caf5",
+  bold: "#c0caf5",
   "fg-dim": "#565f89",
   "fg-muted": "#737aa2",
   border: "#3b4261",
@@ -73,6 +76,7 @@ const LIGHT: Palette = {
   "bg-hl": "#c4c8da",
   "bg-sel": "#b7c5f0",
   fg: "#3760bf",
+  bold: "#3760bf",
   "fg-dim": "#8990b3",
   "fg-muted": "#6172b0",
   border: "#a8aecb",
@@ -136,6 +140,7 @@ export const TOKENS: Readonly<
   cursorline: ["fg", "cursorline", 0, 0],
   selection: ["fg", "bg-sel", 0, INVERSE],
   searchMatch: ["fg", "match-bg", 0, UNDERLINE],
+  searchCurrent: ["mode-fg", "warn", BOLD, BOLD | INVERSE],
   codeKeyword: ["kw", "bg", BOLD, BOLD],
   codeBuiltin: ["type", "bg", 0, 0],
   codeType: ["type", "bg", 0, 0],
@@ -157,6 +162,9 @@ export const TOKENS: Readonly<
   bufferline: ["fg-muted", "bg-dark", 0, 0],
   bufferActive: ["fg", "bg", BOLD, BOLD | UNDERLINE],
   bufferDirty: ["warn", "bg-dark", 0, 0],
+  bufferActiveDirty: ["warn", "bg", 0, 0],
+  bufferIndicator: ["border-hl", "bg", 0, 0],
+  bufferSep: ["border", "bg-dark", 0, 0],
   statusline: ["fg", "bg-dark", 0, 0],
   statusDim: ["fg-muted", "bg-dark", 0, DIM],
   statusFile: ["fg", "bg-dark", BOLD, BOLD],
@@ -175,7 +183,7 @@ export const TOKENS: Readonly<
   explorer: ["fg", "bg-dark", 0, 0],
   explorerDim: ["fg-dim", "bg-dark", 0, DIM],
   explorerTitle: ["fg-muted", "bg-dark", BOLD, BOLD],
-  explorerDir: ["h1", "bg-dark", 0, 0],
+  explorerDir: ["fn", "bg-dark", 0, 0],
   explorerDirty: ["warn", "bg-dark", 0, 0],
   explorerWarn: ["warn", "bg-dark", 0, 0],
   explorerError: ["error", "bg-dark", BOLD, BOLD],
@@ -219,7 +227,7 @@ export const TOKENS: Readonly<
   mdHeading2: ["h2", "h2-bg", BOLD, BOLD | UNDERLINE],
   mdHeading3: ["h3", "h3-bg", BOLD, BOLD],
   mdHeading4: ["h4", "bg", BOLD, BOLD],
-  mdBold: ["fg", "bg", BOLD, BOLD],
+  mdBold: ["bold", "bg", BOLD, BOLD],
   mdItalic: ["fg", "bg", ITALIC, ITALIC],
   mdStrike: ["fg-muted", "bg", STRIKETHROUGH, STRIKETHROUGH],
   mdHighlight: ["hl-fg", "hl-bg", 0, BOLD | UNDERLINE],
@@ -283,15 +291,14 @@ export const TOKENS: Readonly<
   statusGitAdd: ["ok", "bg-dark", 0, 0],
   statusGitChange: ["fn", "bg-dark", 0, 0],
   statusGitDelete: ["error", "bg-dark", 0, 0],
-  explorerGitModified: ["fn", "bg-dark", 0, 0],
+  explorerGitModified: ["warn", "bg-dark", 0, 0],
   explorerGitStaged: ["ok", "bg-dark", 0, 0],
-  explorerGitUntracked: ["fg-muted", "bg-dark", 0, 0],
+  explorerGitUntracked: ["kw", "bg-dark", 0, 0],
   explorerGitConflict: ["error", "bg-dark", BOLD, BOLD | UNDERLINE],
-  explorerGitContains: ["fg-dim", "bg-dark", 0, DIM],
   messageWarn: ["warn", "bg", 0, 0],
 };
 
-function colorTheme(name: "dark" | "light", p: Palette): Theme {
+function colorTheme(name: ThemeName, p: Palette): Theme {
   const cache = new Map<string, Style>();
   return {
     name,
@@ -324,13 +331,20 @@ const nocolorTheme: Theme = {
 export const themes: Readonly<Record<Theme["name"], Theme>> = {
   dark: colorTheme("dark", DARK),
   light: colorTheme("light", LIGHT),
+  "catppuccin-latte": colorTheme("catppuccin-latte", catppuccin("latte")),
+  "catppuccin-frappe": colorTheme("catppuccin-frappe", catppuccin("frappe")),
+  "catppuccin-macchiato": colorTheme(
+    "catppuccin-macchiato",
+    catppuccin("macchiato"),
+  ),
+  "catppuccin-mocha": colorTheme("catppuccin-mocha", catppuccin("mocha")),
   nocolor: nocolorTheme,
 };
 
 /** The one place colour is decided: `NO_COLOR` (resolved at boot) wins over the theme. */
 export const resolveTheme = (o: {
   color: "color" | "nocolor";
-  theme: "dark" | "light";
+  theme: ThemeName;
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
 
 /** The theme for the state's colour mode and configured theme; `color = "never"` turns colour off. */

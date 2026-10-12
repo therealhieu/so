@@ -41,7 +41,8 @@ export function onFileChanged(prev: AppState, e: FileEvent): Result {
 }
 
 function fileEvent(prev: AppState, e: FileEvent): Result {
-  const s = indexAfterFileEvent(prev, e);
+  // The index never holds paths watched only for the explorer.
+  const s = e.explorerOnly === true ? prev : indexAfterFileEvent(prev, e);
   if (e.kind === "removed") {
     const open = buffersUnder(s, e.path).filter((b) => b.disk === "present");
     const marked = open.reduce<Result>(

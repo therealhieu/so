@@ -134,6 +134,53 @@ test("a file without an attached server says so", () => {
   expect(r.effects).toEqual([]);
 });
 
+const withLspConfig = (
+  s: AppState,
+  patch: Partial<AppState["config"]["lsp"]>,
+): AppState => ({
+  ...s,
+  config: { ...s.config, lsp: { ...s.config.lsp, ...patch } },
+});
+
+test("a file without a server while language servers are off says how to turn them on", () => {
+  const r = hover(withLspConfig(attached([]), { enabled: false }));
+  expect(messageOf(r.state)).toBe(
+    "language servers are off: set [lsp] enabled = true in config.toml",
+  );
+});
+
+test("a file type no configured server serves says so", () => {
+  const s = withLspConfig(attached([]), {
+    servers: { "rust-analyzer": { enabled: false } },
+  });
+  expect(messageOf(hover(s).state)).toBe(
+    "no language server configured for rust",
+  );
+});
+
+test("a file whose servers did not start names each server and why", () => {
+  const s = attached([{ ...ready("rust-analyzer", []), state: "missing" }]);
+  expect(messageOf(hover(s).state)).toBe(
+    "rust: rust-analyzer not on PATH (:LspInfo)",
+  );
+  const gated = attached([
+    {
+      ...ready("rust-analyzer", []),
+      state: "unavailable",
+      reason: "no component",
+    },
+  ]);
+  expect(messageOf(hover(gated).state)).toBe(
+    "rust: rust-analyzer unavailable: no component (:LspInfo)",
+  );
+  const crashed = attached([
+    { ...ready("rust-analyzer", []), state: "failed", reason: "crash" },
+  ]);
+  expect(messageOf(hover(crashed).state)).toBe(
+    "rust: rust-analyzer crash (:LspInfo)",
+  );
+});
+
 test("a hover result shows a float at the requested position", () => {
   const sent = hover(attached([ready("a", ["hover"])]));
   const r = run(

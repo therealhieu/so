@@ -190,11 +190,34 @@ const JUMP_MOTIONS: ReadonlySet<string> = new Set([
   "}",
 ]);
 
+/** Search motions; `N` runs against the search's direction. */
+const SEARCH_MOTIONS: Readonly<Record<string, 1 | -1>> = {
+  n: 1,
+  N: -1,
+  "*": 1,
+  "#": 1,
+};
+
+/** Report a search motion from `from` to `to` that came round the buffer's end. */
+function noteWrap(run: Run, key: string, from: Pos, to: Pos): void {
+  const sign = SEARCH_MOTIONS[key];
+  const search = run.s.vim.search;
+  if (sign === undefined || search === undefined) return;
+  const dir = (search.dir * sign) as 1 | -1;
+  const before =
+    to.line < from.line || (to.line === from.line && to.col <= from.col);
+  const after =
+    to.line > from.line || (to.line === from.line && to.col >= from.col);
+  if (dir === 1 ? before : after)
+    run.effects.push({ kind: "searchWrapped", dir });
+}
+
 function moveCursor(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const res = runMotion(run, cmd.target ?? "", cmd, env);
   if (res === null) return;
   if (JUMP_MOTIONS.has(cmd.target ?? ""))
     run.effects.push({ kind: "jumped", from: run.s.cursor });
+  noteWrap(run, cmd.target ?? "", run.s.cursor, res.to);
   setCursor(run, res.to);
   if (res.want !== undefined) updateVim(run, { wantCol: res.want });
 }
@@ -216,6 +239,9 @@ function runMotion(
     updateVim(run, { search });
     run.effects.push({ kind: "search", ...search });
     at = { line: at.line, col: word.col };
+  } else if ((key === "n" || key === "N") && search?.hidden === true) {
+    search = { pattern: search.pattern, dir: search.dir };
+    updateVim(run, { search });
   }
   const ctx: MotionCtx = {
     hasCount: cmd.count !== undefined,
@@ -668,6 +694,7 @@ function cmdlineKey(run: Run, key: Key, env: VimEnv): void {
   const res = runMotion(run, "n", { keys: [] }, env);
   if (res === null) return;
   run.effects.push({ kind: "jumped", from: cursor });
+  noteWrap(run, "n", cursor, res.to);
   setCursor(run, res.to);
 }
 

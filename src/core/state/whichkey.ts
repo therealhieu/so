@@ -2,7 +2,7 @@ import type { KeyScope } from "../kernel/commands/keymap";
 import { type Key, splitKeys } from "../kernel/vim/keys";
 import { parseKeys } from "../kernel/vim/parser";
 import { runCommand } from "./commands";
-import { keymapFor, keyScope } from "./keymap";
+import { isKeySequence, keymapFor, keyScope } from "./keymap";
 import { message, none } from "./result";
 import type { AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -100,6 +100,8 @@ export function whichKeyKey(
   }
   const seq = [...prefix, a.key];
   const hit = keymapFor(reg, s.config).lookup(scope, seq);
+  // A bound key sequence goes back to the keymap, which types it into the engine.
+  if (hit.kind === "command" && isKeySequence(hit.id)) return undefined;
   if (hit.kind === "command") return runCommand(close(s), hit.id, a.now, reg);
   if (hit.kind === "prefix")
     return none({
@@ -111,9 +113,12 @@ export function whichKeyKey(
   return noMapping(s, seq);
 }
 
+const TAB_COMMAND = /^buffer\.goto\d$/;
+
 /**
  * The popup's rows: direct actions (command titles) first, then `+groups`,
- * each alphabetical by key. Only keys bound in the popup's scope appear.
+ * each alphabetical by key; the keys that go to the Nth tab share one row.
+ * Only keys bound in the popup's scope appear.
  */
 export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
   if (s.overlay.kind !== "whichKey") return [];
@@ -127,17 +132,33 @@ export function whichKeyRows(s: AppState, reg: Registries): WhichKeyRow[] {
       label,
     ]),
   );
-  const rows = hit.next.map((item): WhichKeyRow => {
+  // The nine tab keys read as one row.
+  const tabKeys = hit.next.filter((i) => i.id?.match(TAB_COMMAND) != null);
+  const tabRow: WhichKeyRow[] =
+    tabKeys.length > 1
+      ? [
+          {
+            key: `${tabKeys[0]?.key}-${tabKeys.at(-1)?.key}`,
+            label: "Go to buffer N",
+            group: false,
+          },
+        ]
+      : [];
+  const rest =
+    tabRow.length > 0 ? hit.next.filter((i) => !tabKeys.includes(i)) : hit.next;
+  const rows = rest.map((item): WhichKeyRow => {
     if (item.id !== undefined)
       return {
         key: item.key,
-        label: reg.commands.get(item.id)?.title ?? item.id,
+        label: isKeySequence(item.id)
+          ? `→ ${item.id}`
+          : (reg.commands.get(item.id)?.title ?? item.id),
         group: false,
       };
     const label = groups.get([...prefix, item.key].join("\u0000")) ?? "…";
     return { key: item.key, label: `+${label}`, group: true };
   });
-  return rows.sort(
+  return [...rows, ...tabRow].sort(
     (a, b) =>
       Number(a.group) - Number(b.group) ||
       (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),

@@ -3,7 +3,7 @@ import { summarize } from "../../src/core/features/links/summarize";
 import { scanDoc } from "../../src/core/lang/markdown/scan";
 import { fullText } from "../../src/core/state/buffers";
 import type { DirEntry, FsOp } from "../../src/core/state/types";
-import { type Mounted, mountShell, TREE } from "../support/ui";
+import { cellStyle, type Mounted, mountShell, TREE } from "../support/ui";
 
 let m: Mounted;
 
@@ -67,7 +67,7 @@ const text = () => {
 };
 
 describe("explorer prompts", () => {
-  test("a opens a name field in the tree under the target folder", async () => {
+  test("a opens a marked name field in the tree under the target folder, with its keys below", async () => {
     select("config.yaml");
     m.keys("a");
     let frame = await m.frame();
@@ -76,7 +76,8 @@ describe("explorer prompts", () => {
       `${DIR} notes`,
       `${DIR} scripts`,
       `${YAML} config.yaml`,
-      NOTE,
+      "✎",
+      "  ⏎ create · esc cancel",
       `${NOTE} todo.md`,
     ]);
     m.keys("ide");
@@ -88,7 +89,8 @@ describe("explorer prompts", () => {
     expect(frame).not.toContain("❯");
     expect(await tree()).toEqual([
       `${DIR} notes`,
-      `  ${NOTE} draft`,
+      "  ✎ draft",
+      "    ⏎ create · esc cancel",
       `${DIR} scripts`,
       `${YAML} config.yaml`,
       `${NOTE} todo.md`,
@@ -114,7 +116,7 @@ describe("explorer prompts", () => {
     ]);
   });
 
-  test("r edits the name in place; m asks for the new path", async () => {
+  test("r edits the name in a marked field with its keys and link impact below; m asks for the new path", async () => {
     indexed({ "todo.md": "" });
     select("todo.md");
     m.keys("r");
@@ -124,12 +126,13 @@ describe("explorer prompts", () => {
       `${DIR} notes`,
       `${DIR} scripts`,
       `${YAML} config.yaml`,
-      `${NOTE} todo.md`,
+      "✎ todo.md",
+      "  ⏎ rename · esc cancel",
       "  No links to update",
     ]);
     expect(await cursorAt()).toEqual({ x: 10, y: 5 });
     m.keys("<BS><BS>txt");
-    expect((await tree())[3]).toBe(`${NOTE} todo.txt`);
+    expect((await tree())[3]).toBe("✎ todo.txt");
     m.keys("<CR>");
     expect(effectsOf("rename")).toEqual([
       {
@@ -143,6 +146,26 @@ describe("explorer prompts", () => {
     expect(frame).toContain("❯ todo.md");
     m.keys("<Esc>");
     expect(m.store.get().overlay.kind).toBe("none");
+  });
+
+  test("arrows move the caret in the tree's name field and in a floating prompt, and typing goes in at it", async () => {
+    indexed({ "todo.md": "" });
+    select("todo.md");
+    m.keys("r<Left><Left><Left>");
+    expect(await cursorAt()).toEqual({ x: 7, y: 5 });
+    m.keys("-2");
+    expect((await tree())[3]).toBe("✎ todo-2.md");
+    expect(await cursorAt()).toEqual({ x: 9, y: 5 });
+    m.keys("<Esc>m");
+    const end = await cursorAt();
+    m.keys("<Home>");
+    expect(await cursorAt()).toEqual({ x: (end?.x ?? 0) - 7, y: end?.y ?? 0 });
+    m.keys("a/<End><Left><Del>");
+    expect(await m.frame()).toContain("❯ a/todo.m");
+    m.keys("<CR>");
+    expect(effectsOf("move")).toEqual([
+      { kind: "move", op: { kind: "move", from: "todo.md", to: "a/todo.m" } },
+    ]);
   });
 
   test("explorer move shows the link impact before Enter", async () => {
@@ -377,4 +400,34 @@ describe("refused files", () => {
     expect(Object.keys(m.store.get().buffers)).toEqual([]);
     expect(effectsOf("write")).toEqual([]);
   });
+});
+
+test("the focused tree hides the cursor, and its name field shows a line cursor", async () => {
+  await m.frame();
+  expect(m.store.get().panels.explorer.focused).toBe(true);
+  expect(m.t.renderer.getCursorState().visible).toBe(false);
+  m.keys("a");
+  await m.frame();
+  expect(m.t.renderer.getCursorState()).toMatchObject({
+    visible: true,
+    style: "line",
+  });
+});
+
+test("an entry cut with x is dimmed until it is pasted", async () => {
+  const nameStyle = async () => {
+    const lines = (await m.frame()).split("\n");
+    const y = lines.findIndex((l) => l.includes("todo.md"));
+    const x = [...(lines[y] ?? "")].indexOf("t");
+    return cellStyle(m.t.captureSpans().lines, x, y);
+  };
+  select("todo.md");
+  const plain = await nameStyle();
+  m.keys("x");
+  expect(effectsOf("fileClipboardWrite")).toHaveLength(1);
+  const cut = await nameStyle();
+  expect(cut?.fg).not.toBe(plain?.fg);
+  m.keys("ky");
+  expect(m.store.get().panels.explorer.cursor).toBe("config.yaml");
+  expect((await nameStyle())?.fg).toBe(plain?.fg);
 });

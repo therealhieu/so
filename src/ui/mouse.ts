@@ -36,6 +36,7 @@ export type MouseRouter = {
 };
 
 const LEFT = 0;
+const MIDDLE = 1;
 
 const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   up: { dx: 0, dy: -1 },
@@ -44,20 +45,22 @@ const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   right: { dx: 1, dy: 0 },
 };
 
-/** Targets a drag can start on: window text (a selection), the zoom float (a pan), and the explorer's separator (a resize). */
+/** Targets a drag can start on: window text (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
 const draggable = (t: MouseTarget) =>
-  (t.kind === "window" && t.spot.kind === "text") ||
+  (t.kind === "window" &&
+    (t.spot.kind === "text" || t.spot.kind === "baseEdge")) ||
   t.kind === "zoomPoint" ||
   t.kind === "explorerEdge";
 
 /**
  * Turn OpenTUI mouse events into core mouse actions: drop everything while
- * `enabled()` is false and every button but the left one, ask `sources`
+ * `enabled()` is false and every button but the left one (a middle press
+ * is sent alone, with no clicks or drag), ask `sources`
  * (top of the z-order first, skipping wheel-only ones for a press) for the
  * target, count clicks on one cell (a repeated click keeps the first one's
  * target), and keep a drag with the source its press landed on, sending
  * each new drag target once. A press that `stops` says only closes
- * something starts no drag.
+ * something starts no drag. Shift turns a vertical wheel notch sideways.
  */
 export function createMouseRouter(o: {
   sources: readonly MouseSource[];
@@ -108,13 +111,24 @@ export function createMouseRouter(o: {
           return;
         }
         case "scroll": {
-          const step = WHEEL[e.scroll?.direction ?? ""];
+          const notch = WHEEL[e.scroll?.direction ?? ""];
           const hit = resolve(e.x, e.y, true);
-          if (step === undefined || hit === undefined) return;
+          if (notch === undefined || hit === undefined) return;
+          const step =
+            e.modifiers?.shift && notch.dy !== 0
+              ? { dx: notch.dy, dy: 0 as const }
+              : notch;
+          // Scrolling moves what is under the pointer, so the next move counts.
+          lastMove = undefined;
           send({ kind: "wheel", target: hit.target, ...step });
           return;
         }
         case "down": {
+          if (e.button === MIDDLE) {
+            const hit = resolve(e.x, e.y);
+            if (hit !== undefined) send({ kind: "middle", target: hit.target });
+            return;
+          }
           if (e.button !== LEFT) return;
           origin = undefined;
           lastDrag = undefined;

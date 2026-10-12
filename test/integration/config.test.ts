@@ -21,6 +21,7 @@ import { createExclusionMatcher } from "../../src/workspace/ignore";
 import { createImageLoader } from "../../src/workspace/images";
 import { createLogger } from "../../src/workspace/log";
 import { createSvgRasterizer } from "../../src/workspace/svg";
+import { noFileClipboard } from "../../src/workspace/system";
 import { createOwnOps } from "../../src/workspace/watcher";
 import { testRegistries } from "../support/state";
 import { clock, gitOff, tmpWorkspace, waitFor } from "./helpers";
@@ -65,6 +66,7 @@ async function start(config?: string) {
     ownOps: createOwnOps(),
     trash: { available: false, move: () => Promise.reject(new Error("no")) },
     clipboard: { name: "none", copy: async () => {} },
+    fileClipboard: noFileClipboard,
     dispatch: (a) => store.dispatch(a),
     exit: () => {},
     logger: createLogger({}, base),
