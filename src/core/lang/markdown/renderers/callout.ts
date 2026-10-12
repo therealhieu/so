@@ -1,6 +1,6 @@
 import { contentEnd, contentStart } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
-import { lineStyle, replaceCols, replaceLine } from "./rows";
+import { markCols, replaceCols, replaceLine } from "./rows";
 
 type Look = { icon: string; style: string };
 
@@ -25,8 +25,9 @@ const PREFIX = /^(?: {0,3}>[ \t]?)+/;
 
 /**
  * A callout's title row (icon, title, and `▸`/`▾` when foldable) and its body
- * behind a `▎` bar, or the body hidden when folded; `[!x]-` starts folded and
- * a block id in `folds` flips that. A click on the marker flips it too. Plain quotes get the bar only.
+ * behind a `▎` bar in plain text, or the body hidden when folded; `[!x]-`
+ * starts folded and a block id in `folds` flips that. A click on the marker
+ * flips it too. Plain quotes get the bar and quote text only.
  */
 export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
   const first = contentStart(v.buf, block);
@@ -68,8 +69,11 @@ export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
   ) {
     const prefix = PREFIX.exec(v.buf.line(l));
     if (prefix === null) continue;
-    out.push(replaceCols(l, 0, prefix[0].length, [{ text: "▎ ", style }]));
-    if (!title) out.push(lineStyle(l, "mdQuote"));
+    const from = prefix[0].length;
+    out.push(
+      replaceCols(l, 0, from, [{ text: "▎ ", style }]),
+      markCols(l, from, v.buf.line(l).length, title ? "text" : "mdQuote"),
+    );
   }
   return out;
 };

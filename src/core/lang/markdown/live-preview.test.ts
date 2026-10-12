@@ -8,12 +8,16 @@ import {
 } from "../../../../test/support/markdown";
 import { baseEmbedRenderer } from "../../features/bases/embed";
 import { createTextBuffer } from "../../kernel/text/text-buffer";
+import type { DecorationProvider } from "../../kernel/view/decorations";
+import { highlightMarks } from "../../kernel/view/marks";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
 import { type Block, parseDoc } from "./doc";
+import { markdownFileType } from "./file-type";
 import {
   type BlockRenderer,
   blocksIn,
+  livePreview,
   registerBlockRenderer,
 } from "./live-preview";
 import type { EmbedData } from "./renderers/embed";
@@ -290,6 +294,36 @@ test("a warning callout icon differs from the render-error sign", () => {
     }),
   );
   expect(rowText(rows[0])).toBe("▲ Careful");
+});
+
+test("callout and quote bodies keep their own text styles over source highlighting", () => {
+  builtinRenderers();
+  const { v, doc } = noteView(
+    "> [!note]\n> Body with [a link](https://x.y).\n\n> Plain quote\n\nAfter",
+    { cursor: { line: 5, col: 0 } },
+  );
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "reading", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  expect(styles(1)).toEqual([
+    ["mdCalloutNote", "▎ "],
+    ["text", "Body with "],
+    ["mdLink", "a link"],
+    ["text", "."],
+  ]);
+  expect(styles(3)).toEqual([
+    ["mdQuote", "▎ "],
+    ["mdQuote", "Plain quote"],
+  ]);
 });
 
 test("the reveal sign marks exactly the revealed rows", () => {
