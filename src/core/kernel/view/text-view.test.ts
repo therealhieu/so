@@ -214,6 +214,24 @@ test("line decoration sets the line style and sign", () => {
   ]);
 });
 
+test("line decoration gives the line a wrap prefix alongside its style", () => {
+  const wrapPrefix = [{ text: "▎ ", style: "mdQuote" }];
+  const rows = layoutText(
+    view(["quoted", "plain"]),
+    [
+      fixed({ kind: "line", line: 0, style: "mdQuote" }),
+      fixed({ kind: "line", line: 0, wrapPrefix }),
+    ],
+    undefined,
+  );
+  expect(rows[0]).toEqual({
+    sourceLine: 0,
+    spans: [{ text: "quoted", style: "mdQuote", col: 0 }],
+    wrapPrefix,
+  });
+  expect(rows[1]?.wrapPrefix).toBeUndefined();
+});
+
 test("viewport only", () => {
   const lines = Array.from({ length: 5000 }, (_, i) => `line ${i}`);
   const v = view(lines, { from: 100, to: 130 });

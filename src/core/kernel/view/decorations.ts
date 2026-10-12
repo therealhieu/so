@@ -5,8 +5,8 @@ import type { Sign, Span, StyleToken, TextView, Widget } from "./types";
  * How language code changes what a line looks like, never its text:
  * `mark` styles a range; `replace` hides a range (inline, or whole lines when
  * `block`) and shows `spans` or a `widget` instead; `widget` inserts rows
- * (`block`) or inline content; `line` styles a line or gives it a sign or a
- * change sign.
+ * (`block`) or inline content; `line` styles a line, gives it a sign or a
+ * change sign, or gives its wrap rows after the first a prefix.
  */
 export type Decoration =
   | { kind: "mark"; range: Range; style: StyleToken }
@@ -24,6 +24,7 @@ export type Decoration =
       style?: StyleToken;
       sign?: Sign;
       changeSign?: Sign;
+      wrapPrefix?: Span[];
     };
 
 /** A pure function of the view; it reads only `v.visible` lines. */

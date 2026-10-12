@@ -45,6 +45,25 @@ export const replaceCols = (
   ...(spans.length === 0 ? {} : { spans }),
 });
 
+/** Columns `from…to` of `line` styled `style`, over the source highlighting. */
+export const markCols = (
+  line: number,
+  from: number,
+  to: number,
+  style: string,
+): Decoration => ({
+  kind: "mark",
+  range: { start: { line, col: from }, end: { line, col: to } },
+  style,
+});
+
+/** `spans` drawn at the start of each wrap row of `line` after the first. */
+export const wrapPrefix = (line: number, spans: Span[]): Decoration => ({
+  kind: "line",
+  line,
+  wrapPrefix: spans,
+});
+
 export const lineStyle = (line: number, style: string): Decoration => ({
   kind: "line",
   line,

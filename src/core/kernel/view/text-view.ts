@@ -118,12 +118,14 @@ function layoutLine(
   let base = PLAIN;
   let sign: Sign | undefined;
   let changeSign: Sign | undefined;
+  let wrapPrefix: Span[] | undefined;
   let widget: Widget | undefined;
   for (const d of decos)
     if (d.kind === "line" && d.line === line) {
       if (d.style !== undefined) base = d.style;
       if (d.sign !== undefined) sign = d.sign;
       if (d.changeSign !== undefined) changeSign = d.changeSign;
+      if (d.wrapPrefix !== undefined) wrapPrefix = d.wrapPrefix;
     } else if (d.kind === "widget" && !d.block && d.at.line === line)
       widget = d.widget;
   const styles: StyleToken[] = Array.from({ length: text.length }, () => base);
@@ -147,7 +149,8 @@ function layoutLine(
   const spans = spansOf(text, styles, hidden, inserts);
   const row: RenderLine = withWidget({ sourceLine: line, spans }, widget);
   const signed = sign === undefined ? row : { ...row, sign };
-  return changeSign === undefined ? signed : { ...signed, changeSign };
+  const changed = changeSign === undefined ? signed : { ...signed, changeSign };
+  return wrapPrefix === undefined ? changed : { ...changed, wrapPrefix };
 }
 
 function spansOf(

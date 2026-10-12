@@ -55,6 +55,8 @@ export type RenderLine = {
   sign?: Sign;
   /** The sign in the change column, left of the line number. */
   changeSign?: Sign;
+  /** Drawn at the start of each wrap row after the first, before the text. */
+  wrapPrefix?: Span[];
 };
 
 /** Syntax highlighting for a line range: one span list per line. */
