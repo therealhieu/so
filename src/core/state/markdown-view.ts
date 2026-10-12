@@ -36,7 +36,7 @@ export const markdownViewContextFor =
       const r = resolveLink(s.index.ix, from, { target });
       return "path" in r ? r.path : undefined;
     };
-    const { embedMaxRows, images } = s.config.preview;
+    const { embedMaxRows, images, justify } = s.config.preview;
     return {
       resolve,
       isResolved: (t) => resolve(t) !== undefined,
@@ -61,5 +61,6 @@ export const markdownViewContextFor =
       folds: new Set(window?.content.folds ?? []),
       embedMaxRows,
       images,
+      justify,
     };
   };

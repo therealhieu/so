@@ -57,6 +57,8 @@ export type RenderLine = {
   changeSign?: Sign;
   /** Drawn at the start of each wrap row after the first, before the text. */
   wrapPrefix?: Span[];
+  /** Each wrap row but the last is stretched to the width; see `justifyRow`. */
+  justify?: true;
 };
 
 /** Syntax highlighting for a line range: one span list per line. */

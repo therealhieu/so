@@ -273,3 +273,27 @@ test("a tab after inline text keeps the cursor on its last cell", () => {
   expect(displayColOf(spans, 1, 4, true)).toBe(3);
   expect(displayColOf(spans, 2, 4, false)).toBe(4);
 });
+
+test("a stretched row maps its cells back through the extra gap cells", () => {
+  const lines = layout(["aa bb cc dd ee"], {
+    kind: "line",
+    line: 0,
+    justify: true,
+  });
+  // Width 10 wraps after "aa bb cc " (9 cells, 8 used): two extra cells.
+  const row = rowAt(lines, 0, {
+    width: 10,
+    tabWidth: 8,
+    wrap: true,
+    skipRows: 0,
+  });
+  expect(row?.shift).toBeDefined();
+  // Painted "aa  bb  cc": "bb" starts at cell 4, "cc" at cell 8.
+  expect(row && displayColAt(row, 4)).toBe(3);
+  expect(row && displayColAt(row, 3)).toBe(2);
+  expect(row && displayColAt(row, 8)).toBe(6);
+  // The last row stays ragged.
+  expect(
+    rowAt(lines, 1, { width: 10, tabWidth: 8, wrap: true, skipRows: 0 })?.shift,
+  ).toBeUndefined();
+});

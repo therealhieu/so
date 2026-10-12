@@ -354,3 +354,11 @@ test("sign and change sign merge independently, the later provider winning per c
   ]);
   expect(Object.keys(rows[1] ?? {})).toEqual(["sourceLine", "spans"]);
 });
+
+test("a justify line decoration marks its row, and only its row", () => {
+  const justify: DecorationProvider = () => [
+    { kind: "line", line: 1, justify: true },
+  ];
+  const rows = layoutText(view(["one", "two", "three"]), [justify], undefined);
+  expect(rows.map((r) => r.justify)).toEqual([undefined, true, undefined]);
+});

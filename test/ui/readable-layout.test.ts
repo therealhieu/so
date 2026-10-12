@@ -36,15 +36,19 @@ const cursor = () => {
   return s.windows.byId[s.windows.active]?.content.cursor;
 };
 
-/** The screen rows of buffer line 1, from its numbered row to the next numbered one. */
-function rowsOfFirstLine(frame: string[], gutterX: number) {
-  const y0 = frame.findIndex(
-    (l) => l.slice(gutterX, gutterX + GUTTER) === "   1  ",
-  );
+/**
+ * The screen rows of the line numbered `number` (relative numbers: the
+ * cursor line shows its own), from its numbered row to the next numbered one.
+ */
+function rowsOfFirstLine(frame: string[], gutterX: number, number = 1) {
+  // The number cells and their space; the sign cell after them may be set.
+  const numberOf = (l: string) => l.slice(gutterX, gutterX + GUTTER - 1);
+  const label = `${String(number).padStart(4)} `;
+  const y0 = frame.findIndex((l) => numberOf(l) === label);
   const rows: string[] = [];
   for (let y = y0; y < frame.length; y++) {
     const row = frame[y] ?? "";
-    if (y > y0 && row.slice(gutterX, gutterX + GUTTER).trim() !== "") break;
+    if (y > y0 && numberOf(row).trim() !== "") break;
     if (row.trim() === "") break;
     rows.push(row);
   }
@@ -101,4 +105,55 @@ test("the source view is centered too, and a code file fills the window", async 
   const { rows } = rowsOfFirstLine(frame, 0);
   expect(rows[0]?.startsWith("   1  const s")).toBe(true);
   expect(rows[0]?.trimEnd().length).toBeGreaterThan(TEXT_X + WIDTH);
+});
+
+const JUSTIFY = `[preview]\nreadableWidth = ${WIDTH}\njustify = true\n`;
+
+/** The column's text of each row, stretched rows keeping their inner spaces. */
+const textsOf = (rows: string[]) =>
+  rows.map((r) => r.slice(TEXT_X, TEXT_X + WIDTH).trimEnd());
+
+test("justified rows reach the right edge and the last row stays ragged", async () => {
+  await mount(JUSTIFY);
+  m.open("notes/long.md", `${PARA}\n`);
+  const texts = textsOf(rowsOfFirstLine(await lines(), GUTTER_X).rows);
+  expect(texts.length).toBeGreaterThanOrEqual(5);
+  for (const t of texts.slice(0, -1)) expect(t.length).toBe(WIDTH);
+  expect(texts.at(-1)?.length).toBeLessThan(WIDTH);
+  expect(texts.join(" ").split(/ +/).join(" ")).toBe(PARA);
+});
+
+test("the cursor and clicks land on the words of a stretched row", async () => {
+  await mount(JUSTIFY);
+  m.open("notes/long.md", `${PARA}\n`);
+  const { y0, rows } = rowsOfFirstLine(await lines(), GUTTER_X);
+  const row = textsOf(rows)[0] ?? "";
+  const cell = (word: string) => row.search(new RegExp(`\\b${word}\\b`));
+  expect(cell("word6")).toBeGreaterThan(PARA.indexOf("word6"));
+
+  m.keys("5w");
+  expect(cursor()).toEqual({ line: 0, col: PARA.indexOf("word5") });
+  expect(await cursorAt()).toEqual({ x: TEXT_X + cell("word5"), y: y0 });
+
+  await m.mouse.click(TEXT_X + cell("word6") + 1, y0);
+  expect(cursor()).toEqual({ line: 0, col: PARA.indexOf("word6") + 1 });
+
+  // The cell just before a word is an extra one: it belongs to the space.
+  await m.mouse.click(TEXT_X + cell("word7") - 1, y0);
+  expect(cursor()).toEqual({ line: 0, col: PARA.indexOf("word7") - 1 });
+});
+
+test("in the live view the cursor's revealed line stays ragged", async () => {
+  await mount(JUSTIFY);
+  m.open("notes/long.md", `${PARA}\n\n${PARA}\n`);
+  m.keys("<leader>m");
+  const s = m.store.get();
+  const w = s.windows.byId[s.windows.active];
+  expect(w && s.buffers[w.content.bufferId]?.view).toBe("live");
+  const frame = await lines();
+  expect(rowsOfFirstLine(frame, GUTTER_X).y0).toBeGreaterThanOrEqual(0);
+  const own = textsOf(rowsOfFirstLine(frame, GUTTER_X).rows);
+  const other = textsOf(rowsOfFirstLine(frame, GUTTER_X, 2).rows);
+  expect(own.slice(0, -1).some((t) => t.length < WIDTH)).toBe(true);
+  for (const t of other.slice(0, -1)) expect(t.length).toBe(WIDTH);
 });

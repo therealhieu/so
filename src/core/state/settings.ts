@@ -119,6 +119,16 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "choice",
+    path: ["preview", "justify"],
+    choices: [false, true],
+    about: [
+      "Spread wrapped prose rows to",
+      "both edges in the reading and",
+      "live views.",
+    ],
+  },
+  {
+    kind: "choice",
     path: ["autosave", "enabled"],
     choices: [true, false],
     about: ["Save a changed note after a", "pause in typing."],

@@ -44,6 +44,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "editor.relativeNumbers on",
       "preview.mode live",
       "preview.images auto",
+      "preview.justify off",
       "autosave.enabled on",
       "autosave.delayMs 1000",
       "editor.tabWidth 8",

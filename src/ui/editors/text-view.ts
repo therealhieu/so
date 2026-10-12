@@ -24,6 +24,7 @@ import {
   type InlayHint,
   inlayHintMarks,
 } from "../../core/kernel/view/inlay-hints";
+import { justifyRow } from "../../core/kernel/view/justify";
 import {
   highlightMarks,
   referenceMarks,
@@ -163,6 +164,8 @@ export function paintLine(
     endCol?: number;
     tabWidth: number;
     cursorline: boolean;
+    /** A stretched row's `justifyRow` cells: extra spaces after a gap. */
+    shift?: readonly number[];
   },
 ): void {
   const line = theme.style("cursorline");
@@ -184,7 +187,12 @@ export function paintLine(
     for (const ch of span.text) {
       const w = cellWidth(ch, v, o.tabWidth);
       for (let i = 0; i < w; i++, v++)
-        if (v >= o.leftCol && v < end) run += ch === "\t" ? " " : ch;
+        if (v >= o.leftCol && v < end) {
+          run += ch === "\t" ? " " : ch;
+          const at = v - o.leftCol;
+          if (o.shift !== undefined)
+            run += " ".repeat((o.shift[at + 1] ?? 0) - (o.shift[at] ?? 0));
+        }
     }
     const room = at.width - x;
     if (run === "" || room <= 0) continue;
@@ -375,8 +383,9 @@ export class EditorView extends Renderable implements WindowView {
       : cursorDisplayCol(text, col, tabWidth);
     const { textX, textW } = this.columnsOf(s, b);
     /**
-     * The cursor's wrap row and cell in `lines`. A row with virtual text
-     * places it among its spans; any other row uses the buffer line.
+     * The cursor's wrap row and cell in `lines`. A row with virtual text or
+     * stretched rows places it among its spans; any other row uses the
+     * buffer line.
      */
     const place = (lines: readonly RenderLine[]) => {
       const shown = lines.find(
@@ -384,22 +393,35 @@ export class EditorView extends Renderable implements WindowView {
           l.sourceLine === line &&
           !(l.widget !== undefined && l.spans.length === 0),
       );
-      const virtual = shown?.spans.some((sp) => sp.virtual !== undefined);
+      const bySpans =
+        shown?.spans.some((sp) => sp.virtual !== undefined) === true ||
+        (wrap && shown?.justify === true);
       const dc =
-        shown !== undefined && virtual === true
+        shown !== undefined && bySpans
           ? displayColOf(shown.spans, col, tabWidth, insert)
           : rawCol;
       if (!wrap) return { k: 0, x: dc, dc };
       const prefix = shown === undefined ? 0 : prefixCells(shown);
       const starts = wrapLine(
-        shown !== undefined && virtual === true ? wrapText(shown.spans) : text,
+        shown !== undefined && bySpans ? wrapText(shown.spans) : text,
         textW,
         tabWidth,
         prefix,
       );
       const k = rowOf(starts, dc);
       const indent = k === 0 ? 0 : prefix;
-      const x = dc - (starts[k] ?? 0) + indent;
+      const start = starts[k] ?? 0;
+      const shift =
+        shown?.justify === true
+          ? justifyRow(
+              shown.spans,
+              start,
+              starts[k + 1],
+              Math.max(1, textW - indent),
+              tabWidth,
+            )
+          : undefined;
+      const x = dc - start + indent + (shift?.[dc - start] ?? 0);
       // An Insert cursor just past a full row sits at the start of the next.
       return x >= textW ? { k: k + 1, x: prefix, dc } : { k, x, dc };
     };
@@ -731,6 +753,10 @@ export class EditorView extends Renderable implements WindowView {
             row.wrapPrefix ?? [],
             { leftCol: 0, tabWidth, cursorline: isCursor && active },
           );
+        const shift =
+          wrap && row.justify
+            ? justifyRow(row.spans, start, end, textW - indent, tabWidth)
+            : undefined;
         paintLine(
           buf,
           theme,
@@ -739,6 +765,7 @@ export class EditorView extends Renderable implements WindowView {
           {
             leftCol: start,
             ...(end === undefined ? {} : { endCol: end }),
+            ...(shift === undefined ? {} : { shift }),
             tabWidth,
             cursorline: isCursor && active,
           },
