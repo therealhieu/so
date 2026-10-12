@@ -31,7 +31,7 @@ const indexing = () => m.store.get().index.status === "indexing";
 /** Let queued worker messages reach the store. */
 const settle = () => new Promise<void>((r) => setImmediate(r));
 
-host.start(ws, []);
+host.start(ws, m.store.get().config);
 while (!indexing()) await Bun.sleep(1);
 
 const keys = [

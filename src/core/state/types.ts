@@ -70,7 +70,7 @@ export type FsOp = {
 };
 /** Files on a clipboard and whether pasting copies or moves them. */
 export type FileClip = { op: "copy" | "cut"; paths: string[] };
-/** `explorerOnly`: a dot or gitignored path, watched only for the explorer. */
+/** `explorerOnly`: a path the index skips, watched only for the explorer. */
 export type FileEvent =
   | { kind: "changed"; path: string; isDir: boolean; explorerOnly?: true }
   | { kind: "removed"; path: string; explorerOnly?: true };
@@ -701,6 +701,8 @@ export type Action =
       files: string[];
       /** Facts of files that are not notes. */
       facts?: FileFacts[];
+      /** Files a rescan no longer finds. */
+      removed?: string[];
       done: number;
       total: number;
     }
