@@ -142,6 +142,7 @@ test("preview options default to reading view, ten embed rows, automatic images,
     mode: "reading",
     embedMaxRows: 10,
     images: "auto",
+    readable: true,
     readableWidth: 100,
     justify: false,
   });

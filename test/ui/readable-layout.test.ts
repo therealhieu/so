@@ -157,3 +157,30 @@ test("in the live view the cursor's revealed line stays ragged", async () => {
   expect(own.slice(0, -1).some((t) => t.length < WIDTH)).toBe(true);
   for (const t of other.slice(0, -1)) expect(t.length).toBe(WIDTH);
 });
+
+test("<leader>ur and <leader>uj toggle the column and justify, and save them", async () => {
+  await mount(JUSTIFY);
+  m.open("notes/long.md", `${PARA}\n`);
+  const writes = () =>
+    m.effects
+      .filter((e) => e.kind === "writeSetting")
+      .map((e) => `${e.path.join(".")}=${String(e.value)}`);
+
+  m.keys("<leader>ur");
+  let frame = await lines();
+  expect(rowsOfFirstLine(frame, 0).y0).toBeGreaterThanOrEqual(0);
+  expect(frame.join("\n")).toContain("readable width off");
+
+  m.keys("<leader>ur");
+  frame = await lines();
+  expect(rowsOfFirstLine(frame, GUTTER_X).y0).toBeGreaterThanOrEqual(0);
+
+  m.keys("<leader>uj");
+  const texts = textsOf(rowsOfFirstLine(await lines(), GUTTER_X).rows);
+  expect(texts.slice(0, -1).some((t) => t.length < WIDTH)).toBe(true);
+  expect(writes()).toEqual([
+    "preview.readable=false",
+    "preview.readable=true",
+    "preview.justify=false",
+  ]);
+});

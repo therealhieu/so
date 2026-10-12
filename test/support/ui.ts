@@ -51,10 +51,10 @@ export type MountOptions = {
   /** The registries to run on; `testRegistries()` otherwise. */
   reg?: Registries;
   /**
-   * `preview.readableWidth`, unless `config` sets it; 0 by default, so a
-   * note fills the window as the layout tests expect.
+   * `preview.readable`, unless `config` sets it or the readable width; off
+   * by default, so a note fills the window as the layout tests expect.
    */
-  readableWidth?: number;
+  readable?: boolean;
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -103,7 +103,7 @@ export async function mountShell(o: MountOptions) {
   const editing = editingNotes(base);
   const readable = (c: AppConfig): AppConfig => ({
     ...c,
-    preview: { ...c.preview, readableWidth: o.readableWidth ?? 0 },
+    preview: { ...c.preview, readable: o.readable ?? false },
   });
   const initial: AppState = {
     ...editing,
@@ -119,7 +119,7 @@ export async function mountShell(o: MountOptions) {
   if (o.config !== undefined) {
     const result = parseConfig(o.config);
     const pinned = /^\s*position\s*=/m.test(o.config);
-    const width = /^\s*readableWidth\s*=/m.test(o.config);
+    const width = /^\s*readable(Width)?\s*=/m.test(o.config);
     const config = (c: AppConfig) => {
       const placed = pinned ? c : explorerLeft(c);
       return width ? placed : readable(placed);

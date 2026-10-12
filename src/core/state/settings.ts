@@ -119,12 +119,22 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "choice",
+    path: ["preview", "readable"],
+    choices: [true, false],
+    about: [
+      "Cap a note's text at the",
+      "readable width and center it;",
+      "<leader>ur toggles it.",
+    ],
+  },
+  {
+    kind: "choice",
     path: ["preview", "justify"],
     choices: [false, true],
     about: [
       "Spread wrapped prose rows to",
       "both edges in the reading and",
-      "live views.",
+      "live views; <leader>uj.",
     ],
   },
   {
@@ -165,11 +175,7 @@ export const SETTINGS: readonly Setting[] = [
   {
     kind: "number",
     path: ["preview", "readableWidth"],
-    about: [
-      "Text columns a note shows,",
-      "centered; 0 fills the window,",
-      "up to 500.",
-    ],
+    about: ["Text columns a readable note", "shows, 20–500."],
   },
   {
     kind: "number",
@@ -464,6 +470,22 @@ export function toggleGitignored(s: AppState): Result {
       st,
       shown ? "gitignored entries shown" : "gitignored entries hidden",
     ),
+  );
+}
+
+/** `<leader>ur` in a note: cap and center its text, or fill the window; saved like the setting. */
+export function toggleReadable(s: AppState): Result {
+  const on = !s.config.preview.readable;
+  return chain(setSetting(s, ["preview", "readable"], on), (st) =>
+    message(st, on ? "readable width on" : "readable width off"),
+  );
+}
+
+/** `<leader>uj` in a note: justify wrapped prose rows or leave them ragged; saved like the setting. */
+export function toggleJustify(s: AppState): Result {
+  const on = !s.config.preview.justify;
+  return chain(setSetting(s, ["preview", "justify"], on), (st) =>
+    message(st, on ? "justify on" : "justify off"),
   );
 }
 
