@@ -283,7 +283,7 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
- NORMAL  live  tour.md                                                  293 words  preview off  1:1"
+ NORMAL  live  tour.md                                                  337 words  preview off  1:1"
 `;
 
 exports[`with images off the zoom float draws a diagram too wide for the note as text 1`] = `
