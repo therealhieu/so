@@ -109,17 +109,17 @@ exports[`the tour at width 60 matches its golden, base embed included 1`] = `
       │    review-pr.md    │ doing  │ 2026-10-03 │ ☐        
       │    write-report.md │ todo   │ 2026-10-05 │ ☐        
       │    inbox.md        │ —      │ 2026-10-08 │ ☐        
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
+  79                                                        
+  80  ▊ Reading layout                                      
+  81                                                        
+  82  A long paragraph shows the reading layout. In a wide  
+      window the text stays in a centered column, and       
+      <leader>ur lets it fill the window instead. With      
+      justify on, <leader>uj spreads every wrapped row of a 
+      paragraph, a list item, or a callout body to both     
+      edges, while the last row of each line keeps its      
+      ragged end so the paragraph still reads as one block  
+      of prose.                                             
                                                             
                                                             
                                                             
@@ -252,6 +252,13 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
       │    review-pr.md    │ doing  │ 2026-10-03 │ ☐                                                
       │    write-report.md │ todo   │ 2026-10-05 │ ☐                                                
       │    inbox.md        │ —      │ 2026-10-08 │ ☐                                                
+  79                                                                                                
+  80  ▊ Reading layout                                                                              
+  81                                                                                                
+  82  A long paragraph shows the reading layout. In a wide window the text stays in a centered      
+      column, and <leader>ur lets it fill the window instead. With justify on, <leader>uj spreads   
+      every wrapped row of a paragraph, a list item, or a callout body to both edges, while the     
+      last row of each line keeps its ragged end so the paragraph still reads as one block of prose.
                                                                                                     
                                                                                                     
                                                                                                     
@@ -276,14 +283,7 @@ exports[`the tour at width 100 matches its golden, base embed included 1`] = `
                                                                                                     
                                                                                                     
                                                                                                     
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
- NORMAL  live  tour.md                                                  337 words  preview off  1:1"
+ NORMAL  live  tour.md                                                  408 words  preview off  1:1"
 `;
 
 exports[`with images off the zoom float draws a diagram too wide for the note as text 1`] = `

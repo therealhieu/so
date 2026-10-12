@@ -29,12 +29,12 @@ export type PreviewCtx = {
   folds: ReadonlySet<number>;
   embedMaxRows: number;
   images: "auto" | "blocks" | "off";
-  /** Stretch the wrapped rows of paragraphs and list items to both edges. */
+  /** Stretch the wrapped rows of paragraphs, list items, callouts, and quotes to both edges. */
   justify: boolean;
 };
 
 /** Render keys whose rows are prose that may be justified. */
-const PROSE = new Set(["paragraph", "list"]);
+const PROSE = new Set(["paragraph", "list", "callout", "quote"]);
 
 /** A `justify` line decoration on each visible line of `block`'s content. */
 function justified(block: Block, v: TextView): Decoration[] {

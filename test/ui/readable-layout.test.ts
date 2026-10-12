@@ -184,3 +184,12 @@ test("<leader>ur and <leader>uj toggle the column and justify, and save them", a
     "preview.justify=false",
   ]);
 });
+
+test("a justified callout body keeps its bar on every row and reaches the right edge", async () => {
+  await mount(JUSTIFY);
+  m.open("notes/callout.md", `> [!note] Title\n> ${PARA}\n`);
+  const body = textsOf(await lines()).filter((t) => t.startsWith("▎ "));
+  expect(body.length).toBeGreaterThanOrEqual(5);
+  for (const t of body.slice(0, -1)) expect([...t].length).toBe(WIDTH);
+  expect([...(body.at(-1) ?? "")].length).toBeLessThan(WIDTH);
+});
