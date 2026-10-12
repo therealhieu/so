@@ -1,7 +1,8 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
-import type { ThemeName } from "../core/config/schema";
+import { THEME_NAMES, type ThemeName } from "../core/config/schema";
 import type { AppState } from "../core/state/types";
 import { catppuccin } from "./catppuccin";
+import { PAPER, ROSE_PINE_DAWN, SEPIA } from "./warm-light";
 
 /** Terminal attributes for one token. */
 export type Style = { fg: RGBA; bg: RGBA; attrs: number };
@@ -338,6 +339,9 @@ export const themes: Readonly<Record<Theme["name"], Theme>> = {
     catppuccin("macchiato"),
   ),
   "catppuccin-mocha": colorTheme("catppuccin-mocha", catppuccin("mocha")),
+  paper: colorTheme("paper", PAPER),
+  sepia: colorTheme("sepia", SEPIA),
+  "rose-pine-dawn": colorTheme("rose-pine-dawn", ROSE_PINE_DAWN),
   nocolor: nocolorTheme,
 };
 
@@ -347,12 +351,22 @@ export const resolveTheme = (o: {
   theme: ThemeName;
 }): Theme => (o.color === "nocolor" ? themes.nocolor : themes[o.theme]);
 
-/** The theme for the state's colour mode and configured theme; `color = "never"` turns colour off. */
+/**
+ * The theme for the state's colour mode and configured theme; `color = "never"`
+ * turns colour off. While the theme list is open, its selected theme shows.
+ */
 export const themeOf = (s: AppState): Theme =>
   resolveTheme({
     color: s.config.color === "never" ? "nocolor" : s.terminal.color,
-    theme: s.config.theme,
+    theme: previewedTheme(s) ?? s.config.theme,
   });
+
+function previewedTheme(s: AppState): ThemeName | undefined {
+  if (s.overlay.kind !== "picker" || s.overlay.picker.source !== "themes")
+    return undefined;
+  const key = s.overlay.picker.items[s.overlay.picker.selected]?.key;
+  return THEME_NAMES.find((name) => name === key);
+}
 
 /** Cut the middle of `text` to `width` cells with `…`, keeping both ends. */
 export function middle(text: string, width: number): string {

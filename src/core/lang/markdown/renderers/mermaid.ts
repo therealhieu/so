@@ -199,6 +199,27 @@ const DIAGRAM_COLORS = {
     muted: "#6e738d",
   },
   "catppuccin-mocha": "catppuccin-mocha",
+  paper: {
+    bg: "#fbf8f1",
+    fg: "#2f2a24",
+    line: "#a39a8a",
+    accent: "#8a5a2b",
+    muted: "#6f6658",
+  },
+  sepia: {
+    bg: "#f2e8d0",
+    fg: "#3d2f20",
+    line: "#a08c6c",
+    accent: "#8b5e34",
+    muted: "#776448",
+  },
+  "rose-pine-dawn": {
+    bg: "#faf4ed",
+    fg: "#575279",
+    line: "#9893a5",
+    accent: "#907aa9",
+    muted: "#797593",
+  },
 } satisfies Record<string, string | BeautifulMermaid.DiagramColors>;
 
 /** A colour theme a diagram can be drawn in. */

@@ -418,6 +418,8 @@ export type PickerState = {
     refused?: "binary" | "tooLarge" | "io";
   };
   error?: string;
+  /** The picker `Esc` returns to, as the theme list returns to the settings. */
+  back?: PickerState;
 };
 
 /** The which-key popup: the pending prefix and the scope its keys resolve in. */
