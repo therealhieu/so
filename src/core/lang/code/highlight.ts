@@ -1,3 +1,4 @@
+import dockerfile from "highlight.js/lib/languages/dockerfile";
 import { common, createLowlight, type LanguageFn } from "lowlight";
 import type { TextBuffer } from "../../kernel/text/text-buffer";
 import type { Highlighter, Span, StyleToken } from "../../kernel/view/types";
@@ -39,7 +40,7 @@ const markdown: LanguageFn = (hljs) => {
   return grammar;
 };
 
-const low = createLowlight({ ...common, markdown });
+const low = createLowlight({ ...common, markdown, dockerfile });
 
 /** Lines above the window that are highlighted too, so open comments and strings carry over. */
 const LOOK_BACK = 200;

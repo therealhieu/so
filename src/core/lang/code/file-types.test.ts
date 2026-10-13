@@ -6,9 +6,9 @@ import { CODE_LANGUAGES, codeFileTypes } from "./file-types";
 
 test("language table covers the bundled grammars", () => {
   const ids: string[] = CODE_LANGUAGES.map((l) => l.id);
-  expect(ids).toHaveLength(34);
-  expect(new Set(ids).size).toBe(34);
-  for (const id of ids) expect(Object.keys(common)).toContain(id);
+  expect(ids).toHaveLength(35);
+  expect(new Set(ids).size).toBe(35);
+  expect(ids.filter((id) => !(id in common))).toEqual(["dockerfile"]);
   for (const id of ["shell", "python-repl", "plaintext"])
     expect(ids).not.toContain(id);
   expect(

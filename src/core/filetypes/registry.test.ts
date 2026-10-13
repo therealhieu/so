@@ -25,7 +25,10 @@ test("forPath matches extension, then file name, then falls back to text", () =>
   ]);
   expect(id("run.sh")).toBe("bash");
   expect(id("pyproject.toml")).toBe("ini");
-  expect(id("Dockerfile")).toBe("text");
+  expect(id("Dockerfile")).toBe("dockerfile");
+  expect(id("Containerfile")).toBe("dockerfile");
+  expect(id("app.dockerfile")).toBe("dockerfile");
+  expect(id("Dockerfile.dev")).toBe("text");
 });
 
 test("forPath ignores extension case and directories", () => {

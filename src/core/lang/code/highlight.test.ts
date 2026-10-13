@@ -26,6 +26,20 @@ test("highlights only the requested lines", () => {
   expect(lines[1]).toEqual([{ text: "   comment */", style: "codeComment" }]);
 });
 
+test("Dockerfile instructions highlight, with shell commands as Bash", () => {
+  const buf = createTextBuffer(
+    'FROM oven/bun:1.4.2\n# deps\nRUN echo "hi" && bun install',
+  );
+  const lines = lowlightHighlighter("dockerfile").highlight(buf, {
+    from: 0,
+    to: 3,
+  });
+  expect(lines[0]?.[0]).toEqual({ text: "FROM", style: "codeKeyword" });
+  expect(lines[1]).toEqual([{ text: "# deps", style: "codeComment" }]);
+  expect(lines[2]?.[0]).toEqual({ text: "RUN", style: "codeKeyword" });
+  expect(lines[2]).toContainEqual({ text: '"hi"', style: "codeString" });
+});
+
 test("look-back carries state from above the window", () => {
   const buf = createTextBuffer(source);
   const h = lowlightHighlighter("typescript");
