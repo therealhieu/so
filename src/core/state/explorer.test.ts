@@ -4,6 +4,7 @@ import {
   openBuffer,
   stamp,
   testRegistries,
+  textFile,
 } from "../../../test/support/state";
 import { parseConfig } from "../config/toml";
 import { splitKeys } from "../kernel/vim/keys";
@@ -146,6 +147,44 @@ test("moving a folder re-paths every buffer below it", () => {
     // The open buffers' paths are part of the saved session.
     { kind: "startTimer", id: "saveState", ms: SAVE_STATE_MS },
   ]);
+});
+
+test("renaming an open file to another extension takes that file type", () => {
+  const load = (s: AppState, path: string, text: string) =>
+    update(s, { type: "fileLoaded", path, file: textFile(text) }).state;
+  const rename = (s: AppState, from: string, to: string) =>
+    update(s, { type: "fsResult", op: { kind: "rename", from, to }, ok: true });
+  const editorOf = (s: AppState) =>
+    s.windows.byId[s.windows.active]?.content.editor;
+
+  const code = rename(load(fresh(), "a.md", "const x = 1;\n"), "a.md", "a.ts");
+  expect(code.state.buffers[1]).toMatchObject({
+    path: "a.ts",
+    fileType: reg.fileTypes.forPath("a.ts").id,
+    view: "source",
+  });
+  expect(code.effects).not.toContainEqual({ kind: "read", path: "a.ts" });
+
+  const base = load(fresh(), "t.base", "views: []\n");
+  expect(base.buffers[1]?.readOnly).toBe(true);
+  expect(editorOf(base)).toBe("base");
+  const note = rename(base, "t.base", "t.md");
+  expect(note.state.buffers[1]?.readOnly).toBeUndefined();
+  expect(note.state.buffers[1]?.fileType).toBe("markdown");
+  expect(editorOf(note.state)).toBe("text");
+
+  // The text cannot become a PDF's body: the file is read again.
+  const pdf = rename(load(fresh(), "a.md", "x\n"), "a.md", "a.pdf");
+  expect(pdf.state.buffers[1]).toMatchObject({ binary: true, readOnly: true });
+  expect(pdf.effects).toContainEqual({ kind: "read", path: "a.pdf" });
+  const reread = update(pdf.state, {
+    type: "fileLoaded",
+    path: "a.pdf",
+    file: textFile("", 2),
+  });
+  expect(reread.state.buffers[1]?.stamp).toEqual(stamp(2));
+  expect(reread.state.buffers[1]?.text.lineCount).toBe(1);
+  expect(reread.state.buffers[1]?.text.line(0)).toBe("");
 });
 
 test("trash flushes a dirty buffer, then closes it or keeps it if the flush failed", () => {

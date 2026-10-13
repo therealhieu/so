@@ -2,8 +2,10 @@ import {
   activeBuffer,
   bufferForPath,
   buffersUnder,
+  defaultView,
   openPath,
   removeBuffer,
+  withAnalysis,
 } from "./buffers";
 import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
@@ -34,6 +36,7 @@ import type {
   MouseTarget,
   PromptState,
   Result,
+  Stamp,
 } from "./types";
 import type { Registries } from "./update";
 
@@ -196,7 +199,7 @@ export function onFsResult(
   reg: Registries,
 ): Result {
   const { op } = a;
-  const r = fsResultTree(prev, a);
+  const r = fsResultTree(prev, a, reg);
   if (!awaitsOp(prev, op)) return r;
   return a.ok
     ? chain(r, (st) => beginRewrite(st, reg))
@@ -206,6 +209,7 @@ export function onFsResult(
 function fsResultTree(
   prev: AppState,
   a: Extract<Action, { type: "fsResult" }>,
+  reg: Registries,
 ): Result {
   const { op } = a;
   if (!a.ok)
@@ -228,21 +232,26 @@ function fsResultTree(
       const to = op.to ?? op.from;
       const ex = s.panels.explorer;
       const expanded = ex.expanded.map((d) => repath(d, op.from, to));
-      const moved = setExplorer(
-        repathBuffers(followMove(s, op.from, to), op.from, to),
-        {
-          entries: Object.fromEntries(
-            Object.entries(ex.entries).filter(([d]) => !under(d, op.from)),
-          ),
-          expanded,
-          cursor: repath(ex.cursor, op.from, to),
-        },
+      const repathed = repathBuffers(
+        followMove(s, op.from, to),
+        op.from,
+        to,
+        reg,
       );
-      return relist(moved, [
-        dirname(op.from),
-        ...ancestors(to),
-        ...expanded.filter((d) => under(d, to)),
-      ]);
+      const moved = setExplorer(repathed.state, {
+        entries: Object.fromEntries(
+          Object.entries(ex.entries).filter(([d]) => !under(d, op.from)),
+        ),
+        expanded,
+        cursor: repath(ex.cursor, op.from, to),
+      });
+      return chain({ state: moved, effects: repathed.effects }, (st) =>
+        relist(st, [
+          dirname(op.from),
+          ...ancestors(to),
+          ...expanded.filter((d) => under(d, to)),
+        ]),
+      );
     }
     case "trash": {
       const closed = buffersUnder(s, op.from).reduce<Result>(
@@ -271,12 +280,47 @@ function fsResultTree(
   }
 }
 
-/** Buffers follow a rename or move; text, undo, dirty state, and stamp are kept. */
-function repathBuffers(s: AppState, from: string, to: string): AppState {
+/** A stamp no file has, so the next read of the path reloads the buffer. */
+const UNREAD: Stamp = { mtimeMs: 0, size: 0, hash: "" };
+
+/**
+ * Buffers follow a rename or move; text, undo, dirty state, and stamp are
+ * kept. A new extension that names another file type gives the buffer that
+ * type's view, read-only flag, and analysis; when one side is binary the
+ * text cannot carry over, so the file is read again.
+ */
+function repathBuffers(
+  s: AppState,
+  from: string,
+  to: string,
+  reg: Registries,
+): Result {
   const buffers = { ...s.buffers };
-  for (const b of buffersUnder(s, from))
-    buffers[b.id] = { ...b, path: repath(b.path, from, to) };
-  return { ...s, buffers };
+  const effects: Effect[] = [];
+  for (const b of buffersUnder(s, from)) {
+    const path = repath(b.path, from, to);
+    const ft = reg.fileTypes.forPath(path);
+    if (ft.id === b.fileType) {
+      buffers[b.id] = { ...b, path };
+      continue;
+    }
+    const { readOnly: _, binary, analysis: __, ...rest } = b;
+    const reread = (binary === true) !== (ft.binary === true);
+    buffers[b.id] = withAnalysis(
+      {
+        ...rest,
+        path,
+        fileType: ft.id,
+        view: defaultView(ft, s.config),
+        ...(ft.readOnly === true ? { readOnly: true as const } : {}),
+        ...(ft.binary === true ? { binary: true as const } : {}),
+        ...(reread ? { stamp: UNREAD } : {}),
+      },
+      ft,
+    );
+    if (reread) effects.push({ kind: "read", path });
+  }
+  return { state: { ...s, buffers }, effects };
 }
 
 export function onDirListed(
