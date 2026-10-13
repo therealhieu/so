@@ -10,9 +10,9 @@ import type { AppState, BufferState, Result } from "./types";
 const encodePath = (path: string) =>
   path.split("/").map(encodeURIComponent).join("/");
 
-/** The browser address of the preview on `port`, at `path` when given. */
-export const previewUrl = (port: number, path?: string) =>
-  `http://127.0.0.1:${port}/${path === undefined ? "" : encodePath(path)}`;
+/** The browser address of the preview on `port`, at `path` when given, carrying the server's `token`. */
+export const previewUrl = (port: number, token: string, path?: string) =>
+  `http://127.0.0.1:${port}/${path === undefined ? "" : encodePath(path)}?token=${token}`;
 
 /** A note's analysis and text: the stored analysis when current, else parsed now. */
 function noteOf(b: BufferState): { doc: Doc; text: TextBuffer } {
@@ -92,7 +92,10 @@ export function startPreview(c: CommandContext): Result {
     return {
       state: s,
       effects: [
-        { kind: "openUrl", url: previewUrl(p.port, followTarget(s)?.path) },
+        {
+          kind: "openUrl",
+          url: previewUrl(p.port, p.token, followTarget(s)?.path),
+        },
       ],
     };
   if (p.status === "starting") return none(s);
@@ -109,12 +112,18 @@ export function stopPreview(c: CommandContext): Result {
   return { state: c.state, effects: [{ kind: "stopPreview" }] };
 }
 
-/** The server listens: record its port and open the browser at the current note. */
-export function onPreviewStarted(s: AppState, a: { port: number }): Result {
+/** The server listens: record its port and token and open the browser at the current note. */
+export function onPreviewStarted(
+  s: AppState,
+  a: { port: number; token: string },
+): Result {
   return {
-    state: { ...s, preview: { status: "on", port: a.port } },
+    state: { ...s, preview: { status: "on", port: a.port, token: a.token } },
     effects: [
-      { kind: "openUrl", url: previewUrl(a.port, followTarget(s)?.path) },
+      {
+        kind: "openUrl",
+        url: previewUrl(a.port, a.token, followTarget(s)?.path),
+      },
     ],
   };
 }

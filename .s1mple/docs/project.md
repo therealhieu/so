@@ -1,6 +1,6 @@
 # so
 
-- **Last Modified:** 2026-10-12
+- **Last Modified:** 2026-10-13
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
@@ -94,7 +94,7 @@ Live preview is a decoration provider over the kernel's `layoutText`: the Markdo
 :PreviewStop | exit → SSE "stopped" → server stops → preview = off
 ```
 
-The server answers GET only, rejects a foreign `Host`, serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
+The server answers GET only, rejects a foreign `Host`, and answers only a request carrying its random per-server token, so another local user cannot read the workspace through it: the opened address carries the token in its query, and that response sets it as an `HttpOnly`, `SameSite=Strict` cookie named for the port (`so-preview-<port>`), which the page's own requests send. It serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
 
 Language servers follow the same one-way flow. The core holds `LspState` and emits `lsp` effects; the host observes the store to start servers and sync documents, and answers with actions:
 

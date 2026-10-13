@@ -1,3 +1,4 @@
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { createTextBuffer } from "../core/kernel/text/text-buffer";
@@ -32,8 +33,16 @@ export type PreviewServerOptions = {
   isExcluded(rel: string): boolean;
   port?: number;
 };
-/** `stop` resolves once every connection has closed. */
-export type PreviewServer = { port: number; stop(): Promise<void> };
+/**
+ * `token` must reach the server, in the `token` query parameter of the
+ * address opened in the browser; `stop` resolves once every connection has
+ * closed.
+ */
+export type PreviewServer = {
+  port: number;
+  token: string;
+  stop(): Promise<void>;
+};
 
 /** How long the server lets edits settle before it tells pages about them. */
 const FOLLOW_DELAY_MS = 100;
@@ -66,10 +75,21 @@ const serveAsset = (a: PreviewAsset | undefined) =>
 /**
  * The read-only preview: the page, its embedded assets, rendered notes,
  * contained workspace files, and server-sent `doc` events that follow the
- * active note. It listens on 127.0.0.1 only and answers GET only.
+ * active note. It listens on 127.0.0.1 only and answers GET only, and only
+ * to a request carrying the server's random token, so another local user
+ * cannot read the workspace through it: the address opened in the browser
+ * carries it in the query, and that response sets it as an `HttpOnly`,
+ * `SameSite=Strict` cookie that the page's own requests send.
  */
 export function startPreviewServer(o: PreviewServerOptions): PreviewServer {
   const rootReal = realpathSync(o.root);
+  const token = randomBytes(32).toString("hex");
+  const expected = Buffer.from(token);
+  const matches = (given: string | undefined | null) => {
+    if (given === undefined || given === null) return false;
+    const b = Buffer.from(given);
+    return b.length === expected.length && timingSafeEqual(b, expected);
+  };
   const encoder = new TextEncoder();
   const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
   let last: FollowTarget | undefined = followTarget(o.store.get());
@@ -187,18 +207,35 @@ export function startPreviewServer(o: PreviewServerOptions): PreviewServer {
         host !== `localhost:${server.port}`
       )
         return respond("forbidden", 403);
-      if (req.method !== "GET") return respond("method not allowed", 405);
       const url = new URL(req.url);
-      if (url.pathname === "/events") return events();
-      if (url.pathname === "/render")
-        return render(url.searchParams.get("path"));
-      if (url.pathname.startsWith("/assets/"))
-        return serveAsset(ASSETS.get(url.pathname.slice("/assets/".length)));
-      if (url.pathname.startsWith("/file/"))
-        return file(url.pathname.slice("/file/".length));
-      return serveAsset(PAGE);
+      // Cookies are shared across ports, so the name carries this server's.
+      const cookie = `so-preview-${server.port}`;
+      const fromQuery = matches(url.searchParams.get("token"));
+      if (
+        !fromQuery &&
+        !matches(new Bun.CookieMap(req.headers.get("cookie") ?? "").get(cookie))
+      )
+        return respond("forbidden", 403);
+      if (req.method !== "GET") return respond("method not allowed", 405);
+      const res = route(url);
+      if (fromQuery)
+        res.headers.append(
+          "Set-Cookie",
+          `${cookie}=${token}; HttpOnly; SameSite=Strict; Path=/`,
+        );
+      return res;
     },
   });
+
+  function route(url: URL): Response {
+    if (url.pathname === "/events") return events();
+    if (url.pathname === "/render") return render(url.searchParams.get("path"));
+    if (url.pathname.startsWith("/assets/"))
+      return serveAsset(ASSETS.get(url.pathname.slice("/assets/".length)));
+    if (url.pathname.startsWith("/file/"))
+      return file(url.pathname.slice("/file/".length));
+    return serveAsset(PAGE);
+  }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   const check = () => {
@@ -220,6 +257,7 @@ export function startPreviewServer(o: PreviewServerOptions): PreviewServer {
 
   return {
     port: server.port as number,
+    token,
     stop() {
       unsubscribe();
       clearTimeout(timer);

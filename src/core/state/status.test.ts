@@ -97,7 +97,7 @@ test("status shows the preview while it starts and its port once it runs", () =>
     s = update(s, { type: "key", key, now: 0 }).state;
   s = update(s, { type: "key", key: "<CR>", now: 0 }).state;
   expect(statusSegments(s).preview).toBe("preview …");
-  s = update(s, { type: "previewStarted", port: 8731 }).state;
+  s = update(s, { type: "previewStarted", port: 8731, token: "t0k" }).state;
   expect(statusSegments(s).preview).toBe("preview :8731");
 });
 

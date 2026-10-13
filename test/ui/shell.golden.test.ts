@@ -141,7 +141,7 @@ test("the statusline shows the preview port after the word count", async () => {
   indexFixture(m);
   m.keys(":Preview<CR>");
   expect(segments(await m.status())).toContain("preview …");
-  m.store.dispatch({ type: "previewStarted", port: 8731 });
+  m.store.dispatch({ type: "previewStarted", port: 8731, token: "t0k" });
   expect(segments(await m.status())).toEqual([
     "NORMAL",
     "live",
