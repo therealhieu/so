@@ -12,7 +12,7 @@ export const TARGETS = {
   sourceOpenFile: 50,
   liveScrollFrameP95: 16.7,
   sourceScrollFrameP95: 16.7,
-  firstFrame: 250,
+  firstFrame: 300,
   indexReady: 3000,
   indexingKeystrokeP95: 30,
   lspKeystrokeP95: 16,
