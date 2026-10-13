@@ -10,8 +10,8 @@ type LanguageSpec = {
 
 /**
  * Every lowlight `common` grammar except `shell` and `python-repl` (console
- * sessions, no file extension) and `plaintext` (the `text` file type).
- * Markdown's file type lives in `lang/markdown`.
+ * sessions, no file extension) and `plaintext` (the `text` file type), plus
+ * `dockerfile`. Markdown's file type lives in `lang/markdown`.
  */
 export const CODE_LANGUAGES = [
   { id: "typescript", extensions: [".ts", ".tsx", ".mts", ".cts"] },
@@ -52,6 +52,11 @@ export const CODE_LANGUAGES = [
   { id: "wasm", extensions: [".wat", ".wast"] },
   { id: "vbnet", extensions: [".vb"] },
   { id: "arduino", extensions: [".ino"] },
+  {
+    id: "dockerfile",
+    extensions: [".dockerfile"],
+    names: ["Dockerfile", "Containerfile"],
+  },
 ] as const satisfies readonly LanguageSpec[];
 
 /** One source-view file type per language except Markdown. */

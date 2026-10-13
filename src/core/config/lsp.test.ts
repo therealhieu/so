@@ -52,6 +52,7 @@ test("without overrides the built-in servers resolve in table order", () => {
     "rust-analyzer",
     "clangd",
     "json",
+    "yaml",
   ]);
 });
 
@@ -78,6 +79,7 @@ test("overrides change only the fields they set and additions follow the built-i
     "rust-analyzer",
     "clangd",
     "json",
+    "yaml",
     "eslint",
   ]);
   const rust = servers.find((s) => s.name === "rust-analyzer");

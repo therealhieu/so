@@ -18,6 +18,7 @@ Versions are exact pins from `package.json`; `bunfig.toml` sets `[install] exact
 | TypeScript | Primary language and type checker | `typescript` `7.0.2` — `tsconfig.json` |
 | `@opentui/core` | Terminal renderer (only `src/ui` imports it) | `0.5.14` |
 | `lowlight` | Syntax highlighting (`src/core/lang/code`) | `3.3.0` |
+| `highlight.js` | The Dockerfile grammar, outside lowlight's `common` set (`src/core/lang/code`) | `11.11.2` (lowlight's own copy) |
 | `zod` | Config schema (`src/core/config`) | `4.6.5` |
 | `toml-eslint-parser` | `config.toml` parsing with line numbers (`src/core/config`) | `1.0.3` |
 | `mdast-util-from-markdown` | Markdown syntax tree, built on demand (`src/core/lang/markdown`) | `2.0.3` |

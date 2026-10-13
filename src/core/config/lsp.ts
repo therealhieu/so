@@ -60,6 +60,9 @@ const TS_SETTINGS = {
   javascript: { inlayHints: TS_INLAY_HINTS },
 };
 
+const COMPOSE_SCHEMA =
+  "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json";
+
 /** The servers `so` knows, in routing order. */
 export const BUILTIN_SERVERS: readonly ServerSpec[] = [
   {
@@ -163,6 +166,32 @@ export const BUILTIN_SERVERS: readonly ServerSpec[] = [
     rootSearch: "nearest",
     settings: {},
     initOptions: { provideFormatter: true },
+    snippets: true,
+    localBin: true,
+  },
+  {
+    name: "yaml",
+    command: ["yaml-language-server", "--stdio"],
+    fileTypes: ["yaml"],
+    rootMarkers: [],
+    rootSearch: "nearest",
+    // Patterns match the file name in any folder.
+    settings: {
+      yaml: {
+        schemas: {
+          [COMPOSE_SCHEMA]: [
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "docker-compose.*.yml",
+            "docker-compose.*.yaml",
+            "compose.yml",
+            "compose.yaml",
+            "compose.*.yml",
+            "compose.*.yaml",
+          ],
+        },
+      },
+    },
     snippets: true,
     localBin: true,
   },
