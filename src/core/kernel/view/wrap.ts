@@ -1,13 +1,10 @@
+import { cellWidth, clusters } from "../text/cells";
 import type { RenderLine, Span } from "./types";
-
-/** Cells `ch` takes at display column `v`: a tab reaches the next multiple of `tabWidth`. */
-export const cellWidth = (ch: string, v: number, tabWidth: number): number =>
-  ch === "\t" ? tabWidth - (v % tabWidth) : 1;
 
 /** Cells `text` takes from column 0. */
 export function displayWidth(text: string, tabWidth: number): number {
   let v = 0;
-  for (const ch of text) v += cellWidth(ch, v, tabWidth);
+  for (const ch of clusters(text)) v += cellWidth(ch, v, tabWidth);
   return v;
 }
 
@@ -15,8 +12,10 @@ export function displayWidth(text: string, tabWidth: number): number {
  * Display columns where each screen row of `text` starts, for a first row of
  * at most `width` cells and later rows of `width - indent` (at least one). A
  * row breaks after the last space or tab that fits, or at the width when
- * none fits. A character never straddles two rows, so a tab wider than the
- * row takes a row alone. Returns [0] when the text fits.
+ * none fits. A character (a grapheme cluster) never straddles two rows: a
+ * wide character that would end a row half drawn starts the next one, and
+ * a tab wider than the row takes a row alone. Returns [0] when the text
+ * fits.
  */
 export function wrapLine(
   text: string,
@@ -30,7 +29,7 @@ export function wrapLine(
   /** Display column just after the row's last space or tab. */
   let afterBlank = 0;
   let v = 0;
-  for (const ch of text) {
+  for (const ch of clusters(text)) {
     const w = cellWidth(ch, v, tabWidth);
     while (v + w - rowStart > rowWidth && v > rowStart) {
       rowWidth = Math.max(1, width - indent);
@@ -51,9 +50,14 @@ export function rowOf(starts: readonly number[], col: number): number {
   return row;
 }
 
-/** Cells a line's wrap prefix takes on each wrap row after the first. */
+/**
+ * Cells a line's wrap prefix takes on each wrap row after the first, a tab
+ * counting as one.
+ */
 export const prefixCells = (line: RenderLine): number =>
-  line.wrapPrefix === undefined ? 0 : [...wrapText(line.wrapPrefix)].length;
+  line.wrapPrefix === undefined
+    ? 0
+    : displayWidth(wrapText(line.wrapPrefix), 1);
 
 /** The text a row wraps on: every span but end-of-line virtual text. */
 export const wrapText = (spans: readonly Span[]): string =>

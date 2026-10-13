@@ -297,3 +297,45 @@ test("a stretched row maps its cells back through the extra gap cells", () => {
     rowAt(lines, 1, { width: 10, tabWidth: 8, wrap: true, skipRows: 0 })?.shift,
   ).toBeUndefined();
 });
+
+test("both cells of a wide character map to it, and the columns after it shift", () => {
+  const text = "a中👍b";
+  const [line] = layout([text]);
+  const spans = line?.spans ?? [];
+  // a(0) 中(1-2) 👍(3-4) b(5); 👍 is two UTF-16 units.
+  const cols = [0, 1, 1, 2, 2, 4, 5];
+  for (const [dc, col] of cols.entries())
+    expect(sourceColAt(spans, dc, 4, text.length)).toBe(col);
+  expect(spanAt(spans, 5, 4)?.text).toBe(text);
+  expect(spanAt(spans, 6, 4)).toBeUndefined();
+});
+
+test("a click on a wrapped row of wide characters lands on the character drawn there", () => {
+  const text = "你好世界你好";
+  const lines = layout([text]);
+  const o = { width: 5, tabWidth: 4, wrap: true, skipRows: 0 };
+  // Two characters fill four cells; the fifth cell stays blank.
+  expect(wrapLine(text, 5, 4)).toEqual([0, 4, 8]);
+  const at = (y: number, x: number) => {
+    const row = rowAt(lines, y, o);
+    if (row === undefined) throw new Error("expected a screen row");
+    return sourceColAt(row.line.spans, displayColAt(row, x), 4, text.length);
+  };
+  expect([0, 1, 2, 3, 4].map((x) => at(0, x))).toEqual([0, 0, 1, 1, 1]);
+  expect([0, 1, 2, 3].map((x) => at(1, x))).toEqual([2, 2, 3, 3]);
+  expect(at(2, 3)).toBe(5);
+});
+
+test("a column inside a character shows the cursor at the character's start", () => {
+  const text = "éx👍y";
+  const [line] = layout([text], virtualAt(0, "·", "inline"));
+  const spans = line?.spans ?? [];
+  // · (0) é (1) x (2) 👍 (3-4) y (5)
+  expect(displayColOf(spans, 0, 4, false)).toBe(1);
+  expect(displayColOf(spans, 1, 4, false)).toBe(1);
+  expect(displayColOf(spans, 2, 4, false)).toBe(2);
+  expect(displayColOf(spans, 3, 4, false)).toBe(3);
+  expect(displayColOf(spans, 4, 4, false)).toBe(3);
+  expect(displayColOf(spans, 5, 4, false)).toBe(5);
+  expect(displayColOf(spans, text.length, 4, true)).toBe(6);
+});

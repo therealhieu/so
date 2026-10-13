@@ -1,6 +1,7 @@
+import { cellWidth, clusters } from "../text/cells";
 import { colAtCell, justifyRow } from "./justify";
 import type { RenderLine, Span } from "./types";
-import { cellWidth, prefixCells, wrapLine, wrapText } from "./wrap";
+import { prefixCells, wrapLine, wrapText } from "./wrap";
 
 /**
  * One screen row of text: the rendered line, the display column it starts
@@ -93,7 +94,7 @@ export function spanAt(
 ): Span | undefined {
   let v = 0;
   for (const span of spans)
-    for (const ch of span.text) {
+    for (const ch of clusters(span.text)) {
       v += cellWidth(ch, v, tabWidth);
       if (dc < v) return span;
     }
@@ -102,7 +103,8 @@ export function spanAt(
 
 /**
  * Source column shown at display column `dc`, counted from the line start.
- * Verbatim text maps cell by cell, replacement text maps to the start of the
+ * Verbatim text maps cell by cell, each cell of a wide character or tab to
+ * the character's first column, replacement text maps to the start of the
  * range it hides, and cells after the last one map to `lineLength`, the
  * source line's length, even when the line ends in hidden text. A span
  * without `col` continues from the previous span.
@@ -118,7 +120,7 @@ export function sourceColAt(
   for (const span of spans) {
     const col = span.col ?? end;
     let i = 0;
-    for (const ch of span.text) {
+    for (const ch of clusters(span.text)) {
       const w = cellWidth(ch, v, tabWidth);
       if (dc < v + w) return span.inserted ? col : col + i;
       v += w;
@@ -146,9 +148,14 @@ export function displayColOf(
     if (span.virtual === "eol") continue;
     const start = span.col ?? 0;
     let i = 0;
-    for (const ch of span.text) {
+    for (const ch of clusters(span.text)) {
       const w = cellWidth(ch, v, tabWidth);
-      if (span.virtual === undefined && start + i === col)
+      // A column inside a character (a grapheme cluster) shows at its start.
+      if (
+        span.virtual === undefined &&
+        col >= start + i &&
+        col < start + i + ch.length
+      )
         return ch === "\t" && !insert ? v + w - 1 : v;
       v += w;
       i += ch.length;

@@ -5,6 +5,7 @@ import {
 } from "@opentui/core";
 import { hunkSigns } from "../../core/features/git/signs";
 import type { FileType } from "../../core/filetypes/registry";
+import { cellWidth, clusters } from "../../core/kernel/text/cells";
 import type { Range } from "../../core/kernel/text/pos";
 import type { TextBuffer } from "../../core/kernel/text/text-buffer";
 import type { DecorationProvider } from "../../core/kernel/view/decorations";
@@ -39,14 +40,12 @@ import type {
   TextView,
 } from "../../core/kernel/view/types";
 import {
-  cellWidth,
   displayWidth,
   prefixCells,
   rowOf,
   wrapLine,
   wrapText,
 } from "../../core/kernel/view/wrap";
-import { cursorDisplayCol } from "../../core/kernel/vim/motions";
 import { bodyRows } from "../../core/state/layout";
 import { panelFocused } from "../../core/state/side-panel";
 import type {
@@ -149,7 +148,8 @@ export type Rect = { x: number; y: number; w: number; h: number };
 /**
  * Paint one screen row of a line's spans at (x, y), `width` cells wide.
  * Display columns count from the line start, with tabs reaching the next
- * multiple of `tabWidth`; the cells from `leftCol` up to `endCol` (or the
+ * multiple of `tabWidth` and wide characters taking two cells; the cells
+ * from `leftCol` up to `endCol` (or the
  * row's width) are painted and the rest of the row is filled. On the cursor
  * line every token keeps its foreground and takes the cursorline
  * background, except selection and search matches.
@@ -184,19 +184,27 @@ export function paintLine(
   for (const span of spans) {
     if (v >= end) break;
     let run = "";
-    for (const ch of span.text) {
+    let cells = 0;
+    for (const ch of clusters(span.text)) {
       const w = cellWidth(ch, v, o.tabWidth);
+      // A tab, or a wide character cut at the row's edge, paints blank cells.
+      const whole = ch !== "\t" && v >= o.leftCol && v + w <= end;
       for (let i = 0; i < w; i++, v++)
         if (v >= o.leftCol && v < end) {
-          run += ch === "\t" ? " " : ch;
+          if (!whole) run += " ";
+          else if (i === 0) run += ch;
+          cells++;
           const at = v - o.leftCol;
-          if (o.shift !== undefined)
-            run += " ".repeat((o.shift[at + 1] ?? 0) - (o.shift[at] ?? 0));
+          if (o.shift !== undefined) {
+            const extra = (o.shift[at + 1] ?? 0) - (o.shift[at] ?? 0);
+            run += " ".repeat(extra);
+            cells += extra;
+          }
         }
     }
     const room = at.width - x;
-    if (run === "" || room <= 0) continue;
-    const n = Math.min(room, [...run].length);
+    if (cells === 0 || room <= 0) continue;
+    const n = Math.min(room, cells);
     drawCells(buf, styleOf(span.style), at.x + x, at.y, run, n);
     x += n;
   }
@@ -378,9 +386,12 @@ export class EditorView extends Renderable implements WindowView {
     if (followsCursor) this.topLine = Math.max(this.topLine, line - rows + 1);
     const text = b.text.line(Math.min(line, b.text.lineCount - 1));
     const insert = s.vim.mode === "insert";
-    const rawCol = insert
-      ? cursorDisplayCol(text.slice(0, col), col, tabWidth)
-      : cursorDisplayCol(text, col, tabWidth);
+    const rawCol = displayColOf(
+      [{ text, style: "text" }],
+      col,
+      tabWidth,
+      insert,
+    );
     const { textX, textW } = this.columnsOf(s, b);
     /**
      * The cursor's wrap row and cell in `lines`. A row with virtual text or

@@ -87,6 +87,32 @@ test("wrap off scrolls the row with an overflow marker", async () => {
   expect(frame[y0]?.endsWith("›")).toBe(true);
 });
 
+test("a line of wide characters wraps at the window edge and places the cursor by cells", async () => {
+  await mount();
+  // 50 characters of two cells each: 37 fill a 74-cell row, 13 wrap.
+  const cjk = "漢字かな".repeat(13).slice(0, 50);
+  m.open("notes/cjk.txt", `${cjk}\nnext\n`);
+  await m.frame();
+  // The captured frame drops wide characters' second cells, so read the
+  // cells: ASCII as is, any other cell (either half of a wide one) as `#`.
+  const buf = m.t.renderer.currentRenderBuffer;
+  const row = (y: number) =>
+    [...buf.buffers.char.slice(y * buf.width, (y + 1) * buf.width)]
+      .map((c) => (c < 0x80 ? String.fromCharCode(c) : "#"))
+      .join("");
+  const rows = Array.from({ length: buf.height }, (_, y) => row(y));
+  const y0 = rows.findIndex((l) => l.startsWith("   1  #"));
+  expect(y0).toBeGreaterThanOrEqual(0);
+  expect(rows[y0]).toBe(`   1  ${"#".repeat(74)}`);
+  expect(rows[y0 + 1]).toBe(`      ${"#".repeat(26)}${" ".repeat(48)}`);
+  expect(rows[y0 + 2]?.startsWith("   1  next")).toBe(true);
+
+  m.keys("$");
+  expect(await cursorAt()).toEqual({ x: 6 + 12 * 2, y: y0 + 1 });
+  m.keys("0lll");
+  expect(await cursorAt()).toEqual({ x: 6 + 3 * 2, y: y0 });
+});
+
 test("absolute numbers on every row", async () => {
   await mount("[editor]\nrelativeNumbers = false\n");
   m.open("notes/a.txt", "one\ntwo\nthree\n");
