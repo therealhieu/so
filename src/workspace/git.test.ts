@@ -347,6 +347,22 @@ test("staging an untracked file and a CRLF line stage only the hunk", async () =
   expect(await crlf.run(["diff", "--numstat"])).toBe("");
 });
 
+test("lines added after an index line without a final newline stage on their own line", async () => {
+  const r = await repo({ "a.md": "a" });
+  const info = await detected(r);
+  const g = gitIn(r);
+  await r.write("a.md", "a\nb\n");
+  const entry = tracked(await g.readIndex(info, "a.md"));
+  const cur = bufferOf("a\nb\n");
+  const [h] = diffLines(entry.text.lines, cur.lines);
+  if (h === undefined) throw new Error("no hunk");
+  const patch = hunkPatch("a.md", entry.mode, h, entry.text, cur);
+  expect(
+    await g.stage(info, { repoPath: "a.md", expectedOid: entry.oid, patch }),
+  ).toBe("ok");
+  expect(await r.run(["show", ":a.md"])).toBe("a\nb\n");
+});
+
 test("a changed index entry stages nothing", async () => {
   const r = await repo({ "a.md": TEN });
   const info = await detected(r);
