@@ -291,6 +291,12 @@ function slowWrites(runner: EffectRunner): EffectRunner {
   };
 }
 
+/** Test-only: `SO_TEST_THROW=start` throws during startup, before the first frame is painted. */
+function injectStartupThrow(): void {
+  if (testing && process.env.SO_TEST_THROW === "start")
+    throw new Error("injected startup failure");
+}
+
 /** Test-only: `SO_TEST_THROW=1` throws outside the reducer once the active buffer's first line has "THROW". */
 function injectThrow(store: Store): void {
   if (!testing || process.env.SO_TEST_THROW !== "1") return;
@@ -428,8 +434,8 @@ async function main(argv: string[]): Promise<void> {
       state: parsePersisted(readStateFile(stateFile)),
       restore: ws.file === undefined,
     });
-  shell.attach(store);
-  injectThrow(store);
+  // Installed before the first paint, so a failure there still restores the
+  // terminal, and after the session loads, so it never saves an empty one.
   const saveSession = sessionSaver(stateFile, logger);
   const lifecycle = installLifecycle({
     store,
@@ -439,6 +445,9 @@ async function main(argv: string[]): Promise<void> {
     stopPreview: previewHost.stop,
     stopLsp: lspHost.stop,
   });
+  injectStartupThrow();
+  shell.attach(store);
+  injectThrow(store);
   deps.exit = lifecycle.exitNow;
   deps.tool = createToolHost({
     screen: shell,

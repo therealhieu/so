@@ -64,6 +64,17 @@ describe("the terminal is restored on every exit path", () => {
       "THROW\n# Note\n",
     );
   });
+
+  test("a failure before the first frame restores the terminal and says why", async () => {
+    const r = await runInPty([process.execPath, MAIN, await workspace()], {
+      env: { SO_TEST: "1", SO_TEST_THROW: "start" },
+      script: async () => {},
+    });
+    expect(r.exitCode).toBe(1);
+    expect(r.screen.buffer).toBe("normal");
+    expect(r.screen.mouse).toBe("none");
+    expect(r.screen.text).toContain("so: Error: injected startup failure");
+  });
 });
 
 test("NO_COLOR output has no colour escape sequences", async () => {
