@@ -35,14 +35,18 @@ export function recordJump(s: AppState): AppState {
 }
 
 /**
- * <C-o>: at the end of the list the current position is recorded first, so
- * <C-i> comes back to it; then the cursor moves to the previous entry.
+ * <C-o>: at the end of the list the current position is recorded first (the
+ * oldest entry falls off past `JUMP_LIMIT`), so <C-i> comes back to it; then
+ * the cursor moves to the previous entry.
  */
 export function jumpBack(s: AppState, now: number): Result {
   let { jumps } = s;
   const here = currentJump(s);
   if (jumps.at === jumps.entries.length && here !== undefined) {
-    const entries = [...jumps.entries.filter((x) => !sameLine(x, here)), here];
+    const entries = [
+      ...jumps.entries.filter((x) => !sameLine(x, here)),
+      here,
+    ].slice(-JUMP_LIMIT);
     jumps = { entries, at: entries.length - 1 };
   }
   return jumpTo({ ...s, jumps }, jumps.at - 1, now);
