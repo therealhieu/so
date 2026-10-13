@@ -270,15 +270,21 @@ export async function startApp(
       !isListed(s, folderOf(rel))
     );
   };
-  const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
-    const explorerOnly = indexSkips(matcher, store.get(), event.path);
-    store.dispatch({
-      type: "fileChanged",
-      event: explorerOnly ? { ...event, explorerOnly: true } : event,
-    });
-    if (!explorerOnly) index?.notify(event);
-    if (!matcher.isExcludedPath(event.path)) lsp?.notify(event);
-  });
+  const stopWatch = watchWorkspace(
+    root,
+    ownOps,
+    excluded,
+    (event) => {
+      const explorerOnly = indexSkips(matcher, store.get(), event.path);
+      store.dispatch({
+        type: "fileChanged",
+        event: explorerOnly ? { ...event, explorerOnly: true } : event,
+      });
+      if (!explorerOnly) index?.notify(event);
+      if (!matcher.isExcludedPath(event.path)) lsp?.notify(event);
+    },
+    logger,
+  );
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);
   const keys = (seq: string) => {

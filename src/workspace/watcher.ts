@@ -1,8 +1,9 @@
-import { watch } from "node:fs";
+import { type FSWatcher, watch } from "node:fs";
 import { lstat } from "node:fs/promises";
 import { join } from "node:path";
 import type { FileEvent, Stamp } from "../core/state/types";
 import { sameStamp, stampOfFile } from "./fs";
+import type { Logger } from "./log";
 
 /** What `so` itself did on disk, so the watcher can drop the echoes. Paths are workspace-relative. */
 export type OwnOps = {
@@ -61,13 +62,17 @@ export function createOwnOps(clock = () => performance.now()): OwnOps {
  * Watch `root` recursively. Events are debounced per path and classified by
  * `lstat` alone (event types are unreliable); symlinks are never followed.
  * Paths `isExcluded` rejects, asked per event, and `so`'s own operations are
- * dropped. Returns `stop`.
+ * dropped. A watch that cannot start or later fails (such as running out of
+ * inotify watches) is logged and stops, and `so` runs on without it.
+ * Returns `stop`.
  */
 export function watchWorkspace(
   root: string,
   own: OwnOps,
   isExcluded: (rel: string) => boolean,
   emit: (e: FileEvent) => void,
+  logger: Logger,
+  watchFn: typeof watch = watch,
 ): () => void {
   const timers = new Map<string, Timer>();
   let stopped = false;
@@ -88,18 +93,29 @@ export function watchWorkspace(
     emit({ kind: "changed", path: rel, isDir: st.isDirectory() });
   }
 
-  const w = watch(root, { recursive: true }, (_type, name) => {
-    if (!name || isExcluded(name)) return;
-    clearTimeout(timers.get(name));
-    timers.set(
-      name,
-      setTimeout(() => void classify(name), DEBOUNCE_MS),
-    );
-  });
-  return () => {
+  const fail = (x: unknown) => {
+    logger.error("fs.watchFailed", { reason: String(x) });
+    stop();
+  };
+  let w: FSWatcher | undefined;
+  try {
+    w = watchFn(root, { recursive: true }, (_type, name) => {
+      if (stopped || !name || isExcluded(name)) return;
+      clearTimeout(timers.get(name));
+      timers.set(
+        name,
+        setTimeout(() => void classify(name), DEBOUNCE_MS),
+      );
+    });
+    w.on("error", fail);
+  } catch (x) {
+    fail(x);
+  }
+  function stop() {
     stopped = true;
-    w.close();
+    w?.close();
     for (const t of timers.values()) clearTimeout(t);
     timers.clear();
-  };
+  }
+  return stop;
 }

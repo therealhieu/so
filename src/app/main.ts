@@ -461,16 +461,22 @@ async function main(argv: string[]): Promise<void> {
         !isListed(s, dirname(rel))
       );
     };
-    watchWorkspace(ws.root, ownOps, excluded, (event) => {
-      // Gitignored paths, and dot paths unless shown, are watched only for the explorer.
-      const explorerOnly = indexSkips(matcher, store.get(), event.path);
-      store.dispatch({
-        type: "fileChanged",
-        event: explorerOnly ? { ...event, explorerOnly: true } : event,
-      });
-      if (!explorerOnly) indexHost.notify(event);
-      if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
-    });
+    watchWorkspace(
+      ws.root,
+      ownOps,
+      excluded,
+      (event) => {
+        // Gitignored paths, and dot paths unless shown, are watched only for the explorer.
+        const explorerOnly = indexSkips(matcher, store.get(), event.path);
+        store.dispatch({
+          type: "fileChanged",
+          event: explorerOnly ? { ...event, explorerOnly: true } : event,
+        });
+        if (!explorerOnly) indexHost.notify(event);
+        if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
+      },
+      logger,
+    );
     indexHost.start(ws.root, store.get().config);
     runner.run({ kind: "readPropertyTypes" });
     logger.info("app.firstFrame", { ms: Math.round(performance.now()) });
