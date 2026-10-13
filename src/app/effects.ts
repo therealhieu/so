@@ -315,6 +315,17 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
     return stamp;
   }
 
+  /**
+   * A closed file's edit (links, frontmatter, a server's workspace edit):
+   * written over the version it read, and never remapped later, so a buffer
+   * that loaded the file before this write gets a conflict on its next save
+   * instead of overwriting the edit.
+   */
+  async function writeEdit(path: string, text: string, expected: Stamp) {
+    own.delete(path);
+    return atomicWrite(abs(path), text, expected);
+  }
+
   /** The template text to expand, and what became of the template file. */
   async function templateText(
     e: Extract<Effect, { kind: "createNote" }>,
@@ -441,7 +452,11 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           const text = applySpanEdits(cur.text, edit.edits);
           if (text === null) return fail("changed on disk");
           try {
-            const stamp = await write(path, restoreFile(cur, text), cur.stamp);
+            const stamp = await writeEdit(
+              path,
+              restoreFile(cur, text),
+              cur.stamp,
+            );
             d.ownOps.noteWrite(path, stamp);
             d.index?.notify({ kind: "changed", path, isDir: false });
             d.lsp?.notify({ kind: "changed", path, isDir: false });
@@ -488,7 +503,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           const r = patchFrontmatter(cur.text, e.patch);
           if (!r.ok) return fail(r.reason);
           try {
-            const stamp = await write(
+            const stamp = await writeEdit(
               path,
               restoreFile(cur, r.text),
               cur.stamp,

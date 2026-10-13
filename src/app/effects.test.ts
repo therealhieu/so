@@ -440,6 +440,33 @@ test("a flush still refuses a file changed on disk after so's own write", async 
   );
 });
 
+test("a save over the version a closed-file edit replaced conflicts instead of overwriting it", async () => {
+  const s0 = await atomicWrite(join(root, "linked.md"), "see [[plan]]\n");
+  const r = runner();
+  r.run({
+    kind: "applyEdits",
+    batch: 1,
+    edit: {
+      path: "linked.md",
+      edits: [
+        {
+          range: { start: { line: 0, col: 6 }, end: { line: 0, col: 10 } },
+          text: "goal",
+        },
+      ],
+    },
+  });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions[0]).toMatchObject({ type: "editsApplied", ok: true });
+  // A buffer that loaded the file before the edit landed saves over s0.
+  r.run({ kind: "write", path: "linked.md", text: "typed\n", expected: s0 });
+  await waitFor(() => r.actions.length > 1);
+  expect(r.actions[1]).toMatchObject({ type: "saveFailed", path: "linked.md" });
+  expect(await readFile(join(root, "linked.md"), "utf8")).toBe(
+    "see [[goal]]\n",
+  );
+});
+
 test("writes queued behind a move, a removal, or a failed rename follow its outcome", async () => {
   await mkdir(join(root, "box"), { recursive: true });
   await writeFile(join(root, "box/m.md"), "m\n");
