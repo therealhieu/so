@@ -41,17 +41,14 @@ test("SHA-pinned actions", () => {
   }
 });
 
-test("CI runs on pull_request only, on Linux runners", () => {
+test("CI runs on pull_request only", () => {
   const ci = Bun.YAML.parse(workflows.get("ci.yml") ?? "") as {
     on: Record<string, unknown>;
     concurrency: { group: string; "cancel-in-progress": boolean };
-    jobs: Record<string, { "runs-on": unknown }>;
   };
   expect(Object.keys(ci.on)).toEqual(["pull_request"]);
   expect(ci.concurrency.group).toContain("github.event.pull_request.number");
   expect(ci.concurrency["cancel-in-progress"]).toBe(true);
-  for (const job of Object.values(ci.jobs))
-    expect(job["runs-on"]).toMatch(/^ubuntu-/);
 });
 
 test("compile includes the worker", () => {

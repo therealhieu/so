@@ -17,14 +17,18 @@ jobs:
       # Poppler draws PDF pages; tests that need it skip without it.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - run: bun run check
-  # Linux only: macOS minutes bill at ten times the rate on a private repo.
-  # macOS is covered by local runs and the release dry run's smoke tests.
   test:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - run: bun install --frozen-lockfile
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - run: bun run test:ci
-      - run: bun run bench
+      - if: runner.os == 'Linux'
+        run: bun run bench
