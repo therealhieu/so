@@ -561,9 +561,9 @@ test("the zoom float draws a diagram as a sharp image of the part in view", asyn
     expect(await m.frame()).toContain("mermaid · 2×");
     expect(draw).toHaveBeenCalledTimes(1);
     expect(rasters.length).toBe(before);
-    await Bun.sleep(150);
-    await m.frame();
-    await Bun.sleep(20);
+    // A paint while the view moves restarts the idle wait, so only sleep.
+    for (let i = 0; i < 100 && rasters.length === before; i++)
+      await Bun.sleep(10);
     expect(await m.frame()).toContain("mermaid · 2×");
     const zoomed = rasters.at(-1);
     if (zoomed === undefined) throw new Error("expected a raster");
@@ -587,8 +587,8 @@ test("the zoom float draws a diagram as a sharp image of the part in view", asyn
     m.keys("llll");
     await m.frame();
     expect(rasters.length).toBe(count);
-    await Bun.sleep(120);
-    await m.frame();
+    for (let i = 0; i < 100 && rasters.length === count; i++)
+      await Bun.sleep(10);
     expect(rasters.length).toBe(count + 1);
   } finally {
     draw.mockRestore();

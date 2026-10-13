@@ -293,7 +293,7 @@ test("with kitty the page and the next one are PNG-encoded ahead of sending", as
     await settled(m);
     const encoded = () => new Set(encode.mock.contexts).size;
     expect(encoded()).toBe(1);
-    await Bun.sleep(150);
+    for (let i = 0; i < 100 && encoded() < 2; i++) await Bun.sleep(10);
     expect(encoded()).toBe(2);
     m.keys("J");
     await settled(m);
