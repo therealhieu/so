@@ -4,7 +4,7 @@ import {
   patchFrontmatter,
 } from "../lang/markdown/frontmatter-patch";
 import { applyBufferEdits, bufferForPath, fullText } from "./buffers";
-import { summarizeWritten } from "./index";
+import { onClosedFileWritten } from "./closed-edits";
 import { chain, toast } from "./result";
 import type { Action, AppState, Result } from "./types";
 import type { Registries } from "./update";
@@ -52,17 +52,17 @@ export function writeProperty(
   return chain(applied, (st) => diffToast(st, path, r.removed, r.added));
 }
 
-/** A closed note's patch answered: the index takes the written text, or the failure is shown. */
+/**
+ * A closed note's patch answered: the index takes the written text and a
+ * buffer opened meanwhile reads it back, or the failure is shown.
+ */
 export function onFrontmatterPatched(
   s: AppState,
   a: Extract<Action, { type: "frontmatterPatched" }>,
 ): Result {
   return a.ok && a.text !== undefined
-    ? diffToast(
-        summarizeWritten(s, a.path, a.text, a.stamp),
-        a.path,
-        a.removed,
-        a.added,
+    ? chain(onClosedFileWritten(s, a), (st) =>
+        diffToast(st, a.path, a.removed, a.added),
       )
     : toast(
         s,

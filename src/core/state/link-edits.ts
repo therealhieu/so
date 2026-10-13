@@ -7,9 +7,9 @@ import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
 import type { DocScan } from "../lang/markdown/scan";
 import { applyBufferEdits, bufferForPath } from "./buffers";
+import { onClosedFileWritten, settle, skippedText } from "./closed-edits";
 import type { CommandContext } from "./commands";
 import { dirname, explorerOp } from "./explorer";
-import { summarizeWritten } from "./index";
 import { onCodeEditApplied } from "./lsp-edits";
 import { chain, message, none, toast } from "./result";
 import type {
@@ -321,23 +321,15 @@ export function onEditsApplied(
   s: AppState,
   a: Extract<Action, { type: "editsApplied" }>,
 ): Result {
-  const written =
-    a.ok && a.text !== undefined
-      ? summarizeWritten(s, a.path, a.text, a.stamp)
-      : s;
-  if (written.lsp.edit?.batch === a.batch) return onCodeEditApplied(written, a);
-  const r = written.index.rewrite;
-  if (r === undefined || r.batch !== a.batch || !r.pending.includes(a.path))
-    return none(written);
-  const rewrite: LinkRewrite = {
-    ...r,
-    pending: r.pending.filter((p) => p !== a.path),
-    updated: a.ok ? [...r.updated, a.path] : r.updated,
-    skipped: a.ok
-      ? r.skipped
-      : [...r.skipped, { path: a.path, reason: a.reason ?? "unknown error" }],
-  };
-  return finish({ ...written, index: { ...written.index, rewrite } });
+  return chain(onClosedFileWritten(s, a), (written) => {
+    if (written.lsp.edit?.batch === a.batch)
+      return onCodeEditApplied(written, a);
+    const r = written.index.rewrite;
+    if (r === undefined || r.batch !== a.batch || !r.pending.includes(a.path))
+      return none(written);
+    const rewrite: LinkRewrite = settle(r, a);
+    return finish({ ...written, index: { ...written.index, rewrite } });
+  });
 }
 
 /** Once nothing is pending: one "N files updated" toast, plus one listing skipped files. */
@@ -351,11 +343,5 @@ function finish(s: AppState): Result {
     `${n} ${n === 1 ? "file" : "files"} updated`,
   );
   if (r.skipped.length === 0) return done;
-  const byReason = new Map<string, string[]>();
-  for (const { path, reason } of r.skipped)
-    byReason.set(reason, [...(byReason.get(reason) ?? []), path]);
-  const text = [...byReason]
-    .map(([reason, paths]) => `${paths.join(", ")} (${reason})`)
-    .join("; ");
-  return chain(done, (st) => toast(st, "error", `skipped: ${text}`));
+  return chain(done, (st) => toast(st, "error", skippedText(r.skipped)));
 }

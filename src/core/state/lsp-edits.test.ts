@@ -197,6 +197,25 @@ test("a server edit is answered once after the closed files are written", () => 
   expect(replies(again.effects)).toEqual([]);
 });
 
+test("a file opened while the server's edit is written reads the written version", () => {
+  const r = run(open(), applyEdit({ files: [closed("src/b.ts")], outside: 0 }));
+  const opened = run(r.state, {
+    type: "fileLoaded",
+    path: "src/b.ts",
+    file: textFile("old\n", 1),
+  }).state;
+  const done = run(opened, {
+    type: "editsApplied",
+    batch: batchOf(r.effects, "src/b.ts"),
+    path: "src/b.ts",
+    ok: true,
+    text: "xold\n",
+    stamp: textFile("xold\n", 2).stamp,
+  });
+  expect(done.effects).toContainEqual({ kind: "read", path: "src/b.ts" });
+  expect(replies(done.effects)).toMatchObject([{ applied: true }]);
+});
+
 test("a skipped file is named in the reply", () => {
   const r = run(
     open(),

@@ -249,6 +249,60 @@ test("edits apply after the operation and report one toast", () => {
   ).toBe(true);
 });
 
+test("a file opened while its link edits are written reloads them, or conflicts when dirty", () => {
+  const r = move(ready(), "projects/roadmap.md");
+  const done = update(r.state, { type: "fsResult", op: moveOp(r), ok: true });
+  const e = applyEdits(done.effects).find((x) => x.edit.path === "refs/r9.md");
+  if (e === undefined) throw new Error("no edit for refs/r9.md");
+  const before = "[[plan]] [x](notes/plan.md)\n";
+  const after = "[[roadmap]] [x](projects/roadmap.md)\n";
+  // The file opens from disk before the write lands.
+  const opened = run(done.state, {
+    type: "fileLoaded",
+    path: "refs/r9.md",
+    file: textFile(before, 1),
+  });
+  const written: Action = {
+    type: "editsApplied",
+    batch: e.batch,
+    path: "refs/r9.md",
+    ok: true,
+    text: after,
+    stamp: textFile(after, 2).stamp,
+  };
+  const answered = update(opened, written);
+  expect(answered.effects).toContainEqual({ kind: "read", path: "refs/r9.md" });
+  const reloaded = run(answered.state, {
+    type: "fileLoaded",
+    path: "refs/r9.md",
+    file: textFile(after, 2),
+  });
+  const b = reloaded.buffers[1];
+  expect(b === undefined ? undefined : fullText(b.text)).toBe(after.trimEnd());
+  expect(b?.dirty).toBe(false);
+  expect(b?.stamp).toEqual(textFile(after, 2).stamp);
+
+  // An edit typed before the write lands is not overwritten silently.
+  const typed = keys(opened, "$x").state;
+  const conflicted = run(update(typed, written).state, {
+    type: "fileLoaded",
+    path: "refs/r9.md",
+    file: textFile(after, 2),
+  });
+  expect(conflicted.overlay.kind).toBe("conflict");
+
+  // A buffer already holding the written version reads nothing.
+  const current = run(done.state, {
+    type: "fileLoaded",
+    path: "refs/r9.md",
+    file: textFile(after, 2),
+  });
+  expect(update(current, written).effects).not.toContainEqual({
+    kind: "read",
+    path: "refs/r9.md",
+  });
+});
+
 test("an open buffer whose text no longer matches is not edited", () => {
   let s = run(fresh(), {
     type: "fileLoaded",
