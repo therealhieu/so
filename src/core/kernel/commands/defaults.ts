@@ -23,6 +23,9 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>ff", id: "file.find" },
   { scope: { mode: "normal" }, seq: "<leader>fr", id: "file.recent" },
   { scope: { mode: "normal" }, seq: "<leader>fo", id: "file.systemOpen" },
+  { scope: { mode: "normal" }, seq: "<leader>fy", id: "file.copy" },
+  { scope: { mode: "normal" }, seq: "<leader>fx", id: "file.cut" },
+  { scope: { mode: "normal" }, seq: "<leader>fp", id: "file.paste" },
   { scope: { mode: "normal" }, seq: "<leader>sg", id: "search.grep" },
   { scope: { mode: "normal" }, seq: "<Esc>", id: "search.clear" },
   { scope: { mode: "normal" }, seq: "<leader>st", id: "search.tags" },
@@ -56,13 +59,16 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "H", id: "explorer.toggleDotfiles" },
   { scope: { mode: "explorer" }, seq: "I", id: "explorer.toggleGitignored" },
   { scope: { mode: "explorer" }, seq: "<leader>e", id: "explorer.toggle" },
+  { scope: { mode: "explorer" }, seq: "<leader>fy", id: "explorer.copy" },
+  { scope: { mode: "explorer" }, seq: "<leader>fx", id: "explorer.cut" },
+  { scope: { mode: "explorer" }, seq: "<leader>fp", id: "explorer.paste" },
   { scope: { mode: "explorer" }, seq: "<leader>us", id: "settings.open" },
   { scope: { mode: "explorer" }, seq: "<leader>qq", id: "app.quit" },
 ];
 
 /** Which-key group labels by prefix sequence. */
 export const defaultGroups: Readonly<Record<string, string>> = {
-  "<leader>f": "find",
+  "<leader>f": "file",
   "<leader>s": "search",
   "<leader>b": "buffer",
   "<leader>w": "window",

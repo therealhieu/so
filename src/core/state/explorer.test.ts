@@ -603,6 +603,11 @@ const select = (s: AppState, cursor: string): AppState => ({
   },
 });
 
+const inWindow = (s: AppState): AppState => ({
+  ...s,
+  panels: { ...s.panels, explorer: { ...s.panels.explorer, focused: false } },
+});
+
 const pasted = (
   s: AppState,
   target: string,
@@ -625,13 +630,76 @@ test("y and x take the selection here and on the system clipboard", () => {
   expect(copied.effects).toEqual([
     { kind: "fileClipboardWrite", clip: { op: "copy", paths: ["/ws/a.md"] } },
   ]);
-  expect(copied.state.notifications.message?.text).toBe("Copied a.md");
+  expect(copied.state.notifications.message).toBeUndefined();
   const cut = pressKeys(select(s, "notes"), "x");
   expect(cut.state.panels.explorer.clip).toEqual({
     op: "cut",
     paths: ["notes"],
   });
-  expect(cut.state.notifications.message?.text).toBe("Cut notes");
+});
+
+test("the copy is confirmed once the clipboard takes it", () => {
+  const written = (op: "copy" | "cut", system: boolean) =>
+    update(clipTree(), {
+      type: "fileClipboardWritten",
+      clip: { op, paths: ["/ws/a.md"] },
+      system,
+    }).state.notifications.message?.text;
+  expect(written("copy", true)).toBe("Copied a.md to the system clipboard");
+  expect(written("cut", true)).toBe("Cut a.md to the system clipboard");
+  expect(written("copy", false)).toBe("Copied a.md");
+});
+
+test("<leader>fy, fx, and fp take the active file and paste beside it", () => {
+  const s = inWindow(openBuffer(clipTree(), "notes/one.md", "one"));
+  const leader = s.config.leader;
+  const copied = pressKeys(s, `${leader}fy`);
+  expect(copied.state.panels.explorer.clip).toEqual({
+    op: "copy",
+    paths: ["notes/one.md"],
+  });
+  expect(copied.effects).toEqual([
+    {
+      kind: "fileClipboardWrite",
+      clip: { op: "copy", paths: ["/ws/notes/one.md"] },
+    },
+  ]);
+  expect(pressKeys(s, `${leader}fx`).state.panels.explorer.clip?.op).toBe(
+    "cut",
+  );
+  expect(pressKeys(s, `${leader}fp`).effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+});
+
+test("in the explorer, <leader>fy, fx, and fp work on the selection like y, x, and p", () => {
+  const s = select(clipTree(), "b.png");
+  const leader = s.config.leader;
+  const copied = pressKeys(s, `${leader}fy`);
+  expect(copied.state.panels.explorer.clip).toEqual({
+    op: "copy",
+    paths: ["b.png"],
+  });
+  expect(copied.effects).toEqual([
+    { kind: "fileClipboardWrite", clip: { op: "copy", paths: ["/ws/b.png"] } },
+  ]);
+  expect(pressKeys(s, `${leader}fx`).state.panels.explorer.clip?.op).toBe(
+    "cut",
+  );
+  expect(pressKeys(select(s, "notes"), `${leader}fp`).effects).toEqual([
+    { kind: "fileClipboardRead", target: "notes" },
+  ]);
+});
+
+test("<leader>fy without a file says so, and <leader>fp pastes at the root", () => {
+  const s = inWindow(fresh());
+  const leader = s.config.leader;
+  expect(pressKeys(s, `${leader}fy`).state.notifications.message?.text).toBe(
+    "E32: No file name",
+  );
+  expect(pressKeys(s, `${leader}fp`).effects).toEqual([
+    { kind: "fileClipboardRead", target: "" },
+  ]);
 });
 
 test("p reads the clipboard for the selected folder, or the selected file's folder", () => {

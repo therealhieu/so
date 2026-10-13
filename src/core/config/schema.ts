@@ -82,6 +82,8 @@ export const ConfigSchema = z.strictObject({
       tabWidth: z.number().int().min(1).max(16).default(8),
       wrap: z.boolean().default(true),
       relativeNumbers: z.boolean().default(true),
+      /** Yanks, deletes, and puts without a register use the system clipboard, as Neovim's `unnamedplus`. */
+      clipboard: z.boolean().default(true),
       /** Milliseconds an Insert-mode binding's first keys wait for the rest. */
       keyTimeout: z.number().int().min(50).max(10000).default(1000),
     })

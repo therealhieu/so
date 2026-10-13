@@ -103,6 +103,16 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "choice",
+    path: ["editor", "clipboard"],
+    choices: [true, false],
+    about: [
+      "y, d, and p without a register",
+      "use the system clipboard; off",
+      "keeps them in so, as in Vim.",
+    ],
+  },
+  {
+    kind: "choice",
     path: ["preview", "mode"],
     choices: ["reading", "live", "source"],
     about: ["The view a note opens in;", "open notes keep theirs."],

@@ -42,6 +42,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "mouse on",
       "editor.wrap on",
       "editor.relativeNumbers on",
+      "editor.clipboard off",
       "preview.mode live",
       "preview.images auto",
       "preview.readable off",

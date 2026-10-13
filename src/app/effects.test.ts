@@ -971,6 +971,21 @@ test("a clipboard paste names workspace files from its root, even through a link
   }
 });
 
+test("a clipboard write is confirmed, as system-wide only with a real clipboard", async () => {
+  const clip = { op: "copy" as const, paths: ["/ws/a.md"] };
+  for (const [name, system] of [
+    ["osascript", true],
+    ["none", false],
+  ] as const) {
+    const r = runner({
+      fileClipboard: { name, write: async () => {}, read: async () => null },
+    });
+    r.run({ kind: "fileClipboardWrite", clip });
+    await waitFor(() => r.actions.length === 1);
+    expect(r.actions).toEqual([{ type: "fileClipboardWritten", clip, system }]);
+  }
+});
+
 test("clipboard failures are reported: a read as no files, a write once", async () => {
   const r = runner({
     fileClipboard: {

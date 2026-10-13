@@ -97,6 +97,7 @@ test("a valid file parses with binding lines", () => {
         tabWidth: 4,
         wrap: false,
         relativeNumbers: false,
+        clipboard: true,
         keyTimeout: 300,
       },
       explorer: {
@@ -153,6 +154,7 @@ test("an empty file gives the defaults", () => {
     tabWidth: 8,
     wrap: true,
     relativeNumbers: true,
+    clipboard: true,
     keyTimeout: 1000,
   });
   expect(defaults.leader).toBe(" ");

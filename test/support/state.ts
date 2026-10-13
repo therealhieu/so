@@ -189,9 +189,18 @@ export const explorerLeft = <C extends AppState["config"]>(config: C): C => ({
   explorer: { ...config.explorer, position: "left" },
 });
 
+/**
+ * The state most suites start from: notes editable, the explorer left, and
+ * yanks and puts kept in so's registers (suites about the clipboard turn
+ * `editor.clipboard` back on).
+ */
 export const fresh = (): AppState => {
   const s = editingNotes(initialState(boot));
-  return { ...s, config: explorerLeft(s.config) };
+  const config = explorerLeft(s.config);
+  return {
+    ...s,
+    config: { ...config, editor: { ...config.editor, clipboard: false } },
+  };
 };
 
 /** A fresh state with the shipped config, where notes open in `reading`. */

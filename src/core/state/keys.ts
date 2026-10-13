@@ -321,6 +321,7 @@ const envOf = (s: AppState, w: WindowState): VimEnv => ({
   topLine: w.content.scroll,
   rows: Math.max(1, bodyRows(s.terminal)),
   tabWidth: s.config.editor.tabWidth,
+  clipboard: s.config.editor.clipboard,
 });
 
 /** Feed keys to the engine one by one, as if typed. */
@@ -378,7 +379,9 @@ function runVim(
     env,
   );
   if (
-    (r.s.text !== b.text || r.s.vim.mode === "insert") &&
+    (r.s.text !== b.text ||
+      r.s.vim.mode === "insert" ||
+      r.effects.some((e) => e.kind === "paste")) &&
     readOnlyView(reg, b)
   )
     return message(refusedKey(s), readOnlyHint(b));
@@ -441,7 +444,8 @@ function applyVimEffects(
               : none(marked);
           }
           case "yank":
-            return e.register === "+"
+            return e.register === "+" ||
+              (e.register === '"' && st.config.editor.clipboard)
               ? {
                   state: st,
                   effects: [{ kind: "clipboardWrite", text: e.text }],
@@ -450,7 +454,12 @@ function applyVimEffects(
           case "paste":
             return {
               state: setVim(st, {
-                pendingPaste: { bufferId: b.id, before: e.before },
+                pendingPaste: {
+                  bufferId: b.id,
+                  register: e.register,
+                  before: e.before,
+                  count: e.count,
+                },
               }),
               effects: [{ kind: "clipboardRead" }],
             };
@@ -485,8 +494,11 @@ function applyVimEffects(
 }
 
 /**
- * The clipboard answered. A pending "+ put inserts its text, or
- * `registers["+"]` when the clipboard failed or was empty; a failure is shown.
+ * The clipboard answered a pending put. A `"+` put inserts its text, or
+ * `registers["+"]` when the clipboard failed or was empty. A put without a
+ * register with `editor.clipboard` on inserts the clipboard's text, but the unnamed
+ * register when it holds that same text (it keeps its linewise mark) or the
+ * clipboard is empty. A failure is shown.
  */
 export function onClipboardText(
   s: AppState,
@@ -501,10 +513,11 @@ export function onClipboardText(
   if (pending === undefined) return failed;
   const { pendingPaste: _, ...vim } = failed.state.vim;
   const cleared: AppState = { ...failed.state, vim };
+  const own = s.vim.registers.get(pending.register);
   const value: Register | undefined =
-    a.text !== ""
-      ? { text: a.text, linewise: a.text.endsWith("\n") }
-      : s.vim.registers.get("+");
+    a.text === "" || own?.text === a.text
+      ? own
+      : { text: a.text, linewise: a.text.endsWith("\n") };
   const b = activeBuffer(cleared);
   if (
     value === undefined ||
@@ -512,26 +525,45 @@ export function onClipboardText(
     cleared.vim.mode !== "normal"
   )
     return none(cleared);
-  return paste(cleared, value, pending.before, reg);
+  return paste(cleared, value, pending, reg);
 }
 
 /**
  * Put `value` with the engine's own `p`/`P` through a scratch unnamed
- * register; the registers are left as they were. The clipboard reply has
- * no time, so the autosave is due at the next timer (now = 0).
+ * register, named so the engine does not ask the clipboard again; the
+ * registers are left as they were, and `.` repeats the put as it was typed.
+ * The clipboard reply has no time, so the autosave is due at the next timer
+ * (now = 0).
  */
 function paste(
   s: AppState,
   value: Register,
-  before: boolean,
+  pending: NonNullable<AppState["vim"]["pendingPaste"]>,
   reg: Registries,
 ): Result {
-  const key = before ? "P" : "p";
-  const r = runVim(s, key, 0, reg, s.vim.registers.yank('"', value));
+  const key = pending.before ? "P" : "p";
+  const keys = [
+    '"',
+    '"',
+    ...(pending.count > 1 ? String(pending.count) : ""),
+    key,
+  ];
+  const scratch = s.vim.registers.yank('"', value);
+  const r = keys.reduce<Result>(
+    (acc, k, i) =>
+      chain(acc, (st) =>
+        runVim(st, k, 0, reg, i === 0 ? scratch : st.vim.registers),
+      ),
+    none(s),
+  );
+  const typed = pending.register === "+" ? ['"', "+", key] : [key];
   const vim = {
     ...r.state.vim,
     registers: s.vim.registers,
-    lastChange: { keys: ['"', "+", key] },
+    lastChange: {
+      keys: typed,
+      ...(pending.count > 1 ? { count: pending.count } : {}),
+    },
   };
   return { state: { ...r.state, vim }, effects: r.effects };
 }
