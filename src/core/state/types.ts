@@ -15,7 +15,7 @@ import type { PdfPageLayout, PdfPoint } from "../features/pdf/layout";
 import type { PdfOutlineItem } from "../features/pdf/outline";
 import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
-import type { Registers } from "../kernel/editor/registers";
+import type { RegisterName, Registers } from "../kernel/editor/registers";
 import type { UndoHistory } from "../kernel/editor/undo";
 import type { WindowTree } from "../kernel/editor/windows";
 import type { Pos } from "../kernel/text/pos";
@@ -716,7 +716,12 @@ export type AppState = {
   };
   vim: VimState & {
     registers: Registers;
-    pendingPaste?: { bufferId: BufferId; before: boolean };
+    pendingPaste?: {
+      bufferId: BufferId;
+      register: RegisterName;
+      before: boolean;
+      count: number;
+    };
   };
   panels: { explorer: ExplorerState; side: SidePanelState };
   overlay: Overlay;
@@ -797,6 +802,7 @@ export type Action =
   | { type: "trashAvailable"; available: boolean }
   | { type: "timer"; id: TimerId; now: number }
   | { type: "clipboardText"; text: string; error?: string }
+  | { type: "fileClipboardWritten"; clip: FileClip; system: boolean }
   | { type: "fileClipboardFailed"; reason: string }
   /** A long copy or move into `to` has started `done` of its `total` entries. */
   | { type: "copyProgress"; to: string; done: number; total: number }

@@ -126,7 +126,7 @@ function normalCommand(run: Run, cmd: ParsedCommand, env: VimEnv): void {
     switch (t) {
       case "p":
       case "P":
-        putRegister(run, cmd, t === "P");
+        putRegister(run, cmd, t === "P", env);
         break;
       case "J":
         join(run, run.s.cursor.line, Math.max(2, count), false);
@@ -328,10 +328,25 @@ function exclusiveRange(run: Run, start: Pos, end: Pos): OpRange {
   };
 }
 
-function putRegister(run: Run, cmd: ParsedCommand, putBefore: boolean): void {
+/** A put whose text comes from the system clipboard, answered later. */
+const fromClipboard = (cmd: ParsedCommand, env: VimEnv) =>
+  cmd.register === "+" ||
+  (cmd.register === undefined && env.clipboard === true);
+
+function putRegister(
+  run: Run,
+  cmd: ParsedCommand,
+  putBefore: boolean,
+  env: VimEnv,
+): void {
   const name = cmd.register ?? '"';
-  if (name === "+") {
-    run.effects.push({ kind: "paste", register: name, before: putBefore });
+  if (fromClipboard(cmd, env)) {
+    run.effects.push({
+      kind: "paste",
+      register: name,
+      before: putBefore,
+      count: cmd.count ?? 1,
+    });
     return;
   }
   const value = run.s.registers.get(name);
@@ -706,7 +721,7 @@ function visualCommand(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const t = cmd.target ?? "";
   const { vim, cursor, text } = run.s;
   if (cmd.op !== undefined || VISUAL_CHANGES.has(t)) {
-    visualChange(run, cmd);
+    visualChange(run, cmd, env);
     return;
   }
   if (t === "<Esc>") {
@@ -769,7 +784,7 @@ function visualRange(run: Run): OpRange {
   return { start, end: e, linewise: false, visual: true };
 }
 
-function visualChange(run: Run, cmd: ParsedCommand): void {
+function visualChange(run: Run, cmd: ParsedCommand, env: VimEnv): void {
   const t = cmd.target ?? "";
   const range = visualRange(run);
   const { vim, cursor } = run.s;
@@ -791,16 +806,30 @@ function visualChange(run: Run, cmd: ParsedCommand): void {
   else if (t === "J") join(run, range.start.line, Math.max(2, lines), true);
   else if (t === "p" || t === "P") {
     const name = cmd.register ?? '"';
-    if (name === "+")
-      run.effects.push({ kind: "paste", register: name, before: true });
+    const clipboard = fromClipboard(cmd, env);
     const value = run.s.registers.get(name);
-    if (name === "+" || value === undefined) return;
+    if (!clipboard && value === undefined) return;
     // Text deleted from the end of a line (or the buffer) is replaced by putting after it.
     const atEnd = range.linewise
       ? range.end.line === run.s.text.lineCount - 1
       : range.end.col >= lineOf(run, range.end.line).length;
+    if (clipboard) {
+      // The clipboard is read after this delete, so the delete must not write it.
+      const { registers } = run.s;
+      const effects = run.effects.length;
+      operators.d?.(run, range);
+      run.s = { ...run.s, registers };
+      run.effects.length = effects;
+      run.effects.push({
+        kind: "paste",
+        register: name,
+        before: !atEnd,
+        count: 1,
+      });
+      return;
+    }
     operators.d?.(run, range);
-    put(run, value, 1, !atEnd);
+    if (value !== undefined) put(run, value, 1, !atEnd);
   } else {
     const r = range.linewise
       ? {

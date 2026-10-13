@@ -56,13 +56,19 @@ export type BufferVim = {
 };
 
 /** The window viewport (first visible line, visible line count) and the tab width in cells. */
-export type VimEnv = { topLine: number; rows: number; tabWidth: number };
+export type VimEnv = {
+  topLine: number;
+  rows: number;
+  tabWidth: number;
+  /** Puts without a register read the system clipboard, as `"+` does. */
+  clipboard?: boolean;
+};
 
 /** The engine's only outputs. `paste` from "+ waits for the clipboard in core/state. */
 export type VimEffect =
   | { kind: "changed" }
   | { kind: "yank"; register: RegisterName; text: string; linewise: boolean }
-  | { kind: "paste"; register: RegisterName; before: boolean }
+  | { kind: "paste"; register: RegisterName; before: boolean; count: number }
   | { kind: "modeChanged"; mode: Mode }
   | { kind: "ex"; line: string }
   | { kind: "search"; pattern: string; dir: 1 | -1 }

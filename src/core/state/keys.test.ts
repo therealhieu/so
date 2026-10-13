@@ -138,7 +138,12 @@ test('"+p pastes the clipboard text, or registers["+"] when the clipboard fails'
   const yanked = keys(open("a.md", "one\ntwo\n"), '"+yyj');
   const paste = keys(yanked.state, '"+p');
   expect(paste.effects).toEqual([{ kind: "clipboardRead" }]);
-  expect(paste.state.vim.pendingPaste).toEqual({ bufferId: 1, before: false });
+  expect(paste.state.vim.pendingPaste).toEqual({
+    bufferId: 1,
+    register: "+",
+    before: false,
+    count: 1,
+  });
 
   const fallback = update(paste.state, {
     type: "clipboardText",
@@ -166,6 +171,72 @@ test('"+p pastes the clipboard text, or registers["+"] when the clipboard fails'
   });
   expect(textOf(fromClipboard.state)).toBe("one\ntabcwo");
   expect(fromClipboard.state.notifications.message).toBeUndefined();
+});
+
+const withClipboard = (s: AppState): AppState => ({
+  ...s,
+  config: {
+    ...s.config,
+    editor: { ...s.config.editor, clipboard: true },
+  },
+});
+
+test("with the clipboard on, yanks and deletes without a register go to the clipboard", () => {
+  const s = withClipboard(open("a.md", "one\ntwo\n"));
+  expect(keys(s, "yy").effects).toContainEqual({
+    kind: "clipboardWrite",
+    text: "one\n",
+  });
+  expect(keys(s, "x").effects).toContainEqual({
+    kind: "clipboardWrite",
+    text: "o",
+  });
+  expect(keys(s, '"ayy').effects.some((e) => e.kind === "clipboardWrite")).toBe(
+    false,
+  );
+  expect(
+    keys(open("a.md", "one\n"), "yy").effects.some(
+      (e) => e.kind === "clipboardWrite",
+    ),
+  ).toBe(false);
+});
+
+test("with the clipboard on, p puts the clipboard's text, or the unnamed register when it holds the same", () => {
+  const yanked = keys(withClipboard(open("a.md", "one\ntwo\n")), "yyj").state;
+  const paste = keys(yanked, "2p");
+  expect(paste.effects).toEqual([{ kind: "clipboardRead" }]);
+  expect(paste.state.vim.pendingPaste).toEqual({
+    bufferId: 1,
+    register: '"',
+    before: false,
+    count: 2,
+  });
+  expect(textOf(paste.state)).toBe("one\ntwo");
+
+  const same = update(paste.state, { type: "clipboardText", text: "one\n" });
+  expect(textOf(same.state)).toBe("one\ntwo\none\none");
+  expect(same.state.vim.registers.get('"')).toEqual({
+    text: "one\n",
+    linewise: true,
+  });
+  const other = update(paste.state, { type: "clipboardText", text: "abc" });
+  expect(textOf(other.state)).toBe("one\ntabcabcwo");
+  const empty = update(paste.state, { type: "clipboardText", text: "" });
+  expect(textOf(empty.state)).toBe("one\ntwo\none\none");
+
+  const repeated = keys(same.state, ".");
+  expect(repeated.state.vim.pendingPaste?.count).toBe(2);
+});
+
+test("with the clipboard on, visual p replaces the selection with the clipboard's text, registers untouched", () => {
+  const s = keys(withClipboard(open("a.md", "one two\n")), "yiw").state;
+  const replaced = keys(s, "wviwp");
+  expect(textOf(replaced.state)).toBe("one ");
+  expect(replaced.effects).toContainEqual({ kind: "clipboardRead" });
+  expect(replaced.effects.some((e) => e.kind === "clipboardWrite")).toBe(false);
+  expect(replaced.state.vim.registers.get('"')?.text).toBe("one");
+  const done = update(replaced.state, { type: "clipboardText", text: "six" });
+  expect(textOf(done.state)).toBe("one six");
 });
 
 test("a search with no match shows E486 on the message line", () => {

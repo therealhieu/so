@@ -210,7 +210,7 @@ describe("in scripts/sync.ts", () => {
     m.keys(" ");
     m.advance(300);
     const labels = whichKeyLabels(await whichKeyRows(m));
-    expect(labels).toContain("f → +find");
+    expect(labels).toContain("f → +file");
     expect(labels.some((l) => l.includes("+links"))).toBe(false);
 
     m.keys("<Esc><leader>:follow");

@@ -24,10 +24,12 @@ import {
   explorerWidth,
   moveCursor,
   openSelected,
+  pasteBesideActiveFile,
   resizeExplorer,
   startOp,
   startPaste,
   systemOpenSelected,
+  takeActiveFile,
   takeSelected,
   toggleExplorer,
 } from "./explorer";
@@ -368,6 +370,21 @@ const builtins: AppCommand[] = [
             ],
           };
     },
+  },
+  {
+    id: "file.copy",
+    title: "Copy file",
+    run: (c) => takeActiveFile(c.state, "copy"),
+  },
+  {
+    id: "file.cut",
+    title: "Cut file",
+    run: (c) => takeActiveFile(c.state, "cut"),
+  },
+  {
+    id: "file.paste",
+    title: "Paste files beside this file",
+    run: (c) => pasteBesideActiveFile(c.state),
   },
   {
     id: "file.recent",

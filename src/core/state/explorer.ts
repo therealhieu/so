@@ -1,4 +1,10 @@
-import { bufferForPath, buffersUnder, openPath, removeBuffer } from "./buffers";
+import {
+  activeBuffer,
+  bufferForPath,
+  buffersUnder,
+  openPath,
+  removeBuffer,
+} from "./buffers";
 import type { CommandContext } from "./commands";
 import { markDeleted } from "./disk";
 import { indexAfterFsOp } from "./index";
@@ -443,15 +449,37 @@ function workspacePath(s: AppState, abs: string): string | undefined {
 }
 
 /** `y` / `x`: take the selection for a paste, in so and on the system clipboard. */
-export function takeSelected(s: AppState, op: FileClip["op"]): Result {
-  const path = s.panels.explorer.cursor;
+export const takeSelected = (s: AppState, op: FileClip["op"]): Result =>
+  take(s, s.panels.explorer.cursor, op);
+
+/** `<leader>fy` / `<leader>fx`: take the active buffer's file for a paste. */
+export function takeActiveFile(s: AppState, op: FileClip["op"]): Result {
+  const b = activeBuffer(s);
+  return b === undefined
+    ? message(s, "E32: No file name", "error")
+    : take(s, b.path, op);
+}
+
+/** The message comes when the system clipboard answers the write. */
+function take(s: AppState, path: string, op: FileClip["op"]): Result {
   if (path === "") return none(s);
-  const taken = setExplorer(s, { clip: { op, paths: [path] } });
-  const verb = op === "copy" ? "Copied" : "Cut";
-  return withEffect(message(taken, `${verb} ${basename(path)}`), {
+  return withEffect(none(setExplorer(s, { clip: { op, paths: [path] } })), {
     kind: "fileClipboardWrite",
     clip: { op, paths: [absPath(s, path)] },
   });
+}
+
+/** The system clipboard took the files `y`/`x` gave it, or so kept them alone. */
+export function onFileClipboardWritten(
+  s: AppState,
+  a: Extract<Action, { type: "fileClipboardWritten" }>,
+): Result {
+  const verb = a.clip.op === "copy" ? "Copied" : "Cut";
+  const names = a.clip.paths.map((p) => basename(p)).join(", ");
+  return message(
+    s,
+    `${verb} ${names}${a.system ? " to the system clipboard" : ""}`,
+  );
 }
 
 /** A long paste's progress on the message line, until its result replaces it. */
@@ -463,9 +491,19 @@ export const onCopyProgress = (
 /** `p`: paste into the selected folder, or the selected file's folder. */
 export function startPaste(s: AppState): Result {
   const at = s.panels.explorer.cursor;
-  const target = kindOf(s, at) === "dir" ? at : dirname(at);
-  return { state: s, effects: [{ kind: "fileClipboardRead", target }] };
+  return pasteInto(s, kindOf(s, at) === "dir" ? at : dirname(at));
 }
+
+/** `<leader>fp`: paste into the active file's folder, or the workspace root. */
+export function pasteBesideActiveFile(s: AppState): Result {
+  const b = activeBuffer(s);
+  return pasteInto(s, b === undefined ? "" : dirname(b.path));
+}
+
+const pasteInto = (s: AppState, target: string): Result => ({
+  state: s,
+  effects: [{ kind: "fileClipboardRead", target }],
+});
 
 /**
  * `name`, or the first of "name copy", "name copy 2", … that is not taken;

@@ -22,6 +22,7 @@ import {
   onCopyProgress,
   onDirListed,
   onFileClip,
+  onFileClipboardWritten,
   onFsResult,
   withTrash,
 } from "./explorer";
@@ -198,6 +199,8 @@ export function createUpdate(reg: Registries): Update {
         return onFileClip(state, action);
       case "copyProgress":
         return onCopyProgress(state, action);
+      case "fileClipboardWritten":
+        return onFileClipboardWritten(state, action);
       case "fileClipboardFailed":
         return message(
           state,

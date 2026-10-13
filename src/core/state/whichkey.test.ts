@@ -72,7 +72,7 @@ test("direct actions list before groups and backspace pops a key", () => {
     { key: "x", label: "Toggle task", group: false },
     { key: "z", label: "Zoom image or diagram", group: false },
     { key: "b", label: "+buffer", group: true },
-    { key: "f", label: "+find", group: true },
+    { key: "f", label: "+file", group: true },
     { key: "g", label: "+git", group: true },
     { key: "l", label: "+links", group: true },
     { key: "n", label: "+notes", group: true },
@@ -83,7 +83,15 @@ test("direct actions list before groups and backspace pops a key", () => {
 
   s = keys(s, "f").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" ", "f"] } });
-  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual(["b", "f", "o", "r"]);
+  expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual([
+    "b",
+    "f",
+    "o",
+    "p",
+    "r",
+    "x",
+    "y",
+  ]);
 
   s = keys(s, "<BS>").state;
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" "] } });
@@ -205,7 +213,7 @@ test("the explorer's leader popup lists Normal mode's leader keys too", () => {
   for (const row of [
     { key: "a", label: "Split window", group: false },
     { key: "e", label: "Toggle explorer", group: false },
-    { key: "f", label: "+find", group: true },
+    { key: "f", label: "+file", group: true },
     { key: "g", label: "+git", group: true },
     { key: "s", label: "+search", group: true },
   ])

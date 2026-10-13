@@ -648,8 +648,14 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
       case "fileClipboardWrite":
         void Promise.resolve()
           .then(() => d.fileClipboard.write(e.clip))
-          .catch((x) =>
-            d.dispatch({ type: "fileClipboardFailed", reason: msg(x) }),
+          .then(
+            () =>
+              d.dispatch({
+                type: "fileClipboardWritten",
+                clip: e.clip,
+                system: d.fileClipboard.name !== "none",
+              }),
+            (x) => d.dispatch({ type: "fileClipboardFailed", reason: msg(x) }),
           );
         return;
       case "fileClipboardRead":
