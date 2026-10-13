@@ -83,7 +83,7 @@ test("renaming a dirty open file moves it, then autosave writes only the new pat
   await waitFor(() =>
     since(mark).some((a) => a.type === "saved" && a.path === "c.md"),
   );
-  await Bun.sleep(1000);
+  await settle();
   expect(await disk("c.md")).toBe("pha\n");
   expect(await exists("a.md")).toBe(false);
   const diskOps = app.effects
@@ -114,7 +114,7 @@ test("typing during a queued write, then renaming, never writes to the old path"
   await waitFor(() =>
     since(mark).some((a) => a.type === "saved" && a.path === "e.md"),
   );
-  await Bun.sleep(500);
+  await settle();
   const writes = app.effects
     .slice(marked)
     .filter((e) => e.kind === "write" || e.kind === "rename")

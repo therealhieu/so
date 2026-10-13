@@ -154,6 +154,11 @@ export async function startApp(
     tool?: ToolHost;
     /** Finds Poppler for PDFs in place of `PATH`. */
     pdfWhich?: (cmd: string) => string | null;
+    /**
+     * `false` skips waiting out the watcher's replays of the workspace's
+     * creation, for a suite that never looks at watcher events.
+     */
+    settle?: boolean;
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -320,7 +325,7 @@ export async function startApp(
     index.start(root, store.get().config);
   }
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
-  await settle();
+  if (opts.settle !== false) await settle();
   if (opts.git !== undefined)
     store.dispatch({ type: "gitDetected", ...(await git.detect(root)) });
 
