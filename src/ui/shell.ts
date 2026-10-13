@@ -117,6 +117,8 @@ export type Shell = {
   attach(store: Store): void;
   /** OSC 52 copy for the clipboard provider chain. */
   copyOsc52(text: string): void;
+  /** Drop the decoded images of a workspace path that changed or went away on disk. */
+  forgetImages(path: string): void;
   /** Paint the latest state and resolve once that frame is written. */
   flush(): Promise<void>;
   /** Give the terminal away: nothing is painted until `resume`. */
@@ -266,6 +268,9 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     },
     copyOsc52(text) {
       renderer.copyToClipboardOSC52(text);
+    },
+    forgetImages(path) {
+      images.forget(path);
     },
     async flush() {
       repaint();

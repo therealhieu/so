@@ -483,6 +483,8 @@ async function main(argv: string[]): Promise<void> {
         });
         if (!explorerOnly) indexHost.notify(event);
         if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
+        if (event.kind === "removed" || !event.isDir)
+          shell.forgetImages(event.path);
       },
       logger,
     );
