@@ -12,17 +12,16 @@
 - Be professional and pragmatic.
 - Think critically instead of following instructions blindly. Optimize for the user's underlying intent, not only the literal request.
 - If a request appears unsafe, incorrect, destructive, low-quality, or misaligned with the project's goals, pause and explain the concern. Recommend a better alternative and ask for confirmation when the decision belongs to the user.
-- Do not over-engineer. Choose the simplest robust design that meets current requirements; add abstractions only when demonstrated needs justify them.
-- Follow established project conventions, applicable industry standards, and proven patterns. Deviate only when requirements or evidence justify it.
-- Focus development on shipping complete, usable, and verified outcomes. Prefer small end-to-end increments over speculative groundwork, broad refactors, or perfectionism.
+- Apply the [project principles](docs/principles.md) to every decision.
 - Make assumptions explicit. Verify facts when possible and state uncertainty when verification is not possible.
 - Report outcomes faithfully. Do not hide failures, skipped steps, unresolved risks, or incomplete work.
 
 ## 2. Required Context
 
 1. Read and apply [communication rules](docs/communication.md) before responding or creating or updating documents.
-2. Read [project context](docs/project.md) before discussion, planning, or implementation.
-3. Read the applicable language rules below before editing code.
+2. Read and apply [principles](docs/principles.md) before discussion, planning, implementation, review, or verification.
+3. Read [project context](docs/project.md) before discussion, planning, or implementation.
+4. Read the applicable language rules below before editing code.
 
 Follow existing repository instructions. Surface conflicts before proceeding.
 
@@ -66,7 +65,7 @@ Code explains itself in domain terms. Traceability belongs in `.s1mple/` work do
 
 **Verification**
 
-Not established.
+After overall verification passes and before project documentation finalization, run the `s1mple-harden` skill in workflow mode on the work folder.
 
 **Delivery**
 
@@ -85,6 +84,7 @@ Keep s1mple files under `.s1mple/` in the project root:
 ├── S1MPLE.md
 ├── docs/
 │   ├── communication.md
+│   ├── principles.md
 │   ├── project.md
 │   └── languages/
 │       └── typescript.md
@@ -95,6 +95,7 @@ Keep s1mple files under `.s1mple/` in the project root:
 
 - `S1MPLE.md` is the entrypoint for shared instructions and required context.
 - `docs/communication.md` defines rules for chat and authored documents.
+- `docs/principles.md` defines the principles that drive decisions, delivery, testing, and documents.
 - `docs/project.md` describes architecture, contracts, constraints, and development checks.
 - `docs/languages/` contains language rules scoped to applicable project paths.
 - `work/active/` contains work in progress.

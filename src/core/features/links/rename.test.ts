@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { type DocScan, scanDoc } from "../../lang/markdown/scan";
+import { markdownTarget } from "../../lang/markdown/syntax";
 import { applySummaries, emptyIndex, type NoteIndex } from "./note-index";
 import {
   applySpanEdits,
@@ -298,4 +299,24 @@ test("span edits without expected text check only their bounds", () => {
   expect(
     applySpanEdits("abc", [span(0, 0, 2, "x"), span(0, 1, 3, "y")]),
   ).toBeNull();
+});
+
+test("a new name with % or # is encoded so the link still finds it", () => {
+  const ws: Workspace = {
+    "plan.md": "# Plan",
+    "a.md": "[x](plan.md) [y](<plan.md>) [z](plan%2Emd)",
+  };
+  for (const name of ["100% done.md", "C# notes.md"]) {
+    const plan = planRename(
+      index(ws),
+      [{ from: "plan.md", to: name }],
+      new Map(),
+    );
+    const texts = plan.flatMap((f) => f.edits.map((e) => e.text));
+    expect(texts).toHaveLength(3);
+    for (const text of texts) {
+      const dest = /\]\(<?([^>)]*)>?\)/.exec(text)?.[1] ?? "";
+      expect(markdownTarget(dest)).toEqual({ target: name });
+    }
+  }
 });

@@ -99,6 +99,45 @@ test("an image loads once, however often it is asked for", async () => {
   expect(calls).toEqual(["a.png"]);
 });
 
+test("an image changed or removed on disk loads again", async () => {
+  let bytes: Uint8Array = PNG;
+  const { c, calls, repaints } = cache(async () => bytes);
+  for (const path of ["img/a.png", "img/sub/b.png", "imgx.png"]) c.get(path);
+  await settle();
+  expect(c.size("img/a.png")).toEqual({ width: 240, height: 120 });
+  const held = c.bytes();
+
+  bytes = blackPng(10);
+  c.forget("img/a.png");
+  expect(c.size("img/a.png")).toBeUndefined();
+  expect(c.bytes()).toBe(held - 240 * 120 * 4);
+  expect(repaints()).toBe(4);
+  expect(c.get("img/a.png")).toBeUndefined();
+  await settle();
+  expect(c.size("img/a.png")).toEqual({ width: 10, height: 10 });
+
+  // A removed folder drops what is below it, not a sibling sharing its prefix.
+  c.forget("img");
+  expect(c.size("img/a.png")).toBeUndefined();
+  expect(c.size("img/sub/b.png")).toBeUndefined();
+  expect(c.size("imgx.png")).toEqual({ width: 240, height: 120 });
+  expect(calls).toEqual([
+    "img/a.png",
+    "img/sub/b.png",
+    "imgx.png",
+    "img/a.png",
+  ]);
+
+  // A load still running when the file changes is not kept.
+  c.get("late.png");
+  c.forget("late.png");
+  await settle();
+  expect(c.size("late.png")).toBeUndefined();
+  const before = repaints();
+  c.forget("never-loaded.png");
+  expect(repaints()).toBe(before);
+});
+
 test("decoded images stay within the memory limit", async () => {
   const big = blackPng(2805);
   const dispose = spyOn(NativeImage.prototype, "dispose");

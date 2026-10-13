@@ -44,6 +44,17 @@ test("an EOF change without a final newline marks the side that lacks it", () =>
   );
 });
 
+test("lines added after an index line without a final newline replace that line", () => {
+  const index = normalizeIndexText("a", "lf");
+  const now = cur(["a", "b"]);
+  const [h] = diffLines(index.lines, now.lines);
+  if (h === undefined) throw new Error("no hunk");
+  expect(h.old.count).toBe(0);
+  expect(hunkPatch("notes/a.md", "100644", h, index, now)).toBe(
+    `${HEADER}@@ -1,1 +1,2 @@\n-a\n\\ No newline at end of file\n+a\n+b\n`,
+  );
+});
+
 test("CRLF index lines end with CRLF on both sides", () => {
   const index = normalizeIndexText("one\r\nold\r\nthree\r\n", "crlf");
   const now = cur(["one", "new", "three"]);

@@ -97,16 +97,27 @@ export type Exec = (
   input?: string,
 ) => Promise<{ code: number; stdout: string }>;
 
-const bunExec: Exec = async (argv, input) => {
+/**
+ * A call with `input` is a write: its stdout is not read, because a tool
+ * like `xclip -i` leaves a child serving the selection that keeps an
+ * inherited stdout open until another app takes the clipboard.
+ */
+export const bunExec: Exec = async (argv, input) => {
+  if (input !== undefined) {
+    const p = Bun.spawn(argv, {
+      stdin: "pipe",
+      stdout: "ignore",
+      stderr: "ignore",
+    });
+    p.stdin.write(input);
+    await p.stdin.end();
+    return { code: await p.exited, stdout: "" };
+  }
   const p = Bun.spawn(argv, {
-    stdin: input === undefined ? "ignore" : "pipe",
+    stdin: "ignore",
     stdout: "pipe",
     stderr: "ignore",
   });
-  if (input !== undefined && p.stdin !== undefined) {
-    p.stdin.write(input);
-    await p.stdin.end();
-  }
   const stdout = await new Response(p.stdout).text();
   return { code: await p.exited, stdout };
 };

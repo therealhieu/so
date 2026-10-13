@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { EventEmitter } from "node:events";
+import { readFileSync, type watch } from "node:fs";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FileEvent } from "../core/state/types";
 import { atomicWrite } from "./fs";
 import { createExclusionMatcher } from "./ignore";
+import type { Logger } from "./log";
 import { createOwnOps, watchWorkspace } from "./watcher";
 
 const stamp = (n: number) => ({ mtimeMs: n, size: n, hash: `h${n}` });
@@ -96,6 +98,7 @@ beforeAll(async () => {
     own,
     (rel) => matcher.isExcludedPath(rel, { dotfiles }),
     (e) => events.push(e),
+    { info() {}, error() {} },
   );
   startMs = performance.now() - t0;
   await settle();
@@ -160,4 +163,52 @@ test("a removal and a new folder are classified by stat", async () => {
     isDir: true,
   });
   events = [];
+});
+
+test("a watch that cannot start or fails later is logged and stops", () => {
+  const logged: unknown[] = [];
+  const logger: Logger = {
+    info() {},
+    error: (event, fields) => logged.push([event, fields?.reason]),
+  };
+  const throwing = (() => {
+    throw new Error("ENOSPC: System limit for number of file watchers reached");
+  }) as unknown as typeof watch;
+  const stopThrown = watchWorkspace(
+    "/ws",
+    createOwnOps(),
+    () => false,
+    () => {},
+    logger,
+    throwing,
+  );
+  expect(logged).toEqual([
+    [
+      "fs.watchFailed",
+      "Error: ENOSPC: System limit for number of file watchers reached",
+    ],
+  ]);
+  stopThrown();
+
+  const w = Object.assign(new EventEmitter(), {
+    closed: false,
+    close: () => {
+      w.closed = true;
+    },
+  });
+  const failing = (() => w) as unknown as typeof watch;
+  watchWorkspace(
+    "/ws",
+    createOwnOps(),
+    () => false,
+    () => {},
+    logger,
+    failing,
+  );
+  w.emit("error", new Error("EMFILE: too many open files"));
+  expect(logged.at(-1)).toEqual([
+    "fs.watchFailed",
+    "Error: EMFILE: too many open files",
+  ]);
+  expect(w.closed).toBe(true);
 });

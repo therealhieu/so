@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
+  bunExec,
   commandProvider,
   detectClipboard,
   detectFileClipboard,
@@ -65,6 +69,31 @@ test("a command provider pipes text through argv commands and reports failures",
   const failing = commandProvider("false", ["false"], ["false"]);
   await expect(failing.copy("text")).rejects.toThrow();
   await expect(failing.paste?.()).rejects.toThrow();
+});
+
+test("a write returns when its tool exits, though a child it leaves holds stdout", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "so-exec-"));
+  const pidFile = join(dir, "pid");
+  try {
+    // Like `xclip -i`: read stdin, leave a child serving it, and exit.
+    const script = `cat >/dev/null; sleep 8 & echo $! > "${pidFile}"`;
+    const started = performance.now();
+    expect(await bunExec(["sh", "-c", script], "text")).toEqual({
+      code: 0,
+      stdout: "",
+    });
+    expect(performance.now() - started).toBeLessThan(5000);
+    expect(await bunExec(["printf", "read"])).toEqual({
+      code: 0,
+      stdout: "read",
+    });
+  } finally {
+    const pid = Number(
+      (await readFile(pidFile, "utf8").catch(() => "")).trim(),
+    );
+    if (pid > 0) process.kill(pid);
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test.each([

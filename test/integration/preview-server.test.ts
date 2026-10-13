@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 import { readFileSync, symlinkSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { createEffectRunner } from "../../src/app/effects";
@@ -26,12 +27,15 @@ const FILES = {
     '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>\n',
 };
 
+/** `url` carries the server's token, as the address opened in the browser does. */
 type Running = { app: App; server: PreviewServer; url(path: string): string };
 let running: Running | undefined;
 
-afterEach(() => {
-  running?.server.stop();
-  running?.app.stop();
+afterEach(async () => {
+  await running?.server.stop();
+  await running?.app.stop();
+  if (running !== undefined)
+    await rm(running.app.root, { recursive: true, force: true });
   running = undefined;
 });
 
@@ -56,7 +60,8 @@ async function serve(): Promise<Running> {
   running = {
     app,
     server,
-    url: (path) => `http://127.0.0.1:${server.port}${path}`,
+    url: (path) =>
+      `http://127.0.0.1:${server.port}${path}${path.includes("?") ? "&" : "?"}token=${server.token}`,
   };
   return running;
 }
@@ -147,9 +152,41 @@ const waitUntil = async (pred: () => boolean, ms: number) => {
 
 test("requests with a foreign host are refused", async () => {
   const { server } = await serve();
-  expect(await rawStatus(server.port, `evil.test:${server.port}`)).toBe(403);
-  expect(await rawStatus(server.port, `127.0.0.1:${server.port}`)).toBe(200);
-  expect(await rawStatus(server.port, `localhost:${server.port}`)).toBe(200);
+  const page = `/?token=${server.token}`;
+  expect(
+    await rawStatus(server.port, `evil.test:${server.port}`, "GET", page),
+  ).toBe(403);
+  expect(
+    await rawStatus(server.port, `127.0.0.1:${server.port}`, "GET", page),
+  ).toBe(200);
+  expect(
+    await rawStatus(server.port, `localhost:${server.port}`, "GET", page),
+  ).toBe(200);
+});
+
+test("only a request with the server's token, or the cookie it sets, is answered", async () => {
+  const { server, url } = await serve();
+  const base = `http://127.0.0.1:${server.port}`;
+  const name = `so-preview-${server.port}`;
+  for (const path of ["/", "/render", "/events", "/file/notes/plan.md"])
+    expect([path, (await fetch(base + path)).status]).toEqual([path, 403]);
+  expect((await fetch(`${base}/?token=${"0".repeat(64)}`)).status).toBe(403);
+  expect((await fetch(`${base}/?token=short`)).status).toBe(403);
+
+  const page = await fetch(url("/notes/plan.md"));
+  expect(page.status).toBe(200);
+  expect(page.headers.get("set-cookie")).toBe(
+    `${name}=${server.token}; HttpOnly; SameSite=Strict; Path=/`,
+  );
+  const withCookie = (path: string, cookie: string) =>
+    fetch(base + path, { headers: { cookie } }).then((r) => r.status);
+  expect(await withCookie("/render", `${name}=${server.token}`)).toBe(200);
+  expect(
+    await withCookie("/file/notes/plan.md", `${name}=${server.token}`),
+  ).toBe(200);
+  // Cookies are not kept apart by port: another server's cookie name does not count.
+  expect(await withCookie("/render", `so-preview-1=${server.token}`)).toBe(403);
+  expect(await withCookie("/render", `${name}=wrong`)).toBe(403);
 });
 
 test("paths outside the workspace or hidden or ignored are not found", async () => {
@@ -170,9 +207,14 @@ test("paths outside the workspace or hidden or ignored are not found", async () 
 test("only GET is answered, on the loopback address only", async () => {
   const { server, url } = await serve();
   expect((await fetch(url("/render"), { method: "POST" })).status).toBe(405);
-  expect(await rawStatus(server.port, `127.0.0.1:${server.port}`, "PUT")).toBe(
-    405,
-  );
+  expect(
+    await rawStatus(
+      server.port,
+      `127.0.0.1:${server.port}`,
+      "PUT",
+      `/?token=${server.token}`,
+    ),
+  ).toBe(405);
   const others = Object.values(networkInterfaces())
     .flat()
     .filter((a) => a !== undefined && !a.internal && a.family === "IPv4")
@@ -323,4 +365,5 @@ test("a failed browser launch is reported with its address and logged", async ()
   expect(logged).toEqual([
     { event: "browser.openFailed", fields: { reason: "xdg-open failed" } },
   ]);
+  await rm(root, { recursive: true, force: true });
 });

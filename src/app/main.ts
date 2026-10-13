@@ -291,6 +291,12 @@ function slowWrites(runner: EffectRunner): EffectRunner {
   };
 }
 
+/** Test-only: `SO_TEST_THROW=start` throws during startup, before the first frame is painted. */
+function injectStartupThrow(): void {
+  if (testing && process.env.SO_TEST_THROW === "start")
+    throw new Error("injected startup failure");
+}
+
 /** Test-only: `SO_TEST_THROW=1` throws outside the reducer once the active buffer's first line has "THROW". */
 function injectThrow(store: Store): void {
   if (!testing || process.env.SO_TEST_THROW !== "1") return;
@@ -428,8 +434,8 @@ async function main(argv: string[]): Promise<void> {
       state: parsePersisted(readStateFile(stateFile)),
       restore: ws.file === undefined,
     });
-  shell.attach(store);
-  injectThrow(store);
+  // Installed before the first paint, so a failure there still restores the
+  // terminal, and after the session loads, so it never saves an empty one.
   const saveSession = sessionSaver(stateFile, logger);
   const lifecycle = installLifecycle({
     store,
@@ -439,6 +445,9 @@ async function main(argv: string[]): Promise<void> {
     stopPreview: previewHost.stop,
     stopLsp: lspHost.stop,
   });
+  injectStartupThrow();
+  shell.attach(store);
+  injectThrow(store);
   deps.exit = lifecycle.exitNow;
   deps.tool = createToolHost({
     screen: shell,
@@ -461,16 +470,24 @@ async function main(argv: string[]): Promise<void> {
         !isListed(s, dirname(rel))
       );
     };
-    watchWorkspace(ws.root, ownOps, excluded, (event) => {
-      // Gitignored paths, and dot paths unless shown, are watched only for the explorer.
-      const explorerOnly = indexSkips(matcher, store.get(), event.path);
-      store.dispatch({
-        type: "fileChanged",
-        event: explorerOnly ? { ...event, explorerOnly: true } : event,
-      });
-      if (!explorerOnly) indexHost.notify(event);
-      if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
-    });
+    watchWorkspace(
+      ws.root,
+      ownOps,
+      excluded,
+      (event) => {
+        // Gitignored paths, and dot paths unless shown, are watched only for the explorer.
+        const explorerOnly = indexSkips(matcher, store.get(), event.path);
+        store.dispatch({
+          type: "fileChanged",
+          event: explorerOnly ? { ...event, explorerOnly: true } : event,
+        });
+        if (!explorerOnly) indexHost.notify(event);
+        if (!matcher.isExcludedPath(event.path)) lspHost.notify(event);
+        if (event.kind === "removed" || !event.isDir)
+          shell.forgetImages(event.path);
+      },
+      logger,
+    );
     indexHost.start(ws.root, store.get().config);
     runner.run({ kind: "readPropertyTypes" });
     logger.info("app.firstFrame", { ms: Math.round(performance.now()) });

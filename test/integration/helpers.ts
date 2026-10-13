@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
@@ -154,6 +154,11 @@ export async function startApp(
     tool?: ToolHost;
     /** Finds Poppler for PDFs in place of `PATH`. */
     pdfWhich?: (cmd: string) => string | null;
+    /**
+     * `false` skips waiting out the watcher's replays of the workspace's
+     * creation, for a suite that never looks at watcher events.
+     */
+    settle?: boolean;
   } = {},
 ): Promise<App> {
   const actions: Action[] = [];
@@ -167,10 +172,15 @@ export async function startApp(
   });
   const ownOps = createOwnOps();
   const logger = createLogger(opts.env ?? {}, root);
-  const configPath =
+  // A config folder made here is removed by `stop`; the workspace belongs to the caller.
+  const configDir =
     opts.lsp === undefined
+      ? undefined
+      : await mkdtemp(join(tmpdir(), "so-config-"));
+  const configPath =
+    configDir === undefined
       ? join(root, ".no-config.toml")
-      : join(await mkdtemp(join(tmpdir(), "so-config-")), "config.toml");
+      : join(configDir, "config.toml");
   if (opts.lsp !== undefined) await writeFile(configPath, opts.lsp.config);
   const lsp =
     opts.lsp === undefined
@@ -235,6 +245,7 @@ export async function startApp(
       saveStateFileSync(opts.state.path, snapshotSession(store.get()));
   };
   const update = createUpdate(reg);
+  let stopped = false;
   const store: Store = createStore(
     editingNotes(initialState({ root, cols: 100, rows: 30, color: "nocolor" })),
     (s, a) => {
@@ -243,6 +254,9 @@ export async function startApp(
     },
     (e) => {
       effects.push(e);
+      // `stop` saved the session; a debounced save firing later would
+      // recreate a state folder the test already removed.
+      if (stopped && e.kind === "saveState") return;
       runner.run(e);
     },
   );
@@ -270,15 +284,21 @@ export async function startApp(
       !isListed(s, folderOf(rel))
     );
   };
-  const stopWatch = watchWorkspace(root, ownOps, excluded, (event) => {
-    const explorerOnly = indexSkips(matcher, store.get(), event.path);
-    store.dispatch({
-      type: "fileChanged",
-      event: explorerOnly ? { ...event, explorerOnly: true } : event,
-    });
-    if (!explorerOnly) index?.notify(event);
-    if (!matcher.isExcludedPath(event.path)) lsp?.notify(event);
-  });
+  const stopWatch = watchWorkspace(
+    root,
+    ownOps,
+    excluded,
+    (event) => {
+      const explorerOnly = indexSkips(matcher, store.get(), event.path);
+      store.dispatch({
+        type: "fileChanged",
+        event: explorerOnly ? { ...event, explorerOnly: true } : event,
+      });
+      if (!explorerOnly) index?.notify(event);
+      if (!matcher.isExcludedPath(event.path)) lsp?.notify(event);
+    },
+    logger,
+  );
   const buffer = (path: string) =>
     Object.values(store.get().buffers).find((b) => b.path === path);
   const keys = (seq: string) => {
@@ -305,7 +325,7 @@ export async function startApp(
     index.start(root, store.get().config);
   }
   await waitFor(() => store.get().panels.explorer.entries[""] !== undefined);
-  await settle();
+  if (opts.settle !== false) await settle();
   if (opts.git !== undefined)
     store.dispatch({ type: "gitDetected", ...(await git.detect(root)) });
 
@@ -347,11 +367,14 @@ export async function startApp(
     ...(lsp === undefined ? {} : { lsp }),
     configPath,
     async stop() {
+      stopped = true;
       stopWatch();
       for (const w of gitWatchers) w.stop();
       index?.stop();
       saveSession();
       await lsp?.stop();
+      if (configDir !== undefined)
+        await rm(configDir, { recursive: true, force: true });
     },
   };
 }

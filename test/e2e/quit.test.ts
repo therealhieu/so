@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterEach, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import {
   chmod,
@@ -15,8 +15,15 @@ import { ready, runInPty } from "./pty";
 
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
 
+const folders: string[] = [];
+afterEach(async () => {
+  for (const d of folders.splice(0))
+    await rm(d, { recursive: true, force: true });
+});
+
 async function note(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "so-quit-"));
+  folders.push(root);
   await writeFile(join(root, "note.md"), "# Note\n");
   return join(root, "note.md");
 }
@@ -113,7 +120,8 @@ test("exit tells a connected preview page before restoring the terminal", async 
         await p.waitFor(() => existsSync(opened));
         const url = new URL(await readFile(opened, "utf8"));
         expect(url.pathname).toBe("/note.md");
-        const res = await fetch(new URL("/events", url));
+        expect(url.searchParams.get("token")).toMatch(/^[0-9a-f]{64}$/);
+        const res = await fetch(new URL(`/events${url.search}`, url));
         const reader = (res.body as ReadableStream<Uint8Array>).getReader();
         const decoder = new TextDecoder();
         p.proc.kill("SIGTERM");

@@ -8,6 +8,7 @@ import {
   pushJump,
 } from "./jumps";
 import { RECENT_LIMIT, touchRecent } from "./recent";
+import { parsePersisted, snapshotSession } from "./session";
 import type { AppState, JumpList } from "./types";
 import { createUpdate } from "./update";
 
@@ -63,6 +64,22 @@ test("jumping back from the end records the current position for <C-i>", () => {
   expect(cursorOf(s)).toEqual({ path: "a.md", line: 2, col: 0 });
   expect(s.jumps.at).toBe(1);
   expect(jumpForward(s, 0).state.jumps.at).toBe(1);
+});
+
+test("jumping back from a full list keeps it within the limit the session file accepts", () => {
+  let s = load(fresh(), "a.md", "x\n".repeat(JUMP_LIMIT + 1));
+  let j = empty;
+  for (let i = 0; i < JUMP_LIMIT; i++) j = pushJump(j, at("a.md", i));
+  s = { ...s, jumps: j };
+  for (const key of [..."100j"])
+    s = update(s, { type: "key", key, now: 0 }).state;
+  s = jumpBack(s, 0).state;
+  expect(s.jumps.entries).toHaveLength(JUMP_LIMIT);
+  expect(s.jumps.entries.at(-1)).toEqual(at("a.md", JUMP_LIMIT));
+  expect(s.jumps.at).toBe(JUMP_LIMIT - 2);
+  expect(cursorOf(s)).toEqual({ path: "a.md", line: JUMP_LIMIT - 1, col: 0 });
+  const saved = JSON.parse(JSON.stringify(snapshotSession(s)));
+  expect(parsePersisted(saved)?.jumps).toEqual(s.jumps);
 });
 
 test("jumping back to another open file shows it at the recorded position", () => {

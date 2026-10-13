@@ -1,11 +1,12 @@
 import { expect, test } from "bun:test";
-import { cellWidth, displayWidth, rowOf, wrapLine } from "./wrap";
+import { cellWidth, clusters } from "../text/cells";
+import { displayWidth, rowOf, wrapLine } from "./wrap";
 
 /** The text of each row, by display column, with tabs expanded. */
 function rows(text: string, starts: number[], tabWidth: number): string[] {
   const out = starts.map(() => "");
   let v = 0;
-  for (const ch of text) {
+  for (const ch of clusters(text)) {
     const w = cellWidth(ch, v, tabWidth);
     const r = rowOf(starts, v);
     // A character never straddles two rows.
@@ -60,7 +61,7 @@ test("a tab never straddles two rows", () => {
     for (const [k, p] of parts.entries()) {
       const from = starts[k] ?? 0;
       let v = from;
-      for (const ch of p) v += cellWidth(ch, v, 4);
+      for (const ch of clusters(p)) v += cellWidth(ch, v, 4);
       expect(v - from).toBeLessThanOrEqual(width);
     }
   }
@@ -95,4 +96,42 @@ test("an indent narrows every row after the first", () => {
 
 test("an indent as wide as the row still leaves one cell per row", () => {
   expect(wrapLine("abcdef", 3, 8, 5)).toEqual([0, 3, 4, 5]);
+});
+
+test("wide characters and emoji take two cells, combining marks none", () => {
+  const widths: [string, number][] = [
+    ["中a", 3],
+    ["👍b", 3],
+    ["e\u0301x", 2],
+    ["👨\u200d👩\u200d👧z", 3],
+    ["🇻🇳q", 3],
+    ["☺\ufe0fw", 3],
+    ["ｱｲ", 2],
+    ["Ａ", 2],
+    ["─│", 2],
+  ];
+  for (const [text, cells] of widths) expect(displayWidth(text, 4)).toBe(cells);
+  // A tab still reaches the next stop after a wide character.
+  expect(displayWidth("中\tx", 4)).toBe(5);
+});
+
+test("a wide character never straddles two rows", () => {
+  const text = "你好世界你好世界";
+  expect(wrapLine(text, 10, 4)).toEqual([0, 10]);
+  // Nine cells hold four characters; the fifth starts the next row.
+  const starts = wrapLine(text, 9, 4);
+  expect(starts).toEqual([0, 8]);
+  expect(rows(text, starts, 4)).toEqual(["你好世界", "你好世界"]);
+  expect(wrapLine("ab中", 3, 4)).toEqual([0, 2]);
+});
+
+test("rows of emoji and combining text break between whole characters", () => {
+  const text = "👍🏽 e\u0301te\u0301 👨\u200d👩\u200d👧 🇻🇳".repeat(3);
+  for (const width of [3, 4, 5, 7]) {
+    const starts = wrapLine(text, width, 4);
+    const parts = rows(text, starts, 4);
+    expect(parts.join("")).toBe(text);
+    for (const p of parts)
+      expect(displayWidth(p, 4)).toBeLessThanOrEqual(width);
+  }
 });

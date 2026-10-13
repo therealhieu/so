@@ -1,6 +1,6 @@
 # so
 
-- **Last Modified:** 2026-10-12
+- **Last Modified:** 2026-10-13
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
@@ -94,7 +94,7 @@ Live preview is a decoration provider over the kernel's `layoutText`: the Markdo
 :PreviewStop | exit → SSE "stopped" → server stops → preview = off
 ```
 
-The server answers GET only, rejects a foreign `Host`, serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
+The server answers GET only, rejects a foreign `Host`, and answers only a request carrying its random per-server token, so another local user cannot read the workspace through it: the opened address carries the token in its query, and that response sets it as an `HttpOnly`, `SameSite=Strict` cookie named for the port (`so-preview-<port>`), which the page's own requests send. It serves workspace files under `/file/*` with containment and a sandboxing policy, and the page loads nothing outside its own origin.
 
 Language servers follow the same one-way flow. The core holds `LspState` and emits `lsp` effects; the host observes the store to start servers and sync documents, and answers with actions:
 
@@ -160,7 +160,7 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 | Contract | Source of truth |
 |---|---|
 | App state, actions, effects (one-way protocol) | `src/core/state/types.ts` — `AppState`, `Action`, `Effect`, `FsOp`; `createUpdate` in `src/core/state/update.ts`, `createStore` in `src/core/state/store.ts` |
-| Editor kernel | `src/core/kernel/{text,editor,vim,commands,view}` — text buffer, vim engine (`handleKey`), `CommandRegistry`, `Keymap`, `layoutText` and decorations |
+| Editor kernel | `src/core/kernel/{text,editor,vim,commands,view}` — text buffer, vim engine (`handleKey`), `CommandRegistry`, `Keymap`, `layoutText` and decorations. Wrapping, cursor and mouse columns, and `drawCells` measure text per grapheme cluster with `cellWidth` (`src/core/kernel/text/cells.ts`), which follows OpenTUI's `unicode` width method (CJK, fullwidth, and emoji take two cells; `src/ui/cell-width.test.ts` checks it against OpenTUI); on a terminal where OpenTUI picks `wcwidth`, flags and VS16 emoji can be off by one cell |
 | File types and highlighting | `src/core/filetypes/registry.ts` (`FileTypeRegistry`), `src/core/lang/code` (language table, `lowlightHighlighter`), `src/core/lang/markdown/file-type.ts` |
 | Effect execution | `src/app/effects.ts` — one serial file-system queue; writes queued behind a rename, move, or trash of their path follow it; `createNote`, `patchFrontmatter`, `copy`, and the PDF annotation effects (`readAnnotations` aside) run on it; `flush` also waits for everything queued before it, so a quit never cuts off a queued annotations write; `createExclusive`, `copyEntry`, and `moveInto` in `src/workspace/fs.ts` never replace an entry |
 | Explorer clipboard | `y`/`x`/`p` in the explorer (`explorer.copy`/`cut`/`paste`; `takeSelected`, `startPaste`) and `<leader>fy`/`<leader>fx`/`<leader>fp` in Normal mode on the active file (`file.copy`/`cut`/`paste`; `takeActiveFile`, `pasteBesideActiveFile`, pasting into the active file's folder or the root), sharing `onFileClip` and `freeName` in `src/core/state/explorer.ts`. A take keeps `ExplorerState.clip` (a cut entry is dimmed) and emits `fileClipboardWrite` with absolute paths; the runner answers `fileClipboardWritten` (`Copied <name> to the system clipboard`, or just `Copied <name>` under `noFileClipboard`) or `fileClipboardFailed`; `p` emits `fileClipboardRead`, and the runner answers `fileClip` with paths inside the workspace spelled from its root (through `realpath`) and the folders marked. The system clipboard's files win, but the explorer's cut decides when they are the paths `x` took (Finder has no cut); with none there, `clip` is pasted. Workspace entries copy (`FsOp` `copy`) or move through the link-safe path (`pasteMove` in `link-edits.ts`; several cut entries move without link edits); outside entries copy, or move in when a Linux file manager cut them (`FsOp.outside`, absolute `from`). A taken name gets ` copy`, ` copy 2`, … (folders keep dots); a folder never goes into itself. A copy runs on the serial queue (saves wait behind it); one still running after 300 ms reports `copyProgress` at most every 100 ms (`Copying pics… 120/3400`, entries counted by `copyEntry`), and every finished paste says `Pasted <name>`. `FileClipboard`/`detectFileClipboard` in `src/workspace/system.ts`: `osascript` (JXA, paths as argv) on macOS, `wl-copy`/`wl-paste` on Wayland, `xclip` on X11, reading `x-special/gnome-copied-files` or `text/uri-list` with `application/x-kde-cutselection`, and writing GNOME's list, or a URI list when `XDG_CURRENT_DESKTOP` names KDE; otherwise `noFileClipboard` and pastes stay inside so |
@@ -214,7 +214,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   |---|---|---|
   | `dev` | `bun src/app/main.ts` | Run from source |
   | `check` | `biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src scripts test/boundaries.test.ts test/repo.test.ts test/vim` | Fast local gate: format, lint, types, unused code, unit suites (< 30 s) |
-  | `test:ci` | `bun test test/ui test/integration test/e2e` | Component, integration, and PTY e2e suites |
+  | `test:ci` | `bun test --parallel test/ui test/integration test/e2e` | Component, integration, and PTY e2e suites, files in parallel |
   | `bench` | `bun scripts/bench-gate.ts` | Benchmark gate (median of 5 runs, 2× target) |
   | `build` | `bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so` | Single binary; the worker is a second compile entrypoint; the preview page, KaTeX (with fonts), and Mermaid are embedded, so the binary needs no `node_modules` |
   | `record:vim` | `bun scripts/record-vim.ts` | Record vim expectations from Neovim 0.11.x (local only) |
@@ -233,7 +233,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   Language-server suites run against `test/fixtures/fake-lsp.ts`, whose command line carries a unique `fake-lsp-<log>` tag; every suite stops its servers, so `pgrep -f fake-lsp` is empty after a run. `test/integration/lsp-real.test.ts` runs only where `rust-analyzer --version` succeeds; GitHub runners have only rustup's proxy without the component, so CI skips it.
 
 - **Worker entrypoint:** every `bun build --compile` (the `build` script and both loops in `release.yml`) lists `src/workspace/index-worker.ts` after `src/app/main.ts`, which `test/repo.test.ts` enforces; `knip.json` lists the worker as an entry.
-- **Benchmarks:** `TARGETS` in `scripts/bench-gate.ts`, in milliseconds. The gate fails when a median exceeds twice its target and writes the runs to `.so-bench/results.json`. `makeNoteWorkspace`, `make5000LineNote`, and `make5000LineTs` in `test/fixtures/generate.ts` generate the fixtures. The live and startup targets are relaxed from the initiative's REQ9 values (16 ms keystroke, 50 ms open, 200 ms first frame) by user decision on 2026-10-04; source targets keep them.
+- **Benchmarks:** `TARGETS` in `scripts/bench-gate.ts`, in milliseconds. The gate fails when a median exceeds twice its target and writes the runs to `.so-bench/results.json`. `makeNoteWorkspace`, `make5000LineNote`, and `make5000LineTs` in `test/fixtures/generate.ts` generate the fixtures. The live and startup targets are relaxed from the initiative's REQ9 values (16 ms keystroke, 50 ms open, 200 ms first frame) by user decision on 2026-10-04, and `firstFrame` again from 250 to 300 ms on 2026-10-13, after CI medians reached 458–494 ms against its 500 ms limit; source targets keep them.
 
   | Metric | Target | Bench |
   |---|---|---|
@@ -243,13 +243,13 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `sourceOpenFile` | 50 | `source-open.bench.ts` — a 5,000-line TypeScript file to its first frame |
   | `liveScrollFrameP95` | 16.7 | `scroll.bench.ts --file note` — held `j` and `Ctrl-d`/`Ctrl-u` frames in a note |
   | `sourceScrollFrameP95` | 16.7 | `scroll.bench.ts --file ts` — the same in a TypeScript file |
-  | `firstFrame` | 250 | `startup.bench.ts --metric firstFrame` — spawn to the first statusline, 10,000 notes, in a PTY |
+  | `firstFrame` | 300 | `startup.bench.ts --metric firstFrame` — spawn to the first statusline, 10,000 notes, in a PTY |
   | `indexReady` | 3000 | `startup.bench.ts --metric indexReady` — spawn to `◆ index ready` |
   | `indexingKeystrokeP95` | 30 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 10,000 notes |
   | `lspKeystrokeP95` | 16 | `lsp-keystroke.bench.ts` — the source key mix in a 5,000-line TypeScript file with the real host attached to the fake server, which publishes 200 diagnostics on every change |
   | `gitDiffKeystrokeP95` | 24 | `git-diff.bench.ts` — 200 keys in a 5,000-line note whose every line differs from the index, each followed by the 100 ms diff |
 
-- **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `master` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux.
+- **CI Checks:** `.github/workflows/ci.yml` runs on `pull_request` to `master` only (no `push` trigger), with per-PR concurrency and `cancel-in-progress`. Job `check` (`ubuntu-24.04`) runs `bun run check`; job `test` (matrix `ubuntu-24.04`, `macos-15`) runs `bun run test:ci`, plus `bun run bench` on Linux. The repository is public, so these standard runners cost no Actions minutes.
 - **Release:** Nothing is released automatically; a release happens only when the user asks. A pushed `v*` tag runs `release.yml`, which builds four binaries on one runner, smoke-tests each on its native runner (`macos-15`, `macos-15-intel`, `ubuntu-24.04`, `ubuntu-24.04-arm`), and publishes a GitHub Release with generated notes only after every smoke job passes. Tags containing `-` publish as prereleases. A manual run (`gh workflow run release.yml`) is a dry run: the same build and smoke tests with version `0.0.0-dev+<short sha>`, publish skipped. Phase exits use the dry run.
 
 ## Sources and Open Questions

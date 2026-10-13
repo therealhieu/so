@@ -620,7 +620,8 @@ export type Toast = { id: number; level: "info" | "error"; text: string };
 export type PreviewState =
   | { status: "off" }
   | { status: "starting" }
-  | { status: "on"; port: number };
+  /** `token` opens the page; the server refuses requests without it. */
+  | { status: "on"; port: number; token: string };
 
 /** What a pointer is over inside an editor or Base window. */
 export type WindowSpot =
@@ -861,7 +862,7 @@ export type Action =
       stamp?: Stamp;
       reason?: string;
     }
-  | { type: "previewStarted"; port: number }
+  | { type: "previewStarted"; port: number; token: string }
   | { type: "previewStopped" }
   | { type: "previewFailed"; reason: string }
   | { type: "openUrlFailed"; url: string; reason: string }

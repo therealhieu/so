@@ -40,7 +40,9 @@ function rewriteWiki(link: Link, target: string): string {
 
 /**
  * A Markdown link pointing at the vault-root `path`, the form other Markdown
- * tools resolve. The destination is URL-encoded when the source was.
+ * tools resolve. The destination is URL-encoded when the source was; `%`
+ * and `#` are always encoded, because destinations are URL-decoded and
+ * split at `#`.
  */
 function rewriteMarkdown(link: Link, path: string): string {
   const md = parseMarkdownLink(link.raw, 0);
@@ -48,11 +50,12 @@ function rewriteMarkdown(link: Link, path: string): string {
   const dest = link.raw.slice(md.destStart, md.destEnd);
   const hash = dest.indexOf("#");
   const subpath = hash === -1 ? "" : dest.slice(hash);
+  const encode = (c: string) => encodeURIComponent(c);
   const written = md.angle
-    ? path
+    ? path.replace(/[%#]/g, encode)
     : dest.includes("%")
       ? path.split("/").map(encodeURIComponent).join("/")
-      : path.replace(/[ <>()]/g, (c) => encodeURIComponent(c));
+      : path.replace(/[ <>()%#]/g, encode);
   return (
     link.raw.slice(0, md.destStart) +
     written +

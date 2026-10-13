@@ -15,10 +15,11 @@ const NO_NEWLINE = "\\ No newline at end of file\n";
 export function hunkPatch(
   repoPath: string,
   mode: string,
-  h: Hunk,
+  hunk: Hunk,
   index: IndexText,
   cur: Cur,
 ): string {
+  const h = afterUnterminatedEnd(hunk, index);
   const removed = h.oldLines.map((l, i) =>
     patchLine("-", h.old.start + i, l, index, index),
   );
@@ -33,6 +34,25 @@ export function hunkPatch(
     removed.join("") +
     added.join("")
   );
+}
+
+/**
+ * Lines added after an index whose last line has no final newline: a pure
+ * add would join the first added line onto it, so the hunk also replaces
+ * that last line, as `git diff` writes it.
+ */
+function afterUnterminatedEnd(h: Hunk, index: IndexText): Hunk {
+  const last = index.lines.length - 1;
+  if (h.old.count > 0 || h.old.start !== last + 1 || index.finalNewline)
+    return h;
+  const line = index.lines[last];
+  if (line === undefined) return h;
+  return {
+    ...h,
+    old: { start: last, count: 1 },
+    new: { start: h.new.start - 1, count: h.new.count + 1 },
+    oldLines: [line],
+  };
 }
 
 /** Git-diff numbering: 1-based, and an empty side names the line before it. */

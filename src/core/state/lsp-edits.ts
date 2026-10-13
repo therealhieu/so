@@ -1,5 +1,6 @@
 import type { FileEdit } from "../features/links/rename";
 import { applyBufferEdits, bufferForPath } from "./buffers";
+import { settle, skippedText } from "./closed-edits";
 import { nextEditBatch } from "./link-edits";
 import type { CodeEdit, CodeEditBatch, ServerKey } from "./lsp-types";
 import { chain, message, none, toast } from "./result";
@@ -134,28 +135,10 @@ export function onCodeEditApplied(
   const e = s.lsp.edit;
   if (e === undefined || e.batch !== a.batch || !e.pending.includes(a.path))
     return none(s);
-  const next: CodeEditBatch = {
-    ...e,
-    pending: e.pending.filter((p) => p !== a.path),
-    updated: a.ok ? [...e.updated, a.path] : e.updated,
-    skipped: a.ok
-      ? e.skipped
-      : [...e.skipped, { path: a.path, reason: a.reason ?? "unknown error" }],
-  };
+  const next: CodeEditBatch = settle(e, a);
   return next.pending.length > 0
     ? none(withEdit(s, next))
     : finish(withEdit(s, undefined), next);
-}
-
-/** "skipped: a.ts, b.ts (reason); c.ts (other reason)". */
-function skippedText(skipped: CodeEditBatch["skipped"]): string {
-  const byReason = new Map<string, string[]>();
-  for (const { path, reason } of skipped)
-    byReason.set(reason, [...(byReason.get(reason) ?? []), path]);
-  const text = [...byReason]
-    .map(([reason, paths]) => `${paths.join(", ")} (${reason})`)
-    .join("; ");
-  return `skipped: ${text}`;
 }
 
 /** One "N files changed" toast, one listing skipped files, and the reply. */

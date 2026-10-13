@@ -1,12 +1,15 @@
 import { afterEach, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
 import { lspConfig } from "../support/lsp";
 import { type App, startApp, tmpWorkspace, waitFor } from "./helpers";
 
 let app: App | undefined;
 
 afterEach(async () => {
+  const root = app?.root;
   await app?.stop();
   app = undefined;
+  if (root !== undefined) await rm(root, { recursive: true, force: true });
 });
 
 /** Polls `ok` every 200 ms until it holds; throws after `ms`. */

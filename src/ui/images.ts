@@ -111,6 +111,25 @@ export class ImageCache {
     return this.total;
   }
 
+  /**
+   * Drop what is held for workspace `path` (and, for a folder, every path
+   * below it) after it changed or went away on disk, so the next `get`
+   * loads it again; a load still running is discarded when it finishes.
+   */
+  forget(path: string): void {
+    let dropped = false;
+    for (const [ref, e] of this.entries) {
+      if (ref !== path && !ref.startsWith(`${path}/`)) continue;
+      if (e.kind === "image") {
+        e.image.dispose();
+        this.total -= e.bytes;
+      }
+      this.entries.delete(ref);
+      dropped = true;
+    }
+    if (dropped) this.o.repaint();
+  }
+
   /** Dispose every decoded image. */
   clear(): void {
     for (const e of this.entries.values())

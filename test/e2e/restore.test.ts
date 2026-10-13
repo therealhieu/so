@@ -1,13 +1,20 @@
-import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type PtyOptions, type PtyRun, ready, runInPty } from "./pty";
 
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
 
+const folders: string[] = [];
+afterEach(async () => {
+  for (const d of folders.splice(0))
+    await rm(d, { recursive: true, force: true });
+});
+
 async function workspace(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "so-e2e-"));
+  folders.push(root);
   await writeFile(join(root, "note.md"), "# Note\n");
   return root;
 }
@@ -63,6 +70,17 @@ describe("the terminal is restored on every exit path", () => {
     expect(await readFile(join(root, "note.md"), "utf8")).toBe(
       "THROW\n# Note\n",
     );
+  });
+
+  test("a failure before the first frame restores the terminal and says why", async () => {
+    const r = await runInPty([process.execPath, MAIN, await workspace()], {
+      env: { SO_TEST: "1", SO_TEST_THROW: "start" },
+      script: async () => {},
+    });
+    expect(r.exitCode).toBe(1);
+    expect(r.screen.buffer).toBe("normal");
+    expect(r.screen.mouse).toBe("none");
+    expect(r.screen.text).toContain("so: Error: injected startup failure");
   });
 });
 

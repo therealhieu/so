@@ -1,5 +1,6 @@
 import { type OptimizedBuffer, RGBA, TextAttributes } from "@opentui/core";
 import { THEME_NAMES, type ThemeName } from "../core/config/schema";
+import { fitCells } from "../core/kernel/text/cells";
 import type { AppState } from "../core/state/types";
 import { catppuccin } from "./catppuccin";
 import { PAPER, ROSE_PINE_DAWN, SEPIA } from "./warm-light";
@@ -393,12 +394,6 @@ export function drawCells(
   width?: number,
 ): void {
   if (width !== undefined && width <= 0) return;
-  const cells = [...text];
-  const fitted =
-    width === undefined
-      ? text
-      : cells.length >= width
-        ? cells.slice(0, width).join("")
-        : text + " ".repeat(width - cells.length);
+  const fitted = width === undefined ? text : fitCells(text, width);
   if (fitted !== "") buf.drawText(fitted, x, y, s.fg, s.bg, s.attrs);
 }

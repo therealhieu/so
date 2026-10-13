@@ -21,7 +21,11 @@ export function createPreviewHost(d: {
   return {
     start() {
       if (server !== undefined) {
-        d.dispatch({ type: "previewStarted", port: server.port });
+        d.dispatch({
+          type: "previewStarted",
+          port: server.port,
+          token: server.token,
+        });
         return;
       }
       try {
@@ -37,7 +41,11 @@ export function createPreviewHost(d: {
         return;
       }
       d.logger.info("preview.started", { port: server.port });
-      d.dispatch({ type: "previewStarted", port: server.port });
+      d.dispatch({
+        type: "previewStarted",
+        port: server.port,
+        token: server.token,
+      });
     },
     async stop() {
       if (server === undefined) return;

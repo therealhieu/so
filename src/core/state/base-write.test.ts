@@ -139,6 +139,30 @@ test("a written patch updates the index and shows the change", () => {
     "tasks/plain.md: - status: todo / + status: doing",
   ]);
   expect(r.state.notifications.toasts[0]?.level).toBe("info");
+  expect(r.effects).not.toContainEqual({
+    kind: "read",
+    path: "tasks/plain.md",
+  });
+
+  // Opened while the patch was written: the buffer reads the patched file.
+  const opened = run(s, {
+    type: "fileLoaded",
+    path: "tasks/plain.md",
+    file: textFile(plain, 1),
+  }).state;
+  const reread = onFrontmatterPatched(opened, {
+    type: "frontmatterPatched",
+    path: "tasks/plain.md",
+    ok: true,
+    text,
+    stamp: stamp(7),
+    removed: ["status: todo"],
+    added: ["status: doing"],
+  });
+  expect(reread.effects).toContainEqual({
+    kind: "read",
+    path: "tasks/plain.md",
+  });
 });
 
 test("a refused patch leaves the index at the disk value", () => {

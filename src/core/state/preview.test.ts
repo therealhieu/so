@@ -29,10 +29,10 @@ const previewEffects = (effects: Effect[]) =>
   );
 const note = () => open(fresh(), "notes/plan.md", "# Plan\n");
 
-test("the preview address is on the loopback host and encodes each path segment", () => {
-  expect(previewUrl(8731)).toBe("http://127.0.0.1:8731/");
-  expect(previewUrl(8731, "notes/my plan#1.md")).toBe(
-    "http://127.0.0.1:8731/notes/my%20plan%231.md",
+test("the preview address is on the loopback host, encodes each path segment, and carries the token", () => {
+  expect(previewUrl(8731, "t0k")).toBe("http://127.0.0.1:8731/?token=t0k");
+  expect(previewUrl(8731, "t0k", "notes/my plan#1.md")).toBe(
+    "http://127.0.0.1:8731/notes/my%20plan%231.md?token=t0k",
   );
 });
 
@@ -45,16 +45,28 @@ test("starting the preview twice starts one server", () => {
   expect(again.state.preview).toEqual({ status: "starting" });
   expect(previewEffects(again.effects)).toEqual([]);
 
-  const started = dispatch(again.state, { type: "previewStarted", port: 8731 });
-  expect(started.state.preview).toEqual({ status: "on", port: 8731 });
+  const started = dispatch(again.state, {
+    type: "previewStarted",
+    port: 8731,
+    token: "t0k",
+  });
+  expect(started.state.preview).toEqual({
+    status: "on",
+    port: 8731,
+    token: "t0k",
+  });
   expect(started.effects).toEqual([
-    { kind: "openUrl", url: "http://127.0.0.1:8731/notes/plan.md" },
+    { kind: "openUrl", url: "http://127.0.0.1:8731/notes/plan.md?token=t0k" },
   ]);
 
   const reopen = keys(started.state, ":Preview<CR>");
-  expect(reopen.state.preview).toEqual({ status: "on", port: 8731 });
+  expect(reopen.state.preview).toEqual({
+    status: "on",
+    port: 8731,
+    token: "t0k",
+  });
   expect(previewEffects(reopen.effects)).toEqual([
-    { kind: "openUrl", url: "http://127.0.0.1:8731/notes/plan.md" },
+    { kind: "openUrl", url: "http://127.0.0.1:8731/notes/plan.md?token=t0k" },
   ]);
 });
 
@@ -66,6 +78,7 @@ test("stopping says so when nothing runs and stops a running preview", () => {
   const on = dispatch(keys(note(), ":Preview<CR>").state, {
     type: "previewStarted",
     port: 8731,
+    token: "t0k",
   }).state;
   const stop = keys(on, ":PreviewStop<CR>");
   expect(previewEffects(stop.effects)).toEqual([{ kind: "stopPreview" }]);
@@ -77,14 +90,14 @@ test("stopping says so when nothing runs and stops a running preview", () => {
 test("a failed browser launch shows the address", () => {
   const r = dispatch(note(), {
     type: "openUrlFailed",
-    url: "http://127.0.0.1:8731/notes/plan.md",
+    url: "http://127.0.0.1:8731/notes/plan.md?token=t0k",
     reason: "open failed",
   });
   expect(r.state.notifications.toasts).toEqual([
     {
       id: 1,
       level: "info",
-      text: "could not open a browser — http://127.0.0.1:8731/notes/plan.md",
+      text: "could not open a browser — http://127.0.0.1:8731/notes/plan.md?token=t0k",
     },
   ]);
 });
@@ -116,6 +129,7 @@ test("the preview can be stopped from a code file", () => {
   const on = dispatch(keys(note(), ":Preview<CR>").state, {
     type: "previewStarted",
     port: 8731,
+    token: "t0k",
   }).state;
   const code = open(on, "scripts/sync.ts", "export {};\n");
   expect(previewEffects(keys(code, ":PreviewStop<CR>").effects)).toEqual([

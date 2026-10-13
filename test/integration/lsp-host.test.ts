@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { chmodSync, readFileSync } from "node:fs";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -19,6 +19,8 @@ import { type App, startApp, tmpWorkspace, waitFor } from "./helpers";
 let app: App | undefined;
 let logs: string[] = [];
 let dir = "";
+/** Workspace and state folders a test made; removed after it. */
+let temps: string[] = [];
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "so-lsp-"));
@@ -29,8 +31,23 @@ afterEach(async () => {
   app = undefined;
   const alive = killServers(logs);
   logs = [];
+  for (const d of [dir, ...temps])
+    await rm(d, { recursive: true, force: true });
+  temps = [];
   expect(alive).toEqual([]);
 });
+
+/** An app that does not wait out watcher replays; only the watched-file test needs them. */
+const start = (root: string, opts: Parameters<typeof startApp>[1] = {}) =>
+  startApp(root, { settle: false, ...opts });
+
+const kept = (d: string) => {
+  temps.push(d);
+  return d;
+};
+const workspace = async (files: Record<string, string>) =>
+  kept(await tmpWorkspace(files));
+const stateDir = async () => kept(await mkdtemp(join(tmpdir(), "so-state-")));
 
 /** A fresh log path for one fake server. */
 const logFor = (name: string) => {
@@ -77,9 +94,9 @@ const pidGone = (pid: number | undefined) => {
 };
 
 test("servers start only when enabled and stop when disabled again", async () => {
-  const root = await tmpWorkspace({ "src/main.rs": "fn main() {}\n" });
+  const root = await workspace({ "src/main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], {});
-  app = await startApp(root, { lsp: { config: lspConfig(false, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(false, rs.config) } });
   await app.open("src/main.rs");
   await Bun.sleep(300);
   expect(readServerLog(rs.log)).toEqual([]);
@@ -105,7 +122,7 @@ test("servers start only when enabled and stop when disabled again", async () =>
 });
 
 test("one process serves a Cargo workspace and marker-less files share one without a folder", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "repo/Cargo.toml": "[workspace]\n",
     "repo/a/Cargo.toml": "[package]\n",
     "repo/a/src/lib.rs": "pub fn a() {}\n",
@@ -123,7 +140,7 @@ test("one process serves a Cargo workspace and marker-less files share one witho
     { rootMarkers: ["Cargo.toml"], rootSearch: "topmost" },
   );
   const py = fake("py", ["python"], {}, { rootMarkers: ["pyproject.toml"] });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, rs.config, py.config) },
   });
   for (const path of [
@@ -160,7 +177,7 @@ test("one process serves a Cargo workspace and marker-less files share one witho
 });
 
 test("a second server on the same file type also attaches and both diagnostics show", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "main.rs": "fn main() {\n  let x = 1;\n}\n",
   });
   const diag = (line: number, message: string) => ({
@@ -175,7 +192,7 @@ test("a second server on the same file type also attaches and both diagnostics s
   const b = fake("b", ["rust"], {
     diagnostics: [diag(1, "from b"), diag(2, "also b")],
   });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, a.config, b.config) },
   });
   await app.open("main.rs");
@@ -196,7 +213,7 @@ test("a project's own tsc is used and picks the TypeScript server by version", a
     ["7.0.0", "tsc"],
     ["5.9.0", "typescript"],
   ] as const) {
-    const root = await tmpWorkspace({
+    const root = await workspace({
       "package.json": "{}\n",
       "src/x.ts": "export const x = 1;\n",
     });
@@ -211,7 +228,7 @@ test("a project's own tsc is used and picks the TypeScript server by version", a
         '[lsp.servers."typescript"]',
       ),
     );
-    app = await startApp(root, {
+    app = await start(root, {
       lsp: {
         config,
         which: (cmd) =>
@@ -250,7 +267,7 @@ test("a project's own tsc is used and picks the TypeScript server by version", a
 }, 15_000);
 
 test("settings reach servers by configuration requests and initialization options", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "main.py": "x = 1\n",
     "main.rs": "fn main() {}\n",
   });
@@ -267,7 +284,7 @@ test("settings reach servers by configuration requests and initialization option
     log: raLog,
     settings: { "rust-analyzer": { check: { command: "clippy" } } },
   });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, py.config, ra) },
   });
   await app.open("main.py");
@@ -290,12 +307,12 @@ test("settings reach servers by configuration requests and initialization option
 });
 
 test("a server that exits before initializing is unavailable without a toast or restart", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
-  const state = await mkdtemp(join(tmpdir(), "so-state-"));
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
+  const state = await stateDir();
   const rs = fake("rs", ["rust"], {
     exitBeforeInitialize: { stderr: "error: component not installed" },
   });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, rs.config) },
     env: { SO_LOG: "debug", XDG_STATE_HOME: state },
   });
@@ -322,9 +339,9 @@ test("a server that exits before initializing is unavailable without a toast or 
 });
 
 test("stopping kills a server that ignores shutdown within the bound", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], { ignoreShutdown: true });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitForMessage(rs.log, "textDocument/didOpen");
   const pid = processes(rs.log)[0]?.pid;
@@ -339,7 +356,7 @@ test("stopping kills a server that ignores shutdown within the bound", async () 
 });
 
 test("stopping leaves no version probe or starting server running", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "package.json": "{}\n",
     "src/x.ts": "export const x = 1;\n",
     "main.rs": "fn main() {}\n",
@@ -356,7 +373,7 @@ test("stopping leaves no version probe or starting server running", async () => 
   // Pay macOS's first-run check now, not inside the probe's bound.
   Bun.spawnSync([tsc], { stdout: "ignore", stderr: "ignore" });
   const rs = fake("rs", ["rust"], { ignoreInitialize: true });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: {
       config: lspConfig(
         true,
@@ -417,9 +434,9 @@ const syncLog = (log: string) =>
     );
 
 test("keys typed within the debounce produce one change sent before the next request", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], {});
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitForMessage(rs.log, "textDocument/didOpen");
   await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
@@ -452,12 +469,12 @@ test("keys typed within the debounce produce one change sent before the next req
 });
 
 test("a pull server is pulled after opening and after each sent change", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], {
     capabilities: PULL_CAPS,
     pull: { items: [diagnostic(0, "pulled")] },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitForMessage(rs.log, "textDocument/diagnostic");
   for (let n = 1; n <= 3; n++) {
@@ -485,7 +502,7 @@ test("a pull server is pulled after opening and after each sent change", async (
 });
 
 test("a refresh pulls every open document again", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "a.rs": "fn a() {}\n",
     "b.rs": "fn b() {}\n",
   });
@@ -494,7 +511,7 @@ test("a refresh pulls every open document again", async () => {
     pull: { items: [] },
     refreshOn: "textDocument/hover",
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("a.rs");
   await app.open("b.rs");
   await waitForMessage(rs.log, "textDocument/diagnostic", 5000, 2);
@@ -516,7 +533,7 @@ test("a refresh pulls every open document again", async () => {
 });
 
 test("pushed and pulled lists are both kept and closing clears only the pulled one", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "main.rs": "fn main() {}\n",
     "other.rs": "",
   });
@@ -525,7 +542,7 @@ test("pushed and pulled lists are both kept and closing clears only the pulled o
     diagnostics: [diagnostic(0, "pushed")],
     pull: { items: [diagnostic(0, "pulled")] },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(() => app?.store.get().lsp.shown["main.rs"]?.length === 2);
   expect(
@@ -561,12 +578,12 @@ const logged = (state: string, event: string) =>
     .map((l) => JSON.parse(l) as Record<string, unknown>);
 
 test("a crashing server restarts until the fifth crash within three minutes", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn secret_name() {}\n" });
-  const state = await mkdtemp(join(tmpdir(), "so-state-"));
+  const root = await workspace({ "main.rs": "fn secret_name() {}\n" });
+  const state = await stateDir();
   const rs = fake("rs", ["rust"], {
     crash: { after: "textDocument/didOpen" },
   });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, rs.config) },
     env: { SO_LOG: "debug", XDG_STATE_HOME: state },
   });
@@ -595,13 +612,13 @@ test("a crashing server restarts until the fifth crash within three minutes", as
 }, 15_000);
 
 test("crashes spread over more than three minutes keep restarting", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], {
     crash: { after: "textDocument/didOpen", times: 5 },
   });
   let t = 0;
   const states: string[] = [];
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: {
       config: lspConfig(true, rs.config),
       now: () => {
@@ -627,8 +644,8 @@ test("crashes spread over more than three minutes keep restarting", async () => 
 }, 15_000);
 
 test("progress is throttled and info messages do not toast", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
-  const state = await mkdtemp(join(tmpdir(), "so-state-"));
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
+  const state = await stateDir();
   const rs = fake("rs", ["rust"], {
     progress: { count: 50, everyMs: 4 },
     messages: [
@@ -636,7 +653,7 @@ test("progress is throttled and info messages do not toast", async () => {
       { type: 2, message: "toolchain is old" },
     ],
   });
-  app = await startApp(root, {
+  app = await start(root, {
     lsp: { config: lspConfig(true, rs.config) },
     env: { SO_LOG: "debug", XDG_STATE_HOME: state },
   });
@@ -662,11 +679,11 @@ test("progress is throttled and info messages do not toast", async () => {
 });
 
 test("a request still waiting when the server crashes fails as restarted", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], {
     crash: { after: "textDocument/hover", times: 1 },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
   app.keys("K");
@@ -684,7 +701,7 @@ test("a request still waiting when the server crashes fails as restarted", async
 }, 15_000);
 
 test("a watched file change reaches a server only when it matches a registered glob", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() {}\n" });
+  const root = await workspace({ "main.rs": "fn main() {}\n" });
   const rs = fake("rs", ["rust"], { registerWatchers: { globs: ["**/*.rs"] } });
   app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
@@ -717,9 +734,9 @@ const HINTS = {
 };
 
 test("inlay hints are fetched after opening and each change, and again on refresh", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const root = await workspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], HINTS);
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(
     () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
@@ -737,7 +754,7 @@ test("inlay hints are fetched after opening and each change, and again on refres
 });
 
 test("hints and pulls the server drops as outdated are asked again", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const root = await workspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], {
     ...HINTS,
     capabilities: { ...HINTS.capabilities, diagnosticProvider: {} },
@@ -758,7 +775,7 @@ test("hints and pulls the server drops as outdated are asked again", async () =>
       times: 2,
     },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(
     () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
@@ -768,9 +785,9 @@ test("hints and pulls the server drops as outdated are asked again", async () =>
 });
 
 test("inlay hints come back after the server restarts", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const root = await workspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], HINTS);
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(
     () => app?.store.get().lsp.inlayHints["main.rs"]?.["rs@"]?.length === 1,
@@ -783,10 +800,10 @@ test("inlay hints come back after the server restarts", async () => {
 });
 
 test("turning inlay hints off clears them and stops asking", async () => {
-  const root = await tmpWorkspace({ "main.rs": "fn main() { let x = 1; }\n" });
+  const root = await workspace({ "main.rs": "fn main() { let x = 1; }\n" });
   const rs = fake("rs", ["rust"], HINTS);
   const on = lspConfig(true, rs.config);
-  app = await startApp(root, { lsp: { config: on } });
+  app = await start(root, { lsp: { config: on } });
   await app.open("main.rs");
   await waitFor(() => app?.store.get().lsp.inlayHints["main.rs"] !== undefined);
   await reload(
@@ -803,7 +820,7 @@ test("turning inlay hints off clears them and stops asking", async () => {
 });
 
 test("a resting cursor shows the uses a server reports", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "main.rs": "fn main() { let x = 1; x; }\n",
   });
   const rs = fake("rs", ["rust"], {
@@ -825,7 +842,7 @@ test("a resting cursor shows the uses a server reports", async () => {
       ],
     },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
   app.keys("16l");
@@ -834,7 +851,7 @@ test("a resting cursor shows the uses a server reports", async () => {
 });
 
 test("the workspace symbol picker lists what the server finds for the query", async () => {
-  const root = await tmpWorkspace({
+  const root = await workspace({
     "main.rs": "fn main() {}\n",
     "geo.rs": "pub struct Point;\n",
   });
@@ -856,7 +873,7 @@ test("the workspace symbol picker lists what the server finds for the query", as
       ],
     },
   });
-  app = await startApp(root, { lsp: { config: lspConfig(true, rs.config) } });
+  app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
   await app.open("main.rs");
   await waitFor(() => app?.store.get().lsp.servers["rs@"]?.state === "ready");
   app.keys(":WorkspaceSymbols<CR>");

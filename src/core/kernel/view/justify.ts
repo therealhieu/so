@@ -1,5 +1,5 @@
+import { cellWidth, clusters } from "../text/cells";
 import type { Span } from "./types";
-import { cellWidth } from "./wrap";
 
 /** The most extra cells a gap between words takes before a row stays ragged. */
 const MAX_PER_GAP = 3;
@@ -31,7 +31,7 @@ export function justifyRow(
   for (const span of spans) {
     if (span.virtual === "eol") continue;
     const text = span.virtual === undefined && span.inserted !== true;
-    for (const ch of span.text) {
+    for (const ch of clusters(span.text)) {
       const w = cellWidth(ch, v, tabWidth);
       for (let i = 0; i < w; i++, v++)
         if (v >= start && v < end) {

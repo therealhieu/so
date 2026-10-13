@@ -58,3 +58,13 @@ test("a cell of a stretched gap maps to the space before it", () => {
   expect(colAtCell(shift, 8)).toBe(6);
   expect(colAtCell(shift, 12)).toBe(10);
 });
+
+test("a wide character counts as two cells of its word", () => {
+  const spans = plain("中文 bb cc next");
+  // "中文 bb cc " is 10 cells and a blank; stretched to 12, both gaps grow.
+  const shift = justifyRow(spans, 0, 11, 12, 8) ?? [];
+  expect(shift).toEqual([0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2]);
+  // "cc" starts at column 8 and is painted at cell 10.
+  expect(colAtCell(shift, 10)).toBe(8);
+  expect(colAtCell(shift, 5)).toBe(4);
+});
