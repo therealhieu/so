@@ -214,7 +214,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   |---|---|---|
   | `dev` | `bun src/app/main.ts` | Run from source |
   | `check` | `biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src scripts test/boundaries.test.ts test/repo.test.ts test/vim` | Fast local gate: format, lint, types, unused code, unit suites (< 30 s) |
-  | `test:ci` | `bun test test/ui test/integration test/e2e` | Component, integration, and PTY e2e suites |
+  | `test:ci` | `bun test --parallel test/ui test/integration test/e2e` | Component, integration, and PTY e2e suites, files in parallel |
   | `bench` | `bun scripts/bench-gate.ts` | Benchmark gate (median of 5 runs, 2× target) |
   | `build` | `bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so` | Single binary; the worker is a second compile entrypoint; the preview page, KaTeX (with fonts), and Mermaid are embedded, so the binary needs no `node_modules` |
   | `record:vim` | `bun scripts/record-vim.ts` | Record vim expectations from Neovim 0.11.x (local only) |
