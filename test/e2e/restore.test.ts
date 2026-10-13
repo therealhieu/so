@@ -1,13 +1,20 @@
-import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type PtyOptions, type PtyRun, ready, runInPty } from "./pty";
 
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
 
+const folders: string[] = [];
+afterEach(async () => {
+  for (const d of folders.splice(0))
+    await rm(d, { recursive: true, force: true });
+});
+
 async function workspace(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "so-e2e-"));
+  folders.push(root);
   await writeFile(join(root, "note.md"), "# Note\n");
   return root;
 }

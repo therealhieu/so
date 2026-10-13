@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 import { readFileSync, symlinkSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { createEffectRunner } from "../../src/app/effects";
@@ -30,9 +31,11 @@ const FILES = {
 type Running = { app: App; server: PreviewServer; url(path: string): string };
 let running: Running | undefined;
 
-afterEach(() => {
-  running?.server.stop();
-  running?.app.stop();
+afterEach(async () => {
+  await running?.server.stop();
+  await running?.app.stop();
+  if (running !== undefined)
+    await rm(running.app.root, { recursive: true, force: true });
   running = undefined;
 });
 
@@ -362,4 +365,5 @@ test("a failed browser launch is reported with its address and logged", async ()
   expect(logged).toEqual([
     { event: "browser.openFailed", fields: { reason: "xdg-open failed" } },
   ]);
+  await rm(root, { recursive: true, force: true });
 });

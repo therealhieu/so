@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   fakeServerConfig,
@@ -21,9 +21,13 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  const root = app?.root;
   await app?.stop();
   app = undefined;
-  expect(killServers(logs)).toEqual([]);
+  const alive = killServers(logs);
+  for (const d of [root, ...logs.map(dirname)])
+    if (d !== undefined) await rm(d, { recursive: true, force: true });
+  expect(alive).toEqual([]);
 });
 
 const uri = (p: string) => pathToFileURL(p).href;

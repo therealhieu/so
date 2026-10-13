@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createEffectRunner, type EffectRunner } from "../../src/app/effects";
@@ -167,10 +167,15 @@ export async function startApp(
   });
   const ownOps = createOwnOps();
   const logger = createLogger(opts.env ?? {}, root);
-  const configPath =
+  // A config folder made here is removed by `stop`; the workspace belongs to the caller.
+  const configDir =
     opts.lsp === undefined
+      ? undefined
+      : await mkdtemp(join(tmpdir(), "so-config-"));
+  const configPath =
+    configDir === undefined
       ? join(root, ".no-config.toml")
-      : join(await mkdtemp(join(tmpdir(), "so-config-")), "config.toml");
+      : join(configDir, "config.toml");
   if (opts.lsp !== undefined) await writeFile(configPath, opts.lsp.config);
   const lsp =
     opts.lsp === undefined
@@ -235,6 +240,7 @@ export async function startApp(
       saveStateFileSync(opts.state.path, snapshotSession(store.get()));
   };
   const update = createUpdate(reg);
+  let stopped = false;
   const store: Store = createStore(
     editingNotes(initialState({ root, cols: 100, rows: 30, color: "nocolor" })),
     (s, a) => {
@@ -243,6 +249,9 @@ export async function startApp(
     },
     (e) => {
       effects.push(e);
+      // `stop` saved the session; a debounced save firing later would
+      // recreate a state folder the test already removed.
+      if (stopped && e.kind === "saveState") return;
       runner.run(e);
     },
   );
@@ -353,11 +362,14 @@ export async function startApp(
     ...(lsp === undefined ? {} : { lsp }),
     configPath,
     async stop() {
+      stopped = true;
       stopWatch();
       for (const w of gitWatchers) w.stop();
       index?.stop();
       saveSession();
       await lsp?.stop();
+      if (configDir !== undefined)
+        await rm(configDir, { recursive: true, force: true });
     },
   };
 }

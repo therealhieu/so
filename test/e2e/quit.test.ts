@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterEach, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import {
   chmod,
@@ -15,8 +15,15 @@ import { ready, runInPty } from "./pty";
 
 const MAIN = join(import.meta.dir, "../../src/app/main.ts");
 
+const folders: string[] = [];
+afterEach(async () => {
+  for (const d of folders.splice(0))
+    await rm(d, { recursive: true, force: true });
+});
+
 async function note(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "so-quit-"));
+  folders.push(root);
   await writeFile(join(root, "note.md"), "# Note\n");
   return join(root, "note.md");
 }
