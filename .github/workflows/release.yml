@@ -24,8 +24,8 @@ jobs:
       - env:
           V: ${{ steps.version.outputs.version }}
         run: |
-          for t in darwin-arm64 darwin-x64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" src/app/main.ts src/workspace/index-worker.ts --outfile dist/so-$t; done
-          for t in linux-x64 linux-arm64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" --define 'process.env.OPENTUI_LIBC="glibc"' src/app/main.ts src/workspace/index-worker.ts --outfile dist/so-$t; done
+          for t in darwin-arm64 darwin-x64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts --outfile dist/so-$t; done
+          for t in linux-x64 linux-arm64; do bun build --compile --target=bun-$t --define "process.env.SO_VERSION=\"$V\"" --define 'process.env.OPENTUI_LIBC="glibc"' src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts --outfile dist/so-$t; done
           (cd dist && sha256sum so-* > SHA256SUMS)
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

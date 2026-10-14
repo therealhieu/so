@@ -34,6 +34,7 @@ import { openPicker, selectPickerItem } from "./picker";
 import { chain, clearMessage, none } from "./result";
 import { autosaveNow, closeBuffer } from "./save";
 import { sidePanelRows } from "./side-panel";
+import { focusSqliteCell, resizeSqliteColumn } from "./sqlite";
 import type {
   AppState,
   MouseEvent,
@@ -89,6 +90,8 @@ export function onMouse(
           t.spot.column,
           t.spot.width,
         );
+      if (t.kind === "window" && t.spot.kind === "sqliteEdge")
+        return resizeSqliteColumn(s, t.window, t.spot.column, t.spot.width);
       if (t.kind !== "window" || t.window !== s.windows.active) return none(s);
       if (t.spot.kind === "pdf")
         return t.spot.at === undefined ? none(s) : dragPdf(s, t.spot.at);
@@ -181,6 +184,8 @@ function wheel(
       const editor = s.windows.byId[t.window]?.content.editor;
       if (editor === "base")
         return withFocus(s, t, (f) => wheelBase(f, dx, dy, now, reg));
+      if (editor === "sqlite")
+        return withFocus(s, t, (f) => wheelSqlite(f, dx, dy, now, reg));
       if (editor === "pdf")
         return withFocus(s, t, (f) =>
           dx !== 0
@@ -256,6 +261,31 @@ function wheelBase(
       ? "base.moveRight"
       : "base.moveLeft";
   return runCommand(s, id, now, reg);
+}
+
+/** The SQLite commands its keys run: `j`/`k` a notch's lines, `L`/`H` sideways. */
+function wheelSqlite(
+  s: AppState,
+  dx: number,
+  dy: number,
+  now: number,
+  reg: Registries,
+): Result {
+  if (dy !== 0)
+    return Array.from({ length: WHEEL_LINES }).reduce<Result>(
+      (r) =>
+        chain(r, (st) =>
+          runCommand(st, dy > 0 ? "sqlite.down" : "sqlite.up", now, reg),
+        ),
+      none(s),
+    );
+  if (dx === 0) return none(s);
+  return runCommand(
+    s,
+    dx > 0 ? "sqlite.scrollRight" : "sqlite.scrollLeft",
+    now,
+    reg,
+  );
 }
 
 /**
@@ -602,6 +632,21 @@ function pressBase(
     case "baseEdge":
       return clicks === 2
         ? chain(r, () => resizeBaseColumn(c, spot.column, undefined))
+        : r;
+    case "sqliteCell": {
+      const id = s.windows.active;
+      const at = chain(r, (st) =>
+        none(focusSqliteCell(st, id, spot.row, spot.column)),
+      );
+      return clicks >= 2
+        ? chain(at, (st) => runCommand(st, "sqlite.cell", now, reg))
+        : at;
+    }
+    case "sqliteEdge":
+      return clicks === 2
+        ? chain(r, (st) =>
+            resizeSqliteColumn(st, st.windows.active, spot.column, undefined),
+          )
         : r;
     case "baseCell": {
       const t = m?.table;

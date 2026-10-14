@@ -18,6 +18,7 @@ const BADGES: Readonly<Record<string, [string, string]>> = {
   explorer: ["EXPLORER", "modeNormal"],
   base: ["BASE", "modeNormal"],
   pdf: ["PDF", "modeNormal"],
+  sqlite: ["DB", "modeNormal"],
   conflict: ["CONFLICT", "modeCmd"],
 };
 

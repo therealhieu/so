@@ -13,6 +13,13 @@ import type { TemplateVars } from "../features/notes/template";
 import type { PdfAnnotation } from "../features/pdf/annotations";
 import type { PdfPageLayout, PdfPoint } from "../features/pdf/layout";
 import type { PdfOutlineItem } from "../features/pdf/outline";
+import type {
+  SqliteCountResult,
+  SqlitePageResult,
+  SqliteSchemaResult,
+  SqliteSource,
+  SqliteTable,
+} from "../features/sqlite/types";
 import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { RegisterName, Registers } from "../kernel/editor/registers";
@@ -159,6 +166,28 @@ export type AnnotationLoad =
   | { status: "ready"; items: PdfAnnotation[]; detached?: string[] }
   | { status: "failed"; reason: string };
 
+/** A table's row count, read after its first rows. */
+export type SqliteCount =
+  | { status: "loading" }
+  | { status: "ready"; count: number }
+  | { status: "failed" };
+
+/**
+ * A SQLite database's schema as read for the file version `stamp`. `gen`
+ * counts the reads of this buffer, so a reload of the same bytes still drops
+ * answers to the read before it.
+ */
+export type SqliteInfo = { stamp: Stamp; gen: number } & (
+  | { status: "loading" }
+  | {
+      status: "ready";
+      tables: SqliteTable[];
+      counts: Record<string, SqliteCount>;
+    }
+  | { status: "notSqlite" }
+  | { status: "failed"; reason: string }
+);
+
 export type BufferState = {
   id: BufferId;
   path: string;
@@ -194,6 +223,8 @@ export type BufferState = {
   pdfOutline?: PdfLoad<PdfOutlineItem[]>;
   /** Words and their boxes of the PDF pages read so far, by page. Never persisted. */
   pdfLayout?: Record<number, PdfLoad<PdfPageLayout>>;
+  /** A SQLite database's schema and row counts. Never persisted. */
+  sqlite?: SqliteInfo;
   /** Kept at the front of the bufferline and out of bulk closes. */
   pinned?: true;
 };
@@ -640,7 +671,12 @@ export type WindowSpot =
   | { kind: "baseCard"; lane: number; card: number }
   | { kind: "base" }
   /** On a PDF page; `at` is the point under the pointer, absent off the page. */
-  | { kind: "pdf"; at?: PdfPoint };
+  | { kind: "pdf"; at?: PdfPoint }
+  /** A SQLite grid cell; `row` counts from the source's first row. */
+  | { kind: "sqliteCell"; row: number; column: number }
+  /** The header separator right of SQLite column `column`, which is `width` cells wide. */
+  | { kind: "sqliteEdge"; column: number; width: number }
+  | { kind: "sqlite" };
 
 /**
  * What a pointer is over, in model terms. `explorer` with path "" and
@@ -750,6 +786,43 @@ export type Action =
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
   /** How many columns after the pinned first one a base table window shows scrolled off. */
   | { type: "baseScrolled"; window: WindowId; col: number }
+  /**
+   * What a SQLite window drew: the columns scrolled off after the pinned
+   * one, its body rows, and the lines its schema or cell pane holds.
+   */
+  | {
+      type: "sqliteLaidOut";
+      window: WindowId;
+      col: number;
+      rows: number;
+      lines: number;
+    }
+  /** Answers the `sqliteSchema` effect for read `gen` of the file version `stamp`. */
+  | {
+      type: "sqliteSchema";
+      path: string;
+      stamp: Stamp;
+      gen: number;
+      result: SqliteSchemaResult;
+    }
+  /** Answers the `sqlitePage` effect of window `window`. */
+  | {
+      type: "sqlitePage";
+      path: string;
+      gen: number;
+      window: WindowId;
+      source: SqliteSource;
+      offset: number;
+      result: SqlitePageResult;
+    }
+  /** Answers the `sqliteCount` effect. */
+  | {
+      type: "sqliteCount";
+      path: string;
+      gen: number;
+      table: string;
+      result: SqliteCountResult;
+    }
   /** Answers the `pdfInfo` effect for the file version `stamp`. */
   | { type: "pdfInfo"; path: string; stamp: Stamp; result: PdfInfoResult }
   /** How many rows a PDF window drew its page in and how many it shows. */
@@ -1024,6 +1097,19 @@ export type Effect =
   | { kind: "pdfLayout"; path: string; stamp: Stamp; page: number }
   /** Read the PDF's table of contents; answered by `pdfOutline`. */
   | { kind: "pdfOutline"; path: string; stamp: Stamp }
+  /** Read the schema of the SQLite database at `path`; answered by `sqliteSchema`. */
+  | { kind: "sqliteSchema"; path: string; stamp: Stamp; gen: number }
+  /** Read rows of `source` from `offset` for window `window`; answered by `sqlitePage`. */
+  | {
+      kind: "sqlitePage";
+      path: string;
+      gen: number;
+      window: WindowId;
+      source: SqliteSource;
+      offset: number;
+    }
+  /** Count the rows of table `table`; answered by `sqliteCount`. */
+  | { kind: "sqliteCount"; path: string; gen: number; table: string }
   /** Read the annotations file of PDF `pdf`; answered by `annotationsRead`. */
   | { kind: "readAnnotations"; pdf: string }
   /** Replace the annotations file of PDF `pdf`; only a failure is answered. */

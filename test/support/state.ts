@@ -14,6 +14,10 @@ import {
   pdfFileType,
 } from "../../src/core/features/pdf/file-type";
 import {
+  sqliteEditorKind,
+  sqliteFileType,
+} from "../../src/core/features/sqlite/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -75,6 +79,7 @@ import {
   pdfToolBindings,
   pdfToolCommands,
 } from "../../src/core/state/pdf-tools";
+import { sqliteBindings, sqliteCommands } from "../../src/core/state/sqlite";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
 import { ViewContextRegistry } from "../../src/core/state/view-context";
@@ -93,9 +98,11 @@ export function testRegistries(): Registries {
   fileTypes.register(markdownFileType);
   fileTypes.register(baseFileType);
   fileTypes.register(pdfFileType);
+  fileTypes.register(sqliteFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
   editorKinds.register(pdfEditorKind);
+  editorKinds.register(sqliteEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -106,6 +113,7 @@ export function testRegistries(): Registries {
   for (const c of pdfToolCommands) commands.register(c);
   for (const c of pdfSelectCommands) commands.register(c);
   for (const c of pdfAnnotateCommands) commands.register(c);
+  for (const c of sqliteCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -131,6 +139,7 @@ export function testRegistries(): Registries {
       ...pdfToolBindings,
       ...pdfSelectBindings,
       ...pdfAnnotateBindings,
+      ...sqliteBindings,
       ...lspBindings,
       ...gitBindings,
     ],

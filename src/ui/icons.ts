@@ -22,6 +22,7 @@ const code = (nerd: string, token = "iconCode"): Kind => ({
   token,
 });
 const CONFIG = (nerd: string): Kind => code(nerd, "iconConfig");
+const DATABASE: Kind = { nerd: "", unicode: "▤", token: "iconData" }; // nf-fa-database
 
 /** Lower-case file names that carry their own icon, checked before extensions. */
 const BY_NAME: Readonly<Record<string, Kind>> = {
@@ -65,6 +66,10 @@ const BY_EXTENSION: Readonly<Record<string, Kind>> = {
   css: code(""), // nf-dev-css3
   lock: CONFIG(""), // nf-fa-lock
   pdf: code("", "iconData"), // nf-fa-file_pdf_o
+  db: DATABASE,
+  db3: DATABASE,
+  sqlite: DATABASE,
+  sqlite3: DATABASE,
   zip: BINARY,
   gz: BINARY,
   tar: BINARY,

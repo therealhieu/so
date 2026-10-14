@@ -98,6 +98,13 @@ import {
   followShownNote,
   onMentionResults,
 } from "./side-panel";
+import {
+  onSqliteCount,
+  onSqliteLaidOut,
+  onSqlitePage,
+  onSqliteSchema,
+  syncSqlite,
+} from "./sqlite";
 import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
@@ -223,6 +230,14 @@ export function createUpdate(reg: Registries): Update {
         return onBaseScrolled(state, action);
       case "pdfInfo":
         return onPdfInfo(state, action);
+      case "sqliteSchema":
+        return onSqliteSchema(state, action);
+      case "sqlitePage":
+        return onSqlitePage(state, action);
+      case "sqliteCount":
+        return onSqliteCount(state, action);
+      case "sqliteLaidOut":
+        return onSqliteLaidOut(state, action);
       case "pdfLaidOut":
         return onPdfLaidOut(state, action);
       case "pdfText":
@@ -312,30 +327,33 @@ export function createUpdate(reg: Registries): Update {
     try {
       const r = syncAnnotations(
         state,
-        syncPdfLayout(
+        syncSqlite(
           state,
-          syncPdfInfo(
+          syncPdfLayout(
             state,
-            syncGitFiles(
+            syncPdfInfo(
               state,
-              syncHighlight(
+              syncGitFiles(
                 state,
-                syncFloat(
+                syncHighlight(
                   state,
-                  syncDiagnostics(
+                  syncFloat(
                     state,
-                    syncLineShift(
+                    syncDiagnostics(
                       state,
-                      syncEmbeds(
+                      syncLineShift(
                         state,
-                        followShownNote(
+                        syncEmbeds(
                           state,
-                          syncEditorKinds(
-                            syncBufferLists(state, step(state, action)),
-                            reg,
+                          followShownNote(
+                            state,
+                            syncEditorKinds(
+                              syncBufferLists(state, step(state, action)),
+                              reg,
+                            ),
                           ),
+                          reg,
                         ),
-                        reg,
                       ),
                     ),
                   ),

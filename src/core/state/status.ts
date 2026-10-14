@@ -17,6 +17,7 @@ import { gitSegment } from "./git";
 import { jumpSegment } from "./jumps";
 import { pdfPages, pdfWindow } from "./pdf";
 import { pdfSearchCount } from "./pdf-tools";
+import { rowCount, sqliteWindow } from "./sqlite";
 import type { AppState, BufferState } from "./types";
 
 export type StatusSegments = {
@@ -121,6 +122,11 @@ function modeOf(s: AppState): string {
   if (s.panels.explorer.focused) return "explorer";
   if (pdfWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
     return "pdf";
+  if (
+    sqliteWindow(s, s.windows.active) !== undefined &&
+    s.vim.mode === "normal"
+  )
+    return "sqlite";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
   return base.edit === undefined && base.search === undefined
@@ -153,6 +159,15 @@ export function statusSegments(s: AppState): StatusSegments {
       seg.page += ` ${Math.round(pdf.zoom * 100)}%`;
     const found = pdfSearchCount(s);
     if (found !== undefined) seg.search = found;
+  }
+  const db = sqliteWindow(s, s.windows.active);
+  if (b !== undefined && db !== undefined) {
+    delete seg.position;
+    if (db.source !== undefined && db.pane !== "schema") {
+      const count = rowCount(b, db);
+      const n = (x: number) => x.toLocaleString("en-US");
+      seg.page = `row ${n(db.row + 1)}/${count === undefined ? "?" : n(count)}`;
+    }
   }
   if (b !== undefined && w !== undefined) {
     if (b.fileType === markdownFileType.id) {

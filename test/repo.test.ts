@@ -51,7 +51,7 @@ test("CI runs on pull_request only", () => {
   expect(ci.concurrency["cancel-in-progress"]).toBe(true);
 });
 
-test("compile includes the worker", () => {
+test("compile includes the workers", () => {
   const sources = [
     ...Object.values(pkg.scripts as Record<string, string>),
     ...workflows.values(),
@@ -61,7 +61,9 @@ test("compile includes the worker", () => {
     .filter((line) => /\bbun build\b.*--compile/.test(line));
   expect(compiles.length).toBeGreaterThanOrEqual(3);
   for (const line of compiles)
-    expect(line).toContain("src/app/main.ts src/workspace/index-worker.ts");
+    expect(line).toContain(
+      "src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts",
+    );
 });
 
 /** Replaced code that must not come back: what to forbid, and where. */

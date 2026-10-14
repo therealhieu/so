@@ -93,6 +93,7 @@ export const EX_ALIASES: Readonly<Record<string, string>> = {
   Open: "file.systemOpen",
   Page: "pdf.page",
   Preview: "preview.start",
+  Sql: "sqlite.query",
   PreviewStop: "preview.stop",
   Today: "note.today",
   Yesterday: "note.yesterday",

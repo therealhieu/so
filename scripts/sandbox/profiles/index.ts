@@ -12,6 +12,7 @@ import { intro } from "./intro";
 import { large } from "./large";
 import { lsp } from "./lsp";
 import { pdf } from "./pdf";
+import { sqlite } from "./sqlite";
 import { tour } from "./tour";
 
 /** Every profile, in `--list` order. */
@@ -29,6 +30,7 @@ export const PROFILES: readonly Profile[] = [
   gitEol,
   lsp,
   pdf,
+  sqlite,
   intro,
 ];
 
