@@ -1,4 +1,5 @@
 import type {
+  SqliteCheckResult,
   SqliteCountResult,
   SqlitePageResult,
   SqliteSchemaResult,
@@ -30,6 +31,8 @@ export type SqliteHost = {
     slot: string,
   ): Promise<SqlitePageResult>;
   count(rel: string, table: string): Promise<SqliteCountResult>;
+  /** Whether `sql` would run; a check still waiting is replaced, answering `superseded`. */
+  check(rel: string, sql: string): Promise<SqliteCheckResult>;
   stop(): void;
 };
 
@@ -156,6 +159,7 @@ export function createSqliteHost(d: {
     page: (rel, source, offset, slot) =>
       enqueue(rel, { t: "page", source, offset }, slot),
     count: (rel, table) => enqueue(rel, { t: "count", table }),
+    check: (rel, sql) => enqueue(rel, { t: "check", sql }, "check"),
     stop() {
       stopped = true;
       worker?.terminate();

@@ -4,7 +4,13 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CELL_TEXT_MAX, PAGE_ROWS } from "../core/features/sqlite/types";
-import { countRows, encodeCell, readPage, readSchema } from "./sqlite";
+import {
+  checkStatement,
+  countRows,
+  encodeCell,
+  readPage,
+  readSchema,
+} from "./sqlite";
 
 const dir = mkdtempSync(join(tmpdir(), "so-sqlite-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -130,6 +136,34 @@ test("queries keep duplicate column names apart", () => {
   expect(r.columns.length).toBe(2);
   expect(new Set(r.columns).size).toBe(2);
   expect(r.rows.length).toBe(2);
+});
+
+test("a check compiles the query without running it", () => {
+  expect(checkStatement(users, "select id, email from users")).toEqual({
+    kind: "ok",
+    columns: ["id", "email"],
+  });
+  expect(checkStatement(users, "select emial from users")).toEqual({
+    kind: "failed",
+    reason: "no such column: emial",
+  });
+  expect(checkStatement(users, "select * from nope").kind).toBe("failed");
+  expect(checkStatement(users, "selec 1")).toMatchObject({ kind: "failed" });
+  expect(checkStatement(users, "delete from users")).toEqual({
+    kind: "failed",
+    reason: "Returns no rows: only reading statements run here",
+  });
+  expect(checkStatement(users, "select * from users where id = ?")).toEqual({
+    kind: "failed",
+    reason: "Parameters (?, :name) are not supported",
+  });
+  expect(checkStatement(users, "select 1; select 2")).toEqual({
+    kind: "failed",
+    reason: "Run one statement at a time",
+  });
+  expect(checkStatement(users, "pragma table_info(users)").kind).toBe("ok");
+  const after = readPage(users, { kind: "table", name: "users" }, 0);
+  expect(after.kind === "ok" && after.rows.length).toBe(2);
 });
 
 test("a query may end in a comment", () => {

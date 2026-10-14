@@ -4,7 +4,6 @@ import {
   type SqlitePage,
   type SqliteWindowState,
 } from "../features/sqlite/file-type";
-import { oneStatement } from "../features/sqlite/statement";
 import { sqliteTableModel } from "../features/sqlite/table";
 import {
   PAGE_ROWS,
@@ -21,6 +20,7 @@ import type { CommandContext, CommandResult } from "./commands";
 import { sameStamp, windowBuffer } from "./pdf";
 import { openPicker } from "./picker";
 import { message, none } from "./result";
+import { openSqliteQuery } from "./sqlite-query";
 import type {
   Action,
   AppState,
@@ -521,31 +521,6 @@ function reload(a: Active): Result {
   return { state: s, effects: [read.effect] };
 }
 
-export const SQL_USAGE = ":Sql <query> runs a read-only query on this database";
-
-/** `:Sql <query>`: show what the query returns; `Esc` goes back to the table. */
-function runQuery(c: CommandContext): Result {
-  return withActive((a) => {
-    const sql = c.args?.trim() ?? "";
-    if (sql === "") return message(a.s, SQL_USAGE);
-    const one = oneStatement(sql);
-    if ("error" in one) return message(a.s, one.error, "error");
-    const src = a.ws.source;
-    const back = src?.kind === "table" ? src.name : a.ws.back;
-    const { widths: _, back: __, ...rest } = a.ws;
-    return set(a, {
-      ...rest,
-      ...(back === undefined ? {} : { back }),
-      pane: "rows",
-      source: { kind: "query", sql: one.sql },
-      row: 0,
-      column: 0,
-      col: 0,
-      paneTop: 0,
-    });
-  })(c);
-}
-
 const SQLITE = ["sqlite"] as const;
 const cmd = (
   id: string,
@@ -628,7 +603,11 @@ export const sqliteCommands = [
   ),
   cmd("sqlite.copy", "Copy the focused value", withActive(copyCell)),
   cmd("sqlite.reload", "Read the database again", withActive(reload)),
-  cmd("sqlite.query", "Run a read-only SQL query", runQuery),
+  cmd(
+    "sqlite.query",
+    "Write a read-only SQL query",
+    withActive((a) => openSqliteQuery(a.s, a.id)),
+  ),
 ];
 
 const KEYS: readonly (readonly [string, string])[] = [
@@ -656,6 +635,7 @@ const KEYS: readonly (readonly [string, string])[] = [
   ["<Esc>", "sqlite.back"],
   ["y", "sqlite.copy"],
   ["R", "sqlite.reload"],
+  ["s", "sqlite.query"],
 ];
 
 export const sqliteBindings: readonly Binding[] = KEYS.map(([seq, id]) => ({

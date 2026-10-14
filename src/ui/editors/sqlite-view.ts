@@ -190,7 +190,7 @@ export class SqliteView extends Renderable implements WindowView {
     const query = ws.source?.kind === "query";
     const back =
       query && ws.back !== undefined ? `esc back to ${ws.back} · ` : "";
-    const hint = `${back}⏎ value · y copy · t tables${query ? "" : " · ⇥ schema"} · R reload · :Sql query`;
+    const hint = `${back}⏎ value · y copy · t tables${query ? "" : " · ⇥ schema"} · R reload · s query`;
     const p = shownPage(ws);
     const loading = ws.want !== undefined;
     if (p === undefined)

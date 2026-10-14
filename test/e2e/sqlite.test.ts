@@ -49,18 +49,34 @@ test("a database shows its first table, its schema, a value, and a query", async
       p.type("q");
       await p.waitFor(() => p.screen().includes("rows 1–3 of 3"));
 
-      // Longer than the toolbar: the query is cut, and the rows still show.
+      // The dialog checks the query as it is typed; Enter waits for a fix.
+      p.type("s");
+      await p.waitFor(() => p.screen().includes("Query · app.db"));
+      p.type("select emial from users");
+      await p.waitFor(() => p.screen().includes("✗ no such column: emial"));
+      p.type("\r");
+      expect(p.screen()).toContain("Query · app.db");
+      // Ctrl-U clears it. Longer than the toolbar: the query is cut, and the rows still show.
       p.type(
-        `:Sql select email from users where id = 2 and email <> '${"x".repeat(200)}'\r`,
+        `\x15select email from users where id = 2 and email <> '${"x".repeat(200)}'`,
       );
+      await p.waitFor(() => p.screen().includes("✓ 1 column: email"));
+      p.type("\r");
       await p.waitFor(() => p.screen().includes("rows 1–1 of 1"));
       expect(p.screen()).toContain("app.db › select email from users");
       expect(p.screen()).toContain("b@x.dev");
       expect(p.screen()).not.toContain("a@x.dev");
-      p.type(":Sql delete from users\r");
-      await p.waitFor(() => p.screen().includes("readonly"));
-      p.type("\x1b");
+
+      p.type("s\x15delete from users");
+      await p.waitFor(() => p.screen().includes("✗ Returns no rows"));
+      // A pasted query keeps its line break.
+      p.type("\x15\x1b[200~select id -- every id\nfrom users\x1b[201~");
+      await p.waitFor(() => p.screen().includes("✓ 1 column: id"));
+      p.type("\r");
       await p.waitFor(() => p.screen().includes("rows 1–3 of 3"));
+      expect(p.screen()).toContain("app.db › select id -- every id from users");
+      p.type("\x1b");
+      await p.waitFor(() => p.screen().includes("app.db › users"));
       p.type(":q\r");
     },
   });

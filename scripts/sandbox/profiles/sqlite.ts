@@ -63,7 +63,7 @@ function stageShop(path: string): void {
 
 export const sqlite: Profile = {
   name: "sqlite",
-  summary: "SQLite: tables, a view, a schema, values, and :Sql queries",
+  summary: "SQLite: tables, a view, a schema, values, and the query dialog",
   journeys: [
     {
       title: "Browse",
@@ -91,14 +91,18 @@ export const sqlite: Profile = {
     {
       title: "Queries",
       steps: [
-        ":Sql select plan, count(*) from customers group by plan",
-        ":Sql delete from customers",
-        "Press Esc",
+        "Press s; type select plan, count(*) from custo, press Tab, then type group by plan",
+        "Make it select plnn: wait for the check, then press Enter",
+        "Fix it and press Enter; press Esc",
+        "Press s, Ctrl-U, type delete from customers",
+        "Press s, Ctrl-U, then ↑ twice",
       ],
       expect: [
-        "Three rows, one per plan",
-        "The delete fails: attempt to write a readonly database",
-        "Esc returns to the table the query ran from",
+        "Tab writes customers; the dialog shows ✓ 2 columns: plan, count(*)",
+        "✗ no such column: plnn shows and Enter keeps the dialog open",
+        "Three rows, one per plan; Esc returns to customers",
+        "✗ Returns no rows: only reading statements run here",
+        "↑ brings back the earlier queries",
       ],
     },
     {

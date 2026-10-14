@@ -94,7 +94,7 @@ export type RunnerDeps = {
   /** Counts PDF pages; without one, every PDF answers that Poppler is missing. */
   pdf?: Pick<PdfRasterizer, "info" | "text" | "layout" | "outline">;
   /** Reads SQLite databases; without one, every read fails. */
-  sqlite?: Pick<SqliteHost, "schema" | "page" | "count">;
+  sqlite?: Pick<SqliteHost, "schema" | "page" | "count" | "check">;
 };
 
 export type EffectRunner = {
@@ -977,6 +977,14 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             result,
           }),
         );
+        return;
+      }
+      case "sqliteCheck": {
+        void (d.sqlite?.check(e.path, e.sql) ?? noSqlite()).then((result) => {
+          // A newer edit's check took its place in the queue.
+          if (result.kind === "failed" && result.reason === SUPERSEDED) return;
+          d.dispatch({ type: "sqliteChecked", gen: e.gen, result });
+        });
         return;
       }
       case "readAnnotations": {

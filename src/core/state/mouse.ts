@@ -119,20 +119,21 @@ export function onMouse(
 
 /**
  * Whether a press on `t` stops at the gate without reaching `t`: any press
- * while a prompt or conflict dialog is open, a press outside any other
+ * while a prompt, conflict, or SQLite query dialog is open, a press outside any other
  * overlay but completion and the PDF action float, and a press anywhere but the command line while
  * it is open.
  */
 export function pressStops(s: AppState, t: MouseTarget): boolean {
   const open = s.overlay.kind;
-  if (open === "prompt" || open === "conflict") return true;
+  if (open === "prompt" || open === "conflict" || open === "sqliteQuery")
+    return true;
   if (open === "completion" || open === "pdfMenu") return false;
   if (open !== "none") return !onOverlay(t);
   return s.vim.mode === "cmdline" && t.kind !== "inert";
 }
 
 /**
- * Prompt and conflict dialogs take no mouse input. A press outside any
+ * Prompt, conflict, and SQLite query dialogs take no mouse input. A press outside any
  * other overlay, or anywhere but the command line while it is open, closes
  * it like `<Esc>` and goes no further. Completion gives way to a press in
  * the body: it closes, Insert stays, and the press goes on. So does the
@@ -145,7 +146,8 @@ function overlayGate(
   reg: Registries,
 ): { stop: Result } | { go: AppState } {
   const open = s.overlay.kind;
-  if (open === "prompt" || open === "conflict") return { stop: none(s) };
+  if (open === "prompt" || open === "conflict" || open === "sqliteQuery")
+    return { stop: none(s) };
   if (e.kind !== "press") return { go: s };
   const t = e.target;
   if (open === "completion" || open === "pdfMenu")

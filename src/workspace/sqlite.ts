@@ -11,6 +11,7 @@ import {
   CELL_TEXT_MAX,
   PAGE_ROWS,
   type SqliteCell,
+  type SqliteCheckResult,
   type SqliteColumn,
   type SqliteCountResult,
   type SqliteIndex,
@@ -192,6 +193,39 @@ export function readPage(
           rows: all.slice(0, PAGE_ROWS).map((r) => r.map(encodeCell)),
           more: all.length > PAGE_ROWS,
         };
+      } finally {
+        st.finalize();
+      }
+    });
+  } catch (e) {
+    return { kind: "failed", reason: reasonOf(e) };
+  }
+}
+
+/**
+ * Whether `sql` would run: SQLite compiles it without running it, which
+ * finds syntax errors and unknown tables and columns. A statement without
+ * result columns is refused, as only reading statements run here, and so
+ * is one with parameters, which nothing would bind.
+ */
+export function checkStatement(path: string, sql: string): SqliteCheckResult {
+  const one = oneStatement(sql);
+  if ("error" in one) return { kind: "failed", reason: one.error };
+  try {
+    return withDb(path, (db) => {
+      const st = db.prepare(one.sql);
+      try {
+        if (st.paramsCount > 0)
+          return {
+            kind: "failed",
+            reason: "Parameters (?, :name) are not supported",
+          };
+        if (st.columnNames.length === 0)
+          return {
+            kind: "failed",
+            reason: "Returns no rows: only reading statements run here",
+          };
+        return { kind: "ok", columns: [...st.columnNames] };
       } finally {
         st.finalize();
       }

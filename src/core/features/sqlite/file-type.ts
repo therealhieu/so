@@ -36,6 +36,8 @@ export type SqliteWindowState = {
   paneTop: number;
   bodyRows?: number;
   paneLines?: number;
+  /** Queries run in this window, oldest first, each once. */
+  queries?: string[];
 };
 
 export function isSqliteWindowState(v: unknown): v is SqliteWindowState {

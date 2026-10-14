@@ -16,7 +16,7 @@ so [path]
 - **Daily notes and templates** — Obsidian-compatible; never overwrite an existing file.
 - **Bases** — Obsidian `.base` files open as table and Kanban views that write back to frontmatter.
 - **PDFs** — read, search, and zoom PDFs in the terminal; select text with the mouse to copy, highlight, or add a note; list your highlights and notes (`<leader>pa`); embed a page in a note (`![[paper.pdf#page=3]]`). Needs [Poppler](https://poppler.freedesktop.org) (`brew install poppler`).
-- **SQLite** — open a `.db`, `.sqlite`, `.sqlite3`, or `.db3` file to page through its tables and views, read a table's schema (`Tab`), see a whole value (`Enter`), and run read-only queries (`:Sql select …`). Nothing is ever written to the database.
+- **SQLite** — open a `.db`, `.sqlite`, `.sqlite3`, or `.db3` file to page through its tables and views, read a table's schema (`Tab`), see a whole value (`Enter`), and run read-only queries in a dialog (`s`) that checks them as you type and completes table and column names. Nothing is ever written to the database.
 - **Git** — change column, blame, hunk stage/reset, and a lazygit handoff (`<leader>gg`).
 - **Code intelligence** — language servers for diagnostics, hover, go-to, rename, code actions, formatting, and completion.
 - **Mouse** — works on every surface, always running the same path as a keyboard action.

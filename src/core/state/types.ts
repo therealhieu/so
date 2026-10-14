@@ -14,6 +14,7 @@ import type { PdfAnnotation } from "../features/pdf/annotations";
 import type { PdfPageLayout, PdfPoint } from "../features/pdf/layout";
 import type { PdfOutlineItem } from "../features/pdf/outline";
 import type {
+  SqliteCheckResult,
   SqliteCountResult,
   SqlitePageResult,
   SqliteSchemaResult,
@@ -37,6 +38,7 @@ import type {
 } from "../lang/markdown/frontmatter-patch";
 import type { MermaidSvg } from "../lang/markdown/renderers/mermaid";
 import type { LocalDate } from "../time/local";
+import type { LineField } from "./line-field";
 import type {
   CodeCompletionItem,
   CodeEdit,
@@ -107,7 +109,8 @@ export type TimerId =
   | `lsp:${number}`
   | `lspFormat:${BufferId}`
   | `gitDiff:${BufferId}`
-  | "gitRefresh";
+  | "gitRefresh"
+  | "sqliteCheck";
 
 /**
  * Where a buffer's save stands. `writing.at` is when the write was requested
@@ -448,7 +451,27 @@ export type Overlay =
   | { kind: "calendar"; calendar: CalendarState }
   | { kind: "zoom"; zoom: ZoomState }
   | { kind: "gitHunk"; bufferId: BufferId; hunk: Hunk }
-  | { kind: "pdfMenu"; window: WindowId; on: PdfMenuSubject };
+  | { kind: "pdfMenu"; window: WindowId; on: PdfMenuSubject }
+  | { kind: "sqliteQuery"; query: SqliteQueryState };
+
+/**
+ * The query dialog of SQLite window `window`. `field` may hold newlines.
+ * Each edit bumps `gen`; the check answers only the latest. `recall` is the
+ * history entry shown while stepping with `↑`/`↓`, `draft` the text typed
+ * before it; `matches` lists what `Tab` could not choose between.
+ */
+export type SqliteQueryState = {
+  window: WindowId;
+  field: LineField;
+  gen: number;
+  check:
+    | { status: "idle" | "checking" }
+    | { status: "ok"; columns: string[] }
+    | { status: "failed"; reason: string };
+  recall?: number;
+  draft?: string;
+  matches?: string[];
+};
 
 /**
  * What the PDF action float is about: the selection, or an annotation, shown
@@ -823,6 +846,10 @@ export type Action =
       table: string;
       result: SqliteCountResult;
     }
+  /** Answers the `sqliteCheck` effect for edit `gen` of the query dialog. */
+  | { type: "sqliteChecked"; gen: number; result: SqliteCheckResult }
+  /** Text pasted into the terminal. */
+  | { type: "paste"; text: string }
   /** Answers the `pdfInfo` effect for the file version `stamp`. */
   | { type: "pdfInfo"; path: string; stamp: Stamp; result: PdfInfoResult }
   /** How many rows a PDF window drew its page in and how many it shows. */
@@ -1110,6 +1137,8 @@ export type Effect =
     }
   /** Count the rows of table `table`; answered by `sqliteCount`. */
   | { kind: "sqliteCount"; path: string; gen: number; table: string }
+  /** Whether `sql` would run on the database at `path`; answered by `sqliteChecked`. */
+  | { kind: "sqliteCheck"; path: string; gen: number; sql: string }
   /** Read the annotations file of PDF `pdf`; answered by `annotationsRead`. */
   | { kind: "readAnnotations"; pdf: string }
   /** Replace the annotations file of PDF `pdf`; only a failure is answered. */

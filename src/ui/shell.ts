@@ -29,6 +29,7 @@ import { ToastStack } from "./overlays/notify";
 import { PdfMenuView } from "./overlays/pdf-menu";
 import { PickerView } from "./overlays/picker";
 import { PromptView } from "./overlays/prompt";
+import { SqliteQueryView } from "./overlays/sqlite-query";
 import { WhichKeyView } from "./overlays/whichkey";
 import { ZoomOverlay } from "./overlays/zoom";
 import { Bufferline } from "./views/bufferline";
@@ -195,6 +196,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           new ZoomOverlay(renderer, ctx),
           new HunkView(renderer, () => windows.anchor()),
           new PdfMenuView(renderer, () => windows.pdfMenuBox()),
+          new SqliteQueryView(renderer, ctx),
         ],
         new LspFloatView(renderer, (f) =>
           f.pointer === true ? router?.pointer() : windows.cursor(),
@@ -261,6 +263,10 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         emit: (key, now) => store.dispatch({ type: "key", key, now }),
       });
       renderer.keyInput.on("keypress", (e) => normalizer.feed(e));
+      const utf8 = new TextDecoder();
+      renderer.keyInput.on("paste", (e) =>
+        store.dispatch({ type: "paste", text: utf8.decode(e.bytes) }),
+      );
       renderer.on("resize", (cols: number, rows: number) =>
         store.dispatch({ type: "resize", cols, rows }),
       );

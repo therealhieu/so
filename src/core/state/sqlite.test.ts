@@ -14,7 +14,7 @@ import type {
 } from "../features/sqlite/types";
 import { splitKeys } from "../kernel/vim/keys";
 import { activeBuffer, activeWindow } from "./buffers";
-import { SQL_USAGE, sqliteWindow } from "./sqlite";
+import { sqliteWindow } from "./sqlite";
 import type {
   Action,
   AppState,
@@ -40,7 +40,17 @@ function run(s: AppState, ...actions: Action[]): Result {
 
 const keys = (seq: string): Action[] =>
   splitKeys(seq).map((key) => ({ type: "key", key, now: 0 }));
-const ex = (line: string): Action[] => keys(`:${line}<CR>`);
+/** Each character of `text` as a key, so `<` stays a character. */
+const chars = (text: string): Action[] =>
+  [...text].map((key) => ({ type: "key", key, now: 0 }));
+/** Open the query dialog, clear what it holds, type `sql`, and run it. */
+const query = (sql: string): Action[] => [
+  ...keys("s<C-u>"),
+  ...chars(sql),
+  ...keys("<CR>"),
+];
+const dialog = (s: AppState) =>
+  s.overlay.kind === "sqliteQuery" ? s.overlay.query : undefined;
 const loaded = (n = 1): Action => ({
   type: "fileLoaded",
   path: PATH,
@@ -282,9 +292,15 @@ test("R reads the same bytes again under a new read", () => {
   });
 });
 
-test(":Sql shows a query's rows; Esc goes back to the table", () => {
+test("s opens the query dialog; Enter shows the query's rows; Esc goes back to the table", () => {
   const s = opened();
-  const q = run(s, ...ex("Sql select * from users where id > 3"));
+  const open = run(s, ...keys("s"));
+  expect(dialog(open.state)).toMatchObject({
+    field: { value: "" },
+    check: { status: "idle" },
+  });
+  const q = run(s, ...query("select * from users where id > 3"));
+  expect(q.state.overlay.kind).toBe("none");
   const source = {
     kind: "query",
     sql: "select * from users where id > 3",
@@ -299,22 +315,128 @@ test(":Sql shows a query's rows; Esc goes back to the table", () => {
   expect(ws(back.state)?.source).toEqual({ kind: "table", name: "kv" });
 });
 
-test(":Sql without a query says how to use it, and refuses two statements", () => {
+test("Enter keeps the dialog open with the reason when the query cannot run", () => {
   const s = opened();
-  expect(run(s, ...ex("Sql")).state.notifications.message?.text).toBe(
-    SQL_USAGE,
-  );
-  const two = run(s, ...ex("Sql select 1; delete from kv"));
-  expect(two.state.notifications.message).toEqual({
-    text: "Run one statement at a time",
-    level: "error",
+  const blank = run(s, ...keys("s<CR>"));
+  expect(dialog(blank.state)?.check).toEqual({
+    status: "failed",
+    reason: "Nothing to run",
+  });
+  const two = run(s, ...query("select 1; delete from kv"));
+  expect(dialog(two.state)?.check).toEqual({
+    status: "failed",
+    reason: "Run one statement at a time",
   });
   expect(ws(two.state)?.source).toEqual({ kind: "table", name: "kv" });
 });
 
+test("a pause in typing checks the query; only the latest edit's answer is kept", () => {
+  const s = opened();
+  const typed = run(s, ...keys("s"), ...chars("select id"));
+  expect(typed.effects).toContainEqual({
+    kind: "startTimer",
+    id: "sqliteCheck",
+    ms: 150,
+  });
+  const gen = dialog(typed.state)?.gen ?? 0;
+  expect(dialog(typed.state)?.check.status).toBe("checking");
+  const timer = run(typed.state, { type: "timer", id: "sqliteCheck", now: 0 });
+  expect(timer.effects).toEqual([
+    { kind: "sqliteCheck", path: PATH, gen, sql: "select id" },
+  ]);
+  const stale = run(typed.state, {
+    type: "sqliteChecked",
+    gen: gen - 1,
+    result: { kind: "failed", reason: "old" },
+  });
+  expect(dialog(stale.state)?.check.status).toBe("checking");
+  const ok = run(typed.state, {
+    type: "sqliteChecked",
+    gen,
+    result: { kind: "ok", columns: ["id"] },
+  });
+  expect(dialog(ok.state)?.check).toEqual({ status: "ok", columns: ["id"] });
+  const bad = run(typed.state, {
+    type: "sqliteChecked",
+    gen,
+    result: { kind: "failed", reason: "no such column: idd" },
+  });
+  const stays = run(bad.state, ...keys("<CR>"));
+  expect(dialog(stays.state)?.check.status).toBe("failed");
+  expect(ws(stays.state)?.source).toEqual({ kind: "table", name: "kv" });
+});
+
+test("Tab completes a table or column name, and lists names it cannot choose between", () => {
+  const a = run(fresh(), loaded());
+  const s = run(a.state, {
+    type: "sqliteSchema",
+    path: PATH,
+    stamp: stamp(1),
+    gen: 1,
+    result: {
+      kind: "ok",
+      tables: [table("users"), table("user roles"), table("kv")],
+    },
+  }).state;
+  const value = (r: Result) => dialog(r.state)?.field.value;
+  expect(
+    value(run(s, ...keys("s"), ...chars("select em"), ...keys("<Tab>"))),
+  ).toBe("select email");
+  const both = run(s, ...keys("s"), ...chars("from U"), ...keys("<Tab>"));
+  expect(value(both)).toBe("from user");
+  expect(dialog(both.state)?.matches).toEqual(["users", "user roles"]);
+  expect(value(run(both.state, ...chars(" "), ...keys("<BS><Tab>")))).toBe(
+    "from user",
+  );
+  // After FROM only a table or view can follow, so the email column is not offered.
+  expect(
+    value(run(s, ...keys("s"), ...chars("from em"), ...keys("<Tab>"))),
+  ).toBe("from em");
+  const roles = run(a.state, {
+    type: "sqliteSchema",
+    path: PATH,
+    stamp: stamp(1),
+    gen: 1,
+    result: { kind: "ok", tables: [table("user roles"), table("kv")] },
+  }).state;
+  expect(
+    value(run(roles, ...keys("s"), ...chars("from us"), ...keys("<Tab>"))),
+  ).toBe('from "user roles"');
+});
+
+test("↑ and ↓ step through the queries run before, then back to the draft", () => {
+  const s = run(opened(), ...query("select 1"), ...query("select 2")).state;
+  const draft = run(s, ...keys("s<C-u>"), ...chars("sel"));
+  const value = (r: Result) => dialog(r.state)?.field.value;
+  const up = run(draft.state, ...keys("<Up>"));
+  expect(value(up)).toBe("select 2");
+  expect(value(run(up.state, ...keys("<Up><Up>")))).toBe("select 1");
+  expect(value(run(up.state, ...keys("<Down>")))).toBe("sel");
+  const again = run(s, ...query("select 1"));
+  expect(ws(again.state)?.queries).toEqual(["select 2", "select 1"]);
+});
+
+test("a paste goes into the dialog with its line breaks; Ctrl-J breaks a line", () => {
+  const s = run(opened(), ...keys("s")).state;
+  const pasted = run(s, {
+    type: "paste",
+    text: "select id -- the id\r\nfrom kv",
+  });
+  expect(dialog(pasted.state)?.field).toEqual({
+    value: "select id -- the id\nfrom kv",
+    caret: 27,
+  });
+  const broken = run(pasted.state, ...keys("<Home><C-j>"));
+  expect(dialog(broken.state)?.field.value).toBe(
+    "select id -- the id\n\nfrom kv",
+  );
+  const plain = opened();
+  expect(run(plain, { type: "paste", text: "x" }).state).toBe(plain);
+});
+
 test("a failed query is kept and not asked again", () => {
   const s = opened();
-  const q = run(s, ...ex("Sql select nope")).state;
+  const q = run(s, ...query("select nope")).state;
   const source = { kind: "query", sql: "select nope" } as const;
   const failed = run(
     q,
@@ -341,7 +463,7 @@ test("Tab toggles the schema, which a query does not have", () => {
   const shown = run(s, ...keys("<Tab>"));
   expect(ws(shown.state)?.pane).toBe("schema");
   expect(ws(run(shown.state, ...keys("<Tab>")).state)?.pane).toBe("rows");
-  const q = run(s, ...ex("Sql select 1"), ...keys("<Tab>"));
+  const q = run(s, ...query("select 1"), ...keys("<Tab>"));
   expect(q.state.notifications.message?.text).toBe("a query has no schema");
 });
 

@@ -15,6 +15,7 @@ import { createUpdate, type Registries } from "../../src/core/state/update";
 import { BaseView } from "../../src/ui/editors/base-view";
 import { PdfView } from "../../src/ui/editors/pdf-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
+import { SqliteView } from "../../src/ui/editors/sqlite-view";
 import { EditorView } from "../../src/ui/editors/text-view";
 import {
   createShell,
@@ -79,6 +80,7 @@ export async function mountShell(o: MountOptions) {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
+  registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);

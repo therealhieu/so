@@ -105,6 +105,7 @@ import {
   onSqliteSchema,
   syncSqlite,
 } from "./sqlite";
+import { onPaste, onSqliteChecked, onSqliteCheckTimer } from "./sqlite-query";
 import type { Action, AppState, Effect, Result } from "./types";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
@@ -238,6 +239,10 @@ export function createUpdate(reg: Registries): Update {
         return onSqliteCount(state, action);
       case "sqliteLaidOut":
         return onSqliteLaidOut(state, action);
+      case "sqliteChecked":
+        return onSqliteChecked(state, action);
+      case "paste":
+        return onPaste(state, action.text);
       case "pdfLaidOut":
         return onPdfLaidOut(state, action);
       case "pdfText":
@@ -425,6 +430,7 @@ function onTimerAction(
       effects: [{ kind: "saveState", state: snapshotSession(s) }],
     };
   if (a.id === "gitRefresh") return onGitRefreshTimer(s);
+  if (a.id === "sqliteCheck") return onSqliteCheckTimer(s);
   if (a.id.startsWith("gitDiff:"))
     return onGitDiffTimer(s, Number(a.id.slice("gitDiff:".length)));
   return onTimer(s, a, reg);

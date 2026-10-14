@@ -59,6 +59,11 @@ export type SqlitePageResult =
   | { kind: "ok"; columns: string[]; rows: SqliteCell[][]; more: boolean }
   | { kind: "failed"; reason: string };
 
+/** Whether a query compiles into one statement that returns rows, and its columns. */
+export type SqliteCheckResult =
+  | { kind: "ok"; columns: string[] }
+  | { kind: "failed"; reason: string };
+
 export type SqliteCountResult =
   | { kind: "ok"; count: number }
   | { kind: "failed"; reason: string };

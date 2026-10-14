@@ -1,10 +1,11 @@
 import type {
+  SqliteCheckResult,
   SqliteCountResult,
   SqlitePageResult,
   SqliteSchemaResult,
   SqliteSource,
 } from "../core/features/sqlite/types";
-import { countRows, readPage, readSchema } from "./sqlite";
+import { checkStatement, countRows, readPage, readSchema } from "./sqlite";
 
 /** Requests to the SQLite worker; `path` is a real, absolute path. */
 export type ToSqliteWorker =
@@ -16,12 +17,17 @@ export type ToSqliteWorker =
       source: SqliteSource;
       offset: number;
     }
-  | { id: number; t: "count"; path: string; table: string };
+  | { id: number; t: "count"; path: string; table: string }
+  | { id: number; t: "check"; path: string; sql: string };
 
 /** The answer to request `id`. */
 export type FromSqliteWorker = {
   id: number;
-  result: SqliteSchemaResult | SqlitePageResult | SqliteCountResult;
+  result:
+    | SqliteSchemaResult
+    | SqlitePageResult
+    | SqliteCountResult
+    | SqliteCheckResult;
 };
 
 declare const self: Worker;
@@ -34,6 +40,8 @@ function answer(m: ToSqliteWorker): FromSqliteWorker["result"] {
       return readPage(m.path, m.source, m.offset);
     case "count":
       return countRows(m.path, m.table);
+    case "check":
+      return checkStatement(m.path, m.sql);
   }
 }
 
