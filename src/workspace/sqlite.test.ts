@@ -204,7 +204,7 @@ test("rows committed to the WAL by another connection are seen", () => {
   writer.close();
 });
 
-test("a WAL database without its -wal and -shm files opens and stays as it is", () => {
+test("a WAL database without its -wal and -shm files opens and its bytes stay as they are", async () => {
   const path = join(dir, "wal only?#.db");
   const w = new Database(path);
   w.run("PRAGMA journal_mode = WAL");
@@ -213,10 +213,10 @@ test("a WAL database without its -wal and -shm files opens and stays as it is", 
   w.close(true);
   rmSync(`${path}-wal`, { force: true });
   rmSync(`${path}-shm`, { force: true });
+  const before = await Bun.file(path).bytes();
   expect(readSchema(path).kind).toBe("ok");
   expect(countRows(path, "t")).toEqual({ kind: "ok", count: 1 });
-  expect(Bun.file(`${path}-wal`).size).toBe(0);
-  expect(Bun.file(`${path}-shm`).size).toBe(0);
+  expect(await Bun.file(path).bytes()).toEqual(before);
 });
 
 test("long text is cut and keeps its whole length", () => {

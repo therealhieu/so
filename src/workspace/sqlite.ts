@@ -54,10 +54,10 @@ function openRun<T>(name: string, f: (db: Database) => T): T {
 }
 
 /**
- * Run `f` on a read-only connection to `path`. A WAL database whose `-wal`
- * and `-shm` files are gone cannot be opened read-only, as SQLite would have
- * to create them; with no `-wal` file the main file holds every commit, so it
- * is opened immutable instead, which creates nothing.
+ * Run `f` on a read-only connection to `path`. Some SQLite builds (macOS's)
+ * refuse to open a WAL database read-only when its `-wal` and `-shm` files
+ * are gone; with no `-wal` file the main file holds every commit, so it is
+ * opened immutable instead.
  */
 function withDb<T>(path: string, f: (db: Database) => T): T {
   try {
