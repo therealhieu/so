@@ -51,7 +51,7 @@ Config lives at `~/.config/so/config.toml` (or `$XDG_CONFIG_HOME/so/config.toml`
 
 ## Development
 
-To run from source, install [Bun](https://bun.sh) `1.4.2`.
+To run from source, install [Bun](https://bun.sh). CI uses `1.4.2` (pinned in `package.json`); other versions aren't tested.
 
 ```sh
 bun install --frozen-lockfile
