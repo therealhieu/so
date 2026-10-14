@@ -20,9 +20,21 @@ so [path]
 - **Code intelligence** — language servers for diagnostics, hover, go-to, rename, code actions, formatting, and completion.
 - **Mouse** — works on every surface, always running the same path as a keyboard action.
 
+## Install
+
+macOS and Linux (x64, arm64):
+
+```sh
+brew install therealhieu/tap/so
+# or
+bun add -g @therealhieu/so      # npm install -g @therealhieu/so also works
+```
+
+Each install is a single prebuilt binary, so it needs no runtime. Homebrew core also has an unrelated `so`, so install only one of the two. Binaries are also attached to each [GitHub release](https://github.com/therealhieu/so/releases).
+
 ## Getting Started
 
-Requires [Bun](https://bun.sh) `1.4.2`.
+To run from source, install [Bun](https://bun.sh) `1.4.2`.
 
 ```sh
 bun install --frozen-lockfile

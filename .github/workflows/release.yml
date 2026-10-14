@@ -1,6 +1,7 @@
 name: release
-# A pushed `v*` tag builds, smoke-tests, and publishes a release.
-# A manual run is a dry run: the same build and smoke tests, nothing published.
+# A pushed `v*` tag builds, smoke-tests, and publishes a release, then the
+# npm packages and the Homebrew formula (not for prereleases).
+# A manual run is a dry run: the same build and checks, nothing published.
 on:
   push:
     tags: ["v*"]
@@ -47,8 +48,42 @@ jobs:
       - env:
           V: ${{ needs.build.outputs.version }}
         run: chmod +x so-${{ matrix.t }} && test "$(./so-${{ matrix.t }} --version)" = "so $V"
+  channels:
+    # Installs the formula and the npm packages from the built binaries.
+    needs: build
+    runs-on: macos-15
+    env:
+      V: ${{ needs.build.outputs.version }}
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist
+      - name: Homebrew formula
+        run: |
+          tap="$(brew --repository)/Library/Taps/therealhieu/homebrew-tap"
+          mkdir -p "$tap/Formula"
+          bun scripts/release-channels.ts formula "$V" "file://$PWD/dist" dist > "$tap/Formula/so.rb"
+          brew style therealhieu/tap/so
+          brew audit therealhieu/tap/so
+          brew install therealhieu/tap/so
+          test "$(so --version)" = "so $V"
+      - name: npm packages
+        run: |
+          tag=latest; if [[ "$V" == *-* ]]; then tag=next; fi
+          bun scripts/release-channels.ts npm "$V" dist "$RUNNER_TEMP/npm" > "$RUNNER_TEMP/order"
+          while read -r dir; do npm publish "$dir" --dry-run --access public --tag "$tag"; done < "$RUNNER_TEMP/order"
+          mkdir -p "$RUNNER_TEMP/tgz"
+          npm pack --pack-destination "$RUNNER_TEMP/tgz" "$RUNNER_TEMP/npm/so" "$RUNNER_TEMP/npm/so-darwin-arm64"
+          npm install -g --prefix "$RUNNER_TEMP/npm-global" "$RUNNER_TEMP"/tgz/*.tgz
+          test "$("$RUNNER_TEMP/npm-global/bin/so" --version)" = "so $V"
+          BUN_INSTALL="$RUNNER_TEMP/bun-global" bun add -g "$RUNNER_TEMP"/tgz/*.tgz
+          test "$("$RUNNER_TEMP/bun-global/bin/so" --version)" = "so $V"
   publish:
-    needs: smoke
+    needs: [smoke, channels]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
     permissions:
@@ -63,3 +98,65 @@ jobs:
           gh release create "$GITHUB_REF_NAME" so-* SHA256SUMS "${flags[@]}"
         env:
           GH_TOKEN: ${{ github.token }}
+  npm:
+    needs: [build, publish]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      # npm 11.5.1+ publishes through trusted publishing (OIDC).
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist
+      - env:
+          V: ${{ needs.build.outputs.version }}
+          # Only for a package's first publish, before its trusted publisher exists.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          tag=latest; if [[ "$V" == *-* ]]; then tag=next; fi
+          bun scripts/release-channels.ts npm "$V" dist "$RUNNER_TEMP/npm" > "$RUNNER_TEMP/order"
+          # Platform packages first, the launcher last; a rerun skips what is already up.
+          while read -r dir; do
+            name="$(jq -r .name "$dir/package.json")"
+            if npm view "$name@$V" version >/dev/null 2>&1; then echo "$name@$V is already published"; continue; fi
+            npm publish "$dir" --access public --provenance --tag "$tag"
+          done < "$RUNNER_TEMP/order"
+  homebrew:
+    needs: [build, publish]
+    if: github.ref_type == 'tag' && !contains(github.ref_name, '-')
+    runs-on: macos-15
+    env:
+      V: ${{ needs.build.outputs.version }}
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "$GITHUB_REF_NAME" --pattern SHA256SUMS --dir dist
+      - env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          tap="$(brew --repository)/Library/Taps/therealhieu/homebrew-tap"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/therealhieu/homebrew-tap.git" "$tap"
+          bun scripts/release-channels.ts formula "$V" "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME" dist > "$tap/Formula/so.rb"
+          brew style therealhieu/tap/so
+          brew audit --online therealhieu/tap/so
+          brew install therealhieu/tap/so
+          test "$(so --version)" = "so $V"
+          cd "$tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/so.rb
+          git diff --cached --quiet || git commit -m "so $V"
+          git push
