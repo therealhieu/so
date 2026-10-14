@@ -144,11 +144,15 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release download "$GITHUB_REF_NAME" --pattern SHA256SUMS --dir dist
+      # The tap's deploy key can write to the tap only; GitHub's host key is pinned.
       - env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
         run: |
+          (umask 077 && printf '%s\n' "$TAP_KEY" > "$RUNNER_TEMP/tap_key")
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "$RUNNER_TEMP/known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/tap_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts"
           tap="$(brew --repository)/Library/Taps/therealhieu/homebrew-tap"
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/therealhieu/homebrew-tap.git" "$tap"
+          git clone git@github.com:therealhieu/homebrew-tap.git "$tap"
           bun scripts/release-channels.ts formula "$V" "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME" dist > "$tap/Formula/so.rb"
           brew style therealhieu/tap/so
           brew audit --online therealhieu/tap/so
