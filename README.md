@@ -22,19 +22,36 @@ so [path]
 
 ## Install
 
-macOS and Linux (x64, arm64):
+Runs on macOS and Linux, x64 and arm64. Every channel installs the same prebuilt binary, so you don't need Node or Bun to run it.
+
+| Channel | Install | Upgrade |
+|---|---|---|
+| Homebrew | `brew install therealhieu/tap/so` | `brew upgrade therealhieu/tap/so` |
+| Bun | `bun add -g @therealhieu/so` | `bun add -g @therealhieu/so@latest` |
+| npm | `npm install -g @therealhieu/so` | `npm install -g @therealhieu/so@latest` |
+
+Or download the binary for your platform (`so-darwin-arm64`, `so-darwin-x64`, `so-linux-x64`, `so-linux-arm64`) from the [latest release](https://github.com/therealhieu/so/releases/latest):
 
 ```sh
-brew install therealhieu/tap/so
-# or
-bun add -g @therealhieu/so      # npm install -g @therealhieu/so also works
+curl -fLo so https://github.com/therealhieu/so/releases/latest/download/so-darwin-arm64
+chmod +x so && mv so ~/.local/bin/
 ```
 
-Each install is a single prebuilt binary, so it needs no runtime. Homebrew core also has an unrelated `so`, so install only one of the two. Binaries are also attached to each [GitHub release](https://github.com/therealhieu/so/releases).
+The package names are scoped because `so` is already taken by unrelated tools: on npm by a coroutine library, and in Homebrew core by a StackOverflow client. The command you run is still `so`. If Homebrew core's `so` is installed, it collides with this one, so keep only one of them.
 
-## Getting Started
+Optional tools turn on more features:
 
-To run from source, install [Bun](https://bun.sh) `1.4.2`.
+- [Poppler](https://poppler.freedesktop.org) (`brew install poppler`) — PDFs
+- Language servers on `PATH` (e.g. `rust-analyzer`, `typescript-language-server`) — code intelligence
+- [lazygit](https://github.com/jesseduffield/lazygit) — the `<leader>gg` handoff
+
+## Configuration
+
+Config lives at `~/.config/so/config.toml` (or `$XDG_CONFIG_HOME/so/config.toml`); `:Settings` changes common options in place.
+
+## Development
+
+To run from source, install [Bun](https://bun.sh). CI uses `1.4.2` (pinned in `package.json`); other versions aren't tested.
 
 ```sh
 bun install --frozen-lockfile
@@ -43,4 +60,4 @@ bun run sandbox             # try it on a demo vault with isolated config
 bun run build               # compile to dist/so
 ```
 
-Config lives at `~/.config/so/config.toml` (or `$XDG_CONFIG_HOME/so/config.toml`); `:Settings` changes common options in place.
+Releases are manual: pushing a `v*` tag builds and smoke-tests the four binaries, publishes the GitHub release, then publishes to npm and the Homebrew tap.
