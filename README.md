@@ -2,6 +2,8 @@
 
 A fast terminal editor with Vim keys, for Markdown notes and code. Notes get Obsidian-style links, views, and Bases; code files get language-server features.
 
+![so: a file picker, a rendered note with a Mermaid diagram, a PDF highlight, a Bases table edit, and a Rust hover](docs/intro.gif)
+
 ```sh
 so [path]
 ```

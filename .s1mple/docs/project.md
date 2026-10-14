@@ -1,6 +1,6 @@
 # so
 
-- **Last Modified:** 2026-10-13
+- **Last Modified:** 2026-10-14
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
@@ -46,7 +46,7 @@ Default branch: `master`. One package, no monorepo.
 | `src/workspace` | File-system, watcher, trash, clipboard (text and files), config-file, state-file, log, and image-loading (`images.ts`) adapters; the index worker (`index-worker.ts`); the language-server client (`lsp/`) |
 | `src/preview` | Browser preview server (`server.ts`) and the page, KaTeX, and Mermaid files embedded into the binary (`assets.ts`) |
 | `src/core` | Pure product logic: `kernel`, `filetypes`, `lang`, `features` (`links`, `notes`, `bases`, `git`), `time` (local calendar fields and a Moment-compatible formatter), `state`, `config` |
-| `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`, `sandbox.ts` with its profiles in `sandbox/`) |
+| `scripts` | Developer tools (`record-vim.ts`, `bench-gate.ts`, `sandbox.ts` with its profiles in `sandbox/`, `record-intro.ts` with its player, recorder, and vault in `intro/`) |
 | `test` | Policy, boundary, vim, component, integration, e2e, and benchmark suites |
 | `.github/workflows` | `ci.yml`, `release.yml` |
 
@@ -219,6 +219,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `bench` | `bun scripts/bench-gate.ts` | Benchmark gate (median of 5 runs, 2× target) |
   | `build` | `bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so` | Single binary; the worker is a second compile entrypoint; the preview page, KaTeX (with fonts), and Mermaid are embedded, so the binary needs no `node_modules` |
   | `record:vim` | `bun scripts/record-vim.ts` | Record vim expectations from Neovim 0.11.x (local only) |
+  | `record:intro` | `bun scripts/record-intro.ts` | Record the README intro `docs/intro.gif` (local, macOS only): Ghostty runs `scripts/intro/play.ts`, which drives so on the `intro` profile's vault; `SoRecorder.app` (built from `scripts/intro/recorder.swift` into `.tmp/intro/`, asks once for Screen Recording) records the window, because kitty graphics only show in a real terminal; ffmpeg cuts the marked beats, captions them, and adds an outro. Needs Ghostty, ffmpeg, Poppler, rust-analyzer, and Swift; `--cut` re-cuts the last recording |
   | `sandbox` | `bun scripts/sandbox.ts` | Launch so on a profile (`scripts/sandbox/profiles/`, default `tour`): a vault, optional `config.toml`, and journeys to check by hand, staged once under `.sandbox/<profile>/` with its own config and state (`--reset` restages that profile; other args go to so) |
 
 - **Test Layers:**

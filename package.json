@@ -15,6 +15,7 @@
     "bench": "bun scripts/bench-gate.ts",
     "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts --outfile dist/so",
     "record:vim": "bun scripts/record-vim.ts",
+    "record:intro": "bun scripts/record-intro.ts",
     "sandbox": "bun scripts/sandbox.ts"
   },
   "dependencies": {

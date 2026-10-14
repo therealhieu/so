@@ -8,6 +8,7 @@ import { gitEol } from "./git-eol";
 import { gitSubfolder } from "./git-subfolder";
 import { gitUnborn } from "./git-unborn";
 import { gitWorktree } from "./git-worktree";
+import { intro } from "./intro";
 import { large } from "./large";
 import { lsp } from "./lsp";
 import { pdf } from "./pdf";
@@ -28,6 +29,7 @@ export const PROFILES: readonly Profile[] = [
   gitEol,
   lsp,
   pdf,
+  intro,
 ];
 
 export const DEFAULT_PROFILE = tour.name;
