@@ -50,6 +50,7 @@ const draggable = (t: MouseTarget) =>
   (t.kind === "window" &&
     (t.spot.kind === "text" ||
       t.spot.kind === "baseEdge" ||
+      t.spot.kind === "sqliteEdge" ||
       (t.spot.kind === "pdf" && t.spot.at !== undefined))) ||
   t.kind === "zoomPoint" ||
   t.kind === "explorerEdge";

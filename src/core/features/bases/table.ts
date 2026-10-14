@@ -21,7 +21,8 @@ export type TableColumn = {
   width: number;
 };
 
-export type TableCell = { text: string; value: BaseCell };
+/** `dim` draws `text` as it is, dimmed like an empty value (a database's NULL). */
+export type TableCell = { text: string; value: BaseCell; dim?: true };
 export type TableRow = { path: string; cells: TableCell[] };
 /** A run of `count` rows from `start`; `key` is the group's value, `null` for None. */
 export type TableGroup = {
@@ -71,6 +72,7 @@ export function shown(c: TableCell | undefined): {
   text: string;
   empty: boolean;
 } {
+  if (c?.dim) return { text: c.text, empty: true };
   if (c === undefined || c.value.type === "null" || c.text === "")
     return { text: "—", empty: true };
   if (c.value.type === "boolean")

@@ -43,6 +43,7 @@ import {
   settingItems,
   themeItems,
 } from "./settings";
+import { showSqliteTable, sqliteTableCandidates, sqliteWindow } from "./sqlite";
 import type {
   Action,
   AppState,
@@ -511,6 +512,27 @@ export const pickerSources: Readonly<Record<string, PickerSource>> = {
     accept: (s, item) =>
       none(
         selectBaseView(
+          { ...s, overlay: { kind: "none" } },
+          s.windows.active,
+          item.key,
+        ),
+      ),
+  },
+  sqliteTables: {
+    id: "sqliteTables",
+    title: "Tables",
+    action: "show",
+    items: (s, _r, q) => ranked(sqliteTableCandidates(s), q),
+    total: (s) => sqliteTableCandidates(s).length,
+    initial: (s, items) => {
+      const src = sqliteWindow(s, s.windows.active)?.source;
+      const i =
+        src?.kind === "table" ? items.findIndex((x) => x.key === src.name) : -1;
+      return Math.max(0, i);
+    },
+    accept: (s, item) =>
+      none(
+        showSqliteTable(
           { ...s, overlay: { kind: "none" } },
           s.windows.active,
           item.key,

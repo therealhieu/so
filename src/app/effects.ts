@@ -48,6 +48,7 @@ import type { OwnOps } from "../workspace/watcher";
 import type { IndexHost } from "./index-host";
 import type { LspHost } from "./lsp-host";
 import type { PreviewHost } from "./preview-host";
+import { type SqliteHost, SUPERSEDED } from "./sqlite-host";
 import type { ToolHost } from "./tool-host";
 
 /**
@@ -92,6 +93,8 @@ export type RunnerDeps = {
   binaryFile?: (path: string) => boolean;
   /** Counts PDF pages; without one, every PDF answers that Poppler is missing. */
   pdf?: Pick<PdfRasterizer, "info" | "text" | "layout" | "outline">;
+  /** Reads SQLite databases; without one, every read fails. */
+  sqlite?: Pick<SqliteHost, "schema" | "page" | "count" | "check">;
 };
 
 export type EffectRunner = {
@@ -104,6 +107,9 @@ export type EffectRunner = {
     writes: Extract<Effect, { kind: "write" | "writeAnnotations" }>[],
   ): Promise<void>;
 };
+
+const noSqlite = () =>
+  Promise.resolve({ kind: "failed", reason: "SQLite is unavailable" } as const);
 
 const wallClock = () => performance.timeOrigin + performance.now();
 
@@ -928,6 +934,57 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             result,
           }),
         );
+        return;
+      }
+      case "sqliteSchema": {
+        void (d.sqlite?.schema(e.path) ?? noSqlite()).then((result) =>
+          d.dispatch({
+            type: "sqliteSchema",
+            path: e.path,
+            stamp: e.stamp,
+            gen: e.gen,
+            result,
+          }),
+        );
+        return;
+      }
+      case "sqlitePage": {
+        const page =
+          d.sqlite?.page(e.path, e.source, e.offset, String(e.window)) ??
+          noSqlite();
+        void page.then((result) => {
+          // A newer ask for the same window took its place in the queue.
+          if (result.kind === "failed" && result.reason === SUPERSEDED) return;
+          d.dispatch({
+            type: "sqlitePage",
+            path: e.path,
+            gen: e.gen,
+            window: e.window,
+            source: e.source,
+            offset: e.offset,
+            result,
+          });
+        });
+        return;
+      }
+      case "sqliteCount": {
+        void (d.sqlite?.count(e.path, e.table) ?? noSqlite()).then((result) =>
+          d.dispatch({
+            type: "sqliteCount",
+            path: e.path,
+            gen: e.gen,
+            table: e.table,
+            result,
+          }),
+        );
+        return;
+      }
+      case "sqliteCheck": {
+        void (d.sqlite?.check(e.path, e.sql) ?? noSqlite()).then((result) => {
+          // A newer edit's check took its place in the queue.
+          if (result.kind === "failed" && result.reason === SUPERSEDED) return;
+          d.dispatch({ type: "sqliteChecked", gen: e.gen, result });
+        });
         return;
       }
       case "readAnnotations": {

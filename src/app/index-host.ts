@@ -28,14 +28,13 @@ export type IndexHost = {
 };
 
 /**
- * The worker entry next to this module. A compiled binary keeps every entry
- * point under one root with the main entry at its top, so `app/` is gone there.
+ * The worker entry `file` in `src/workspace`, seen from a module in
+ * `src/app`. A compiled binary keeps every entry point under one root with
+ * the main entry at its top, so `app/` is gone there.
  */
-export const workerUrl = (here: string): URL =>
+export const workerUrl = (here: string, file = "index-worker.ts"): URL =>
   new URL(
-    here.includes("/$bunfs/")
-      ? "./workspace/index-worker.ts"
-      : "../workspace/index-worker.ts",
+    here.includes("/$bunfs/") ? `./workspace/${file}` : `../workspace/${file}`,
     here,
   );
 

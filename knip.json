@@ -2,6 +2,7 @@
   "entry": [
     "scripts/*.ts",
     "src/workspace/index-worker.ts",
+    "src/workspace/sqlite-worker.ts",
     "test/**/*.ts",
     "!test/fixtures/boundary-violation/**"
   ],

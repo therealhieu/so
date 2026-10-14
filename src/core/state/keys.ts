@@ -43,6 +43,7 @@ import { chain, message, none } from "./result";
 import { autosaveNow, scheduleAutosave } from "./save";
 import { settingPromptKey } from "./settings";
 import { panelFocused, sidePanelKey } from "./side-panel";
+import { sqliteQueryKey } from "./sqlite-query";
 import type { Action, AppState, BufferId, Result, WindowState } from "./types";
 import type { Registries } from "./update";
 import { armWhichKey, noMapping, whichKeyKey } from "./whichkey";
@@ -116,6 +117,8 @@ function routeKey(
         ? none(closed)
         : routeKey(closed, a, reg);
     }
+    case "sqliteQuery":
+      return sqliteQueryKey(s, s.overlay.query, a.key);
     case "pdfMenu":
       // Its own keys act; any other key closes it and runs.
       return (

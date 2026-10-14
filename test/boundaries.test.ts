@@ -51,6 +51,7 @@ const PACKAGE_HOMES: Readonly<Record<string, readonly string[]>> = {
   yaml: ["src/core/lang/markdown/", "src/core/features/bases/"],
   "beautiful-mermaid": ["src/core/lang/markdown/"],
   katex: ["src/preview/"],
+  "bun:sqlite": ["src/workspace/"],
   mermaid: ["src/preview/"],
   "toml-eslint-parser": ["src/core/config/"],
   "@resvg/resvg-wasm": ["src/workspace/"],

@@ -14,6 +14,10 @@ import {
 } from "../core/features/bases/views";
 import { pdfEditorKind, pdfFileType } from "../core/features/pdf/file-type";
 import {
+  sqliteEditorKind,
+  sqliteFileType,
+} from "../core/features/sqlite/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -77,6 +81,7 @@ import {
   pdfToolCommands,
 } from "../core/state/pdf-tools";
 import { parsePersisted, snapshotSession } from "../core/state/session";
+import { sqliteBindings, sqliteCommands } from "../core/state/sqlite";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
@@ -84,6 +89,7 @@ import { ViewContextRegistry } from "../core/state/view-context";
 import { BaseView } from "../ui/editors/base-view";
 import { PdfView } from "../ui/editors/pdf-view";
 import { registerEditorView } from "../ui/editors/registry";
+import { SqliteView } from "../ui/editors/sqlite-view";
 import { EditorView } from "../ui/editors/text-view";
 import { createRenderer, createShell } from "../ui/shell";
 import { paintBaseEmbed } from "../ui/widgets/base";
@@ -121,6 +127,7 @@ import { createIndexHost, indexSkips } from "./index-host";
 import { installLifecycle } from "./lifecycle";
 import { createLspHost } from "./lsp-host";
 import { createPreviewHost } from "./preview-host";
+import { createSqliteHost } from "./sqlite-host";
 import { createToolHost } from "./tool-host";
 import { resolveWorkspace } from "./workspace";
 
@@ -157,9 +164,11 @@ function registries(): Registries {
   fileTypes.register(markdownFileType);
   fileTypes.register(baseFileType);
   fileTypes.register(pdfFileType);
+  fileTypes.register(sqliteFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
   editorKinds.register(pdfEditorKind);
+  editorKinds.register(sqliteEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -170,6 +179,7 @@ function registries(): Registries {
   for (const c of pdfToolCommands) commands.register(c);
   for (const c of pdfSelectCommands) commands.register(c);
   for (const c of pdfAnnotateCommands) commands.register(c);
+  for (const c of sqliteCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -194,6 +204,7 @@ function registries(): Registries {
       ...pdfToolBindings,
       ...pdfSelectBindings,
       ...pdfAnnotateBindings,
+      ...sqliteBindings,
       ...lspBindings,
       ...gitBindings,
     ],
@@ -339,6 +350,7 @@ async function main(argv: string[]): Promise<void> {
   registerEditorView("text", (ctx, deps) => new EditorView(ctx, deps));
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
+  registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -369,6 +381,7 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     logger,
   });
+  const sqlite = createSqliteHost({ root: ws.root, logger });
   const previewHost = createPreviewHost({
     root: ws.root,
     store: () => store,
@@ -389,6 +402,7 @@ async function main(argv: string[]): Promise<void> {
     root: ws.root,
     binaryFile: (path) => reg.fileTypes.forPath(path).binary === true,
     pdf,
+    sqlite,
     matcher,
     ownOps,
     trash: {

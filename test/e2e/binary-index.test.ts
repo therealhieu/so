@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -29,6 +30,9 @@ beforeAll(async () => {
       join(root, `note-${i}.md`),
       `# Note ${i}\n\nSee [[note-${(i % 50) + 1}]].\n`,
     );
+  const db = new Database(join(root, "app.db"));
+  db.run("CREATE TABLE t (x); INSERT INTO t VALUES (1), (2)");
+  db.close();
 }, 120_000);
 
 afterAll(async () => {
@@ -47,5 +51,16 @@ test("the compiled binary reaches index ready", async () => {
     },
   });
   expect(elapsed).toBeLessThan(10_000);
+  expect(r.exitCode).toBe(0);
+}, 30_000);
+
+test("the compiled binary reads a database in its SQLite worker", async () => {
+  const r = await runInPty([BINARY, join(root, "app.db")], {
+    async script(p) {
+      await ready(p);
+      await p.waitFor(() => p.screen().includes("rows 1–2 of 2"), 10_000);
+      p.type(":q\r");
+    },
+  });
   expect(r.exitCode).toBe(0);
 }, 30_000);
