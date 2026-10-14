@@ -1,0 +1,18 @@
+filters:
+  and:
+    - file.hasTag("consensus")
+properties:
+  status:
+    displayName: Status
+  year:
+    displayName: Year
+views:
+  - type: table
+    name: By status
+    order:
+      - file.name
+      - year
+      - status
+    groupBy:
+      property: status
+      direction: ASC
