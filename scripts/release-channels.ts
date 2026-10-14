@@ -55,10 +55,14 @@ ${source(arm, "      ")}
 ${source(intel, "      ")}
     end
   end`;
+  // Homebrew reads the version from a release URL (`.../download/v1.2.3/`),
+  // and its audit rejects a `version` line that repeats it.
+  const versionLine = baseUrl.includes(`/v${version}`)
+    ? ""
+    : `\n  version "${version}"`;
   return `class So < Formula
   desc "${DESCRIPTION}"
-  homepage "${HOMEPAGE}"
-  version "${version}"
+  homepage "${HOMEPAGE}"${versionLine}
   license "MIT"
 
   livecheck do

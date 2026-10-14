@@ -35,7 +35,7 @@ test("the formula downloads each platform's binary with its hash", () => {
     "https://github.com/therealhieu/so/releases/download/v1.2.3",
     parseSums(SUMS),
   );
-  expect(rb).toContain('version "1.2.3"');
+  expect(rb).not.toMatch(/^\s+version "/m);
   const blocks = [
     ...rb.matchAll(/on_(arm|intel) do\n\s+url "(\S+)"\n\s+sha256 "(\w+)"/g),
   ];
@@ -47,6 +47,13 @@ test("the formula downloads each platform's binary with its hash", () => {
   ]);
   expect(rb.indexOf("on_macos")).toBeLessThan(rb.indexOf("so-darwin-arm64"));
   expect(rb.indexOf("on_linux")).toBeLessThan(rb.indexOf("so-linux-arm64"));
+});
+
+test("a URL without the version gets a version line", () => {
+  const rb = formula("0.0.0-dev+abc1234", "file:///dist", parseSums(SUMS));
+  expect(rb).toContain(
+    '  homepage "https://github.com/therealhieu/so"\n  version "0.0.0-dev+abc1234"\n  license "MIT"',
+  );
 });
 
 test("a formula without every platform's hash is refused", () => {
