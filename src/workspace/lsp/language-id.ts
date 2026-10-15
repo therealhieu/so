@@ -3,6 +3,7 @@ import { extname } from "node:path";
 const BY_EXTENSION: Record<string, string> = {
   ".tsx": "typescriptreact",
   ".jsx": "javascriptreact",
+  ".tfvars": "terraform-vars",
 };
 const BY_TYPE: Record<string, string> = { objectivec: "objective-c" };
 

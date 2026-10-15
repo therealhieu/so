@@ -9,6 +9,10 @@ test("file types get their own Nerd Font icon and colour", () => {
   expect(fileIcon("tasks.base", "nerd").token).toBe("iconBase");
   expect(fileIcon("photo.PNG", "nerd").token).toBe("iconImage");
   expect(fileIcon("config.yaml", "nerd").token).toBe("iconConfig");
+  expect(fileIcon("infra/main.tf", "nerd")).toEqual({
+    glyph: "",
+    token: "iconConfig",
+  });
   expect(fileIcon("scripts/sync.ts", "nerd").token).toBe("iconCode");
   expect(fileIcon("keep.log", "nerd").token).toBe("iconText");
 });

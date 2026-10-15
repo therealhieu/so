@@ -2,7 +2,7 @@ import type { FileType } from "../../filetypes/registry";
 import { lowlightHighlighter } from "./highlight";
 
 type LanguageSpec = {
-  /** A lowlight `common` grammar name. */
+  /** A grammar name or alias registered with lowlight. */
   id: string;
   extensions: readonly string[];
   names?: readonly string[];
@@ -11,7 +11,8 @@ type LanguageSpec = {
 /**
  * Every lowlight `common` grammar except `shell` and `python-repl` (console
  * sessions, no file extension) and `plaintext` (the `text` file type), plus
- * `dockerfile`. Markdown's file type lives in `lang/markdown`.
+ * `dockerfile` and `hcl` (`terraform` is its alias). Markdown's file type
+ * lives in `lang/markdown`.
  */
 export const CODE_LANGUAGES = [
   { id: "typescript", extensions: [".ts", ".tsx", ".mts", ".cts"] },
@@ -57,6 +58,8 @@ export const CODE_LANGUAGES = [
     extensions: [".dockerfile"],
     names: ["Dockerfile", "Containerfile"],
   },
+  { id: "terraform", extensions: [".tf", ".tfvars"] },
+  { id: "hcl", extensions: [".hcl"] },
 ] as const satisfies readonly LanguageSpec[];
 
 /** One source-view file type per language except Markdown. */
