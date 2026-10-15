@@ -53,7 +53,22 @@ test("without overrides the built-in servers resolve in table order", () => {
     "clangd",
     "json",
     "yaml",
+    "terraform-ls",
   ]);
+});
+
+test("an added server can serve Terraform files", () => {
+  const config = parsed(
+    lines(
+      "[lsp.servers.tflint]",
+      `command = ["tflint", "--langserver"]`,
+      `fileTypes = ["terraform"]`,
+    ),
+  );
+  expect(resolveServers(config.lsp).at(-1)).toMatchObject({
+    name: "tflint",
+    fileTypes: ["terraform"],
+  });
 });
 
 test("overrides change only the fields they set and additions follow the built-ins", () => {
@@ -80,6 +95,7 @@ test("overrides change only the fields they set and additions follow the built-i
     "clangd",
     "json",
     "yaml",
+    "terraform-ls",
     "eslint",
   ]);
   const rust = servers.find((s) => s.name === "rust-analyzer");

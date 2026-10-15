@@ -79,6 +79,36 @@ console.log(total, label);
 `,
 };
 
+/** A Terraform module with unaligned attributes and one attribute a variable block does not take. */
+const TERRAFORM: Record<string, string> = {
+  "main.tf": `terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+variable "region" {
+  type = string
+  default = "eu-west-1"
+  colour = "blue"
+}
+
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_s3_bucket" "logs" {
+  bucket = "\${var.region}-logs"
+  tags = { Team = "ops" }
+}
+`,
+  "prod.tfvars": 'region = "eu-central-1"\n',
+  "terragrunt.hcl": 'include "root" {\n  path = find_in_parent_folders()\n}\n',
+};
+
 export const lsp: Profile = {
   name: "lsp",
   summary:
@@ -186,9 +216,29 @@ export const lsp: Profile = {
       ],
     },
     {
+      title: "Terraform",
+      steps: [
+        "Needs terraform-ls on PATH",
+        "Open tf/main.tf and run :LspInfo",
+        "Press K on aws_s3_bucket, then ]d",
+        "Run :Format",
+        "Open tf/prod.tfvars, then tf/terragrunt.hcl, running :LspInfo in each",
+      ],
+      expect: [
+        "Blocks, attributes, strings, the var reference in bucket, and comments are coloured",
+        ":LspInfo lists terraform-ls with root tf/",
+        "K shows the resource block's docs; ]d lands on colour with an unexpected-attribute message",
+        "The = signs in each block line up",
+        "prod.tfvars attaches to terraform-ls; terragrunt.hcl is coloured but has no server",
+      ],
+    },
+    {
       title: "Notes stay plain",
       steps: ["Open notes/readme.md"],
-      expect: ["No server starts and the statusline shows no server mark"],
+      expect: [
+        "No server starts and the statusline shows no server mark",
+        "The hcl code block is coloured like tf/main.tf",
+      ],
     },
     {
       title: "Restart and exit",
@@ -215,11 +265,12 @@ export const lsp: Profile = {
   stage: (vault) => {
     writeFiles(vault, {
       "notes/readme.md":
-        "# LSP sandbox\n\nrs/ is a Rust crate and ts/ a TypeScript project, each its own repository.\n",
+        '# LSP sandbox\n\nrs/ is a Rust crate, ts/ a TypeScript project, and tf/ a Terraform module, each its own repository.\n\n```hcl\nvariable "region" {\n  default = "eu-west-1" # where the bucket lives\n}\n```\n',
     });
     for (const [dir, files] of [
       ["rs", RUST],
       ["ts", TYPESCRIPT],
+      ["tf", TERRAFORM],
     ] as const) {
       const root = join(vault, dir);
       writeFiles(root, files);
