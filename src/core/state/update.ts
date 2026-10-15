@@ -19,6 +19,7 @@ import { onFileChanged } from "./disk";
 import type { EmbedModelRegistry } from "./embed-models";
 import { syncEmbeds } from "./embeds";
 import {
+  followActiveFile,
   onCopyProgress,
   onDirListed,
   onFileClip,
@@ -179,9 +180,10 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
 /**
  * A pure reducer over the given registries; a thrown error keeps the
  * previous state. A change to the persisted session (re)starts the save
- * debounce, the backlinks panel follows the active note, notes' embed
- * targets stay loaded while they are embedded, the buffer lists follow the
- * buffers, and each window's editor kind follows its file type.
+ * debounce, the backlinks panel follows the active note, the explorer
+ * reveals the active file, notes' embed targets stay loaded while they are
+ * embedded, the buffer lists follow the buffers, and each window's editor
+ * kind follows its file type.
  */
 export function createUpdate(reg: Registries): Update {
   const step = (state: AppState, action: Action): Result => {
@@ -350,11 +352,14 @@ export function createUpdate(reg: Registries): Update {
                         state,
                         syncEmbeds(
                           state,
-                          followShownNote(
+                          followActiveFile(
                             state,
-                            syncEditorKinds(
-                              syncBufferLists(state, step(state, action)),
-                              reg,
+                            followShownNote(
+                              state,
+                              syncEditorKinds(
+                                syncBufferLists(state, step(state, action)),
+                                reg,
+                              ),
                             ),
                           ),
                           reg,
