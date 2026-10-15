@@ -123,6 +123,7 @@ test("a valid file parses with binding lines", () => {
       templates: { folder: "templates" },
       index: { exclude: [".obsidian", ".trash"] },
       git: { tool: ["lazygit"] },
+      browser: { chrome: "" },
       keys: { normal: { "<leader>w": "file.save" } },
       filetypes: {
         markdown: { keys: { normal: { "<leader>w": "link.backlinks" } } },

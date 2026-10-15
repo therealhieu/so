@@ -12,6 +12,10 @@ import {
   boardLayout,
   tableLayout,
 } from "../core/features/bases/views";
+import {
+  browserEditorKind,
+  htmlFileType,
+} from "../core/features/browser/file-type";
 import { pdfEditorKind, pdfFileType } from "../core/features/pdf/file-type";
 import {
   sqliteEditorKind,
@@ -33,6 +37,7 @@ import { registerBlockRenderer } from "../core/lang/markdown/live-preview";
 import { builtinRenderers } from "../core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../core/state/base-model";
+import { browserBindings, browserCommands } from "../core/state/browser";
 import { bufferBindings } from "../core/state/buffer-commands";
 import { activeBuffer } from "../core/state/buffers";
 import {
@@ -86,7 +91,9 @@ import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
 import { ViewContextRegistry } from "../core/state/view-context";
+import { createBrowserFrames } from "../ui/browser-frames";
 import { BaseView } from "../ui/editors/base-view";
+import { BrowserView } from "../ui/editors/browser-view";
 import { PdfView } from "../ui/editors/pdf-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { SqliteView } from "../ui/editors/sqlite-view";
@@ -118,6 +125,7 @@ import {
 } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
+import { createBrowserHost } from "./browser-host";
 import {
   createEffectRunner,
   type EffectRunner,
@@ -135,6 +143,9 @@ import { resolveWorkspace } from "./workspace";
 export const VERSION = process.env.SO_VERSION ?? pkg.version;
 
 const USAGE = "usage: so [--version] [--help] [path]\n";
+
+/** Browser frame pixels per second herdr passes on with room left for keys. */
+const HERDR_PIXEL_RATE = 2_000_000;
 
 /** The one clock for keys, timers, and the statusline. */
 const clock = () => performance.timeOrigin + performance.now();
@@ -165,10 +176,12 @@ function registries(): Registries {
   fileTypes.register(baseFileType);
   fileTypes.register(pdfFileType);
   fileTypes.register(sqliteFileType);
+  fileTypes.register(htmlFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
   editorKinds.register(pdfEditorKind);
   editorKinds.register(sqliteEditorKind);
+  editorKinds.register(browserEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -180,6 +193,7 @@ function registries(): Registries {
   for (const c of pdfSelectCommands) commands.register(c);
   for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of sqliteCommands) commands.register(c);
+  for (const c of browserCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -205,6 +219,7 @@ function registries(): Registries {
       ...pdfSelectBindings,
       ...pdfAnnotateBindings,
       ...sqliteBindings,
+      ...browserBindings,
       ...lspBindings,
       ...gitBindings,
     ],
@@ -351,6 +366,7 @@ async function main(argv: string[]): Promise<void> {
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
   registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
+  registerEditorView("browser", (ctx, deps) => new BrowserView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -368,8 +384,15 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const renderer = await createRenderer();
+  const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
+    browserFrames,
+    // herdr passes each new image on as raw pixels, several megabytes for a
+    // page's frame: past its pace it falls behind and holds keys back.
+    ...(process.env.HERDR_ENV === undefined
+      ? {}
+      : { browserPixelRate: HERDR_PIXEL_RATE }),
     now: clock,
     loadImage: createImageLoader(ws.root, { pdfPage: (r) => pdf.page(r) }),
     rasterizeSvg: createSvgRasterizer(),
@@ -382,6 +405,13 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const sqlite = createSqliteHost({ root: ws.root, logger });
+  const browserHost = createBrowserHost({
+    root: ws.root,
+    chrome: () => store.get().config.browser.chrome,
+    dispatch: (a) => store.dispatch(a),
+    frames: browserFrames,
+    logger,
+  });
   const previewHost = createPreviewHost({
     root: ws.root,
     store: () => store,
@@ -403,6 +433,7 @@ async function main(argv: string[]): Promise<void> {
     binaryFile: (path) => reg.fileTypes.forPath(path).binary === true,
     pdf,
     sqlite,
+    browser: browserHost,
     matcher,
     ownOps,
     trash: {
@@ -458,6 +489,7 @@ async function main(argv: string[]): Promise<void> {
     ...(saveSession === undefined ? {} : { saveSession }),
     stopPreview: previewHost.stop,
     stopLsp: lspHost.stop,
+    stopBrowser: browserHost.stop,
   });
   injectStartupThrow();
   shell.attach(store);

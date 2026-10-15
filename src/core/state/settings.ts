@@ -216,6 +216,15 @@ export const SETTINGS: readonly Setting[] = [
     path: ["templates", "folder"],
     about: ["The workspace folder the", "template picker lists."],
   },
+  {
+    kind: "text",
+    path: ["browser", "chrome"],
+    about: [
+      "The Chrome to draw .html pages",
+      "with; empty finds one. Takes",
+      "effect when Chrome next starts.",
+    ],
+  },
 ];
 
 const keyOf = (path: readonly string[]) => path.join(".");

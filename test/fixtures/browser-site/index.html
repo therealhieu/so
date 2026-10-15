@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>so browser showcase</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="top">
+      <strong>showcase</strong>
+      <a href="#visuals">Visuals</a>
+      <a href="#forms">Forms</a>
+      <a href="#mouse">Mouse</a>
+      <a href="#keys">Keys</a>
+      <a href="#data">Data</a>
+      <a href="#motion">Motion</a>
+      <a href="gallery.html">Gallery →</a>
+      <span class="live"><i class="dot"></i><span id="clock">--:--:--</span></span>
+    </nav>
+
+    <header class="hero">
+      <h1>Hello from so</h1>
+      <p>A page drawn by headless Chrome, sent to the terminal as images, and driven by your mouse and keys.</p>
+    </header>
+
+    <section id="visuals">
+      <h2>Visuals</h2>
+      <div class="cards">
+        <div class="card grad">Gradients</div>
+        <div class="card glass">Shadows &amp; blur</div>
+        <div class="card ring"><div class="donut"></div>Conic donut</div>
+        <div class="card hover">Hover me</div>
+      </div>
+      <div class="row">
+        <svg class="chart" viewBox="0 0 320 160" role="img" aria-label="Monthly notes">
+          <g fill="#7aa2f7">
+            <rect x="10" y="90" width="30" height="60" rx="4" />
+            <rect x="50" y="60" width="30" height="90" rx="4" />
+            <rect x="90" y="30" width="30" height="120" rx="4" />
+            <rect x="130" y="70" width="30" height="80" rx="4" />
+            <rect x="170" y="20" width="30" height="130" rx="4" />
+            <rect x="210" y="50" width="30" height="100" rx="4" />
+          </g>
+          <polyline points="25,85 65,55 105,25 145,65 185,15 225,45" fill="none" stroke="#f7768e" stroke-width="3" />
+          <text x="250" y="40" fill="#c0caf5" font-size="14">notes/month</text>
+        </svg>
+        <canvas id="art" width="320" height="160"></canvas>
+        <figure>
+          <img alt="A drawn mountain" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23ffb86c'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fff3'/%3E%3Cpath d='M0 100 L50 40 L80 70 L110 30 L160 100Z' fill='%23414868'/%3E%3C/svg%3E" />
+          <figcaption>An inline SVG image</figcaption>
+        </figure>
+      </div>
+      <p class="prose">
+        Select this sentence by dragging across it, or double-click a <em>single</em> word, then press
+        <kbd>y</kbd> in WEB mode to copy what you selected.
+      </p>
+    </section>
+
+    <section id="forms">
+      <h2>Forms</h2>
+      <form id="form" class="grid">
+        <label>Name <input id="name" name="name" placeholder="Click here and type" /></label>
+        <label>Plan
+          <select id="plan" name="plan">
+            <option>free</option>
+            <option selected>pro</option>
+            <option>team</option>
+          </select>
+        </label>
+        <label class="wide">Notes <textarea id="notes" name="notes" rows="3" placeholder="Several lines…"></textarea>
+          <small><span id="count">0</span> characters</small>
+        </label>
+        <fieldset>
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="night" checked /> night</label>
+          <label><input type="radio" name="theme" value="day" /> day</label>
+        </fieldset>
+        <fieldset>
+          <legend>Options</legend>
+          <label><input type="checkbox" name="sync" checked /> sync</label>
+          <label><input type="checkbox" name="backup" /> backup</label>
+        </fieldset>
+        <label class="wide">Volume <input id="volume" type="range" min="0" max="100" value="40" />
+          <span class="meter"><span id="level"></span></span> <output id="vol">40</output>
+        </label>
+        <div class="wide buttons">
+          <button type="button" id="plus">Clicked <b id="clicks">0</b> times</button>
+          <button type="submit">Submit</button>
+          <button type="button" id="open">Open dialog</button>
+        </div>
+      </form>
+      <pre id="result">Submit the form to see its values here.</pre>
+      <dialog id="dialog">
+        <h3>A dialog</h3>
+        <p>Native &lt;dialog&gt;, opened by a click. Press Esc in BROWSE mode or click Close.</p>
+        <button type="button" id="close">Close</button>
+      </dialog>
+    </section>
+
+    <section id="mouse">
+      <h2>Mouse</h2>
+      <div class="row">
+        <div id="pad" class="pad">Move the pointer here<br /><span id="where">x –, y –</span></div>
+        <div id="lamp" class="lamp">Double-click to switch the lamp <b>off</b></div>
+        <ol id="sortable" class="sortable" title="Drag a row to reorder">
+          <li>Drag me</li>
+          <li>Second</li>
+          <li>Third</li>
+          <li>Fourth</li>
+        </ol>
+      </div>
+      <div class="tabs">
+        <div role="tablist">
+          <button type="button" class="tab on" data-tab="one">Overview</button>
+          <button type="button" class="tab" data-tab="two">Details</button>
+          <button type="button" class="tab" data-tab="three">History</button>
+        </div>
+        <div class="panel" id="one">The first tab: tabs switch on a click.</div>
+        <div class="panel" id="two" hidden>The second tab, with <a href="#data">a link to the table</a>.</div>
+        <div class="panel" id="three" hidden>The third tab. Back and forward (H / L) walk in-page links too.</div>
+      </div>
+      <details>
+        <summary>Click to expand</summary>
+        <p>Hidden content, shown by the browser without any script.</p>
+      </details>
+      <div class="note" contenteditable="true">This note is <b>contenteditable</b>: click into it and type.</div>
+    </section>
+
+    <section id="keys">
+      <h2>Keys</h2>
+      <button type="button" id="keybox" class="keybox">Click here, press i, then press keys (arrows, Tab, Ctrl-combos…)</button>
+      <ol id="keylog" class="keylog"></ol>
+    </section>
+
+    <section id="data">
+      <h2>Data</h2>
+      <input id="filter" placeholder="Filter the table" />
+      <table id="table">
+        <thead>
+          <tr><th data-key="0">Note ▾</th><th data-key="1">Words</th><th data-key="2">Updated</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Inbox</td><td>120</td><td>2026-10-14</td></tr>
+          <tr><td>Reading list</td><td>860</td><td>2026-09-30</td></tr>
+          <tr><td>Recipes</td><td>2410</td><td>2026-08-02</td></tr>
+          <tr><td>Travel</td><td>540</td><td>2026-10-01</td></tr>
+          <tr><td>Weekly review</td><td>1330</td><td>2026-10-12</td></tr>
+          <tr><td>Zettel</td><td>75</td><td>2026-07-19</td></tr>
+        </tbody>
+      </table>
+      <div class="strip" title="Scroll sideways: h / l or Shift-wheel">
+        <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div>
+      </div>
+    </section>
+
+    <section id="motion">
+      <h2>Motion</h2>
+      <p>Animations send frames all the time. Start them to see how the terminal keeps up.</p>
+      <button type="button" id="animate">Start animation</button>
+      <canvas id="balls" width="640" height="200"></canvas>
+      <div class="spinner"></div>
+    </section>
+
+    <footer>
+      <p>The bottom of the page. <a href="#visuals">Back to the top</a></p>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

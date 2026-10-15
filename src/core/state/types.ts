@@ -2,6 +2,13 @@ import type { AppConfig } from "../config/schema";
 import type { ConfigResult } from "../config/toml";
 import type { SettingValue } from "../config/toml-edit";
 import type { PropertyTypes } from "../features/bases/property-types";
+import type {
+  BrowserStatus,
+  PageInput,
+  PagePoint,
+  PageSize,
+} from "../features/browser/file-type";
+import type { RawKey } from "../features/browser/keys";
 import type { BlameLine } from "../features/git/blame";
 import type { Hunk } from "../features/git/diff";
 import type { IndexText } from "../features/git/index-text";
@@ -258,6 +265,8 @@ export type WindowState = {
     kindState?: unknown;
     /** The "#…" part the window was opened at, consumed by the editor kind's `open`. */
     subpath?: string;
+    /** Show the buffer as text although its file type has another editor kind. */
+    source?: true;
   };
 };
 
@@ -693,6 +702,8 @@ export type WindowSpot =
   | { kind: "baseEdge"; column: number; width: number }
   | { kind: "baseCard"; lane: number; card: number }
   | { kind: "base" }
+  /** On a browser page; `at` is the point under the pointer, absent off the frame. */
+  | { kind: "browser"; at?: PagePoint }
   /** On a PDF page; `at` is the point under the pointer, absent off the page. */
   | { kind: "pdf"; at?: PdfPoint }
   /** A SQLite grid cell; `row` counts from the source's first row. */
@@ -731,8 +742,12 @@ export type MouseEvent =
   | { kind: "middle"; target: MouseTarget }
   /** The pointer moved onto `target` with no button held. */
   | { kind: "move"; target: MouseTarget }
-  /** The left button came up after a press on a PDF page that started on `target`. */
-  | { kind: "release"; target: MouseTarget };
+  /**
+   * The left button came up after a press on a PDF or browser page: on the
+   * PDF page the press started on, or where a drag over a browser page
+   * ended. `clicks` is the press's count.
+   */
+  | { kind: "release"; target: MouseTarget; clicks: 1 | 2 | 3 };
 
 export type AppState = {
   workspace: { root: string };
@@ -803,7 +818,10 @@ export type AppState = {
 };
 
 export type Action =
-  | { type: "key"; key: Key; now: number }
+  /** `raw` is the key as the terminal reported it, when the shell knows it. */
+  | { type: "key"; key: Key; now: number; raw?: RawKey }
+  /** A key the editor has no name for (F-keys, Ctrl+arrows); only a page takes it. */
+  | { type: "rawKey"; raw: RawKey; now: number }
   | { type: "resize"; cols: number; rows: number }
   /** How much of the zoom float the shown image covers at fit, per axis (0..1]. */
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
@@ -882,6 +900,16 @@ export type Action =
       pageCols: number;
       viewCols: number;
     }
+  /** The device pixels a browser window drew its page in, and a row's height in them. */
+  | {
+      type: "browserLaidOut";
+      window: WindowId;
+      width: number;
+      height: number;
+      cellHeight: number;
+    }
+  /** What the browser host reports for window `window`'s page. */
+  | { type: "browserEvent"; window: WindowId; event: BrowserEvent }
   /** `embed` answers a read a note's embed sent (see the `read` effect). */
   | { type: "fileLoaded"; path: string; file: TextFile; embed?: true }
   | {
@@ -1116,6 +1144,8 @@ export type Effect =
     }
   /** Read `.obsidian/types.json`; answered by `propertyTypesLoaded`. */
   | { kind: "readPropertyTypes" }
+  /** Drive the page of browser window `window`; answered by `browserEvent`. */
+  | { kind: "browser"; window: WindowId; op: BrowserOp }
   /** Count the pages of the PDF at `path`; answered by `pdfInfo` with the same stamp. */
   | { kind: "pdfInfo"; path: string; stamp: Stamp }
   /** Read the PDF's text per page; answered by `pdfText`. */
@@ -1202,3 +1232,26 @@ export type Effect =
 
 /** What every reducer returns. */
 export type Result = { state: AppState; effects: Effect[] };
+
+/**
+ * What a browser window asks of its page. `open` shows the workspace file
+ * `path` (starting Chrome and the tab when needed); `copy` reads the page's
+ * selection, answered by a `selection` event.
+ */
+export type BrowserOp =
+  | { op: "open"; path: string; size: PageSize }
+  | { op: "close" }
+  | { op: "resize"; size: PageSize }
+  | { op: "input"; input: PageInput }
+  | { op: "back" }
+  | { op: "forward" }
+  | { op: "reload" }
+  | { op: "copy" };
+
+/** What the browser host reports about one window's page. */
+export type BrowserEvent =
+  | { kind: "status"; status: BrowserStatus }
+  | { kind: "page"; url: string; title: string; loading: boolean }
+  | { kind: "selection"; text: string }
+  /** After a click: whether the page's focus is now on a field that takes typing. */
+  | { kind: "focus"; editable: boolean };

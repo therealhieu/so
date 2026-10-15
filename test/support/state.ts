@@ -10,6 +10,10 @@ import {
   tableLayout,
 } from "../../src/core/features/bases/views";
 import {
+  browserEditorKind,
+  htmlFileType,
+} from "../../src/core/features/browser/file-type";
+import {
   pdfEditorKind,
   pdfFileType,
 } from "../../src/core/features/pdf/file-type";
@@ -35,6 +39,7 @@ import { registerBlockRenderer } from "../../src/core/lang/markdown/live-preview
 import { builtinRenderers } from "../../src/core/lang/markdown/renderers/index";
 import { baseBindings, baseCommands } from "../../src/core/state/base-commands";
 import { baseEmbedModel, baseViewModel } from "../../src/core/state/base-model";
+import { browserBindings, browserCommands } from "../../src/core/state/browser";
 import { bufferBindings } from "../../src/core/state/buffer-commands";
 import { registerBuiltins } from "../../src/core/state/commands";
 import { EmbedModelRegistry } from "../../src/core/state/embed-models";
@@ -99,10 +104,12 @@ export function testRegistries(): Registries {
   fileTypes.register(baseFileType);
   fileTypes.register(pdfFileType);
   fileTypes.register(sqliteFileType);
+  fileTypes.register(htmlFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
   editorKinds.register(pdfEditorKind);
   editorKinds.register(sqliteEditorKind);
+  editorKinds.register(browserEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -114,6 +121,7 @@ export function testRegistries(): Registries {
   for (const c of pdfSelectCommands) commands.register(c);
   for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of sqliteCommands) commands.register(c);
+  for (const c of browserCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -140,6 +148,7 @@ export function testRegistries(): Registries {
       ...pdfSelectBindings,
       ...pdfAnnotateBindings,
       ...sqliteBindings,
+      ...browserBindings,
       ...lspBindings,
       ...gitBindings,
     ],

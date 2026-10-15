@@ -13,6 +13,7 @@ import type {
 } from "../../src/core/state/types";
 import { createUpdate, type Registries } from "../../src/core/state/update";
 import { BaseView } from "../../src/ui/editors/base-view";
+import { BrowserView } from "../../src/ui/editors/browser-view";
 import { PdfView } from "../../src/ui/editors/pdf-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { SqliteView } from "../../src/ui/editors/sqlite-view";
@@ -50,6 +51,9 @@ export type MountOptions = {
   rasterizeSvg?: ShellDeps["rasterizeSvg"];
   /** Draws PDF pages; otherwise a page is the `files` entry `path#page=N`. */
   rasterizePdf?: ShellDeps["rasterizePdf"];
+  /** Browser pages' frames, published by the test in place of Chrome. */
+  browserFrames?: ShellDeps["browserFrames"];
+  browserPixelRate?: number;
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
@@ -81,6 +85,7 @@ export async function mountShell(o: MountOptions) {
   registerEditorView("base", (ctx, deps) => new BaseView(ctx, deps));
   registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
   registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
+  registerEditorView("browser", (ctx, deps) => new BrowserView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -142,6 +147,12 @@ export async function mountShell(o: MountOptions) {
     rasterizePdf:
       o.rasterizePdf ?? ((r) => loadImage(pdfPageRef(r.path, r.page))),
     write: (bytes) => writes.push(bytes),
+    ...(o.browserFrames === undefined
+      ? {}
+      : { browserFrames: o.browserFrames }),
+    ...(o.browserPixelRate === undefined
+      ? {}
+      : { browserPixelRate: o.browserPixelRate }),
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });
   shell.attach(store);

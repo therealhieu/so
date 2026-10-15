@@ -54,6 +54,8 @@ export class TerminalProbe {
 
 export type PtyOptions = {
   env?: Record<string, string>;
+  /** More config.toml text, after the live-view setting every run has. */
+  config?: string;
   cols?: number;
   rows?: number;
   /** Drives the process: type keys, send signals, wait. */
@@ -133,7 +135,7 @@ export async function runInPty(argv: string[], o: PtyOptions): Promise<PtyRun> {
   await mkdir(join(state, "config/so"), { recursive: true });
   await writeFile(
     join(state, "config/so/config.toml"),
-    '[preview]\nmode = "live"\n',
+    `[preview]\nmode = "live"\n${o.config ?? ""}`,
   );
   const proc = Bun.spawn(argv, {
     env: {

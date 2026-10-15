@@ -1,3 +1,4 @@
+import type { RawKey } from "../features/browser/keys";
 import type { Binding } from "../kernel/commands/defaults";
 import type { Command } from "../kernel/commands/registry";
 import type { Register } from "../kernel/editor/registers";
@@ -12,6 +13,7 @@ import {
   searchingBase,
   searchKey,
 } from "./base-commands";
+import { browseKey, browsing } from "./browser";
 import {
   activeBuffer,
   activeWindow,
@@ -61,7 +63,7 @@ const setVim = (s: AppState, patch: Partial<AppState["vim"]>): AppState => ({
  */
 export function handleKeyAction(
   s: AppState,
-  a: { key: Key; now: number },
+  a: { key: Key; now: number; raw?: RawKey },
   reg: Registries,
 ): Result {
   if (s.overlay.kind === "completion") {
@@ -80,7 +82,7 @@ export function handleKeyAction(
 
 function routeKey(
   s: AppState,
-  a: { key: Key; now: number },
+  a: { key: Key; now: number; raw?: RawKey },
   reg: Registries,
 ): Result {
   switch (s.overlay.kind) {
@@ -131,6 +133,7 @@ function routeKey(
   if (s.vim.mode === "cmdline" && s.vim.cmdline.startsWith(":"))
     return cmdlineKey(s, a, reg);
   if (pdfSearching(s)) return pdfSearchKey(s, a);
+  if (browsing(s)) return browseKey(s, a.key, a.raw);
   return bindingOrVim(s, a, reg);
 }
 

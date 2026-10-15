@@ -59,6 +59,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "daily.format YYYY-MM-DD",
       "daily.template templates/daily.md",
       "templates.folder templates",
+      "browser.chrome ",
     ]);
   }
 });

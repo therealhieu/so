@@ -45,6 +45,7 @@ import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider, FileClipboard } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
 import type { OwnOps } from "../workspace/watcher";
+import type { BrowserHost } from "./browser-host";
 import type { IndexHost } from "./index-host";
 import type { LspHost } from "./lsp-host";
 import type { PreviewHost } from "./preview-host";
@@ -95,6 +96,8 @@ export type RunnerDeps = {
   pdf?: Pick<PdfRasterizer, "info" | "text" | "layout" | "outline">;
   /** Reads SQLite databases; without one, every read fails. */
   sqlite?: Pick<SqliteHost, "schema" | "page" | "count" | "check">;
+  /** Runs browser windows' pages; without one, a page fails to open. */
+  browser?: Pick<BrowserHost, "run">;
 };
 
 export type EffectRunner = {
@@ -934,6 +937,19 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             result,
           }),
         );
+        return;
+      }
+      case "browser": {
+        if (d.browser !== undefined) d.browser.run(e.window, e.op);
+        else if (e.op.op === "open")
+          d.dispatch({
+            type: "browserEvent",
+            window: e.window,
+            event: {
+              kind: "status",
+              status: { kind: "failed", reason: "the browser view is off" },
+            },
+          });
         return;
       }
       case "sqliteSchema": {

@@ -102,7 +102,7 @@ const press = (s: AppState, x: number, y: number, clicks: 1 | 2 | 3 = 1) =>
 const drag = (s: AppState, x: number, y: number) =>
   mouse({ kind: "drag", target: at(s, x, y) });
 const release = (s: AppState, x: number, y: number) =>
-  mouse({ kind: "release", target: at(s, x, y) });
+  mouse({ kind: "release", target: at(s, x, y), clicks: 1 });
 const move = (s: AppState, x: number, y: number) =>
   mouse({ kind: "move", target: at(s, x, y) });
 

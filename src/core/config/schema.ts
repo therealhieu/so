@@ -146,6 +146,12 @@ export const ConfigSchema = z.strictObject({
       tool: z.array(z.string().min(1)).min(1).default(["lazygit"]),
     })
     .prefault({}),
+  browser: z
+    .strictObject({
+      /** The Chrome-family program that draws `.html` pages; empty finds one on PATH or in the macOS applications. */
+      chrome: z.string().default(""),
+    })
+    .prefault({}),
   keys: KeyBindingsSchema.default({}),
   filetypes: z
     .record(

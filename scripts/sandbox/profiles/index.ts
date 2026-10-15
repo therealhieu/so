@@ -1,6 +1,7 @@
 import type { Profile } from "../profile";
 import { bases } from "./bases";
 import { brokenConfig } from "./broken-config";
+import { browser } from "./browser";
 import { empty } from "./empty";
 import { gitRepo } from "./git";
 import { gitConflict } from "./git-conflict";
@@ -31,6 +32,7 @@ export const PROFILES: readonly Profile[] = [
   lsp,
   pdf,
   sqlite,
+  browser,
   intro,
 ];
 

@@ -8,6 +8,12 @@ import type { CommandRegistry } from "../kernel/commands/registry";
 import { onBaseScrolled } from "./base-commands";
 import { onFrontmatterPatched } from "./base-write";
 import {
+  onBrowserEvent,
+  onBrowserLaidOut,
+  onRawKey,
+  syncBrowser,
+} from "./browser";
+import {
   fullText,
   onFileLoaded,
   onFileRefused,
@@ -147,7 +153,9 @@ function syncEditorKinds(r: Result, reg: Registries): Result {
   for (const w of Object.values(s.windows.byId)) {
     const b = s.buffers[w.content.bufferId];
     if (b === undefined) continue;
-    const kind = reg.fileTypes.get(b.fileType)?.editor;
+    const kind = w.content.source
+      ? undefined
+      : reg.fileTypes.get(b.fileType)?.editor;
     const editor =
       kind !== undefined && reg.editorKinds.get(kind) !== undefined
         ? kind
@@ -231,6 +239,12 @@ export function createUpdate(reg: Registries): Update {
         return onZoomFill(state, action);
       case "baseScrolled":
         return onBaseScrolled(state, action);
+      case "rawKey":
+        return onRawKey(state, action.raw);
+      case "browserLaidOut":
+        return onBrowserLaidOut(state, action);
+      case "browserEvent":
+        return onBrowserEvent(state, action);
       case "pdfInfo":
         return onPdfInfo(state, action);
       case "sqliteSchema":
@@ -334,35 +348,38 @@ export function createUpdate(reg: Registries): Update {
     try {
       const r = syncAnnotations(
         state,
-        syncSqlite(
+        syncBrowser(
           state,
-          syncPdfLayout(
+          syncSqlite(
             state,
-            syncPdfInfo(
+            syncPdfLayout(
               state,
-              syncGitFiles(
+              syncPdfInfo(
                 state,
-                syncHighlight(
+                syncGitFiles(
                   state,
-                  syncFloat(
+                  syncHighlight(
                     state,
-                    syncDiagnostics(
+                    syncFloat(
                       state,
-                      syncLineShift(
+                      syncDiagnostics(
                         state,
-                        syncEmbeds(
+                        syncLineShift(
                           state,
-                          followActiveFile(
+                          syncEmbeds(
                             state,
-                            followShownNote(
+                            followActiveFile(
                               state,
-                              syncEditorKinds(
-                                syncBufferLists(state, step(state, action)),
-                                reg,
+                              followShownNote(
+                                state,
+                                syncEditorKinds(
+                                  syncBufferLists(state, step(state, action)),
+                                  reg,
+                                ),
                               ),
                             ),
+                            reg,
                           ),
-                          reg,
                         ),
                       ),
                     ),
