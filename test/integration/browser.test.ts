@@ -67,12 +67,17 @@ const logged = (
         .map((l) => JSON.parse(l))
     : [];
 
-async function until<T>(f: () => T | undefined, ms = 5000): Promise<T> {
+async function until<T>(
+  f: () => T | undefined,
+  ms = 5000,
+  seen: () => unknown = () => "",
+): Promise<T> {
   const end = Date.now() + ms;
   for (;;) {
     const v = f();
     if (v !== undefined) return v;
-    if (Date.now() > end) throw new Error("timed out");
+    if (Date.now() > end)
+      throw new Error(`timed out; seen: ${JSON.stringify(seen())}`);
     await Bun.sleep(10);
   }
 }
@@ -85,6 +90,8 @@ async function start(chrome: string) {
   );
   await Bun.write(join(dir, "ws/site/next.html"), "<title>Next</title>");
   const events: BrowserEvent[] = [];
+  /** What the host logged as errors, for a timeout to show. */
+  const errors: unknown[] = [];
   const frames = createBrowserFrames();
   host = createBrowserHost({
     root: join(dir, "ws"),
@@ -98,13 +105,16 @@ async function start(chrome: string) {
         if (e === "browser.started" && typeof f?.pid === "number")
           pids.push(f.pid);
       },
-      error() {},
+      error(e, f) {
+        errors.push({ event: e, ...f });
+      },
     },
     idleMs: 50,
   });
   const h = host;
   return {
     events,
+    errors,
     frames,
     run: (op: BrowserOp) => h.run(1, op),
     statuses: () =>
@@ -265,7 +275,11 @@ test.skipIf(real.kind !== "found")(
     if (real.kind !== "found") return;
     const h = await start(real.path);
     h.run({ op: "open", path: "site/index.html", size: SIZE });
-    const frame = await until(() => h.frames.latest(1), 20_000);
+    const frame = await until(
+      () => h.frames.latest(1),
+      20_000,
+      () => h.events,
+    );
     expect([...frame.png.subarray(1, 4)]).toEqual([80, 78, 71]);
     frame.ack();
     await until(() => h.events.find((e) => e.kind === "page" && !e.loading));
