@@ -1,24 +1,51 @@
+import type { Decoration } from "../../../kernel/view/decorations";
 import { contentEnd } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
+import { nestedFences } from "./code";
 import { lineStyle, replaceCols } from "./rows";
 
 const ITEM = /^([ \t]*)([-+*]|\d{1,9}[.)])([ \t]+)(\[([ xX])\][ \t]+)?/;
 const BULLETS = ["•", "◦", "▪"];
 
-/** Bullets as `•` `◦` `▪` by depth, tasks as `☐`/`☑` with done items dimmed, and ordered markers styled. */
+/** Columns before a line's content: its indent, and its marker on an item line. */
+function contentCol(text: string): number {
+  const m = ITEM.exec(text);
+  if (m === null) return text.length - text.trimStart().length;
+  return (m[1] ?? "").length + (m[2] ?? "").length + (m[3] ?? "").length;
+}
+
+/**
+ * Bullets as `•` `◦` `▪` by depth, tasks as `☐`/`☑` with done items dimmed,
+ * ordered markers styled, and fenced code in items rendered like top-level
+ * fences, its indent kept off the code band.
+ */
 export const listRenderer: BlockRenderer = (block, v) => {
-  const out = [];
-  const last = Math.min(contentEnd(v.buf, block), v.visible.to - 1);
+  const out: Decoration[] = [];
+  const stop = contentEnd(v.buf, block);
+  const fences = nestedFences(v.buf, block.startLine, stop, contentCol);
+  out.push(...fences.decorations);
+  const last = Math.min(stop, v.visible.to - 1);
   for (let l = Math.max(block.startLine, v.visible.from); l <= last; l++) {
-    const m = ITEM.exec(v.buf.line(l));
+    const text = v.buf.line(l);
+    const indent = fences.lines.get(l);
+    if (indent !== undefined) {
+      if (indent > 0)
+        out.push(
+          replaceCols(l, 0, indent, [
+            { text: text.slice(0, indent), style: "text" },
+          ]),
+        );
+      continue;
+    }
+    const m = ITEM.exec(text);
     if (m === null) continue;
-    const indent = m[1]?.length ?? 0;
+    const depth = m[1]?.length ?? 0;
     const marker = m[2] ?? "";
     const end = m[0].length;
     if (m[4] !== undefined) {
       const done = m[5] !== " ";
       out.push(
-        replaceCols(l, indent, end, [
+        replaceCols(l, depth, end, [
           { text: done ? "☑ " : "☐ ", style: "mdMarker" },
         ]),
       );
@@ -27,17 +54,15 @@ export const listRenderer: BlockRenderer = (block, v) => {
       out.push({
         kind: "mark" as const,
         range: {
-          start: { line: l, col: indent },
-          end: { line: l, col: indent + marker.length },
+          start: { line: l, col: depth },
+          end: { line: l, col: depth + marker.length },
         },
         style: "mdMarker",
       });
     else {
-      const bullet = BULLETS[Math.floor(indent / 2) % BULLETS.length];
+      const bullet = BULLETS[Math.floor(depth / 2) % BULLETS.length];
       out.push(
-        replaceCols(l, indent, end, [
-          { text: `${bullet} `, style: "mdMarker" },
-        ]),
+        replaceCols(l, depth, end, [{ text: `${bullet} `, style: "mdMarker" }]),
       );
     }
   }

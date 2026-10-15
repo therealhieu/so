@@ -635,3 +635,33 @@ test("dragging inside the zoom float pans the zoomed image", async () => {
   expect(centre()?.cx).toBeCloseTo(0.625);
   expect(centre()?.cy).toBeCloseTo(0.5);
 });
+
+test("coloured text in a code block or heading sits on the block's background", async () => {
+  m = await mountShell({ cols: 100, rows: 30 });
+  openNote(
+    m,
+    "notes/code.md",
+    "Intro\n\n```ts\nconst a = 1;\n```\n\n# Head **bold**\n",
+  );
+  const frame = (await m.frame()).split("\n");
+  const spans = m.t.captureSpans().lines;
+  const at = (text: string) => {
+    const y = frame.findIndex((l) => l.includes(text));
+    const row = frame[y] ?? "";
+    return cellStyle(spans, [...row.slice(0, row.indexOf(text))].length, y);
+  };
+  const rgb = (token: string, part: "fg" | "bg") =>
+    themes.dark.style(token)[part].toInts().join(",");
+  expect(at("const")).toMatchObject({
+    fg: rgb("codeKeyword", "fg"),
+    bg: rgb("mdCode", "bg"),
+  });
+  expect(at(" a = ")).toMatchObject({
+    fg: rgb("mdCode", "fg"),
+    bg: rgb("mdCode", "bg"),
+  });
+  expect(at("bold")).toMatchObject({
+    fg: rgb("mdBold", "fg"),
+    bg: rgb("mdHeading1", "bg"),
+  });
+});

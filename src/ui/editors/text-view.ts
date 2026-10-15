@@ -150,7 +150,8 @@ export type Rect = { x: number; y: number; w: number; h: number };
  * Display columns count from the line start, with tabs reaching the next
  * multiple of `tabWidth` and wide characters taking two cells; the cells
  * from `leftCol` up to `endCol` (or the
- * row's width) are painted and the rest of the row is filled. On the cursor
+ * row's width) are painted and the rest of the row is filled. A span
+ * without a background of its own takes its line style's. On the cursor
  * line every token keeps its foreground and takes the cursorline
  * background, except selection and search matches.
  */
@@ -169,8 +170,13 @@ export function paintLine(
   },
 ): void {
   const line = theme.style("cursorline");
-  const styleOf = (token: string) => {
-    const st = theme.style(token);
+  const plain = theme.style("text").bg;
+  const styleOf = ({ style: token, under }: Span) => {
+    const own = theme.style(token);
+    const st =
+      under !== undefined && own.bg.equals(plain)
+        ? { ...own, bg: theme.style(under).bg }
+        : own;
     return o.cursorline &&
       token !== "selection" &&
       token !== "searchMatch" &&
@@ -205,7 +211,7 @@ export function paintLine(
     const room = at.width - x;
     if (cells === 0 || room <= 0) continue;
     const n = Math.min(room, cells);
-    drawCells(buf, styleOf(span.style), at.x + x, at.y, run, n);
+    drawCells(buf, styleOf(span), at.x + x, at.y, run, n);
     x += n;
   }
   if (x < at.width)

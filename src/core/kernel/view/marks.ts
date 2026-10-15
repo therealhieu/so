@@ -15,7 +15,10 @@ const mark = (
   style,
 });
 
-/** Syntax colours for the visible lines; a failing highlighter gives no marks. */
+/**
+ * Syntax colours for the visible lines; a failing highlighter gives no marks.
+ * Unstyled text gets no mark, so it keeps a line style set by another provider.
+ */
 export function highlightMarks(h: Highlighter | undefined): DecorationProvider {
   return (v) => {
     if (h === undefined) return [];
@@ -29,7 +32,7 @@ export function highlightMarks(h: Highlighter | undefined): DecorationProvider {
     lines.forEach((spans, i) => {
       let col = 0;
       for (const s of spans) {
-        if (s.text !== "")
+        if (s.text !== "" && s.style !== "text")
           out.push(mark(v.visible.from + i, col, col + s.text.length, s.style));
         col += s.text.length;
       }

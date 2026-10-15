@@ -331,6 +331,165 @@ test("callout and quote bodies keep their text styles over source highlighting a
   expect(prefix(5)).toBeUndefined();
 });
 
+test("code bodies, done tasks, and footnotes keep their line styles over source highlighting", () => {
+  builtinRenderers();
+  const note = [
+    "```sh",
+    "./run start",
+    "```",
+    "",
+    "```ts",
+    "const a = 1;",
+    "```",
+    "",
+    "    indented",
+    "",
+    "- [x] done",
+    "",
+    "[^1]: a note",
+    "",
+    "After",
+  ].join("\n");
+  const { v, doc } = noteView(note, { cursor: { line: 14, col: 0 } });
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "live", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  expect(styles(1)).toEqual([["mdCode", "./run start"]]);
+  expect(styles(5)).toEqual([
+    ["codeKeyword", "const"],
+    ["mdCode", " a = "],
+    ["codeNumber", "1"],
+    ["mdCode", ";"],
+  ]);
+  expect(styles(8)).toEqual([["mdCode", "    indented"]]);
+  expect(styles(10)).toEqual([
+    ["mdMarker", "☑ "],
+    ["dim", "done"],
+  ]);
+  expect(styles(12)).toEqual([
+    ["mdFootnote", "¹ "],
+    ["mdFootnote", "a note"],
+  ]);
+});
+
+test("fences in list items, callouts, and quotes render like top-level fences", () => {
+  builtinRenderers();
+  const note = [
+    "1. Build",
+    "",
+    "   ```sh",
+    "   echo hi",
+    "   - not an item",
+    "   ```",
+    "",
+    "2. Configure",
+    "",
+    "   ```toml",
+    '   a = "x"',
+    "   ```",
+    "",
+    "> [!note] Run",
+    "> ```ts",
+    "> const b = 1;",
+    "> ```",
+    "",
+    "> Quoted",
+    "> ```",
+    "> plain",
+    "",
+    "After",
+  ].join("\n");
+  const { v, doc } = noteView(note, { cursor: { line: 22, col: 0 } });
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "live", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  const shown = new Set(rows.map((r) => r.sourceLine));
+  for (const fence of [2, 5, 9, 11, 14, 16, 19])
+    expect(shown).not.toContain(fence);
+  expect(styles(3)).toEqual([
+    ["text", "   "],
+    ["codeBuiltin", "echo"],
+    ["mdCode", " hi"],
+  ]);
+  expect(styles(4)).toEqual([
+    ["text", "   "],
+    ["mdCode", "- not an item"],
+  ]);
+  expect(styles(10)).toEqual([
+    ["text", "   "],
+    ["codeAttribute", "a"],
+    ["mdCode", " = "],
+    ["codeString", '"x"'],
+  ]);
+  expect(styles(15)).toEqual([
+    ["mdCalloutNote", "▎ "],
+    ["codeKeyword", "const"],
+    ["mdCode", " b = "],
+    ["codeNumber", "1"],
+    ["mdCode", ";"],
+  ]);
+  // An unclosed fence runs to the end of its quote.
+  expect(styles(20)).toEqual([
+    ["mdQuote", "▎ "],
+    ["mdCode", "plain"],
+  ]);
+});
+
+test("a fence opening on a list item's line keeps the bullet and the items after it", () => {
+  builtinRenderers();
+  const note = [
+    "- ```sh",
+    "  - echo hi",
+    "  ```",
+    "- next item",
+    "",
+    "After",
+  ].join("\n");
+  const { v, doc } = noteView(note, { cursor: { line: 5, col: 0 } });
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "live", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  expect(styles(0)).toEqual([["mdMarker", "• "]]);
+  expect(styles(1)).toEqual([
+    ["text", "  "],
+    ["mdCode", "- "],
+    ["codeBuiltin", "echo"],
+    ["mdCode", " hi"],
+  ]);
+  expect(rows.map((r) => r.sourceLine)).not.toContain(2);
+  expect(styles(3)).toEqual([
+    ["mdMarker", "• "],
+    ["text", "next item"],
+  ]);
+});
+
 test("the reveal sign marks exactly the revealed rows", () => {
   builtinRenderers();
   const signed = (line: number) =>

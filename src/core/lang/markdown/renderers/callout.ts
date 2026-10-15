@@ -1,5 +1,6 @@
 import { contentEnd, contentStart } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
+import { nestedFences } from "./code";
 import { markCols, replaceCols, replaceLine, wrapPrefix } from "./rows";
 
 type Look = { icon: string; style: string };
@@ -28,7 +29,7 @@ const PREFIX = /^(?: {0,3}>[ \t]?)+/;
  * in plain text behind a `▎` bar repeated on every wrap row, or the body
  * hidden when folded; `[!x]-` starts folded and a block id in `folds` flips
  * that. A click on the marker flips it too. Plain quotes get the bar and
- * quote text only.
+ * quote text only. Fenced code in either is rendered like a top-level fence.
  */
 export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
   const first = contentStart(v.buf, block);
@@ -63,6 +64,12 @@ export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
       return out;
     }
   }
+  const fences = nestedFences(
+    v.buf,
+    body,
+    last,
+    (text) => PREFIX.exec(text)?.[0].length ?? 0,
+  );
   for (
     let l = Math.max(body, v.visible.from);
     l <= last && l < v.visible.to;
@@ -72,11 +79,18 @@ export const calloutRenderer: BlockRenderer = (block, v, { ctx }) => {
     if (prefix === null) continue;
     const from = prefix[0].length;
     const bar = [{ text: "▎ ", style }];
+    const textStyle = fences.lines.has(l)
+      ? "mdCode"
+      : title
+        ? "text"
+        : "mdQuote";
     out.push(
       replaceCols(l, 0, from, bar),
-      markCols(l, from, v.buf.line(l).length, title ? "text" : "mdQuote"),
+      markCols(l, from, v.buf.line(l).length, textStyle),
       wrapPrefix(l, bar),
     );
   }
+  // After the body marks, so code colours win over them.
+  out.push(...fences.decorations);
   return out;
 };

@@ -12,6 +12,8 @@ export type Span = {
   col?: number;
   /** Replacement text: every cell maps to `col`. */
   inserted?: true;
+  /** The line's style; text without a background of its own takes this one's. */
+  under?: StyleToken;
   /** A click on this text flips the fold of this block id in its window. */
   fold?: number;
   /** The tag this text shows, for a click on text drawn in place of its source. */

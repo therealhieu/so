@@ -73,6 +73,35 @@ test("later providers win where marks overlap", () => {
   ]);
 });
 
+test("marked text on a styled line carries the line style beneath it", () => {
+  const rows = layoutText(
+    view(["let x", "plain"]),
+    [
+      fixed(
+        { kind: "line", line: 0, style: "mdCode" },
+        {
+          kind: "mark",
+          range: { start: { line: 0, col: 0 }, end: { line: 0, col: 3 } },
+          style: "codeKeyword",
+        },
+        {
+          kind: "mark",
+          range: { start: { line: 1, col: 0 }, end: { line: 1, col: 5 } },
+          style: "codeKeyword",
+        },
+      ),
+    ],
+    undefined,
+  );
+  expect(rows.map((r) => r.spans)).toEqual([
+    [
+      { text: "let", style: "codeKeyword", col: 0, under: "mdCode" },
+      { text: " x", style: "mdCode", col: 3 },
+    ],
+    [{ text: "plain", style: "codeKeyword", col: 0 }],
+  ]);
+});
+
 test("inline replace hides text and inserts its spans", () => {
   const rows = layoutText(
     view(["a **b** c"]),
