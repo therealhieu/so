@@ -148,7 +148,11 @@ function layoutLine(
       if (d.widget !== undefined) widget = d.widget;
     }
   }
-  const spans = spansOf(text, styles, hidden, inserts);
+  const spans = spansOf(text, styles, hidden, inserts).map((s) =>
+    base === PLAIN || s.style === base || s.inserted
+      ? s
+      : { ...s, under: base },
+  );
   const row: RenderLine = withWidget({ sourceLine: line, spans }, widget);
   const signed = sign === undefined ? row : { ...row, sign };
   const changed = changeSign === undefined ? signed : { ...signed, changeSign };
