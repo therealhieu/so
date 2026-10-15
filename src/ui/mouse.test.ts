@@ -336,10 +336,47 @@ test("letting go after a press on a PDF page reports a release on it, once", () 
   r.handle(ev("up", 3, 1));
   r.handle(ev("up", 3, 1));
   expect(r.events().map((e) => e?.kind)).toEqual(["press", "drag", "release"]);
-  expect(r.events().at(-1)).toEqual({ kind: "release", target: page(1) });
+  expect(r.events().at(-1)).toEqual({
+    kind: "release",
+    target: page(1),
+    clicks: 1,
+  });
   // Letting go after a press elsewhere reports nothing.
   const t = setup([editor]);
   t.handle(ev("down", 2, 2));
   t.handle(ev("up", 2, 2));
   expect(t.events().map((e) => e?.kind)).toEqual(["press"]);
+});
+
+test("a browser page gets the button up where a drag ended, with the press's count", () => {
+  const page = (x: number): MouseTarget => ({
+    kind: "window",
+    window: 1,
+    spot: { kind: "browser", at: { x: x / 10, y: 0.5 } },
+  });
+  const browser: MouseSource = {
+    targetAt: (x) => page(x),
+    dragAt: (x) => page(x),
+  };
+  const r = setup([browser]);
+  r.handle(ev("down", 1, 1));
+  r.handle(ev("drag", 4, 1));
+  r.handle(ev("drag-end", 4, 1));
+  r.handle(ev("up", 4, 1));
+  expect(r.events().at(-1)).toEqual({
+    kind: "release",
+    target: page(4),
+    clicks: 1,
+  });
+  // A double click is two downs and ups; the second up says so too.
+  r.at(1000);
+  r.handle(ev("down", 6, 1));
+  r.handle(ev("up", 6, 1));
+  r.at(1100);
+  r.handle(ev("down", 6, 1));
+  r.handle(ev("up", 6, 1));
+  expect(r.events().slice(-2)).toEqual([
+    { kind: "press", target: page(6), clicks: 2, ctrl: false },
+    { kind: "release", target: page(6), clicks: 2 },
+  ]);
 });

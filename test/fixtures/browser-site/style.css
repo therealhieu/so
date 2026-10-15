@@ -1,0 +1,378 @@
+:root {
+  --bg: #1a1b26;
+  --panel: #24283b;
+  --text: #c0caf5;
+  --dim: #7982a9;
+  --blue: #7aa2f7;
+  --pink: #f7768e;
+  --green: #9ece6a;
+  --amber: #e0af68;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: auto;
+}
+body {
+  margin: 0;
+  font:
+    16px / 1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+a {
+  color: var(--blue);
+}
+nav.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.6rem 2rem;
+  background: rgba(26, 27, 38, 0.92);
+  border-bottom: 1px solid #2f3549;
+}
+nav.top .live {
+  margin-left: auto;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+.hero {
+  padding: 2.5rem 2rem;
+  background:
+    radial-gradient(circle at 20% 20%, #3d59a1 0, transparent 45%),
+    linear-gradient(135deg, #1f2335, #2d1b3d);
+}
+.hero h1 {
+  margin: 0;
+  font-size: 2.6rem;
+  color: var(--amber);
+}
+section {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #2f3549;
+}
+h2 {
+  margin-top: 0;
+  color: var(--blue);
+}
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 11rem;
+  padding: 1rem 1.4rem;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.15s,
+    background 0.15s;
+}
+.grad {
+  background: linear-gradient(135deg, #7aa2f7, #bb9af7);
+  color: #1a1b26;
+  font-weight: 600;
+}
+.glass {
+  background: rgba(122, 162, 247, 0.12);
+  backdrop-filter: blur(6px);
+  border: 1px solid #3b4261;
+}
+.donut {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--pink) 0 35%,
+    var(--amber) 0 60%,
+    var(--green) 0 100%
+  );
+  mask: radial-gradient(circle, transparent 45%, #000 46%);
+}
+.hover:hover {
+  transform: translateY(-4px) scale(1.04);
+  background: var(--pink);
+  color: #1a1b26;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 1rem 0;
+}
+.chart,
+#art {
+  background: var(--panel);
+  border-radius: 10px;
+}
+.chart {
+  width: 320px;
+  height: 160px;
+}
+figure {
+  margin: 0;
+}
+figure img {
+  width: 160px;
+  height: 100px;
+  border-radius: 10px;
+  display: block;
+}
+figcaption {
+  color: var(--dim);
+  font-size: 0.85rem;
+}
+.prose {
+  max-width: 46rem;
+}
+kbd {
+  padding: 0 0.35rem;
+  border: 1px solid #3b4261;
+  border-radius: 4px;
+  background: var(--panel);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(14rem, 22rem));
+  gap: 0.8rem 1.5rem;
+}
+.grid .wide {
+  grid-column: 1 / -1;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+fieldset label {
+  flex-direction: row;
+  gap: 0.4rem;
+}
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid #3b4261;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+}
+input:focus,
+select:focus,
+textarea:focus,
+.note:focus,
+.keybox:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+fieldset {
+  border: 1px solid #3b4261;
+  border-radius: 8px;
+}
+button {
+  cursor: pointer;
+  padding: 0.4rem 0.9rem;
+}
+button:hover {
+  border-color: var(--blue);
+}
+button:active {
+  transform: translateY(1px);
+}
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.6rem;
+}
+.meter {
+  display: inline-block;
+  width: 12rem;
+  height: 0.6rem;
+  border-radius: 4px;
+  background: #2f3549;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 4px;
+  background: var(--green);
+}
+pre {
+  background: var(--panel);
+  padding: 0.8rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--blue);
+  border-radius: 12px;
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.pad {
+  width: 18rem;
+  height: 9rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    #24283b 0 10px,
+    #292e42 10px 20px
+  );
+  user-select: none;
+}
+.lamp {
+  width: 14rem;
+  height: 9rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #e0af68;
+  color: #1a1b26;
+  user-select: none;
+}
+.lamp.off {
+  background: #2f3549;
+  color: var(--dim);
+}
+.sortable {
+  width: 12rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  user-select: none;
+}
+.sortable li {
+  margin-bottom: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  background: var(--panel);
+  cursor: grab;
+}
+.sortable li.dragging {
+  background: var(--blue);
+  color: #1a1b26;
+}
+.tabs [role="tablist"] {
+  display: flex;
+  gap: 0.3rem;
+}
+.tab.on {
+  background: var(--blue);
+  color: #1a1b26;
+}
+.panel {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  background: var(--panel);
+}
+details {
+  margin: 1rem 0;
+}
+.note {
+  min-height: 3rem;
+  padding: 0.6rem;
+  border: 1px dashed #3b4261;
+  border-radius: 8px;
+}
+.keybox {
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--panel);
+}
+.keylog {
+  color: var(--dim);
+  font-family: ui-monospace, monospace;
+}
+table {
+  margin: 0.8rem 0;
+  border-collapse: collapse;
+  min-width: 30rem;
+}
+th,
+td {
+  padding: 0.35rem 0.8rem;
+  border-bottom: 1px solid #3b4261;
+  text-align: left;
+}
+th {
+  cursor: pointer;
+  color: var(--blue);
+}
+tbody tr:hover {
+  background: #2f3549;
+}
+.strip {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.strip div {
+  flex: 0 0 14rem;
+  height: 6rem;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #414868, #24283b);
+}
+#balls {
+  display: block;
+  margin: 1rem 0;
+  background: #16161e;
+  border-radius: 10px;
+}
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 4px solid #3b4261;
+  border-top-color: var(--pink);
+  border-radius: 50%;
+}
+.spinner.on {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+footer {
+  padding: 2rem 2rem 30rem;
+  color: var(--dim);
+}

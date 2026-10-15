@@ -9,6 +9,13 @@ import {
 } from "./base-commands";
 import { baseViewModel } from "./base-model";
 import {
+  dragBrowser,
+  hoverBrowser,
+  pressBrowser,
+  releaseBrowser,
+  wheelBrowser,
+} from "./browser";
+import {
   activeBuffer,
   flipFold,
   leaves,
@@ -62,17 +69,30 @@ export function onMouse(
   reg: Registries,
 ): Result {
   const e = a.event;
-  if (e.kind === "move")
-    return onPointerMove(
-      hoverPdf(hoverExplorer(state, e.target), e.target),
-      e.target,
-    );
-  if (e.kind === "release")
-    return e.target.kind === "window" &&
-      e.target.window === state.windows.active &&
-      state.overlay.kind === "none"
-      ? releasePdf(state)
-      : none(state);
+  if (e.kind === "move") {
+    const t = e.target;
+    const moved = onPointerMove(hoverPdf(hoverExplorer(state, t), t), t);
+    if (
+      t.kind !== "window" ||
+      t.spot.kind !== "browser" ||
+      moved.state.overlay.kind !== "none"
+    )
+      return moved;
+    const { at } = t.spot;
+    return chain(moved, (st) => hoverBrowser(st, t.window, at));
+  }
+  if (e.kind === "release") {
+    const t = e.target;
+    if (
+      t.kind !== "window" ||
+      t.window !== state.windows.active ||
+      state.overlay.kind !== "none"
+    )
+      return none(state);
+    return t.spot.kind === "browser"
+      ? releaseBrowser(state, t.window, t.spot.at, e.clicks)
+      : releasePdf(state);
+  }
   const gate = overlayGate(state, e, a.now, reg);
   if ("stop" in gate) return gate.stop;
   const s = gate.go;
@@ -95,6 +115,10 @@ export function onMouse(
       if (t.kind !== "window" || t.window !== s.windows.active) return none(s);
       if (t.spot.kind === "pdf")
         return t.spot.at === undefined ? none(s) : dragPdf(s, t.spot.at);
+      if (t.spot.kind === "browser")
+        return t.spot.at === undefined
+          ? none(s)
+          : dragBrowser(s, t.window, t.spot.at);
       return t.spot.kind === "text"
         ? dragText(s, t.spot.pos, t.spot.edge, a.now, reg)
         : none(s);
@@ -188,6 +212,12 @@ function wheel(
         return withFocus(s, t, (f) => wheelBase(f, dx, dy, now, reg));
       if (editor === "sqlite")
         return withFocus(s, t, (f) => wheelSqlite(f, dx, dy, now, reg));
+      if (editor === "browser") {
+        const at = t.spot.kind === "browser" ? t.spot.at : undefined;
+        return withFocus(s, t, (f) =>
+          wheelBrowser(f, t.window, at, dx * WHEEL_LINES, dy * WHEEL_LINES),
+        );
+      }
       if (editor === "pdf")
         return withFocus(s, t, (f) =>
           dx !== 0
@@ -448,6 +478,10 @@ function press(
   if (t.kind === "window" && t.spot.kind === "pdf") {
     const { at } = t.spot;
     return chain(focused, (st) => pressPdf(st, at, e.clicks));
+  }
+  if (t.kind === "window" && t.spot.kind === "browser") {
+    const { at } = t.spot;
+    return chain(focused, (st) => pressBrowser(st, t.window, at, e.clicks));
   }
   return t.kind === "window" && t.spot.kind === "text"
     ? pressText(focused, t.spot, e.clicks, e.ctrl, reinsert, now, reg)

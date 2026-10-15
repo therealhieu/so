@@ -12,6 +12,7 @@ import type { Doc } from "../lang/markdown/doc";
 import { markdownFileType } from "../lang/markdown/file-type";
 import { RenderCache } from "../lang/markdown/render-cache";
 import { baseWindow } from "./base-model";
+import { browserWindow } from "./browser";
 import { activeBuffer, activeWindow } from "./buffers";
 import { gitSegment } from "./git";
 import { jumpSegment } from "./jumps";
@@ -114,12 +115,16 @@ function startsOf(text: TextBuffer, pattern: string): Pos[] {
 }
 
 /**
- * The mode the badge names: the explorer, a PDF window, a base window
+ * The mode the badge names: the explorer, a browser window (`browse` while
+ * keys go to the page), a PDF window, a base window
  * (`insert` while one of its cells is edited or its filter input is open),
  * or the vim mode.
  */
 function modeOf(s: AppState): string {
   if (s.panels.explorer.focused) return "explorer";
+  const page = browserWindow(s, s.windows.active);
+  if (page !== undefined && s.vim.mode === "normal")
+    return page.mode === "browse" ? "browse" : "web";
   if (pdfWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
     return "pdf";
   if (
@@ -159,6 +164,14 @@ export function statusSegments(s: AppState): StatusSegments {
       seg.page += ` ${Math.round(pdf.zoom * 100)}%`;
     const found = pdfSearchCount(s);
     if (found !== undefined) seg.search = found;
+  }
+  const page = browserWindow(s, s.windows.active);
+  if (b !== undefined && page !== undefined) {
+    delete seg.position;
+    const shown = page.loading ? "loading…" : page.title || page.url;
+    if (shown) seg.page = shown;
+    if (page.zoom !== 1)
+      seg.page = `${seg.page ?? ""} ${Math.round(page.zoom * 100)}%`.trim();
   }
   const db = sqliteWindow(s, s.windows.active);
   if (b !== undefined && db !== undefined) {

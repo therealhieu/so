@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import type { RawKey } from "../core/features/browser/keys";
 import { createKeyNormalizer, type KeyInput, toKey } from "./input";
 
 /** A fake clock whose timers fire only when `advance` passes their due time. */
@@ -136,6 +137,67 @@ test("ctrl+space is its own key and space stays a space", () => {
     "<C-Space>",
   );
   expect(toKey(key("space", { sequence: " " }))).toBe(" ");
+});
+
+test("Ctrl-\\ from a legacy terminal or with modified keys; a plain \\ stays itself", () => {
+  expect(toKey(key("\\", { ctrl: true, sequence: "\x1c" }))).toBe("<C-\\>");
+  expect(
+    toKey(key("\\", { ctrl: true, sequence: "\x1b[92;5u", source: "kitty" })),
+  ).toBe("<C-\\>");
+  expect(toKey(key("\\", { sequence: "\\" }))).toBe("\\");
+});
+
+/** A normalizer that keeps the raw key beside each key, and the unnamed ones. */
+function rawSetup() {
+  const time = fakeTime();
+  const out: [string, RawKey | undefined][] = [];
+  const unnamed: RawKey[] = [];
+  const n = createKeyNormalizer({
+    escTimeoutMs: 0,
+    now: time.now,
+    setTimer: time.setTimer,
+    clear: time.clear,
+    emit: (k, _at, raw) => out.push([k, raw]),
+    unnamed: (raw) => unnamed.push(raw),
+  });
+  return { out, unnamed, n };
+}
+
+const plain = { ctrl: false, alt: false, shift: false, meta: false };
+
+test("each key carries the key as reported, with the text it types", () => {
+  const { out, n } = rawSetup();
+  n.feed(key("a"));
+  n.feed(key("a", { shift: true, sequence: "A" }));
+  n.feed(key("k", { ctrl: true, sequence: "\x0b" }));
+  n.feed(key("x", { option: true, sequence: "x", source: "kitty" }));
+  n.feed(key("c", { super: true, sequence: "c", source: "kitty" }));
+  n.feed(ESC);
+  expect(out).toEqual([
+    ["a", { name: "a", text: "a", ...plain }],
+    ["A", { name: "a", text: "A", ...plain, shift: true }],
+    ["<C-k>", { name: "k", ...plain, ctrl: true }],
+    ["x", { name: "x", text: "x", ...plain, alt: true }],
+    ["c", { name: "c", ...plain, meta: true }],
+    ["<Esc>", { name: "escape", ...plain }],
+  ]);
+});
+
+test("a legacy meta+key gives the key its own text, without Alt", () => {
+  const { out, n } = rawSetup();
+  n.feed(key("j", { meta: true, sequence: "\x1bj" }));
+  expect(out).toEqual([
+    ["<Esc>", { name: "escape", ...plain }],
+    ["j", { name: "j", text: "j", ...plain }],
+  ]);
+});
+
+test("a key with no Vim name goes to unnamed; Ctrl on a named key stays in its raw key", () => {
+  const { out, unnamed, n } = rawSetup();
+  n.feed(key("f5", { sequence: "\x1b[15~" }));
+  n.feed(key("left", { ctrl: true, sequence: "\x1b[1;5D" }));
+  expect(unnamed).toEqual([{ name: "f5", ...plain }]);
+  expect(out).toEqual([["<Left>", { name: "left", ...plain, ctrl: true }]]);
 });
 
 test("Ctrl-^ from a legacy terminal or with modified keys", () => {

@@ -71,12 +71,17 @@ export function keymapFor(reg: Registries, config: AppConfig): Keymap {
 
 /**
  * Where keys resolve now: the explorer's mode, whose leader keys fall back to
- * Normal mode's, or the vim mode and the active buffer's file type.
+ * Normal mode's, or the vim mode and the active buffer's file type. A page
+ * in a browser window resolves as file type `browser`, so its HTML source,
+ * shown as text, keeps the HTML keys.
  */
 export function keyScope(s: AppState): KeyScope {
   if (s.panels.explorer.focused)
     return { mode: "explorer", leaderFrom: "normal" };
   const b = activeBuffer(s);
   const mode = s.vim.mode;
-  return b === undefined ? { mode } : { mode, filetype: b.fileType };
+  if (b === undefined) return { mode };
+  const browser =
+    s.windows.byId[s.windows.active]?.content.editor === "browser";
+  return { mode, filetype: browser ? "browser" : b.fileType };
 }

@@ -11,6 +11,7 @@ import { pressStops } from "../core/state/mouse";
 import type { Store } from "../core/state/store";
 import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
 import type { Registries } from "../core/state/update";
+import type { BrowserFrames } from "./browser-frames";
 import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
 import {
@@ -87,6 +88,15 @@ export type ShellDeps = {
   rasterizeSvg: (r: SvgRaster) => Promise<RgbaImage>;
   /** PNG bytes of one page of a workspace PDF; PDF windows draw pages with it. */
   rasterizePdf: (r: PdfPageRequest) => Promise<Uint8Array | RgbaImage>;
+  /** The latest frame of each browser window's page; browser windows draw them. */
+  browserFrames?: BrowserFrames;
+  /**
+   * Pixels per second of new browser frame images the terminal is sent:
+   * after each, the page waits that long before sending its next frame.
+   * Unset, the next comes once a frame is drawn. For a path that passes
+   * images on as raw pixels.
+   */
+  browserPixelRate?: number;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
   /**
@@ -260,7 +270,17 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         now: deps.now,
         setTimer: (fn, ms) => setTimeout(fn, ms),
         clear: (t) => clearTimeout(t),
-        emit: (key, now) => store.dispatch({ type: "key", key, now }),
+        emit: (key, now, raw) =>
+          store.dispatch(
+            raw === undefined
+              ? { type: "key", key, now }
+              : { type: "key", key, now, raw },
+          ),
+        unnamed: (raw, now) => store.dispatch({ type: "rawKey", raw, now }),
+      });
+      // A page's frame changes nothing in the store: the next render draws it.
+      deps.browserFrames?.listen(() => {
+        if (!suspended) renderer.requestRender();
       });
       renderer.keyInput.on("keypress", (e) => normalizer.feed(e));
       const utf8 = new TextDecoder();

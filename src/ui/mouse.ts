@@ -45,13 +45,14 @@ const WHEEL: Record<string, { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }> = {
   right: { dx: 1, dy: 0 },
 };
 
-/** Targets a drag can start on: window text or a PDF page (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
+/** Targets a drag can start on: window text, a PDF page, or a browser page (a selection), the zoom float (a pan), and the explorer's or a base table's separator (a resize). */
 const draggable = (t: MouseTarget) =>
   (t.kind === "window" &&
     (t.spot.kind === "text" ||
       t.spot.kind === "baseEdge" ||
       t.spot.kind === "sqliteEdge" ||
-      (t.spot.kind === "pdf" && t.spot.at !== undefined))) ||
+      ((t.spot.kind === "pdf" || t.spot.kind === "browser") &&
+        t.spot.at !== undefined))) ||
   t.kind === "zoomPoint" ||
   t.kind === "explorerEdge";
 
@@ -174,15 +175,27 @@ export function createMouseRouter(o: {
         }
         case "drag-end":
           // OpenTUI sends "up" right after; the gesture ends there.
-          lastDrag = undefined;
           return;
         case "up": {
           const from = origin?.target;
+          const dragged = lastDrag;
+          const clicks = last?.clicks ?? 1;
           origin = undefined;
           lastDrag = undefined;
           // A PDF page acts once the button is up: the selection is final.
           if (from?.kind === "window" && from.spot.kind === "pdf")
-            send({ kind: "release", target: from });
+            send({ kind: "release", target: from, clicks });
+          // A page gets the button up where the drag ended, or where it went
+          // down, with the press's count: a double click is a down and an up.
+          if (from?.kind === "window" && from.spot.kind === "browser")
+            send({
+              kind: "release",
+              target:
+                dragged === undefined
+                  ? from
+                  : (JSON.parse(dragged) as MouseTarget),
+              clicks,
+            });
           return;
         }
       }

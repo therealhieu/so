@@ -3,6 +3,7 @@ import { pendingWrites } from "../core/state/save";
 import type { Store } from "../core/state/store";
 import type { AppState } from "../core/state/types";
 import type { Shell } from "../ui/shell";
+import { CHROME_LIMITS } from "../workspace/browser/chrome";
 import type { EffectRunner } from "./effects";
 import { LSP_STOP_BOUND_MS } from "./lsp-host";
 
@@ -34,6 +35,8 @@ export function installLifecycle(d: {
   stopPreview?: () => Promise<void>;
   /** Stops every language server; each is killed once its own bound passes. */
   stopLsp?: () => Promise<void>;
+  /** Stops Chrome, which browser windows run in; it is killed once its bound passes. */
+  stopBrowser?: () => Promise<void>;
 }): { exitNow(code: number): void; holdInterrupts(): () => void } {
   let done = false;
   let held = 0;
@@ -62,9 +65,17 @@ export function installLifecycle(d: {
         await Promise.race([stopped, Bun.sleep(PREVIEW_STOP_BOUND_MS)]);
     } catch {}
     try {
+      // Chrome and the language servers stop side by side.
+      const browser = d.stopBrowser?.().catch(() => {});
       const stopped = d.stopLsp?.().catch(() => {});
-      if (stopped !== undefined)
-        await Promise.race([stopped, Bun.sleep(LSP_STOP_BOUND_MS + 100)]);
+      await Promise.all([
+        browser === undefined
+          ? undefined
+          : Promise.race([browser, Bun.sleep(CHROME_LIMITS.stopBoundMs + 100)]),
+        stopped === undefined
+          ? undefined
+          : Promise.race([stopped, Bun.sleep(LSP_STOP_BOUND_MS + 100)]),
+      ]);
     } catch {}
     d.shell.destroy();
     // Written after the restore, so the lines land on the main screen, and
