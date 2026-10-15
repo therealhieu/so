@@ -195,6 +195,18 @@ export const BUILTIN_SERVERS: readonly ServerSpec[] = [
     snippets: true,
     localBin: true,
   },
+  {
+    name: "terraform-ls",
+    command: ["terraform-ls", "serve"],
+    fileTypes: ["terraform"],
+    // One server per repository: terraform-ls finds every module under its
+    // root, and each initialized module has its own `.terraform`.
+    rootMarkers: [".git", ".terraform"],
+    rootSearch: "nearest",
+    settings: {},
+    snippets: true,
+    localBin: false,
+  },
 ];
 
 const BUILTIN_NAMES = new Set(BUILTIN_SERVERS.map((s) => s.name));

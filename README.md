@@ -43,7 +43,7 @@ The package names are scoped because `so` is already taken by unrelated tools: o
 Optional tools turn on more features:
 
 - [Poppler](https://poppler.freedesktop.org) (`brew install poppler`) — PDFs
-- Language servers on `PATH` (e.g. `rust-analyzer`, `typescript-language-server`) — code intelligence
+- Language servers on `PATH` (e.g. `rust-analyzer`, `typescript-language-server`, `terraform-ls`) — code intelligence
 - [lazygit](https://github.com/jesseduffield/lazygit) — the `<leader>gg` handoff
 
 ## Configuration

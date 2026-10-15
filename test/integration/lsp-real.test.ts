@@ -21,25 +21,26 @@ async function eventually(ok: () => boolean, ms: number): Promise<void> {
   }
 }
 
-/**
- * rust-analyzer runs here. CI runners have rustup's proxy on PATH without
- * the component, and the proxy fails `--version`.
- */
-const installed = (() => {
+/** True when `argv` runs and exits 0. */
+function runs(argv: string[]): boolean {
   try {
     return (
-      Bun.spawnSync(["rust-analyzer", "--version"], {
-        stdout: "ignore",
-        stderr: "ignore",
-      }).exitCode === 0
+      Bun.spawnSync(argv, { stdout: "ignore", stderr: "ignore" }).exitCode === 0
     );
   } catch {
     return false;
   }
-})();
+}
+
+/**
+ * rust-analyzer runs here. CI runners have rustup's proxy on PATH without
+ * the component, and the proxy fails `--version`.
+ */
+const rustAnalyzer = runs(["rust-analyzer", "--version"]);
+const terraformLs = runs(["terraform-ls", "version"]);
 
 // Runs only where rust-analyzer is installed; CI has none.
-test.skipIf(!installed)(
+test.skipIf(!rustAnalyzer)(
   "a real rust-analyzer becomes ready and answers hover",
   async () => {
     const root = await tmpWorkspace({
@@ -70,4 +71,32 @@ test.skipIf(!installed)(
     expect(app.store.get().lsp.float?.lines.join("\n")).toContain("i32");
   },
   90_000,
+);
+
+// Runs only where terraform-ls is installed; CI has none.
+test.skipIf(!terraformLs)(
+  "a real terraform-ls formats a Terraform file",
+  async () => {
+    const root = await tmpWorkspace({
+      "main.tf":
+        'variable "region" {\n  type = string\n  default = "eu-west-1"\n}\n',
+    });
+    app = await startApp(root, {
+      lsp: { config: lspConfig(true, '[lsp.servers."terraform-ls"]\n') },
+    });
+    await app.open("main.tf");
+    await waitFor(
+      () =>
+        Object.values(app?.store.get().lsp.servers ?? {}).some(
+          (v) => v.name === "terraform-ls" && v.state === "ready",
+        ),
+      30_000,
+    );
+    app.keys(":Format<CR>");
+    await waitFor(() => app?.text("main.tf")?.includes("type    =") ?? false);
+    expect(app.text("main.tf")).toBe(
+      'variable "region" {\n  type    = string\n  default = "eu-west-1"\n}',
+    );
+  },
+  60_000,
 );

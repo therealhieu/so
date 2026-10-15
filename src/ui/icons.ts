@@ -52,6 +52,9 @@ const BY_EXTENSION: Readonly<Record<string, Kind>> = {
   yaml: CONFIG(""), // nf-seti-yml
   yml: CONFIG(""),
   toml: CONFIG(""), // nf-seti-toml
+  tf: CONFIG(""), // nf-seti-terraform
+  tfvars: CONFIG(""),
+  hcl: CONFIG(""),
   ts: code(""), // nf-seti-typescript
   tsx: code(""), // nf-dev-react
   js: code(""), // nf-dev-javascript

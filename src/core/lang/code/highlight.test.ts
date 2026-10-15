@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: these strings are Terraform interpolations, not templates.
 import { expect, test } from "bun:test";
 import { createTextBuffer } from "../../kernel/text/text-buffer";
 import { highlightMarks } from "../../kernel/view/marks";
@@ -38,6 +39,96 @@ test("Dockerfile instructions highlight, with shell commands as Bash", () => {
   expect(lines[1]).toEqual([{ text: "# deps", style: "codeComment" }]);
   expect(lines[2]?.[0]).toEqual({ text: "RUN", style: "codeKeyword" });
   expect(lines[2]).toContainEqual({ text: '"hi"', style: "codeString" });
+});
+
+const terraform = [
+  '# owner: "ops"', //  0
+  "/* storage", //  1
+  "   for logs */", //  2
+  'resource "aws_s3_bucket" "logs" {', //  3
+  '  bucket = "${var.name}-logs"', //  4
+  "  count  = 2", //  5
+  "  policy = <<-EOF", //  6
+  '    {"Resource": "${data.x.arn}"}', //  7
+  "  EOF", //  8
+  "  ids = [for k, v in var.m : k => v if v != null]", //  9
+  '  tags = { Name = lookup(local.tags, "k", null) } // why', // 10
+  "  lifecycle {", // 11
+  "}", // 12
+].join("\n");
+
+const terraformLines = (language = "terraform", from = 0, to = 13) =>
+  lowlightHighlighter(language).highlight(createTextBuffer(terraform), {
+    from,
+    to,
+  });
+
+test("Terraform blocks, attributes, and values highlight", () => {
+  const lines = terraformLines();
+  expect(lines[0]).toEqual([{ text: '# owner: "ops"', style: "codeComment" }]);
+  expect(lines[3]).toEqual([
+    { text: "resource", style: "codeKeyword" },
+    { text: " ", style: "text" },
+    { text: '"aws_s3_bucket"', style: "codeString" },
+    { text: " ", style: "text" },
+    { text: '"logs"', style: "codeString" },
+    { text: " {", style: "text" },
+  ]);
+  expect(lines[5]).toContainEqual({ text: "count", style: "codeAttribute" });
+  expect(lines[5]).toContainEqual({ text: "2", style: "codeNumber" });
+  expect(lines[10]).toContainEqual({ text: "Name", style: "codeAttribute" });
+  expect(lines[10]).toContainEqual({ text: "lookup", style: "codeBuiltin" });
+  expect(lines[10]).toContainEqual({ text: "null", style: "codeLiteral" });
+  expect(lines[10]?.at(-1)).toEqual({ text: "// why", style: "codeComment" });
+  expect(lines[11]).toContainEqual({ text: "lifecycle", style: "codeKeyword" });
+});
+
+test("Terraform interpolation keeps the string around its references", () => {
+  expect(terraformLines()[4]).toEqual([
+    { text: "  ", style: "text" },
+    { text: "bucket", style: "codeAttribute" },
+    { text: " = ", style: "text" },
+    { text: '"${', style: "codeString" },
+    { text: "var", style: "codeVariable" },
+    { text: '.name}-logs"', style: "codeString" },
+  ]);
+});
+
+test("a for expression's arrow is not an attribute", () => {
+  const line = terraformLines()[9];
+  expect(line).toContainEqual({ text: "for", style: "codeKeyword" });
+  expect(line).toContainEqual({ text: "in", style: "codeKeyword" });
+  expect(line).toContainEqual({ text: "if", style: "codeKeyword" });
+  expect(line?.filter((s) => s.style === "codeAttribute")).toEqual([
+    { text: "ids", style: "codeAttribute" },
+  ]);
+});
+
+test("Terraform comments and heredocs end at their closing delimiter", () => {
+  const lines = terraformLines();
+  expect(lines[2]).toEqual([{ text: "   for logs */", style: "codeComment" }]);
+  expect(lines[7]).toContainEqual({ text: "data", style: "codeVariable" });
+  expect(lines[7]?.[0]?.style).toBe("codeString");
+  expect(lines[8]).toEqual([{ text: "  EOF", style: "codeString" }]);
+  expect(lines[9]?.[1]).toEqual({ text: "ids", style: "codeAttribute" });
+  // A window that starts inside the heredoc still sees it open.
+  expect(terraformLines("terraform", 7, 9)).toEqual(lines.slice(7, 9));
+});
+
+test("a heredoc opens with blanks after its marker", () => {
+  const lines = lowlightHighlighter("terraform").highlight(
+    createTextBuffer("p = <<EOF  \n  body = 1\nEOF\nb = 1"),
+    { from: 0, to: 4 },
+  );
+  expect(lines[1]).toEqual([{ text: "  body = 1", style: "codeString" }]);
+  expect(lines[3]?.[0]).toEqual({ text: "b", style: "codeAttribute" });
+});
+
+test("hcl, terraform, and tf name one grammar", () => {
+  const lines = terraformLines("hcl");
+  expect(lines[3]?.[0]).toEqual({ text: "resource", style: "codeKeyword" });
+  expect(terraformLines("terraform")).toEqual(lines);
+  expect(terraformLines("tf")).toEqual(lines);
 });
 
 test("look-back carries state from above the window", () => {
