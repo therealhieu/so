@@ -453,6 +453,43 @@ test("fences in list items, callouts, and quotes render like top-level fences", 
   ]);
 });
 
+test("a fence opening on a list item's line keeps the bullet and the items after it", () => {
+  builtinRenderers();
+  const note = [
+    "- ```sh",
+    "  - echo hi",
+    "  ```",
+    "- next item",
+    "",
+    "After",
+  ].join("\n");
+  const { v, doc } = noteView(note, { cursor: { line: 5, col: 0 } });
+  const rows = layoutText(
+    v,
+    [
+      highlightMarks(markdownFileType.highlighter),
+      livePreview as DecorationProvider,
+    ],
+    { doc, view: "live", ctx: stubCtx() },
+  );
+  const styles = (line: number) =>
+    rows
+      .find((r) => r.sourceLine === line)
+      ?.spans.map((s) => [s.style, s.text]);
+  expect(styles(0)).toEqual([["mdMarker", "• "]]);
+  expect(styles(1)).toEqual([
+    ["text", "  "],
+    ["mdCode", "- "],
+    ["codeBuiltin", "echo"],
+    ["mdCode", " hi"],
+  ]);
+  expect(rows.map((r) => r.sourceLine)).not.toContain(2);
+  expect(styles(3)).toEqual([
+    ["mdMarker", "• "],
+    ["text", "next item"],
+  ]);
+});
+
 test("the reveal sign marks exactly the revealed rows", () => {
   builtinRenderers();
   const signed = (line: number) =>

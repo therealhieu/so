@@ -7,7 +7,12 @@ import { lineStyle, replaceCols } from "./rows";
 const ITEM = /^([ \t]*)([-+*]|\d{1,9}[.)])([ \t]+)(\[([ xX])\][ \t]+)?/;
 const BULLETS = ["•", "◦", "▪"];
 
-const indentOf = (text: string) => text.length - text.trimStart().length;
+/** Columns before a line's content: its indent, and its marker on an item line. */
+function contentCol(text: string): number {
+  const m = ITEM.exec(text);
+  if (m === null) return text.length - text.trimStart().length;
+  return (m[1] ?? "").length + (m[2] ?? "").length + (m[3] ?? "").length;
+}
 
 /**
  * Bullets as `•` `◦` `▪` by depth, tasks as `☐`/`☑` with done items dimmed,
@@ -17,7 +22,7 @@ const indentOf = (text: string) => text.length - text.trimStart().length;
 export const listRenderer: BlockRenderer = (block, v) => {
   const out: Decoration[] = [];
   const stop = contentEnd(v.buf, block);
-  const fences = nestedFences(v.buf, block.startLine, stop, indentOf);
+  const fences = nestedFences(v.buf, block.startLine, stop, contentCol);
   out.push(...fences.decorations);
   const last = Math.min(stop, v.visible.to - 1);
   for (let l = Math.max(block.startLine, v.visible.from); l <= last; l++) {

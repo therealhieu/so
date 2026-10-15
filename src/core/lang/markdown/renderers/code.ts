@@ -7,7 +7,7 @@ import { contentEnd, contentStart } from "../block-text";
 import { closesFence, openFence } from "../blocks";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
-import { lineStyle, replaceLine } from "./rows";
+import { lineStyle, replaceCols, replaceLine } from "./rows";
 
 const highlighters = new Map<string, Highlighter>();
 const spans = new RenderCache<Span[][]>();
@@ -46,6 +46,7 @@ type Prefix = (text: string) => number;
 /**
  * A fenced block's decorations: its fence lines hidden and its body lines,
  * read after `prefix` columns, banded and highlighted in the opener's language.
+ * An opener after a list marker hides only the fence, so the item keeps its row.
  */
 function fence(
   buf: TextBuffer,
@@ -67,7 +68,12 @@ function fence(
   const rows = spans.get(`${language}\n${body.join("\n")}`, () =>
     highlight(language, body),
   );
-  const out: Decoration[] = [replaceLine(buf, open)];
+  const lead = buf.line(open).slice(0, from(open));
+  const out: Decoration[] = [
+    /^[\s>]*$/.test(lead)
+      ? replaceLine(buf, open)
+      : replaceCols(open, lead.length, buf.line(open).length),
+  ];
   if (closed) out.push(replaceLine(buf, last));
   body.forEach((_, i) => {
     const line = open + 1 + i;
@@ -92,8 +98,8 @@ function fence(
 /**
  * Fences inside a list or callout from `first` to `last`, each line read
  * after its `prefix` columns but no more than its opener's: their
- * decorations and the prefix columns of every line they cover. An unclosed
- * fence runs to `last`.
+ * decorations and the prefix columns of every line after each opener. An
+ * unclosed fence runs to `last`.
  */
 export function nestedFences(
   buf: TextBuffer,
@@ -114,7 +120,7 @@ export function nestedFences(
     let end = Math.min(l + 1, last);
     while (end < last && !closes(end)) end++;
     decorations.push(...fence(buf, l, end, inner));
-    for (let j = l; j <= end; j++) lines.set(j, inner(buf.line(j)));
+    for (let j = l + 1; j <= end; j++) lines.set(j, inner(buf.line(j)));
     l = end;
   }
   return { decorations, lines };
