@@ -359,9 +359,57 @@ export function toggleExplorer(s: AppState): Result {
     { ...s, panels: { ...s.panels, side } },
     { open: true, focused: true },
   );
-  return ex.entries[""] === undefined
-    ? { state: opened, effects: [listDirEffect(opened, "")] }
-    : none(opened);
+  return revealPath(opened, activeBuffer(opened)?.path);
+}
+
+/** Whether the explorer's `[explorer] dotfiles` and `gitignored` settings show `path`. */
+const isShown = (s: AppState, path: string): boolean =>
+  (s.config.explorer.dotfiles || !hasDotSegment(path)) &&
+  (s.config.explorer.gitignored || !isIgnoredPath(s, path));
+
+/**
+ * Expand the folders above a shown `path`, keeping every other open folder,
+ * and select it. Folders the tree needs and has not listed yet are read.
+ */
+function revealPath(s: AppState, path: string | undefined): Result {
+  const ex = s.panels.explorer;
+  const shown = path !== undefined && isShown(s, path);
+  const dirs = shown ? ancestors(path) : [""];
+  const next = shown
+    ? setExplorer(s, {
+        expanded: [
+          ...ex.expanded,
+          ...dirs.filter((d) => d !== "" && !ex.expanded.includes(d)),
+        ],
+        cursor: path,
+      })
+    : s;
+  const effects = dirs
+    .filter((d) => ex.entries[d] === undefined)
+    .map((d) => listDirEffect(next, d));
+  return { state: next, effects };
+}
+
+/**
+ * The open explorer reveals the active file whenever another file becomes
+ * active, unless it has focus: then its cursor is the user's.
+ */
+export function followActiveFile(prev: AppState, r: Result): Result {
+  const ex = r.state.panels.explorer;
+  const path = activeBuffer(r.state)?.path;
+  if (
+    !ex.open ||
+    ex.focused ||
+    path === undefined ||
+    path === activeBuffer(prev)?.path ||
+    !isShown(r.state, path)
+  )
+    return r;
+  const revealed = revealPath(r.state, path);
+  return {
+    state: revealed.state,
+    effects: [...r.effects, ...revealed.effects],
+  };
 }
 
 /** The narrowest tree, in columns. */

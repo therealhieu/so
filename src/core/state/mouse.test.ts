@@ -273,7 +273,10 @@ const withActive = (s: AppState, active: WindowId): AppState => ({
 
 const MANY = `${Array.from({ length: 40 }, (_, i) => `line ${i}`).join("\n")}\n`;
 
-/** a.md and tasks.base side by side, with the note's window active. */
+/**
+ * a.md and tasks.base side by side, with the note's window active and the
+ * base's to its left, and the explorer's root listed.
+ */
 function noteAndBase(): AppState {
   const split = keys(open("a.md", MANY), "<C-w>v").state;
   const other = split.windows.active;
@@ -285,7 +288,12 @@ function noteAndBase(): AppState {
     }).state,
     indexed(),
   ).state;
-  return withActive(based, other === 1 ? 2 : 1);
+  const ex = based.panels.explorer;
+  const listed = {
+    ...based,
+    panels: { ...based.panels, explorer: { ...ex, entries: { "": [] } } },
+  };
+  return withActive(listed, other === 1 ? 2 : 1);
 }
 
 const baseWindowOf = (s: AppState) =>
@@ -568,7 +576,7 @@ test.each<
           window: id,
           spot: { kind: "baseTab", view: 1 },
         }),
-        expected: keys(withActive(s, id), "2"),
+        expected: keys(s, "<C-w>h2"),
       };
     },
   ],
@@ -623,7 +631,7 @@ test("a single click on a Bases cell focuses it and a double click opens it", ()
     spot: { kind: "baseCell", row: 2, column: 1 },
   };
   const single = mouse(s, press(cell));
-  expectSame(single, keys(withActive(s, id), "jjl"));
+  expectSame(single, keys(s, "<C-w>hjjl"));
   expect(baseFocus(single.state)).toMatchObject({ index: 2, column: 1 });
   expect(Object.keys(single.state.windows.byId)).toEqual(
     Object.keys(s.windows.byId),
@@ -631,7 +639,7 @@ test("a single click on a Bases cell focuses it and a double click opens it", ()
   expect(single.effects).toEqual([]);
 
   const double = mouse(s, press(cell, 2));
-  expectSame(double, keys(withActive(s, id), "jjl<CR>"));
+  expectSame(double, keys(s, "<C-w>hjjl<CR>"));
   expect(double.effects.length).toBeGreaterThan(0);
 });
 

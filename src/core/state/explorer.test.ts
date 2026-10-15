@@ -889,3 +889,103 @@ test("a long paste shows its progress, then what was pasted", () => {
   });
   expect(done.state.notifications.message?.text).toBe("Pasted pics");
 });
+
+const dir = (name: string) => ({ name, kind: "dir" as const });
+const file = (name: string) => ({ name, kind: "file" as const });
+
+/** `a.md` and then `notes/deep/x.md` open, the tree listed at the root. */
+function twoFiles(explorer: Partial<AppState["panels"]["explorer"]> = {}) {
+  const s = openBuffer(
+    openBuffer(fresh(), "a.md", "a"),
+    "notes/deep/x.md",
+    "x",
+  );
+  const ex = s.panels.explorer;
+  return {
+    ...s,
+    panels: {
+      ...s.panels,
+      explorer: {
+        ...ex,
+        focused: false,
+        entries: { "": [dir("archive"), dir("notes"), file("a.md")] },
+        ...explorer,
+      },
+    },
+  };
+}
+
+test("switching files reveals the new one and keeps open folders open", () => {
+  const s = twoFiles({
+    expanded: ["archive", "notes"],
+    entries: { "": [dir("archive"), dir("notes")], notes: [dir("deep")] },
+  });
+  const back = pressKeys(s, "]b");
+  expect(back.state.panels.explorer).toMatchObject({
+    cursor: "a.md",
+    expanded: ["archive", "notes"],
+  });
+  const r = pressKeys(back.state, "]b");
+  expect(r.state.panels.explorer).toMatchObject({
+    cursor: "notes/deep/x.md",
+    expanded: ["archive", "notes", "notes/deep"],
+  });
+  expect(r.effects.filter((e) => e.kind === "listDir")).toEqual([
+    { kind: "listDir", dir: "notes/deep", gitignored: true },
+  ]);
+});
+
+test("the explorer keeps its cursor while it has focus or is closed", () => {
+  for (const explorer of [{ focused: true }, { open: false }]) {
+    const s = twoFiles({ cursor: "archive", ...explorer });
+    expect(pressKeys(s, "]b").state.panels.explorer).toMatchObject({
+      cursor: "archive",
+      expanded: [],
+    });
+  }
+});
+
+test("opening the explorer reveals the active file", () => {
+  const s = twoFiles({ open: false, entries: {} });
+  const r = toggleExplorer(s);
+  expect(r.state.panels.explorer).toMatchObject({
+    open: true,
+    cursor: "notes/deep/x.md",
+    expanded: ["notes", "notes/deep"],
+  });
+  expect(r.effects.map((e) => e.kind === "listDir" && e.dir)).toEqual([
+    "",
+    "notes",
+    "notes/deep",
+  ]);
+});
+
+test("a file the tree hides is not revealed", () => {
+  const ex = twoFiles().panels.explorer;
+  const s = openBuffer(
+    openBuffer(openBuffer(fresh(), "a.md", "a"), ".config/x.md", "x"),
+    "notes/deep/x.md",
+    "x",
+  );
+  const hidden = { ...s, panels: { ...s.panels, explorer: ex } };
+  expect(pressKeys(hidden, "[b").state.panels.explorer).toBe(ex);
+  const shown = pressKeys(
+    {
+      ...hidden,
+      config: {
+        ...s.config,
+        explorer: { ...s.config.explorer, dotfiles: true },
+      },
+    },
+    "[b",
+  );
+  expect(shown.state.panels.explorer).toMatchObject({
+    cursor: ".config/x.md",
+    expanded: [".config"],
+  });
+});
+
+test("keys that keep the active file leave the explorer alone", () => {
+  const s = twoFiles({ cursor: "archive" });
+  expect(pressKeys(s, "jk").state.panels.explorer).toBe(s.panels.explorer);
+});
