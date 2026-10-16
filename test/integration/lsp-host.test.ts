@@ -475,11 +475,19 @@ test("a pull server is pulled after opening and after each sent change", async (
     pull: { items: [diagnostic(0, "pulled")] },
   });
   app = await start(root, { lsp: { config: lspConfig(true, rs.config) } });
+  // An edit made before a pull's answer arrives would carry the older id.
+  const answered = (n: number) =>
+    waitFor(
+      () =>
+        (app?.actions ?? []).filter(
+          (a) => a.type === "lspDiagnostics" && a.source === "pull",
+        ).length >= n,
+    );
   await app.open("main.rs");
-  await waitForMessage(rs.log, "textDocument/diagnostic");
+  await answered(1);
   for (let n = 1; n <= 3; n++) {
     app.keys(`ix<Esc>`);
-    await waitForMessage(rs.log, "textDocument/diagnostic", 5000, n + 1);
+    await answered(n + 1);
   }
   expect(syncLog(rs.log)).toEqual([
     "textDocument/didOpen",
