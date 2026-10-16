@@ -88,6 +88,14 @@ test("the statusline shows the image's size and its zoom", () => {
   expect(statusSegments(s).page).toBe("800×600 150%");
 });
 
+test("an SVG's statusline size is its own, not the size it is drawn at", () => {
+  const svg =
+    '<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg"\n  width="64" viewBox="0 0 32 16">\n</svg>\n';
+  let s = run(fresh(), loaded("art/logo.svg", svg)).state;
+  s = run(s, laidOut(s, { x: 1, y: 0.5 }, { width: 2048, height: 1024 })).state;
+  expect(statusSegments(s).page).toBe("64×32");
+});
+
 test("the wheel zooms, a sideways turn pans, and a drag moves the image", () => {
   const s = run(openPhoto(), ...keys("++++")).state;
   const target = {

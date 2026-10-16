@@ -1,4 +1,5 @@
 import { resolveServers } from "../config/lsp";
+import { svgSizeOfLines } from "../features/image/svg-size";
 import { backlinksOf } from "../features/links/note-index";
 import { clock } from "../features/video/probe";
 import type { Pos } from "../kernel/text/pos";
@@ -183,10 +184,12 @@ export function statusSegments(s: AppState): StatusSegments {
   const image = imageWindow(s, s.windows.active);
   if (b !== undefined && image !== undefined) {
     delete seg.position;
+    // An SVG is drawn larger than its own size so zooming stays sharp.
+    const size = b.fileType === "svg" ? svgSizeOfLines(b.text) : image.size;
     const parts = [
-      ...(image.size === undefined
+      ...(size === undefined
         ? []
-        : [`${image.size.width}×${image.size.height}`]),
+        : [`${Math.round(size.width)}×${Math.round(size.height)}`]),
       ...(image.level === 1 ? [] : [`${Math.round(image.level * 100)}%`]),
     ];
     if (parts.length > 0) seg.page = parts.join(" ");

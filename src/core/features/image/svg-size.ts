@@ -63,6 +63,23 @@ export function svgSize(text: string): SvgSize | undefined {
   };
 }
 
+/**
+ * `svgSize` of an SVG held as lines, read only as far as its root tag, so a
+ * large drawing costs nothing past its top.
+ */
+export function svgSizeOfLines(text: {
+  lineCount: number;
+  line(i: number): string;
+}): SvgSize | undefined {
+  let head = "";
+  for (let i = 0; i < text.lineCount; i++) {
+    head += `${text.line(i)}\n`;
+    const at = head.indexOf("<svg");
+    if (at >= 0 && head.includes(">", at)) return svgSize(head);
+  }
+  return undefined;
+}
+
 /** The longest side an SVG file is drawn at, so zooming in stays sharp. */
 const LONGEST_SIDE = 2048;
 /** The most pixels one drawing holds. */
