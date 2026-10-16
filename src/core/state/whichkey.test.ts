@@ -85,6 +85,7 @@ test("direct actions list before groups and backspace pops a key", () => {
   expect(s.overlay).toMatchObject({ whichKey: { prefix: [" ", "f"] } });
   expect(whichKeyRows(s, reg).map((r) => r.key)).toEqual([
     "b",
+    "d",
     "f",
     "o",
     "p",
