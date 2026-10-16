@@ -100,6 +100,11 @@ export type ShellDeps = {
    * images on as raw pixels.
    */
   browserPixelRate?: number;
+  /**
+   * The most pixels one browser frame image may have: a larger frame goes
+   * as bands of whole cell rows under it, cut from the decoded frame.
+   */
+  browserImagePixels?: number;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
   /**

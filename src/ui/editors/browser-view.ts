@@ -56,6 +56,12 @@ const PATCH_SHARE = 0.25;
 /** Patches over one whole frame before the next whole frame replaces them. */
 const PATCH_LIMIT = 16;
 /**
+ * How long apart the bands of one frame go to the terminal: herdr hands
+ * Ghostty one image at a time through a file, and sends the others that
+ * reach it together inline.
+ */
+const BAND_GAP_MS = 100;
+/**
  * How many times as long as a frame took to take the page waits before its
  * next: a page that never stops moving keeps so at most a quarter busy.
  */
@@ -120,11 +126,18 @@ export class BrowserView extends Renderable implements WindowView {
   private lines: string[] = [];
   private tier: Tier | undefined;
   /**
-   * What is on screen: the last whole frame, the patches drawn over it
-   * since, and their pixels together. Images taken off screen are freed at
-   * the next frame, once the terminal no longer shows them.
+   * What is on screen: the last whole frame (drawn as `bands` when it has
+   * more pixels than one image may), the patches drawn over it since, and
+   * their pixels together. Bands go on screen one at a time, `shownBands`
+   * so far, over what was shown `behind` them. Images taken off screen are
+   * freed at the next frame, once the terminal no longer shows them.
    */
   private base: Layer | undefined;
+  private bands: Layer[] = [];
+  private shownBands = 0;
+  private behind: Layer[] = [];
+  private bandShownAt = 0;
+  private bandTimer: ReturnType<typeof setTimeout> | undefined;
   private patches: Layer[] = [];
   private shown: Pixels | undefined;
   private trash: NativeImage[] = [];
@@ -294,13 +307,114 @@ export class BrowserView extends Renderable implements WindowView {
 
   /** Show `next` alone, over the whole window. */
   private replace(next: NativeImage, box: CellBox): number {
-    if (this.base !== undefined) this.trash.push(this.base.image);
-    this.trash.push(...this.patches.map((p) => p.image));
+    const bands = this.bandsOf(next, box);
+    // Bands go up one at a time over a whole frame of the same window, which
+    // stays under them.
+    const staggered =
+      bands.length > 1 &&
+      this.bands.length === 0 &&
+      this.base?.box.cols === box.cols &&
+      this.base.box.rows === box.rows;
+    const behind = staggered ? this.onScreen() : [];
+    const old = [
+      ...(this.base === undefined ? [] : [this.base]),
+      ...this.bands,
+      ...this.patches,
+      ...this.behind,
+    ];
+    this.trash.push(
+      ...old.filter((l) => !behind.includes(l)).map((l) => l.image),
+    );
+    this.behind = behind;
     const pixels = pixelsOf(next);
     this.base = { image: next, box };
+    this.bands = bands;
+    this.shownBands = staggered ? 0 : bands.length;
+    for (const b of staggered ? [] : bands) b.image.ensureEncodedPng();
     this.patches = [];
     this.shown = { ...pixels, data: pixels.data.slice() };
     return next.width * next.height;
+  }
+
+  /**
+   * The layers on screen, bottom first. The terminal is told each image
+   * by its place in this list, so a layer keeps its place while it stays.
+   */
+  private onScreen(): Layer[] {
+    const base =
+      this.bands.length > 0
+        ? this.bands.slice(0, this.shownBands)
+        : this.base === undefined
+          ? []
+          : [this.base];
+    return [...this.behind, ...base, ...this.patches];
+  }
+
+  /**
+   * Put the next band on screen once the last went `BAND_GAP_MS` ago, its
+   * PNG made only now; until then, render again when it may.
+   */
+  private showBand(): void {
+    if (this.shownBands === this.bands.length) return;
+    const wait =
+      this.shownBands === 0
+        ? 0
+        : this.bandShownAt + BAND_GAP_MS - performance.now();
+    const later = (ms: number) => {
+      this.bandTimer ??= setTimeout(() => {
+        this.bandTimer = undefined;
+        this.requestRender();
+      }, ms);
+    };
+    if (wait > 0) {
+      later(wait);
+      return;
+    }
+    this.bands[this.shownBands++]?.image.ensureEncodedPng();
+    this.bandShownAt = performance.now();
+    if (this.shownBands < this.bands.length) later(BAND_GAP_MS);
+  }
+
+  /**
+   * `image` over `box` as bands of whole cell rows, each within the image
+   * pixel limit; none when the whole image is.
+   */
+  private bandsOf(image: NativeImage, box: CellBox): Layer[] {
+    const limit = this.deps.browserImagePixels;
+    if (limit === undefined || image.width * image.height <= limit) return [];
+    const boxes = (n: number): CellBox[] => {
+      const rows = Math.ceil(box.rows / n);
+      const out: CellBox[] = [];
+      for (let row = 0; row < box.rows; row += rows)
+        out.push({
+          col: 0,
+          row,
+          cols: box.cols,
+          rows: Math.min(rows, box.rows - row),
+        });
+      return out;
+    };
+    const pixels = (b: CellBox) =>
+      cellPixels(b, image.width, image.height, box.cols, box.rows);
+    let n = Math.min(box.rows, Math.ceil((image.width * image.height) / limit));
+    let cut = boxes(n);
+    while (
+      n < box.rows &&
+      cut.some((b) => pixels(b).width * pixels(b).height > limit)
+    )
+      cut = boxes(++n);
+    return cut.map((b) => {
+      const p = pixels(b);
+      return {
+        image: image.extract({
+          left: p.x,
+          top: p.y,
+          width: p.width,
+          height: p.height,
+        }),
+        box: b,
+      };
+    });
   }
 
   /**
@@ -350,10 +464,15 @@ export class BrowserView extends Renderable implements WindowView {
   protected override destroySelf(): void {
     clearTimeout(this.wait);
     clearTimeout(this.pacing);
+    clearTimeout(this.bandTimer);
     for (const image of this.trash.splice(0)) image.dispose();
     this.base?.image.dispose();
+    for (const b of this.bands) b.image.dispose();
     for (const p of this.patches) p.image.dispose();
+    for (const l of this.behind) l.image.dispose();
     this.base = undefined;
+    this.bands = [];
+    this.behind = [];
     this.patches = [];
     this.shown = undefined;
     super.destroySelf();
@@ -421,9 +540,12 @@ export class BrowserView extends Renderable implements WindowView {
     });
     this.placed = undefined;
     if (tier === undefined || frame === undefined) return;
-    const fresh = frame.seq !== this.seq && !this.resting;
+    // A frame's bands all go on screen before the next frame is taken.
+    const banding = this.shownBands < this.bands.length;
+    const fresh = frame.seq !== this.seq && !this.resting && !banding;
     const started = performance.now();
     const sent = fresh ? this.take(frame) : 0;
+    this.showBand();
     const work = performance.now() - started;
     const base = this.base;
     if (base === undefined) {
@@ -431,7 +553,7 @@ export class BrowserView extends Renderable implements WindowView {
       return;
     }
     this.placed = this.place(base);
-    const layers = [this.placed, ...this.patches.map((p) => this.place(p))];
+    const layers = this.onScreen().map((l) => this.place(l));
     // A terminal image draws over a prompt's cells: the frame leaves them out.
     const hole = promptBox(s);
     this.pieces =
@@ -453,6 +575,14 @@ export class BrowserView extends Renderable implements WindowView {
         tier,
       );
     if (fresh) this.rest(frame, sent, work);
+    // A frame that came while the bands went up is taken now.
+    else if (
+      banding &&
+      this.shownBands === this.bands.length &&
+      frame.seq !== this.seq &&
+      !this.resting
+    )
+      this.requestRender();
   }
 }
 

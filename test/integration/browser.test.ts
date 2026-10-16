@@ -82,8 +82,11 @@ async function until<T>(
   }
 }
 
-/** A host on `chrome` over a workspace holding `site/index.html`. */
-async function start(chrome: string) {
+/** A host on `chrome` (with `more` of its options) over a workspace holding `site/index.html`. */
+async function start(
+  chrome: string,
+  more: { scrollPixels?: number; settleMs?: number } = {},
+) {
   await Bun.write(
     join(dir, "ws/site/index.html"),
     '<a href="next.html" style="display:block;height:100vh">next</a>',
@@ -110,6 +113,7 @@ async function start(chrome: string) {
       },
     },
     idleMs: 50,
+    ...more,
   });
   const h = host;
   return {
@@ -158,6 +162,31 @@ test("a page opens in Chrome, shows its frames and title, and takes input", asyn
     kind: "selection",
     text: "fake selection",
   });
+});
+
+test("while a page scrolls its frames are limited, and full size once it rests", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path, { scrollPixels: 30_000, settleMs: 50 });
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  const starts = () =>
+    logged(fake.log)
+      .filter((m) => m.method === "Page.startScreencast")
+      .map((m) => [m.params?.maxWidth, m.params?.maxHeight]);
+  const wheel: BrowserOp = {
+    op: "input",
+    input: { kind: "wheel", at: { x: 0.5, y: 0.5 }, dx: 0, dy: 1 },
+  };
+  h.run(wheel);
+  h.run(wheel);
+  // 400×300 is 120,000 pixels: half as wide and high fits 30,000.
+  await until(() => (starts().length === 2 ? true : undefined), 5000, starts);
+  await until(() => (starts().length === 3 ? true : undefined), 5000, starts);
+  expect(starts()).toEqual([
+    [400, 300],
+    [200, 150],
+    [400, 300],
+  ]);
 });
 
 test("a frame is acknowledged to Chrome only when the view acknowledges it", async () => {

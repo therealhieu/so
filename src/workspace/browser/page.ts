@@ -15,6 +15,11 @@ export type PageInfo = { url: string; title: string; loading: boolean };
 export type BrowserPage = {
   navigate(url: string): Promise<void>;
   resize(size: PageSize): Promise<void>;
+  /**
+   * Scale frames down to at most `maxPixels`, keeping their shape, or send
+   * them at the page's own size again (undefined).
+   */
+  limit(maxPixels: number | undefined): Promise<void>;
   mouse(
     type: "press" | "release" | "move",
     x: number,
@@ -60,16 +65,11 @@ const EDITING = `(() => {
     !/^(button|checkbox|color|file|hidden|image|radio|range|reset|submit)$/i.test(e.type);
 })()`;
 
-/**
- * Open a tab at `about:blank` sized to `size` and start its screencast.
- * With `maxPixels`, Chrome scales each frame down to at most that many
- * pixels, keeping its shape.
- */
+/** Open a tab at `about:blank` sized to `size` and start its screencast. */
 export async function openPage(
   cdp: Cdp,
   o: {
     size: PageSize;
-    maxPixels?: number;
     onFrame: (png: Uint8Array, ack: () => void) => void;
     onInfo: (info: PageInfo) => void;
   },
@@ -158,17 +158,21 @@ export async function openPage(
     }
   };
   const off = cdp.on(onEvent);
+  let maxPixels: number | undefined;
   const startScreencast = () => {
     const width = size.width * size.dpr;
     const height = size.height * size.dpr;
     const scale =
-      o.maxPixels === undefined
+      maxPixels === undefined
         ? 1
-        : Math.min(1, Math.sqrt(o.maxPixels / (width * height)));
+        : Math.min(1, Math.sqrt(maxPixels / (width * height)));
+    // Scaled down, the box is rounded down so the frame stays within the limit.
+    const fit = (n: number) =>
+      scale < 1 ? Math.floor(n * scale) : Math.round(n);
     return call("Page.startScreencast", {
       format: "png",
-      maxWidth: Math.round(width * scale),
-      maxHeight: Math.round(height * scale),
+      maxWidth: fit(width),
+      maxHeight: fit(height),
     });
   };
   const metrics = () =>
@@ -208,6 +212,12 @@ export async function openPage(
     async resize(next) {
       size = next;
       await metrics();
+      await call("Page.stopScreencast");
+      await startScreencast();
+    },
+    async limit(next) {
+      if (next === maxPixels) return;
+      maxPixels = next;
       await call("Page.stopScreencast");
       await startScreencast();
     },

@@ -166,8 +166,9 @@ const HERDR_PIXEL_RATE = 2_000_000;
 
 /**
  * herdr 0.9.2 and later (whose panes say TERM_PROGRAM=herdr) hand Ghostty an
- * image through a temporary file when its RGBA fits 16 MiB, and inline
- * otherwise: browser frames stay under that.
+ * image through a file when its RGBA fits 16 MiB, and inline otherwise.
+ * Frames of a scrolling page are scaled down to it; a larger frame goes as
+ * bands under it.
  */
 const HERDR_FILE_PIXELS = 4_000_000;
 
@@ -438,6 +439,7 @@ async function main(argv: string[]): Promise<void> {
     ...(underHerdr && !herdrFiles
       ? { browserPixelRate: HERDR_PIXEL_RATE }
       : {}),
+    ...(herdrFiles ? { browserImagePixels: HERDR_FILE_PIXELS } : {}),
     now: clock,
     loadImage: createImageLoader(ws.root, {
       pdfPage: (r) => pdf.page(r),
@@ -460,7 +462,7 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     frames: browserFrames,
     logger,
-    ...(underHerdr ? { maxFramePixels: HERDR_FILE_PIXELS } : {}),
+    ...(herdrFiles ? { scrollPixels: HERDR_FILE_PIXELS } : {}),
   });
   const previewHost = createPreviewHost({
     root: ws.root,

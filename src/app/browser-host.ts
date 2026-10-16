@@ -36,6 +36,9 @@ export type BrowserHost = {
 /** How long Chrome keeps running with no page open, so a page shown again opens at once. */
 export const BROWSER_IDLE_MS = 30_000;
 
+/** How long after the last wheel step a page's frames return to full size. */
+export const SCROLL_SETTLE_MS = 300;
+
 type Tab = {
   path: string;
   size: PageSize;
@@ -43,6 +46,8 @@ type Tab = {
   frame?: string;
   page?: Promise<BrowserPage> | undefined;
   queue: Promise<void>;
+  /** Pending while frames are limited for scrolling: returns them to full size. */
+  settle?: ReturnType<typeof setTimeout> | undefined;
 };
 
 class Missing extends Error {
@@ -58,11 +63,15 @@ export function createBrowserHost(d: {
   dispatch: (a: Action) => void;
   frames: BrowserFrames;
   logger: Logger;
-  /** The most pixels a frame may have; Chrome scales larger pages down. */
-  maxFramePixels?: number;
+  /**
+   * While a page scrolls, its frames have at most this many pixels; they
+   * return to full size `SCROLL_SETTLE_MS` after the last wheel step.
+   */
+  scrollPixels?: number;
   find?: (configured: string) => ChromeLookup;
   launch?: (path: string, dpr: number) => Promise<ChromeProcess>;
   idleMs?: number;
+  settleMs?: number;
 }): BrowserHost {
   const find =
     d.find ??
@@ -165,9 +174,6 @@ export function createBrowserHost(d: {
       const c = await startChrome(tab.size.dpr);
       return openPage(c.cdp, {
         size: tab.size,
-        ...(d.maxFramePixels === undefined
-          ? {}
-          : { maxPixels: d.maxFramePixels }),
         onFrame: (png, ack) => {
           if (tabs.get(window) !== tab) return;
           const dims = pngSize(png);
@@ -233,6 +239,20 @@ export function createBrowserHost(d: {
     queue(window, tab, async () => f(await page, tab));
   };
 
+  const settleMs = d.settleMs ?? SCROLL_SETTLE_MS;
+  /** Limit the page's frames while it scrolls; full size once it rests. */
+  const scrolled = (window: WindowId) => {
+    const tab = tabs.get(window);
+    const limit = d.scrollPixels;
+    if (tab === undefined || limit === undefined) return;
+    if (tab.settle === undefined) withPage(window, (p) => p.limit(limit));
+    clearTimeout(tab.settle);
+    tab.settle = setTimeout(() => {
+      tab.settle = undefined;
+      if (tabs.get(window) === tab) withPage(window, (p) => p.limit(undefined));
+    }, settleMs);
+  };
+
   return {
     run(window, o) {
       if (stopped) return;
@@ -255,6 +275,7 @@ export function createBrowserHost(d: {
         }
         case "close": {
           const tab = tabs.get(window);
+          clearTimeout(tab?.settle);
           tabs.delete(window);
           d.frames.drop(window);
           keepAlive();
@@ -272,6 +293,7 @@ export function createBrowserHost(d: {
           return;
         }
         case "input":
+          if (o.input.kind === "wheel") scrolled(window);
           withPage(window, (p, tab) => {
             const i = o.input;
             const x = (at: { x: number }) => at.x * tab.size.width;
@@ -328,6 +350,7 @@ export function createBrowserHost(d: {
     async stop() {
       stopped = true;
       if (idle !== undefined) clearTimeout(idle);
+      for (const tab of tabs.values()) clearTimeout(tab.settle);
       tabs.clear();
       await stopChrome();
     },
