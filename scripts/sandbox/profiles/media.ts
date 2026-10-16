@@ -43,7 +43,11 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
 }
 
 /** RGBA pixels as a PNG file. */
-function png(rgba: Uint8Array, width: number, height: number): Uint8Array {
+export function png(
+  rgba: Uint8Array,
+  width: number,
+  height: number,
+): Uint8Array {
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
   header.writeUInt32BE(height, 4);

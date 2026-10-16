@@ -25,6 +25,8 @@ export type Drag = { from: [number, number]; to: [number, number] };
 const ESC = "\x1b";
 const ENTER = "\r";
 const BS = "\x7f";
+const TAB = "\t";
+const CTRL_N = "\x0e";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -35,6 +37,8 @@ const ESCAPES =
 
 class Player {
   private lastOutput = Date.now();
+  /** Bytes so has written since it started. */
+  private bytes = 0;
   /** Text so drew since the last `output` call began, escapes removed. */
   private recent = "";
   private readonly decoder = new TextDecoder();
@@ -44,9 +48,10 @@ class Player {
     private readonly marksFile: string,
   ) {}
 
-  /** Note output, for `settle` and `output`. */
+  /** Note output, for `settle`, `output`, and `bulk`. */
   saw(data: Uint8Array): void {
     this.lastOutput = Date.now();
+    this.bytes += data.length;
     this.recent = (
       this.recent + this.decoder.decode(data, { stream: true })
     ).slice(-200_000);
@@ -61,6 +66,16 @@ class Player {
       Date.now() < until
     )
       await sleep(50);
+  }
+
+  /**
+   * Waits until so writes `minBytes` more, or `maxMs` passes. A picture is a
+   * large escape payload, while a text redraw is a few kilobytes.
+   */
+  async bulk(minBytes: number, maxMs: number): Promise<void> {
+    const from = this.bytes;
+    const until = Date.now() + maxMs;
+    while (this.bytes - from < minBytes && Date.now() < until) await sleep(50);
   }
 
   mark(name: string): void {
@@ -133,28 +148,37 @@ async function tour(p: Player): Promise<void> {
   p.mark("notes");
   p.keys(ENTER);
   await p.settle(500);
-  await sleep(1400);
-  p.keys(" m");
-  await sleep(500);
-  p.keys("/Leader");
-  await sleep(150);
+  await sleep(1800);
+  // From the window's last line, each j scrolls: the table, callouts, tasks,
+  // code, picture, and PDF page roll past.
+  p.keys("L");
+  await sleep(300);
+  await p.type("j".repeat(26), 200);
+  await p.settle();
+  await sleep(800);
+  p.mark("notes.end");
+  p.keys("gg");
+  await p.settle();
+
+  // Each theme in the list repaints the note while it is selected.
+  p.mark("themes");
+  p.keys(" us");
+  await sleep(400);
+  await p.type("theme", 70);
+  await sleep(300);
   p.keys(ENTER);
   await sleep(700);
-  p.keys("gd");
+  for (let i = 0; i < 5; i++) {
+    p.keys(CTRL_N);
+    await p.settle(200);
+    await sleep(500);
+  }
+  p.keys(ENTER);
   await p.settle();
-  await sleep(1000);
-  p.mark("notes.end");
-
-  await p.find("consensus");
-  await p.settle(700);
-  p.mark("pdf");
-  await sleep(800);
-  await p.drag(PDF_DRAG);
-  await sleep(700);
-  p.keys("h");
+  p.keys(ESC);
   await p.settle();
-  await sleep(1200);
-  p.mark("pdf.end");
+  await sleep(900);
+  p.mark("themes.end");
 
   await p.find("Reading");
   await p.settle();
@@ -171,10 +195,69 @@ async function tour(p: Player): Promise<void> {
   await sleep(1300);
   p.mark("base.end");
 
+  await p.find("consensus");
+  await p.settle(700);
+  p.mark("pdf");
+  await sleep(800);
+  await p.drag(PDF_DRAG);
+  await sleep(700);
+  p.keys("h");
+  await p.settle();
+  await sleep(1200);
+  p.mark("pdf.end");
+
+  await p.find("lakeside");
+  await p.settle();
+  p.mark("image");
+  await sleep(900);
+  for (const key of "++ll") {
+    p.keys(key);
+    await p.settle(200);
+    await sleep(350);
+  }
+  await sleep(600);
+  p.mark("image.end");
+
+  p.keys(" ff");
+  await sleep(250);
+  await p.type("dashboard");
+  await sleep(500);
+  // Chrome starts on the first page; its first frame is a large picture.
+  const opened = p.bulk(100_000, 20000);
+  p.keys(ENTER);
+  await opened;
+  await p.settle(600, 5000);
+  p.mark("html");
+  await sleep(2600);
+  p.mark("html.end");
+
+  await p.find("cluster.db");
+  await p.settle();
+  p.mark("sqlite");
+  await sleep(1000);
+  p.keys("s");
+  await sleep(400);
+  await p.type("select term, count(*) from log_en", 50);
+  p.keys(TAB);
+  await sleep(300);
+  await p.type(" group by term", 50);
+  await sleep(900);
+  p.keys(ENTER);
+  await p.settle();
+  await sleep(1600);
+  p.mark("sqlite.end");
+
   p.mark("code");
   await p.find("lib.rs");
   await sleep(600);
-  p.mark("code.opened");
+  p.keys("/HEARTBEAT");
+  p.keys(ENTER);
+  await sleep(400);
+  p.keys(" ghp");
+  await p.settle();
+  await sleep(1600);
+  p.mark("git.end");
+  p.keys(ESC);
   // rust-analyzer indexes the standard library before hints and hovers.
   await p.settle(1500, 30000);
   p.keys("/election_timeout(seed)");
@@ -185,7 +268,7 @@ async function tour(p: Player): Promise<void> {
   await sleep(400);
   p.keys("K");
   await p.output(/A randomized election timeout/, 8000);
-  await sleep(1800);
+  await sleep(2800);
   p.mark("code.end");
 }
 
