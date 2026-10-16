@@ -12,16 +12,14 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeBookPdf, makePdf, makeTextPdf } from "../../test/support/pdf";
 import {
-  bunRun,
   createPdfRasterizer,
   macFontConfig,
-  type PdfRun,
   parsePdfPages,
   popplerEnv,
-  ppmToRgba,
   soCacheDir,
   splitPdfPages,
 } from "./pdf";
+import { bunRun, type ToolRun } from "./tool-run";
 
 let root: string;
 let outside: string;
@@ -69,25 +67,6 @@ const ok = (stdout: string | Uint8Array) => ({
   stderr: "",
 });
 
-test("a PPM becomes opaque RGBA; anything else is refused", () => {
-  const ppm = new Uint8Array([
-    ...new TextEncoder().encode("P6\n# made by hand\n2 1\n255\n"),
-    10,
-    20,
-    30,
-    40,
-    50,
-    60,
-  ]);
-  expect(ppmToRgba(ppm)).toEqual({
-    rgba: new Uint8Array([10, 20, 30, 255, 40, 50, 60, 255]),
-    width: 2,
-    height: 1,
-  });
-  expect(() => ppmToRgba(new Uint8Array([0x89, 0x50]))).toThrow("not a PPM");
-  expect(() => ppmToRgba(ppm.subarray(0, ppm.length - 1))).toThrow("truncated");
-});
-
 test("the page count comes from pdfinfo's Pages line", () => {
   expect(parsePdfPages("Title: x\nPages:          12\nEncrypted: no\n")).toBe(
     12,
@@ -97,7 +76,7 @@ test("the page count comes from pdfinfo's Pages line", () => {
 
 test("a page runs pdftoppm on the real path, one page at the snapped width", async () => {
   const calls: string[][] = [];
-  const run: PdfRun = async (argv) => {
+  const run: ToolRun = async (argv) => {
     calls.push(argv);
     return ok(PIXEL);
   };
@@ -130,7 +109,7 @@ test("without Poppler the count is missing and a page rejects", async () => {
 });
 
 test("Poppler's error line is the reason a PDF fails", async () => {
-  const run: PdfRun = async () => ({
+  const run: ToolRun = async () => ({
     code: 1,
     stdout: new Uint8Array(),
     stderr:
@@ -148,7 +127,7 @@ test("Poppler's error line is the reason a PDF fails", async () => {
 
 test("paths outside the workspace are refused before Poppler runs", async () => {
   let ran = 0;
-  const run: PdfRun = async () => {
+  const run: ToolRun = async () => {
     ran++;
     return ok("Pages: 1\n");
   };
@@ -164,7 +143,7 @@ test("paths outside the workspace are refused before Poppler runs", async () => 
 test("at most two Poppler runs go at once", async () => {
   let active = 0;
   let peak = 0;
-  const run: PdfRun = async () => {
+  const run: ToolRun = async () => {
     active++;
     peak = Math.max(peak, active);
     await Bun.sleep(5);
@@ -180,15 +159,6 @@ test("at most two Poppler runs go at once", async () => {
   expect(peak).toBe(2);
 });
 
-test("a run past its timeout or output cap is killed and fails", async () => {
-  await expect(
-    bunRun(["sleep", "5"], { timeoutMs: 50, maxBytes: 1024 }),
-  ).rejects.toThrow("timed out");
-  await expect(
-    bunRun(["yes"], { timeoutMs: 5_000, maxBytes: 1024 }),
-  ).rejects.toThrow("output too large");
-});
-
 test("pdftotext output splits into pages at its form feeds", () => {
   expect(splitPdfPages("one\n\fttwo\n\f")).toEqual(["one\n", "ttwo\n"]);
   expect(splitPdfPages("")).toEqual([""]);
@@ -196,7 +166,7 @@ test("pdftotext output splits into pages at its form feeds", () => {
 
 test("text and contents run pdftotext and pdftohtml on the real path", async () => {
   const calls: string[][] = [];
-  const run: PdfRun = async (argv) => {
+  const run: ToolRun = async (argv) => {
     calls.push(argv);
     return ok(
       argv[0] === "/bin/pdftotext"
@@ -233,7 +203,7 @@ test("text and contents run pdftotext and pdftohtml on the real path", async () 
 
 test("a page's layout runs pdftotext -bbox-layout on that page only", async () => {
   const calls: string[][] = [];
-  const run: PdfRun = async (argv) => {
+  const run: ToolRun = async (argv) => {
     calls.push(argv);
     return ok(
       '<page width="10" height="20"><line><word xMin="1" yMin="2" xMax="3" yMax="4">Hi</word></line></page>',
@@ -270,7 +240,7 @@ test("text and contents report missing Poppler, failures, and outside paths", as
   expect(await none.layout("docs/paper.pdf", 1)).toEqual({ kind: "missing" });
   expect(await none.text("docs/paper.pdf")).toEqual({ kind: "missing" });
   expect(await none.outline("docs/paper.pdf")).toEqual({ kind: "missing" });
-  const run: PdfRun = async () => ({
+  const run: ToolRun = async () => ({
     code: 1,
     stdout: new Uint8Array(),
     stderr: "Syntax Error: Couldn't find trailer dictionary\n",
@@ -339,7 +309,7 @@ test.skipIf(Bun.which("pdftotext") === null || Bun.which("pdftohtml") === null)(
 
 test("the env given to the rasterizer reaches every Poppler run", async () => {
   const envs: unknown[] = [];
-  const run: PdfRun = async (argv, o) => {
+  const run: ToolRun = async (argv, o) => {
     envs.push(o.env);
     return ok(argv[0] === "/bin/pdfinfo" ? "Pages: 1\n" : PIXEL);
   };

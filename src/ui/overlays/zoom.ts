@@ -6,6 +6,7 @@ import {
 } from "@opentui/core";
 import type { AppState, MouseTarget, ZoomState } from "../../core/state/types";
 import { zoomSize } from "../../core/state/zoom";
+import { drawFitted, fitView } from "../image-fit";
 import { imageTier } from "../images";
 import type { LayoutClass, ViewDeps } from "../shell";
 import { drawCells, type Theme, themeOf } from "../theme";
@@ -107,11 +108,7 @@ export class ZoomOverlay extends Renderable {
    * panning stops where the drawn view does. Sent after this frame, and only
    * when it changed.
    */
-  private reportFill(z: ImageZoom, raw: { x: number; y: number }): void {
-    const fill = {
-      x: Math.round(raw.x * 1000) / 1000,
-      y: Math.round(raw.y * 1000) / 1000,
-    };
+  private reportFill(z: ImageZoom, fill: { x: number; y: number }): void {
     if (fill.x === z.fill.x && fill.y === z.fill.y) return;
     queueMicrotask(() =>
       this.deps.dispatch({ type: "zoomFill", path: z.path, fill }),
@@ -156,57 +153,15 @@ export class ZoomOverlay extends Renderable {
       return;
     }
     const v = this.view(inner, z, image.width, image.height);
-    const px = this.deps.images.cellPixels();
-    buf.drawImage(
-      image,
-      v.x,
-      v.y,
-      v.cols,
-      v.rows,
-      px === undefined ? 0 : Math.round(v.cols * px.width),
-      px === undefined ? 0 : Math.round(v.rows * px.height),
-      Math.round(v.sx),
-      Math.round(v.sy),
-      Math.max(1, Math.round(v.sw)),
-      Math.max(1, Math.round(v.sh)),
-      tier,
-    );
+    drawFitted(buf, image, v, this.deps.images.cellPixels(), tier);
   }
 
-  /**
-   * The part of a `iw`×`ih` source the view shows (`sx`, `sy`, `sw`, `sh`,
-   * in source units) and the cells it fills, centred in the float. It also
-   * reports the fitted fill to the core.
-   */
+  /** The image fitted to the float, reporting the fitted fill to the core. */
   private view(inner: Box, z: ImageZoom, iw: number, ih: number) {
     const cell = this.deps.images.cellSize();
-    // Screen pixels per source unit: the fitted scale times the level.
-    const fit = Math.min(
-      (inner.w * cell.width) / iw,
-      (inner.h * cell.height) / ih,
-    );
-    this.reportFill(z, {
-      x: (iw * fit) / (inner.w * cell.width),
-      y: (ih * fit) / (inner.h * cell.height),
-    });
-    const scale = fit * z.level;
-    const sw = Math.min(iw, (inner.w * cell.width) / scale);
-    const sh = Math.min(ih, (inner.h * cell.height) / scale);
-    const sx = clamp(z.cx * iw - sw / 2, 0, iw - sw);
-    const sy = clamp(z.cy * ih - sh / 2, 0, ih - sh);
-    const cols = clamp(Math.round((sw * scale) / cell.width), 1, inner.w);
-    const rows = clamp(Math.round((sh * scale) / cell.height), 1, inner.h);
-    return {
-      sx,
-      sy,
-      sw,
-      sh,
-      cols,
-      rows,
-      cell,
-      x: inner.x + Math.floor((inner.w - cols) / 2),
-      y: inner.y + Math.floor((inner.h - rows) / 2),
-    };
+    const v = fitView(inner, z, iw, ih, cell);
+    this.reportFill(z, v.fill);
+    return { ...v, cell };
   }
 
   /** The diagram raster asked for last, and the last one drawn. */
