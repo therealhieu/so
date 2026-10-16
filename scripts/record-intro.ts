@@ -1,5 +1,5 @@
 // Records the README intro (docs/intro.gif). macOS only: it needs Ghostty,
-// ffmpeg, rust-analyzer, Poppler, and the Swift toolchain.
+// ffmpeg, rust-analyzer, Poppler, Chrome, and the Swift toolchain.
 //
 //   bun run record:intro          stage, record, and cut
 //   bun run record:intro --cut    cut the last recording again
@@ -47,37 +47,62 @@ const CUTS: Cut[] = [
   {
     from: "picker",
     to: "notes",
-    seconds: 1.6,
+    seconds: 1.5,
     caption: "so: Markdown notes and code, with Vim keys",
   },
   {
     from: "notes",
     to: "notes.end",
-    seconds: 4.4,
-    caption: "Linked notes, rendered live",
+    seconds: 9.2,
+    caption:
+      "Obsidian Markdown: callouts, tables, tasks, math, Mermaid, embeds",
   },
   {
-    from: "pdf",
-    to: "pdf.end",
-    seconds: 3.5,
-    caption: "PDFs in the terminal: select, highlight, take notes",
+    from: "themes",
+    to: "themes.end",
+    seconds: 5,
+    caption: "Themes, previewed as you pick",
   },
   {
     from: "base",
     to: "base.end",
-    seconds: 3,
+    seconds: 3.5,
     caption: "Obsidian Bases that write back to frontmatter",
   },
   {
+    from: "pdf",
+    to: "pdf.end",
+    seconds: 4,
+    caption: "PDFs in the terminal: select, highlight, take notes",
+  },
+  {
+    from: "image",
+    to: "image.end",
+    seconds: 3,
+    caption: "Images: zoom and pan",
+  },
+  {
+    from: "html",
+    to: "html.end",
+    seconds: 2.5,
+    caption: "HTML pages, drawn by headless Chrome",
+  },
+  {
+    from: "sqlite",
+    to: "sqlite.end",
+    seconds: 5.5,
+    caption: "SQLite tables and read-only queries",
+  },
+  {
     from: "code",
-    to: "code.opened",
-    seconds: 0.8,
+    to: "git.end",
+    seconds: 2.5,
     caption: "Language servers and Git",
   },
   {
     from: "code.ready",
     to: "code.end",
-    seconds: 3.2,
+    seconds: 3,
     caption: "Language servers and Git",
   },
 ];
@@ -251,7 +276,7 @@ async function record(): Promise<void> {
   writeFileSync(files.go, "");
   await waitFor(
     () => readStatus() === "done" || readStatus().startsWith("error"),
-    180000,
+    300000,
     "the tour",
   );
   if (readStatus() !== "done") throw new Error(`recorder: ${readStatus()}`);
@@ -397,7 +422,7 @@ function cut(): void {
     "-i",
     files.mp4,
     "-filter_complex",
-    "split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a:diff_mode=rectangle",
+    "split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle",
     "-loop",
     "0",
     OUT_GIF,
