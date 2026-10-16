@@ -17,6 +17,8 @@ so [path]
 - **Bases** — Obsidian `.base` files open as table and Kanban views that write back to frontmatter.
 - **PDFs** — read, search, and zoom PDFs in the terminal; select text with the mouse to copy, highlight, or add a note; list your highlights and notes (`<leader>pa`); embed a page in a note (`![[paper.pdf#page=3]]`). Needs [Poppler](https://poppler.freedesktop.org) (`brew install poppler`).
 - **SQLite** — open a `.db`, `.sqlite`, `.sqlite3`, or `.db3` file to page through its tables and views, read a table's schema (`Tab`), see a whole value (`Enter`), and run read-only queries in a dialog (`s`) that checks them as you type and completes table and column names. Nothing is ever written to the database.
+- **Images and SVG** — open a `.png`, `.jpg`, `.webp`, or `.gif` to see it fitted to the window; zoom with `+`/`-` or the wheel and pan with `hjkl` or a drag. An `.svg` opens drawn, and `<leader>m` flips it to its source.
+- **Videos** — open an `.mp4`, `.mov`, `.webm`, `.mkv`, or `.avi` to see a still frame, its size, codecs, and length; move the frame with `h`/`l`, and play it in the system player with `Enter`. Needs [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg`).
 - **HTML pages** — open an `.html` file to see it as a browser shows it, drawn by headless Chrome in the terminal (over SSH too); click and scroll the page, type into it after `i` (`<C-\><C-n>` returns), and flip to its source with `<leader>m`. Needs Chrome or Chromium.
 - **Git** — change column, blame, hunk stage/reset, and a lazygit handoff (`<leader>gg`).
 - **Code intelligence** — language servers for diagnostics, hover, go-to, rename, code actions, formatting, and completion.
@@ -44,6 +46,7 @@ The package names are scoped because `so` is already taken by unrelated tools: o
 Optional tools turn on more features:
 
 - [Poppler](https://poppler.freedesktop.org) (`brew install poppler`) — PDFs
+- [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg`), with `ffprobe` — videos
 - Google Chrome or Chromium (found on `PATH` or in `/Applications`; `[browser] chrome` in config picks one) — HTML pages
 - Language servers on `PATH` (e.g. `rust-analyzer`, `typescript-language-server`, `terraform-ls`) — code intelligence
 - [lazygit](https://github.com/jesseduffield/lazygit) — the `<leader>gg` handoff
