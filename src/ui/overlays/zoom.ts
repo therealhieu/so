@@ -6,7 +6,7 @@ import {
 } from "@opentui/core";
 import type { AppState, MouseTarget, ZoomState } from "../../core/state/types";
 import { zoomSize } from "../../core/state/zoom";
-import { drawFitted, fitView } from "../image-fit";
+import { drawPieces, fittedPiece, fitView } from "../image-fit";
 import { imageTier } from "../images";
 import type { LayoutClass, ViewDeps } from "../shell";
 import { drawCells, type Theme, themeOf } from "../theme";
@@ -153,7 +153,12 @@ export class ZoomOverlay extends Renderable {
       return;
     }
     const v = this.view(inner, z, image.width, image.height);
-    drawFitted(buf, image, v, this.deps.images.cellPixels(), tier);
+    drawPieces(
+      buf,
+      [fittedPiece(image, v)],
+      this.deps.images.cellPixels(),
+      tier,
+    );
   }
 
   /** The image fitted to the float, reporting the fitted fill to the core. */

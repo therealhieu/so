@@ -4,6 +4,7 @@ import { OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import type { VideoInfoResult } from "../../src/core/state/types";
 import { videoTimeline } from "../../src/ui/editors/video-view";
+import { promptBox } from "../../src/ui/overlays/prompt";
 import { stamp } from "../support/state";
 import { type Mounted, type MountOptions, mountShell } from "../support/ui";
 
@@ -90,6 +91,30 @@ test("the frame fits above the details, with the terminal's protocol", async () 
     expect(tier).toBe("kitty");
     const body = m.store.get().terminal.rows;
     expect((y as number) + (rows as number)).toBeLessThanOrEqual(body - 3);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("a delete prompt over the frame stays visible: the frame is drawn around it", async () => {
+  m = await openClip({ capabilities: KITTY });
+  await settled(m);
+  m.keys("<leader>e");
+  m.keys("d");
+  await settled(m);
+  const box = promptBox(m.store.get());
+  if (box === undefined) throw new Error("no prompt open");
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    await m.frame();
+    expect(draw.mock.calls.length).toBeGreaterThan(1);
+    for (const [, x, y, w, h] of draw.mock.calls)
+      expect(
+        x < box.x + box.w &&
+          x + w > box.x &&
+          y < box.y + box.h &&
+          y + h > box.y,
+      ).toBe(false);
   } finally {
     draw.mockRestore();
   }

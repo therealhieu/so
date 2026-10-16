@@ -17,10 +17,17 @@ import type {
   WindowId,
 } from "../../core/state/types";
 import { videoWindow } from "../../core/state/video";
-import { drawFitted, type FittedView, fitView } from "../image-fit";
+import {
+  drawPieces,
+  type FittedView,
+  fittedPiece,
+  fitView,
+} from "../image-fit";
 import { type ImageTier, imageTier } from "../images";
+import { promptBox } from "../overlays/prompt";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, themeOf } from "../theme";
+import { punch } from "./pdf-view";
 import type { WindowView } from "./registry";
 import type { Rect } from "./text-view";
 
@@ -79,6 +86,8 @@ export class VideoView extends Renderable implements WindowView {
         view: FittedView;
         tier: Exclude<ImageTier, "placeholder">;
         key: string;
+        /** The prompt float the frame is drawn around. */
+        hole: Rect | undefined;
       }
     | undefined;
   /** The frame last drawn, kept to stand in while the next one draws. */
@@ -177,7 +186,12 @@ export class VideoView extends Renderable implements WindowView {
       shown.image.height,
       cell,
     );
-    this.placed = { view, tier, key: shown.key };
+    this.placed = {
+      view,
+      tier,
+      key: shown.key,
+      hole: tier === "blocks" ? undefined : promptBox(s),
+    };
   }
 
   cursor(): Cursor | undefined {
@@ -229,6 +243,12 @@ export class VideoView extends Renderable implements WindowView {
     const p = this.placed;
     const image = p && this.deps.images.peek(p.key);
     if (p === undefined || image === undefined) return;
-    drawFitted(buf, image, p.view, this.deps.images.cellPixels(), p.tier);
+    const piece = fittedPiece(image, p.view);
+    drawPieces(
+      buf,
+      p.hole === undefined ? [piece] : punch([piece], p.hole),
+      this.deps.images.cellPixels(),
+      p.tier,
+    );
   }
 }

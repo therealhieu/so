@@ -1,5 +1,4 @@
 import {
-  type NativeImage,
   type OptimizedBuffer,
   Renderable,
   type RenderContext,
@@ -11,7 +10,12 @@ import type {
   WindowId,
   WindowSpot,
 } from "../../core/state/types";
-import { fitView } from "../image-fit";
+import {
+  drawPieces,
+  fittedPiece,
+  fitView,
+  type ImagePiece,
+} from "../image-fit";
 import { type ImageTier, imageTier } from "../images";
 import { promptBox } from "../overlays/prompt";
 import type { Cursor, ViewDeps } from "../shell";
@@ -19,19 +23,6 @@ import { drawCells, themeOf } from "../theme";
 import { punch } from "./pdf-view";
 import type { WindowView } from "./registry";
 import type { Rect } from "./text-view";
-
-/** One image drawn this frame: a source slice into a cell box. */
-type Piece = {
-  image: NativeImage;
-  x: number;
-  y: number;
-  cols: number;
-  rows: number;
-  srcX: number;
-  srcY: number;
-  srcW: number;
-  srcH: number;
-};
 
 const nameOf = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
@@ -46,7 +37,7 @@ export class ImageView extends Renderable implements WindowView {
   private windowId: WindowId = 0;
   private rect: Rect = { x: 0, y: 0, w: 0, h: 0 };
   private lines: string[] = [];
-  private pieces: Piece[] = [];
+  private pieces: ImagePiece[] = [];
   private tier: Exclude<ImageTier, "placeholder"> | undefined;
 
   constructor(
@@ -97,17 +88,7 @@ export class ImageView extends Renderable implements WindowView {
     if (tier === "kitty") image.ensureEncodedPng();
     const cell = this.deps.images.cellSize();
     const v = fitView(r, ws, image.width, image.height, cell);
-    const piece: Piece = {
-      image,
-      x: v.x,
-      y: v.y,
-      cols: v.cols,
-      rows: v.rows,
-      srcX: Math.round(v.sx),
-      srcY: Math.round(v.sy),
-      srcW: Math.max(1, Math.round(v.sw)),
-      srcH: Math.max(1, Math.round(v.sh)),
-    };
+    const piece = fittedPiece(image, v);
     const hole = promptBox(s);
     this.pieces =
       hole === undefined || tier === "blocks" ? [piece] : punch([piece], hole);
@@ -180,23 +161,7 @@ export class ImageView extends Renderable implements WindowView {
         r.w - pad,
       );
     });
-    const tier = this.tier;
-    if (tier === undefined) return;
-    const cell = this.deps.images.cellPixels();
-    for (const p of this.pieces)
-      buf.drawImage(
-        p.image,
-        p.x,
-        p.y,
-        p.cols,
-        p.rows,
-        cell === undefined ? 0 : Math.round(p.cols * cell.width),
-        cell === undefined ? 0 : Math.round(p.rows * cell.height),
-        p.srcX,
-        p.srcY,
-        p.srcW,
-        p.srcH,
-        tier,
-      );
+    if (this.tier !== undefined)
+      drawPieces(buf, this.pieces, this.deps.images.cellPixels(), this.tier);
   }
 }

@@ -60,26 +60,52 @@ export function fitView(
   };
 }
 
-/** Draw `image` as `v` places it. */
-export function drawFitted(
+/** A slice of an image drawn into a box of cells, in whole source pixels. */
+export type ImagePiece = {
+  image: NativeImage;
+  x: number;
+  y: number;
+  cols: number;
+  rows: number;
+  srcX: number;
+  srcY: number;
+  srcW: number;
+  srcH: number;
+};
+
+/** `image` as `v` places it. */
+export const fittedPiece = (image: NativeImage, v: FittedView): ImagePiece => ({
+  image,
+  x: v.x,
+  y: v.y,
+  cols: v.cols,
+  rows: v.rows,
+  srcX: Math.round(v.sx),
+  srcY: Math.round(v.sy),
+  srcW: Math.max(1, Math.round(v.sw)),
+  srcH: Math.max(1, Math.round(v.sh)),
+});
+
+/** Draw each piece with cells of `px` pixels (0 lets the renderer choose). */
+export function drawPieces(
   buf: OptimizedBuffer,
-  image: NativeImage,
-  v: FittedView,
+  pieces: readonly ImagePiece[],
   px: Size | undefined,
   tier: Exclude<ImageTier, "placeholder">,
 ): void {
-  buf.drawImage(
-    image,
-    v.x,
-    v.y,
-    v.cols,
-    v.rows,
-    px === undefined ? 0 : Math.round(v.cols * px.width),
-    px === undefined ? 0 : Math.round(v.rows * px.height),
-    Math.round(v.sx),
-    Math.round(v.sy),
-    Math.max(1, Math.round(v.sw)),
-    Math.max(1, Math.round(v.sh)),
-    tier,
-  );
+  for (const p of pieces)
+    buf.drawImage(
+      p.image,
+      p.x,
+      p.y,
+      p.cols,
+      p.rows,
+      px === undefined ? 0 : Math.round(p.cols * px.width),
+      px === undefined ? 0 : Math.round(p.rows * px.height),
+      p.srcX,
+      p.srcY,
+      p.srcW,
+      p.srcH,
+      tier,
+    );
 }
