@@ -212,7 +212,9 @@ export const statusRow = (p: PtyProcess): string =>
 /**
  * The first frame is painted, the kitty keyboard mode is on, and a file the
  * app was started on is shown. The file is read after the first frame, so
- * keys typed before it is shown would reach the explorer.
+ * keys typed before it is shown would reach the explorer. Starting Bun and
+ * the app takes seconds on a loaded CI host, so this waits longer than
+ * `waitFor`'s default.
  */
 export const ready = (p: PtyProcess): Promise<void> =>
   p.waitFor(
@@ -220,4 +222,5 @@ export const ready = (p: PtyProcess): Promise<void> =>
       p.probe.kittyPushed &&
       p.screen().includes("NOTES") &&
       (p.file === undefined || statusRow(p).includes(p.file)),
+    15_000,
   );
