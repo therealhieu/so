@@ -723,7 +723,20 @@ export function startOp(
   }
   if (from === "") return none(s);
   if (kind === "rename" || kind === "move") return startRename(c, kind, from);
-  return ex.trash === "available"
+  return confirmDelete(s, from);
+}
+
+/** `<leader>fd`: ask to delete the active buffer's file. */
+export function deleteActiveFile(s: AppState): Result {
+  const b = activeBuffer(s);
+  return b === undefined || b.path === ""
+    ? message(s, "E32: No file name", "error")
+    : confirmDelete(s, b.path);
+}
+
+/** Move to Trash on `y`, or, without a trash, delete once the name is typed. */
+function confirmDelete(s: AppState, from: string): Result {
+  return s.panels.explorer.trash === "available"
     ? openPrompt(s, {
         kind: "confirm",
         title: "Move to Trash? [y/N]",

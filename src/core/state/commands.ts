@@ -19,6 +19,7 @@ import { reloadConfig } from "./config";
 import {
   collapse,
   collapseAll,
+  deleteActiveFile,
   EXPLORER_WIDTH_STEP,
   expandOrOpen,
   explorerWidth,
@@ -385,6 +386,11 @@ const builtins: AppCommand[] = [
     id: "file.paste",
     title: "Paste files beside this file",
     run: (c) => pasteBesideActiveFile(c.state),
+  },
+  {
+    id: "file.delete",
+    title: "Delete file",
+    run: (c) => deleteActiveFile(c.state),
   },
   {
     id: "file.recent",

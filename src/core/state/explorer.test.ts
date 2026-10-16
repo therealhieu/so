@@ -741,6 +741,48 @@ test("<leader>fy without a file says so, and <leader>fp pastes at the root", () 
   ]);
 });
 
+test("<leader>fd asks to move the active file to Trash, or to type its name without a trash", () => {
+  const s = inWindow(openBuffer(clipTree(), "notes/one.md", "one"));
+  const leader = s.config.leader;
+  const withTrash = update(s, { type: "trashAvailable", available: true });
+  const asked = pressKeys(withTrash.state, `${leader}fd`).state;
+  expect(asked.overlay).toMatchObject({
+    kind: "prompt",
+    prompt: {
+      kind: "confirm",
+      title: "Move to Trash? [y/N]",
+      op: { kind: "trash", from: "notes/one.md" },
+    },
+  });
+  expect(ops(pressKeys(asked, "y").effects)).toEqual([
+    { kind: "trash", op: { kind: "trash", from: "notes/one.md" } },
+  ]);
+
+  const noTrash = update(s, { type: "trashAvailable", available: false });
+  expect(pressKeys(noTrash.state, `${leader}fd`).state.overlay).toMatchObject({
+    kind: "prompt",
+    prompt: {
+      kind: "typed",
+      op: { kind: "trash", from: "notes/one.md", permanent: true },
+    },
+  });
+});
+
+test("in the explorer, <leader>fd asks like d; without a file it says so", () => {
+  const s = update(select(clipTree(), "b.png"), {
+    type: "trashAvailable",
+    available: true,
+  }).state;
+  const leader = s.config.leader;
+  expect(pressKeys(s, `${leader}fd`).state.overlay).toEqual(
+    pressKeys(s, "d").state.overlay,
+  );
+  expect(
+    pressKeys(inWindow(fresh()), `${leader}fd`).state.notifications.message
+      ?.text,
+  ).toBe("E32: No file name");
+});
+
 test("p reads the clipboard for the selected folder, or the selected file's folder", () => {
   const s = clipTree();
   expect(pressKeys(select(s, "notes"), "p").effects).toEqual([
