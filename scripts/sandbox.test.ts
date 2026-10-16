@@ -209,6 +209,18 @@ test("bases and large stage their vaults", async () => {
   expect(notes).toHaveLength(10_000);
 });
 
+test("media stages a decodable photo, an SVG and its embed, and videos where ffmpeg is", async () => {
+  const { vault } = await staged("media");
+  const files = filesUnder(vault);
+  for (const f of ["photo.png", "broken.png", "logo.svg", "note.md"])
+    expect(files).toContain(f);
+  const photo = await Bun.file(join(vault, "photo.png")).bytes();
+  expect([...photo.subarray(16, 24)]).toEqual([0, 0, 9, 96, 0, 0, 6, 64]);
+  const ffmpeg = Bun.which("ffmpeg") !== null;
+  expect(files.includes("clip.mp4")).toBe(ffmpeg);
+  expect(files.includes("pattern.gif")).toBe(ffmpeg);
+});
+
 test("lsp stages a Rust crate and a TypeScript project as their own repositories", async () => {
   const { vault } = await staged("lsp");
   const files = filesUnder(vault);
