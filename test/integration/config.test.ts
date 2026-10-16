@@ -93,6 +93,7 @@ async function start(config?: string) {
     loadImage: createImageLoader(root),
     rasterizeSvg: createSvgRasterizer(),
     rasterizePdf: () => Promise.reject(new Error("no PDFs here")),
+    videoFrame: () => Promise.reject(new Error("no videos here")),
   });
   shell.attach(store);
 

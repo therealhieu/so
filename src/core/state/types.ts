@@ -28,6 +28,7 @@ import type {
   SqliteSource,
   SqliteTable,
 } from "../features/sqlite/types";
+import type { VideoMeta } from "../features/video/probe";
 import type { EditorKind } from "../filetypes/registry";
 import type { KeyScope } from "../kernel/commands/keymap";
 import type { RegisterName, Registers } from "../kernel/editor/registers";
@@ -144,6 +145,20 @@ export type PdfInfo = { stamp: Stamp } & (
   | { status: "failed"; reason: string }
 );
 
+/** What `ffprobe` answered about a video: what it holds, no ffmpeg, or why it failed. */
+export type VideoInfoResult =
+  | { kind: "ok"; meta: VideoMeta }
+  | { kind: "missing" }
+  | { kind: "failed"; reason: string };
+
+/** What a video buffer holds, as known for the file version `stamp`. */
+export type VideoInfo = { stamp: Stamp } & (
+  | { status: "loading" }
+  | { status: "missing" }
+  | { status: "ready"; meta: VideoMeta }
+  | { status: "failed"; reason: string }
+);
+
 /** What `pdftotext` answered: each page's text, in page order. */
 export type PdfTextResult =
   | { kind: "ok"; pages: string[] }
@@ -227,6 +242,8 @@ export type BufferState = {
   binary?: true;
   /** A PDF's page count for the bytes `stamp` names. Never persisted. */
   pdf?: PdfInfo;
+  /** What a video holds, for the bytes `stamp` names. Never persisted. */
+  video?: VideoInfo;
   /** A PDF's text per page, read for search. Never persisted. */
   pdfText?: PdfLoad<string[]>;
   /** A PDF's table of contents. Never persisted. */
@@ -708,6 +725,7 @@ export type WindowSpot =
   | { kind: "pdf"; at?: PdfPoint }
   /** In an image window; `at` is the point as fractions of the window's width and height. */
   | { kind: "image"; at: { fx: number; fy: number } }
+  | { kind: "video" }
   /** A SQLite grid cell; `row` counts from the source's first row. */
   | { kind: "sqliteCell"; row: number; column: number }
   /** The header separator right of SQLite column `column`, which is `width` cells wide. */
@@ -879,6 +897,7 @@ export type Action =
   | { type: "paste"; text: string }
   /** Answers the `pdfInfo` effect for the file version `stamp`. */
   | { type: "pdfInfo"; path: string; stamp: Stamp; result: PdfInfoResult }
+  | { type: "videoInfo"; path: string; stamp: Stamp; result: VideoInfoResult }
   /** How many rows a PDF window drew its page in and how many it shows. */
   /** Answers the `pdfText` effect for the file version `stamp`. */
   | { type: "pdfText"; path: string; stamp: Stamp; result: PdfTextResult }
@@ -1157,6 +1176,7 @@ export type Effect =
   | { kind: "browser"; window: WindowId; op: BrowserOp }
   /** Count the pages of the PDF at `path`; answered by `pdfInfo` with the same stamp. */
   | { kind: "pdfInfo"; path: string; stamp: Stamp }
+  | { kind: "videoInfo"; path: string; stamp: Stamp }
   /** Read the PDF's text per page; answered by `pdfText`. */
   | { kind: "pdfText"; path: string; stamp: Stamp }
   /** Read one page's words and boxes; answered by `pdfLayout`. */

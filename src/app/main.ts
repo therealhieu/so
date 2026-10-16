@@ -27,6 +27,10 @@ import {
   sqliteFileType,
 } from "../core/features/sqlite/file-type";
 import {
+  videoEditorKind,
+  videoFileType,
+} from "../core/features/video/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -96,6 +100,7 @@ import { sqliteBindings, sqliteCommands } from "../core/state/sqlite";
 import { createStore, type Store } from "../core/state/store";
 import type { Action, AppState } from "../core/state/types";
 import { createUpdate, type Registries } from "../core/state/update";
+import { videoBindings, videoCommands } from "../core/state/video";
 import { ViewContextRegistry } from "../core/state/view-context";
 import { createBrowserFrames } from "../ui/browser-frames";
 import { BaseView } from "../ui/editors/base-view";
@@ -105,6 +110,7 @@ import { PdfView } from "../ui/editors/pdf-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { SqliteView } from "../ui/editors/sqlite-view";
 import { EditorView } from "../ui/editors/text-view";
+import { VideoView } from "../ui/editors/video-view";
 import { createRenderer, createShell } from "../ui/shell";
 import { paintBaseEmbed } from "../ui/widgets/base";
 import { paintEmbed } from "../ui/widgets/embed";
@@ -131,6 +137,7 @@ import {
   openUrl,
 } from "../workspace/system";
 import { detectTrash } from "../workspace/trash";
+import { createVideoTool } from "../workspace/video";
 import { createOwnOps, watchWorkspace } from "../workspace/watcher";
 import { createBrowserHost } from "./browser-host";
 import {
@@ -184,6 +191,7 @@ function registries(): Registries {
   fileTypes.register(pdfFileType);
   fileTypes.register(sqliteFileType);
   fileTypes.register(htmlFileType);
+  fileTypes.register(videoFileType);
   fileTypes.register(imageFileType);
   fileTypes.register(svgFileType);
   const editorKinds = new EditorKindRegistry();
@@ -191,6 +199,7 @@ function registries(): Registries {
   editorKinds.register(pdfEditorKind);
   editorKinds.register(sqliteEditorKind);
   editorKinds.register(browserEditorKind);
+  editorKinds.register(videoEditorKind);
   editorKinds.register(imageEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
@@ -204,6 +213,7 @@ function registries(): Registries {
   for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of sqliteCommands) commands.register(c);
   for (const c of browserCommands) commands.register(c);
+  for (const c of videoCommands) commands.register(c);
   for (const c of imageCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
@@ -231,6 +241,7 @@ function registries(): Registries {
       ...pdfAnnotateBindings,
       ...sqliteBindings,
       ...browserBindings,
+      ...videoBindings,
       ...imageBindings,
       ...lspBindings,
       ...gitBindings,
@@ -380,6 +391,7 @@ async function main(argv: string[]): Promise<void> {
   registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
   registerEditorView("browser", (ctx, deps) => new BrowserView(ctx, deps));
   registerEditorView("image", (ctx, deps) => new ImageView(ctx, deps));
+  registerEditorView("video", (ctx, deps) => new VideoView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -394,6 +406,11 @@ async function main(argv: string[]): Promise<void> {
       soCacheDir(process.env, homedir()),
       logger,
     ),
+    logger,
+  });
+  const video = createVideoTool({
+    root: ws.root,
+    which: (c) => Bun.which(c),
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
@@ -414,6 +431,7 @@ async function main(argv: string[]): Promise<void> {
     }),
     rasterizeSvg,
     rasterizePdf: (r) => pdf.page(r),
+    videoFrame: (r) => video.frame(r),
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
@@ -449,6 +467,7 @@ async function main(argv: string[]): Promise<void> {
     root: ws.root,
     binaryFile: (path) => reg.fileTypes.forPath(path).binary === true,
     pdf,
+    video,
     sqlite,
     browser: browserHost,
     matcher,

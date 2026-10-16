@@ -115,6 +115,7 @@ import {
 } from "./sqlite";
 import { onPaste, onSqliteChecked, onSqliteCheckTimer } from "./sqlite-query";
 import type { Action, AppState, Effect, Result } from "./types";
+import { onVideoInfo, syncVideoInfo } from "./video";
 import type { ViewContextRegistry } from "./view-context";
 import { onWhichKeyTimer } from "./whichkey";
 import { onZoomFill } from "./zoom";
@@ -250,6 +251,8 @@ export function createUpdate(reg: Registries): Update {
         return onBrowserEvent(state, action);
       case "pdfInfo":
         return onPdfInfo(state, action);
+      case "videoInfo":
+        return onVideoInfo(state, action);
       case "sqliteSchema":
         return onSqliteSchema(state, action);
       case "sqlitePage":
@@ -349,39 +352,42 @@ export function createUpdate(reg: Registries): Update {
   };
   return (state, action) => {
     try {
-      const r = syncAnnotations(
+      const r = syncVideoInfo(
         state,
-        syncBrowser(
+        syncAnnotations(
           state,
-          syncSqlite(
+          syncBrowser(
             state,
-            syncPdfLayout(
+            syncSqlite(
               state,
-              syncPdfInfo(
+              syncPdfLayout(
                 state,
-                syncGitFiles(
+                syncPdfInfo(
                   state,
-                  syncHighlight(
+                  syncGitFiles(
                     state,
-                    syncFloat(
+                    syncHighlight(
                       state,
-                      syncDiagnostics(
+                      syncFloat(
                         state,
-                        syncLineShift(
+                        syncDiagnostics(
                           state,
-                          syncEmbeds(
+                          syncLineShift(
                             state,
-                            followActiveFile(
+                            syncEmbeds(
                               state,
-                              followShownNote(
+                              followActiveFile(
                                 state,
-                                syncEditorKinds(
-                                  syncBufferLists(state, step(state, action)),
-                                  reg,
+                                followShownNote(
+                                  state,
+                                  syncEditorKinds(
+                                    syncBufferLists(state, step(state, action)),
+                                    reg,
+                                  ),
                                 ),
                               ),
+                              reg,
                             ),
-                            reg,
                           ),
                         ),
                       ),

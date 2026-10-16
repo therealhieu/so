@@ -19,6 +19,7 @@ import { PdfView } from "../../src/ui/editors/pdf-view";
 import { registerEditorView } from "../../src/ui/editors/registry";
 import { SqliteView } from "../../src/ui/editors/sqlite-view";
 import { EditorView } from "../../src/ui/editors/text-view";
+import { VideoView } from "../../src/ui/editors/video-view";
 import {
   createShell,
   type GraphicsSupport,
@@ -88,6 +89,7 @@ export async function mountShell(o: MountOptions) {
   registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
   registerEditorView("browser", (ctx, deps) => new BrowserView(ctx, deps));
   registerEditorView("image", (ctx, deps) => new ImageView(ctx, deps));
+  registerEditorView("video", (ctx, deps) => new VideoView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -148,6 +150,7 @@ export async function mountShell(o: MountOptions) {
     rasterizeSvg: o.rasterizeSvg ?? rasterizeSvg,
     rasterizePdf:
       o.rasterizePdf ?? ((r) => loadImage(pdfPageRef(r.path, r.page))),
+    videoFrame: (r) => loadImage(`${r.path}#t=${r.at}`),
     write: (bytes) => writes.push(bytes),
     ...(o.browserFrames === undefined
       ? {}

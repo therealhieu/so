@@ -1,5 +1,6 @@
 import { resolveServers } from "../config/lsp";
 import { backlinksOf } from "../features/links/note-index";
+import { clock } from "../features/video/probe";
 import type { Pos } from "../kernel/text/pos";
 import type { TextBuffer } from "../kernel/text/text-buffer";
 import {
@@ -21,6 +22,7 @@ import { pdfPages, pdfWindow } from "./pdf";
 import { pdfSearchCount } from "./pdf-tools";
 import { rowCount, sqliteWindow } from "./sqlite";
 import type { AppState, BufferState } from "./types";
+import { videoDuration, videoWindow } from "./video";
 
 export type StatusSegments = {
   mode: string;
@@ -135,6 +137,8 @@ function modeOf(s: AppState): string {
     return "sqlite";
   if (imageWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
     return "image";
+  if (videoWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
+    return "video";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
   return base.edit === undefined && base.search === undefined
@@ -186,6 +190,12 @@ export function statusSegments(s: AppState): StatusSegments {
       ...(image.level === 1 ? [] : [`${Math.round(image.level * 100)}%`]),
     ];
     if (parts.length > 0) seg.page = parts.join(" ");
+  }
+  const video = videoWindow(s, s.windows.active);
+  if (b !== undefined && video !== undefined) {
+    delete seg.position;
+    const duration = videoDuration(b);
+    seg.page = `${clock(video.at)} / ${duration === undefined ? "?" : clock(duration)}`;
   }
   const db = sqliteWindow(s, s.windows.active);
   if (b !== undefined && db !== undefined) {

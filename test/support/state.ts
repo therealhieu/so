@@ -27,6 +27,10 @@ import {
   sqliteFileType,
 } from "../../src/core/features/sqlite/file-type";
 import {
+  videoEditorKind,
+  videoFileType,
+} from "../../src/core/features/video/file-type";
+import {
   EditorKindRegistry,
   FileTypeRegistry,
   textFileType,
@@ -93,6 +97,7 @@ import {
 import { sqliteBindings, sqliteCommands } from "../../src/core/state/sqlite";
 import type { AppState, Stamp, TextFile } from "../../src/core/state/types";
 import type { Registries } from "../../src/core/state/update";
+import { videoBindings, videoCommands } from "../../src/core/state/video";
 import { ViewContextRegistry } from "../../src/core/state/view-context";
 
 export const boot = {
@@ -111,6 +116,7 @@ export function testRegistries(): Registries {
   fileTypes.register(pdfFileType);
   fileTypes.register(sqliteFileType);
   fileTypes.register(htmlFileType);
+  fileTypes.register(videoFileType);
   fileTypes.register(imageFileType);
   fileTypes.register(svgFileType);
   const editorKinds = new EditorKindRegistry();
@@ -118,6 +124,7 @@ export function testRegistries(): Registries {
   editorKinds.register(pdfEditorKind);
   editorKinds.register(sqliteEditorKind);
   editorKinds.register(browserEditorKind);
+  editorKinds.register(videoEditorKind);
   editorKinds.register(imageEditorKind);
   const commands: Registries["commands"] = new CommandRegistry();
   registerBuiltins(commands);
@@ -131,6 +138,7 @@ export function testRegistries(): Registries {
   for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of sqliteCommands) commands.register(c);
   for (const c of browserCommands) commands.register(c);
+  for (const c of videoCommands) commands.register(c);
   for (const c of imageCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
@@ -159,6 +167,7 @@ export function testRegistries(): Registries {
       ...pdfAnnotateBindings,
       ...sqliteBindings,
       ...browserBindings,
+      ...videoBindings,
       ...imageBindings,
       ...lspBindings,
       ...gitBindings,

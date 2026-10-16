@@ -51,6 +51,7 @@ import type {
   WindowSpot,
 } from "./types";
 import type { Registries } from "./update";
+import { wheelVideo } from "./video";
 import { dragZoom, grabZoom, showZoom, zoomPans, zoomTargetAt } from "./zoom";
 
 const LINK_FOLLOW = "link.follow";
@@ -228,6 +229,8 @@ function wheel(
         );
       if (editor === "image")
         return withFocus(s, t, (f) => wheelImage(f, dx, dy));
+      if (editor === "video")
+        return withFocus(s, t, (f) => wheelVideo(f, dx, dy));
       return scrollWindow(s, t.window, dy);
     }
     case "explorer":
