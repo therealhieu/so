@@ -12,6 +12,7 @@ import { setWindow } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
 import { sameStamp } from "./pdf";
 import { message, none } from "./result";
+import { flipSource } from "./source-view";
 import type {
   Action,
   AppState,
@@ -214,22 +215,6 @@ function zoomTo(a: Active, zoom: number): Result {
   const z = Math.min(BROWSER_ZOOM.max, Math.max(BROWSER_ZOOM.min, zoom));
   const rounded = Math.round(z * 100) / 100;
   return none(setBrowserWindow(a.s, a.id, { ...a.ws, zoom: rounded }));
-}
-
-/** Show the active window's buffer as text, or back in the browser. */
-function flipSource(c: CommandContext): Result {
-  const s = c.state;
-  const w = s.windows.byId[s.windows.active];
-  const b = w === undefined ? undefined : s.buffers[w.content.bufferId];
-  if (w === undefined || b === undefined) return none(s);
-  if (c.reg.fileTypes.get(b.fileType)?.editor !== "browser") return none(s);
-  const { source, ...content } = w.content;
-  return none(
-    setWindow(s, {
-      ...w,
-      content: source === undefined ? { ...content, source: true } : content,
-    }),
-  );
 }
 
 const HTML = ["html"] as const;

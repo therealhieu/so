@@ -25,8 +25,23 @@ afterAll(async () => {
   await rm(app.root, { recursive: true, force: true });
 });
 
+test("opening photo.png shows it in a read-only image window without a write", async () => {
+  const bytes = await readFile(join(app.root, "photo.png"));
+  const marked = app.effects.length;
+  const b = await app.open("photo.png");
+  expect(b).toMatchObject({ fileType: "image", readOnly: true, binary: true });
+  const s = app.store.get();
+  expect(s.windows.byId[s.windows.active]?.content.editor).toBe("image");
+  app.keys(":w<CR>");
+  expect(app.effects.slice(marked).filter((e) => e.kind === "write")).toEqual(
+    [],
+  );
+  expect((await readFile(join(app.root, "photo.png"))).equals(bytes)).toBe(
+    true,
+  );
+});
+
 test.each([
-  ["photo.png", "binary file — not opened"],
   ["nul-at-100.bin", "binary file — not opened"],
   ["invalid-utf8.txt", "binary file — not opened"],
   ["large.md", "file too large — not opened (limit 16 MiB)"],

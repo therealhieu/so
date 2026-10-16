@@ -45,6 +45,7 @@ import {
   onToolExited,
   syncGitFiles,
 } from "./git";
+import { onImageLaidOut } from "./image";
 import {
   onIndexBatch,
   onIndexFailed,
@@ -237,6 +238,8 @@ export function createUpdate(reg: Registries): Update {
         return onResize(state, action);
       case "zoomFill":
         return onZoomFill(state, action);
+      case "imageLaidOut":
+        return onImageLaidOut(state, action);
       case "baseScrolled":
         return onBaseScrolled(state, action);
       case "rawKey":

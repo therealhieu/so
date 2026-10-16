@@ -369,15 +369,15 @@ describe("refused files", () => {
     m.store.dispatch({
       type: "dirListed",
       dir: "",
-      entries: [...(TREE[""] ?? []), { name: "photo.png", kind: "file" }],
+      entries: [...(TREE[""] ?? []), { name: "archive.zip", kind: "file" }],
     });
-    select("photo.png");
+    select("archive.zip");
     const before = await m.frame();
     m.keys("<CR>");
-    expect(effectsOf("read")).toEqual([{ kind: "read", path: "photo.png" }]);
+    expect(effectsOf("read")).toEqual([{ kind: "read", path: "archive.zip" }]);
     m.store.dispatch({
       type: "fileRefused",
-      path: "photo.png",
+      path: "archive.zip",
       reason: "binary",
     });
     let frame = await m.frame();
@@ -386,7 +386,7 @@ describe("refused files", () => {
     expect(frame.split("\n").slice(0, -3)).toEqual(
       before.split("\n").slice(0, -3),
     );
-    expect(m.store.get().panels.explorer.cursor).toBe("photo.png");
+    expect(m.store.get().panels.explorer.cursor).toBe("archive.zip");
     m.keys("<leader>e:e big.log<CR>");
     m.store.dispatch({
       type: "fileRefused",

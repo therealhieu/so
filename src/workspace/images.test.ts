@@ -160,3 +160,31 @@ test("a PDF page reference draws through the PDF renderer", async () => {
     "no PDF renderer",
   );
 });
+
+test("an SVG file is drawn through the SVG rasterizer at its own crop", async () => {
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 0 40 20'/>";
+  await writeFile(join(root, "images/logo.svg"), svg);
+  await writeFile(join(root, "images/not.svg"), "<html></html>");
+  const asked: unknown[] = [];
+  const load = createImageLoader(root, {
+    svg: async (r) => {
+      asked.push(r);
+      return PAGE;
+    },
+  });
+  expect(await load("images/logo.svg")).toBe(PAGE);
+  expect(asked).toEqual([
+    {
+      svg,
+      background: "transparent",
+      crop: { x: 10, y: 0, w: 40, h: 20 },
+      width: 2048,
+      height: 1024,
+    },
+  ]);
+  await expect(load("images/not.svg")).rejects.toThrow("not an SVG drawing");
+  // Without a rasterizer the bytes pass through, as for any other image.
+  expect(await createImageLoader(root)("images/logo.svg")).toBeInstanceOf(
+    Uint8Array,
+  );
+});

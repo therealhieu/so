@@ -14,7 +14,6 @@ test("HTML files open in the browser view; XML stays code", () => {
   });
   expect(of("site/old.htm").id).toBe("html");
   expect(of("feed.xml")).toMatchObject({ id: "xml", editor: "text" });
-  expect(of("icon.svg").id).toBe("xml");
   expect(htmlFileType.highlighter?.language).toBe("xml");
 });
 

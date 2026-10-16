@@ -15,6 +15,7 @@ import { baseWindow } from "./base-model";
 import { browserWindow } from "./browser";
 import { activeBuffer, activeWindow } from "./buffers";
 import { gitSegment } from "./git";
+import { imageWindow } from "./image";
 import { jumpSegment } from "./jumps";
 import { pdfPages, pdfWindow } from "./pdf";
 import { pdfSearchCount } from "./pdf-tools";
@@ -132,6 +133,8 @@ function modeOf(s: AppState): string {
     s.vim.mode === "normal"
   )
     return "sqlite";
+  if (imageWindow(s, s.windows.active) !== undefined && s.vim.mode === "normal")
+    return "image";
   const base = baseWindow(s, s.windows.active);
   if (base === undefined || s.vim.mode !== "normal") return s.vim.mode;
   return base.edit === undefined && base.search === undefined
@@ -172,6 +175,17 @@ export function statusSegments(s: AppState): StatusSegments {
     if (shown) seg.page = shown;
     if (page.zoom !== 1)
       seg.page = `${seg.page ?? ""} ${Math.round(page.zoom * 100)}%`.trim();
+  }
+  const image = imageWindow(s, s.windows.active);
+  if (b !== undefined && image !== undefined) {
+    delete seg.position;
+    const parts = [
+      ...(image.size === undefined
+        ? []
+        : [`${image.size.width}×${image.size.height}`]),
+      ...(image.level === 1 ? [] : [`${Math.round(image.level * 100)}%`]),
+    ];
+    if (parts.length > 0) seg.page = parts.join(" ");
   }
   const db = sqliteWindow(s, s.windows.active);
   if (b !== undefined && db !== undefined) {

@@ -31,6 +31,7 @@ import {
   resizeExplorer,
   visiblePaths,
 } from "./explorer";
+import { dragImage, grabImage, wheelImage } from "./image";
 import { handleKeyAction } from "./keys";
 import { tagUnderCursor } from "./link-commands";
 import { onPointerMove } from "./lsp";
@@ -115,6 +116,7 @@ export function onMouse(
       if (t.kind !== "window" || t.window !== s.windows.active) return none(s);
       if (t.spot.kind === "pdf")
         return t.spot.at === undefined ? none(s) : dragPdf(s, t.spot.at);
+      if (t.spot.kind === "image") return dragImage(s, t.window, t.spot.at);
       if (t.spot.kind === "browser")
         return t.spot.at === undefined
           ? none(s)
@@ -224,6 +226,8 @@ function wheel(
             ? panPdf(f, dx * WHEEL_LINES * 2)
             : wheelPdf(f, dy * WHEEL_LINES, now),
         );
+      if (editor === "image")
+        return withFocus(s, t, (f) => wheelImage(f, dx, dy));
       return scrollWindow(s, t.window, dy);
     }
     case "explorer":
@@ -482,6 +486,10 @@ function press(
   if (t.kind === "window" && t.spot.kind === "browser") {
     const { at } = t.spot;
     return chain(focused, (st) => pressBrowser(st, t.window, at, e.clicks));
+  }
+  if (t.kind === "window" && t.spot.kind === "image") {
+    const { at } = t.spot;
+    return chain(focused, (st) => grabImage(st, t.window, at));
   }
   return t.kind === "window" && t.spot.kind === "text"
     ? pressText(focused, t.spot, e.clicks, e.ctrl, reinsert, now, reg)

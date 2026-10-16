@@ -706,6 +706,8 @@ export type WindowSpot =
   | { kind: "browser"; at?: PagePoint }
   /** On a PDF page; `at` is the point under the pointer, absent off the page. */
   | { kind: "pdf"; at?: PdfPoint }
+  /** In an image window; `at` is the point as fractions of the window's width and height. */
+  | { kind: "image"; at: { fx: number; fy: number } }
   /** A SQLite grid cell; `row` counts from the source's first row. */
   | { kind: "sqliteCell"; row: number; column: number }
   /** The header separator right of SQLite column `column`, which is `width` cells wide. */
@@ -825,6 +827,13 @@ export type Action =
   | { type: "resize"; cols: number; rows: number }
   /** How much of the zoom float the shown image covers at fit, per axis (0..1]. */
   | { type: "zoomFill"; path: string; fill: { x: number; y: number } }
+  /** Image window `window` drew a `size` image covering `fill` of it at fit, per axis (0..1]. */
+  | {
+      type: "imageLaidOut";
+      window: WindowId;
+      fill: { x: number; y: number };
+      size: { width: number; height: number };
+    }
   /** How many columns after the pinned first one a base table window shows scrolled off. */
   | { type: "baseScrolled"; window: WindowId; col: number }
   /**

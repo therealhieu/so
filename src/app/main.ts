@@ -16,6 +16,11 @@ import {
   browserEditorKind,
   htmlFileType,
 } from "../core/features/browser/file-type";
+import {
+  imageEditorKind,
+  imageFileType,
+  svgFileType,
+} from "../core/features/image/file-type";
 import { pdfEditorKind, pdfFileType } from "../core/features/pdf/file-type";
 import {
   sqliteEditorKind,
@@ -52,6 +57,7 @@ import {
   gitCommands,
   gitGroups,
 } from "../core/state/git-commands";
+import { imageBindings, imageCommands } from "../core/state/image";
 import { initialState } from "../core/state/init";
 import { editorBindings, nextLineCommand } from "../core/state/keys";
 import {
@@ -94,6 +100,7 @@ import { ViewContextRegistry } from "../core/state/view-context";
 import { createBrowserFrames } from "../ui/browser-frames";
 import { BaseView } from "../ui/editors/base-view";
 import { BrowserView } from "../ui/editors/browser-view";
+import { ImageView } from "../ui/editors/image-view";
 import { PdfView } from "../ui/editors/pdf-view";
 import { registerEditorView } from "../ui/editors/registry";
 import { SqliteView } from "../ui/editors/sqlite-view";
@@ -177,11 +184,14 @@ function registries(): Registries {
   fileTypes.register(pdfFileType);
   fileTypes.register(sqliteFileType);
   fileTypes.register(htmlFileType);
+  fileTypes.register(imageFileType);
+  fileTypes.register(svgFileType);
   const editorKinds = new EditorKindRegistry();
   editorKinds.register(baseEditorKind);
   editorKinds.register(pdfEditorKind);
   editorKinds.register(sqliteEditorKind);
   editorKinds.register(browserEditorKind);
+  editorKinds.register(imageEditorKind);
   const commands = new CommandRegistry<CommandContext, CommandResult>();
   registerBuiltins(commands);
   for (const c of linkCommands) commands.register(c);
@@ -194,6 +204,7 @@ function registries(): Registries {
   for (const c of pdfAnnotateCommands) commands.register(c);
   for (const c of sqliteCommands) commands.register(c);
   for (const c of browserCommands) commands.register(c);
+  for (const c of imageCommands) commands.register(c);
   for (const c of lspCommands) commands.register(c);
   for (const c of gitCommands) commands.register(c);
   commands.register(nextLineCommand);
@@ -220,6 +231,7 @@ function registries(): Registries {
       ...pdfAnnotateBindings,
       ...sqliteBindings,
       ...browserBindings,
+      ...imageBindings,
       ...lspBindings,
       ...gitBindings,
     ],
@@ -367,6 +379,7 @@ async function main(argv: string[]): Promise<void> {
   registerEditorView("pdf", (ctx, deps) => new PdfView(ctx, deps));
   registerEditorView("sqlite", (ctx, deps) => new SqliteView(ctx, deps));
   registerEditorView("browser", (ctx, deps) => new BrowserView(ctx, deps));
+  registerEditorView("image", (ctx, deps) => new ImageView(ctx, deps));
   registerWidgetPainter("embed", paintEmbed);
   registerWidgetPainter("text", paintEmbed);
   registerWidgetPainter("rule", paintRule);
@@ -383,6 +396,7 @@ async function main(argv: string[]): Promise<void> {
     ),
     logger,
   });
+  const rasterizeSvg = createSvgRasterizer();
   const renderer = await createRenderer();
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
@@ -394,8 +408,11 @@ async function main(argv: string[]): Promise<void> {
       ? {}
       : { browserPixelRate: HERDR_PIXEL_RATE }),
     now: clock,
-    loadImage: createImageLoader(ws.root, { pdfPage: (r) => pdf.page(r) }),
-    rasterizeSvg: createSvgRasterizer(),
+    loadImage: createImageLoader(ws.root, {
+      pdfPage: (r) => pdf.page(r),
+      svg: rasterizeSvg,
+    }),
+    rasterizeSvg,
     rasterizePdf: (r) => pdf.page(r),
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
