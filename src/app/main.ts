@@ -485,6 +485,7 @@ async function main(argv: string[]): Promise<void> {
     configPath: configFile,
     ...(stateFile === undefined ? {} : { statePath: stateFile }),
     index: indexHost,
+    forgetImages: (path) => shell.forgetImages(path),
     lsp: lspHost,
     preview: previewHost,
     openUrl: (url) => openUrl(url, process.platform),

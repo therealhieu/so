@@ -79,6 +79,8 @@ export type RunnerDeps = {
    * are reported to it, since the watcher keeps them silent.
    */
   index?: Pick<IndexHost, "search" | "notify" | "moved">;
+  /** Drops a saved file's cached drawing (an SVG's), for the same reason. */
+  forgetImages?: (path: string) => void;
   /** Runs language-server effects; without one, every request fails at once. */
   lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
@@ -432,6 +434,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             const stamp = await write(path, e.text, e.expected);
             d.ownOps.noteWrite(path, stamp);
             d.index?.notify({ kind: "changed", path, isDir: false });
+            d.forgetImages?.(path);
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
             d.logger.error("fs.writeFailed", { path, reason: msg(x) });
