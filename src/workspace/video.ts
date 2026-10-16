@@ -24,13 +24,18 @@ export type VideoTool = {
   frame(r: VideoFrameRequest): Promise<RgbaImage>;
 };
 
-/** ffmpeg's last error line, else its first, else the exit code. */
-function reasonOf(stderr: string, code: number): string {
-  const lines = stderr
+/**
+ * ffmpeg's last error line without the `<path>: ` it starts with, since the
+ * window already names the file; else the exit code.
+ */
+function reasonOf(stderr: string, code: number, path: string): string {
+  const last = stderr
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l !== "");
-  return lines.at(-1) ?? `exit code ${code}`;
+    .filter((l) => l !== "")
+    .at(-1);
+  if (last === undefined) return `exit code ${code}`;
+  return last.startsWith(`${path}: `) ? last.slice(path.length + 2) : last;
 }
 
 /**
@@ -72,7 +77,7 @@ export function createVideoTool(d: {
           ),
         );
         if (r.code !== 0)
-          return { kind: "failed", reason: reasonOf(r.stderr, r.code) };
+          return { kind: "failed", reason: reasonOf(r.stderr, r.code, path) };
         const meta = parseProbe(new TextDecoder().decode(r.stdout));
         return meta === undefined
           ? { kind: "failed", reason: "no video stream" }
@@ -115,7 +120,9 @@ export function createVideoTool(d: {
       );
       if (out.code !== 0 || out.stdout.byteLength === 0)
         throw new Error(
-          out.code === 0 ? "no frame there" : reasonOf(out.stderr, out.code),
+          out.code === 0
+            ? "no frame there"
+            : reasonOf(out.stderr, out.code, path),
         );
       return ppmToRgba(out.stdout);
     },

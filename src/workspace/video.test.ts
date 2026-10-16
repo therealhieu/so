@@ -91,16 +91,16 @@ test("info runs ffprobe on the workspace file and reads its JSON", async () => {
 });
 
 test("a failed probe, a file without video, or a path outside the workspace fails with why", async () => {
-  const failing: ToolRun = async () => ({
+  const failing: ToolRun = async (argv) => ({
     code: 1,
     stdout: new Uint8Array(),
-    stderr: "clip.mp4: Invalid data found when processing input\n",
+    stderr: `${argv.at(-1)}: Invalid data found when processing input\n`,
   });
   expect(
     await createVideoTool({ root, which, run: failing }).info("clip.mp4"),
   ).toEqual({
     kind: "failed",
-    reason: "clip.mp4: Invalid data found when processing input",
+    reason: "Invalid data found when processing input",
   });
   const audio: ToolRun = async () =>
     ok(JSON.stringify({ streams: [{ codec_type: "audio" }] }));
