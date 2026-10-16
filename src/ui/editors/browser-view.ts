@@ -60,6 +60,11 @@ const PATCH_LIMIT = 16;
  * next: a page that never stops moving keeps so at most a quarter busy.
  */
 const FRAME_REST = 3;
+/**
+ * For this long after a key, click, wheel, or navigation reaches the page,
+ * its frames are taken without resting, so scrolling keeps up.
+ */
+const DRIVEN_MS = 1000;
 
 /** One image on screen over a box of the window's cells. */
 type Layer = { image: NativeImage; box: CellBox };
@@ -243,7 +248,14 @@ export class BrowserView extends Renderable implements WindowView {
     )
       return this.replace(next, whole);
     const pixels = pixelsOf(next);
-    const changed = changedBoxes(shown, pixels, r.w, r.h);
+    const changed = changedBoxes(
+      shown,
+      pixels,
+      r.w,
+      r.h,
+      PATCH_SHARE * r.w * r.h,
+    );
+    if (changed === undefined) return this.replace(next, whole);
     if (changed.length === 0) {
       next.dispose();
       return 0;
@@ -312,15 +324,17 @@ export class BrowserView extends Renderable implements WindowView {
   }
 
   /**
-   * Rest from the frame just taken, `work` ms of it, before taking another;
-   * with a pixel rate set, also until the `sent` pixels fit the rate, so the
-   * terminal is never sent more than it passes on. Chrome has more frames
-   * in flight: those arriving meanwhile wait, and the newest is taken after.
-   * Then the page is asked for its next.
+   * Rest from the frame just taken, `work` ms of it, before taking another,
+   * unless the page was just driven; with a pixel rate set, also until the
+   * `sent` pixels fit the rate, so the terminal is never sent more than it
+   * passes on. Chrome has more frames in flight: those arriving meanwhile
+   * wait, and the newest is taken after. Then the page is asked for its next.
    */
   private rest(frame: BrowserFrame, sent: number, work: number): void {
     const rate = this.deps.browserPixelRate;
     const paced = rate === undefined ? 0 : (sent / rate) * 1000;
+    const driven =
+      this.deps.browserFrames?.drivenWithin(this.windowId, DRIVEN_MS) ?? false;
     this.resting = true;
     clearTimeout(this.pacing);
     this.pacing = setTimeout(
@@ -329,7 +343,7 @@ export class BrowserView extends Renderable implements WindowView {
         frame.ack();
         this.requestRender();
       },
-      Math.max(FRAME_REST * work, paced),
+      Math.max(driven ? 0 : FRAME_REST * work, paced),
     );
   }
 

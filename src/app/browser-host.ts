@@ -58,6 +58,8 @@ export function createBrowserHost(d: {
   dispatch: (a: Action) => void;
   frames: BrowserFrames;
   logger: Logger;
+  /** The most pixels a frame may have; Chrome scales larger pages down. */
+  maxFramePixels?: number;
   find?: (configured: string) => ChromeLookup;
   launch?: (path: string, dpr: number) => Promise<ChromeProcess>;
   idleMs?: number;
@@ -163,6 +165,9 @@ export function createBrowserHost(d: {
       const c = await startChrome(tab.size.dpr);
       return openPage(c.cdp, {
         size: tab.size,
+        ...(d.maxFramePixels === undefined
+          ? {}
+          : { maxPixels: d.maxFramePixels }),
         onFrame: (png, ack) => {
           if (tabs.get(window) !== tab) return;
           const dims = pngSize(png);
@@ -231,6 +236,8 @@ export function createBrowserHost(d: {
   return {
     run(window, o) {
       if (stopped) return;
+      // The frames that answer these are wanted at once.
+      if (o.op !== "close" && o.op !== "copy") d.frames.drive(window);
       switch (o.op) {
         case "open": {
           const tab = tabs.get(window) ?? {

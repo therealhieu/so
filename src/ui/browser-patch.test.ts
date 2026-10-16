@@ -56,6 +56,19 @@ test("changes in rows far apart get a box each, top to bottom", () => {
   ]);
 });
 
+test("a change past the limit stops the comparison", () => {
+  // 10 × 5 cells: every row changed is 50 cells, one changed pixel is 1.
+  const a = frame(160, 80);
+  const scrolled = frame(160, 80);
+  scrolled.data.fill(0);
+  expect(changedBoxes(a, scrolled, 10, 5, 12)).toBeUndefined();
+  const caret = frame(160, 80);
+  paint(caret, 40, 40);
+  expect(changedBoxes(a, caret, 10, 5, 12)).toEqual([
+    { col: 1, row: 1, cols: 3, rows: 3 },
+  ]);
+});
+
 test("padding after a row is not compared", () => {
   const a = frame(160, 80, 8);
   const b = frame(160, 80, 8);

@@ -60,11 +60,16 @@ const EDITING = `(() => {
     !/^(button|checkbox|color|file|hidden|image|radio|range|reset|submit)$/i.test(e.type);
 })()`;
 
-/** Open a tab at `about:blank` sized to `size` and start its screencast. */
+/**
+ * Open a tab at `about:blank` sized to `size` and start its screencast.
+ * With `maxPixels`, Chrome scales each frame down to at most that many
+ * pixels, keeping its shape.
+ */
 export async function openPage(
   cdp: Cdp,
   o: {
     size: PageSize;
+    maxPixels?: number;
     onFrame: (png: Uint8Array, ack: () => void) => void;
     onInfo: (info: PageInfo) => void;
   },
@@ -153,12 +158,19 @@ export async function openPage(
     }
   };
   const off = cdp.on(onEvent);
-  const startScreencast = () =>
-    call("Page.startScreencast", {
+  const startScreencast = () => {
+    const width = size.width * size.dpr;
+    const height = size.height * size.dpr;
+    const scale =
+      o.maxPixels === undefined
+        ? 1
+        : Math.min(1, Math.sqrt(o.maxPixels / (width * height)));
+    return call("Page.startScreencast", {
       format: "png",
-      maxWidth: Math.round(size.width * size.dpr),
-      maxHeight: Math.round(size.height * size.dpr),
+      maxWidth: Math.round(width * scale),
+      maxHeight: Math.round(height * scale),
     });
+  };
   const metrics = () =>
     call("Emulation.setDeviceMetricsOverride", {
       width: size.width,

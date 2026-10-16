@@ -14,6 +14,18 @@ test("a replaced frame is acknowledged with the newest, not before", () => {
   expect(acked).toEqual(["a", "b"]);
 });
 
+test("a page counts as driven only for a while after a key, click, or wheel", () => {
+  let t = 0;
+  const frames = createBrowserFrames(() => t);
+  expect(frames.drivenWithin(1, 1000)).toBe(false);
+  frames.drive(1);
+  t = 999;
+  expect(frames.drivenWithin(1, 1000)).toBe(true);
+  expect(frames.drivenWithin(2, 1000)).toBe(false);
+  t = 1000;
+  expect(frames.drivenWithin(1, 1000)).toBe(false);
+});
+
 test("dropping a window acknowledges its frames; other windows keep theirs", () => {
   const frames = createBrowserFrames();
   const acked: string[] = [];
