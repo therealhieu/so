@@ -34,6 +34,7 @@ test("the unicode set uses symbols every font has", () => {
   expect(fileIcon("plan.md", "unicode").glyph).toBe("◇");
   expect(fileIcon("tasks.base", "unicode").glyph).toBe("▦");
   expect(fileIcon("photo.png", "unicode").glyph).toBe("◩");
+  expect(fileIcon("clip.MOV", "unicode").glyph).toBe("▶");
   expect(fileIcon("config.yaml", "unicode").glyph).toBe("≡");
   expect(folderIcon(false, "unicode")).toBe("▸");
   expect(folderIcon(true, "unicode")).toBe("▾");

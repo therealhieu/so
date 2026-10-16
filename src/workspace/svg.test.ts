@@ -43,3 +43,20 @@ test("without a sans-serif font every call fails", async () => {
   await expect(rasterize(r)).rejects.toThrow("no system font");
   await expect(rasterize(r)).rejects.toThrow("no system font");
 });
+
+test("a file's own size attributes give way to the crop, in either quotes", async () => {
+  const rasterize = createSvgRasterizer();
+  const out = await rasterize({
+    svg:
+      "<svg xmlns='http://www.w3.org/2000/svg' width='9' height = \"9\" viewBox='10 0 10 10'>" +
+      "<rect x='10' y='0' width='5' height='10' fill='#00ff00'/></svg>",
+    background: "transparent",
+    crop: { x: 10, y: 0, w: 10, h: 10 },
+    width: 20,
+    height: 20,
+  });
+  expect([out.width, out.height]).toEqual([20, 20]);
+  // The left half is the green rect; the right half stays transparent.
+  expect([...out.rgba.subarray(0, 4)]).toEqual([0, 255, 0, 255]);
+  expect(out.rgba[(20 - 1) * 4 + 3]).toBe(0);
+});

@@ -21,7 +21,7 @@ export const CODE_LANGUAGES = [
   { id: "yaml", extensions: [".yaml", ".yml"] },
   { id: "ini", extensions: [".toml", ".ini", ".cfg"] },
   { id: "bash", extensions: [".sh", ".bash", ".zsh"] },
-  { id: "xml", extensions: [".xml", ".svg"] },
+  { id: "xml", extensions: [".xml"] },
   {
     id: "makefile",
     extensions: [".mk"],

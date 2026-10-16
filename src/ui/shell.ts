@@ -7,6 +7,7 @@ import {
   type TerminalCapabilities,
 } from "@opentui/core";
 import type { PdfPageRequest } from "../core/features/pdf/page";
+import type { VideoFrameRequest } from "../core/features/video/file-type";
 import { pressStops } from "../core/state/mouse";
 import type { Store } from "../core/state/store";
 import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
@@ -88,6 +89,8 @@ export type ShellDeps = {
   rasterizeSvg: (r: SvgRaster) => Promise<RgbaImage>;
   /** PNG bytes of one page of a workspace PDF; PDF windows draw pages with it. */
   rasterizePdf: (r: PdfPageRequest) => Promise<Uint8Array | RgbaImage>;
+  /** Pixels of a workspace video's still frame; video windows draw it. */
+  videoFrame: (r: VideoFrameRequest) => Promise<Uint8Array | RgbaImage>;
   /** The latest frame of each browser window's page; browser windows draw them. */
   browserFrames?: BrowserFrames;
   /**

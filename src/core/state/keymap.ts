@@ -72,8 +72,9 @@ export function keymapFor(reg: Registries, config: AppConfig): Keymap {
 /**
  * Where keys resolve now: the explorer's mode, whose leader keys fall back to
  * Normal mode's, or the vim mode and the active buffer's file type. A page
- * in a browser window resolves as file type `browser`, so its HTML source,
- * shown as text, keeps the HTML keys.
+ * in a browser window resolves as file type `browser`, and a drawing in an
+ * image window as `image`, so their source, shown as text, keeps the text
+ * keys.
  */
 export function keyScope(s: AppState): KeyScope {
   if (s.panels.explorer.focused)
@@ -81,7 +82,7 @@ export function keyScope(s: AppState): KeyScope {
   const b = activeBuffer(s);
   const mode = s.vim.mode;
   if (b === undefined) return { mode };
-  const browser =
-    s.windows.byId[s.windows.active]?.content.editor === "browser";
-  return { mode, filetype: browser ? "browser" : b.fileType };
+  const editor = s.windows.byId[s.windows.active]?.content.editor;
+  const shown = editor === "browser" || editor === "image";
+  return { mode, filetype: shown ? editor : b.fileType };
 }

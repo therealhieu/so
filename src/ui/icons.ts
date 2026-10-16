@@ -13,6 +13,7 @@ type Kind = {
 const NOTE: Kind = { nerd: "", unicode: "◇", token: "iconNote" }; // nf-seti-markdown
 const BASE: Kind = { nerd: "", unicode: "▦", token: "iconBase" }; // nf-fa-table
 const IMAGE: Kind = { nerd: "", unicode: "◩", token: "iconImage" }; // nf-fa-file_image_o
+const VIDEO: Kind = { nerd: "", unicode: "▶", token: "iconImage" }; // nf-fa-file_video_o
 const TEXT: Kind = { nerd: "", unicode: "≡", token: "iconText" }; // nf-fa-file_text
 const FILE: Kind = { nerd: "", unicode: "≡", token: "iconText" }; // nf-fa-file
 const BINARY: Kind = { nerd: "", unicode: "▫", token: "iconText" }; // nf-fa-file_archive_o
@@ -45,6 +46,12 @@ const BY_EXTENSION: Readonly<Record<string, Kind>> = {
   bmp: IMAGE,
   svg: IMAGE,
   ico: IMAGE,
+  mp4: VIDEO,
+  m4v: VIDEO,
+  mov: VIDEO,
+  webm: VIDEO,
+  mkv: VIDEO,
+  avi: VIDEO,
   txt: TEXT,
   log: TEXT,
   csv: code("", "iconData"), // nf-fa-file_excel_o

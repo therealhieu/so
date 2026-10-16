@@ -12,6 +12,7 @@ import { gitWorktree } from "./git-worktree";
 import { intro } from "./intro";
 import { large } from "./large";
 import { lsp } from "./lsp";
+import { media } from "./media";
 import { pdf } from "./pdf";
 import { sqlite } from "./sqlite";
 import { tour } from "./tour";
@@ -33,6 +34,7 @@ export const PROFILES: readonly Profile[] = [
   pdf,
   sqlite,
   browser,
+  media,
   intro,
 ];
 

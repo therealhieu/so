@@ -39,6 +39,9 @@ function firstFont(paths: readonly string[]): Uint8Array | undefined {
   return undefined;
 }
 
+/** resvg starts once a process: a second `initWasm` throws. */
+let wasm: Promise<void> | undefined;
+
 /**
  * An SVG rasterizer: resvg compiled to WebAssembly, embedded in the binary
  * and started on the first call, with the first system sans-serif and
@@ -52,7 +55,8 @@ export function createSvgRasterizer(
   const start = async () => {
     const sans = firstFont(fontPaths.sans);
     if (sans === undefined) throw new Error("no system font for diagrams");
-    await initWasm(readFileSync(wasmPath));
+    wasm ??= initWasm(readFileSync(wasmPath));
+    await wasm;
     const mono = firstFont(fontPaths.mono);
     return mono === undefined ? [sans] : [sans, mono];
   };
@@ -62,7 +66,7 @@ export function createSvgRasterizer(
     const { x, y, w, h } = r.crop;
     const svg = r.svg.replace(/<svg\b[^>]*>/, (tag) =>
       tag
-        .replace(/\s(viewBox|width|height)="[^"]*"/g, "")
+        .replace(/\s(viewBox|width|height)\s*=\s*("[^"]*"|'[^']*')/g, "")
         .replace(
           /^<svg/,
           `<svg viewBox="${x} ${y} ${w} ${h}" width="${r.width}" height="${r.height}" preserveAspectRatio="none"`,

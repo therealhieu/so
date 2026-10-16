@@ -1,11 +1,12 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, sep } from "node:path";
+import { svgRasterSize, svgSize } from "../core/features/image/svg-size";
 import {
   type PdfPageRequest,
   parsePdfPageRef,
 } from "../core/features/pdf/page";
 import { isWebUrl } from "../core/lang/markdown/renderers/image";
-import type { RgbaImage } from "../core/state/types";
+import type { RgbaImage, SvgRaster } from "../core/state/types";
 import { createLimiter } from "./limit";
 
 /** Limits for downloading images referenced by URL. */
@@ -100,16 +101,39 @@ export async function fetchImage(
 /** The width PDF pages embedded in notes are drawn at. */
 const PDF_EMBED_WIDTH = 1024;
 
+/** Whether `ref` (a path or URL) names an SVG file. */
+const isSvgRef = (ref: string) =>
+  /\.svg$/i.test(isWebUrl(ref) ? new URL(ref).pathname : ref);
+
+/** The pixels of SVG file bytes, drawn through `rasterize` at `svgRasterSize`. */
+async function drawSvg(
+  ref: string,
+  bytes: Uint8Array,
+  rasterize: (r: SvgRaster) => Promise<RgbaImage>,
+): Promise<RgbaImage> {
+  const svg = new TextDecoder().decode(bytes);
+  const size = svgSize(svg);
+  if (size === undefined) throw new Error(`${ref}: not an SVG drawing`);
+  return rasterize({
+    svg,
+    background: "transparent",
+    crop: size.box,
+    ...svgRasterSize(size),
+  });
+}
+
 /**
  * Image bytes or pixels by reference: URLs download through `fetchImage`, at most four
  * at a time; a PDF page (`paper.pdf#page=3`) draws through `pdfPage`; anything
- * else is a workspace path read with `readImage`.
+ * else is a workspace path read with `readImage`. An SVG file, from either,
+ * is drawn through `svg`.
  */
 export function createImageLoader(
   root: string,
   o: {
     fetch?: typeof fetch;
     pdfPage?: (r: PdfPageRequest) => Promise<RgbaImage>;
+    svg?: (r: SvgRaster) => Promise<RgbaImage>;
   } = {},
 ): (ref: string) => Promise<Uint8Array | RgbaImage> {
   const limited = createLimiter(WEB_IMAGE.maxInFlight);
@@ -119,9 +143,13 @@ export function createImageLoader(
       if (o.pdfPage === undefined) throw new Error(`${ref}: no PDF renderer`);
       return o.pdfPage({ ...pdf, width: PDF_EMBED_WIDTH });
     }
-    if (!isWebUrl(ref)) return readImage(root, ref);
-    return limited(() =>
-      fetchImage(ref, o.fetch === undefined ? {} : { fetch: o.fetch }),
-    );
+    const bytes = isWebUrl(ref)
+      ? await limited(() =>
+          fetchImage(ref, o.fetch === undefined ? {} : { fetch: o.fetch }),
+        )
+      : await readImage(root, ref);
+    return o.svg !== undefined && isSvgRef(ref)
+      ? drawSvg(ref, bytes, o.svg)
+      : bytes;
   };
 }

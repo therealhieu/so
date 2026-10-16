@@ -148,6 +148,15 @@ test("mutating effects run one at a time in the order they were emitted", async 
   expect(r.deps.ownOps.isOwn("c.md")).toBe(true);
 });
 
+test("a saved file's drawing is forgotten, since the watcher keeps own writes silent", async () => {
+  const forgotten: string[] = [];
+  const r = runner({ forgetImages: (path) => forgotten.push(path) });
+  r.run({ kind: "write", path: "logo.svg", text: "<svg/>\n" });
+  await waitFor(() => r.actions.length > 0);
+  expect(r.actions[0]?.type).toBe("saved");
+  expect(forgotten).toEqual(["logo.svg"]);
+});
+
 test("a write over an unseen disk version fails with the conflict reason", async () => {
   const seen = await atomicWrite(join(root, "seen.md"), "one\n");
   await writeFile(join(root, "seen.md"), "external\n");

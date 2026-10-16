@@ -44,6 +44,7 @@ import { readPropertyTypes } from "../workspace/property-types";
 import { saveStateFile } from "../workspace/state-file";
 import type { ClipboardProvider, FileClipboard } from "../workspace/system";
 import type { Trash } from "../workspace/trash";
+import type { VideoTool } from "../workspace/video";
 import type { OwnOps } from "../workspace/watcher";
 import type { BrowserHost } from "./browser-host";
 import type { IndexHost } from "./index-host";
@@ -78,6 +79,8 @@ export type RunnerDeps = {
    * are reported to it, since the watcher keeps them silent.
    */
   index?: Pick<IndexHost, "search" | "notify" | "moved">;
+  /** Drops a saved file's cached drawing (an SVG's), for the same reason. */
+  forgetImages?: (path: string) => void;
   /** Runs language-server effects; without one, every request fails at once. */
   lsp?: Pick<LspHost, "run" | "notify">;
   /** The one preview server's owner. */
@@ -94,6 +97,8 @@ export type RunnerDeps = {
   binaryFile?: (path: string) => boolean;
   /** Counts PDF pages; without one, every PDF answers that Poppler is missing. */
   pdf?: Pick<PdfRasterizer, "info" | "text" | "layout" | "outline">;
+  /** Reads what videos hold; without one, every video answers that ffmpeg is missing. */
+  video?: Pick<VideoTool, "info">;
   /** Reads SQLite databases; without one, every read fails. */
   sqlite?: Pick<SqliteHost, "schema" | "page" | "count" | "check">;
   /** Runs browser windows' pages; without one, a page fails to open. */
@@ -429,6 +434,7 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
             const stamp = await write(path, e.text, e.expected);
             d.ownOps.noteWrite(path, stamp);
             d.index?.notify({ kind: "changed", path, isDir: false });
+            d.forgetImages?.(path);
             d.dispatch({ type: "saved", path, stamp });
           } catch (x) {
             d.logger.error("fs.writeFailed", { path, reason: msg(x) });
@@ -899,6 +905,20 @@ export function createEffectRunner(d: RunnerDeps): EffectRunner {
           d.pdf?.info(e.path) ?? Promise.resolve({ kind: "missing" as const });
         void info.then((result) =>
           d.dispatch({ type: "pdfInfo", path: e.path, stamp: e.stamp, result }),
+        );
+        return;
+      }
+      case "videoInfo": {
+        const info =
+          d.video?.info(e.path) ??
+          Promise.resolve({ kind: "missing" as const });
+        void info.then((result) =>
+          d.dispatch({
+            type: "videoInfo",
+            path: e.path,
+            stamp: e.stamp,
+            result,
+          }),
         );
         return;
       }

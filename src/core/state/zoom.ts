@@ -1,3 +1,11 @@
+import {
+  dragFrame,
+  FITTED,
+  filledFrame,
+  framePans,
+  panFrame,
+  zoomFrame,
+} from "../features/image/view";
 import { resolveLink } from "../features/links/resolve";
 import type { Key } from "../kernel/vim/keys";
 import { embedLink, fenceBody } from "../lang/markdown/block-text";
@@ -12,9 +20,7 @@ import { bodyRows } from "./layout";
 import { message, none } from "./result";
 import type { AppState, Result, TerminalState, ZoomState } from "./types";
 
-/** Image zoom, as a multiple of the size that fits the float: 0.25× to 8× in 0.25 steps. */
-export const ZOOM_STEP = 0.25;
-export const ZOOM_MAX = 8;
+export { ZOOM_MAX } from "../features/image/view";
 
 /** The zoom float: 90% of the terminal, at least 60×12, clipped to it below the bufferline. */
 export function zoomSize(t: TerminalState): { w: number; h: number } {
@@ -47,10 +53,7 @@ export function zoomTargetAt(s: AppState, line: number): ZoomState | undefined {
         kind: "image",
         path: r.path,
         name,
-        level: 1,
-        cx: 0.5,
-        cy: 0.5,
-        fill: { x: 1, y: 1 },
+        ...FITTED,
       };
     }
     case "mermaid": {
@@ -65,10 +68,7 @@ export function zoomTargetAt(s: AppState, line: number): ZoomState | undefined {
           kind: "image",
           path: `mermaid:${block.hash}`,
           name: "mermaid",
-          level: 1,
-          cx: 0.5,
-          cy: 0.5,
-          fill: { x: 1, y: 1 },
+          ...FITTED,
           diagram: { svg, lines: lines ?? [] },
         };
       return lines === undefined
@@ -113,45 +113,19 @@ const PAN: Readonly<Record<string, [number, number]>> = {
   "<Up>": [0, -1],
 };
 
-type ImageZoom = Extract<ZoomState, { kind: "image" }>;
 type DiagramZoom = Extract<ZoomState, { kind: "diagram" }>;
 
-/** The fraction of the image the view shows along an axis: all of it until it outgrows the float. */
-const shown = (level: number, fill: number) => Math.min(1, 1 / (level * fill));
-
-/** The image at `level` with its view's centre kept on the image. */
-function centred(
-  z: ImageZoom,
-  level: number,
-  cx: number,
-  cy: number,
-): ImageZoom {
-  const hx = shown(level, z.fill.x) / 2;
-  const hy = shown(level, z.fill.y) / 2;
-  return {
-    ...z,
-    level,
-    cx: clamp(cx, hx, 1 - hx),
-    cy: clamp(cy, hy, 1 - hy),
-  };
-}
-
-function imageKey(z: ImageZoom, key: Key): ZoomState {
+function imageKey(z: Extract<ZoomState, { kind: "image" }>, key: Key) {
   const pan = PAN[key];
-  if (pan !== undefined) {
-    // A quarter of the view per step.
-    const sx = shown(z.level, z.fill.x) / 4;
-    const sy = shown(z.level, z.fill.y) / 4;
-    return centred(z, z.level, z.cx + pan[0] * sx, z.cy + pan[1] * sy);
-  }
+  if (pan !== undefined) return panFrame(z, pan[0], pan[1]);
   switch (key) {
     case "+":
     case "=":
-      return centred(z, Math.min(ZOOM_MAX, z.level + ZOOM_STEP), z.cx, z.cy);
+      return zoomFrame(z, 1);
     case "-":
-      return centred(z, Math.max(ZOOM_STEP, z.level - ZOOM_STEP), z.cx, z.cy);
+      return zoomFrame(z, -1);
     case "0":
-      return centred(z, 1, 0.5, 0.5);
+      return zoomFrame(z, 0);
     default:
       return z;
   }
@@ -175,12 +149,7 @@ export function dragZoom(s: AppState, p: { fx: number; fy: number }): Result {
   if (z === undefined || g === undefined) return none(s);
   const dx = p.fx - g.fx;
   const dy = p.fy - g.fy;
-  if (z.kind === "image") {
-    // The float spans 1 / (level × fill) of the image along each axis.
-    const cx = g.x - dx / (z.level * z.fill.x);
-    const cy = g.y - dy / (z.level * z.fill.y);
-    return none(showZoom(s, centred(z, z.level, cx, cy)));
-  }
+  if (z.kind === "image") return none(showZoom(s, dragFrame(z, g, dx, dy)));
   const { w, h } = zoomSize(s.terminal);
   const col = g.x - Math.round(dx * (w - 2));
   const row = g.y - Math.round(dy * (h - 2));
@@ -193,15 +162,9 @@ export function onZoomFill(
   a: { path: string; fill: { x: number; y: number } },
 ): Result {
   const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
-  if (
-    z?.kind !== "image" ||
-    z.path !== a.path ||
-    (z.fill.x === a.fill.x && z.fill.y === a.fill.y)
-  )
-    return none(s);
-  return none(
-    showZoom(s, centred({ ...z, fill: a.fill }, z.level, z.cx, z.cy)),
-  );
+  if (z?.kind !== "image" || z.path !== a.path) return none(s);
+  const next = filledFrame(z, a.fill);
+  return next === z ? none(s) : none(showZoom(s, next));
 }
 
 /** Diagram rows and columns past the float's inner size, per axis. */
@@ -218,11 +181,7 @@ function diagramExcess(z: DiagramZoom, t: TerminalState) {
 export function zoomPans(s: AppState): { x: boolean; y: boolean } {
   const z = s.overlay.kind === "zoom" ? s.overlay.zoom : undefined;
   if (z === undefined) return { x: false, y: false };
-  if (z.kind === "image")
-    return {
-      x: shown(z.level, z.fill.x) < 1,
-      y: shown(z.level, z.fill.y) < 1,
-    };
+  if (z.kind === "image") return framePans(z);
   const e = diagramExcess(z, s.terminal);
   return { x: e.x > 0, y: e.y > 0 };
 }
