@@ -26,6 +26,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "normal" }, seq: "<leader>fy", id: "file.copy" },
   { scope: { mode: "normal" }, seq: "<leader>fx", id: "file.cut" },
   { scope: { mode: "normal" }, seq: "<leader>fp", id: "file.paste" },
+  { scope: { mode: "normal" }, seq: "<leader>fd", id: "file.delete" },
   { scope: { mode: "normal" }, seq: "<leader>sg", id: "search.grep" },
   { scope: { mode: "normal" }, seq: "<Esc>", id: "search.clear" },
   { scope: { mode: "normal" }, seq: "<leader>st", id: "search.tags" },
@@ -62,6 +63,7 @@ export const defaultBindings: readonly Binding[] = [
   { scope: { mode: "explorer" }, seq: "<leader>fy", id: "explorer.copy" },
   { scope: { mode: "explorer" }, seq: "<leader>fx", id: "explorer.cut" },
   { scope: { mode: "explorer" }, seq: "<leader>fp", id: "explorer.paste" },
+  { scope: { mode: "explorer" }, seq: "<leader>fd", id: "explorer.delete" },
   { scope: { mode: "explorer" }, seq: "<leader>us", id: "settings.open" },
   { scope: { mode: "explorer" }, seq: "<leader>qq", id: "app.quit" },
 ];
