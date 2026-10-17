@@ -1,3 +1,4 @@
+import { appendFileSync } from "node:fs";
 import type { PageSize } from "../../core/features/browser/file-type";
 import type { PageKey } from "../../core/features/browser/keys";
 import type { Cdp, CdpEvent } from "./cdp";
@@ -159,22 +160,26 @@ export async function openPage(
   };
   const off = cdp.on(onEvent);
   let maxPixels: number | undefined;
-  const startScreencast = () => {
+  /** The largest frame the screencast sends with at most `limit` pixels. */
+  const frameBox = (limit: number | undefined) => {
     const width = size.width * size.dpr;
     const height = size.height * size.dpr;
     const scale =
-      maxPixels === undefined
+      limit === undefined
         ? 1
-        : Math.min(1, Math.sqrt(maxPixels / (width * height)));
+        : Math.min(1, Math.sqrt(limit / (width * height)));
     // Scaled down, the box is rounded down so the frame stays within the limit.
     const fit = (n: number) =>
       scale < 1 ? Math.floor(n * scale) : Math.round(n);
-    return call("Page.startScreencast", {
-      format: "png",
-      maxWidth: fit(width),
-      maxHeight: fit(height),
-    });
+    return { maxWidth: fit(width), maxHeight: fit(height) };
   };
+  const startScreencast = () =>
+    call("Page.startScreencast", {
+      ...(process.env.SO_X_JPEG
+        ? { format: "jpeg", quality: Number(process.env.SO_X_JPEG) }
+        : { format: "png" }),
+      ...frameBox(maxPixels),
+    });
   const metrics = () =>
     call("Emulation.setDeviceMetricsOverride", {
       width: size.width,
@@ -216,8 +221,15 @@ export async function openPage(
       await startScreencast();
     },
     async limit(next) {
-      if (next === maxPixels) return;
+      const before = frameBox(maxPixels);
+      const after = frameBox(next);
       maxPixels = next;
+      // A frame that already fits needs no new screencast.
+      if (
+        before.maxWidth === after.maxWidth &&
+        before.maxHeight === after.maxHeight
+      )
+        return;
       await call("Page.stopScreencast");
       await startScreencast();
     },
@@ -234,13 +246,34 @@ export async function openPage(
       if (type === "release") followTitle();
     },
     async wheel(x, y, dx, dy) {
-      await call("Input.dispatchMouseEvent", {
+      const sent = call("Input.dispatchMouseEvent", {
         type: "mouseWheel",
         x,
         y,
         deltaX: dx,
         deltaY: dy,
       });
+      const pace = Number(process.env.SO_X_WHEELFF ?? 0);
+      if (pace > 0) {
+        sent.catch(() => {});
+        await new Promise((r) => setTimeout(r, pace));
+      } else await sent;
+      const traceFile = process.env.SO_X_SCROLLY && process.env.SO_TRACE;
+      if (traceFile) {
+        const t0 = performance.now();
+        const poll = async () => {
+          const r = await call<{ result: { value: number } }>(
+            "Runtime.evaluate",
+            { expression: "scrollY", returnByValue: true },
+          );
+          appendFileSync(
+            traceFile,
+            `${performance.now().toFixed(0)} page scrollY=${r.result.value} dy=${dy} since=${(performance.now() - t0).toFixed(0)}\n`,
+          );
+          if (performance.now() - t0 < 700) setTimeout(poll, 20);
+        };
+        void poll();
+      }
     },
     async key(k) {
       const base = {

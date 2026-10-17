@@ -8,8 +8,8 @@ export type BrowserFrame = { png: Uint8Array; seq: number; ack: () => void };
  * a frame repaints only its window's view, not the whole state. Each frame
  * is acknowledged once, after it or a newer one that replaced it is drawn,
  * so the page sends the next. It also keeps when each page was last driven
- * by a key, click, wheel, or navigation, so frames that answer one are
- * taken at once.
+ * by a key, click, wheel, or navigation, and last scrolled by the wheel, so
+ * frames that answer one are taken at once.
  */
 export type BrowserFrames = {
   publish(window: WindowId, png: Uint8Array, ack: () => void): void;
@@ -22,6 +22,10 @@ export type BrowserFrames = {
   drive(window: WindowId): void;
   /** Whether window `window`'s page was driven within the last `ms`. */
   drivenWithin(window: WindowId, ms: number): boolean;
+  /** Note that window `window`'s page was just scrolled by the wheel, which drives it. */
+  scroll(window: WindowId): void;
+  /** Whether window `window`'s page was scrolled by the wheel within the last `ms`. */
+  scrolledWithin(window: WindowId, ms: number): boolean;
 };
 
 const once = (f: () => void) => {
@@ -38,6 +42,9 @@ export function createBrowserFrames(
 ): BrowserFrames {
   const frames = new Map<WindowId, BrowserFrame>();
   const driven = new Map<WindowId, number>();
+  const scrolled = new Map<WindowId, number>();
+  const within = (at: number | undefined, ms: number) =>
+    at !== undefined && now() - at < ms;
   const listeners: (() => void)[] = [];
   let seq = 0;
   return {
@@ -56,6 +63,7 @@ export function createBrowserFrames(
       frames.get(window)?.ack();
       frames.delete(window);
       driven.delete(window);
+      scrolled.delete(window);
     },
     latest: (window) => frames.get(window),
     listen(cb) {
@@ -64,9 +72,11 @@ export function createBrowserFrames(
     drive(window) {
       driven.set(window, now());
     },
-    drivenWithin(window, ms) {
-      const at = driven.get(window);
-      return at !== undefined && now() - at < ms;
+    drivenWithin: (window, ms) => within(driven.get(window), ms),
+    scroll(window) {
+      driven.set(window, now());
+      scrolled.set(window, now());
     },
+    scrolledWithin: (window, ms) => within(scrolled.get(window), ms),
   };
 }

@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { pathToFileURL } from "node:url";
 import type { PageSize } from "../core/features/browser/file-type";
@@ -48,7 +48,14 @@ type Tab = {
   queue: Promise<void>;
   /** Pending while frames are limited for scrolling: returns them to full size. */
   settle?: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * The wheel step waiting last in the queue: later steps add to it until
+   * anything else is queued after it.
+   */
+  wheel?: WheelStep | undefined;
 };
+
+type WheelStep = { at: { x: number; y: number }; dx: number; dy: number };
 
 class Missing extends Error {
   constructor(readonly configured: string | undefined) {
@@ -87,7 +94,10 @@ export function createBrowserHost(d: {
     d.launch ??
     ((path: string, dpr: number) =>
       launchChrome(path, {
-        extraArgs: [`--force-device-scale-factor=${dpr}`],
+        extraArgs: [
+          `--force-device-scale-factor=${dpr}`,
+          ...(process.env.SO_X_NOSMOOTH ? ["--disable-smooth-scrolling"] : []),
+        ],
       }));
   const idleMs = d.idleMs ?? BROWSER_IDLE_MS;
   const tabs = new Map<WindowId, Tab>();
@@ -181,6 +191,11 @@ export function createBrowserHost(d: {
             tab.frame = dims;
             d.logger.info("browser.frame", { window, size: dims });
           }
+          if (process.env.SO_TRACE)
+            appendFileSync(
+              process.env.SO_TRACE,
+              `${performance.now().toFixed(0)} host frame ${dims}\n`,
+            );
           d.frames.publish(window, png, ack);
         },
         onInfo: (info) => {
@@ -206,6 +221,7 @@ export function createBrowserHost(d: {
     f: () => Promise<void>,
     report = false,
   ) => {
+    tab.wheel = undefined;
     tab.queue = tab.queue.then(f).catch((e: unknown) => {
       d.logger.error("browser.op", {
         reason: e instanceof Error ? e.message : String(e),
@@ -224,6 +240,8 @@ export function createBrowserHost(d: {
         if (tabs.get(window) !== tab) return;
         const page = await pageOf(window, tab);
         if (!sameSize(page.size(), tab.size)) await page.resize(tab.size);
+        if (process.env.SO_X_FIXED && d.scrollPixels !== undefined)
+          await page.limit(d.scrollPixels);
         await page.navigate(url);
       },
       true,
@@ -244,12 +262,29 @@ export function createBrowserHost(d: {
   const scrolled = (window: WindowId) => {
     const tab = tabs.get(window);
     const limit = d.scrollPixels;
-    if (tab === undefined || limit === undefined) return;
-    if (tab.settle === undefined) withPage(window, (p) => p.limit(limit));
+    if (tab === undefined || limit === undefined || process.env.SO_X_FIXED)
+      return;
+    const tr = (m: string): void => {
+      if (process.env.SO_TRACE)
+        appendFileSync(
+          process.env.SO_TRACE,
+          `${performance.now().toFixed(0)} host ${m}\n`,
+        );
+    };
+    tr(`wheel settle=${tab.settle !== undefined}`);
+    if (tab.settle === undefined)
+      withPage(window, (p) => {
+        tr("limit start");
+        return p.limit(limit).then(() => tr("limit done"));
+      });
     clearTimeout(tab.settle);
     tab.settle = setTimeout(() => {
       tab.settle = undefined;
-      if (tabs.get(window) === tab) withPage(window, (p) => p.limit(undefined));
+      if (tabs.get(window) === tab)
+        withPage(window, (p) => {
+          tr("unlimit start");
+          return p.limit(undefined).then(() => tr("unlimit done"));
+        });
     }, settleMs);
   };
 
@@ -292,10 +327,58 @@ export function createBrowserHost(d: {
           withPage(window, (p) => p.resize(o.size));
           return;
         }
-        case "input":
-          if (o.input.kind === "wheel") scrolled(window);
+        case "input": {
+          const input = o.input;
+          if (input.kind === "wheel") {
+            if (process.env.SO_TRACE)
+              appendFileSync(
+                process.env.SO_TRACE,
+                `${performance.now().toFixed(0)} host input wheel\n`,
+              );
+            d.frames.scroll(window);
+            scrolled(window);
+            const tab = tabs.get(window);
+            if (tab?.page === undefined) return;
+            // A trackpad sends hundreds of steps a second, more than a page
+            // takes: the steps that come while one waits are added to it.
+            const waiting = tab.wheel;
+            if (waiting !== undefined) {
+              waiting.at = input.at;
+              waiting.dx += input.dx;
+              waiting.dy += input.dy;
+              return;
+            }
+            const step: WheelStep = { ...input };
+            withPage(window, (p, tab) => {
+              if (process.env.SO_TRACE)
+                appendFileSync(
+                  process.env.SO_TRACE,
+                  `${performance.now().toFixed(0)} host dispatch wheel waited=0\n`,
+                );
+              if (tab.wheel === step) tab.wheel = undefined;
+              return p.wheel(
+                step.at.x * tab.size.width,
+                step.at.y * tab.size.height,
+                step.dx * WHEEL_LINE_PX,
+                step.dy * WHEEL_LINE_PX,
+              );
+            });
+            tab.wheel = step;
+            return;
+          }
+          const arrived = performance.now();
+          if (process.env.SO_TRACE)
+            appendFileSync(
+              process.env.SO_TRACE,
+              `${arrived.toFixed(0)} host input ${input.kind} ${"type" in input ? input.type : ""}\n`,
+            );
           withPage(window, (p, tab) => {
-            const i = o.input;
+            if (process.env.SO_TRACE)
+              appendFileSync(
+                process.env.SO_TRACE,
+                `${performance.now().toFixed(0)} host dispatch ${input.kind} waited=${(performance.now() - arrived).toFixed(0)}\n`,
+              );
+            const i = input;
             const x = (at: { x: number }) => at.x * tab.size.width;
             const y = (at: { y: number }) => at.y * tab.size.height;
             switch (i.kind) {
@@ -312,13 +395,6 @@ export function createBrowserHost(d: {
                     event(window, { kind: "focus", editable });
                 });
               }
-              case "wheel":
-                return p.wheel(
-                  x(i.at),
-                  y(i.at),
-                  i.dx * WHEEL_LINE_PX,
-                  i.dy * WHEEL_LINE_PX,
-                );
               case "key": {
                 const k = pageKey(i.key);
                 return k === undefined ? Promise.resolve() : p.key(k);
@@ -326,6 +402,7 @@ export function createBrowserHost(d: {
             }
           });
           return;
+        }
         case "back":
           withPage(window, (p) => p.back());
           return;

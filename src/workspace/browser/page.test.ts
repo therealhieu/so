@@ -87,6 +87,10 @@ test("a pixel limit restarts the screencast with frames scaled to fit it", async
     maxHeight: 1200,
   });
   expect(f.calls("Page.stopScreencast")).toHaveLength(2);
+  // 1.92 million pixels already fit: the screencast goes on as it is.
+  await page.limit(2_000_000);
+  await page.limit(undefined);
+  expect(f.calls("Page.startScreencast")).toHaveLength(3);
 });
 
 test("a jump to an anchor ends loading without a load event", async () => {

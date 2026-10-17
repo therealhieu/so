@@ -7,6 +7,7 @@ import {
   type BrowserHost,
   createBrowserHost,
 } from "../../src/app/browser-host";
+import { WHEEL_LINE_PX } from "../../src/core/state/browser";
 import type {
   Action,
   BrowserEvent,
@@ -186,6 +187,60 @@ test("while a page scrolls its frames are limited, and full size once it rests",
     [400, 300],
     [200, 150],
     [400, 300],
+  ]);
+});
+
+const wheelOp = (dy: number): BrowserOp => ({
+  op: "input",
+  input: { kind: "wheel", at: { x: 0.5, y: 0.5 }, dx: 0, dy },
+});
+
+/** The mouse wheel and key events the fake was sent, in order. */
+const inputsSent = (log: string) =>
+  logged(log).flatMap((m) =>
+    m.method === "Input.dispatchMouseEvent" && m.params?.type === "mouseWheel"
+      ? [`wheel ${m.params.deltaY}`]
+      : m.method === "Input.dispatchKeyEvent" && m.params?.type !== "keyUp"
+        ? [`key ${m.params?.key}`]
+        : [],
+  );
+
+test("wheel steps that come while one waits go to the page as one", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path);
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  for (let i = 0; i < 10; i++) h.run(wheelOp(1));
+  h.run(wheelOp(-3));
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length > 0 ? true : undefined), 5000, sent);
+  await Bun.sleep(50);
+  expect(sent()).toEqual([`wheel ${7 * WHEEL_LINE_PX}`]);
+});
+
+test("a key between wheel steps keeps its place", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path);
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  const key = (name: string): BrowserOp => ({
+    op: "input",
+    input: {
+      kind: "key",
+      key: { name, ctrl: false, alt: false, shift: false, meta: false },
+    },
+  });
+  h.run(wheelOp(1));
+  h.run(wheelOp(1));
+  h.run(key("home"));
+  h.run(wheelOp(2));
+  h.run(wheelOp(2));
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length === 3 ? true : undefined), 5000, sent);
+  expect(sent()).toEqual([
+    `wheel ${2 * WHEEL_LINE_PX}`,
+    "key Home",
+    `wheel ${4 * WHEEL_LINE_PX}`,
   ]);
 });
 

@@ -26,6 +26,22 @@ test("a page counts as driven only for a while after a key, click, or wheel", ()
   expect(frames.drivenWithin(1, 1000)).toBe(false);
 });
 
+test("a wheel step scrolls the page and drives it; a key only drives it", () => {
+  let t = 0;
+  const frames = createBrowserFrames(() => t);
+  frames.drive(1);
+  expect(frames.scrolledWithin(1, 300)).toBe(false);
+  frames.scroll(2);
+  t = 299;
+  expect(frames.scrolledWithin(2, 300)).toBe(true);
+  expect(frames.drivenWithin(2, 1000)).toBe(true);
+  t = 300;
+  expect(frames.scrolledWithin(2, 300)).toBe(false);
+  frames.drop(2);
+  t = 0;
+  expect(frames.drivenWithin(2, 1000)).toBe(false);
+});
+
 test("dropping a window acknowledges its frames; other windows keep theirs", () => {
   const frames = createBrowserFrames();
   const acked: string[] = [];

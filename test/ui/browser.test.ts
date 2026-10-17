@@ -187,6 +187,53 @@ test("with kitty a small change goes as a patch over the frame shown", async () 
   }
 });
 
+test("with kitty a frame that answers a wheel step goes whole; after the scroll a small change is a patch again", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    let t = 0;
+    const frames = createBrowserFrames(() => t);
+    ({ m } = await openSite({ browserFrames: frames, capabilities: KITTY }));
+    await settled(m);
+    await Bun.sleep(CELL_WAIT_MS);
+    await settled(m);
+    const id = window(m);
+    const size = browserWindow(m.store.get(), id)?.px;
+    if (size === undefined) throw new Error("the page has no size");
+    const { width, height } = size;
+    let acks = 0;
+    const acked = async (n: number) => {
+      for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+    };
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(1);
+
+    frames.scroll(id);
+    frames.publish(
+      id,
+      png(width, height, (x, y) => x === 3 && y === 3),
+      () => acks++,
+    );
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(draw.mock.calls[0]?.[3]).toBe(80);
+    await acked(2);
+
+    // The scroll is over: the frame is compared to the one shown.
+    t = 1000;
+    frames.publish(id, png(width, height), () => acks++);
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(2);
+    const patch = draw.mock.calls[1] ?? [];
+    expect(patch[3]).toBeLessThanOrEqual(2);
+    expect(patch[4]).toBeLessThanOrEqual(2);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
 test("with kitty a frame over the image limit goes as bands, one at a time over the frame before", async () => {
   const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
   try {
