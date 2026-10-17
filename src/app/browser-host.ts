@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { pathToFileURL } from "node:url";
 import type { PageSize } from "../core/features/browser/file-type";
@@ -94,7 +94,10 @@ export function createBrowserHost(d: {
     d.launch ??
     ((path: string, dpr: number) =>
       launchChrome(path, {
-        extraArgs: [`--force-device-scale-factor=${dpr}`],
+        extraArgs: [
+          `--force-device-scale-factor=${dpr}`,
+          ...(process.env.SO_X_NOSMOOTH ? ["--disable-smooth-scrolling"] : []),
+        ],
       }));
   const idleMs = d.idleMs ?? BROWSER_IDLE_MS;
   const tabs = new Map<WindowId, Tab>();
@@ -188,6 +191,11 @@ export function createBrowserHost(d: {
             tab.frame = dims;
             d.logger.info("browser.frame", { window, size: dims });
           }
+          if (process.env.SO_TRACE)
+            appendFileSync(
+              process.env.SO_TRACE,
+              `${performance.now().toFixed(0)} host frame ${dims}\n`,
+            );
           d.frames.publish(window, png, ack);
         },
         onInfo: (info) => {
@@ -232,6 +240,8 @@ export function createBrowserHost(d: {
         if (tabs.get(window) !== tab) return;
         const page = await pageOf(window, tab);
         if (!sameSize(page.size(), tab.size)) await page.resize(tab.size);
+        if (process.env.SO_X_FIXED && d.scrollPixels !== undefined)
+          await page.limit(d.scrollPixels);
         await page.navigate(url);
       },
       true,
@@ -252,12 +262,29 @@ export function createBrowserHost(d: {
   const scrolled = (window: WindowId) => {
     const tab = tabs.get(window);
     const limit = d.scrollPixels;
-    if (tab === undefined || limit === undefined) return;
-    if (tab.settle === undefined) withPage(window, (p) => p.limit(limit));
+    if (tab === undefined || limit === undefined || process.env.SO_X_FIXED)
+      return;
+    const tr = (m: string): void => {
+      if (process.env.SO_TRACE)
+        appendFileSync(
+          process.env.SO_TRACE,
+          `${performance.now().toFixed(0)} host ${m}\n`,
+        );
+    };
+    tr(`wheel settle=${tab.settle !== undefined}`);
+    if (tab.settle === undefined)
+      withPage(window, (p) => {
+        tr("limit start");
+        return p.limit(limit).then(() => tr("limit done"));
+      });
     clearTimeout(tab.settle);
     tab.settle = setTimeout(() => {
       tab.settle = undefined;
-      if (tabs.get(window) === tab) withPage(window, (p) => p.limit(undefined));
+      if (tabs.get(window) === tab)
+        withPage(window, (p) => {
+          tr("unlimit start");
+          return p.limit(undefined).then(() => tr("unlimit done"));
+        });
     }, settleMs);
   };
 
@@ -303,6 +330,11 @@ export function createBrowserHost(d: {
         case "input": {
           const input = o.input;
           if (input.kind === "wheel") {
+            if (process.env.SO_TRACE)
+              appendFileSync(
+                process.env.SO_TRACE,
+                `${performance.now().toFixed(0)} host input wheel\n`,
+              );
             d.frames.scroll(window);
             scrolled(window);
             const tab = tabs.get(window);
@@ -318,6 +350,11 @@ export function createBrowserHost(d: {
             }
             const step: WheelStep = { ...input };
             withPage(window, (p, tab) => {
+              if (process.env.SO_TRACE)
+                appendFileSync(
+                  process.env.SO_TRACE,
+                  `${performance.now().toFixed(0)} host dispatch wheel waited=0\n`,
+                );
               if (tab.wheel === step) tab.wheel = undefined;
               return p.wheel(
                 step.at.x * tab.size.width,
@@ -329,7 +366,18 @@ export function createBrowserHost(d: {
             tab.wheel = step;
             return;
           }
+          const arrived = performance.now();
+          if (process.env.SO_TRACE)
+            appendFileSync(
+              process.env.SO_TRACE,
+              `${arrived.toFixed(0)} host input ${input.kind} ${"type" in input ? input.type : ""}\n`,
+            );
           withPage(window, (p, tab) => {
+            if (process.env.SO_TRACE)
+              appendFileSync(
+                process.env.SO_TRACE,
+                `${performance.now().toFixed(0)} host dispatch ${input.kind} waited=${(performance.now() - arrived).toFixed(0)}\n`,
+              );
             const i = input;
             const x = (at: { x: number }) => at.x * tab.size.width;
             const y = (at: { y: number }) => at.y * tab.size.height;
