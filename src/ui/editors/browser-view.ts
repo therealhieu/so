@@ -77,16 +77,6 @@ const DRIVEN_MS = 1000;
  */
 const SCROLLED_MS = 300;
 
-import { appendFileSync, writeFileSync } from "node:fs";
-const TRACE = process.env.SO_TRACE;
-const trace = (msg: string) => {
-  if (TRACE)
-    appendFileSync(
-      TRACE,
-      `${performance.now().toFixed(0)} view ${msg}\n`,
-    );
-};
-
 /** One image on screen over a box of the window's cells. */
 type Layer = { image: NativeImage; box: CellBox };
 
@@ -158,7 +148,6 @@ export class BrowserView extends Renderable implements WindowView {
   private spare: Uint8Array | undefined;
   /** The PNG of the last frame taken, whose pixels are what is shown. */
   private shownPng: Uint8Array | undefined;
-  private takenFrameId = -1;
   private trash: NativeImage[] = [];
   private seq = -1;
   private pacing: ReturnType<typeof setTimeout> | undefined;
@@ -260,36 +249,28 @@ export class BrowserView extends Renderable implements WindowView {
   private take(frame: BrowserFrame): number {
     this.seq = frame.seq;
     for (const image of this.trash.splice(0)) image.dispose();
-    const r0 = this.rect;
+    const r = this.rect;
     // Chrome sends a frame for every wheel step, even one that moves nothing:
     // the same bytes as what is shown change nothing.
     if (
-      !process.env.SO_X_NODEDUPE &&
       this.base !== undefined &&
-      this.base.box.cols === r0.w &&
-      this.base.box.rows === r0.h &&
+      this.base.box.cols === r.w &&
+      this.base.box.rows === r.h &&
       this.shownPng !== undefined &&
-      Buffer.from(this.shownPng.buffer, this.shownPng.byteOffset, this.shownPng.length).equals(frame.png)
+      Buffer.from(
+        this.shownPng.buffer,
+        this.shownPng.byteOffset,
+        this.shownPng.length,
+      ).equals(frame.png)
     )
       return 0;
     this.shownPng = frame.png;
     let next: NativeImage;
     try {
       next = NativeImage.decode(frame.png);
-      if (process.env.SO_X_TRANSPORT) {
-        const cut = next.extract({
-          left: 0,
-          top: 0,
-          width: next.width,
-          height: next.height,
-        });
-        next.dispose();
-        next = cut;
-      }
     } catch {
       return 0;
     }
-    const r = this.rect;
     const whole: CellBox = { col: 0, row: 0, cols: r.w, rows: r.h };
     const base = this.base;
     if (
@@ -300,30 +281,9 @@ export class BrowserView extends Renderable implements WindowView {
       base.box.rows !== r.h ||
       // A frame that answers a wheel step has moved as a whole: comparing it
       // would only decode its pixels for nothing.
-      this.deps.browserFrames?.scrolledWithin(this.windowId, SCROLLED_MS) ||
-      process.env.SO_X_FIXED === "1"
-    ) {
-      if (
-        process.env.SO_X_DIFF &&
-        base !== undefined &&
-        base.image.width === next.width &&
-        base.image.height === next.height
-      ) {
-        const a = pixelsOf(base.image).data;
-        const b = pixelsOf(next).data;
-        let n = 0;
-        let first = -1;
-        for (let i = 0; i < a.length; i += 4)
-          if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) {
-            n++;
-            if (first < 0) first = i / 4;
-          }
-        trace(
-          `diff px=${n} first=${first < 0 ? "-" : `${first % next.width},${Math.floor(first / next.width)}`}`,
-        );
-      }
+      this.deps.browserFrames?.scrolledWithin(this.windowId, SCROLLED_MS)
+    )
       return this.replace(next, whole);
-    }
     // What is shown is read back from its frame only once a frame is compared to it.
     if (this.shown === undefined) {
       this.shown = pixelsOf(base.image, this.spare);
@@ -353,7 +313,8 @@ export class BrowserView extends Renderable implements WindowView {
       ? [this.patches.reduce((b, p) => union(b, p.box), changed.reduce(union))]
       : changed;
     const area = cells.reduce((n, c) => n + c.cols * c.rows, 0);
-    if (area > PATCH_SHARE * r.w * r.h) return this.replace(next, whole);
+    if (area > PATCH_SHARE * r.w * r.h)
+      return this.replace(next, whole, pixels);
     const gone = this.patches.filter(
       (p) => full || cells.some((c) => within(p.box, c)),
     );
@@ -526,39 +487,13 @@ export class BrowserView extends Renderable implements WindowView {
       this.deps.browserFrames?.drivenWithin(this.windowId, DRIVEN_MS) ?? false;
     this.resting = true;
     clearTimeout(this.pacing);
-    trace(`rest seq=${frame.seq} driven=${driven} work=${work.toFixed(1)}`);
-    const takenAt = this.ctx.frameId;
-    const startedAt = performance.now();
-    const ack = () => {
-      if (process.env.SO_X_BP === "1" && sent > 0) {
-        const status = (
-          this.ctx as unknown as {
-            kittyImageTransportStatus?: { pendingFiles: number };
-          }
-        ).kittyImageTransportStatus;
-        const waiting =
-          this.ctx.frameId === takenAt || (status?.pendingFiles ?? 0) > 0;
-        if (waiting && performance.now() - startedAt < 500) {
-          this.pacing = setTimeout(ack, 2);
-          return;
-        }
-        trace(`bp waited=${(performance.now() - startedAt).toFixed(0)}`);
-      }
-      trace(`ack seq=${frame.seq}`);
-      this.resting = false;
-      frame.ack();
-      this.requestRender();
-    };
     this.pacing = setTimeout(
-      ack,
-      Math.max(
-        driven ? 0 : FRAME_REST * work,
-        paced,
-        Number(process.env.SO_X_GAP ?? 0),
-        !driven && process.env.SO_X_IDLE_RATE
-          ? (sent / Number(process.env.SO_X_IDLE_RATE)) * 1000
-          : 0,
-      ),
+      () => {
+        this.resting = false;
+        frame.ack();
+        this.requestRender();
+      },
+      Math.max(driven ? 0 : FRAME_REST * work, paced),
     );
   }
 
@@ -644,32 +579,9 @@ export class BrowserView extends Renderable implements WindowView {
     if (tier === undefined || frame === undefined) return;
     // A frame's bands all go on screen before the next frame is taken.
     const banding = this.shownBands < this.bands.length;
-    let herdrBusy = false;
-    if (process.env.SO_X_BP === "2" && frame.seq !== this.seq) {
-      const status = (
-        this.ctx as unknown as {
-          kittyImageTransportStatus?: { pendingFiles: number };
-        }
-      ).kittyImageTransportStatus;
-      herdrBusy =
-        this.ctx.frameId === this.takenFrameId ||
-        (status?.pendingFiles ?? 0) > 0;
-      if (herdrBusy) setTimeout(() => this.requestRender(), 2);
-    }
-    const fresh =
-      frame.seq !== this.seq && !this.resting && !banding && !herdrBusy;
-    if (fresh) this.takenFrameId = this.ctx.frameId;
+    const fresh = frame.seq !== this.seq && !this.resting && !banding;
     const started = performance.now();
-    trace(
-      `render seq=${frame.seq} taken=${this.seq} resting=${this.resting} banding=${banding} bands=${this.shownBands}/${this.bands.length} fresh=${fresh}`,
-    );
-    if (fresh && TRACE && process.env.SO_TRACE_PNG)
-      writeFileSync(`${TRACE}.png`, frame.png);
     const sent = fresh ? this.take(frame) : 0;
-    if (fresh)
-      trace(
-        `took ${this.base?.image.width}x${this.base?.image.height} bands=${this.bands.length} patches=${this.patches.length} sent=${sent}`,
-      );
     this.showBand();
     const work = performance.now() - started;
     const base = this.base;

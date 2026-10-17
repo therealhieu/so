@@ -1,4 +1,4 @@
-import { appendFileSync, readFileSync, realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
@@ -429,15 +429,6 @@ async function main(argv: string[]): Promise<void> {
   });
   const rasterizeSvg = createSvgRasterizer();
   const renderer = await createRenderer();
-  if (process.env.SO_X_TRANSPORT && process.env.SO_TRACE) {
-    const traceFile = process.env.SO_TRACE;
-    setInterval(() => {
-      appendFileSync(
-        traceFile,
-        `${performance.now().toFixed(0)} transport epoch=${Date.now()} ${JSON.stringify(renderer.kittyImageTransportStatus)}\n`,
-      );
-    }, 1000);
-  }
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
@@ -448,10 +439,7 @@ async function main(argv: string[]): Promise<void> {
     ...(underHerdr && !herdrFiles
       ? { browserPixelRate: HERDR_PIXEL_RATE }
       : {}),
-    ...(process.env.SO_X_RATE
-      ? { browserPixelRate: Number(process.env.SO_X_RATE) }
-      : {}),
-    ...(herdrFiles ? { browserImagePixels: Number(process.env.SO_X_BAND ?? HERDR_FILE_PIXELS) } : {}),
+    ...(herdrFiles ? { browserImagePixels: HERDR_FILE_PIXELS } : {}),
     now: clock,
     loadImage: createImageLoader(ws.root, {
       pdfPage: (r) => pdf.page(r),
@@ -474,16 +462,7 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     frames: browserFrames,
     logger,
-    ...(herdrFiles
-      ? {
-          scrollPixels: Number(
-            process.env.SO_X_SCROLL ?? HERDR_FILE_PIXELS,
-          ),
-        }
-      : {}),
-    ...(process.env.SO_X_SETTLE
-      ? { settleMs: Number(process.env.SO_X_SETTLE) }
-      : {}),
+    ...(herdrFiles ? { scrollPixels: HERDR_FILE_PIXELS } : {}),
   });
   const previewHost = createPreviewHost({
     root: ws.root,

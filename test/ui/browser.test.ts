@@ -1,6 +1,6 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import { deflateSync } from "node:zlib";
-import { OptimizedBuffer } from "@opentui/core";
+import { NativeImage, OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { browserWindow } from "../../src/core/state/browser";
 import type { BrowserOp } from "../../src/core/state/types";
@@ -184,6 +184,45 @@ test("with kitty a small change goes as a patch over the frame shown", async () 
     expect(patch[4]).toBeLessThanOrEqual(2);
   } finally {
     draw.mockRestore();
+  }
+});
+
+test("with kitty a frame with the same bytes as the one shown is not decoded, only acknowledged", async () => {
+  const decode = spyOn(NativeImage, "decode");
+  try {
+    const frames = createBrowserFrames();
+    ({ m } = await openSite({ browserFrames: frames, capabilities: KITTY }));
+    await settled(m);
+    await Bun.sleep(CELL_WAIT_MS);
+    await settled(m);
+    const id = window(m);
+    const size = browserWindow(m.store.get(), id)?.px;
+    if (size === undefined) throw new Error("the page has no size");
+    const { width, height } = size;
+    let acks = 0;
+    const acked = async (n: number) => {
+      for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+    };
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(1);
+
+    decode.mockClear();
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(2);
+    expect(acks).toBe(2);
+    expect(decode).not.toHaveBeenCalled();
+
+    frames.publish(
+      id,
+      png(width, height, (x, y) => x === 3 && y === 3),
+      () => acks++,
+    );
+    await m.frame();
+    expect(decode).toHaveBeenCalledTimes(1);
+  } finally {
+    decode.mockRestore();
   }
 });
 
