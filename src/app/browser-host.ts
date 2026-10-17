@@ -43,7 +43,14 @@ type Tab = {
   frame?: string;
   page?: Promise<BrowserPage> | undefined;
   queue: Promise<void>;
+  /**
+   * The wheel step waiting last in the queue: later steps add to it until
+   * anything else is queued after it.
+   */
+  wheel?: WheelStep | undefined;
 };
+
+type WheelStep = { at: { x: number; y: number }; dx: number; dy: number };
 
 class Missing extends Error {
   constructor(readonly configured: string | undefined) {
@@ -58,6 +65,8 @@ export function createBrowserHost(d: {
   dispatch: (a: Action) => void;
   frames: BrowserFrames;
   logger: Logger;
+  /** Pages' frames have at most this many pixels, scaled down to fit. */
+  framePixels?: number;
   find?: (configured: string) => ChromeLookup;
   launch?: (path: string, dpr: number) => Promise<ChromeProcess>;
   idleMs?: number;
@@ -195,6 +204,7 @@ export function createBrowserHost(d: {
     f: () => Promise<void>,
     report = false,
   ) => {
+    tab.wheel = undefined;
     tab.queue = tab.queue.then(f).catch((e: unknown) => {
       d.logger.error("browser.op", {
         reason: e instanceof Error ? e.message : String(e),
@@ -213,6 +223,7 @@ export function createBrowserHost(d: {
         if (tabs.get(window) !== tab) return;
         const page = await pageOf(window, tab);
         if (!sameSize(page.size(), tab.size)) await page.resize(tab.size);
+        if (d.framePixels !== undefined) await page.limit(d.framePixels);
         await page.navigate(url);
       },
       true,
@@ -231,6 +242,8 @@ export function createBrowserHost(d: {
   return {
     run(window, o) {
       if (stopped) return;
+      // The frames that answer these are wanted at once.
+      if (o.op !== "close" && o.op !== "copy") d.frames.drive(window);
       switch (o.op) {
         case "open": {
           const tab = tabs.get(window) ?? {
@@ -264,9 +277,36 @@ export function createBrowserHost(d: {
           withPage(window, (p) => p.resize(o.size));
           return;
         }
-        case "input":
+        case "input": {
+          const input = o.input;
+          if (input.kind === "wheel") {
+            d.frames.scroll(window);
+            const tab = tabs.get(window);
+            if (tab?.page === undefined) return;
+            // A trackpad sends hundreds of steps a second, more than a page
+            // takes: the steps that come while one waits are added to it.
+            const waiting = tab.wheel;
+            if (waiting !== undefined) {
+              waiting.at = input.at;
+              waiting.dx += input.dx;
+              waiting.dy += input.dy;
+              return;
+            }
+            const step: WheelStep = { ...input };
+            withPage(window, (p, tab) => {
+              if (tab.wheel === step) tab.wheel = undefined;
+              return p.wheel(
+                step.at.x * tab.size.width,
+                step.at.y * tab.size.height,
+                step.dx * WHEEL_LINE_PX,
+                step.dy * WHEEL_LINE_PX,
+              );
+            });
+            tab.wheel = step;
+            return;
+          }
           withPage(window, (p, tab) => {
-            const i = o.input;
+            const i = input;
             const x = (at: { x: number }) => at.x * tab.size.width;
             const y = (at: { y: number }) => at.y * tab.size.height;
             switch (i.kind) {
@@ -283,13 +323,6 @@ export function createBrowserHost(d: {
                     event(window, { kind: "focus", editable });
                 });
               }
-              case "wheel":
-                return p.wheel(
-                  x(i.at),
-                  y(i.at),
-                  i.dx * WHEEL_LINE_PX,
-                  i.dy * WHEEL_LINE_PX,
-                );
               case "key": {
                 const k = pageKey(i.key);
                 return k === undefined ? Promise.resolve() : p.key(k);
@@ -297,6 +330,7 @@ export function createBrowserHost(d: {
             }
           });
           return;
+        }
         case "back":
           withPage(window, (p) => p.back());
           return;

@@ -56,6 +56,8 @@ export type MountOptions = {
   /** Browser pages' frames, published by the test in place of Chrome. */
   browserFrames?: ShellDeps["browserFrames"];
   browserPixelRate?: number;
+  browserFileRate?: number;
+  imageFilesPending?: () => number;
   /** Loads images in place of `files`, so a test controls when each settles. */
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
@@ -158,6 +160,12 @@ export async function mountShell(o: MountOptions) {
     ...(o.browserPixelRate === undefined
       ? {}
       : { browserPixelRate: o.browserPixelRate }),
+    ...(o.browserFileRate === undefined
+      ? {}
+      : { browserFileRate: o.browserFileRate }),
+    ...(o.imageFilesPending === undefined
+      ? {}
+      : { imageFilesPending: o.imageFilesPending }),
     ...(capabilities === undefined ? {} : { capabilities: () => capabilities }),
   });
   shell.attach(store);

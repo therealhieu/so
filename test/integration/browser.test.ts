@@ -7,6 +7,7 @@ import {
   type BrowserHost,
   createBrowserHost,
 } from "../../src/app/browser-host";
+import { WHEEL_LINE_PX } from "../../src/core/state/browser";
 import type {
   Action,
   BrowserEvent,
@@ -82,8 +83,8 @@ async function until<T>(
   }
 }
 
-/** A host on `chrome` over a workspace holding `site/index.html`. */
-async function start(chrome: string) {
+/** A host on `chrome` (with `more` of its options) over a workspace holding `site/index.html`. */
+async function start(chrome: string, more: { framePixels?: number } = {}) {
   await Bun.write(
     join(dir, "ws/site/index.html"),
     '<a href="next.html" style="display:block;height:100vh">next</a>',
@@ -110,6 +111,7 @@ async function start(chrome: string) {
       },
     },
     idleMs: 50,
+    ...more,
   });
   const h = host;
   return {
@@ -158,6 +160,85 @@ test("a page opens in Chrome, shows its frames and title, and takes input", asyn
     kind: "selection",
     text: "fake selection",
   });
+});
+
+test("with a frame pixel limit the page's frames are scaled to it from the start and stay so while it scrolls", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path, { framePixels: 30_000 });
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  const starts = () =>
+    logged(fake.log)
+      .filter((m) => m.method === "Page.startScreencast")
+      .map((m) => [m.params?.maxWidth, m.params?.maxHeight]);
+  const wheel: BrowserOp = {
+    op: "input",
+    input: { kind: "wheel", at: { x: 0.5, y: 0.5 }, dx: 0, dy: 1 },
+  };
+  h.run(wheel);
+  h.run(wheel);
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length > 0 ? true : undefined), 5000, sent);
+  // 400×300 is 120,000 pixels: half as wide and high fits 30,000. The first
+  // screencast is full size; the limit restarts it once, before the page loads.
+  expect(starts()).toEqual([
+    [400, 300],
+    [200, 150],
+  ]);
+});
+
+const wheelOp = (dy: number): BrowserOp => ({
+  op: "input",
+  input: { kind: "wheel", at: { x: 0.5, y: 0.5 }, dx: 0, dy },
+});
+
+/** The mouse wheel and key events the fake was sent, in order. */
+const inputsSent = (log: string) =>
+  logged(log).flatMap((m) =>
+    m.method === "Input.dispatchMouseEvent" && m.params?.type === "mouseWheel"
+      ? [`wheel ${m.params.deltaY}`]
+      : m.method === "Input.dispatchKeyEvent" && m.params?.type !== "keyUp"
+        ? [`key ${m.params?.key}`]
+        : [],
+  );
+
+test("wheel steps that come while one waits go to the page as one", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path);
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  for (let i = 0; i < 10; i++) h.run(wheelOp(1));
+  h.run(wheelOp(-3));
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length > 0 ? true : undefined), 5000, sent);
+  await Bun.sleep(50);
+  expect(sent()).toEqual([`wheel ${7 * WHEEL_LINE_PX}`]);
+});
+
+test("a key between wheel steps keeps its place", async () => {
+  const fake = await fakeChrome("ok");
+  const h = await start(fake.path);
+  h.run({ op: "open", path: "site/index.html", size: SIZE });
+  await until(() => h.frames.latest(1));
+  const key = (name: string): BrowserOp => ({
+    op: "input",
+    input: {
+      kind: "key",
+      key: { name, ctrl: false, alt: false, shift: false, meta: false },
+    },
+  });
+  h.run(wheelOp(1));
+  h.run(wheelOp(1));
+  h.run(key("home"));
+  h.run(wheelOp(2));
+  h.run(wheelOp(2));
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length === 3 ? true : undefined), 5000, sent);
+  expect(sent()).toEqual([
+    `wheel ${2 * WHEEL_LINE_PX}`,
+    "key Home",
+    `wheel ${4 * WHEEL_LINE_PX}`,
+  ]);
 });
 
 test("a frame is acknowledged to Chrome only when the view acknowledges it", async () => {

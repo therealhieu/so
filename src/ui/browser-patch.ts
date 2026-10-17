@@ -50,28 +50,47 @@ function rowSpan(a: Uint8Array, b: Uint8Array): [number, number] | undefined {
  * The cells whose pixels differ between two frames of the same size drawn
  * over `cols` × `rows` cells, top to bottom: one box per band of changed
  * rows, so a clock in a header and an animation below it stay apart. Empty
- * when the frames match.
+ * when the frames match. Undefined as soon as more than `limit` cells are
+ * known to have changed, so a scrolled page is not compared to its end.
  */
 export function changedBoxes(
   a: Pixels,
   b: Pixels,
   cols: number,
   rows: number,
-): CellBox[] {
+  limit = Number.POSITIVE_INFINITY,
+): CellBox[] | undefined {
   // Per cell row, the leftmost and rightmost changed pixel.
   const left = new Array<number>(rows).fill(Number.POSITIVE_INFINITY);
   const right = new Array<number>(rows).fill(-1);
   const rowBytes = a.width * 4;
+  // Cells changed in the cell rows already passed: the boxes cover at least these.
+  let changed = 0;
+  let row = 0;
+  const cellsOf = (r: number) => {
+    const rt = right[r] ?? -1;
+    if (rt < 0) return 0;
+    const l = left[r] ?? 0;
+    return (
+      Math.floor((rt * cols) / a.width) - Math.floor((l * cols) / a.width) + 1
+    );
+  };
   for (let y = 0; y < a.height; y++) {
+    const r = Math.floor((y * rows) / a.height);
+    if (r !== row) {
+      changed += cellsOf(row);
+      if (changed > limit) return undefined;
+      row = r;
+    }
     const span = rowSpan(
       a.data.subarray(y * a.stride, y * a.stride + rowBytes),
       b.data.subarray(y * b.stride, y * b.stride + rowBytes),
     );
     if (span === undefined) continue;
-    const r = Math.floor((y * rows) / a.height);
     left[r] = Math.min(left[r] ?? 0, Math.floor(span[0] / 4));
     right[r] = Math.max(right[r] ?? 0, Math.floor(span[1] / 4));
   }
+  if (changed + cellsOf(row) > limit) return undefined;
   // A cell more on each side: cell edges are rounded, so a pixel near one
   // may belong to the cell beside the one it divides into. Bands that then
   // touch become one.

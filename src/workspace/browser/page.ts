@@ -15,6 +15,11 @@ export type PageInfo = { url: string; title: string; loading: boolean };
 export type BrowserPage = {
   navigate(url: string): Promise<void>;
   resize(size: PageSize): Promise<void>;
+  /**
+   * Scale frames down to at most `maxPixels`, keeping their shape, or send
+   * them at the page's own size again (undefined).
+   */
+  limit(maxPixels: number | undefined): Promise<void>;
   mouse(
     type: "press" | "release" | "move",
     x: number,
@@ -153,11 +158,24 @@ export async function openPage(
     }
   };
   const off = cdp.on(onEvent);
+  let maxPixels: number | undefined;
+  /** The largest frame the screencast sends with at most `limit` pixels. */
+  const frameBox = (limit: number | undefined) => {
+    const width = size.width * size.dpr;
+    const height = size.height * size.dpr;
+    const scale =
+      limit === undefined
+        ? 1
+        : Math.min(1, Math.sqrt(limit / (width * height)));
+    // Scaled down, the box is rounded down so the frame stays within the limit.
+    const fit = (n: number) =>
+      scale < 1 ? Math.floor(n * scale) : Math.round(n);
+    return { maxWidth: fit(width), maxHeight: fit(height) };
+  };
   const startScreencast = () =>
     call("Page.startScreencast", {
       format: "png",
-      maxWidth: Math.round(size.width * size.dpr),
-      maxHeight: Math.round(size.height * size.dpr),
+      ...frameBox(maxPixels),
     });
   const metrics = () =>
     call("Emulation.setDeviceMetricsOverride", {
@@ -196,6 +214,19 @@ export async function openPage(
     async resize(next) {
       size = next;
       await metrics();
+      await call("Page.stopScreencast");
+      await startScreencast();
+    },
+    async limit(next) {
+      const before = frameBox(maxPixels);
+      const after = frameBox(next);
+      maxPixels = next;
+      // A frame that already fits needs no new screencast.
+      if (
+        before.maxWidth === after.maxWidth &&
+        before.maxHeight === after.maxHeight
+      )
+        return;
       await call("Page.stopScreencast");
       await startScreencast();
     },

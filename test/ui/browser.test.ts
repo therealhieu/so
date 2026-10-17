@@ -1,6 +1,6 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import { deflateSync } from "node:zlib";
-import { OptimizedBuffer } from "@opentui/core";
+import { NativeImage, OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { browserWindow } from "../../src/core/state/browser";
 import type { BrowserOp } from "../../src/core/state/types";
@@ -185,6 +185,166 @@ test("with kitty a small change goes as a patch over the frame shown", async () 
   } finally {
     draw.mockRestore();
   }
+});
+
+test("with kitty a frame with the same bytes as the one shown is not decoded, only acknowledged", async () => {
+  const decode = spyOn(NativeImage, "decode");
+  try {
+    const frames = createBrowserFrames();
+    ({ m } = await openSite({ browserFrames: frames, capabilities: KITTY }));
+    await settled(m);
+    await Bun.sleep(CELL_WAIT_MS);
+    await settled(m);
+    const id = window(m);
+    const size = browserWindow(m.store.get(), id)?.px;
+    if (size === undefined) throw new Error("the page has no size");
+    const { width, height } = size;
+    let acks = 0;
+    const acked = async (n: number) => {
+      for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+    };
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(1);
+
+    decode.mockClear();
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(2);
+    expect(acks).toBe(2);
+    expect(decode).not.toHaveBeenCalled();
+
+    frames.publish(
+      id,
+      png(width, height, (x, y) => x === 3 && y === 3),
+      () => acks++,
+    );
+    await m.frame();
+    expect(decode).toHaveBeenCalledTimes(1);
+  } finally {
+    decode.mockRestore();
+  }
+});
+
+test("with kitty a frame that answers a wheel step goes whole; after the scroll a small change is a patch again", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    let t = 0;
+    const frames = createBrowserFrames(() => t);
+    ({ m } = await openSite({ browserFrames: frames, capabilities: KITTY }));
+    await settled(m);
+    await Bun.sleep(CELL_WAIT_MS);
+    await settled(m);
+    const id = window(m);
+    const size = browserWindow(m.store.get(), id)?.px;
+    if (size === undefined) throw new Error("the page has no size");
+    const { width, height } = size;
+    let acks = 0;
+    const acked = async (n: number) => {
+      for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+    };
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(1);
+
+    frames.scroll(id);
+    frames.publish(
+      id,
+      png(width, height, (x, y) => x === 3 && y === 3),
+      () => acks++,
+    );
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(draw.mock.calls[0]?.[3]).toBe(80);
+    await acked(2);
+
+    // The scroll is over: the frame is compared to the one shown.
+    t = 1000;
+    frames.publish(id, png(width, height), () => acks++);
+    draw.mockClear();
+    await m.frame();
+    expect(draw).toHaveBeenCalledTimes(2);
+    const patch = draw.mock.calls[1] ?? [];
+    expect(patch[3]).toBeLessThanOrEqual(2);
+    expect(patch[4]).toBeLessThanOrEqual(2);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("through herdr's files a small change still goes as the whole frame", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  try {
+    const frames = createBrowserFrames();
+    ({ m } = await openSite({
+      browserFrames: frames,
+      capabilities: KITTY,
+      browserFileRate: 1e12,
+      imageFilesPending: () => 0,
+    }));
+    await settled(m);
+    await Bun.sleep(CELL_WAIT_MS);
+    await settled(m);
+    const id = window(m);
+    const size = browserWindow(m.store.get(), id)?.px;
+    if (size === undefined) throw new Error("the page has no size");
+    const { width, height } = size;
+    let acks = 0;
+    const acked = async (n: number) => {
+      for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+    };
+    frames.publish(id, png(width, height), () => acks++);
+    await m.frame();
+    await acked(1);
+    await m.frame();
+
+    frames.publish(
+      id,
+      png(width, height, (x, y) => x === 3 && y === 3),
+      () => acks++,
+    );
+    draw.mockClear();
+    await m.frame();
+    expect(draw.mock.calls.map((c) => [c[0].width, c[3], c[4]])).toEqual([
+      [width, 80, 28],
+    ]);
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("through herdr's files the next frame waits until herdr has read the last one's file", async () => {
+  const frames = createBrowserFrames();
+  let pending = 0;
+  ({ m } = await openSite({
+    browserFrames: frames,
+    browserFileRate: 1e12,
+    imageFilesPending: () => pending,
+  }));
+  await settled(m);
+  const id = window(m);
+  let acks = 0;
+  const acked = async (n: number) => {
+    for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+  };
+  frames.publish(id, png(160, 100), () => acks++);
+  await m.frame();
+  await acked(1);
+  expect(acks).toBe(1);
+
+  pending = 1;
+  frames.publish(
+    id,
+    png(160, 100, (x) => x < 80),
+    () => acks++,
+  );
+  await m.frame();
+  await Bun.sleep(50);
+  expect(acks).toBe(1);
+  pending = 0;
+  await acked(2);
+  expect(acks).toBe(2);
 });
 
 test("a click on the page goes to it at the point clicked", async () => {

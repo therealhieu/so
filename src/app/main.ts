@@ -158,8 +158,26 @@ export const VERSION = process.env.SO_VERSION ?? pkg.version;
 
 const USAGE = "usage: so [--version] [--help] [path]\n";
 
-/** Browser frame pixels per second herdr passes on with room left for keys. */
+/**
+ * herdr before 0.9.2 passes every image on as raw pixels in the terminal
+ * stream: this many browser frame pixels a second leave room for keys.
+ */
 const HERDR_PIXEL_RATE = 2_000_000;
+
+/**
+ * herdr 0.9.2 and later (whose panes say TERM_PROGRAM=herdr) hand Ghostty a
+ * raw image through a file, one at a time, and stop for good once the
+ * images' layout changes while one is on its way. There every browser frame
+ * is one whole image of at most this many pixels, which herdr passes about
+ * 25 times a second.
+ */
+const HERDR_FILE_PIXELS = 2_500_000;
+
+/** Through herdr's files, the browser frame pixels a second of a page at rest. */
+const HERDR_FILE_RATE = 20_000_000;
+
+const underHerdr = process.env.HERDR_ENV !== undefined;
+const herdrFiles = underHerdr && process.env.TERM_PROGRAM === "herdr";
 
 /** The one clock for keys, timers, and the statusline. */
 const clock = () => performance.timeOrigin + performance.now();
@@ -414,16 +432,18 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
-  const renderer = await createRenderer();
+  const renderer = await createRenderer({ imageFiles: herdrFiles });
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
     browserFrames,
-    // herdr passes each new image on as raw pixels, several megabytes for a
-    // page's frame: past its pace it falls behind and holds keys back.
-    ...(process.env.HERDR_ENV === undefined
-      ? {}
-      : { browserPixelRate: HERDR_PIXEL_RATE }),
+    // An older herdr passes each new image on as raw pixels, several
+    // megabytes for a page's frame: past its pace it falls behind and holds
+    // keys back.
+    ...(underHerdr && !herdrFiles
+      ? { browserPixelRate: HERDR_PIXEL_RATE }
+      : {}),
+    ...(herdrFiles ? { browserFileRate: HERDR_FILE_RATE } : {}),
     now: clock,
     loadImage: createImageLoader(ws.root, {
       pdfPage: (r) => pdf.page(r),
@@ -446,6 +466,7 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     frames: browserFrames,
     logger,
+    ...(herdrFiles ? { framePixels: HERDR_FILE_PIXELS } : {}),
   });
   const previewHost = createPreviewHost({
     root: ws.root,

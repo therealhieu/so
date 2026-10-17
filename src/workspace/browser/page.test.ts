@@ -69,6 +69,30 @@ test("a title a script sets after a key is read without a new frame", async () =
   expect(infos.at(-1)?.title).toBe("A title");
 });
 
+test("a pixel limit restarts the screencast with frames scaled to fit it", async () => {
+  const { f, page } = await open();
+  // 800 × 600 at density 2: 1600 × 1200 pixels, 1.92 million.
+  expect(f.calls("Page.startScreencast").at(-1)).toMatchObject({
+    maxWidth: 1600,
+    maxHeight: 1200,
+  });
+  await page.limit(480_000);
+  const limited = f.calls("Page.startScreencast").at(-1) ?? {};
+  expect(limited).toMatchObject({ maxWidth: 800, maxHeight: 600 });
+  await page.limit(480_000);
+  expect(f.calls("Page.startScreencast")).toHaveLength(2);
+  await page.limit(undefined);
+  expect(f.calls("Page.startScreencast").at(-1)).toMatchObject({
+    maxWidth: 1600,
+    maxHeight: 1200,
+  });
+  expect(f.calls("Page.stopScreencast")).toHaveLength(2);
+  // 1.92 million pixels already fit: the screencast goes on as it is.
+  await page.limit(2_000_000);
+  await page.limit(undefined);
+  expect(f.calls("Page.startScreencast")).toHaveLength(3);
+});
+
 test("a jump to an anchor ends loading without a load event", async () => {
   const { f, infos } = await open();
   f.emit("Page.frameStartedLoading", { frameId: "F" });

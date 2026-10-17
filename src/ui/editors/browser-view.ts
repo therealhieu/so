@@ -60,18 +60,29 @@ const PATCH_LIMIT = 16;
  * next: a page that never stops moving keeps so at most a quarter busy.
  */
 const FRAME_REST = 3;
+/**
+ * For this long after a key, click, wheel, or navigation reaches the page,
+ * its frames are taken without resting, so scrolling keeps up.
+ */
+const DRIVEN_MS = 1000;
+/**
+ * For this long after a wheel step, the page's frames go whole without
+ * being compared to what is shown.
+ */
+const SCROLLED_MS = 300;
+/** How often a frame waiting for herdr to read the last one looks again. */
+const FILE_POLL_MS = 2;
 
 /** One image on screen over a box of the window's cells. */
 type Layer = { image: NativeImage; box: CellBox };
 
-function pixelsOf(image: NativeImage): Pixels {
-  const raw = image.raw("rgba8");
-  return {
-    data: raw.data,
-    width: raw.width,
-    height: raw.height,
-    stride: raw.stride,
-  };
+/** `image`'s RGBA pixels, copied into `into` when it has their size. */
+function pixelsOf(image: NativeImage, into?: Uint8Array): Pixels {
+  const stride = image.width * 4;
+  const size = stride * image.height;
+  const data = into?.length === size ? into : new Uint8Array(size);
+  image.copyTo(data, { stride, format: "rgba8" });
+  return { data, width: image.width, height: image.height, stride };
 }
 
 const nameOf = (path: string) => path.slice(path.lastIndexOf("/") + 1);
@@ -122,6 +133,13 @@ export class BrowserView extends Renderable implements WindowView {
   private base: Layer | undefined;
   private patches: Layer[] = [];
   private shown: Pixels | undefined;
+  /** A buffer a frame's pixels are copied into, so each frame allocates none. */
+  private spare: Uint8Array | undefined;
+  /** The PNG of the last frame taken, whose pixels are what is shown. */
+  private shownPng: Uint8Array | undefined;
+  /** The renderer frame that took the last page frame. */
+  private takenFrameId = -1;
+  private filePoll: ReturnType<typeof setTimeout> | undefined;
   private trash: NativeImage[] = [];
   private seq = -1;
   private pacing: ReturnType<typeof setTimeout> | undefined;
@@ -223,27 +241,73 @@ export class BrowserView extends Renderable implements WindowView {
   private take(frame: BrowserFrame): number {
     this.seq = frame.seq;
     for (const image of this.trash.splice(0)) image.dispose();
+    const r = this.rect;
+    const files = this.deps.browserFileRate !== undefined;
+    // Chrome sends a frame for every wheel step, even one that moves nothing:
+    // the same bytes as what is shown change nothing.
+    if (
+      this.base !== undefined &&
+      this.base.box.cols === r.w &&
+      this.base.box.rows === r.h &&
+      this.shownPng !== undefined &&
+      Buffer.from(
+        this.shownPng.buffer,
+        this.shownPng.byteOffset,
+        this.shownPng.length,
+      ).equals(frame.png)
+    )
+      return 0;
+    this.shownPng = frame.png;
     let next: NativeImage;
     try {
       next = NativeImage.decode(frame.png);
+      // A decoded image keeps its PNG, which goes inline; a copy has none
+      // and goes as raw pixels, which herdr hands Ghostty through a file.
+      if (files) {
+        const cut = next.extract({
+          left: 0,
+          top: 0,
+          width: next.width,
+          height: next.height,
+        });
+        next.dispose();
+        next = cut;
+      }
     } catch {
       return 0;
     }
-    const r = this.rect;
     const whole: CellBox = { col: 0, row: 0, cols: r.w, rows: r.h };
     const base = this.base;
-    const shown = this.shown;
     if (
       base === undefined ||
-      shown === undefined ||
-      shown.width !== next.width ||
-      shown.height !== next.height ||
+      base.image.width !== next.width ||
+      base.image.height !== next.height ||
       base.box.cols !== r.w ||
-      base.box.rows !== r.h
+      base.box.rows !== r.h ||
+      // A frame that answers a wheel step has moved as a whole: comparing it
+      // would only decode its pixels for nothing.
+      this.deps.browserFrames?.scrolledWithin(this.windowId, SCROLLED_MS) ||
+      // herdr stops handing images through files once their layout changes
+      // while one is on its way: through files every frame goes whole.
+      files
     )
       return this.replace(next, whole);
-    const pixels = pixelsOf(next);
-    const changed = changedBoxes(shown, pixels, r.w, r.h);
+    // What is shown is read back from its frame only once a frame is compared to it.
+    if (this.shown === undefined) {
+      this.shown = pixelsOf(base.image, this.spare);
+      this.spare = undefined;
+    }
+    const shown = this.shown;
+    const pixels = pixelsOf(next, this.spare);
+    this.spare = pixels.data;
+    const changed = changedBoxes(
+      shown,
+      pixels,
+      r.w,
+      r.h,
+      PATCH_SHARE * r.w * r.h,
+    );
+    if (changed === undefined) return this.replace(next, whole, pixels);
     if (changed.length === 0) {
       next.dispose();
       return 0;
@@ -257,7 +321,8 @@ export class BrowserView extends Renderable implements WindowView {
       ? [this.patches.reduce((b, p) => union(b, p.box), changed.reduce(union))]
       : changed;
     const area = cells.reduce((n, c) => n + c.cols * c.rows, 0);
-    if (area > PATCH_SHARE * r.w * r.h) return this.replace(next, whole);
+    if (area > PATCH_SHARE * r.w * r.h)
+      return this.replace(next, whole, pixels);
     const gone = this.patches.filter(
       (p) => full || cells.some((c) => within(p.box, c)),
     );
@@ -280,14 +345,18 @@ export class BrowserView extends Renderable implements WindowView {
     return added.reduce((n, l) => n + l.image.width * l.image.height, 0);
   }
 
-  /** Show `next` alone, over the whole window. */
-  private replace(next: NativeImage, box: CellBox): number {
+  /**
+   * Show `next` alone over the whole window; its `pixels` when they were
+   * read, else they are read from it once a frame is compared to it.
+   */
+  private replace(next: NativeImage, box: CellBox, pixels?: Pixels): number {
     if (this.base !== undefined) this.trash.push(this.base.image);
     this.trash.push(...this.patches.map((p) => p.image));
-    const pixels = pixelsOf(next);
     this.base = { image: next, box };
     this.patches = [];
-    this.shown = { ...pixels, data: pixels.data.slice() };
+    // The buffer of the pixels shown before takes the next frame's.
+    this.spare = this.shown?.data ?? this.spare;
+    this.shown = pixels;
     return next.width * next.height;
   }
 
@@ -312,15 +381,21 @@ export class BrowserView extends Renderable implements WindowView {
   }
 
   /**
-   * Rest from the frame just taken, `work` ms of it, before taking another;
-   * with a pixel rate set, also until the `sent` pixels fit the rate, so the
-   * terminal is never sent more than it passes on. Chrome has more frames
-   * in flight: those arriving meanwhile wait, and the newest is taken after.
-   * Then the page is asked for its next.
+   * Rest from the frame just taken, `work` ms of it, before taking another,
+   * unless the page was just driven; with a pixel rate set, also until the
+   * `sent` pixels fit the rate, so the terminal is never sent more than it
+   * passes on, and through herdr's files a page not driven waits until they
+   * fit that rate. Chrome has more frames in flight: those arriving
+   * meanwhile wait, and the newest is taken after. Then the page is asked
+   * for its next.
    */
   private rest(frame: BrowserFrame, sent: number, work: number): void {
     const rate = this.deps.browserPixelRate;
     const paced = rate === undefined ? 0 : (sent / rate) * 1000;
+    const driven =
+      this.deps.browserFrames?.drivenWithin(this.windowId, DRIVEN_MS) ?? false;
+    const files = this.deps.browserFileRate;
+    const idle = files === undefined || driven ? 0 : (sent / files) * 1000;
     this.resting = true;
     clearTimeout(this.pacing);
     this.pacing = setTimeout(
@@ -329,19 +404,21 @@ export class BrowserView extends Renderable implements WindowView {
         frame.ack();
         this.requestRender();
       },
-      Math.max(FRAME_REST * work, paced),
+      Math.max(driven ? 0 : FRAME_REST * work, paced, idle),
     );
   }
 
   protected override destroySelf(): void {
     clearTimeout(this.wait);
     clearTimeout(this.pacing);
+    clearTimeout(this.filePoll);
     for (const image of this.trash.splice(0)) image.dispose();
     this.base?.image.dispose();
     for (const p of this.patches) p.image.dispose();
     this.base = undefined;
     this.patches = [];
     this.shown = undefined;
+    this.spare = undefined;
     super.destroySelf();
   }
 
@@ -407,7 +484,9 @@ export class BrowserView extends Renderable implements WindowView {
     });
     this.placed = undefined;
     if (tier === undefined || frame === undefined) return;
-    const fresh = frame.seq !== this.seq && !this.resting;
+    const fresh =
+      frame.seq !== this.seq && !this.resting && !this.waitingForFiles();
+    if (fresh) this.takenFrameId = this.ctx.frameId;
     const started = performance.now();
     const sent = fresh ? this.take(frame) : 0;
     const work = performance.now() - started;
@@ -439,6 +518,24 @@ export class BrowserView extends Renderable implements WindowView {
         tier,
       );
     if (fresh) this.rest(frame, sent, work);
+  }
+
+  /**
+   * Through herdr's files, whether the next frame waits: until the terminal
+   * has written the last one and herdr has read its file, looking again
+   * every `FILE_POLL_MS`.
+   */
+  private waitingForFiles(): boolean {
+    if (this.deps.browserFileRate === undefined) return false;
+    const waiting =
+      this.ctx.frameId === this.takenFrameId ||
+      this.deps.imageFilesPending() > 0;
+    if (waiting)
+      this.filePoll ??= setTimeout(() => {
+        this.filePoll = undefined;
+        this.requestRender();
+      }, FILE_POLL_MS);
+    return waiting;
   }
 }
 
