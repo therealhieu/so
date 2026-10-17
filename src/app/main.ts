@@ -1,4 +1,4 @@
-import { appendFileSync, readFileSync, realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { parseArgs } from "node:util";
 import pkg from "../../package.json";
@@ -165,12 +165,16 @@ const USAGE = "usage: so [--version] [--help] [path]\n";
 const HERDR_PIXEL_RATE = 2_000_000;
 
 /**
- * herdr 0.9.2 and later (whose panes say TERM_PROGRAM=herdr) hand Ghostty an
- * image through a file when its RGBA fits 16 MiB, and inline otherwise.
- * Frames of a scrolling page are scaled down to it; a larger frame goes as
- * bands under it.
+ * herdr 0.9.2 and later (whose panes say TERM_PROGRAM=herdr) hand Ghostty a
+ * raw image through a file, one at a time, and stop for good once the
+ * images' layout changes while one is on its way. There every browser frame
+ * is one whole image of at most this many pixels, which herdr passes about
+ * 25 times a second.
  */
-const HERDR_FILE_PIXELS = 4_000_000;
+const HERDR_FILE_PIXELS = 2_500_000;
+
+/** Through herdr's files, the browser frame pixels a second of a page at rest. */
+const HERDR_FILE_RATE = 20_000_000;
 
 const underHerdr = process.env.HERDR_ENV !== undefined;
 const herdrFiles = underHerdr && process.env.TERM_PROGRAM === "herdr";
@@ -428,16 +432,7 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
-  const renderer = await createRenderer();
-  if (process.env.SO_X_TRANSPORT && process.env.SO_TRACE) {
-    const traceFile = process.env.SO_TRACE;
-    setInterval(() => {
-      appendFileSync(
-        traceFile,
-        `${performance.now().toFixed(0)} transport epoch=${Date.now()} ${JSON.stringify(renderer.kittyImageTransportStatus)}\n`,
-      );
-    }, 1000);
-  }
+  const renderer = await createRenderer({ imageFiles: herdrFiles });
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
@@ -448,16 +443,7 @@ async function main(argv: string[]): Promise<void> {
     ...(underHerdr && !herdrFiles
       ? { browserPixelRate: HERDR_PIXEL_RATE }
       : {}),
-    ...(process.env.SO_X_RATE
-      ? { browserPixelRate: Number(process.env.SO_X_RATE) }
-      : {}),
-    ...(herdrFiles
-      ? {
-          browserImagePixels: Number(
-            process.env.SO_X_BAND ?? HERDR_FILE_PIXELS,
-          ),
-        }
-      : {}),
+    ...(herdrFiles ? { browserFileRate: HERDR_FILE_RATE } : {}),
     now: clock,
     loadImage: createImageLoader(ws.root, {
       pdfPage: (r) => pdf.page(r),
@@ -480,14 +466,7 @@ async function main(argv: string[]): Promise<void> {
     dispatch: (a) => store.dispatch(a),
     frames: browserFrames,
     logger,
-    ...(herdrFiles
-      ? {
-          scrollPixels: Number(process.env.SO_X_SCROLL ?? HERDR_FILE_PIXELS),
-        }
-      : {}),
-    ...(process.env.SO_X_SETTLE
-      ? { settleMs: Number(process.env.SO_X_SETTLE) }
-      : {}),
+    ...(herdrFiles ? { framePixels: HERDR_FILE_PIXELS } : {}),
   });
   const previewHost = createPreviewHost({
     root: ws.root,

@@ -69,13 +69,14 @@ export const RENDERER_OPTIONS = {
 export const FOREIGN_MODES_RESET =
   "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1004l\x1b[?2004l\x1b[<99u\x1b[>4;0m\x1b[0m\x1b[?25h";
 
-export const createRenderer = (): Promise<CliRenderer> =>
+/** With `imageFiles`, raw kitty images go through files the terminal reads. */
+export const createRenderer = (
+  o: { imageFiles?: boolean } = {},
+): Promise<CliRenderer> =>
   createCliRenderer({
     ...RENDERER_OPTIONS,
     exitSignals: [],
-    ...(process.env.SO_X_TRANSPORT
-      ? { kittyImageTransport: process.env.SO_X_TRANSPORT as "file" }
-      : {}),
+    ...(o.imageFiles ? { kittyImageTransport: "file" } : {}),
   });
 
 export type LayoutClass = "wide" | "medium" | "narrow";
@@ -107,12 +108,16 @@ export type ShellDeps = {
    */
   browserPixelRate?: number;
   /**
-   * The most pixels one browser frame image may have: a larger frame goes
-   * as bands of whole cell rows under it, cut from the decoded frame.
+   * Set where herdr hands Ghostty images through files, which it does only
+   * while their layout stays the same: every browser frame goes whole as raw
+   * pixels, the next is taken once herdr has read the last, and a page not
+   * driven by a key, click, or wheel sends at most this many pixels a second.
    */
-  browserImagePixels?: number;
+  browserFileRate?: number;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
+  /** Tests inject how many image files the terminal has yet to read; the renderer's otherwise. */
+  imageFilesPending?: () => number;
   /**
    * Bytes for the terminal outside the renderer; otherwise written to
    * standard output synchronously, so they land before the renderer's next
@@ -135,6 +140,7 @@ export type ViewDeps = ShellDeps & {
   dispatch: Store["dispatch"];
   images: ImageCache;
   capabilities: () => GraphicsSupport;
+  imageFilesPending: () => number;
 };
 
 export type Shell = {
@@ -202,6 +208,9 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
             caps: renderer.capabilities,
             hasResolution: renderer.resolution !== null,
           })),
+        imageFilesPending:
+          deps.imageFilesPending ??
+          (() => renderer.kittyImageTransportStatus.pendingFiles),
       };
       const windows = new WindowTree(renderer, ctx);
       const explorer = new ExplorerView(renderer);

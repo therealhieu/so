@@ -273,15 +273,15 @@ test("with kitty a frame that answers a wheel step goes whole; after the scroll 
   }
 });
 
-test("with kitty a frame over the image limit goes as bands, one at a time over the frame before", async () => {
+test("through herdr's files a small change still goes as the whole frame", async () => {
   const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
   try {
     const frames = createBrowserFrames();
-    // 640×448 pixels over 80×28 cells: two bands of 14 rows fit.
     ({ m } = await openSite({
       browserFrames: frames,
       capabilities: KITTY,
-      browserImagePixels: 150_000,
+      browserFileRate: 1e12,
+      imageFilesPending: () => 0,
     }));
     await settled(m);
     await Bun.sleep(CELL_WAIT_MS);
@@ -294,70 +294,57 @@ test("with kitty a frame over the image limit goes as bands, one at a time over 
     const acked = async (n: number) => {
       for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
     };
-    const drawn = () =>
-      draw.mock.calls.map((c) => ({
-        width: c[0].width,
-        row: c[2],
-        rows: c[4],
-      }));
-
-    // A frame scaled down to fit, as while scrolling: one image.
-    frames.publish(id, png(width / 2, height / 2), () => acks++);
-    draw.mockClear();
+    frames.publish(id, png(width, height), () => acks++);
     await m.frame();
-    expect(drawn()).toEqual([{ width: width / 2, row: 1, rows: 28 }]);
     await acked(1);
+    await m.frame();
 
     frames.publish(
       id,
-      png(width, height, (x) => x < 8),
+      png(width, height, (x, y) => x === 3 && y === 3),
       () => acks++,
     );
     draw.mockClear();
     await m.frame();
-    expect(drawn()).toEqual([
-      { width: width / 2, row: 1, rows: 28 },
-      { width, row: 1, rows: 14 },
-    ]);
-    await Bun.sleep(150);
-    draw.mockClear();
-    await m.frame();
-    // The frame before stays first, so the terminal keeps each image's place.
-    expect(drawn()).toEqual([
-      { width: width / 2, row: 1, rows: 28 },
-      { width, row: 1, rows: 14 },
-      { width, row: 15, rows: 14 },
+    expect(draw.mock.calls.map((c) => [c[0].width, c[3], c[4]])).toEqual([
+      [width, 80, 28],
     ]);
   } finally {
     draw.mockRestore();
   }
 });
 
-test("with kitty a first frame over the image limit goes as all its bands at once", async () => {
-  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
-  try {
-    const frames = createBrowserFrames();
-    ({ m } = await openSite({
-      browserFrames: frames,
-      capabilities: KITTY,
-      browserImagePixels: 150_000,
-    }));
-    await settled(m);
-    await Bun.sleep(CELL_WAIT_MS);
-    await settled(m);
-    const id = window(m);
-    const size = browserWindow(m.store.get(), id)?.px;
-    if (size === undefined) throw new Error("the page has no size");
-    frames.publish(id, png(size.width, size.height), () => {});
-    draw.mockClear();
-    await m.frame();
-    expect(draw.mock.calls.map((c) => [c[2], c[4]])).toEqual([
-      [1, 14],
-      [15, 14],
-    ]);
-  } finally {
-    draw.mockRestore();
-  }
+test("through herdr's files the next frame waits until herdr has read the last one's file", async () => {
+  const frames = createBrowserFrames();
+  let pending = 0;
+  ({ m } = await openSite({
+    browserFrames: frames,
+    browserFileRate: 1e12,
+    imageFilesPending: () => pending,
+  }));
+  await settled(m);
+  const id = window(m);
+  let acks = 0;
+  const acked = async (n: number) => {
+    for (let i = 0; i < 50 && acks < n; i++) await Bun.sleep(5);
+  };
+  frames.publish(id, png(160, 100), () => acks++);
+  await m.frame();
+  await acked(1);
+  expect(acks).toBe(1);
+
+  pending = 1;
+  frames.publish(
+    id,
+    png(160, 100, (x) => x < 80),
+    () => acks++,
+  );
+  await m.frame();
+  await Bun.sleep(50);
+  expect(acks).toBe(1);
+  pending = 0;
+  await acked(2);
+  expect(acks).toBe(2);
 });
 
 test("a click on the page goes to it at the point clicked", async () => {

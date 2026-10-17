@@ -1,4 +1,3 @@
-import { appendFileSync } from "node:fs";
 import type { PageSize } from "../../core/features/browser/file-type";
 import type { PageKey } from "../../core/features/browser/keys";
 import type { Cdp, CdpEvent } from "./cdp";
@@ -175,9 +174,7 @@ export async function openPage(
   };
   const startScreencast = () =>
     call("Page.startScreencast", {
-      ...(process.env.SO_X_JPEG
-        ? { format: "jpeg", quality: Number(process.env.SO_X_JPEG) }
-        : { format: "png" }),
+      format: "png",
       ...frameBox(maxPixels),
     });
   const metrics = () =>
@@ -246,34 +243,13 @@ export async function openPage(
       if (type === "release") followTitle();
     },
     async wheel(x, y, dx, dy) {
-      const sent = call("Input.dispatchMouseEvent", {
+      await call("Input.dispatchMouseEvent", {
         type: "mouseWheel",
         x,
         y,
         deltaX: dx,
         deltaY: dy,
       });
-      const pace = Number(process.env.SO_X_WHEELFF ?? 0);
-      if (pace > 0) {
-        sent.catch(() => {});
-        await new Promise((r) => setTimeout(r, pace));
-      } else await sent;
-      const traceFile = process.env.SO_X_SCROLLY && process.env.SO_TRACE;
-      if (traceFile) {
-        const t0 = performance.now();
-        const poll = async () => {
-          const r = await call<{ result: { value: number } }>(
-            "Runtime.evaluate",
-            { expression: "scrollY", returnByValue: true },
-          );
-          appendFileSync(
-            traceFile,
-            `${performance.now().toFixed(0)} page scrollY=${r.result.value} dy=${dy} since=${(performance.now() - t0).toFixed(0)}\n`,
-          );
-          if (performance.now() - t0 < 700) setTimeout(poll, 20);
-        };
-        void poll();
-      }
     },
     async key(k) {
       const base = {

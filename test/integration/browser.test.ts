@@ -84,10 +84,7 @@ async function until<T>(
 }
 
 /** A host on `chrome` (with `more` of its options) over a workspace holding `site/index.html`. */
-async function start(
-  chrome: string,
-  more: { scrollPixels?: number; settleMs?: number } = {},
-) {
+async function start(chrome: string, more: { framePixels?: number } = {}) {
   await Bun.write(
     join(dir, "ws/site/index.html"),
     '<a href="next.html" style="display:block;height:100vh">next</a>',
@@ -165,9 +162,9 @@ test("a page opens in Chrome, shows its frames and title, and takes input", asyn
   });
 });
 
-test("while a page scrolls its frames are limited, and full size once it rests", async () => {
+test("with a frame pixel limit the page's frames are scaled to it from the start and stay so while it scrolls", async () => {
   const fake = await fakeChrome("ok");
-  const h = await start(fake.path, { scrollPixels: 30_000, settleMs: 50 });
+  const h = await start(fake.path, { framePixels: 30_000 });
   h.run({ op: "open", path: "site/index.html", size: SIZE });
   await until(() => h.frames.latest(1));
   const starts = () =>
@@ -180,13 +177,13 @@ test("while a page scrolls its frames are limited, and full size once it rests",
   };
   h.run(wheel);
   h.run(wheel);
-  // 400×300 is 120,000 pixels: half as wide and high fits 30,000.
-  await until(() => (starts().length === 2 ? true : undefined), 5000, starts);
-  await until(() => (starts().length === 3 ? true : undefined), 5000, starts);
+  const sent = () => inputsSent(fake.log);
+  await until(() => (sent().length > 0 ? true : undefined), 5000, sent);
+  // 400×300 is 120,000 pixels: half as wide and high fits 30,000. The first
+  // screencast is full size; the limit restarts it once, before the page loads.
   expect(starts()).toEqual([
     [400, 300],
     [200, 150],
-    [400, 300],
   ]);
 });
 
