@@ -186,9 +186,9 @@ test("in reading view + and = zoom note text in and - out; other views pass them
   const reading = keys(live, "<leader>m<leader>m");
   expect(activeBuffer(reading)?.view).toBe("reading");
   const zoom = (s: AppState) => s.config.preview.zoom;
-  expect(zoom(keys(reading, "+"))).toBe(1.25);
-  expect(zoom(keys(reading, "==-"))).toBe(1.25);
-  expect(message(keys(reading, "="))).toBe("text zoom 1.25×");
+  expect(zoom(keys(reading, "+"))).toBe(1.1);
+  expect(zoom(keys(reading, "==-"))).toBe(1.1);
+  expect(message(keys(reading, "="))).toBe("text zoom 1.1×");
   for (const k of ["+", "=", "-"]) {
     const after = keys(live, k);
     expect(zoom(after)).toBe(1);

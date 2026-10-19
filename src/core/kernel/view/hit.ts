@@ -1,6 +1,6 @@
 import { cellWidth, clusters } from "../text/cells";
 import { colAtCell, justifyRow } from "./justify";
-import { zoomRowsOf, zoomStep } from "./sized";
+import { type TextZoom, zoomRowsOf, zoomStep } from "./sized";
 import type { RenderLine, Span, ZoomRow } from "./types";
 import { prefixCells, wrapLine, wrapText } from "./wrap";
 
@@ -26,12 +26,13 @@ export type ScreenRow = {
  */
 export function lineRows(
   line: RenderLine,
-  o: { width: number; tabWidth: number; wrap: boolean; zoom?: number },
+  o: { width: number; tabWidth: number; wrap: boolean; zoom?: TextZoom },
 ): number {
   if (isWidgetRow(line)) return Math.max(1, line.widget?.rows ?? 1);
   if (line.zoom === true && o.zoom !== undefined)
     return (
-      zoomStep(o.zoom) * zoomRowsOf(line, o.zoom, o.width, o.tabWidth).length
+      zoomStep(o.zoom.size) *
+      zoomRowsOf(line, o.zoom, o.width, o.tabWidth).length
     );
   return o.wrap
     ? wrapLine(wrapText(line.spans), o.width, o.tabWidth, prefixCells(line))
@@ -56,8 +57,8 @@ export function rowAt(
     tabWidth: number;
     wrap: boolean;
     skipRows: number;
-    /** The text size zoomed lines are drawn at. */
-    zoom?: number;
+    /** The text zoom zoomed lines are drawn at. */
+    zoom?: TextZoom;
   },
 ): ScreenRow | undefined {
   let last: ScreenRow | undefined;
@@ -71,7 +72,7 @@ export function rowAt(
       continue;
     }
     if (line.zoom === true && o.zoom !== undefined) {
-      const step = zoomStep(o.zoom);
+      const step = zoomStep(o.zoom.size);
       const zoomed = zoomRowsOf(line, o.zoom, o.width, o.tabWidth);
       const skip = line.sourceLine === lines[0]?.sourceLine ? o.skipRows : 0;
       for (let k = Math.floor(skip / step); k < zoomed.length; k++) {

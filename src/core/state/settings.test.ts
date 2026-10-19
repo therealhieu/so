@@ -293,14 +293,16 @@ test("the theme preview wraps its choices so every theme shows", () => {
   expect(lines[0]?.ranges).toEqual([{ from: 0, to: 4, style: "floatTitle" }]);
 });
 
-test("text zoom steps through 1× to 3× a quarter or half at a time, saved like the setting", () => {
+test("text zoom steps through 1× to 2× a tenth at a time, then 2.5× and 3×, saved like the setting", () => {
   let s = fresh();
   const seen: number[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 13; i++) {
     s = zoomText(s, 1).state;
     seen.push(s.config.preview.zoom);
   }
-  expect(seen).toEqual([1.25, 1.5, 1.75, 2, 2.5, 3, 3]);
+  expect(seen).toEqual([
+    1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.5, 3, 3,
+  ]);
   const out = zoomText(s, -1);
   expect(out.state.config.preview.zoom).toBe(2.5);
   expect(out.effects).toEqual([

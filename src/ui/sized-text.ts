@@ -93,7 +93,7 @@ export function rowBytes(
   let out = "";
   let at = x;
   for (const chunk of chunks) {
-    if (!chunk.plain)
+    if (!chunk.plain && !chunk.bar)
       out += cup(at, y) + sgr(style(chunk)) + chunkBytes(chunk, scale);
     at += chunk.cells;
   }

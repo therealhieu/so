@@ -172,9 +172,9 @@ test("an unknown preview key is rejected", () => {
 
 test("the text zoom is one of its levels from 1 to 3", () => {
   const zoom = (v: string) => parseConfig(lines("[preview]", `zoom = ${v}`));
-  for (const v of [2, 1.5, 1.25] as const) {
+  for (const v of [2, 1.5, 1.1] as const) {
     const ok = zoom(String(v));
     expect(ok.ok && ok.config.preview.zoom).toBe(v);
   }
-  for (const v of ["1.3", "0", "4", "2.25"]) expect(zoom(v).ok).toBe(false);
+  for (const v of ["1.25", "0", "4", "2.25"]) expect(zoom(v).ok).toBe(false);
 });

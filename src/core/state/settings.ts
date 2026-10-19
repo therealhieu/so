@@ -167,7 +167,7 @@ export const SETTINGS: readonly Setting[] = [
     path: ["preview", "zoom"],
     choices: [...ZOOM_LEVELS],
     about: [
-      "Note prose drawn 1.25× to 3× in",
+      "Note prose drawn 1.1× to 3× in",
       "the reading view where the",
       "terminal can; + or =, -, and",
       "<leader>u0 in the reading view.",

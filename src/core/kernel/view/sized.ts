@@ -30,7 +30,7 @@ export const sizedCell = (scale: SizedScale) => scale.s ?? 2;
 
 /** Columns a chunk of `w` normal-size cells takes at `scale`: whole sized cells. */
 const scaledCells = (w: number, scale: SizedScale) =>
-  sizedCell(scale) * Math.ceil((scale.n * w) / scale.d);
+  sizedCell(scale) * Math.ceil((w * advance(scale)) / sizedCell(scale) - 1e-9);
 
 const isBlank = (ch: string) => ch === " " || ch === "\t";
 
@@ -177,25 +177,54 @@ function zoomCells(spans: readonly Span[], tabWidth: number): Cell[] {
 
 /**
  * A text size as a sized scale: whole sized cells of the size rounded up,
- * the text taking `n/d` of them (1.5 is 3/4 of 2, 2.5 is 5/6 of 3).
+ * the text taking the `n/d` of them nearest the size, with kitty's `d` of at
+ * most 15 (1.5 is 3/4 of 2; 1.1 is drawn at 6/11 of 2, 1.09).
  */
 export function sizeScale(size: number): SizedScale {
   const s = Math.ceil(size);
-  for (let d = 1; d <= 15; d++) {
-    const n = (size * d) / s;
-    if (Number.isInteger(n)) return { s, n, d };
+  let best: SizedScale = { s, n: 1, d: 1 };
+  let off = Math.abs(s - size);
+  for (let d = 2; d <= 15; d++) {
+    const n = Math.min(d - 1, Math.max(1, Math.round((size * d) / s)));
+    const o = Math.abs((s * n) / d - size);
+    if (o < off - EPS) {
+      best = { s, n, d };
+      off = o;
+    }
   }
-  return { s, n: 1, d: 1 };
+  return best;
 }
 
 /** Screen rows one zoomed row takes at text size `size`. */
 export const zoomStep = (size: number) => sizedCell(sizeScale(size));
 
 /** Columns one normal-size cell's text takes at `scale`. */
-const advance = (scale: SizedScale) => (sizedCell(scale) * scale.n) / scale.d;
+function advance(scale: SizedScale): number {
+  return scale.adv ?? (sizedCell(scale) * scale.n) / scale.d;
+}
 
 /** Normal-size cells one chunk holds at most: kitty draws one in at most 7 sized cells. */
-const chunkMost = ({ n, d }: SizedScale) => Math.floor((7 * d) / n);
+const chunkMost = (scale: SizedScale) =>
+  Math.max(1, Math.floor((7 * sizedCell(scale)) / advance(scale) + EPS));
+
+/**
+ * The text zoom: its size, and the width of a terminal cell in pixels when
+ * the terminal reports it.
+ */
+export type TextZoom = { size: number; cellPx?: number };
+
+/**
+ * `zoom` as the sized scale its text is drawn at. kitty draws each
+ * character of a fractional size in whole pixels, `ceil(size × cell)` wide,
+ * so with the cell's pixels a character takes that over the cell's columns.
+ */
+export function zoomScale(zoom: TextZoom): SizedScale {
+  const scale = sizeScale(zoom.size);
+  const px = zoom.cellPx === undefined ? 0 : Math.round(zoom.cellPx);
+  if (px <= 0 || scale.n === scale.d) return scale;
+  const glyph = Math.ceil((sizedCell(scale) * scale.n * px) / scale.d - EPS);
+  return { ...scale, adv: glyph / px };
+}
 
 /** The most extra columns a gap takes per column of a space before a row stays ragged. */
 const MAX_STRETCH = 3;
@@ -219,17 +248,38 @@ function chunkOf(cells: readonly Cell[], scale: SizedScale): SizedChunk {
 }
 
 /**
- * A word's chunks: each same-look run cut evenly into as few chunks as
- * kitty takes. Several chunks meet: the first sits at the right of its
+ * A word's chunks: each same-look run cut into as few chunks as kitty
+ * takes, evenly, or in two where the first leaves the least of its sized
+ * cells empty. Several chunks meet: the first sits at the right of its
  * sized cells, the last at the left, and any between are centred.
  */
 function wordChunks(cells: readonly Cell[], scale: SizedScale): SizedChunk[] {
   const most = chunkMost(scale);
   const out: SizedChunk[] = [];
   let run: Cell[] = [];
+  /** Normal-size cells of a run's first chunk when it takes two. */
+  const firstOfTwo = (all: number) => {
+    let best = Math.ceil(all / 2);
+    let least = Number.POSITIVE_INFINITY;
+    for (let k = Math.max(1, all - most); k <= Math.min(most, all - 1); k++) {
+      const slack = scaledCells(k, scale) - k * advance(scale);
+      if (
+        slack < least - EPS ||
+        (Math.abs(slack - least) < EPS &&
+          Math.abs(k - all / 2) < Math.abs(best - all / 2))
+      ) {
+        best = k;
+        least = slack;
+      }
+    }
+    return best;
+  };
   const flush = () => {
-    const parts = Math.ceil(widthOf(run) / most);
-    const size = Math.ceil(widthOf(run) / parts);
+    const all = widthOf(run);
+    const parts = Math.ceil(all / most);
+    const even = Math.ceil(all / parts);
+    const first = parts === 2 ? firstOfTwo(all) : even;
+    let size = first;
     let part: Cell[] = [];
     let w = 0;
     for (const c of run) {
@@ -237,6 +287,7 @@ function wordChunks(cells: readonly Cell[], scale: SizedScale): SizedChunk[] {
         out.push(chunkOf(part, scale));
         part = [];
         w = 0;
+        size = parts === 2 ? most : even;
       }
       part.push(c);
       w += c.w;
@@ -256,6 +307,21 @@ function wordChunks(cells: readonly Cell[], scale: SizedScale): SizedChunk[] {
       else if (i < out.length - 1) c.align = "center";
     });
   return out;
+}
+
+/**
+ * Whether kitty draws `ch` itself as a shape (box drawing, blocks, braille,
+ * Powerline, legacy computing): a chunk starting with one is drawn all as
+ * shapes, and a bar of one is cut short at a fractional size.
+ */
+function isBoxDrawn(ch: string): boolean {
+  const c = ch.codePointAt(0) ?? 0;
+  return (
+    (c >= 0x2500 && c <= 0x259f) ||
+    (c >= 0x2800 && c <= 0x28ff) ||
+    (c >= 0xe0b0 && c <= 0xe0d4) ||
+    (c >= 0x1fb00 && c <= 0x1fbff)
+  );
 }
 
 /** Columns a chunk's sized cells hold beyond its text. */
@@ -297,6 +363,10 @@ type Choice = {
   cells: number;
   lead: number;
   trail: number;
+  /** The squares of the gaps between its chunks, in columns. */
+  inner: number;
+  /** Only for a word at a row's left edge. */
+  edge?: true;
 };
 
 /**
@@ -304,23 +374,46 @@ type Choice = {
  * the left, right, or centre of its sized cells.
  */
 function choicesOf(cells: readonly Cell[], scale: SizedScale): Choice[] {
+  if (cells.every((c) => isBoxDrawn(c.ch))) {
+    const bar = { ...chunkOf(cells, scale), bar: true as const };
+    bar.cells = widthOf(cells);
+    return [{ chunks: [bar], cells: bar.cells, lead: 0, trail: 0, inner: 0 }];
+  }
   const word = wordChunks(cells, scale);
   const only = word[0];
+  const left = (c: SizedChunk): SizedChunk => {
+    const { align: _, ...rest } = c;
+    return rest;
+  };
+  // At a row's left edge, a word of several chunks starts at the left of
+  // its first chunk, its slack then falling between its chunks.
   const ways =
-    word.length === 1 && only !== undefined && slackOf(only, scale) > EPS
-      ? (["left", "right", "center"] as const).map((a) => {
-          const { align: _, ...c } = only;
-          return [a === "left" ? c : { ...c, align: a }];
-        })
-      : [word];
+    word.length === 1 && only !== undefined
+      ? slackOf(only, scale) > EPS
+        ? (["left", "right", "center"] as const).map((a) => [
+            a === "left" ? left(only) : { ...only, align: a },
+          ])
+        : [word]
+      : [word, [left(word[0] as SizedChunk), ...word.slice(1)]];
+  const trailOf = (c: SizedChunk) => slackOf(c, scale) - leadOf(c, scale);
   return ways.map((chunks) => {
-    const last = chunks.at(-1) as SizedChunk;
-    return {
+    let inner = 0;
+    for (let i = 1; i < chunks.length; i++) {
+      const gap =
+        trailOf(chunks[i - 1] as SizedChunk) +
+        leadOf(chunks[i] as SizedChunk, scale);
+      inner += gap * gap;
+    }
+    const way: Choice = {
       chunks,
       cells: chunks.reduce((n, c) => n + c.cells, 0),
       lead: leadOf(chunks[0] as SizedChunk, scale),
-      trail: slackOf(last, scale) - leadOf(last, scale),
+      trail: trailOf(chunks.at(-1) as SizedChunk),
+      inner,
     };
+    return word.length > 1 && chunks[0]?.align === undefined
+      ? { ...way, edge: true as const }
+      : way;
   });
 }
 
@@ -360,10 +453,13 @@ function placeWord(
 ): Placing[] {
   const space = widthOf(gap) * advance(scale);
   const kept = new Map<number, Placing>();
+  // A row's first word starts at its left edge: off it shows the most.
+  const flush = ways.filter((w) => w.lead < EPS);
   for (const row of rows) {
     const target = row.end + space + stretch;
     const least = space > 0 ? target - 0.5 : target;
-    for (const way of ways) {
+    const first = row.prev === undefined && space === 0 && flush.length > 0;
+    for (const way of first ? flush : ways.filter((w) => !w.edge)) {
       const from = Math.max(row.x, Math.ceil(least - way.lead - EPS));
       const near = Math.max(from, Math.round(target - way.lead));
       const exact = Math.abs(near + way.lead - target) < EPS;
@@ -372,7 +468,7 @@ function placeWord(
         const off = p + way.lead - target;
         const x = p + way.cells;
         const end = x - way.trail;
-        const cost = row.cost + off * off;
+        const cost = row.cost + off * off + way.inner;
         const key = x * 4096 + Math.round(end * 48);
         const had = kept.get(key);
         if (had !== undefined && had.cost <= cost + EPS) continue;
@@ -560,7 +656,12 @@ function placeRow(
   width: number,
   justify: boolean,
 ): SizedChunk[] {
-  const natural = placeAll(plan.items, scale, width);
+  const joined =
+    justify || scale.n === scale.d
+      ? []
+      : placeAll(joinWords(plan.items, plan.own, scale), scale, width);
+  const natural =
+    joined.length > 0 ? joined : placeAll(plan.items, scale, width);
   let rows =
     natural.length > 0
       ? natural
@@ -614,6 +715,63 @@ function placeRow(
   ];
 }
 
+/** Whether `cells` all share the look of `first`. */
+const oneLook = (cells: readonly Cell[], first: Cell) =>
+  cells.every((c) => sameLook(c, first));
+
+/**
+ * `items` from `from` with neighbouring words of one look joined, with the
+ * blanks between them, into one chunk where they fit, so kitty spaces them
+ * itself. The cuts are chosen for the fewest chunks with the least slack,
+ * each chunk costing one plus its slack in columns.
+ */
+function joinWords(
+  items: readonly Item[],
+  from: number,
+  scale: SizedScale,
+): Item[] {
+  const most = chunkMost(scale);
+  const n = items.length;
+  const best: { cost: number; to: number }[] = [];
+  best[n] = { cost: 0, to: n };
+  for (let i = n - 1; i >= from; i--) {
+    const head = items[i] as Item;
+    const first = head.word[0] as Cell;
+    let cells = [...head.word];
+    let pick = { cost: Number.POSITIVE_INFINITY, to: i + 1 };
+    for (let j = i + 1; j <= n; j++) {
+      if (j > i + 1) {
+        const next = items[j - 1] as Item;
+        cells = [...cells, ...next.gap, ...next.word];
+      }
+      if (
+        !oneLook(cells, first) ||
+        widthOf(cells) > most ||
+        cells.some((c) => isBoxDrawn(c.ch))
+      ) {
+        if (j === i + 1) pick = { cost: 1 + (best[j]?.cost ?? 0), to: j };
+        break;
+      }
+      const w = widthOf(cells);
+      const slack = scaledCells(w, scale) - w * advance(scale);
+      const cost = 1 + slack + (best[j]?.cost ?? 0);
+      if (cost < pick.cost - EPS) pick = { cost, to: j };
+    }
+    best[i] = pick;
+  }
+  const out = items.slice(0, from);
+  for (let i = from; i < n; ) {
+    const to = best[i]?.to ?? i + 1;
+    const head = items[i] as Item;
+    const word = items
+      .slice(i + 1, to)
+      .reduce<Cell[]>((w, it) => [...w, ...it.gap, ...it.word], [...head.word]);
+    out.push(to === i + 1 ? head : { gap: head.gap, word });
+    i = to;
+  }
+  return out;
+}
+
 /** `units` laid out as rows of placed words within `width` columns. */
 const wordRows = (
   units: readonly Unit[],
@@ -633,11 +791,11 @@ const wordRows = (
  */
 export function zoomRows(
   line: RenderLine,
-  size: number,
+  zoom: TextZoom,
   width: number,
   tabWidth: number,
 ): ZoomRow[] {
-  const scale = sizeScale(size);
+  const scale = zoomScale(zoom);
   const prefix =
     line.wrapPrefix === undefined
       ? []
@@ -708,14 +866,14 @@ const zoomed = new WeakMap<RenderLine, { key: string; rows: ZoomRow[] }>();
 /** `zoomRows` of `line`, kept while the line, size, and width stay the same. */
 export function zoomRowsOf(
   line: RenderLine,
-  s: number,
+  zoom: TextZoom,
   width: number,
   tabWidth: number,
 ): ZoomRow[] {
-  const key = `${s}:${width}:${tabWidth}`;
+  const key = `${zoom.size}:${zoom.cellPx}:${width}:${tabWidth}`;
   const hit = zoomed.get(line);
   if (hit?.key === key) return hit.rows;
-  const rows = zoomRows(line, s, width, tabWidth);
+  const rows = zoomRows(line, zoom, width, tabWidth);
   zoomed.set(line, { key, rows });
   return rows;
 }

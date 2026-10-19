@@ -56,6 +56,11 @@ export type SizedChunk = {
    * at their left.
    */
   align?: "right" | "center";
+  /**
+   * A shape like a quote bar, drawn at normal size on every row of its
+   * sized cells instead of by the terminal, so it runs unbroken.
+   */
+  bar?: true;
 };
 
 /**
@@ -72,6 +77,8 @@ export type SizedScale = {
   d: number;
   wordSpace?: number;
   words?: true;
+  /** Columns one character's text takes, where it is not `s × n / d`. */
+  adv?: number;
 };
 
 /**

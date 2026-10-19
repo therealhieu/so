@@ -36,12 +36,13 @@ import {
 } from "../../core/kernel/view/marks";
 import {
   sizedCell,
-  sizeScale,
+  type TextZoom,
   underText,
   zoomCellOf,
   zoomColAt,
   zoomRowOf,
   zoomRowsOf,
+  zoomScale,
   zoomStep,
 } from "../../core/kernel/view/sized";
 import { layoutText } from "../../core/kernel/view/text-view";
@@ -131,9 +132,13 @@ function rowOfLine(
   return y < rows ? (covering ?? missing) : missing;
 }
 
-/** The text size zoomed lines are drawn at, when the text zoom is on. */
-const zoomLevel = (s: AppState): number | undefined =>
-  s.config.preview.zoom > 1 ? s.config.preview.zoom : undefined;
+/** The text zoom zoomed lines are drawn at, when it is on. */
+const textZoom = (s: AppState, deps: ViewDeps): TextZoom | undefined => {
+  const size = s.config.preview.zoom;
+  if (size <= 1) return undefined;
+  const cellPx = deps.images.cellPixels()?.width;
+  return cellPx === undefined ? { size } : { size, cellPx };
+};
 
 /** How often a frame with hidden lines lays out more lines to fill its rows. */
 const FILL_PASSES = 3;
@@ -438,7 +443,7 @@ export class EditorView extends Renderable implements WindowView {
       insert,
     );
     const { textX, textW } = this.columnsOf(s, b);
-    const zoom = zoomLevel(s);
+    const zoom = textZoom(s, this.deps);
     /**
      * The cursor's screen row within its line and its cell in `lines`. A
      * zoomed line places it in its sized chunks, at the top of the row; a
@@ -458,7 +463,7 @@ export class EditorView extends Renderable implements WindowView {
         const at = zoomed[k];
         const x = at === undefined ? 0 : zoomCellOf(at, dc);
         return {
-          k: zoomStep(zoom) * k,
+          k: zoomStep(zoom.size) * k,
           x: Math.min(x, textW - 1),
           dc,
           zoomed: true,
@@ -516,7 +521,8 @@ export class EditorView extends Renderable implements WindowView {
           (lines) => {
             const p = place(lines);
             // A zoomed cursor row shows whole.
-            const tall = p.zoomed && zoom !== undefined ? zoomStep(zoom) : 1;
+            const tall =
+              p.zoomed && zoom !== undefined ? zoomStep(zoom.size) : 1;
             return at(lines) + p.k + tall - rows;
           },
           height,
@@ -533,7 +539,7 @@ export class EditorView extends Renderable implements WindowView {
     let row = at(this.lines);
     // A line taller than the window shows the rows holding the cursor; a
     // zoomed line drops whole sized rows.
-    const step = placed.zoomed && zoom !== undefined ? zoomStep(zoom) : 1;
+    const step = placed.zoomed && zoom !== undefined ? zoomStep(zoom.size) : 1;
     if (row === 0 && k + step > rows)
       this.skipRows = Math.ceil((k + step - rows) / step) * step;
     row += k - this.skipRows;
@@ -684,7 +690,7 @@ export class EditorView extends Renderable implements WindowView {
     const { tabWidth, wrap } = s.config.editor;
     const { textX, textW } = this.columnsOf(s, b);
     const row = y - this.rect.y - (this.winbar ? 1 : 0);
-    const zoom = zoomLevel(s);
+    const zoom = textZoom(s, this.deps);
     const shown = rowAt(this.lines, row, {
       width: textW,
       tabWidth,
@@ -755,7 +761,7 @@ export class EditorView extends Renderable implements WindowView {
       for (let r = 0; r < rows; r++)
         drawCells(buf, theme.style("text"), this.x, y + r, "", this.width);
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
-    const zoom = zoomLevel(s);
+    const zoom = textZoom(s, this.deps);
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
     let numbered = -1;
@@ -902,7 +908,7 @@ export class EditorView extends Renderable implements WindowView {
     buf: OptimizedBuffer,
     theme: Theme,
     line: RenderLine,
-    zoom: number,
+    zoom: TextZoom,
     o: {
       x: number;
       y: number;
@@ -914,7 +920,7 @@ export class EditorView extends Renderable implements WindowView {
       gutter: (at: number, first: boolean) => void;
     },
   ): number {
-    const scale = sizeScale(zoom);
+    const scale = zoomScale(zoom);
     const step = sizedCell(scale);
     const zoomed = zoomRowsOf(line, zoom, o.width, o.tabWidth);
     const skip =
@@ -942,11 +948,13 @@ export class EditorView extends Renderable implements WindowView {
           const n = Math.min(o.width - x, whole ? c.cells : (c.w ?? c.cells));
           if (n <= 0) break;
           const text =
-            r === 0 && c.plain !== true
-              ? whole
-                ? underText(c, scale)
-                : c.text
-              : "";
+            c.bar === true
+              ? c.text
+              : r === 0 && c.plain !== true
+                ? whole
+                  ? underText(c, scale)
+                  : c.text
+                : "";
           const st = c.plain === true && whole ? blankLook(c, r) : look(c);
           drawCells(buf, st, o.x + x, o.y + i + r, text, n);
           x += n;

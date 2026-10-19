@@ -60,7 +60,9 @@ const workspacePath = (opts: { root: "allow" | "deny" }) =>
 
 /** The whole config file; any key not listed here is an error. */
 /** Text zoom levels, smallest first. */
-export const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5, 3] as const;
+export const ZOOM_LEVELS = [
+  1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.5, 3,
+] as const;
 
 export const ConfigSchema = z.strictObject({
   /** One key in Vim notation, stored as that key ("<space>" → " "). */

@@ -271,6 +271,21 @@ test("at a fractional zoom each word is sent on its own over cells that hold its
   expect(rows[at + 1]?.trim()).toBe("");
 });
 
+test("a zoomed quote's bar is drawn at normal size down every row, never sent sized", async () => {
+  const m = await mountNote(
+    "> Simplicity is prerequisite for reliability.\n",
+    16,
+    "[preview]\nzoom = 1.1\n",
+  );
+  const rows = (await m.frame()).split("\n");
+  const at = rows.findIndex((r) => r.includes("▎"));
+  expect(at).toBeGreaterThanOrEqual(0);
+  expect(rows[at + 1]).toContain("▎");
+  const out = m.writes.join("");
+  expect(out).toContain("Simplicity");
+  expect(out).not.toContain(";▎");
+});
+
 test("a click on zoomed text places the cursor on the character drawn there", async () => {
   const m = await mountNote(ZOOMED, 16, ZOOM_2);
   const rows = (await m.frame()).split("\n");
@@ -298,8 +313,8 @@ test("<leader>u= and <leader>u- step the text zoom, which redraws the note's pro
   m.keys("<leader>u=");
   m.writes.length = 0;
   await m.frame();
-  expect(m.store.get().config.preview.zoom).toBe(1.25);
-  expect(m.writes.join("")).toContain(`${OSC66}s=2:w=2:n=5:d=8:v=2;See\x1b\\`);
+  expect(m.store.get().config.preview.zoom).toBe(1.1);
+  expect(m.writes.join("")).toContain(`${OSC66}s=2:w=2:n=6:d=11:v=2;See\x1b\\`);
   m.keys("<leader>u-");
   await m.frame();
   expect(m.store.get().config.preview.zoom).toBe(1);
