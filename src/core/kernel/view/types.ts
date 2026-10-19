@@ -24,6 +24,12 @@ export type Span = {
    * edge instead of wrapping.
    */
   virtual?: "inline" | "eol";
+  /**
+   * One or two narrow characters drawn half size in this span's one cell,
+   * raised or lowered; `text` is the first of them, shown where the
+   * terminal cannot size text.
+   */
+  script?: { text: string; place: "sup" | "sub" };
 };
 
 export type Sign = { text: string; style: StyleToken };

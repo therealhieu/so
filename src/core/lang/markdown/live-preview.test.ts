@@ -563,3 +563,35 @@ test("in live view a sized heading on the cursor's line shows its source and kee
   expect(heading.map(rowText)).toEqual(["# Raft", ""]);
   expect(heading[1]?.widget).toEqual({ type: "text", data: [[]], rows: 1 });
 });
+
+test("with sized text, inline math scripts and footnote labels are half-size pairs", () => {
+  builtinRenderers();
+  const note = "Lease $Q_{w}$ holds[^note]\n\n[^note]: why";
+  const rows = (sizedText: boolean) =>
+    layoutNote(
+      noteView(note, { cursor: { line: 1, col: 0 } }),
+      "live",
+      stubCtx({ sizedText }),
+    );
+  const scripts = (row: RenderLine | undefined) =>
+    (row?.spans ?? []).map((s) =>
+      s.script === undefined ? s.text : [s.text, s.script.text, s.script.place],
+    );
+  const [para, , def] = rows(true);
+  expect(scripts(para)).toEqual([
+    "Lease ",
+    "Q",
+    ["w", "w", "sub"],
+    " holds",
+    ["n", "no", "sup"],
+    ["t", "te", "sup"],
+  ]);
+  expect(scripts(def).slice(0, 3)).toEqual([
+    ["n", "no", "sup"],
+    ["t", "te", "sup"],
+    " ",
+  ]);
+  const [plainPara, , plainDef] = rows(false);
+  expect(rowText(plainPara)).toBe("Lease Q_{w} holds[note]");
+  expect(rowText(plainDef)).toBe("[note] why");
+});

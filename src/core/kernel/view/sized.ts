@@ -54,6 +54,27 @@ function chunksOf(
   return out;
 }
 
+/**
+ * `text` as half-size script spans, two characters to a cell, or undefined
+ * when a character is not one cell wide.
+ */
+export function scriptSpans(
+  text: string,
+  place: "sup" | "sub",
+  style: StyleToken,
+): Span[] | undefined {
+  const chars = [...clusters(text)];
+  if (chars.length === 0 || chars.some((ch) => cellWidth(ch, 0, 1) !== 1))
+    return undefined;
+  const out: Span[] = [];
+  for (let i = 0; i < chars.length; i += 2) {
+    const first = chars[i] ?? "";
+    const pair = first + (chars[i + 1] ?? "");
+    out.push({ text: first, style, script: { text: pair, place } });
+  }
+  return out;
+}
+
 const cellsOf = (chunks: readonly SizedChunk[]) =>
   chunks.reduce((n, c) => n + c.cells, 0);
 

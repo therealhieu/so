@@ -1,3 +1,5 @@
+import { scriptSpans } from "../../../kernel/view/sized";
+import type { Span, StyleToken } from "../../../kernel/view/types";
 import { fenceBody, wholeBlock } from "../block-text";
 import type { BlockRenderer } from "../live-preview";
 import { RenderCache } from "../render-cache";
@@ -184,63 +186,139 @@ function digitMap(glyphs: string): Record<string, string> {
   );
 }
 
+/** A piece of math text; a script piece is raised (`sup`) or lowered (`sub`). */
+export type MathRun = { text: string; place?: "sup" | "sub" };
+
+/**
+ * How the scanner writes scripts: as Unicode script characters (every one
+ * mapped, nested scripts refused), or as runs of any characters (nested
+ * scripts flattened into their outer script).
+ */
+type ScriptMode = "unicode" | "runs";
+
 /** TeX as Unicode text only when every token has a mapping (all or nothing). */
 export function mathText(tex: string): MathResult {
-  const scanner = new TexScanner(tex);
-  const text = scanner.sequence();
-  return text !== null && scanner.done()
-    ? { kind: "unicode", text }
-    : { kind: "source", tex };
+  const runs = scan(tex, "unicode");
+  return runs === null
+    ? { kind: "source", tex }
+    : { kind: "unicode", text: textOf(runs) };
+}
+
+/** TeX as text and script runs when every token outside scripts has a mapping. */
+export function mathRuns(tex: string): MathRun[] | null {
+  return scan(tex, "runs");
+}
+
+/**
+ * TeX as `style` spans with each script as half-size pairs (`scriptSpans`),
+ * or undefined when a token has no mapping or a script has a wide character.
+ */
+function mathSpans(tex: string, style: StyleToken): Span[] | undefined {
+  const runs = mathRuns(tex);
+  if (runs === null) return undefined;
+  const out: Span[] = [];
+  for (const r of runs) {
+    const spans =
+      r.place === undefined
+        ? [{ text: r.text, style }]
+        : scriptSpans(r.text, r.place, style);
+    if (spans === undefined) return undefined;
+    out.push(...spans);
+  }
+  return out;
+}
+
+/**
+ * TeX as spans: half-size scripts with sized text when it can, else the
+ * Unicode text, else undefined.
+ */
+export function mathTextSpans(
+  tex: string,
+  style: StyleToken,
+  sizedText: boolean,
+): Span[] | undefined {
+  const sized = sizedText ? mathSpans(tex, style) : undefined;
+  if (sized !== undefined) return sized;
+  const r = mathText(tex);
+  return r.kind === "unicode" ? [{ text: r.text, style }] : undefined;
+}
+
+function scan(tex: string, scripts: ScriptMode): MathRun[] | null {
+  const scanner = new TexScanner(tex, scripts);
+  const runs = scanner.sequence();
+  return runs !== null && scanner.done() ? runs : null;
+}
+
+const textOf = (runs: readonly MathRun[]) => runs.map((r) => r.text).join("");
+
+/** Appends `run` to `out`, joining it to the last run of the same place. */
+function append(out: MathRun[], run: MathRun): void {
+  if (run.text === "") return;
+  const last = out.at(-1);
+  if (last !== undefined && last.place === run.place)
+    out[out.length - 1] = { ...last, text: last.text + run.text };
+  else out.push(run);
 }
 
 /** Recursive-descent scanner; every method returns `null` when a token has no mapping. */
 class TexScanner {
   private index = 0;
 
-  constructor(private readonly tex: string) {}
+  constructor(
+    private readonly tex: string,
+    private readonly scripts: ScriptMode,
+  ) {}
 
   done(): boolean {
     return this.index >= this.tex.length;
   }
 
   /** Reads atoms until the end of input or a closing brace (left unread). */
-  sequence(): string | null {
-    let text = "";
+  sequence(): MathRun[] | null {
+    const out: MathRun[] = [];
     while (!this.done() && this.tex[this.index] !== "}") {
       const char = this.tex[this.index] ?? "";
       if (char === "^" || char === "_") {
         this.index += 1;
         const script = this.argument();
+        if (script === null) return null;
+        if (this.scripts === "runs") {
+          append(out, {
+            text: textOf(script),
+            place: char === "^" ? "sup" : "sub",
+          });
+          continue;
+        }
         const table = char === "^" ? SUPERSCRIPT : SUBSCRIPT;
-        const mapped = script === null ? null : toScript(script, table);
+        const mapped = toScript(textOf(script), table);
         if (mapped === null) return null;
-        text += mapped;
+        append(out, { text: mapped });
         continue;
       }
       const atom = this.atom();
       if (atom === null) return null;
-      text += atom;
+      for (const run of atom) append(out, run);
     }
-    return text;
+    return out;
   }
 
   /** One atom: a literal character, a command, or a braced group. */
-  private atom(): string | null {
+  private atom(): MathRun[] | null {
     const char = this.tex[this.index] ?? "";
     if (char === "{") return this.group();
     if (char === "\\") return this.command();
     if (SPECIAL.has(char)) return null;
     this.index += 1;
-    return char;
+    return [{ text: char }];
   }
 
   /** A script or `\frac` argument: a braced group or a single atom. */
-  private argument(): string | null {
+  private argument(): MathRun[] | null {
     if (this.done() || this.tex[this.index] === "}") return null;
     return this.atom();
   }
 
-  private group(): string | null {
+  private group(): MathRun[] | null {
     this.index += 1;
     const inner = this.sequence();
     if (inner === null || this.tex[this.index] !== "}") return null;
@@ -248,7 +326,7 @@ class TexScanner {
     return inner;
   }
 
-  private command(): string | null {
+  private command(): MathRun[] | null {
     const match = /^\\([A-Za-z]+)/.exec(this.tex.slice(this.index));
     const name = match?.[1];
     if (!match || !name) return null;
@@ -258,21 +336,24 @@ class TexScanner {
       const denominator = numerator === null ? null : this.argument();
       return numerator === null || denominator === null
         ? null
-        : `${toOperand(numerator)}/${toOperand(denominator)}`;
+        : [...toOperand(numerator), { text: "/" }, ...toOperand(denominator)];
     }
     if (name === "sqrt") {
       if (this.tex[this.index] === "[") return null;
       const radicand = this.argument();
       if (radicand === null) return null;
-      return `√${toOperand(radicand)}`;
+      return [{ text: "√" }, ...toOperand(radicand)];
     }
-    return GREEK[name] ?? SYMBOLS[name] ?? null;
+    const symbol = GREEK[name] ?? SYMBOLS[name];
+    return symbol === undefined ? null : [{ text: symbol }];
   }
 }
 
 /** Wraps an operand in parentheses unless it is one word or number, so `a+b` over `c` reads `(a+b)/c`. */
-function toOperand(text: string): string {
-  return /^[\p{L}\p{N}.]+$/u.test(text) ? text : `(${text})`;
+function toOperand(runs: MathRun[]): MathRun[] {
+  return /^[\p{L}\p{N}.]+$/u.test(textOf(runs))
+    ? runs
+    : [{ text: "(" }, ...runs, { text: ")" }];
 }
 
 function toScript(
@@ -288,22 +369,22 @@ function toScript(
   return mapped;
 }
 
-const blocks = new RenderCache<MathResult>();
+const blocks = new RenderCache<Span[] | undefined>();
 
-/** A `$$` block as one row of Unicode text, or its source under a label. */
-export const mathRenderer: BlockRenderer = (block, v) => {
+/**
+ * A `$$` block as one row of text (half-size scripts with sized text, else
+ * Unicode), or its source under a label.
+ */
+export const mathRenderer: BlockRenderer = (block, v, { ctx }) => {
   const range = wholeBlock(v.buf, block);
-  const r = blocks.get(block.hash, () =>
-    mathText(fenceBody(v.buf, block).join(" ").trim()),
+  const spans = blocks.get(`${block.hash}|${ctx.sizedText}`, () =>
+    mathTextSpans(
+      fenceBody(v.buf, block).join(" ").trim(),
+      "mdCode",
+      ctx.sizedText,
+    ),
   );
-  return r.kind === "unicode"
-    ? [
-        {
-          kind: "replace",
-          range,
-          block: true,
-          spans: [{ text: r.text, style: "mdCode" }],
-        },
-      ]
+  return spans !== undefined
+    ? [{ kind: "replace", range, block: true, spans }]
     : [labelAbove(range.start.line, "math: unsupported TeX shown as source")];
 };

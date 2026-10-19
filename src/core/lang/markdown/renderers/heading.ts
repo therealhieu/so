@@ -66,6 +66,8 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
     out.push(replaceCols(first, atx[0].length + closing.index, text.length));
   const scale = SCALES[depth - 1];
   if (!input.ctx.sizedText || scale === undefined) return out;
-  const inline = inlineDecorations(block, v, input, new Set());
+  // Scripts inside a sized heading keep their Unicode form: a chunk is drawn at one scale.
+  const unsized = { ...input, ctx: { ...input.ctx, sizedText: false } };
+  const inline = inlineDecorations(block, v, unsized, new Set());
   return [sizedLine(v, first, scale, [...out, ...inline])];
 };
