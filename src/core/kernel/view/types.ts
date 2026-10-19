@@ -31,6 +31,20 @@ export type Sign = { text: string; style: StyleToken };
 /** Source lines `from` up to, not including, `to`. */
 export type LineRange = { from: number; to: number };
 
+/** A run of one look drawn at its block's scale, `cells` columns wide. */
+export type SizedChunk = {
+  text: string;
+  style: StyleToken;
+  under?: StyleToken;
+  cells: number;
+};
+
+/**
+ * Text the terminal draws larger than one cell (kitty's text sizing
+ * protocol); each row of chunks takes two screen rows.
+ */
+export type SizedBlock = { scale: 2 | 1.5; rows: SizedChunk[][] };
+
 /** Rows painted by a UI widget painter registered for `type`. */
 export type Widget = { type: string; data: unknown; rows: number };
 
