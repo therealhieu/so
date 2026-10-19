@@ -191,7 +191,7 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
     try {
       const key = renderKey(block, input.doc, v.buf);
       const r = renderers.get(key) ?? renderers.get("paragraph") ?? inlineOnly;
-      const zoomed = PROSE.has(key) && zoomOf(input) > 1;
+      const zoomed = (PROSE.has(key) || key === "code") && zoomOf(input) > 1;
       // Zoomed prose is drawn at one size, so its scripts keep their Unicode form.
       const ownInput = zoomed
         ? { ...input, ctx: { ...input.ctx, sizedText: false } }

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+  gridRow,
   sizeScale,
   underText,
   wrapSized,
@@ -407,4 +408,47 @@ test("a cell of a zoomed row maps to the column it draws, and back", () => {
   expect(zoomColAt(row, 10)).toBe(5);
   expect(zoomColAt(row, 79)).toBe(7);
   expect(zoomRowOf([row], 4)).toBe(0);
+});
+
+test("a zoomed grid row keeps each box-drawing character at its column times the size, so rows line up", () => {
+  const rows: Span[][] = [
+    [{ text: "│ Key │ Action      │", style: "mdTable", col: 0 }],
+    [{ text: "├─────┼─────────────┤", style: "mdTable", col: 0 }],
+    [
+      { text: "│ ", style: "mdTable", col: 0 },
+      { text: "gd", style: "text", col: 2 },
+      { text: "  │ ", style: "mdTable", col: 4 },
+      { text: "Follow link", style: "text", col: 8 },
+      { text: " │", style: "mdTable", col: 19 },
+    ],
+  ];
+  for (const zoom of [{ size: 1.5 }, { size: 1.3, cellPx: 18 }, { size: 2 }]) {
+    const adv = zoomScale(zoom).adv ?? zoom.size;
+    const borders = rows.map((spans) => {
+      const at: number[] = [];
+      let x = 0;
+      for (const c of gridRow(spans, zoom)) {
+        if (c.bar === true && /[│├┼┤]/.test(c.text[0] ?? "")) at.push(x);
+        x += c.cells;
+      }
+      return at;
+    });
+    const want = [0, 6, 20].map((col) => Math.round(col * adv));
+    for (const b of borders) expect(b).toEqual(want);
+  }
+});
+
+test("a zoomed rule runs on between its corners, and its vertical lines run down", () => {
+  const row = gridRow([{ text: "├──┼──┤", style: "mdTable", col: 0 }], {
+    size: 1.5,
+  });
+  expect(row.map((c) => [c.text, c.down])).toEqual([
+    ["├─", "│ "],
+    ["─", " "],
+    ["──", "  "],
+    ["┼", "│"],
+    ["──", "  "],
+    ["─", " "],
+    ["┤ ", "│ "],
+  ]);
 });

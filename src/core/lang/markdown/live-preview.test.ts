@@ -544,7 +544,7 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
   expect(justified("reading", 0, false)).toEqual([]);
 });
 
-test("text zoom marks prose lines in the reading view with sized text, keeping their scripts in Unicode", () => {
+test("text zoom marks prose and code lines in the reading view with sized text, keeping their scripts in Unicode", () => {
   builtinRenderers();
   const note = [
     "# Title",
@@ -558,6 +558,10 @@ test("text zoom marks prose lines in the reading view with sized text, keeping t
     "```",
     "code",
     "```",
+    "",
+    "| a | b |",
+    "|---|---|",
+    "| 1 | 2 |",
   ].join("\n");
   const zoomed = (view: "live" | "reading", over: Partial<PreviewCtx> = {}) =>
     layoutNote(
@@ -565,10 +569,18 @@ test("text zoom marks prose lines in the reading view with sized text, keeping t
       view,
       stubCtx({ sizedText: true, zoom: 2, ...over }),
     ).filter((r) => r.zoom);
-  expect(zoomed("reading").map((r) => r.sourceLine)).toEqual([2, 4, 6]);
+  expect(zoomed("reading").map((r) => r.sourceLine)).toEqual([2, 4, 6, 9]);
   expect(
     zoomed("reading")[0]?.spans.some((sp) => sp.script !== undefined),
   ).toBe(false);
+  // A table is drawn at the zoom as a grid, one widget per source row.
+  const table = layoutNote(
+    noteView(note),
+    "reading",
+    stubCtx({ sizedText: true, zoom: 2 }),
+  ).filter((r) => r.widget?.type === "zoomText");
+  expect(table.map((r) => r.sourceLine)).toEqual([12, 13, 14]);
+  expect(table[0]?.widget?.rows).toBe(2);
   expect(zoomed("live")).toEqual([]);
   expect(zoomed("reading", { sizedText: false })).toEqual([]);
   expect(zoomed("reading", { zoom: 1 })).toEqual([]);

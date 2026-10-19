@@ -242,20 +242,20 @@ test("a resize or a resume from a tool hand-off sends the sized text again", asy
 const ZOOMED = "# Raft\n\nSee [[ideas]] now.\n\n```\ncode\n```\n";
 const ZOOM_2 = "[preview]\nzoom = 2\n";
 
-test("with text zoom, prose and headings are sent larger and code stays at its size", async () => {
+test("with text zoom, prose, headings, and code are sent larger", async () => {
   const m = await mountNote(ZOOMED, 16, ZOOM_2);
   const out = m.writes.join("");
   expect(out).toContain(`${OSC66}s=2;See\x1b\\`);
   expect(out).toContain(`${OSC66}s=2;ideas\x1b\\`);
   // H1 keeps its 1.75× of the body: 3.5×, 7/8 of four-row cells.
   expect(out).toContain(`${OSC66}s=4:w=4:n=7:d=8:v=2;Raft\x1b\\`);
-  expect(out).not.toContain(";code");
+  expect(out).toContain(`${OSC66}s=2;code\x1b\\`);
   const rows = (await m.frame()).split("\n");
   const at = rows.findIndex((r) => r.includes("S e e"));
   // Each character sits on the first of its double cells, a blank row below.
   expect(rows[at]).toContain("S e e   i d e a s   n o w .");
   expect(rows[at + 1]?.trim()).toBe("");
-  expect(rows.some((r) => r.includes("code"))).toBe(true);
+  expect(rows.some((r) => r.includes("c o d e"))).toBe(true);
 });
 
 test("at a fractional zoom each word is sent on its own over cells that hold its text", async () => {
@@ -284,6 +284,24 @@ test("a zoomed quote's bar is drawn at normal size down every row, never sent si
   const out = m.writes.join("");
   expect(out).toContain("Simplicity");
   expect(out).not.toContain(";▎");
+});
+
+test("a zoomed table keeps its borders at normal size, running down every row, and sends its cells sized", async () => {
+  const m = await mountNote(
+    "| Key | Action |\n|---|---|\n| gd | Follow |\n",
+    16,
+    "[preview]\nzoom = 1.5\n",
+  );
+  const rows = (await m.frame()).split("\n");
+  const at = rows.findIndex((r) => r.includes("K") && r.includes("│"));
+  expect(at).toBeGreaterThanOrEqual(0);
+  const bars = (r: string | undefined) =>
+    [...(r ?? "")].flatMap((ch, i) => (ch === "│" ? [i] : []));
+  expect(bars(rows[at + 1])).toEqual(bars(rows[at]));
+  const out = m.writes.join("");
+  expect(out).toMatch(/n=3:d=4:v=2(:h=\d)?;Key/);
+  expect(out).toMatch(/n=3:d=4:v=2(:h=\d)?;Follow/);
+  expect(out).not.toContain(";│");
 });
 
 test("a click on zoomed text places the cursor on the character drawn there", async () => {

@@ -119,6 +119,7 @@ import { paintImage } from "../ui/widgets/image";
 import { registerWidgetPainter } from "../ui/widgets/registry";
 import { paintRule } from "../ui/widgets/rule";
 import { paintSizedText } from "../ui/widgets/sized-text";
+import { paintZoomText } from "../ui/widgets/zoom-text";
 import { configPath, readConfigTextSync } from "../workspace/config-file";
 import { createGit } from "../workspace/git";
 import { watchGitDirs } from "../workspace/git-watcher";
@@ -425,6 +426,7 @@ async function main(argv: string[]): Promise<void> {
   registerWidgetPainter("image", paintImage);
   registerWidgetPainter("base", paintBaseEmbed);
   registerWidgetPainter("sizedText", paintSizedText);
+  registerWidgetPainter("zoomText", paintZoomText);
   const pdf = createPdfRasterizer({
     root: ws.root,
     which: (c) => Bun.which(c),

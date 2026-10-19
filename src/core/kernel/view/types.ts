@@ -61,6 +61,8 @@ export type SizedChunk = {
    * sized cells instead of by the terminal, so it runs unbroken.
    */
   bar?: true;
+  /** A bar's text on the rows after its first; absent, its text again. */
+  down?: string;
 };
 
 /**

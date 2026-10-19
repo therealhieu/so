@@ -2,7 +2,6 @@ import {
   type OptimizedBuffer,
   Renderable,
   type RenderContext,
-  TextAttributes,
 } from "@opentui/core";
 import { hunkSigns } from "../../core/features/git/signs";
 import type { FileType } from "../../core/filetypes/registry";
@@ -37,7 +36,6 @@ import {
 import {
   sizedCell,
   type TextZoom,
-  underText,
   zoomCellOf,
   zoomColAt,
   zoomRowOf,
@@ -51,7 +49,6 @@ import type {
   Sign,
   SizedChunk,
   Span,
-  StyleToken,
   TextView,
 } from "../../core/kernel/view/types";
 import {
@@ -71,10 +68,11 @@ import type {
 } from "../../core/state/types";
 import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
-import { rowBytes, type SizedText, scriptBytes } from "../sized-text";
-import { drawCells, middle, type Style, type Theme, themeOf } from "../theme";
+import { type SizedText, scriptBytes } from "../sized-text";
+import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { kittyPictures } from "../widgets/image";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
+import { lookOf, paintZoomRow } from "../zoom-row";
 import type { WindowView } from "./registry";
 
 const NO_FOLDS: ReadonlySet<number> = new Set();
@@ -181,29 +179,6 @@ export type Rect = { x: number; y: number; w: number; h: number };
  * background, except selection and search matches. With `scripts`, each
  * half-size script cell drawn is sent there to be drawn at its size.
  */
-/**
- * The look of text in `token` over its line style `under`: a token without
- * a background of its own takes the line's, and on the cursor line every
- * token but selection and search matches takes the cursorline background.
- */
-function lookOf(
-  theme: Theme,
-  { style: token, under }: { style: StyleToken; under?: StyleToken },
-  cursorline: boolean,
-): Style {
-  const own = theme.style(token);
-  const st =
-    under !== undefined && own.bg.equals(theme.style("text").bg)
-      ? { ...own, bg: theme.style(under).bg }
-      : own;
-  return cursorline &&
-    token !== "selection" &&
-    token !== "searchMatch" &&
-    token !== "searchCurrent"
-    ? { ...st, bg: theme.style("cursorline").bg }
-    : st;
-}
-
 export function paintLine(
   buf: OptimizedBuffer,
   theme: Theme,
@@ -926,48 +901,23 @@ export class EditorView extends Renderable implements WindowView {
     const skip =
       line.sourceLine === this.topLine ? Math.floor(this.skipRows / step) : 0;
     const look = (c: SizedChunk) => lookOf(theme, c, o.cursorline);
-    // A blank between sized words is normal-size cells: only its last row
-    // keeps an underline, near the sized text's, and none is struck.
-    const blankLook = (c: SizedChunk, r: number): Style => {
-      const st = look(c);
-      const drop =
-        TextAttributes.STRIKETHROUGH |
-        (r === step - 1 ? 0 : TextAttributes.UNDERLINE);
-      return { ...st, attrs: st.attrs & ~drop };
-    };
     const fill = lookOf(theme, { style: "text" }, o.cursorline);
     let i = o.i;
     for (let k = skip; k < zoomed.length && i < o.rows; k++) {
-      const chunks = zoomed[k]?.chunks ?? [];
-      const cells = chunks.reduce((n, c) => n + c.cells, 0);
-      const whole = i + step <= o.rows && cells <= o.width;
-      for (let r = 0; r < step && i + r < o.rows; r++) {
-        o.gutter(i + r, k === 0 && r === 0);
-        let x = 0;
-        for (const c of chunks) {
-          const n = Math.min(o.width - x, whole ? c.cells : (c.w ?? c.cells));
-          if (n <= 0) break;
-          const text =
-            c.bar === true
-              ? c.text
-              : r === 0 && c.plain !== true
-                ? whole
-                  ? underText(c, scale)
-                  : c.text
-                : "";
-          const st = c.plain === true && whole ? blankLook(c, r) : look(c);
-          drawCells(buf, st, o.x + x, o.y + i + r, text, n);
-          x += n;
-        }
-        if (x < o.width)
-          drawCells(buf, fill, o.x + x, o.y + i + r, "", o.width - x);
-      }
-      if (whole)
-        this.deps.sizedText.draw(
-          buf,
-          [{ x: o.x, y: o.y + i, w: cells, h: step }],
-          rowBytes(chunks, scale, o.x, o.y + i, look),
-        );
+      const row = i;
+      paintZoomRow({
+        buf,
+        sizedText: this.deps.sizedText,
+        x: o.x,
+        y: o.y + i,
+        width: o.width,
+        rows: o.rows - i,
+        scale,
+        chunks: zoomed[k]?.chunks ?? [],
+        look,
+        fill,
+        gutter: (r) => o.gutter(row + r, k === 0 && r === 0),
+      });
       i += step;
     }
     return i;

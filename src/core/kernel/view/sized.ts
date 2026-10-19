@@ -763,9 +763,8 @@ function joinWords(
   for (let i = from; i < n; ) {
     const to = best[i]?.to ?? i + 1;
     const head = items[i] as Item;
-    const word = items
-      .slice(i + 1, to)
-      .reduce<Cell[]>((w, it) => [...w, ...it.gap, ...it.word], [...head.word]);
+    const word = [...head.word];
+    for (const it of items.slice(i + 1, to)) word.push(...it.gap, ...it.word);
     out.push(to === i + 1 ? head : { gap: head.gap, word });
     i = to;
   }
@@ -781,6 +780,103 @@ const wordRows = (
   planRows(units, scale, width, []).map((p) =>
     placeRow(p, scale, width, false),
   );
+
+/** Box-drawing characters with a line going right, and with one going down. */
+const RIGHT_ARM = new Set([..."─━═┼╋╬├┣╠┌┏╔└┗╚┬┳╦┴┻╩"]);
+const DOWN_ARM = new Set([..."│┃║┼╋╬├┣╠┤┫╣┌┏╔┐┓╗┬┳╦"]);
+/** Bars that run down as themselves. */
+const BARS = new Set([..."▏▎▍▌▋▊▉█"]);
+
+/**
+ * A box-drawing character at normal size across `cells` columns: its line
+ * going right carried on with `─` on its own row, and its line going down
+ * (or a bar) on the rows below.
+ */
+function gridShape(c: Cell, cells: number): SizedChunk {
+  const down = DOWN_ARM.has(c.ch) ? "│" : BARS.has(c.ch) ? c.ch : " ";
+  const right = RIGHT_ARM.has(c.ch) ? "─" : " ";
+  return {
+    text: c.ch + right.repeat(Math.max(0, cells - 1)),
+    down: down + " ".repeat(Math.max(0, cells - 1)),
+    style: c.style,
+    ...(c.under === undefined ? {} : { under: c.under }),
+    cells,
+    bar: true,
+    ...(c.col === undefined ? {} : { col: c.col }),
+    w: c.w,
+  };
+}
+
+/**
+ * One row of a grid (a table) at `zoom`, its columns kept: each box-drawing
+ * character sits at `round(column × width)` of a character at the size,
+ * drawn at normal size, and the text between two of them is placed like
+ * prose in the columns between. Text that does not fit there stays at
+ * normal size.
+ */
+export function gridRow(spans: readonly Span[], zoom: TextZoom): SizedChunk[] {
+  const scale = zoomScale(zoom);
+  const at = (col: number) => Math.round(col * advance(scale));
+  const cells = zoomCells(spans, 1);
+  const out: SizedChunk[] = [];
+  let i = 0;
+  while (i < cells.length) {
+    const c = cells[i] as Cell;
+    const col = c.col ?? 0;
+    if (isBoxDrawn(c.ch)) {
+      out.push(gridShape(c, at(col + c.w) - at(col)));
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < cells.length && !isBoxDrawn((cells[j] as Cell).ch)) j++;
+    const part = cells.slice(i, j);
+    const next = cells[j];
+    const end = next?.col ?? col + widthOf(part);
+    const room = at(end) - at(col);
+    const { items, trailing } = itemsOf(part);
+    const rows = placeAll(joinWords(items, 0, scale), scale, room);
+    if (rows.length > 0) {
+      const placed = chunksOfBest(rows);
+      const used = rows[0]?.x ?? 0;
+      const first = trailing[0] ?? part[0];
+      out.push(...placed);
+      if (used < room && first !== undefined)
+        out.push({
+          text: " ",
+          style: first.style,
+          ...(first.under === undefined ? {} : { under: first.under }),
+          cells: room - used,
+          plain: true,
+          ...(trailing[0]?.col === undefined
+            ? {}
+            : { col: trailing[0].col, w: widthOf(trailing) }),
+        });
+    } else if (room > 0) {
+      const text = part.map((p) => p.ch).join("");
+      out.push({
+        text: text + " ".repeat(Math.max(0, room - widthOf(part))),
+        down: "",
+        style: c.style,
+        ...(c.under === undefined ? {} : { under: c.under }),
+        cells: room,
+        bar: true,
+        col,
+        w: widthOf(part),
+      });
+    }
+    i = j;
+  }
+  return out;
+}
+
+/**
+ * Columns a grid `width` columns wide at `size` keeps at normal size. With
+ * the cell's pixels, kitty's whole-pixel glyphs are at most a fifth of a
+ * column wider than the size (cells of 5 px or more).
+ */
+export const gridColumns = (width: number, size: number) =>
+  Math.max(1, Math.floor(width / (Number.isInteger(size) ? size : size + 0.2)));
 
 /**
  * A zoomed line at text size `size` as rows of sized chunks within
