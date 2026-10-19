@@ -11,7 +11,7 @@ so [path]
 ## Features
 
 - **Notes** — wiki links, backlinks, link-safe renames, pickers, and full-text search, backed by a background index so typing never blocks.
-- **Three views** — read-only `reading`, Obsidian-style `live` (rendered blocks, source on the cursor line), and `source`; images, embeds, math, and Mermaid draw in the terminal. In kitty, `+`/`-` (or `<leader>u=`/`<leader>u-`) draw the reading view's text 2× or 3× as large, leaving the rest of the screen as it is.
+- **Three views** — read-only `reading`, Obsidian-style `live` (rendered blocks, source on the cursor line), and `source`; images, embeds, math, and Mermaid draw in the terminal. In kitty, `+`/`-` (or `<leader>u=`/`<leader>u-`) draw the reading view's text, code, and tables larger, 1.1× to 2× in tenths, then 2.5× and 3×, leaving the rest of the screen as it is.
 - **Browser preview** — `:Preview` mirrors the active note on `127.0.0.1`.
 - **Daily notes and templates** — Obsidian-compatible; never overwrite an existing file.
 - **Bases** — Obsidian `.base` files open as table and Kanban views that write back to frontmatter.
