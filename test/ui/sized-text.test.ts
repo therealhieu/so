@@ -5,12 +5,20 @@ import {
   createTerminalCapabilities,
   createTestRenderer,
 } from "@opentui/core/testing";
-import { SizedText, terminalWriter } from "../../src/ui/sized-text";
+import {
+  fullRepaintFlag,
+  SizedText,
+  terminalWriter,
+} from "../../src/ui/sized-text";
 import { type Mounted, mountShell } from "../support/ui";
 
 const COLS = 20;
 const ROWS = 6;
 const OSC66 = "\x1b]66;";
+/** The heading's old 6×2 area at the top left, erased row by row. */
+const ERASE_TOP = "\x1b7\x1b[1;1H\x1b[6X\x1b[2;1H\x1b[6X\x1b8";
+/** Where OpenTUI's own frame begins. */
+const FRAME_START = "\x1b[?2026h\x1b[?25l";
 const FG = RGBA.fromInts(255, 255, 255, 255);
 const BG = RGBA.fromInts(20, 30, 60, 255);
 
@@ -110,12 +118,40 @@ test("a draw goes out again once it moves, its cells change, or the screen is re
   expect((await m.frame()).out).not.toContain(OSC66);
 });
 
+test("an area that held a draw is erased row by row before OpenTUI writes the frame", async () => {
+  const m = await mount();
+  expect((await m.frame()).out).not.toContain("[6X");
+  m.heading.y0 = 2;
+  m.heading.bytes = `\x1b[3;1H${OSC66}s=2;Raft\x1b\\`;
+  const moved = (await m.frame()).out;
+  expect(moved).toStartWith(ERASE_TOP);
+  expect(moved.indexOf(FRAME_START)).toBeGreaterThan(0);
+  expect(moved.indexOf(OSC66)).toBeGreaterThan(moved.indexOf(FRAME_START));
+  // Unchanged: nothing erased, nothing sent.
+  expect((await m.frame()).out).not.toContain("[6X");
+});
+
+test("a full repaint OpenTUI forces on its own erases and sends the draw again", async () => {
+  const m = await mount();
+  await m.frame();
+  expect(fullRepaintFlag(m.t.renderer)()).toBe(false);
+  // A late capability reply (DA1) makes OpenTUI repaint every cell.
+  m.t.mockInput.pressKey("\x1b[?62;22c");
+  expect(fullRepaintFlag(m.t.renderer)()).toBe(true);
+  const repainted = await m.frame();
+  expect(repainted.cells).toBe(COLS * ROWS);
+  expect(repainted.out).toStartWith(ERASE_TOP);
+  expect(repainted.out).toContain(`${OSC66}s=2;Raft`);
+  expect((await m.frame()).out).not.toContain(OSC66);
+});
+
 test("a float over the second row stops the draw and has its whole area rewritten", async () => {
   const m = await mount();
   await m.frame();
   m.float.shown = true;
   const covered = await m.frame();
   expect(covered.out).not.toContain(OSC66);
+  expect(covered.out).toStartWith(ERASE_TOP);
   // Three float cells changed; the other nine of the 6×2 area are rewritten too.
   expect(covered.cells).toBe(12);
   expect((await m.frame()).out).not.toContain(OSC66);

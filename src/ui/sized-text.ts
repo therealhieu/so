@@ -122,12 +122,37 @@ export function scriptBytes(
 export const frameBytes = (body: string) =>
   `${ESC}[?2026h${ESC}7${body}${ESC}8${ESC}[?2026l`;
 
+/**
+ * Every row of `rects`, inside a `w`×`h` screen, erased with ECH. kitty
+ * pushes text written into a sized block's lower row past the block unless
+ * that row was erased first, even after the top row's write removed it.
+ */
+export function eraseBytes(
+  rects: readonly CellRect[],
+  w: number,
+  h: number,
+): string {
+  let body = "";
+  for (const r of rects) {
+    const x0 = Math.max(0, r.x);
+    const x1 = Math.min(w, r.x + r.w);
+    if (x1 <= x0) continue;
+    for (let y = Math.max(0, r.y); y < Math.min(h, r.y + r.h); y++)
+      body += `${cup(x0, y)}${ESC}[${x1 - x0}X`;
+  }
+  return body === "" ? "" : `${ESC}7${body}${ESC}8`;
+}
+
 /** One registered draw: the cells it covers and what it sends. */
 type Draw = { rects: readonly CellRect[]; bytes: string };
 
-/** What one frame does with the draws: which to send, which areas OpenTUI must rewrite. */
+/**
+ * What one frame does with the draws: which old areas to erase before
+ * OpenTUI writes, which areas it must rewrite, and which draws to send.
+ */
 export type FramePlan = {
   send: readonly Draw[];
+  erase: readonly CellRect[];
   rewrite: readonly CellRect[];
   /** The draws on screen once the frame is written. */
   shown: ReadonlyMap<string, readonly CellRect[]>;
@@ -137,9 +162,10 @@ export type FramePlan = {
  * The frame's decisions, following kitty's overwrite rules: writing a
  * sized block's top-left cell erases it, another top-row cell blanks it,
  * and a lower-row cell pushes text right. So every area OpenTUI writes
- * into, and every area whose draw goes away, is rewritten whole, top row
- * first, and a draw is sent again after OpenTUI wrote into its area, when
- * it is new or moved, or after `fresh` (a resize or resume).
+ * into, and every area whose draw goes away, is rewritten whole; a draw is
+ * sent again after OpenTUI wrote into its area, when it is new or moved,
+ * or when the screen is `fresh` (a resize, resume, or full repaint). An
+ * area that held a draw last frame and is rewritten now is erased first.
  */
 export function planFrame(
   last: ReadonlyMap<string, readonly CellRect[]>,
@@ -149,14 +175,15 @@ export function planFrame(
 ): FramePlan {
   const visible = draws.filter((d) => !d.covered);
   const shown = new Map(visible.map((d) => [d.bytes, d.rects]));
-  const rewrite: CellRect[] = [];
-  for (const [bytes, rects] of last)
-    if (!shown.has(bytes)) rewrite.push(...rects);
   const send = visible.filter(
     (d) => fresh || !last.has(d.bytes) || touched(d.rects),
   );
-  for (const d of send) rewrite.push(...d.rects);
-  return { send, rewrite, shown };
+  const resent = new Set(send.map((d) => d.bytes));
+  const erase: CellRect[] = [];
+  for (const [bytes, rects] of last)
+    if (!shown.has(bytes) || resent.has(bytes)) erase.push(...rects);
+  const rewrite = [...erase, ...send.flatMap((d) => d.rects)];
+  return { send, erase, rewrite, shown };
 }
 
 /** The cells of `rects` inside a `w`×`h` buffer, as indexes. */
@@ -205,11 +232,25 @@ export function terminalWriter(r: CliRenderer): (bytes: string) => void {
 }
 
 /**
+ * Whether the renderer will repaint every cell this frame, which erases
+ * all sized text. OpenTUI keeps the flag private.
+ */
+export function fullRepaintFlag(r: CliRenderer): () => boolean {
+  const read = () =>
+    (r as unknown as { forceFullRepaintRequested?: unknown })
+      .forceFullRepaintRequested;
+  if (typeof read() !== "boolean")
+    throw new Error("OpenTUI's renderer has no forceFullRepaintRequested");
+  return () => read() === true;
+}
+
+/**
  * The frame's sized text. Views `draw` while they render; a post-process
- * step then decides with `planFrame` and marks the areas OpenTUI must
- * rewrite as changed in its current buffer, and once the frame is written
- * the draws go out in one write after it. A draw whose cells something
- * painted over since is covered and not sent.
+ * step then decides with `planFrame`, erases the old areas through the
+ * renderer's writer (so the bytes land before the frame's), and marks the
+ * areas OpenTUI must rewrite as changed in its current buffer; once the
+ * frame is written the draws go out in one write after it. A draw whose
+ * cells something painted over since is covered and not sent.
  */
 export class SizedText {
   private draws: { rects: CellRect[]; bytes: string; painted: number[][] }[] =
@@ -218,12 +259,14 @@ export class SizedText {
   private pending: FramePlan | undefined;
   private fresh = false;
   private readonly write: (bytes: string) => void;
+  private readonly repaintsAll: () => boolean;
 
   constructor(
     private readonly renderer: CliRenderer,
     write?: (bytes: string) => void,
   ) {
     this.write = write ?? terminalWriter(renderer);
+    this.repaintsAll = fullRepaintFlag(renderer);
     renderer.addPostProcessFn(this.step);
     renderer.on("frame", this.flush);
   }
@@ -237,7 +280,7 @@ export class SizedText {
     this.draws.push({ rects, bytes, painted });
   }
 
-  /** Send every draw again on the next frame: the terminal redrew its screen. */
+  /** Send every draw again on the next frame: the terminal resized or was handed back. */
   invalidate(): void {
     this.fresh = true;
   }
@@ -278,8 +321,10 @@ export class SizedText {
           if (!sameCell(n, c, i)) return true;
         return false;
       },
-      this.fresh,
+      this.fresh || this.repaintsAll(),
     );
+    const erase = eraseBytes(plan.erase, w, h);
+    if (erase !== "") this.write(erase);
     if (sameSize)
       for (const i of cellsOf(plan.rewrite, w, h))
         c.fg[4 * i + 3] = (n.fg[4 * i + 3] ?? 0) ^ 0x8000;

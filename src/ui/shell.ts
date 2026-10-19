@@ -138,7 +138,7 @@ export type ShellDeps = {
    * Bytes for the terminal outside the renderer; otherwise written to
    * standard output synchronously, so they land before the renderer's next
    * native write. Sized text otherwise goes through the renderer's own
-   * writer, after the frame it belongs to.
+   * writer, in order with the frames.
    */
   write?: (bytes: string) => void;
 };
