@@ -75,11 +75,11 @@ Both files hold their own `SUPERSCRIPT` table and digit-or-bracket rule, and thi
 
 Workflow mode only. The implementer fills this section; the sections above stay unchanged.
 
-- **Status:** `Not required` | `Completed` | `Blocked`
+- **Status:** `Completed`
 
 | Finding | Change | Verification | Commit | Result |
 |---|---|---|---|---|
-| `HRD-1` | `<path>:<symbol>` | `<command and actual result>` | `<SHA>` or `No change — <reason and evidence>` | `Fixed` / `Blocked` |
+| `HRD-1` | `src/core/lang/markdown/inline.ts:footnoteRef` (exported, takes `after`); `src/core/lang/markdown/renderers/footnote.ts:footnoteRenderer` uses it, its `SUPERSCRIPT` copy deleted | `bun test src/core/lang/markdown` → 150 pass, 0 fail, 18 snapshots unchanged (plain `¹ ` definition span and the sized-pairs test both pass) | `942f799` | `Fixed` |
 
-- **Final checks:** `<command>` → `Passed` / `Failed` — <actual result>
-- **Remaining issues:** <items or None>
+- **Final checks:** `bun run check` → `Passed` — Biome, tsc, knip clean; 1989 pass, 0 fail. One earlier run exited 1 with no failing test in the rerun; the immediate rerun passed with exit 0.
+- **Remaining issues:** None
