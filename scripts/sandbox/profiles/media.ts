@@ -65,7 +65,7 @@ export function png(
 }
 
 /** Run ffmpeg quietly; false when it is not installed or fails. */
-function ffmpeg(args: string[]): boolean {
+export function ffmpeg(args: string[]): boolean {
   const bin = Bun.which("ffmpeg");
   if (bin === null) return false;
   const p = Bun.spawnSync([bin, "-v", "error", "-nostdin", "-y", ...args], {

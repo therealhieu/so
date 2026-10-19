@@ -14,6 +14,7 @@ import { large } from "./large";
 import { lsp } from "./lsp";
 import { media } from "./media";
 import { pdf } from "./pdf";
+import { pictures } from "./pictures";
 import { sqlite } from "./sqlite";
 import { tour } from "./tour";
 
@@ -35,6 +36,7 @@ export const PROFILES: readonly Profile[] = [
   sqlite,
   browser,
   media,
+  pictures,
   intro,
 ];
 

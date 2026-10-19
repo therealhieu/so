@@ -62,6 +62,8 @@ export type MountOptions = {
   loadImage?: (ref: string) => Promise<Uint8Array>;
   /** The registries to run on; `testRegistries()` otherwise. */
   reg?: Registries;
+  /** Reads and scales note pictures in place of a worker. */
+  imageScaler?: ShellDeps["imageScaler"];
 };
 
 /** The workspace tree the shell tests list: folder → entries. */
@@ -154,6 +156,7 @@ export async function mountShell(o: MountOptions) {
       o.rasterizePdf ?? ((r) => loadImage(pdfPageRef(r.path, r.page))),
     videoFrame: (r) => loadImage(`${r.path}#t=${r.at}`),
     write: (bytes) => writes.push(bytes),
+    ...(o.imageScaler === undefined ? {} : { imageScaler: o.imageScaler }),
     ...(o.browserFrames === undefined
       ? {}
       : { browserFrames: o.browserFrames }),

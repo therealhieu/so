@@ -13,6 +13,8 @@ import type { Store } from "../core/state/store";
 import type { AppState, RgbaImage, SvgRaster } from "../core/state/types";
 import type { Registries } from "../core/state/update";
 import type { BrowserFrames } from "./browser-frames";
+import type { ImageScaler } from "./image-scaler";
+import { ImageSlots } from "./image-slots";
 import { ImageCache } from "./images";
 import { createKeyNormalizer } from "./input";
 import {
@@ -21,6 +23,7 @@ import {
   type MouseRouter,
   type MouseSource,
 } from "./mouse";
+import { NotePictures } from "./note-pictures";
 import { CalendarOverlay } from "./overlays/calendar";
 import { CompletionView } from "./overlays/completion";
 import { ConflictView } from "./overlays/conflict";
@@ -114,6 +117,18 @@ export type ShellDeps = {
    * driven by a key, click, or wheel sends at most this many pixels a second.
    */
   browserFileRate?: number;
+  /**
+   * Reads and scales pictures off the main thread. With it, a note window
+   * on a kitty terminal never decodes its pictures and sends each one at
+   * the size it shows.
+   */
+  imageScaler?: Pick<ImageScaler, "size" | "scale">;
+  /**
+   * How long a note picture stays on screen before the terminal gets it.
+   * For a path where each picture costs much to pass on, so those a fast
+   * scroll carries past are never sent.
+   */
+  pictureSettleMs?: number;
   /** Tests inject terminal graphics support; the renderer's own detection otherwise. */
   capabilities?: () => GraphicsSupport;
   /** Tests inject how many image files the terminal has yet to read; the renderer's otherwise. */
@@ -139,6 +154,10 @@ export type GraphicsSupport = {
 export type ViewDeps = ShellDeps & {
   dispatch: Store["dispatch"];
   images: ImageCache;
+  /** Note pictures as kitty images, kept in places that do not move. */
+  imageSlots: ImageSlots;
+  /** Note pictures read and scaled off the main thread, with `imageScaler`. */
+  pictures?: NotePictures;
   capabilities: () => GraphicsSupport;
   imageFilesPending: () => number;
 };
@@ -196,12 +215,32 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         : { width: r.width / cols, height: r.height / rows };
     },
   });
+  const pictures =
+    deps.imageScaler === undefined
+      ? undefined
+      : new NotePictures({
+          load: deps.loadImage,
+          scaler: deps.imageScaler,
+          repaint: () => repaint(),
+          now: deps.now,
+        });
+  let imageSlots: ImageSlots | undefined;
   return {
     attach(store) {
+      const slots = new ImageSlots(renderer, {
+        ...(deps.pictureSettleMs === undefined
+          ? {}
+          : { settleMs: deps.pictureSettleMs }),
+        now: deps.now,
+        repaint: () => repaint(),
+      });
+      imageSlots = slots;
       const ctx: ViewDeps = {
         ...deps,
         dispatch: store.dispatch,
         images,
+        imageSlots: slots,
+        ...(pictures === undefined ? {} : { pictures }),
         capabilities:
           deps.capabilities ??
           (() => ({
@@ -238,9 +277,11 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const bufferline = new Bufferline(renderer);
       const statusline = new Statusline(renderer, ctx);
       const toasts = new ToastStack(renderer);
+      // Images go after the windows' text and before anything drawn over them.
       const views: View[] = [
         bufferline,
         windows,
+        slots,
         explorer,
         side,
         statusline,
@@ -320,6 +361,8 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     },
     forgetImages(path) {
       images.forget(path);
+      pictures?.forget(path);
+      imageSlots?.forget(path);
     },
     async flush() {
       repaint();
@@ -327,6 +370,9 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     },
     suspend() {
       suspended = true;
+      // The terminal drops every image: holding scrolled-away pictures would
+      // send them all again on resume.
+      imageSlots?.clear();
       renderer.suspend();
     },
     resume() {
@@ -343,6 +389,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       if (destroyed) return;
       destroyed = true;
       images.clear();
+      pictures?.clear();
       renderer.destroy();
     },
   };

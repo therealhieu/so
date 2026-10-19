@@ -13,7 +13,7 @@
     "check": "biome check . && bun --bun run tsc --noEmit -p . && bun --bun run knip && bun test src scripts test/boundaries.test.ts test/repo.test.ts test/vim",
     "test:ci": "bun test --parallel --timeout=20000 test/ui test/integration test/e2e",
     "bench": "bun scripts/bench-gate.ts",
-    "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts --outfile dist/so",
+    "build": "bun build --compile src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts src/ui/image-scale-worker.ts --outfile dist/so",
     "record:vim": "bun scripts/record-vim.ts",
     "record:intro": "bun scripts/record-intro.ts",
     "sandbox": "bun scripts/sandbox.ts"
