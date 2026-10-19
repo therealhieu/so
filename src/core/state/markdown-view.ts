@@ -37,6 +37,7 @@ export const markdownViewContextFor =
       return "path" in r ? r.path : undefined;
     };
     const { embedMaxRows, images, justify, sizedText } = s.config.preview;
+    const { wrap, tabWidth } = s.config.editor;
     return {
       resolve,
       isResolved: (t) => resolve(t) !== undefined,
@@ -63,5 +64,7 @@ export const markdownViewContextFor =
       images,
       justify,
       sizedText: host.sizedText && sizedText,
+      wrap,
+      tabWidth,
     };
   };

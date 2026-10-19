@@ -35,6 +35,9 @@ export type PreviewCtx = {
   justify: boolean;
   /** Draw H1/H2 headings larger and math and footnote scripts half size. */
   sizedText: boolean;
+  /** Whether the window wraps long lines, and its tab width, as the UI draws source rows. */
+  wrap: boolean;
+  tabWidth: number;
 };
 
 /** Render keys whose rows are prose that may be justified. */
@@ -103,15 +106,22 @@ function linesOf(d: Decoration): [number, number] {
 
 /**
  * Blank rows below a revealed `sizedText` block's source that the block would
- * have drawn beyond the source's own wrapped rows, so the lines below keep
- * their place while it shows. A tab counts as one cell.
+ * have drawn beyond the source's own screen rows, so the lines below keep
+ * their place while it shows. Source rows are counted as the window draws
+ * them: wrapped with its tab width, or one row per line when it does not wrap.
  */
-function keepSizedRows(d: Decoration, v: TextView): Decoration[] {
+function keepSizedRows(
+  d: Decoration,
+  v: TextView,
+  ctx: PreviewCtx,
+): Decoration[] {
   if (d.kind !== "replace" || d.widget?.type !== "sizedText") return [];
   const { start, end } = d.range;
   let source = 0;
   for (let l = start.line; l <= end.line; l++)
-    source += wrapLine(v.buf.line(l), v.width, 1).length;
+    source += ctx.wrap
+      ? wrapLine(v.buf.line(l), v.width, ctx.tabWidth).length
+      : 1;
   const blank = d.widget.rows - source;
   if (blank < 1) return [];
   return [
@@ -175,7 +185,8 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
       ];
       if (lines.length === 0) out.push(...own);
       else
-        for (const d of own) out.push(...(keep(d) ? [d] : keepSizedRows(d, v)));
+        for (const d of own)
+          out.push(...(keep(d) ? [d] : keepSizedRows(d, v, input.ctx)));
     } catch {
       out.push(sign(block.startLine, "⚠", "signError"));
     }

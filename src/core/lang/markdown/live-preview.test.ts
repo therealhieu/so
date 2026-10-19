@@ -19,6 +19,7 @@ import {
   type BlockRenderer,
   blocksIn,
   livePreview,
+  type PreviewCtx,
   registerBlockRenderer,
 } from "./live-preview";
 import type { EmbedData } from "./renderers/embed";
@@ -546,26 +547,28 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
 test("in live view a sized heading on the cursor's line shows its source and keeps its rows", () => {
   builtinRenderers();
   const sized = stubCtx({ sizedText: true });
-  const screenRows = (rows: RenderLine[], width: number) =>
+  const screenRows = (rows: RenderLine[], width: number, ctx: PreviewCtx) =>
     rows.reduce(
       (n, r) =>
         n +
         (r.widget !== undefined && r.spans.length === 0
           ? r.widget.rows
-          : wrapLine(rowText(r), width, 1).length),
+          : ctx.wrap
+            ? wrapLine(rowText(r), width, ctx.tabWidth).length
+            : 1),
       0,
     );
-  const at = (note: string, line: number, width = 80) =>
+  const at = (note: string, line: number, width = 80, ctx = sized) =>
     layoutNote(
       noteView(note, { cursor: { line, col: 0 }, width }),
       "live",
-      sized,
+      ctx,
     );
-  const keepsRows = (note: string, line: number, width = 80) => {
-    const off = at(note, 0, width);
+  const keepsRows = (note: string, line: number, width = 80, ctx = sized) => {
+    const off = at(note, 0, width, ctx);
     expect(off.some((r) => r.widget?.type === "sizedText")).toBe(true);
-    expect(screenRows(at(note, line, width), width)).toBe(
-      screenRows(off, width),
+    expect(screenRows(at(note, line, width, ctx), width, ctx)).toBe(
+      screenRows(off, width, ctx),
     );
   };
 
@@ -581,6 +584,18 @@ test("in live view a sized heading on the cursor's line shows its source and kee
   keepsRows(long, 2, 30);
   const spacers = at(long, 2, 30).filter((r) => r.widget?.type === "text");
   expect(spacers.map((r) => r.widget?.rows)).toEqual([6]);
+
+  // Without wrapping the same source takes one row, so the spacer takes seven.
+  const unwrapped = stubCtx({ sizedText: true, wrap: false });
+  keepsRows(long, 2, 30, unwrapped);
+  const flat = at(long, 2, 30, unwrapped).filter(
+    (r) => r.widget?.type === "text",
+  );
+  expect(flat.map((r) => r.widget?.rows)).toEqual([7]);
+
+  // A tab takes the window's tab width when the source wraps.
+  // This source is 30 cells with a one-cell tab but 31 with the default 8.
+  keepsRows("Intro\n\n# Raft\tand Paxos side by sides\n\nBody", 2, 30);
 
   // A setext heading reveals its text and its underline: two source rows.
   const setext = "Intro\n\nRaft\n====\n\nBody";
