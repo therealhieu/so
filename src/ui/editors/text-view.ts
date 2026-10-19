@@ -57,6 +57,7 @@ import type {
 import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
+import { kittyPictures } from "../widgets/image";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
 import type { WindowView } from "./registry";
 
@@ -823,10 +824,18 @@ export class EditorView extends Renderable implements WindowView {
     try {
       const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = this.specOf(b);
+      const pictures = kittyPictures(this.deps, s);
       const host: ViewHost = {
         width,
         rows,
-        imageSize: (path) => this.deps.images.size(path),
+        imageSize: (path) => {
+          const got = pictures?.size(path);
+          return pictures === undefined
+            ? this.deps.images.size(path)
+            : got === undefined || "failed" in got
+              ? undefined
+              : got;
+        },
         cell: this.deps.images.cellSize(),
       };
       const input =

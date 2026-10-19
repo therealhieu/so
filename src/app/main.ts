@@ -111,6 +111,7 @@ import { registerEditorView } from "../ui/editors/registry";
 import { SqliteView } from "../ui/editors/sqlite-view";
 import { EditorView } from "../ui/editors/text-view";
 import { VideoView } from "../ui/editors/video-view";
+import { createImageScaler } from "../ui/image-scaler";
 import { createRenderer, createShell } from "../ui/shell";
 import { paintBaseEmbed } from "../ui/widgets/base";
 import { paintEmbed } from "../ui/widgets/embed";
@@ -175,6 +176,13 @@ const HERDR_FILE_PIXELS = 2_500_000;
 
 /** Through herdr's files, the browser frame pixels a second of a page at rest. */
 const HERDR_FILE_RATE = 20_000_000;
+
+/**
+ * Under herdr, how long a note picture stays on screen before it is sent:
+ * herdr reads and passes on every picture, so a scroll past a page of them
+ * would wait on pictures gone from the screen by the time they arrive.
+ */
+const HERDR_PICTURE_SETTLE_MS = 120;
 
 const underHerdr = process.env.HERDR_ENV !== undefined;
 const herdrFiles = underHerdr && process.env.TERM_PROGRAM === "herdr";
@@ -445,6 +453,8 @@ async function main(argv: string[]): Promise<void> {
       : {}),
     ...(herdrFiles ? { browserFileRate: HERDR_FILE_RATE } : {}),
     now: clock,
+    imageScaler: createImageScaler(),
+    ...(underHerdr ? { pictureSettleMs: HERDR_PICTURE_SETTLE_MS } : {}),
     loadImage: createImageLoader(ws.root, {
       pdfPage: (r) => pdf.page(r),
       svg: rasterizeSvg,

@@ -1,8 +1,9 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { OptimizedBuffer } from "@opentui/core";
+import { imageInfo, OptimizedBuffer } from "@opentui/core";
 import { createTerminalCapabilities } from "@opentui/core/testing";
 import { activeBuffer, activeWindow } from "../../src/core/state/buffers";
+import { encodePng } from "../../src/ui/png";
 import { themes } from "../../src/ui/theme";
 import { createSvgRasterizer } from "../../src/workspace/svg";
 import { noteSummary, TASK_NOTES, TASKS_BASE } from "../support/bases";
@@ -376,6 +377,71 @@ test("an image is drawn only while it is on screen, so no placement outlives it"
     m.open("notes/other.md", "# Other\n\nPlain text.\n");
     expect(await drawn()).toBe(0);
     expect((await windowRows(m)).join("\n")).toContain("Plain text.");
+  } finally {
+    draw.mockRestore();
+  }
+});
+
+test("with a scaler, a kitty note picture is sent at its shown size and stays sent while scrolled away", async () => {
+  const draw = spyOn(OptimizedBuffer.prototype, "drawImage");
+  const scaled: [number, number][] = [];
+  try {
+    m = await mountImageNote(
+      {
+        capabilities: KITTY,
+        imageScaler: {
+          size: async (_key, source) => {
+            const info = imageInfo(source as Uint8Array);
+            return { width: info.width, height: info.height };
+          },
+          scale: async (_key, _source, width, height) => {
+            scaled.push([width, height]);
+            return encodePng(
+              new Uint8Array(width * height * 4).fill(60),
+              width,
+              height,
+            );
+          },
+        },
+      },
+      `${Array.from({ length: 20 }, (_, i) => `Above ${i + 1}`).join("\n")}\n\n${IMAGE_NOTE}`,
+    );
+    // 8×16-pixel cells: the 1920×960 picture shows in at most 98 columns.
+    (m.t.renderer as unknown as { _resolution: unknown })._resolution = {
+      width: 100 * 8,
+      height: 40 * 16,
+    };
+    await m.frame();
+    await Bun.sleep(0);
+    draw.mockClear();
+    await m.frame();
+    expect(m.loads).toEqual(["images/diagram.png"]);
+    const [w, h] = scaled.at(-1) ?? [0, 0];
+    expect(w).toBeLessThanOrEqual(98 * 8);
+    const shown = draw.mock.calls.find((c) => c[0].width === w);
+    const [, , y, , rows, , , , , , sourceHeight, tier] = shown ?? [];
+    expect(tier).toBe("kitty");
+    expect(rows).toBe(38 - ((y as number) - 1));
+    expect(sourceHeight).toBe(Math.round((h * (rows as number)) / 24));
+
+    // Scrolled away, it is drawn on the statusline's first cell, which the
+    // statusline then paints over.
+    m.keys("G");
+    draw.mockClear();
+    await m.frame();
+    expect(
+      draw.mock.calls.map(([image, x, y, cols, rows]) => [
+        image.width,
+        x,
+        y,
+        cols,
+        rows,
+      ]),
+    ).toEqual([[w, 0, 39, 1, 1]]);
+    expect((await m.status()).trim()).not.toBe("");
+    m.keys("gg");
+    await m.frame();
+    expect(scaled).toHaveLength(2);
   } finally {
     draw.mockRestore();
   }

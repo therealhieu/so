@@ -62,7 +62,7 @@ test("compile includes the workers", () => {
   expect(compiles.length).toBeGreaterThanOrEqual(3);
   for (const line of compiles)
     expect(line).toContain(
-      "src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts",
+      "src/app/main.ts src/workspace/index-worker.ts src/workspace/sqlite-worker.ts src/ui/image-scale-worker.ts",
     );
 });
 
