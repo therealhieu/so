@@ -10,7 +10,7 @@ import {
   SizedText,
   terminalWriter,
 } from "../../src/ui/sized-text";
-import { type Mounted, mountShell } from "../support/ui";
+import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
 const COLS = 20;
 const ROWS = 6;
@@ -194,12 +194,20 @@ test("a note's heading and script cells are sent at their size over cells the wi
   const m = await mountNote(NOTE);
   const out = m.writes.join("");
   const frame = m.t.captureCharFrame();
-  expect(out).toContain(`${OSC66}s=2;█ Raft\x1b\\`);
+  expect(out).toContain(`${OSC66}s=2;Raft\x1b\\`);
   expect(out).toContain(`${OSC66}n=1:d=2:v=1:w=1;w\x1b\\`);
   const rows = frame.split("\n");
-  const at = rows.findIndex((r) => r.includes("█ Raft"));
+  const at = rows.findIndex((r) => r.includes("Raft"));
   expect(at).toBeGreaterThanOrEqual(0);
+  expect(rows[at]).not.toContain("█");
   expect(rows[at + 1]?.trim()).toBe("");
+  // No heading band: the heading sits on the paragraph's background.
+  const spans = m.t.captureSpans().lines;
+  const x = [...(rows[at] ?? "")].indexOf("R");
+  const term = rows.findIndex((r) => r.includes("Term"));
+  const plain = cellStyle(spans, [...(rows[term] ?? "")].indexOf("T"), term);
+  expect(cellStyle(spans, x, at)?.bg).toEqual(plain?.bg);
+  expect(cellStyle(spans, x + 6, at + 1)?.bg).toEqual(plain?.bg);
   expect(await sent(m)).toBe("");
 });
 
@@ -207,7 +215,7 @@ test("a heading cut at the window bottom keeps its normal-size text and is not s
   const m = await mountNote(`${"line\n".repeat(30)}# Raft\n`);
   m.keys("Gk");
   const out = await sent(m);
-  expect(await m.frame()).toContain("█ Raft");
+  expect(await m.frame()).toContain("Raft");
   expect(out).not.toContain(`${OSC66}s=2`);
 });
 
@@ -215,9 +223,9 @@ test("a resize or a resume from a tool hand-off sends the sized text again", asy
   const m = await mountNote(NOTE);
   await sent(m);
   m.t.resize(64, 12);
-  expect(await sent(m)).toContain(`${OSC66}s=2;█ Raft`);
+  expect(await sent(m)).toContain(`${OSC66}s=2;Raft`);
   expect(await sent(m)).toBe("");
   m.shell.suspend();
   m.shell.resume();
-  expect(await sent(m)).toContain(`${OSC66}s=2;█ Raft`);
+  expect(await sent(m)).toContain(`${OSC66}s=2;Raft`);
 });

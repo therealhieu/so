@@ -21,7 +21,7 @@ const sized = (decos: Decoration[]) => {
   return { range: d.range, block: d.block, widget: d.widget };
 };
 
-test("an H1 becomes one sized block of two rows per wrapped row", () => {
+test("an H1 becomes one sized block of two rows per wrapped row, without a glyph", () => {
   const one = sized(render("# Raft", 20, true));
   expect(one.block).toBe(true);
   expect(one.range).toEqual({
@@ -33,7 +33,7 @@ test("an H1 becomes one sized block of two rows per wrapped row", () => {
     rows: 2,
     data: {
       scale: 2,
-      rows: [[{ text: "█ Raft", style: "mdHeading1", cells: 12 }]],
+      rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
   expect(sized(render("# Leader leases", 20, true)).widget.rows).toBe(4);
@@ -45,12 +45,7 @@ test("an H2 is sized at 1.5× with its inline styles as separate chunks", () => 
   const data = widget.data as SizedBlock;
   expect(widget.rows).toBe(2);
   expect(data.scale).toBe(1.5);
-  expect(data.rows[0]?.map((c) => c.text)).toEqual([
-    "▊ A ",
-    "bold",
-    " mov",
-    "e",
-  ]);
+  expect(data.rows[0]?.map((c) => c.text)).toEqual(["A ", "bold", " mov", "e"]);
   expect(data.rows[0]?.[1]).toMatchObject({
     style: "mdBold",
     under: "mdHeading2",
@@ -69,7 +64,7 @@ test("a setext H1 or H2 is one sized block over its text lines and underline", (
     rows: 2,
     data: {
       scale: 2,
-      rows: [[{ text: "█ Raft", style: "mdHeading1", cells: 12 }]],
+      rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
   const h2 = sized(render("Raft\n  leases\n---", 40, true));
@@ -77,7 +72,7 @@ test("a setext H1 or H2 is one sized block over its text lines and underline", (
   const data = h2.widget.data as SizedBlock;
   expect(data.scale).toBe(1.5);
   expect(data.rows.map((r) => r.map((c) => c.text).join(""))).toEqual([
-    "▊ Raft leases",
+    "Raft leases",
   ]);
   const plain = render("Raft\n====", 20, false);
   expect(plain.some((d) => d.kind === "replace" && d.widget)).toBe(false);

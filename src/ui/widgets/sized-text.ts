@@ -10,18 +10,21 @@ const headingOf = (block: SizedBlock) => {
   return first?.under ?? first?.style ?? "text";
 };
 
-/** A chunk's style; text without a background of its own takes the heading's. */
+/**
+ * A chunk's style on the plain background: a sized heading has no band, so
+ * only text with a background of its own (code, a highlight) keeps it.
+ */
 function chunkStyle(theme: Theme, c: SizedChunk, heading: string): Style {
   const own = theme.style(c.style);
-  return own.bg.equals(theme.style("text").bg)
-    ? { ...own, bg: theme.style(c.under ?? heading).bg }
+  return own.bg.equals(theme.style(c.under ?? heading).bg)
+    ? { ...own, bg: theme.style("text").bg }
     : own;
 }
 
 /**
- * A sized heading: each row of chunks takes two screen rows, painted in the
- * heading's background as wide as the terminal draws it, with the text at
- * normal size on the first of them. Given all its rows, the terminal then
+ * A sized heading: each row of chunks takes two screen rows, on the plain
+ * background, with the text at normal size on the first of them. Given all
+ * its rows, the terminal then
  * draws the text at its size over them; cut at the window bottom, the
  * normal-size text stays.
  */
@@ -29,7 +32,6 @@ export const paintSizedText: WidgetPainter = (t, w) => {
   const block = w.data as SizedBlock;
   const heading = headingOf(block);
   const plain = t.theme.style("text");
-  const fill = t.theme.style(heading);
   const rects: CellRect[] = [];
   let whole = t.rows >= w.rows;
   for (let i = 0; i < t.rows; i++) {
@@ -49,8 +51,6 @@ export const paintSizedText: WidgetPainter = (t, w) => {
         x += n;
       }
     }
-    if (x < cells) drawCells(t.buf, fill, t.x + x, t.y + i, "", cells - x);
-    x = Math.max(x, cells);
     if (x < t.width) drawCells(t.buf, plain, t.x + x, t.y + i, "", t.width - x);
   }
   if (!whole) return;

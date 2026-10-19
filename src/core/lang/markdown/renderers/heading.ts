@@ -47,8 +47,8 @@ function sizedBlock(
 /**
  * A heading with its level glyph in place of the `#` markers (or above a
  * hidden setext underline), styled `mdHeading1`–`mdHeading4`. With sized
- * text, an H1 or H2 is drawn larger as one `sizedText` widget covering its
- * text lines and any setext underline.
+ * text, an H1 or H2 is drawn larger, without a glyph, as one `sizedText`
+ * widget covering its text lines and any setext underline.
  */
 export const headingRenderer: BlockRenderer = (block, v, input) => {
   const { doc } = input;
@@ -60,15 +60,16 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
     : Number(rootOf(doc, block, v.buf).children?.[0]?.depth ?? 1);
   const level = Math.min(depth, 4);
   const style = `mdHeading${level}`;
-  const glyph = { text: `${GLYPHS[level - 1]} `, style };
   const scale = SCALES[depth - 1];
   const sized = input.ctx.sizedText && scale !== undefined;
+  // A sized heading's size shows its level.
+  const glyph = sized ? [] : [{ text: `${GLYPHS[level - 1]} `, style }];
   // Scripts inside a sized heading keep their Unicode form: a chunk is drawn at one scale.
   const unsized = { ...input, ctx: { ...input.ctx, sizedText: false } };
   if (atx === null) {
     // Setext: the text lines, then an `===` or `---` underline.
     const last = contentEnd(v.buf, block);
-    const out = [replaceCols(first, 0, 0, [glyph]), replaceLine(v.buf, last)];
+    const out = [replaceCols(first, 0, 0, glyph), replaceLine(v.buf, last)];
     const lines: number[] = [];
     for (let l = first; l < last; l++) {
       out.push(lineStyle(l, style));
@@ -86,7 +87,7 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
   const closing = CLOSING.exec(text.slice(atx[0].length));
   const out = [
     lineStyle(first, style),
-    replaceCols(first, 0, atx[0].length, [glyph]),
+    replaceCols(first, 0, atx[0].length, glyph),
   ];
   if (closing)
     out.push(replaceCols(first, atx[0].length + closing.index, text.length));
