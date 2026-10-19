@@ -826,7 +826,7 @@ exports[`the settings picker moves the explorer to the other edge at once 1`] = 
  NOTES  ~/notes               │   1 ▕# Ideas                                                                            
   notes                      │   1                                                                                     
     ideas.m╭─ Settings ───────────────────────────────────────────────────────────────────────────────────╮            
-    plan.md│ ❯                                                27/27 │ explorer.position                   │            
+    plan.md│ ❯                                                28/28 │ explorer.position                   │            
   scripts  │ ────────────────────────────────────────────────────── │                                     │            
   config.ya│ ▸ explorer.position                               left │ The edge the explorer docks on;     │            
   todo.md  │   explorer.icons                                  nerd │ the side panel takes the other.     │            
@@ -842,9 +842,9 @@ exports[`the settings picker moves the explorer to the other edge at once 1`] = 
             │   preview.images                                  auto │                                     │            
             │   preview.readable                                 off │                                     │            
             │   preview.justify                                  off │                                     │            
+            │   preview.sizedText                                 on │                                     │            
             │   autosave.enabled                                  on │                                     │            
             │   autosave.delayMs                                1000 │                                     │            
-            │   editor.tabWidth                                    8 │                                     │            
             ╰─ C-j/C-k move · Enter change · Esc close ────────────────────────────────────────────────────╯            
                               │                                                                                         
                               │                                                                                         

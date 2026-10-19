@@ -26,6 +26,9 @@ export function stubCtx(over: Partial<PreviewCtx> = {}): PreviewCtx {
     embedMaxRows: 10,
     images: "auto",
     justify: false,
+    sizedText: false,
+    wrap: true,
+    tabWidth: 8,
     ...over,
   };
 }

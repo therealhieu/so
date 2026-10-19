@@ -40,6 +40,7 @@ const model = m.reg.viewContexts.build(
     rows: 37,
     imageSize: () => undefined,
     cell: { width: 8, height: 16 },
+    sizedText: false,
   },
 ) as PreviewCtx;
 const embedded = model.embedModel("tasks.base", "#All tasks");

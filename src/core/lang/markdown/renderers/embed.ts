@@ -101,6 +101,7 @@ export function embedRows(
     ...ctx,
     embed: () => "missing",
     images: "off",
+    sizedText: false,
     folds: new Set(),
   };
   nested.add(inner);

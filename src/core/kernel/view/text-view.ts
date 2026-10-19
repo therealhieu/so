@@ -109,7 +109,8 @@ function onLine(
   return [Math.min(start, length), Math.min(end, length)];
 }
 
-function layoutLine(
+/** One line with the decorations that touch it, as `layoutText` lays it out. */
+export function layoutLine(
   v: TextView,
   line: number,
   decos: readonly Decoration[],

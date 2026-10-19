@@ -24,12 +24,44 @@ export type Span = {
    * edge instead of wrapping.
    */
   virtual?: "inline" | "eol";
+  /**
+   * One or two narrow characters drawn half size in this span's one cell,
+   * raised or lowered; `text` is the first of them, shown where the
+   * terminal cannot size text.
+   */
+  script?: { text: string; place: "sup" | "sub" };
 };
 
 export type Sign = { text: string; style: StyleToken };
 
 /** Source lines `from` up to, not including, `to`. */
 export type LineRange = { from: number; to: number };
+
+/**
+ * A run of one look drawn at its block's scale, `cells` columns wide; a
+ * `plain` chunk is a space left blank at normal size.
+ */
+export type SizedChunk = {
+  text: string;
+  style: StyleToken;
+  under?: StyleToken;
+  cells: number;
+  plain?: true;
+};
+
+/**
+ * Text size as `n/d` of double size: 7/8 draws text at 1.75×. With
+ * `wordSpace`, each word starts its own chunks and a space between words is
+ * that many blank normal-size cells, so the gap kitty leaves after a chunk
+ * falls between words.
+ */
+export type SizedScale = { n: number; d: number; wordSpace?: number };
+
+/**
+ * Text the terminal draws larger than one cell (kitty's text sizing
+ * protocol); each row of chunks takes two screen rows.
+ */
+export type SizedBlock = { scale: SizedScale; rows: SizedChunk[][] };
 
 /** Rows painted by a UI widget painter registered for `type`. */
 export type Widget = { type: string; data: unknown; rows: number };

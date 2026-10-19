@@ -47,6 +47,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "preview.images auto",
       "preview.readable off",
       "preview.justify off",
+      "preview.sizedText on",
       "autosave.enabled on",
       "autosave.delayMs 1000",
       "editor.tabWidth 8",
@@ -140,6 +141,20 @@ test("cycling explorer.gitignored hides gitignored entries and lists the shown f
     },
     { kind: "listDir", dir: "" },
   ]);
+});
+
+test("preview.sizedText starts on, and Enter turns it off and saves it", () => {
+  const r = keys(keys(editing(), " us").state, "sizedText<CR>");
+  expect(r.state.config.preview.sizedText).toBe(false);
+  expect(r.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["preview", "sizedText"],
+      value: false,
+      previous: true,
+    },
+  ]);
+  expect(rows(r.state)).toEqual(["preview.sizedText off"]);
 });
 
 test("Enter on theme opens the theme list with the theme in use selected", () => {

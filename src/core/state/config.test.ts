@@ -145,6 +145,7 @@ test("preview options default to reading view, ten embed rows, automatic images,
     readable: false,
     readableWidth: 100,
     justify: false,
+    sizedText: true,
   });
   expect(defaults.preview).toEqual(result.config.preview);
 });

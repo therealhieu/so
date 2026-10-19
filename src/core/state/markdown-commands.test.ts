@@ -58,6 +58,7 @@ function liveRows(s: AppState): string[] {
     rows: 40,
     imageSize: () => undefined,
     cell: { width: 8, height: 16 },
+    sizedText: false,
   };
   const ctx = markdownViewContext(s, s.windows.active, host) as PreviewCtx;
   const v: TextView = {

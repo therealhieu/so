@@ -149,6 +149,16 @@ export const SETTINGS: readonly Setting[] = [
   },
   {
     kind: "choice",
+    path: ["preview", "sizedText"],
+    choices: [true, false],
+    about: [
+      "Larger H1–H3 headings and",
+      "half-size math and footnote",
+      "scripts where the terminal can.",
+    ],
+  },
+  {
+    kind: "choice",
     path: ["autosave", "enabled"],
     choices: [true, false],
     about: ["Save a changed note after a", "pause in typing."],

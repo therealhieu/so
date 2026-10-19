@@ -1,11 +1,12 @@
 import type { Pos, Range } from "../../kernel/text/pos";
 import type { Decoration } from "../../kernel/view/decorations";
+import { scriptSpans } from "../../kernel/view/sized";
 import type { Span, StyleToken, TextView } from "../../kernel/view/types";
 import { nodeRange, rootOf } from "./block-text";
 import type { Block } from "./doc";
 import type { MarkdownViewInput } from "./live-preview";
 import type { MdNode } from "./mdast";
-import { mathText } from "./renderers/math";
+import { mathTextSpans } from "./renderers/math";
 
 /** Emphasis-like nodes: a style for the content and how many marker characters sit on each side. */
 const WRAPPED: Readonly<
@@ -58,6 +59,23 @@ const footnoteLabel = (label: string) =>
     : `[${label}]`;
 
 /**
+ * A footnote label as a reference or definition shows it: half-size raised
+ * pairs with sized text, else `footnoteLabel`; `after` follows the label.
+ */
+export const footnoteRef = (
+  label: string,
+  sizedText: boolean,
+  after = "",
+): Span[] => {
+  const pairs = sizedText ? scriptSpans(label, "sup", "mdFootnote") : undefined;
+  if (pairs === undefined)
+    return [{ text: footnoteLabel(label) + after, style: "mdFootnote" }];
+  return after === ""
+    ? pairs
+    : [...pairs, { text: after, style: "mdFootnote" }];
+};
+
+/**
  * Inline rendering of a prose block: emphasis markers, link syntax,
  * `%%comments%%`, and footnote markers are hidden or replaced, and the
  * content is styled. Nodes on `revealed` lines keep their source.
@@ -82,10 +100,9 @@ export function inlineDecorations(
       const wrapped = WRAPPED[node.type];
       const math =
         node.type === "inlineMath"
-          ? mathText(String(node.value ?? ""))
+          ? mathTextSpans(String(node.value ?? ""), "mdCode", ctx.sizedText)
           : undefined;
-      if (math?.kind === "unicode")
-        out.push(show(range, [{ text: math.text, style: "mdCode" }]));
+      if (math !== undefined) out.push(show(range, math));
       else if (wrapped !== undefined) {
         const n = wrapped.marker(src);
         const inner = { start: at(range.start, n), end: at(range.end, -n) };
@@ -142,12 +159,13 @@ export function inlineDecorations(
             break;
           case "footnoteReference":
             out.push(
-              show(range, [
-                {
-                  text: footnoteLabel(String(node.label ?? node.identifier)),
-                  style: "mdFootnote",
-                },
-              ]),
+              show(
+                range,
+                footnoteRef(
+                  String(node.label ?? node.identifier),
+                  ctx.sizedText,
+                ),
+              ),
             );
             break;
           case "inlineFootnote":
@@ -169,9 +187,10 @@ export function inlineDecorations(
               )
                 continue;
               out.push(
-                show({ start, end: at(start, raw.length) }, [
-                  { text: footnoteLabel(m[1] ?? ""), style: "mdFootnote" },
-                ]),
+                show(
+                  { start, end: at(start, raw.length) },
+                  footnoteRef(m[1] ?? "", ctx.sizedText),
+                ),
               );
             }
             break;

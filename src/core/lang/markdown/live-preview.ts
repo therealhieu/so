@@ -4,11 +4,13 @@ import type {
   DecorationProvider,
 } from "../../kernel/view/decorations";
 import type { LineRange, TextView } from "../../kernel/view/types";
+import { wrapLine } from "../../kernel/view/wrap";
 import { contentEnd } from "./block-text";
 import type { BlockKind } from "./blocks";
 import type { Block, Doc } from "./doc";
 import { inlineDecorations } from "./inline";
 import { renderKey } from "./render-key";
+import { textWidget } from "./renderers/rows";
 import { reveal } from "./reveal";
 
 /** What the provider and block renderers may know beyond the view; built per window per frame. */
@@ -31,6 +33,11 @@ export type PreviewCtx = {
   images: "auto" | "blocks" | "off";
   /** Stretch the wrapped rows of paragraphs, list items, callouts, and quotes to both edges. */
   justify: boolean;
+  /** Draw H1–H3 headings larger and math and footnote scripts half size. */
+  sizedText: boolean;
+  /** Whether the window wraps long lines, and its tab width, as the UI draws source rows. */
+  wrap: boolean;
+  tabWidth: number;
 };
 
 /** Render keys whose rows are prose that may be justified. */
@@ -97,6 +104,36 @@ function linesOf(d: Decoration): [number, number] {
   }
 }
 
+/**
+ * Blank rows below a revealed `sizedText` block's source that the block would
+ * have drawn beyond the source's own screen rows, so the lines below keep
+ * their place while it shows. Source rows are counted as the window draws
+ * them: wrapped with its tab width, or one row per line when it does not wrap.
+ */
+function keepSizedRows(
+  d: Decoration,
+  v: TextView,
+  ctx: PreviewCtx,
+): Decoration[] {
+  if (d.kind !== "replace" || d.widget?.type !== "sizedText") return [];
+  const { start, end } = d.range;
+  let source = 0;
+  for (let l = start.line; l <= end.line; l++)
+    source += ctx.wrap
+      ? wrapLine(v.buf.line(l), v.width, ctx.tabWidth).length
+      : 1;
+  const blank = d.widget.rows - source;
+  if (blank < 1) return [];
+  return [
+    {
+      kind: "widget",
+      at: { line: end.line, col: 1 },
+      block: true,
+      widget: textWidget(Array.from({ length: blank }, () => [])),
+    },
+  ];
+}
+
 const sign = (line: number, text: string, style: string): Decoration => ({
   kind: "line",
   line,
@@ -107,7 +144,8 @@ const sign = (line: number, text: string, style: string): Decoration => ({
  * Live and reading views of a Markdown note. Only blocks intersecting the
  * visible lines are rendered, each by the renderer registered for its render
  * key (the paragraph renderer otherwise). Revealed lines and blocks keep
- * their source and get a `▕` sign; a throwing renderer leaves its block as
+ * their source and get a `▕` sign, and a revealed sized heading keeps its
+ * rows; a throwing renderer leaves its block as
  * source with a `⚠` sign on its first line.
  */
 export const livePreview: DecorationProvider<MarkdownViewInput> = (
@@ -145,7 +183,10 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
         ...inlineDecorations(block, v, input, shown.lines),
         ...(input.ctx.justify && PROSE.has(key) ? justified(block, v) : []),
       ];
-      out.push(...(lines.length === 0 ? own : own.filter(keep)));
+      if (lines.length === 0) out.push(...own);
+      else
+        for (const d of own)
+          out.push(...(keep(d) ? [d] : keepSizedRows(d, v, input.ctx)));
     } catch {
       out.push(sign(block.startLine, "⚠", "signError"));
     }

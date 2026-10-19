@@ -12,12 +12,14 @@ import type { DecorationProvider } from "../../kernel/view/decorations";
 import { highlightMarks } from "../../kernel/view/marks";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
+import { wrapLine } from "../../kernel/view/wrap";
 import { type Block, parseDoc } from "./doc";
 import { markdownFileType } from "./file-type";
 import {
   type BlockRenderer,
   blocksIn,
   livePreview,
+  type PreviewCtx,
   registerBlockRenderer,
 } from "./live-preview";
 import type { EmbedData } from "./renderers/embed";
@@ -540,4 +542,99 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
   // The live cursor reveals its line, which keeps its source ragged.
   expect(justified("live", 3)).toEqual([2, 5, 6, 13, 15]);
   expect(justified("reading", 0, false)).toEqual([]);
+});
+
+test("in live view a sized heading on the cursor's line shows its source and keeps its rows", () => {
+  builtinRenderers();
+  const sized = stubCtx({ sizedText: true });
+  const screenRows = (rows: RenderLine[], width: number, ctx: PreviewCtx) =>
+    rows.reduce(
+      (n, r) =>
+        n +
+        (r.widget !== undefined && r.spans.length === 0
+          ? r.widget.rows
+          : ctx.wrap
+            ? wrapLine(rowText(r), width, ctx.tabWidth).length
+            : 1),
+      0,
+    );
+  const at = (note: string, line: number, width = 80, ctx = sized) =>
+    layoutNote(
+      noteView(note, { cursor: { line, col: 0 }, width }),
+      "live",
+      ctx,
+    );
+  const keepsRows = (note: string, line: number, width = 80, ctx = sized) => {
+    const off = at(note, 0, width, ctx);
+    expect(off.some((r) => r.widget?.type === "sizedText")).toBe(true);
+    expect(screenRows(at(note, line, width, ctx), width, ctx)).toBe(
+      screenRows(off, width, ctx),
+    );
+  };
+
+  const note = "Intro\n\n# Raft\n\nBody";
+  keepsRows(note, 2);
+  const heading = at(note, 2).filter((r) => r.sourceLine === 2);
+  expect(heading.map(rowText)).toEqual(["# Raft", ""]);
+  expect(heading[1]?.widget).toEqual({ type: "text", data: [[]], rows: 1 });
+
+  // The 46-cell source wraps to two rows at width 30, so the spacer takes one less.
+  const long =
+    "Intro\n\n# Consensus guarantees for distributed leaders\n\nBody";
+  keepsRows(long, 2, 30);
+  const spacers = at(long, 2, 30).filter((r) => r.widget?.type === "text");
+  expect(spacers.map((r) => r.widget?.rows)).toEqual([6]);
+
+  // Without wrapping the same source takes one row, so the spacer takes seven.
+  const unwrapped = stubCtx({ sizedText: true, wrap: false });
+  keepsRows(long, 2, 30, unwrapped);
+  const flat = at(long, 2, 30, unwrapped).filter(
+    (r) => r.widget?.type === "text",
+  );
+  expect(flat.map((r) => r.widget?.rows)).toEqual([7]);
+
+  // A tab takes the window's tab width when the source wraps.
+  // This source is 30 cells with a one-cell tab but 31 with the default 8.
+  keepsRows("Intro\n\n# Raft\tand Paxos side by sides\n\nBody", 2, 30);
+
+  // A setext heading reveals its text and its underline: two source rows.
+  const setext = "Intro\n\nRaft\n====\n\nBody";
+  keepsRows(setext, 2);
+  keepsRows(setext, 3);
+  const revealed = at(setext, 2).filter(
+    (r) => r.sourceLine === 2 || r.sourceLine === 3,
+  );
+  expect(revealed.map(rowText)).toEqual(["Raft", "===="]);
+});
+
+test("with sized text, inline math scripts and footnote labels are half-size pairs", () => {
+  builtinRenderers();
+  const note = "Lease $Q_{w}$ holds[^note]\n\n[^note]: why";
+  const rows = (sizedText: boolean) =>
+    layoutNote(
+      noteView(note, { cursor: { line: 1, col: 0 } }),
+      "live",
+      stubCtx({ sizedText }),
+    );
+  const scripts = (row: RenderLine | undefined) =>
+    (row?.spans ?? []).map((s) =>
+      s.script === undefined ? s.text : [s.text, s.script.text, s.script.place],
+    );
+  const [para, , def] = rows(true);
+  expect(scripts(para)).toEqual([
+    "Lease ",
+    "Q",
+    ["w", "w", "sub"],
+    " holds",
+    ["n", "no", "sup"],
+    ["t", "te", "sup"],
+  ]);
+  expect(scripts(def).slice(0, 3)).toEqual([
+    ["n", "no", "sup"],
+    ["t", "te", "sup"],
+    " ",
+  ]);
+  const [plainPara, , plainDef] = rows(false);
+  expect(rowText(plainPara)).toBe("Lease Q_{w} holds[note]");
+  expect(rowText(plainDef)).toBe("[note] why");
 });
