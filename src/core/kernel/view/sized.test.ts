@@ -1,68 +1,73 @@
 import { expect, test } from "bun:test";
 import { wrapSized } from "./sized";
-import type { Span } from "./types";
+import type { SizedScale, Span } from "./types";
 
-const h1 = (text: string): Span[] => [
-  { text: "█ ", style: "mdHeading1", col: 0, inserted: true },
-  { text, style: "mdHeading1", col: 2 },
-];
-const h2 = (text: string): Span[] => [
-  { text: "▊ ", style: "mdHeading2", col: 0, inserted: true },
-  { text, style: "mdHeading2", col: 3 },
+const H1: SizedScale = { n: 7, d: 8 };
+const H2: SizedScale = { n: 4, d: 5 };
+const H3: SizedScale = { n: 7, d: 10 };
+
+const heading = (text: string, style = "mdHeading1"): Span[] => [
+  { text, style, col: 2 },
 ];
 const texts = (rows: { text: string }[][]) =>
   rows.map((r) => r.map((c) => c.text));
 const widest = (rows: { cells: number }[][]) =>
   Math.max(...rows.map((r) => r.reduce((n, c) => n + c.cells, 0)));
 
-test("at 2× a same-style run is one chunk twice its width", () => {
-  expect(wrapSized(h1("Raft"), 2, 20)).toEqual([
-    [{ text: "█ Raft", style: "mdHeading1", cells: 12 }],
+test("a chunk takes whole double cells at its scale", () => {
+  expect(wrapSized(heading("Raft"), H1, 20)).toEqual([
+    [{ text: "Raft", style: "mdHeading1", cells: 8 }],
   ]);
 });
 
-test("at 2× a heading wider than half the window wraps after a space", () => {
-  const rows = wrapSized(h1("Leader leases"), 2, 20);
-  expect(texts(rows)).toEqual([["█ Leader "], ["leases"]]);
-  expect(rows.map((r) => r.map((c) => c.cells))).toEqual([[18], [12]]);
-});
-
-test("at 1.5× runs split into chunks of at most 4 cells, each an even cell count", () => {
-  expect(wrapSized(h2("Guarantees"), 1.5, 20)).toEqual([
-    [
-      { text: "▊ Gu", style: "mdHeading2", cells: 6 },
-      { text: "aran", style: "mdHeading2", cells: 6 },
-      { text: "tees", style: "mdHeading2", cells: 6 },
-    ],
+test("a run is cut where its chunks fill double cells exactly", () => {
+  const cut = (text: string, scale: SizedScale) =>
+    texts(wrapSized(heading(text), scale, 80))[0];
+  expect(cut("Markdown tour guide", H1)).toEqual([
+    "Markdown",
+    " tour gu",
+    "ide",
   ]);
-  const rows = wrapSized(h2("Consensus guarantees for leaders"), 1.5, 20);
-  expect(rows.length).toBeGreaterThan(1);
-  expect(widest(rows)).toBeLessThanOrEqual(20);
-  expect(texts(rows).flat().join("")).toBe(
-    "▊ Consensus guarantees for leaders",
+  expect(cut("Guarantees", H2)).toEqual(["Guara", "ntees"]);
+  expect(cut("Table of contents", H3)).toEqual(["Table of c", "ontents"]);
+  // Full chunks: 8 at 7/8 → 14 cells, 5 at 4/5 → 8 cells, 10 at 7/10 → 14 cells.
+  expect(wrapSized(heading("Markdown tour guide"), H1, 80)[0]?.[0]?.cells).toBe(
+    14,
   );
-  for (const c of rows.flat()) expect(c.cells % 2).toBe(0);
+  expect(wrapSized(heading("Guarantees"), H2, 80)[0]?.[0]?.cells).toBe(8);
+  expect(wrapSized(heading("Table of contents"), H3, 80)[0]?.[0]?.cells).toBe(
+    14,
+  );
+});
+
+test("a heading wider than the window wraps after a space", () => {
+  const rows = wrapSized(heading("Leader leases"), H1, 20);
+  expect(texts(rows)).toEqual([["Leader "], ["leases"]]);
+  expect(rows.map((r) => r.map((c) => c.cells))).toEqual([[14], [12]]);
+  const long = wrapSized(heading("Consensus guarantees for leaders"), H2, 20);
+  expect(long.length).toBeGreaterThan(1);
+  expect(widest(long)).toBeLessThanOrEqual(20);
+  expect(texts(long).flat().join("")).toBe("Consensus guarantees for leaders");
+  for (const c of long.flat()) expect(c.cells % 2).toBe(0);
 });
 
 test("a styled run is its own chunk and keeps the line style under it", () => {
   const spans: Span[] = [
-    { text: "▊ ", style: "mdHeading2", inserted: true },
     { text: "A ", style: "mdHeading2", col: 3 },
     { text: "bold", style: "mdBold", under: "mdHeading2", col: 7 },
     { text: " move", style: "mdHeading2", col: 13 },
   ];
-  expect(wrapSized(spans, 1.5, 40)).toEqual([
+  expect(wrapSized(spans, H2, 40)).toEqual([
     [
-      { text: "▊ A ", style: "mdHeading2", cells: 6 },
-      { text: "bold", style: "mdBold", under: "mdHeading2", cells: 6 },
-      { text: " mov", style: "mdHeading2", cells: 6 },
-      { text: "e", style: "mdHeading2", cells: 2 },
+      { text: "A ", style: "mdHeading2", cells: 4 },
+      { text: "bold", style: "mdBold", under: "mdHeading2", cells: 8 },
+      { text: " move", style: "mdHeading2", cells: 8 },
     ],
   ]);
 });
 
 test("a word longer than a row breaks mid-word", () => {
-  const rows = wrapSized(h1("Linearizability"), 2, 20);
-  expect(texts(rows)).toEqual([["█ "], ["Linearizab"], ["ility"]]);
+  const rows = wrapSized(heading("Linearizability"), H1, 20);
+  expect(texts(rows)).toEqual([["Lineariz", "abi"], ["lity"]]);
   expect(widest(rows)).toBeLessThanOrEqual(20);
 });

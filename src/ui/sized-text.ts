@@ -4,7 +4,6 @@ import {
   type RGBA,
   TextAttributes,
 } from "@opentui/core";
-import { cellWidth, clusters } from "../core/kernel/text/cells";
 import type { SizedBlock, SizedChunk } from "../core/kernel/view/types";
 import type { Style } from "./theme";
 
@@ -57,30 +56,14 @@ const osc66 = (params: string, text: string) =>
   `${ESC}]66;${params};${text}${ST}`;
 
 /**
- * One chunk at its block's scale. At 2× kitty lays each character out
- * itself, except a grapheme of several code points, which gets its width
- * pinned so kitty and so agree. At 1.5× the chunk is drawn in `cells / 2`
- * double cells at three quarters of 2×, centred vertically.
+ * One chunk drawn in `cells / 2` double cells at `n/d` of double size,
+ * centred vertically.
  */
 export function chunkBytes(
   chunk: SizedChunk,
-  scale: SizedBlock["scale"],
+  { n, d }: SizedBlock["scale"],
 ): string {
-  const text = clean(chunk.text);
-  if (scale === 1.5) return osc66(`s=2:w=${chunk.cells / 2}:n=3:d=4:v=2`, text);
-  let out = "";
-  let run = "";
-  for (const ch of clusters(text)) {
-    if ([...ch].length === 1) {
-      run += ch;
-      continue;
-    }
-    if (run !== "") out += osc66("s=2", run);
-    run = "";
-    out += osc66(`s=2:w=${cellWidth(ch, 0, 1)}`, ch);
-  }
-  if (run !== "") out += osc66("s=2", run);
-  return out;
+  return osc66(`s=2:w=${chunk.cells / 2}:n=${n}:d=${d}:v=2`, clean(chunk.text));
 }
 
 /** Each chunk of `block` in `style`, its rows from (x, y), two screen rows apart. */

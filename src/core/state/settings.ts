@@ -152,7 +152,7 @@ export const SETTINGS: readonly Setting[] = [
     path: ["preview", "sizedText"],
     choices: [true, false],
     about: [
-      "Larger H1/H2 headings and",
+      "Larger H1–H3 headings and",
       "half-size math and footnote",
       "scripts where the terminal can.",
     ],

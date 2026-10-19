@@ -194,7 +194,7 @@ test("a note's heading and script cells are sent at their size over cells the wi
   const m = await mountNote(NOTE);
   const out = m.writes.join("");
   const frame = m.t.captureCharFrame();
-  expect(out).toContain(`${OSC66}s=2;Raft\x1b\\`);
+  expect(out).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft\x1b\\`);
   expect(out).toContain(`${OSC66}n=1:d=2:v=1:w=1;w\x1b\\`);
   const rows = frame.split("\n");
   const at = rows.findIndex((r) => r.includes("Raft"));
@@ -223,9 +223,9 @@ test("a resize or a resume from a tool hand-off sends the sized text again", asy
   const m = await mountNote(NOTE);
   await sent(m);
   m.t.resize(64, 12);
-  expect(await sent(m)).toContain(`${OSC66}s=2;Raft`);
+  expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
   expect(await sent(m)).toBe("");
   m.shell.suspend();
   m.shell.resume();
-  expect(await sent(m)).toContain(`${OSC66}s=2;Raft`);
+  expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
 });

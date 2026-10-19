@@ -45,11 +45,14 @@ export type SizedChunk = {
   cells: number;
 };
 
+/** Text size as `n/d` of double size: 7/8 draws text at 1.75×. */
+export type SizedScale = { n: number; d: number };
+
 /**
  * Text the terminal draws larger than one cell (kitty's text sizing
  * protocol); each row of chunks takes two screen rows.
  */
-export type SizedBlock = { scale: 2 | 1.5; rows: SizedChunk[][] };
+export type SizedBlock = { scale: SizedScale; rows: SizedChunk[][] };
 
 /** Rows painted by a UI widget painter registered for `type`. */
 export type Widget = { type: string; data: unknown; rows: number };

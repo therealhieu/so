@@ -11,8 +11,12 @@ import { lineStyle, replaceCols, replaceLine } from "./rows";
 const GLYPHS = ["█", "▊", "▌", "▏"];
 const ATX = /^( {0,3}#{1,6})([ \t]+|$)/;
 const CLOSING = /[ \t]+#+[ \t]*$/;
-/** Scales of the headings the terminal draws larger: H1 and H2. */
-const SCALES: readonly SizedBlock["scale"][] = [2, 1.5];
+/** Sizes of the headings the terminal draws larger: H1 1.75×, H2 1.6×, H3 1.4×. */
+const SCALES: readonly SizedBlock["scale"][] = [
+  { n: 7, d: 8 },
+  { n: 4, d: 5 },
+  { n: 7, d: 10 },
+];
 
 /**
  * The first of `lines` through `to` as one `sizedText` block widget of two
@@ -47,7 +51,7 @@ function sizedBlock(
 /**
  * A heading with its level glyph in place of the `#` markers (or above a
  * hidden setext underline), styled `mdHeading1`–`mdHeading4`. With sized
- * text, an H1 or H2 is drawn larger, without a glyph, as one `sizedText`
+ * text, an H1–H3 is drawn larger, without a glyph, as one `sizedText`
  * widget covering its text lines and any setext underline.
  */
 export const headingRenderer: BlockRenderer = (block, v, input) => {

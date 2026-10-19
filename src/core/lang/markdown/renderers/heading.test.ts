@@ -32,7 +32,7 @@ test("an H1 becomes one sized block of two rows per wrapped row, without a glyph
     type: "sizedText",
     rows: 2,
     data: {
-      scale: 2,
+      scale: { n: 7, d: 8 },
       rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
@@ -40,12 +40,12 @@ test("an H1 becomes one sized block of two rows per wrapped row, without a glyph
   expect(sized(render("# Leader leases", 40, true)).widget.rows).toBe(2);
 });
 
-test("an H2 is sized at 1.5× with its inline styles as separate chunks", () => {
+test("an H2 is sized at 1.6× with its inline styles as separate chunks", () => {
   const { widget } = sized(render("## A **bold** move", 40, true));
   const data = widget.data as SizedBlock;
   expect(widget.rows).toBe(2);
-  expect(data.scale).toBe(1.5);
-  expect(data.rows[0]?.map((c) => c.text)).toEqual(["A ", "bold", " mov", "e"]);
+  expect(data.scale).toEqual({ n: 4, d: 5 });
+  expect(data.rows[0]?.map((c) => c.text)).toEqual(["A ", "bold", " move"]);
   expect(data.rows[0]?.[1]).toMatchObject({
     style: "mdBold",
     under: "mdHeading2",
@@ -63,14 +63,14 @@ test("a setext H1 or H2 is one sized block over its text lines and underline", (
     type: "sizedText",
     rows: 2,
     data: {
-      scale: 2,
+      scale: { n: 7, d: 8 },
       rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
   const h2 = sized(render("Raft\n  leases\n---", 40, true));
   expect(h2.range.end).toEqual({ line: 2, col: 3 });
   const data = h2.widget.data as SizedBlock;
-  expect(data.scale).toBe(1.5);
+  expect(data.scale).toEqual({ n: 4, d: 5 });
   expect(data.rows.map((r) => r.map((c) => c.text).join(""))).toEqual([
     "Raft leases",
   ]);
@@ -78,8 +78,19 @@ test("a setext H1 or H2 is one sized block over its text lines and underline", (
   expect(plain.some((d) => d.kind === "replace" && d.widget)).toBe(false);
 });
 
-test("H3 and sized text off keep the glyph decorations", () => {
-  expect(render("### Raft", 20, true)).toEqual(render("### Raft", 20, false));
+test("an H3 is sized at 1.4×", () => {
+  expect(sized(render("### Raft", 20, true)).widget).toEqual({
+    type: "sizedText",
+    rows: 2,
+    data: {
+      scale: { n: 7, d: 10 },
+      rows: [[{ text: "Raft", style: "mdHeading3", cells: 6 }]],
+    },
+  });
+});
+
+test("H4 and sized text off keep the glyph decorations", () => {
+  expect(render("#### Raft", 20, true)).toEqual(render("#### Raft", 20, false));
   expect(render("# Raft", 20, false)).toEqual([
     { kind: "line", line: 0, style: "mdHeading1" },
     {

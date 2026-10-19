@@ -1,26 +1,30 @@
 import { cellWidth, clusters } from "../text/cells";
-import type { SizedBlock, SizedChunk, Span, StyleToken } from "./types";
-
-/** Normal-size cells one 1.5× chunk holds. */
-const PART = 4;
+import type { SizedChunk, SizedScale, Span, StyleToken } from "./types";
 
 type Unit = { ch: string; w: number; style: StyleToken; under?: StyleToken };
 
 const sameLook = (a: Unit, b: Unit) =>
   a.style === b.style && a.under === b.under;
 
-/** Columns a chunk of `w` normal-size cells takes at `scale`: whole 2× cells. */
-const scaledCells = (w: number, scale: SizedBlock["scale"]) =>
-  scale === 2 ? 2 * w : 2 * Math.ceil((1.5 * w) / 2);
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 /**
- * `units` as chunks: at 2× each same-look run is one chunk; at 1.5× a run is
- * cut every `PART` cells, so each chunk's width rounds up by at most one cell.
+ * Normal-size cells one chunk holds: the fewest that fill whole double
+ * cells at `scale` (8 at 7/8, 5 at 4/5, 10 at 7/10). kitty draws a chunk in
+ * at most 7 double cells, so `n / gcd(n, d)` must not pass 7.
  */
-function chunksOf(
-  units: readonly Unit[],
-  scale: SizedBlock["scale"],
-): SizedChunk[] {
+const chunkPart = ({ n, d }: SizedScale) => d / gcd(n, d);
+
+/** Columns a chunk of `w` normal-size cells takes at `scale`: whole double cells. */
+const scaledCells = (w: number, { n, d }: SizedScale) =>
+  2 * Math.ceil((n * w) / d);
+
+/**
+ * `units` as chunks: a same-look run is cut every `chunkPart` cells, so only
+ * a run's last chunk leaves part of a double cell empty.
+ */
+function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
+  const part = chunkPart(scale);
   const out: SizedChunk[] = [];
   let first: Unit | undefined;
   let text = "";
@@ -36,11 +40,7 @@ function chunksOf(
     );
   };
   for (const u of units) {
-    if (
-      first !== undefined &&
-      sameLook(first, u) &&
-      (scale === 2 || w + u.w <= PART)
-    ) {
+    if (first !== undefined && sameLook(first, u) && w + u.w <= part) {
       text += u.ch;
       w += u.w;
       continue;
@@ -85,7 +85,7 @@ const cellsOf = (chunks: readonly SizedChunk[]) =>
  */
 export function wrapSized(
   spans: readonly Span[],
-  scale: SizedBlock["scale"],
+  scale: SizedScale,
   width: number,
 ): SizedChunk[][] {
   const units: Unit[] = [];

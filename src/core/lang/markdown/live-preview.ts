@@ -33,7 +33,7 @@ export type PreviewCtx = {
   images: "auto" | "blocks" | "off";
   /** Stretch the wrapped rows of paragraphs, list items, callouts, and quotes to both edges. */
   justify: boolean;
-  /** Draw H1/H2 headings larger and math and footnote scripts half size. */
+  /** Draw H1–H3 headings larger and math and footnote scripts half size. */
   sizedText: boolean;
   /** Whether the window wraps long lines, and its tab width, as the UI draws source rows. */
   wrap: boolean;
