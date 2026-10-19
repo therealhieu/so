@@ -9,6 +9,8 @@ export type ViewHost = {
   imageSize(path: string): { width: number; height: number } | undefined;
   /** A terminal cell's size in pixels. */
   cell: { width: number; height: number };
+  /** The terminal draws text at other sizes (kitty's text sizing protocol). */
+  sizedText: boolean;
 };
 
 /** Builds a view's input context for one window; a pure function of its arguments. */

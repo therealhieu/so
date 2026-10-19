@@ -113,6 +113,8 @@ export const ConfigSchema = z.strictObject({
       readableWidth: z.number().int().min(20).max(500).default(100),
       /** Spread wrapped prose rows to both edges in the rendered views. */
       justify: z.boolean().default(false),
+      /** Draw H1/H2 headings larger and math and footnote scripts half size where the terminal can. */
+      sizedText: z.boolean().default(true),
     })
     .prefault({}),
   daily: z

@@ -46,6 +46,7 @@ const host = {
   rows: 20,
   imageSize: () => undefined,
   cell: { width: 8, height: 16 },
+  sizedText: false,
 };
 const ctxOf = (s: AppState) =>
   markdownViewContextFor(reg)(s, s.windows.active, host) as PreviewCtx;

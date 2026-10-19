@@ -10,6 +10,7 @@ const host = (over: Partial<ViewHost> = {}): ViewHost => ({
   width: 80,
   rows: 40,
   cell: { width: 8, height: 16 },
+  sizedText: false,
   imageSize: (p) =>
     p === "img/a.png" ? { width: 1600, height: 900 } : undefined,
   ...over,

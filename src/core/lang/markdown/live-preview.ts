@@ -31,6 +31,8 @@ export type PreviewCtx = {
   images: "auto" | "blocks" | "off";
   /** Stretch the wrapped rows of paragraphs, list items, callouts, and quotes to both edges. */
   justify: boolean;
+  /** Draw H1/H2 headings larger and math and footnote scripts half size. */
+  sizedText: boolean;
 };
 
 /** Render keys whose rows are prose that may be justified. */
