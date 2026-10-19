@@ -581,6 +581,15 @@ test("in live view a sized heading on the cursor's line shows its source and kee
   keepsRows(long, 2, 30);
   const spacers = at(long, 2, 30).filter((r) => r.widget?.type === "text");
   expect(spacers.map((r) => r.widget?.rows)).toEqual([6]);
+
+  // A setext heading reveals its text and its underline: two source rows.
+  const setext = "Intro\n\nRaft\n====\n\nBody";
+  keepsRows(setext, 2);
+  keepsRows(setext, 3);
+  const revealed = at(setext, 2).filter(
+    (r) => r.sourceLine === 2 || r.sourceLine === 3,
+  );
+  expect(revealed.map(rowText)).toEqual(["Raft", "===="]);
 });
 
 test("with sized text, inline math scripts and footnote labels are half-size pairs", () => {

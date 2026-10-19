@@ -57,6 +57,32 @@ test("an H2 is sized at 1.5× with its inline styles as separate chunks", () => 
   });
 });
 
+test("a setext H1 or H2 is one sized block over its text lines and underline", () => {
+  const h1 = sized(render("Raft\n====", 20, true));
+  expect(h1.block).toBe(true);
+  expect(h1.range).toEqual({
+    start: { line: 0, col: 0 },
+    end: { line: 1, col: 4 },
+  });
+  expect(h1.widget).toEqual({
+    type: "sizedText",
+    rows: 2,
+    data: {
+      scale: 2,
+      rows: [[{ text: "█ Raft", style: "mdHeading1", cells: 12 }]],
+    },
+  });
+  const h2 = sized(render("Raft\n  leases\n---", 40, true));
+  expect(h2.range.end).toEqual({ line: 2, col: 3 });
+  const data = h2.widget.data as SizedBlock;
+  expect(data.scale).toBe(1.5);
+  expect(data.rows.map((r) => r.map((c) => c.text).join(""))).toEqual([
+    "▊ Raft leases",
+  ]);
+  const plain = render("Raft\n====", 20, false);
+  expect(plain.some((d) => d.kind === "replace" && d.widget)).toBe(false);
+});
+
 test("H3 and sized text off keep the glyph decorations", () => {
   expect(render("### Raft", 20, true)).toEqual(render("### Raft", 20, false));
   expect(render("# Raft", 20, false)).toEqual([

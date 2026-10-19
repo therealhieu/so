@@ -1,7 +1,7 @@
 import type { Decoration } from "../../../kernel/view/decorations";
 import { wrapSized } from "../../../kernel/view/sized";
 import { layoutLine } from "../../../kernel/view/text-view";
-import type { SizedBlock, TextView } from "../../../kernel/view/types";
+import type { SizedBlock, Span, TextView } from "../../../kernel/view/types";
 import { contentEnd, contentStart, rootOf } from "../block-text";
 import { inlineDecorations } from "../inline";
 import type { BlockRenderer } from "../live-preview";
@@ -14,20 +14,30 @@ const CLOSING = /[ \t]+#+[ \t]*$/;
 /** Scales of the headings the terminal draws larger: H1 and H2. */
 const SCALES: readonly SizedBlock["scale"][] = [2, 1.5];
 
-/** `line` as one `sizedText` block widget of two rows per wrapped row. */
-function sizedLine(
+/**
+ * The first of `lines` through `to` as one `sizedText` block widget of two
+ * rows per wrapped row, drawing the text `lines` joined by a space in `style`.
+ */
+function sizedBlock(
   v: TextView,
-  line: number,
+  lines: readonly number[],
+  to: number,
   scale: SizedBlock["scale"],
+  style: string,
   decos: readonly Decoration[],
 ): Decoration {
-  const rows = wrapSized(layoutLine(v, line, decos).spans, scale, v.width);
+  const spans = lines.flatMap((l, i): Span[] => {
+    const own = layoutLine(v, l, decos).spans;
+    return i === 0 ? own : [{ text: " ", style }, ...own];
+  });
+  const rows = wrapSized(spans, scale, v.width);
   const data: SizedBlock = { scale, rows };
+  const from = lines[0] ?? to;
   return {
     kind: "replace",
     range: {
-      start: { line, col: 0 },
-      end: { line, col: v.buf.line(line).length },
+      start: { line: from, col: 0 },
+      end: { line: to, col: v.buf.line(to).length },
     },
     block: true,
     widget: { type: "sizedText", data, rows: 2 * rows.length },
@@ -37,7 +47,8 @@ function sizedLine(
 /**
  * A heading with its level glyph in place of the `#` markers (or above a
  * hidden setext underline), styled `mdHeading1`–`mdHeading4`. With sized
- * text, an ATX H1 or H2 line is drawn larger as a `sizedText` widget.
+ * text, an H1 or H2 is drawn larger as one `sizedText` widget covering its
+ * text lines and any setext underline.
  */
 export const headingRenderer: BlockRenderer = (block, v, input) => {
   const { doc } = input;
@@ -50,12 +61,27 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
   const level = Math.min(depth, 4);
   const style = `mdHeading${level}`;
   const glyph = { text: `${GLYPHS[level - 1]} `, style };
+  const scale = SCALES[depth - 1];
+  const sized = input.ctx.sizedText && scale !== undefined;
+  // Scripts inside a sized heading keep their Unicode form: a chunk is drawn at one scale.
+  const unsized = { ...input, ctx: { ...input.ctx, sizedText: false } };
   if (atx === null) {
     // Setext: the text lines, then an `===` or `---` underline.
     const last = contentEnd(v.buf, block);
     const out = [replaceCols(first, 0, 0, [glyph]), replaceLine(v.buf, last)];
-    for (let l = first; l < last; l++) out.push(lineStyle(l, style));
-    return out;
+    const lines: number[] = [];
+    for (let l = first; l < last; l++) {
+      out.push(lineStyle(l, style));
+      lines.push(l);
+    }
+    if (!sized) return out;
+    const indents = lines.map((l) =>
+      replaceCols(l, 0, /^[ \t]*/.exec(v.buf.line(l))?.[0].length ?? 0),
+    );
+    const inline = inlineDecorations(block, v, unsized, new Set());
+    return [
+      sizedBlock(v, lines, last, scale, style, [...out, ...indents, ...inline]),
+    ];
   }
   const closing = CLOSING.exec(text.slice(atx[0].length));
   const out = [
@@ -64,10 +90,7 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
   ];
   if (closing)
     out.push(replaceCols(first, atx[0].length + closing.index, text.length));
-  const scale = SCALES[depth - 1];
-  if (!input.ctx.sizedText || scale === undefined) return out;
-  // Scripts inside a sized heading keep their Unicode form: a chunk is drawn at one scale.
-  const unsized = { ...input, ctx: { ...input.ctx, sizedText: false } };
+  if (!sized) return out;
   const inline = inlineDecorations(block, v, unsized, new Set());
-  return [sizedLine(v, first, scale, [...out, ...inline])];
+  return [sizedBlock(v, [first], first, scale, style, [...out, ...inline])];
 };
