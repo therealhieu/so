@@ -9,6 +9,7 @@ import type { BlockKind } from "./blocks";
 import type { Block, Doc } from "./doc";
 import { inlineDecorations } from "./inline";
 import { renderKey } from "./render-key";
+import { textWidget } from "./renderers/rows";
 import { reveal } from "./reveal";
 
 /** What the provider and block renderers may know beyond the view; built per window per frame. */
@@ -99,6 +100,24 @@ function linesOf(d: Decoration): [number, number] {
   }
 }
 
+/**
+ * Blank rows below a revealed line that a `sizedText` block would have drawn,
+ * so the lines below keep their place while its source shows.
+ */
+function keepSizedRows(d: Decoration): Decoration[] {
+  if (d.kind !== "replace" || d.widget?.type !== "sizedText") return [];
+  const blank = d.widget.rows - 1;
+  if (blank < 1) return [];
+  return [
+    {
+      kind: "widget",
+      at: { line: d.range.start.line, col: 1 },
+      block: true,
+      widget: textWidget(Array.from({ length: blank }, () => [])),
+    },
+  ];
+}
+
 const sign = (line: number, text: string, style: string): Decoration => ({
   kind: "line",
   line,
@@ -109,7 +128,8 @@ const sign = (line: number, text: string, style: string): Decoration => ({
  * Live and reading views of a Markdown note. Only blocks intersecting the
  * visible lines are rendered, each by the renderer registered for its render
  * key (the paragraph renderer otherwise). Revealed lines and blocks keep
- * their source and get a `▕` sign; a throwing renderer leaves its block as
+ * their source and get a `▕` sign, and a revealed sized heading keeps its
+ * rows; a throwing renderer leaves its block as
  * source with a `⚠` sign on its first line.
  */
 export const livePreview: DecorationProvider<MarkdownViewInput> = (
@@ -147,7 +167,8 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
         ...inlineDecorations(block, v, input, shown.lines),
         ...(input.ctx.justify && PROSE.has(key) ? justified(block, v) : []),
       ];
-      out.push(...(lines.length === 0 ? own : own.filter(keep)));
+      if (lines.length === 0) out.push(...own);
+      else for (const d of own) out.push(...(keep(d) ? [d] : keepSizedRows(d)));
     } catch {
       out.push(sign(block.startLine, "⚠", "signError"));
     }

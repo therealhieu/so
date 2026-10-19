@@ -541,3 +541,25 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
   expect(justified("live", 3)).toEqual([2, 5, 6, 13, 15]);
   expect(justified("reading", 0, false)).toEqual([]);
 });
+
+test("in live view a sized heading on the cursor's line shows its source and keeps its rows", () => {
+  builtinRenderers();
+  const note = "Intro\n\n# Raft\n\nBody";
+  const sized = stubCtx({ sizedText: true });
+  const screenRows = (rows: RenderLine[]) =>
+    rows.reduce(
+      (n, r) =>
+        n +
+        (r.widget !== undefined && r.spans.length === 0 ? r.widget.rows : 1),
+      0,
+    );
+  const at = (line: number) =>
+    layoutNote(noteView(note, { cursor: { line, col: 0 } }), "live", sized);
+  const off = at(0);
+  const on = at(2);
+  expect(screenRows(on)).toBe(screenRows(off));
+  expect(off.find((r) => r.sourceLine === 2)?.widget?.type).toBe("sizedText");
+  const heading = on.filter((r) => r.sourceLine === 2);
+  expect(heading.map(rowText)).toEqual(["# Raft", ""]);
+  expect(heading[1]?.widget).toEqual({ type: "text", data: [[]], rows: 1 });
+});
