@@ -115,6 +115,7 @@ test("a valid file parses with binding lines", () => {
         readableWidth: 100,
         justify: false,
         sizedText: true,
+        zoom: 1,
       },
       daily: {
         folder: "daily",

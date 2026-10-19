@@ -56,3 +56,30 @@ test("a terminal without text sizing shows headings, math, and footnotes as toda
   expect(output).not.toContain(`${ESC}]66;s=`);
   expect(output).not.toContain(`${ESC}]66;n=`);
 });
+
+test("with text zoom set, a terminal without text sizing shows the reading view as today and gets no sizing bytes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "so-zoom-"));
+  temps.push(root);
+  const path = join(root, "raft.md");
+  await writeFile(path, NOTE);
+  let screen = "";
+  const r = await runInPty([process.execPath, MAIN, path], {
+    config: "zoom = 2\n",
+    async script(p) {
+      await ready(p);
+      // live → source → reading
+      p.type(" m");
+      await p.waitFor(() => p.screen().includes("mode: source"));
+      p.type(" m");
+      await p.waitFor(() => p.screen().includes("mode: reading"));
+      await p.waitFor(() => p.screen().includes("Quorums overlap."));
+      screen = p.screen();
+      p.type(":q\r");
+    },
+  });
+  expect(r.exitCode).toBe(0);
+  expect(screen).toContain("█ Raft");
+  const output = r.probe.text.replace(PROBE, "");
+  expect(output).not.toContain(`${ESC}]66;s=`);
+  expect(output).not.toContain(`${ESC}]66;n=`);
+});

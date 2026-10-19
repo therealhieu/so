@@ -1,3 +1,4 @@
+import { sizedCell } from "../../core/kernel/view/sized";
 import type { SizedBlock, SizedChunk } from "../../core/kernel/view/types";
 import { displayWidth } from "../../core/kernel/view/wrap";
 import { blockBytes, type CellRect } from "../sized-text";
@@ -22,7 +23,7 @@ function chunkStyle(theme: Theme, c: SizedChunk, heading: string): Style {
 }
 
 /**
- * A sized heading: each row of chunks takes two screen rows, on the plain
+ * A sized heading: each row of chunks takes `sizedCell` screen rows, on the plain
  * background, with the text at normal size on the first of them. Given all
  * its rows, each chunk's text sits under its own sized cells and the
  * terminal draws the text at its size over them; a `plain` chunk's cell is
@@ -38,12 +39,13 @@ export const paintSizedText: WidgetPainter = (t, w) => {
     row.reduce((n, c) => n + c.cells, 0);
   const whole =
     t.rows >= w.rows && block.rows.every((row) => sizedOf(row) <= t.width);
+  const step = sizedCell(block.scale);
   for (let i = 0; i < t.rows; i++) {
-    const row = block.rows[Math.floor(i / 2)] ?? [];
+    const row = block.rows[Math.floor(i / step)] ?? [];
     const cells = Math.min(t.width, sizedOf(row));
     let x = 0;
-    if (i % 2 === 0) {
-      rects.push({ x: t.x, y: t.y + i, w: cells, h: 2 });
+    if (i % step === 0) {
+      rects.push({ x: t.x, y: t.y + i, w: cells, h: step });
       for (const c of row) {
         const text = c.text.replace(/\t/g, " ");
         const n = Math.min(

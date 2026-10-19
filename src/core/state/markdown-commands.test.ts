@@ -180,3 +180,19 @@ test("substitution is refused in reading view and works in live view", () => {
   expect(text(replaced)).toBe("bar");
   expect(activeBuffer(replaced)?.dirty).toBe(true);
 });
+
+test("in reading view + and = zoom note text in and - out; other views pass them to vim", () => {
+  const live = open(fresh(), "n.md", "a\nb\n");
+  const reading = keys(live, "<leader>m<leader>m");
+  expect(activeBuffer(reading)?.view).toBe("reading");
+  const zoom = (s: AppState) => s.config.preview.zoom;
+  expect(zoom(keys(reading, "+"))).toBe(1.25);
+  expect(zoom(keys(reading, "==-"))).toBe(1.25);
+  expect(message(keys(reading, "="))).toBe("text zoom 1.25×");
+  for (const k of ["+", "=", "-"]) {
+    const after = keys(live, k);
+    expect(zoom(after)).toBe(1);
+    expect(text(after)).toBe("a\nb");
+    expect(activeWindow(after)?.content.cursor).toEqual({ line: 0, col: 0 });
+  }
+});

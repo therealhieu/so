@@ -15,14 +15,34 @@ import {
   setWindow,
 } from "./buffers";
 import type { CommandContext, CommandResult } from "./commands";
+import { typeKeys } from "./keys";
 import { followLink } from "./link-commands";
 import { startPreview, stopPreview } from "./preview";
 import { message, none } from "./result";
-import { toggleJustify, toggleReadable } from "./settings";
+import { toggleJustify, toggleReadable, zoomText } from "./settings";
 import type { Result } from "./types";
 import { openZoom } from "./zoom";
 
 type AppCommand = Command<CommandContext, CommandResult>;
+
+/**
+ * `key` in a note's reading view: a text zoom step. In the other views the
+ * key goes to the vim engine as typed.
+ */
+const zoomKey = (
+  id: string,
+  key: "+" | "=" | "-",
+  step: 1 | -1,
+): AppCommand => ({
+  id,
+  title:
+    step === 1 ? `Zoom note text in (${key})` : `Zoom note text out (${key})`,
+  filetypes: ["markdown"],
+  run: (c) =>
+    activeBuffer(c.state)?.view === "reading"
+      ? zoomText(c.state, step)
+      : typeKeys(c.state, [key], c.now, c.reg),
+});
 
 /** A task item's checkbox: the `[`, its mark, and the `]`. */
 const TASK = /^([ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+\[)([ xX])\]/;
@@ -155,6 +175,27 @@ export const markdownCommands: readonly AppCommand[] = [
     filetypes: ["markdown"],
     run: (c) => toggleJustify(c.state),
   },
+  {
+    id: "view.zoomIn",
+    title: "Zoom note text in",
+    filetypes: ["markdown"],
+    run: (c) => zoomText(c.state, 1),
+  },
+  {
+    id: "view.zoomOut",
+    title: "Zoom note text out",
+    filetypes: ["markdown"],
+    run: (c) => zoomText(c.state, -1),
+  },
+  zoomKey("view.zoomInPlus", "+", 1),
+  zoomKey("view.zoomInEqual", "=", 1),
+  zoomKey("view.zoomOutMinus", "-", -1),
+  {
+    id: "view.zoomReset",
+    title: "Reset note text zoom",
+    filetypes: ["markdown"],
+    run: (c) => zoomText(c.state, 0),
+  },
 ];
 
 const md = (mode: Mode) => ({ mode, filetype: "markdown" }) as const;
@@ -167,4 +208,12 @@ export const markdownBindings: readonly Binding[] = [
   { scope: md("normal"), seq: "<leader>z", id: "image.zoom" },
   { scope: { mode: "normal" }, seq: "<leader>ur", id: "view.toggleReadable" },
   { scope: md("normal"), seq: "<leader>uj", id: "view.toggleJustify" },
+  { scope: md("normal"), seq: "<leader>u+", id: "view.zoomIn" },
+  // kitty's keyboard protocol reports Shift+= as "=".
+  { scope: md("normal"), seq: "<leader>u=", id: "view.zoomIn" },
+  { scope: md("normal"), seq: "<leader>u-", id: "view.zoomOut" },
+  { scope: md("normal"), seq: "<leader>u0", id: "view.zoomReset" },
+  { scope: md("normal"), seq: "+", id: "view.zoomInPlus" },
+  { scope: md("normal"), seq: "=", id: "view.zoomInEqual" },
+  { scope: md("normal"), seq: "-", id: "view.zoomOutMinus" },
 ];

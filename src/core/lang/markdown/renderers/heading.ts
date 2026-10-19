@@ -1,10 +1,10 @@
 import type { Decoration } from "../../../kernel/view/decorations";
-import { wrapSized } from "../../../kernel/view/sized";
+import { sizedCell, sizeScale, wrapSized } from "../../../kernel/view/sized";
 import { layoutLine } from "../../../kernel/view/text-view";
 import type { SizedBlock, Span, TextView } from "../../../kernel/view/types";
 import { contentEnd, contentStart, rootOf } from "../block-text";
 import { inlineDecorations } from "../inline";
-import type { BlockRenderer } from "../live-preview";
+import { type BlockRenderer, zoomOf } from "../live-preview";
 import { lineStyle, replaceCols, replaceLine } from "./rows";
 
 /** Level glyphs: H1 █, H2 ▊, H3 ▌, H4 and deeper ▏. */
@@ -20,10 +20,35 @@ const SCALES: readonly SizedBlock["scale"][] = [
   { n: 4, d: 5 },
   { n: 7, d: 10 },
 ];
+/** How much larger than the body H1–H3 draw, as at 1×. */
+const FACTORS = [1.75, 1.6, 1.4];
+/**
+ * Heading sizes under a text zoom: whole sizes and those whose text fills
+ * at least 3/4 of its sized cells and fits kitty's fractions.
+ */
+const SIZES = [1.5, 1.75, 2, 2.25, 2.5, 2.625, 3, 3.5, 4, 4.375, 5, 5.25, 6, 7];
 
 /**
- * The first of `lines` through `to` as one `sizedText` block widget of two
- * rows per wrapped row, drawing the text `lines` joined by a space in `style`.
+ * The size of an H1–H3 under text `zoom`: its own at 1, else the size
+ * nearest its factor times the body's, each word placed on its own.
+ */
+export function headingScale(
+  depth: number,
+  zoom: number,
+): SizedBlock["scale"] | undefined {
+  const factor = FACTORS[depth - 1];
+  if (factor === undefined) return undefined;
+  if (zoom === 1) return SCALES[depth - 1];
+  const want = zoom * factor;
+  const size = SIZES.reduce((best, z) =>
+    Math.abs(z - want) < Math.abs(best - want) ? z : best,
+  );
+  return { ...sizeScale(size), words: true };
+}
+
+/**
+ * The first of `lines` through `to` as one `sizedText` block widget of
+ * `sizedCell(scale)` rows per wrapped row, drawing the text `lines` joined by a space in `style`.
  */
 function sizedBlock(
   v: TextView,
@@ -47,7 +72,7 @@ function sizedBlock(
       end: { line: to, col: v.buf.line(to).length },
     },
     block: true,
-    widget: { type: "sizedText", data, rows: 2 * rows.length },
+    widget: { type: "sizedText", data, rows: sizedCell(scale) * rows.length },
   };
 }
 
@@ -67,7 +92,7 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
     : Number(rootOf(doc, block, v.buf).children?.[0]?.depth ?? 1);
   const level = Math.min(depth, 4);
   const style = `mdHeading${level}`;
-  const scale = SCALES[depth - 1];
+  const scale = headingScale(depth, zoomOf(input));
   const sized = input.ctx.sizedText && scale !== undefined;
   // A sized heading's size shows its level.
   const glyph = sized ? [] : [{ text: `${GLYPHS[level - 1]} `, style }];

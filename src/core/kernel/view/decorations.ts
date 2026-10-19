@@ -28,6 +28,8 @@ export type Decoration =
       wrapPrefix?: Span[];
       /** Spread the line's wrapped rows to both edges. */
       justify?: true;
+      /** Draw the line larger, at the view's zoom. */
+      zoom?: true;
     };
 
 /** A pure function of the view; it reads only `v.visible` lines. */

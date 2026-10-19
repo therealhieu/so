@@ -27,6 +27,7 @@ export function stubCtx(over: Partial<PreviewCtx> = {}): PreviewCtx {
     images: "auto",
     justify: false,
     sizedText: false,
+    zoom: 1,
     wrap: true,
     tabWidth: 8,
     ...over,

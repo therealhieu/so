@@ -47,21 +47,49 @@ export type SizedChunk = {
   under?: StyleToken;
   cells: number;
   plain?: true;
+  /** Display column of the first cell it draws; absent on a wrap prefix. */
+  col?: number;
+  /** Normal-size cells it draws, from `col`. */
+  w?: number;
+  /**
+   * Where a chunk drawn below its sized cells' size sits in them; absent,
+   * at their left.
+   */
+  align?: "right" | "center";
 };
 
 /**
- * Text size as `n/d` of double size: 7/8 draws text at 1.75×. With
+ * Text size as `n/d` of `s` times the normal size (`s` defaults to 2): 7/8
+ * draws text at 1.75×, and each row takes `s` screen rows. With
  * `wordSpace`, each word starts its own chunks and a space between words is
  * that many blank normal-size cells, so the gap kitty leaves after a chunk
- * falls between words.
+ * falls between words. With `words`, each word is placed on its own and
+ * every space between words takes its width at the scale.
  */
-export type SizedScale = { n: number; d: number; wordSpace?: number };
+export type SizedScale = {
+  s?: number;
+  n: number;
+  d: number;
+  wordSpace?: number;
+  words?: true;
+};
 
 /**
  * Text the terminal draws larger than one cell (kitty's text sizing
- * protocol); each row of chunks takes two screen rows.
+ * protocol); each row of chunks takes `scale.s` screen rows.
  */
 export type SizedBlock = { scale: SizedScale; rows: SizedChunk[][] };
+
+/**
+ * One row of a zoomed line: the display columns [startCol, endCol) it
+ * shows, as sized chunks after the wrap prefix's; the last row has no
+ * `endCol`.
+ */
+export type ZoomRow = {
+  startCol: number;
+  endCol?: number;
+  chunks: SizedChunk[];
+};
 
 /** Rows painted by a UI widget painter registered for `type`. */
 export type Widget = { type: string; data: unknown; rows: number };
@@ -93,6 +121,8 @@ export type RenderLine = {
   wrapPrefix?: Span[];
   /** Each wrap row but the last is stretched to the width; see `justifyRow`. */
   justify?: true;
+  /** Drawn larger by the terminal, at the view's zoom; see `zoomRows`. */
+  zoom?: true;
 };
 
 /** Syntax highlighting for a line range: one span list per line. */

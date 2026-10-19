@@ -146,6 +146,7 @@ test("preview options default to reading view, ten embed rows, automatic images,
     readableWidth: 100,
     justify: false,
     sizedText: true,
+    zoom: 1,
   });
   expect(defaults.preview).toEqual(result.config.preview);
 });
@@ -161,10 +162,19 @@ test("an out-of-range embed row limit names its line", () => {
 });
 
 test("an unknown preview key is rejected", () => {
-  const result = parseConfig(lines("[preview]", "zoom = 1"));
+  const result = parseConfig(lines("[preview]", "scale = 1"));
   expect(result.ok).toBe(false);
   if (result.ok) return;
   expect(result.errors).toEqual([
-    { line: 2, message: 'unknown key "preview.zoom"' },
+    { line: 2, message: 'unknown key "preview.scale"' },
   ]);
+});
+
+test("the text zoom is one of its levels from 1 to 3", () => {
+  const zoom = (v: string) => parseConfig(lines("[preview]", `zoom = ${v}`));
+  for (const v of [2, 1.5, 1.25] as const) {
+    const ok = zoom(String(v));
+    expect(ok.ok && ok.config.preview.zoom).toBe(v);
+  }
+  for (const v of ["1.3", "0", "4", "2.25"]) expect(zoom(v).ok).toBe(false);
 });

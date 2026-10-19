@@ -3,17 +3,23 @@
 // repeat, then 40 `<C-d>` and 40 `<C-u>`. Each frame is timed from the key
 // to the end of its render. Prints
 // {"metric":"liveScrollFrameP95"|"sourceScrollFrameP95","ms":<p95>}.
+// With --zoom Z, the note scrolls in reading view at text zoom Z on a
+// terminal that sizes text, and the metric is "zoomScrollFrameP95".
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { createTerminalCapabilities } from "@opentui/core/testing";
 import { make5000LineNote, make5000LineTs } from "../fixtures/generate";
 import { mountShell } from "../support/ui";
 
-const { values } = parseArgs({ options: { file: { type: "string" } } });
+const { values } = parseArgs({
+  options: { file: { type: "string" }, zoom: { type: "string" } },
+});
 if (values.file !== "note" && values.file !== "ts")
-  throw new Error("usage: scroll.bench.ts --file note|ts");
+  throw new Error("usage: scroll.bench.ts --file note|ts [--zoom Z]");
 const note = values.file === "note";
+const zoom = values.zoom;
 
 let text: string;
 if (note) {
@@ -22,12 +28,24 @@ if (note) {
   await rm(dir, { recursive: true });
 } else text = make5000LineTs();
 
-const m = await mountShell({ cols: 120, rows: 40 });
+const m = await mountShell({
+  cols: 120,
+  rows: 40,
+  ...(zoom === undefined
+    ? {}
+    : {
+        config: `[preview]\nmode = "reading"\nzoom = ${zoom}\n`,
+        capabilities: {
+          caps: createTerminalCapabilities({ scaled_text: true }),
+          hasResolution: false,
+        },
+      }),
+});
 m.keys("<leader>e");
 m.open(note ? "long.md" : "src/big.ts", text);
 await m.frame();
 const view = m.store.get().buffers[1]?.view;
-if (view !== (note ? "live" : "source"))
+if (view !== (zoom !== undefined ? "reading" : note ? "live" : "source"))
   throw new Error(`the file opened in ${view} view`);
 
 const keys = [
@@ -45,5 +63,10 @@ for (const k of keys) {
 m.destroy();
 times.sort((a, b) => a - b);
 const p95 = times[Math.ceil(times.length * 0.95) - 1] ?? Number.NaN;
-const metric = note ? "liveScrollFrameP95" : "sourceScrollFrameP95";
+const metric =
+  zoom !== undefined
+    ? "zoomScrollFrameP95"
+    : note
+      ? "liveScrollFrameP95"
+      : "sourceScrollFrameP95";
 console.log(JSON.stringify({ metric, ms: p95, frames: times.length }));

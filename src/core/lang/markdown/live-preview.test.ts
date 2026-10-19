@@ -544,6 +544,36 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
   expect(justified("reading", 0, false)).toEqual([]);
 });
 
+test("text zoom marks prose lines in the reading view with sized text, keeping their scripts in Unicode", () => {
+  builtinRenderers();
+  const note = [
+    "# Title",
+    "",
+    "A paragraph with $x^2$",
+    "",
+    "- item",
+    "",
+    "> quote",
+    "",
+    "```",
+    "code",
+    "```",
+  ].join("\n");
+  const zoomed = (view: "live" | "reading", over: Partial<PreviewCtx> = {}) =>
+    layoutNote(
+      noteView(note),
+      view,
+      stubCtx({ sizedText: true, zoom: 2, ...over }),
+    ).filter((r) => r.zoom);
+  expect(zoomed("reading").map((r) => r.sourceLine)).toEqual([2, 4, 6]);
+  expect(
+    zoomed("reading")[0]?.spans.some((sp) => sp.script !== undefined),
+  ).toBe(false);
+  expect(zoomed("live")).toEqual([]);
+  expect(zoomed("reading", { sizedText: false })).toEqual([]);
+  expect(zoomed("reading", { zoom: 1 })).toEqual([]);
+});
+
 test("in live view a sized heading on the cursor's line shows its source and keeps its rows", () => {
   builtinRenderers();
   const sized = stubCtx({ sizedText: true });
