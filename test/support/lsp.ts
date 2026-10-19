@@ -108,7 +108,10 @@ export function fakeTsc(
   return path;
 }
 
-/** Every line of the fake server's log; empty before it starts. */
+/**
+ * Every complete line of the fake server's log; empty before it starts. A
+ * line the server is still appending has no newline yet and is skipped.
+ */
 export function readServerLog(log: string): LoggedMessage[] {
   let text: string;
   try {
@@ -118,6 +121,7 @@ export function readServerLog(log: string): LoggedMessage[] {
   }
   return text
     .split("\n")
+    .slice(0, -1)
     .filter((l) => l !== "")
     .map((l) => JSON.parse(l) as LoggedMessage);
 }
