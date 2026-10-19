@@ -5,7 +5,7 @@
 - **Scope:** `G1`
 - **Tasks:** `G1-T1`, `G1-T2`, `G1-T3`, `G1-T4`
 - **Change range:** `407ac50..13742f3`
-- **Report:** `.s1mple/work/active/w26101928x8-kitty-text-sizing/reports/g1-verification-report.md`
+- **Report:** `.s1mple/work/done/w26101928x8-kitty-text-sizing/reports/g1-verification-report.md`
 
 ## Status
 

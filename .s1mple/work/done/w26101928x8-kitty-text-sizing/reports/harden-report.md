@@ -2,7 +2,7 @@
 
 - **Outcome:** `Findings identified`
 - **Mode:** `Workflow`
-- **Target:** `.s1mple/work/active/w26101928x8-kitty-text-sizing/` (W26101928X8 Kitty text sizing)
+- **Target:** `.s1mple/work/done/w26101928x8-kitty-text-sizing/` (W26101928X8 Kitty text sizing)
 - **Range:** `53fadeb..HEAD`
 - **Reviewed:** `src/ui/sized-text.ts`, `src/ui/widgets/sized-text.ts`, `src/ui/shell.ts`, `src/ui/editors/text-view.ts`, `src/ui/widgets/embed.ts`, `src/app/main.ts`, `src/core/kernel/view/{sized,types,text-view}.ts`, `src/core/lang/markdown/{live-preview,inline}.ts`, `src/core/lang/markdown/renderers/{heading,footnote,math,embed}.ts`, `src/core/state/{markdown-view,view-context,settings}.ts`, `src/core/config/schema.ts`, and the new tests (`src/core/kernel/view/sized.test.ts`, `renderers/heading.test.ts`, `src/ui/sized-text.test.ts`, `test/ui/sized-text.test.ts`, `test/e2e/sized-text.test.ts`).
 - **Not reviewed:** `.s1mple/` documents (excluded by the skill); the settings-picker snapshot (generated).

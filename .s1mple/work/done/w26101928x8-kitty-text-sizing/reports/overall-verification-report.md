@@ -5,7 +5,7 @@
 - **Scope:** `overall`
 - **Tasks:** `G1-T1`, `G1-T2`, `G1-T3`, `G1-T4`, `G2-T1`, `G2-T2`, `G2-T3` — all tasks
 - **Change range:** `53fadeb..b4b3b22`
-- **Report:** `.s1mple/work/active/w26101928x8-kitty-text-sizing/reports/overall-verification-report.md`
+- **Report:** `.s1mple/work/done/w26101928x8-kitty-text-sizing/reports/overall-verification-report.md`
 
 ## Status
 
