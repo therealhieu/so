@@ -56,6 +56,7 @@ import type {
 } from "../../core/state/types";
 import type { ViewHost } from "../../core/state/view-context";
 import type { Cursor, ViewDeps } from "../shell";
+import { type SizedText, scriptBytes } from "../sized-text";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { kittyPictures } from "../widgets/image";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
@@ -154,7 +155,8 @@ export type Rect = { x: number; y: number; w: number; h: number };
  * row's width) are painted and the rest of the row is filled. A span
  * without a background of its own takes its line style's. On the cursor
  * line every token keeps its foreground and takes the cursorline
- * background, except selection and search matches.
+ * background, except selection and search matches. With `scripts`, each
+ * half-size script cell drawn is sent there to be drawn at its size.
  */
 export function paintLine(
   buf: OptimizedBuffer,
@@ -168,6 +170,7 @@ export function paintLine(
     cursorline: boolean;
     /** A stretched row's `justifyRow` cells: extra spaces after a gap. */
     shift?: readonly number[];
+    scripts?: SizedText;
   },
 ): void {
   const line = theme.style("cursorline");
@@ -212,7 +215,14 @@ export function paintLine(
     const room = at.width - x;
     if (cells === 0 || room <= 0) continue;
     const n = Math.min(room, cells);
-    drawCells(buf, styleOf(span), at.x + x, at.y, run, n);
+    const style = styleOf(span);
+    drawCells(buf, style, at.x + x, at.y, run, n);
+    if (span.script !== undefined && o.scripts !== undefined)
+      o.scripts.draw(
+        buf,
+        [{ x: at.x + x, y: at.y, w: 1, h: 1 }],
+        scriptBytes(span.script, at.x + x, at.y, style),
+      );
     x += n;
   }
   if (x < at.width)
@@ -786,6 +796,7 @@ export class EditorView extends Renderable implements WindowView {
             ...(shift === undefined ? {} : { shift }),
             tabWidth,
             cursorline: isCursor && active,
+            scripts: this.deps.sizedText,
           },
         );
         if (!wrap && displayWidth(text, tabWidth) > start + textW)
@@ -837,7 +848,7 @@ export class EditorView extends Renderable implements WindowView {
               : got;
         },
         cell: this.deps.images.cellSize(),
-        sizedText: false,
+        sizedText: this.deps.capabilities().caps?.scaled_text === true,
       };
       const input =
         spec?.input === undefined

@@ -44,6 +44,7 @@ function drawSpans(
         leftCol: 0,
         tabWidth: t.state.config.editor.tabWidth,
         cursorline: false,
+        scripts: t.deps.sizedText,
       },
     );
     i++;

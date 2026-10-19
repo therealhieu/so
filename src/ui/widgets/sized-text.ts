@@ -1,0 +1,62 @@
+import type { SizedBlock, SizedChunk } from "../../core/kernel/view/types";
+import { displayWidth } from "../../core/kernel/view/wrap";
+import { blockBytes, type CellRect } from "../sized-text";
+import { drawCells, type Style, type Theme } from "../theme";
+import type { WidgetPainter } from "./registry";
+
+/** The heading's own style: its first chunk's line style, else that chunk's. */
+const headingOf = (block: SizedBlock) => {
+  const first = block.rows[0]?.[0];
+  return first?.under ?? first?.style ?? "text";
+};
+
+/** A chunk's style; text without a background of its own takes the heading's. */
+function chunkStyle(theme: Theme, c: SizedChunk, heading: string): Style {
+  const own = theme.style(c.style);
+  return own.bg.equals(theme.style("text").bg)
+    ? { ...own, bg: theme.style(c.under ?? heading).bg }
+    : own;
+}
+
+/**
+ * A sized heading: each row of chunks takes two screen rows, painted in the
+ * heading's background as wide as the terminal draws it, with the text at
+ * normal size on the first of them. Given all its rows, the terminal then
+ * draws the text at its size over them; cut at the window bottom, the
+ * normal-size text stays.
+ */
+export const paintSizedText: WidgetPainter = (t, w) => {
+  const block = w.data as SizedBlock;
+  const heading = headingOf(block);
+  const plain = t.theme.style("text");
+  const fill = t.theme.style(heading);
+  const rects: CellRect[] = [];
+  let whole = t.rows >= w.rows;
+  for (let i = 0; i < t.rows; i++) {
+    const row = block.rows[Math.floor(i / 2)] ?? [];
+    const sized = row.reduce((n, c) => n + c.cells, 0);
+    const cells = Math.min(t.width, sized);
+    let x = 0;
+    if (i % 2 === 0) {
+      if (sized > t.width) whole = false;
+      rects.push({ x: t.x, y: t.y + i, w: cells, h: 2 });
+      for (const c of row) {
+        const text = c.text.replace(/\t/g, " ");
+        const n = Math.min(t.width - x, displayWidth(text, 1));
+        if (n <= 0) break;
+        const style = chunkStyle(t.theme, c, heading);
+        drawCells(t.buf, style, t.x + x, t.y + i, text, n);
+        x += n;
+      }
+    }
+    if (x < cells) drawCells(t.buf, fill, t.x + x, t.y + i, "", cells - x);
+    x = Math.max(x, cells);
+    if (x < t.width) drawCells(t.buf, plain, t.x + x, t.y + i, "", t.width - x);
+  }
+  if (!whole) return;
+  t.deps.sizedText.draw(
+    t.buf,
+    rects,
+    blockBytes(block, t.x, t.y, (c) => chunkStyle(t.theme, c, heading)),
+  );
+};

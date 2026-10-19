@@ -37,6 +37,7 @@ import { PromptView } from "./overlays/prompt";
 import { SqliteQueryView } from "./overlays/sqlite-query";
 import { WhichKeyView } from "./overlays/whichkey";
 import { ZoomOverlay } from "./overlays/zoom";
+import { SizedText } from "./sized-text";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -136,7 +137,8 @@ export type ShellDeps = {
   /**
    * Bytes for the terminal outside the renderer; otherwise written to
    * standard output synchronously, so they land before the renderer's next
-   * native write.
+   * native write. Sized text otherwise goes through the renderer's own
+   * writer, after the frame it belongs to.
    */
   write?: (bytes: string) => void;
 };
@@ -158,6 +160,8 @@ export type ViewDeps = ShellDeps & {
   imageSlots: ImageSlots;
   /** Note pictures read and scaled off the main thread, with `imageScaler`. */
   pictures?: NotePictures;
+  /** Text the terminal draws at other sizes, written after each frame. */
+  sizedText: SizedText;
   capabilities: () => GraphicsSupport;
   imageFilesPending: () => number;
 };
@@ -225,6 +229,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
           now: deps.now,
         });
   let imageSlots: ImageSlots | undefined;
+  let sizedText: SizedText | undefined;
   return {
     attach(store) {
       const slots = new ImageSlots(renderer, {
@@ -235,11 +240,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
         repaint: () => repaint(),
       });
       imageSlots = slots;
+      const sized = new SizedText(renderer, deps.write);
+      sizedText = sized;
       const ctx: ViewDeps = {
         ...deps,
         dispatch: store.dispatch,
         images,
         imageSlots: slots,
+        sizedText: sized,
         ...(pictures === undefined ? {} : { pictures }),
         capabilities:
           deps.capabilities ??
@@ -351,9 +359,14 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       renderer.keyInput.on("paste", (e) =>
         store.dispatch({ type: "paste", text: utf8.decode(e.bytes) }),
       );
-      renderer.on("resize", (cols: number, rows: number) =>
-        store.dispatch({ type: "resize", cols, rows }),
-      );
+      renderer.on("resize", (cols: number, rows: number) => {
+        sized.invalidate();
+        store.dispatch({ type: "resize", cols, rows });
+      });
+      // Whether the terminal sizes text is known only once it answers.
+      renderer.on("capabilities", () => {
+        if (!suspended) repaint();
+      });
       paint(store.get());
     },
     copyOsc52(text) {
@@ -380,6 +393,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       // still on screen is drawn again; the terminal dropped it on suspend.
       renderer.resume();
       suspended = false;
+      sizedText?.invalidate();
       repaint();
     },
     resetForeignModes() {

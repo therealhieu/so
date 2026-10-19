@@ -1,8 +1,12 @@
 import { afterEach, expect, test } from "bun:test";
 import { Writable } from "node:stream";
 import { type OptimizedBuffer, Renderable, RGBA } from "@opentui/core";
-import { createTestRenderer } from "@opentui/core/testing";
+import {
+  createTerminalCapabilities,
+  createTestRenderer,
+} from "@opentui/core/testing";
 import { SizedText, terminalWriter } from "../../src/ui/sized-text";
+import { type Mounted, mountShell } from "../support/ui";
 
 const COLS = 20;
 const ROWS = 6;
@@ -119,4 +123,65 @@ test("a float over the second row stops the draw and has its whole area rewritte
   const back = await m.frame();
   expect(back.out).toContain(`${OSC66}s=2;Raft`);
   expect(back.cells).toBe(12);
+});
+
+const SIZED = {
+  caps: createTerminalCapabilities({ scaled_text: true }),
+  hasResolution: false,
+};
+const NOTE = "# Raft\n\nTerm $Q_{w}$ ends.\n\nEnd.\n";
+
+const shells: Mounted[] = [];
+afterEach(() => {
+  for (const x of shells.splice(0)) x.destroy();
+});
+
+/** The shell on a terminal that sizes text, with `text` open as a note. */
+async function mountNote(text: string, rows = 12): Promise<Mounted> {
+  const x = await mountShell({ cols: 60, rows, capabilities: SIZED });
+  shells.push(x);
+  x.keys("<leader>e");
+  x.open("notes/raft.md", text);
+  x.keys("G");
+  await x.frame();
+  return x;
+}
+
+/** What the shell sent the terminal outside the renderer during one more frame. */
+async function sent(x: Mounted): Promise<string> {
+  x.writes.length = 0;
+  await x.frame();
+  return x.writes.join("");
+}
+
+test("a note's heading and script cells are sent at their size over cells the window reserves", async () => {
+  const m = await mountNote(NOTE);
+  const out = m.writes.join("");
+  const frame = m.t.captureCharFrame();
+  expect(out).toContain(`${OSC66}s=2;█ Raft\x1b\\`);
+  expect(out).toContain(`${OSC66}n=1:d=2:v=1:w=1;w\x1b\\`);
+  const rows = frame.split("\n");
+  const at = rows.findIndex((r) => r.includes("█ Raft"));
+  expect(at).toBeGreaterThanOrEqual(0);
+  expect(rows[at + 1]?.trim()).toBe("");
+  expect(await sent(m)).toBe("");
+});
+
+test("a heading cut at the window bottom keeps its normal-size text and is not sent", async () => {
+  const m = await mountNote(`${"line\n".repeat(30)}# Raft\n`);
+  m.keys("Gk");
+  const out = await sent(m);
+  expect(await m.frame()).toContain("█ Raft");
+  expect(out).not.toContain(`${OSC66}s=2`);
+});
+
+test("a resize or a resume from a tool hand-off sends the sized text again", async () => {
+  const m = await mountNote(NOTE);
+  await sent(m);
+  m.t.resize(64, 12);
+  expect(await sent(m)).toContain(`${OSC66}s=2;█ Raft`);
+  expect(await sent(m)).toBe("");
+  m.shell.suspend();
+  m.shell.resume();
+  expect(await sent(m)).toContain(`${OSC66}s=2;█ Raft`);
 });
