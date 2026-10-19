@@ -37,16 +37,25 @@ export type Sign = { text: string; style: StyleToken };
 /** Source lines `from` up to, not including, `to`. */
 export type LineRange = { from: number; to: number };
 
-/** A run of one look drawn at its block's scale, `cells` columns wide. */
+/**
+ * A run of one look drawn at its block's scale, `cells` columns wide; a
+ * `plain` chunk is a space left blank at normal size.
+ */
 export type SizedChunk = {
   text: string;
   style: StyleToken;
   under?: StyleToken;
   cells: number;
+  plain?: true;
 };
 
-/** Text size as `n/d` of double size: 7/8 draws text at 1.75×. */
-export type SizedScale = { n: number; d: number };
+/**
+ * Text size as `n/d` of double size: 7/8 draws text at 1.75×. With
+ * `wordSpace`, each word starts its own chunks and a space between words is
+ * that many blank normal-size cells, so the gap kitty leaves after a chunk
+ * falls between words.
+ */
+export type SizedScale = { n: number; d: number; wordSpace?: number };
 
 /**
  * Text the terminal draws larger than one cell (kitty's text sizing

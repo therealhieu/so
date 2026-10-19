@@ -48,6 +48,29 @@ test("a sized block's chunks follow each other, each row two screen rows below t
   );
 });
 
+test("a plain word space is skipped, the next word drawn after its cells", () => {
+  expect(
+    blockBytes(
+      {
+        scale: { ...H1, wordSpace: 1 },
+        rows: [
+          [
+            { text: "Markdown", style: "mdHeading1", cells: 14 },
+            { text: " ", style: "mdHeading1", cells: 1, plain: true },
+            { text: "tour", style: "mdHeading1", cells: 8 },
+          ],
+        ],
+      },
+      0,
+      0,
+      () => HEADING,
+    ),
+  ).toBe(
+    `\x1b[1;1H${HEADING_SGR}\x1b]66;s=2:w=7:n=7:d=8:v=2;Markdown\x1b\\` +
+      `\x1b[1;16H${HEADING_SGR}\x1b]66;s=2:w=4:n=7:d=8:v=2;tour\x1b\\`,
+  );
+});
+
 test("a script pair is half size in one cell, lowered or raised", () => {
   const plain: Style = {
     fg: RGBA.defaultForeground(),

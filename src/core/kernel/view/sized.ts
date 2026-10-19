@@ -19,9 +19,12 @@ const chunkPart = ({ n, d }: SizedScale) => d / gcd(n, d);
 const scaledCells = (w: number, { n, d }: SizedScale) =>
   2 * Math.ceil((n * w) / d);
 
+const isBlank = (ch: string) => ch === " " || ch === "\t";
+
 /**
  * `units` as chunks: a same-look run is cut every `chunkPart` cells, so only
- * a run's last chunk leaves part of a double cell empty.
+ * a run's last chunk leaves part of a double cell empty. With `wordSpace`, a
+ * blank ends the chunk and becomes a `plain` chunk of its own.
  */
 function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
   const part = chunkPart(scale);
@@ -38,8 +41,20 @@ function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
         ? { text, style, cells }
         : { text, style, under, cells },
     );
+    first = undefined;
   };
   for (const u of units) {
+    if (scale.wordSpace !== undefined && isBlank(u.ch)) {
+      flush();
+      const { style, under } = u;
+      const cells = scale.wordSpace;
+      out.push(
+        under === undefined
+          ? { text: " ", style, cells, plain: true }
+          : { text: " ", style, under, cells, plain: true },
+      );
+      continue;
+    }
     if (first !== undefined && sameLook(first, u) && w + u.w <= part) {
       text += u.ch;
       w += u.w;

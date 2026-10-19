@@ -11,9 +11,12 @@ import { lineStyle, replaceCols, replaceLine } from "./rows";
 const GLYPHS = ["█", "▊", "▌", "▏"];
 const ATX = /^( {0,3}#{1,6})([ \t]+|$)/;
 const CLOSING = /[ \t]+#+[ \t]*$/;
-/** Sizes of the headings the terminal draws larger: H1 1.75×, H2 1.6×, H3 1.4×. */
+/**
+ * Sizes of the headings the terminal draws larger: H1 1.75× with words in
+ * their own chunks and one-cell spaces, H2 1.6×, H3 1.4×.
+ */
 const SCALES: readonly SizedBlock["scale"][] = [
-  { n: 7, d: 8 },
+  { n: 7, d: 8, wordSpace: 1 },
   { n: 4, d: 5 },
   { n: 7, d: 10 },
 ];

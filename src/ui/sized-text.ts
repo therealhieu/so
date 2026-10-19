@@ -66,7 +66,10 @@ export function chunkBytes(
   return osc66(`s=2:w=${chunk.cells / 2}:n=${n}:d=${d}:v=2`, clean(chunk.text));
 }
 
-/** Each chunk of `block` in `style`, its rows from (x, y), two screen rows apart. */
+/**
+ * Each chunk of `block` in `style`, its rows from (x, y), two screen rows
+ * apart; a `plain` chunk stays as the painter left it.
+ */
 export function blockBytes(
   block: SizedBlock,
   x: number,
@@ -77,8 +80,11 @@ export function blockBytes(
   block.rows.forEach((row, r) => {
     let at = x;
     for (const chunk of row) {
-      out +=
-        cup(at, y + 2 * r) + sgr(style(chunk)) + chunkBytes(chunk, block.scale);
+      if (!chunk.plain)
+        out +=
+          cup(at, y + 2 * r) +
+          sgr(style(chunk)) +
+          chunkBytes(chunk, block.scale);
       at += chunk.cells;
     }
   });

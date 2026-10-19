@@ -66,6 +66,25 @@ test("a styled run is its own chunk and keeps the line style under it", () => {
   ]);
 });
 
+test("with a word space, words start their own chunks and spaces are plain cells", () => {
+  const words: SizedScale = { n: 7, d: 8, wordSpace: 1 };
+  expect(wrapSized(heading("Markdown tour"), words, 80)).toEqual([
+    [
+      { text: "Markdown", style: "mdHeading1", cells: 14 },
+      { text: " ", style: "mdHeading1", cells: 1, plain: true },
+      { text: "tour", style: "mdHeading1", cells: 8 },
+    ],
+  ]);
+  // A word longer than a chunk still splits; a row still breaks after a space.
+  expect(texts(wrapSized(heading("Consensus guide"), words, 80))).toEqual([
+    ["Consensu", "s", " ", "guide"],
+  ]);
+  expect(texts(wrapSized(heading("Markdown tour guide"), words, 20))).toEqual([
+    ["Markdown", " "],
+    ["tour", " ", "guide"],
+  ]);
+});
+
 test("a word longer than a row breaks mid-word", () => {
   const rows = wrapSized(heading("Linearizability"), H1, 20);
   expect(texts(rows)).toEqual([["Lineariz", "abi"], ["lity"]]);

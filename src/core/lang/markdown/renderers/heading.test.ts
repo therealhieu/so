@@ -32,7 +32,7 @@ test("an H1 becomes one sized block of two rows per wrapped row, without a glyph
     type: "sizedText",
     rows: 2,
     data: {
-      scale: { n: 7, d: 8 },
+      scale: { n: 7, d: 8, wordSpace: 1 },
       rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
@@ -63,7 +63,7 @@ test("a setext H1 or H2 is one sized block over its text lines and underline", (
     type: "sizedText",
     rows: 2,
     data: {
-      scale: { n: 7, d: 8 },
+      scale: { n: 7, d: 8, wordSpace: 1 },
       rows: [[{ text: "Raft", style: "mdHeading1", cells: 8 }]],
     },
   });
