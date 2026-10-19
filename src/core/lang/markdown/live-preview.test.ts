@@ -12,6 +12,7 @@ import type { DecorationProvider } from "../../kernel/view/decorations";
 import { highlightMarks } from "../../kernel/view/marks";
 import { layoutText } from "../../kernel/view/text-view";
 import type { RenderLine, Span, Widget } from "../../kernel/view/types";
+import { wrapLine } from "../../kernel/view/wrap";
 import { type Block, parseDoc } from "./doc";
 import { markdownFileType } from "./file-type";
 import {
@@ -544,24 +545,42 @@ test("justify marks rendered paragraph, list, and callout and quote body lines, 
 
 test("in live view a sized heading on the cursor's line shows its source and keeps its rows", () => {
   builtinRenderers();
-  const note = "Intro\n\n# Raft\n\nBody";
   const sized = stubCtx({ sizedText: true });
-  const screenRows = (rows: RenderLine[]) =>
+  const screenRows = (rows: RenderLine[], width: number) =>
     rows.reduce(
       (n, r) =>
         n +
-        (r.widget !== undefined && r.spans.length === 0 ? r.widget.rows : 1),
+        (r.widget !== undefined && r.spans.length === 0
+          ? r.widget.rows
+          : wrapLine(rowText(r), width, 1).length),
       0,
     );
-  const at = (line: number) =>
-    layoutNote(noteView(note, { cursor: { line, col: 0 } }), "live", sized);
-  const off = at(0);
-  const on = at(2);
-  expect(screenRows(on)).toBe(screenRows(off));
-  expect(off.find((r) => r.sourceLine === 2)?.widget?.type).toBe("sizedText");
-  const heading = on.filter((r) => r.sourceLine === 2);
+  const at = (note: string, line: number, width = 80) =>
+    layoutNote(
+      noteView(note, { cursor: { line, col: 0 }, width }),
+      "live",
+      sized,
+    );
+  const keepsRows = (note: string, line: number, width = 80) => {
+    const off = at(note, 0, width);
+    expect(off.some((r) => r.widget?.type === "sizedText")).toBe(true);
+    expect(screenRows(at(note, line, width), width)).toBe(
+      screenRows(off, width),
+    );
+  };
+
+  const note = "Intro\n\n# Raft\n\nBody";
+  keepsRows(note, 2);
+  const heading = at(note, 2).filter((r) => r.sourceLine === 2);
   expect(heading.map(rowText)).toEqual(["# Raft", ""]);
   expect(heading[1]?.widget).toEqual({ type: "text", data: [[]], rows: 1 });
+
+  // The 46-cell source wraps to two rows at width 30, so the spacer takes one less.
+  const long =
+    "Intro\n\n# Consensus guarantees for distributed leaders\n\nBody";
+  keepsRows(long, 2, 30);
+  const spacers = at(long, 2, 30).filter((r) => r.widget?.type === "text");
+  expect(spacers.map((r) => r.widget?.rows)).toEqual([6]);
 });
 
 test("with sized text, inline math scripts and footnote labels are half-size pairs", () => {

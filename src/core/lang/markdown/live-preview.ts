@@ -4,6 +4,7 @@ import type {
   DecorationProvider,
 } from "../../kernel/view/decorations";
 import type { LineRange, TextView } from "../../kernel/view/types";
+import { wrapLine } from "../../kernel/view/wrap";
 import { contentEnd } from "./block-text";
 import type { BlockKind } from "./blocks";
 import type { Block, Doc } from "./doc";
@@ -101,17 +102,22 @@ function linesOf(d: Decoration): [number, number] {
 }
 
 /**
- * Blank rows below a revealed line that a `sizedText` block would have drawn,
- * so the lines below keep their place while its source shows.
+ * Blank rows below a revealed `sizedText` block's source that the block would
+ * have drawn beyond the source's own wrapped rows, so the lines below keep
+ * their place while it shows. A tab counts as one cell.
  */
-function keepSizedRows(d: Decoration): Decoration[] {
+function keepSizedRows(d: Decoration, v: TextView): Decoration[] {
   if (d.kind !== "replace" || d.widget?.type !== "sizedText") return [];
-  const blank = d.widget.rows - 1;
+  const { start, end } = d.range;
+  let source = 0;
+  for (let l = start.line; l <= end.line; l++)
+    source += wrapLine(v.buf.line(l), v.width, 1).length;
+  const blank = d.widget.rows - source;
   if (blank < 1) return [];
   return [
     {
       kind: "widget",
-      at: { line: d.range.start.line, col: 1 },
+      at: { line: end.line, col: 1 },
       block: true,
       widget: textWidget(Array.from({ length: blank }, () => [])),
     },
@@ -168,7 +174,8 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
         ...(input.ctx.justify && PROSE.has(key) ? justified(block, v) : []),
       ];
       if (lines.length === 0) out.push(...own);
-      else for (const d of own) out.push(...(keep(d) ? [d] : keepSizedRows(d)));
+      else
+        for (const d of own) out.push(...(keep(d) ? [d] : keepSizedRows(d, v)));
     } catch {
       out.push(sign(block.startLine, "⚠", "signError"));
     }
