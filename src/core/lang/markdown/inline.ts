@@ -58,11 +58,22 @@ const footnoteLabel = (label: string) =>
     ? [...label].map((d) => SUPERSCRIPT[Number(d)]).join("")
     : `[${label}]`;
 
-/** A footnote reference: half-size raised pairs with sized text, else `footnoteLabel`. */
-const footnoteRef = (label: string, sizedText: boolean): Span[] =>
-  (sizedText ? scriptSpans(label, "sup", "mdFootnote") : undefined) ?? [
-    { text: footnoteLabel(label), style: "mdFootnote" },
-  ];
+/**
+ * A footnote label as a reference or definition shows it: half-size raised
+ * pairs with sized text, else `footnoteLabel`; `after` follows the label.
+ */
+export const footnoteRef = (
+  label: string,
+  sizedText: boolean,
+  after = "",
+): Span[] => {
+  const pairs = sizedText ? scriptSpans(label, "sup", "mdFootnote") : undefined;
+  if (pairs === undefined)
+    return [{ text: footnoteLabel(label) + after, style: "mdFootnote" }];
+  return after === ""
+    ? pairs
+    : [...pairs, { text: after, style: "mdFootnote" }];
+};
 
 /**
  * Inline rendering of a prose block: emphasis markers, link syntax,
