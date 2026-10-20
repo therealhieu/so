@@ -40,6 +40,8 @@ export type PreviewCtx = {
    * text; 1 keeps them at their own size.
    */
   zoom: number;
+  /** A terminal cell's width in pixels, when the terminal reports it. */
+  cellPx?: number;
   /** Whether the window wraps long lines, and its tab width, as the UI draws source rows. */
   wrap: boolean;
   tabWidth: number;

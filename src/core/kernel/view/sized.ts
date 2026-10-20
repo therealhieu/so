@@ -28,9 +28,12 @@ const chunkPart = ({ n, d }: SizedScale) => {
 /** Screen rows and columns one sized cell takes at `scale`. */
 export const sizedCell = (scale: SizedScale) => scale.s ?? 2;
 
-/** Columns a chunk of `w` normal-size cells takes at `scale`: whole sized cells. */
+/**
+ * Columns a chunk of `w` normal-size cells takes at `scale`: whole sized
+ * cells of its text at the full size, which kitty's text never passes.
+ */
 const scaledCells = (w: number, scale: SizedScale) =>
-  sizedCell(scale) * Math.ceil((w * advance(scale)) / sizedCell(scale) - 1e-9);
+  sizedCell(scale) * Math.ceil((w * fullSize(scale)) / sizedCell(scale) - 1e-9);
 
 const isBlank = (ch: string) => ch === " " || ch === "\t";
 
@@ -211,14 +214,17 @@ export function sizeScale(size: number): SizedScale {
 /** Screen rows one zoomed row takes at text size `size`. */
 export const zoomStep = (size: number) => sizedCell(sizeScale(size));
 
+/** The size `scale` draws text at, in columns per normal-size cell. */
+const fullSize = (scale: SizedScale) => (sizedCell(scale) * scale.n) / scale.d;
+
 /** Columns one normal-size cell's text takes at `scale`. */
 function advance(scale: SizedScale): number {
-  return scale.adv ?? (sizedCell(scale) * scale.n) / scale.d;
+  return scale.adv ?? fullSize(scale);
 }
 
 /** Normal-size cells one chunk holds at most: kitty draws one in at most 7 sized cells. */
 const chunkMost = (scale: SizedScale) =>
-  Math.max(1, Math.floor((7 * sizedCell(scale)) / advance(scale) + EPS));
+  Math.max(1, Math.floor((7 * sizedCell(scale)) / fullSize(scale) + EPS));
 
 /**
  * The text zoom: its size, and the width of a terminal cell in pixels when
@@ -227,17 +233,20 @@ const chunkMost = (scale: SizedScale) =>
 export type TextZoom = { size: number; cellPx?: number };
 
 /**
- * `zoom` as the sized scale its text is drawn at. kitty draws each
- * character of a fractional size in whole pixels, `ceil(size × cell)` wide,
- * so with the cell's pixels a character takes that over the cell's columns.
+ * `scale` with the columns a character takes, given a cell `cellPx` pixels
+ * wide. kitty's cell is the font's advance rounded up to a whole pixel, and
+ * at a fractional size it spaces characters by that advance at the size,
+ * not by the cell: half a pixel under the cell is the advance's middle.
  */
-export function zoomScale(zoom: TextZoom): SizedScale {
-  const scale = sizeScale(zoom.size);
-  const px = zoom.cellPx === undefined ? 0 : Math.round(zoom.cellPx);
+export function withAdvance(scale: SizedScale, cellPx?: number): SizedScale {
+  const px = cellPx === undefined ? 0 : Math.round(cellPx);
   if (px <= 0 || scale.n === scale.d) return scale;
-  const glyph = Math.ceil((sizedCell(scale) * scale.n * px) / scale.d - EPS);
-  return { ...scale, adv: glyph / px };
+  return { ...scale, adv: (fullSize(scale) * (px - 0.5)) / px };
 }
+
+/** `zoom` as the sized scale its text is drawn at. */
+export const zoomScale = (zoom: TextZoom): SizedScale =>
+  withAdvance(sizeScale(zoom.size), zoom.cellPx);
 
 /** The most extra columns a gap takes per column of a space before a row stays ragged. */
 const MAX_STRETCH = 3;
@@ -884,9 +893,8 @@ export function gridRow(spans: readonly Span[], zoom: TextZoom): SizedChunk[] {
 }
 
 /**
- * Columns a grid `width` columns wide at `size` keeps at normal size. With
- * the cell's pixels, kitty's whole-pixel glyphs are at most a fifth of a
- * column wider than the size (cells of 5 px or more).
+ * Columns a grid `width` columns wide at `size` keeps at normal size, with
+ * a fifth of a column to spare per column at a fractional size.
  */
 export const gridColumns = (width: number, size: number) =>
   Math.max(1, Math.floor(width / (Number.isInteger(size) ? size : size + 0.2)));

@@ -119,6 +119,12 @@ test("headings keep their sizes at 1× and keep about those factors of the zoome
       expect(Math.abs((sizes[i] ?? 0) / zoom - factor)).toBeLessThan(0.2);
     });
   }
+  // With the cell's pixels, H3's characters take the font's advance; H1 and H2 keep their chunks.
+  expect([1, 2, 3].map((depth) => headingScale(depth, 1, 17)?.adv)).toEqual([
+    undefined,
+    undefined,
+    (1.4 * 16.5) / 17,
+  ]);
   expect([1, 2, 3].map((depth) => headingScale(depth, 1.5))).toEqual([
     { s: 3, n: 7, d: 8, words: true },
     { s: 3, n: 5, d: 6, words: true },

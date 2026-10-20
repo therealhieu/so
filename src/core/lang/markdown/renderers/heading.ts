@@ -1,5 +1,10 @@
 import type { Decoration } from "../../../kernel/view/decorations";
-import { sizedCell, sizeScale, wrapSized } from "../../../kernel/view/sized";
+import {
+  sizedCell,
+  sizeScale,
+  withAdvance,
+  wrapSized,
+} from "../../../kernel/view/sized";
 import { layoutLine } from "../../../kernel/view/text-view";
 import type { SizedBlock, Span, TextView } from "../../../kernel/view/types";
 import { contentEnd, contentStart, rootOf } from "../block-text";
@@ -31,20 +36,23 @@ const SIZES = [1.5, 1.75, 2, 2.25, 2.5, 2.625, 3, 3.5, 4, 4.375, 5, 5.25, 6, 7];
 
 /**
  * The size of an H1–H3 under text `zoom`: its own at 1, else the size
- * nearest its factor times the body's, each word placed on its own.
+ * nearest its factor times the body's, each word placed on its own, where
+ * its characters take the width kitty gives them in a cell `cellPx` wide.
  */
 export function headingScale(
   depth: number,
   zoom: number,
+  cellPx?: number,
 ): SizedBlock["scale"] | undefined {
   const factor = FACTORS[depth - 1];
   if (factor === undefined) return undefined;
-  if (zoom === 1) return SCALES[depth - 1];
+  const own = SCALES[depth - 1];
+  if (zoom === 1) return own?.words === true ? withAdvance(own, cellPx) : own;
   const want = zoom * factor;
   const size = SIZES.reduce((best, z) =>
     Math.abs(z - want) < Math.abs(best - want) ? z : best,
   );
-  return { ...sizeScale(size), words: true };
+  return withAdvance({ ...sizeScale(size), words: true }, cellPx);
 }
 
 /**
@@ -93,7 +101,7 @@ export const headingRenderer: BlockRenderer = (block, v, input) => {
     : Number(rootOf(doc, block, v.buf).children?.[0]?.depth ?? 1);
   const level = Math.min(depth, 4);
   const style = `mdHeading${level}`;
-  const scale = headingScale(depth, zoomOf(input));
+  const scale = headingScale(depth, zoomOf(input), input.ctx.cellPx);
   const sized = input.ctx.sizedText && scale !== undefined;
   // A sized heading's size shows its level.
   const glyph = sized ? [] : [{ text: `${GLYPHS[level - 1]} `, style }];

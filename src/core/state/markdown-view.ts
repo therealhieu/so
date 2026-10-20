@@ -65,6 +65,7 @@ export const markdownViewContextFor =
       justify,
       sizedText: host.sizedText && sizedText,
       zoom,
+      ...(host.cellPx === undefined ? {} : { cellPx: host.cellPx }),
       wrap,
       tabWidth,
     };
