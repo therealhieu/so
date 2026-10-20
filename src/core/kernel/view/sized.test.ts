@@ -103,9 +103,33 @@ test("with a word space, words start their own chunks and spaces are plain cells
     ["ncephalo", "center"],
     ["gram", undefined],
   ]);
-  expect(aligns("Requirements", { ...H3, wordSpace: 1 })).toEqual([
+  expect(aligns("Requirements", { ...H3, words: true })).toEqual([
     ["Requiremen", "right"],
     ["ts", undefined],
+  ]);
+  // Placed word by word, short words share a chunk instead of each padding
+  // its own sized cells before a space.
+  expect(
+    texts(
+      wrapSized(
+        heading("Why can't you just put everything in goroutines?"),
+        { ...H3, words: true },
+        80,
+      ),
+    ),
+  ).toEqual([
+    [
+      "Why",
+      "can't you",
+      "just put",
+      " ",
+      "everything",
+      " ",
+      "in",
+      " ",
+      "goroutines",
+      "?",
+    ],
   ]);
   expect(texts(wrapSized(heading("Markdown tour guide"), words, 20))).toEqual([
     ["Markdown", " "],

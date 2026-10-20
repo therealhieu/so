@@ -83,8 +83,8 @@ test("an H3 is sized at 1.4×", () => {
     type: "sizedText",
     rows: 2,
     data: {
-      scale: { n: 7, d: 10, wordSpace: 1 },
-      rows: [[{ text: "Raft", style: "mdHeading3", cells: 6 }]],
+      scale: { n: 7, d: 10, words: true },
+      rows: [[{ text: "Raft", style: "mdHeading3", cells: 6, w: 4 }]],
     },
   });
 });
@@ -106,7 +106,7 @@ test("headings keep their sizes at 1× and keep about those factors of the zoome
   expect([1, 2, 3, 4].map((depth) => headingScale(depth, 1))).toEqual([
     { n: 7, d: 8, wordSpace: 1 },
     { n: 4, d: 5 },
-    { n: 7, d: 10, wordSpace: 1 },
+    { n: 7, d: 10, words: true },
     undefined,
   ]);
   const size = (x: SizedBlock["scale"] | undefined) =>
