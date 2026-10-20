@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { noteView, stubCtx } from "../../../../../test/support/markdown";
 import type { Decoration } from "../../../kernel/view/decorations";
 import type { SizedBlock } from "../../../kernel/view/types";
-import { headingRenderer } from "./heading";
+import { headingRenderer, headingScale } from "./heading";
 
 const render = (text: string, width: number, sizedText: boolean) => {
   const { v, doc } = noteView(text, { width });
@@ -100,4 +100,43 @@ test("H4 and sized text off keep the glyph decorations", () => {
       spans: [{ text: "█ ", style: "mdHeading1" }],
     },
   ]);
+});
+
+test("headings keep their sizes at 1× and keep about those factors of the zoomed body", () => {
+  expect([1, 2, 3, 4].map((depth) => headingScale(depth, 1))).toEqual([
+    { n: 7, d: 8, wordSpace: 1 },
+    { n: 4, d: 5 },
+    { n: 7, d: 10 },
+    undefined,
+  ]);
+  const size = (x: SizedBlock["scale"] | undefined) =>
+    x === undefined ? 0 : ((x.s ?? 2) * x.n) / x.d;
+  for (const zoom of [1.1, 1.3, 1.5, 1.7, 1.9, 2, 2.5, 3]) {
+    const sizes = [1, 2, 3].map((depth) => size(headingScale(depth, zoom)));
+    expect(sizes[2]).toBeGreaterThan(zoom);
+    expect(sizes).toEqual([...sizes].sort((a, b) => b - a));
+    [1.75, 1.6, 1.4].forEach((factor, i) => {
+      expect(Math.abs((sizes[i] ?? 0) / zoom - factor)).toBeLessThan(0.2);
+    });
+  }
+  expect([1, 2, 3].map((depth) => headingScale(depth, 1.5))).toEqual([
+    { s: 3, n: 7, d: 8, words: true },
+    { s: 3, n: 5, d: 6, words: true },
+    { s: 2, n: 1, d: 1, words: true },
+  ]);
+});
+
+test("in a zoomed reading view a heading is drawn larger, its rows that many screen rows", () => {
+  const { v, doc } = noteView("# Raft", { width: 80 });
+  const block = doc.blocks[0];
+  if (block === undefined) throw new Error("no block");
+  const [d] = headingRenderer(block, v, {
+    doc,
+    view: "reading",
+    ctx: stubCtx({ sizedText: true, zoom: 2 }),
+  });
+  if (d?.kind !== "replace" || d.widget === undefined)
+    throw new Error("not sized");
+  expect(d.widget.rows).toBe(4);
+  expect((d.widget.data as SizedBlock).scale.s).toBe(4);
 });

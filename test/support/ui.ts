@@ -36,6 +36,7 @@ const rasterizeSvg = createSvgRasterizer();
 import { registerWidgetPainter } from "../../src/ui/widgets/registry";
 import { paintRule } from "../../src/ui/widgets/rule";
 import { paintSizedText } from "../../src/ui/widgets/sized-text";
+import { paintZoomText } from "../../src/ui/widgets/zoom-text";
 import { editingNotes, explorerLeft, testRegistries, textFile } from "./state";
 
 export type MountOptions = {
@@ -101,6 +102,7 @@ export async function mountShell(o: MountOptions) {
   registerWidgetPainter("image", paintImage);
   registerWidgetPainter("base", paintBaseEmbed);
   registerWidgetPainter("sizedText", paintSizedText);
+  registerWidgetPainter("zoomText", paintZoomText);
   const t = await createTestRenderer({
     width: o.cols,
     height: o.rows,

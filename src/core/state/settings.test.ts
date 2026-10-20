@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { fresh, testRegistries } from "../../../test/support/state";
 import { splitKeys } from "../kernel/vim/keys";
-import { describeSetting } from "./settings";
+import { describeSetting, zoomText } from "./settings";
 import type { AppState, Effect, PickerState, Result } from "./types";
 import { createUpdate } from "./update";
 
@@ -48,6 +48,7 @@ test("<leader>us, also in the explorer, and :Settings list each setting with its
       "preview.readable off",
       "preview.justify off",
       "preview.sizedText on",
+      "preview.zoom 1",
       "autosave.enabled on",
       "autosave.delayMs 1000",
       "editor.tabWidth 8",
@@ -290,4 +291,28 @@ test("the theme preview wraps its choices so every theme shows", () => {
     "rose-pine-dawn",
   ]);
   expect(lines[0]?.ranges).toEqual([{ from: 0, to: 4, style: "floatTitle" }]);
+});
+
+test("text zoom steps through 1× to 2× a tenth at a time, then 2.5× and 3×, saved like the setting", () => {
+  let s = fresh();
+  const seen: number[] = [];
+  for (let i = 0; i < 13; i++) {
+    s = zoomText(s, 1).state;
+    seen.push(s.config.preview.zoom);
+  }
+  expect(seen).toEqual([
+    1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.5, 3, 3,
+  ]);
+  const out = zoomText(s, -1);
+  expect(out.state.config.preview.zoom).toBe(2.5);
+  expect(out.effects).toEqual([
+    {
+      kind: "writeSetting",
+      path: ["preview", "zoom"],
+      value: 2.5,
+      previous: 3,
+    },
+  ]);
+  expect(zoomText(out.state, 0).state.config.preview.zoom).toBe(1);
+  expect(zoomText(fresh(), -1).effects).toEqual([]);
 });

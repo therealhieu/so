@@ -1,6 +1,7 @@
 import { cellWidth, clusters } from "../text/cells";
 import { colAtCell, justifyRow } from "./justify";
-import type { RenderLine, Span } from "./types";
+import { type TextZoom, zoomRowsOf, zoomStep } from "./sized";
+import type { RenderLine, Span, ZoomRow } from "./types";
 import { prefixCells, wrapLine, wrapText } from "./wrap";
 
 /**
@@ -15,7 +16,29 @@ export type ScreenRow = {
   indent: number;
   endCol?: number;
   shift?: number[];
+  /** The zoomed row shown, on a line drawn larger. */
+  zoom?: ZoomRow;
 };
+
+/**
+ * Screen rows `line` takes: a widget's own, `zoom` per zoomed row,
+ * else one per wrap row.
+ */
+export function lineRows(
+  line: RenderLine,
+  o: { width: number; tabWidth: number; wrap: boolean; zoom?: TextZoom },
+): number {
+  if (isWidgetRow(line)) return Math.max(1, line.widget?.rows ?? 1);
+  if (line.zoom === true && o.zoom !== undefined)
+    return (
+      zoomStep(o.zoom.size) *
+      zoomRowsOf(line, o.zoom, o.width, o.tabWidth).length
+    );
+  return o.wrap
+    ? wrapLine(wrapText(line.spans), o.width, o.tabWidth, prefixCells(line))
+        .length
+    : 1;
+}
 
 const isWidgetRow = (r: RenderLine) =>
   r.widget !== undefined && r.spans.length === 0;
@@ -29,7 +52,14 @@ const isWidgetRow = (r: RenderLine) =>
 export function rowAt(
   lines: readonly RenderLine[],
   y: number,
-  o: { width: number; tabWidth: number; wrap: boolean; skipRows: number },
+  o: {
+    width: number;
+    tabWidth: number;
+    wrap: boolean;
+    skipRows: number;
+    /** The text zoom zoomed lines are drawn at. */
+    zoom?: TextZoom;
+  },
 ): ScreenRow | undefined {
   let last: ScreenRow | undefined;
   let row = 0;
@@ -39,6 +69,28 @@ export function rowAt(
       const height = Math.max(1, line.widget?.rows ?? 1);
       if (y < row + height) return last;
       row += height;
+      continue;
+    }
+    if (line.zoom === true && o.zoom !== undefined) {
+      const step = zoomStep(o.zoom.size);
+      const zoomed = zoomRowsOf(line, o.zoom, o.width, o.tabWidth);
+      const skip = line.sourceLine === lines[0]?.sourceLine ? o.skipRows : 0;
+      for (let k = Math.floor(skip / step); k < zoomed.length; k++) {
+        const z = zoomed[k];
+        if (z === undefined) break;
+        last =
+          z.endCol === undefined
+            ? { line, startCol: z.startCol, indent: 0, zoom: z }
+            : {
+                line,
+                startCol: z.startCol,
+                indent: 0,
+                endCol: z.endCol,
+                zoom: z,
+              };
+        if (y < row + step) return last;
+        row += step;
+      }
       continue;
     }
     const prefix = prefixCells(line);

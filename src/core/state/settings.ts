@@ -1,4 +1,9 @@
-import { type AppConfig, ConfigSchema, THEME_NAMES } from "../config/schema";
+import {
+  type AppConfig,
+  ConfigSchema,
+  THEME_NAMES,
+  ZOOM_LEVELS,
+} from "../config/schema";
 import type { SettingValue } from "../config/toml-edit";
 import { rankBy } from "../kernel/text/fuzzy";
 import { movedCaret, relistShown, resizeExplorer, typed } from "./explorer";
@@ -155,6 +160,17 @@ export const SETTINGS: readonly Setting[] = [
       "Larger H1–H3 headings and",
       "half-size math and footnote",
       "scripts where the terminal can.",
+    ],
+  },
+  {
+    kind: "choice",
+    path: ["preview", "zoom"],
+    choices: [...ZOOM_LEVELS],
+    about: [
+      "Note prose drawn 1.1× to 3× in",
+      "the reading view where the",
+      "terminal can; + or =, -, and",
+      "<leader>u0 in the reading view.",
     ],
   },
   {
@@ -515,6 +531,25 @@ export function toggleJustify(s: AppState): Result {
   const on = !s.config.preview.justify;
   return chain(setSetting(s, ["preview", "justify"], on), (st) =>
     message(st, on ? "justify on" : "justify off"),
+  );
+}
+
+/**
+ * `<leader>u+` (or `=`)/`<leader>u-` in a note: the next larger or smaller text zoom
+ * step, `<leader>u0` back to 1×; saved like the setting.
+ */
+export function zoomText(s: AppState, step: 1 | -1 | 0): Result {
+  const now = s.config.preview.zoom;
+  const at = ZOOM_LEVELS.findIndex((z) => z >= now);
+  const to =
+    step === 0
+      ? 1
+      : (ZOOM_LEVELS[
+          Math.max(0, Math.min(ZOOM_LEVELS.length - 1, at + step))
+        ] ?? now);
+  if (to === now) return message(s, `text zoom ${now}×`);
+  return chain(setSetting(s, ["preview", "zoom"], to), (st) =>
+    message(st, `text zoom ${to}×`),
   );
 }
 

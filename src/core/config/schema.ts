@@ -59,6 +59,11 @@ const workspacePath = (opts: { root: "allow" | "deny" }) =>
   });
 
 /** The whole config file; any key not listed here is an error. */
+/** Text zoom levels, smallest first. */
+export const ZOOM_LEVELS = [
+  1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.5, 3,
+] as const;
+
 export const ConfigSchema = z.strictObject({
   /** One key in Vim notation, stored as that key ("<space>" → " "). */
   leader: z
@@ -115,6 +120,8 @@ export const ConfigSchema = z.strictObject({
       justify: z.boolean().default(false),
       /** Draw H1–H3 headings larger and math and footnote scripts half size where the terminal can. */
       sizedText: z.boolean().default(true),
+      /** The size the reading view draws note prose at where the terminal sizes text. */
+      zoom: z.literal(ZOOM_LEVELS).default(1),
     })
     .prefault({}),
   daily: z

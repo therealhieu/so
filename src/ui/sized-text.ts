@@ -4,7 +4,12 @@ import {
   type RGBA,
   TextAttributes,
 } from "@opentui/core";
-import type { SizedBlock, SizedChunk } from "../core/kernel/view/types";
+import { sizedCell } from "../core/kernel/view/sized";
+import type {
+  SizedBlock,
+  SizedChunk,
+  SizedScale,
+} from "../core/kernel/view/types";
 import type { Style } from "./theme";
 
 /**
@@ -55,20 +60,49 @@ const clean = (text: string) => text.replace(CONTROL, " ");
 const osc66 = (params: string, text: string) =>
   `${ESC}]66;${params};${text}${ST}`;
 
+const ALIGN = { right: ":h=1", center: ":h=2" } as const;
+
 /**
- * One chunk drawn in `cells / 2` double cells at `n/d` of double size,
- * centred vertically.
+ * One chunk at `s` times the normal size. At a whole size each character
+ * takes its own sized cells, as text does at normal size; at `n/d` of it,
+ * the chunk is drawn in `cells / s` sized cells, centred vertically, and at
+ * the side of them its `align` names.
  */
-export function chunkBytes(
-  chunk: SizedChunk,
-  { n, d }: SizedBlock["scale"],
-): string {
-  return osc66(`s=2:w=${chunk.cells / 2}:n=${n}:d=${d}:v=2`, clean(chunk.text));
+export function chunkBytes(chunk: SizedChunk, scale: SizedScale): string {
+  const s = sizedCell(scale);
+  const { n, d } = scale;
+  if (n === d) return osc66(`s=${s}`, clean(chunk.text));
+  const h = chunk.align === undefined ? "" : ALIGN[chunk.align];
+  return osc66(
+    `s=${s}:w=${chunk.cells / s}:n=${n}:d=${d}:v=2${h}`,
+    clean(chunk.text),
+  );
 }
 
 /**
- * Each chunk of `block` in `style`, its rows from (x, y), two screen rows
- * apart; a `plain` chunk stays as the painter left it.
+ * `chunks` from (x, y) in `style`, each at its own place; a `plain` chunk
+ * stays as the painter left it.
+ */
+export function rowBytes(
+  chunks: readonly SizedChunk[],
+  scale: SizedScale,
+  x: number,
+  y: number,
+  style: (chunk: SizedChunk) => Style,
+): string {
+  let out = "";
+  let at = x;
+  for (const chunk of chunks) {
+    if (!chunk.plain && !chunk.bar)
+      out += cup(at, y) + sgr(style(chunk)) + chunkBytes(chunk, scale);
+    at += chunk.cells;
+  }
+  return out;
+}
+
+/**
+ * Each chunk of `block` in `style`, its rows from (x, y), `sizedCell` screen
+ * rows apart; a `plain` chunk stays as the painter left it.
  */
 export function blockBytes(
   block: SizedBlock,
@@ -76,19 +110,10 @@ export function blockBytes(
   y: number,
   style: (chunk: SizedChunk) => Style,
 ): string {
-  let out = "";
-  block.rows.forEach((row, r) => {
-    let at = x;
-    for (const chunk of row) {
-      if (!chunk.plain)
-        out +=
-          cup(at, y + 2 * r) +
-          sgr(style(chunk)) +
-          chunkBytes(chunk, block.scale);
-      at += chunk.cells;
-    }
-  });
-  return out;
+  const step = sizedCell(block.scale);
+  return block.rows
+    .map((row, r) => rowBytes(row, block.scale, x, y + step * r, style))
+    .join("");
 }
 
 /** One or two characters at half size in the cell (x, y), raised or lowered. */

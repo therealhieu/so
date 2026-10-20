@@ -35,6 +35,11 @@ export type PreviewCtx = {
   justify: boolean;
   /** Draw H1–H3 headings larger and math and footnote scripts half size. */
   sizedText: boolean;
+  /**
+   * How much larger the reading view draws prose and headings with sized
+   * text; 1 keeps them at their own size.
+   */
+  zoom: number;
   /** Whether the window wraps long lines, and its tab width, as the UI draws source rows. */
   wrap: boolean;
   tabWidth: number;
@@ -43,14 +48,22 @@ export type PreviewCtx = {
 /** Render keys whose rows are prose that may be justified. */
 const PROSE = new Set(["paragraph", "list", "callout", "quote"]);
 
-/** A `justify` line decoration on each visible line of `block`'s content. */
-function justified(block: Block, v: TextView): Decoration[] {
+/** A line decoration on each visible line of `block`'s content. */
+function eachLine(
+  block: Block,
+  v: TextView,
+  flag: { justify: true } | { zoom: true },
+): Decoration[] {
   const out: Decoration[] = [];
   const last = Math.min(contentEnd(v.buf, block), v.visible.to - 1);
   for (let l = Math.max(block.startLine, v.visible.from); l <= last; l++)
-    out.push({ kind: "line", line: l, justify: true });
+    out.push({ kind: "line", line: l, ...flag });
   return out;
 }
+
+/** How much larger this view draws prose and headings: the zoom in the reading view with sized text, else 1. */
+export const zoomOf = (input: MarkdownViewInput): number =>
+  input.view === "reading" && input.ctx.sizedText ? input.ctx.zoom : 1;
 export type MarkdownViewInput = {
   doc: Doc;
   view: "live" | "reading";
@@ -178,10 +191,18 @@ export const livePreview: DecorationProvider<MarkdownViewInput> = (
     try {
       const key = renderKey(block, input.doc, v.buf);
       const r = renderers.get(key) ?? renderers.get("paragraph") ?? inlineOnly;
+      const zoomed = (PROSE.has(key) || key === "code") && zoomOf(input) > 1;
+      // Zoomed prose is drawn at one size, so its scripts keep their Unicode form.
+      const ownInput = zoomed
+        ? { ...input, ctx: { ...input.ctx, sizedText: false } }
+        : input;
       const own = [
-        ...r(block, v, input),
-        ...inlineDecorations(block, v, input, shown.lines),
-        ...(input.ctx.justify && PROSE.has(key) ? justified(block, v) : []),
+        ...r(block, v, ownInput),
+        ...inlineDecorations(block, v, ownInput, shown.lines),
+        ...(input.ctx.justify && PROSE.has(key)
+          ? eachLine(block, v, { justify: true })
+          : []),
+        ...(zoomed ? eachLine(block, v, { zoom: true }) : []),
       ];
       if (lines.length === 0) out.push(...own);
       else

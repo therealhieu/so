@@ -22,6 +22,18 @@ test("a chunk is drawn at n/d of double size in half its cells, centred vertical
   ).toBe("\x1b]66;s=2:w=4:n=4:d=5:v=2;Hi 👍🏽\x1b\\");
 });
 
+test("a chunk at a whole size lets each character take its own sized cells, and a fraction sets its width", () => {
+  expect(
+    chunkBytes({ text: "Raft", style: "text", cells: 8 }, { s: 2, n: 1, d: 1 }),
+  ).toBe("\x1b]66;s=2;Raft\x1b\\");
+  expect(
+    chunkBytes(
+      { text: "Raft", style: "mdHeading1", cells: 16 },
+      { s: 4, n: 7, d: 8 },
+    ),
+  ).toBe("\x1b]66;s=4:w=4:n=7:d=8:v=2;Raft\x1b\\");
+});
+
 test("a sized block's chunks follow each other, each row two screen rows below the last, in one synchronized update", () => {
   expect(
     frameBytes(

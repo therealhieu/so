@@ -1,3 +1,4 @@
+import { sizedCell } from "../../core/kernel/view/sized";
 import type { SizedBlock, SizedChunk } from "../../core/kernel/view/types";
 import { displayWidth } from "../../core/kernel/view/wrap";
 import { blockBytes, type CellRect } from "../sized-text";
@@ -22,29 +23,35 @@ function chunkStyle(theme: Theme, c: SizedChunk, heading: string): Style {
 }
 
 /**
- * A sized heading: each row of chunks takes two screen rows, on the plain
+ * A sized heading: each row of chunks takes `sizedCell` screen rows, on the plain
  * background, with the text at normal size on the first of them. Given all
- * its rows, the terminal then
- * draws the text at its size over them; cut at the window bottom, the
- * normal-size text stays.
+ * its rows, each chunk's text sits under its own sized cells and the
+ * terminal draws the text at its size over them; a `plain` chunk's cell is
+ * never drawn over, so it must hold its own blank. Cut at the window
+ * bottom, the normal-size text stays, run together.
  */
 export const paintSizedText: WidgetPainter = (t, w) => {
   const block = w.data as SizedBlock;
   const heading = headingOf(block);
   const plain = t.theme.style("text");
   const rects: CellRect[] = [];
-  let whole = t.rows >= w.rows;
+  const sizedOf = (row: readonly SizedChunk[]) =>
+    row.reduce((n, c) => n + c.cells, 0);
+  const whole =
+    t.rows >= w.rows && block.rows.every((row) => sizedOf(row) <= t.width);
+  const step = sizedCell(block.scale);
   for (let i = 0; i < t.rows; i++) {
-    const row = block.rows[Math.floor(i / 2)] ?? [];
-    const sized = row.reduce((n, c) => n + c.cells, 0);
-    const cells = Math.min(t.width, sized);
+    const row = block.rows[Math.floor(i / step)] ?? [];
+    const cells = Math.min(t.width, sizedOf(row));
     let x = 0;
-    if (i % 2 === 0) {
-      if (sized > t.width) whole = false;
-      rects.push({ x: t.x, y: t.y + i, w: cells, h: 2 });
+    if (i % step === 0) {
+      rects.push({ x: t.x, y: t.y + i, w: cells, h: step });
       for (const c of row) {
         const text = c.text.replace(/\t/g, " ");
-        const n = Math.min(t.width - x, displayWidth(text, 1));
+        const n = Math.min(
+          t.width - x,
+          whole ? c.cells : displayWidth(text, 1),
+        );
         if (n <= 0) break;
         const style = chunkStyle(t.theme, c, heading);
         drawCells(t.buf, style, t.x + x, t.y + i, text, n);

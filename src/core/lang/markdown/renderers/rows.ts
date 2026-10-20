@@ -1,5 +1,6 @@
 import type { TextBuffer } from "../../../kernel/text/text-buffer";
 import type { Decoration } from "../../../kernel/view/decorations";
+import { zoomStep } from "../../../kernel/view/sized";
 import type { Span } from "../../../kernel/view/types";
 
 /** Rows of spans drawn by the `text` widget painter. */
@@ -7,6 +8,16 @@ export const textWidget = (rows: Span[][]) => ({
   type: "text",
   data: rows,
   rows: rows.length,
+});
+
+/**
+ * Rows of spans the `zoomText` widget painter draws as a grid at text zoom
+ * `size`, each a sized cell tall.
+ */
+export const zoomTextWidget = (rows: Span[][], size: number) => ({
+  type: "zoomText",
+  data: { rows, size },
+  rows: zoomStep(size) * rows.length,
 });
 
 /** One dim row above `line` explaining why a block shows its source. */

@@ -122,9 +122,11 @@ export function layoutLine(
   let wrapPrefix: Span[] | undefined;
   let widget: Widget | undefined;
   let justify = false;
+  let zoom = false;
   for (const d of decos)
     if (d.kind === "line" && d.line === line) {
       if (d.justify) justify = true;
+      if (d.zoom) zoom = true;
       if (d.style !== undefined) base = d.style;
       if (d.sign !== undefined) sign = d.sign;
       if (d.changeSign !== undefined) changeSign = d.changeSign;
@@ -159,7 +161,10 @@ export function layoutLine(
   const changed = changeSign === undefined ? signed : { ...signed, changeSign };
   const prefixed =
     wrapPrefix === undefined ? changed : { ...changed, wrapPrefix };
-  return justify ? { ...prefixed, justify: true } : prefixed;
+  const justified = justify
+    ? { ...prefixed, justify: true as const }
+    : prefixed;
+  return zoom ? { ...justified, zoom: true } : justified;
 }
 
 function spansOf(

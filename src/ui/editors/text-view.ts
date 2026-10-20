@@ -17,6 +17,7 @@ import {
 import {
   displayColAt,
   displayColOf,
+  lineRows,
   rowAt,
   sourceColAt,
   spanAt,
@@ -32,10 +33,21 @@ import {
   searchMarks,
   selectionMarks,
 } from "../../core/kernel/view/marks";
+import {
+  sizedCell,
+  type TextZoom,
+  zoomCellOf,
+  zoomColAt,
+  zoomRowOf,
+  zoomRowsOf,
+  zoomScale,
+  zoomStep,
+} from "../../core/kernel/view/sized";
 import { layoutText } from "../../core/kernel/view/text-view";
 import type {
   RenderLine,
   Sign,
+  SizedChunk,
   Span,
   TextView,
 } from "../../core/kernel/view/types";
@@ -60,6 +72,7 @@ import { type SizedText, scriptBytes } from "../sized-text";
 import { drawCells, middle, type Theme, themeOf } from "../theme";
 import { kittyPictures } from "../widgets/image";
 import { type WidgetPainter, widgetPainters } from "../widgets/registry";
+import { lookOf, paintZoomRow } from "../zoom-row";
 import type { WindowView } from "./registry";
 
 const NO_FOLDS: ReadonlySet<number> = new Set();
@@ -116,6 +129,14 @@ function rowOfLine(
   // Every row came before `line`: it is hidden at the end, or ran out of room.
   return y < rows ? (covering ?? missing) : missing;
 }
+
+/** The text zoom zoomed lines are drawn at, when it is on. */
+const textZoom = (s: AppState, deps: ViewDeps): TextZoom | undefined => {
+  const size = s.config.preview.zoom;
+  if (size <= 1) return undefined;
+  const cellPx = deps.images.cellPixels()?.width;
+  return cellPx === undefined ? { size } : { size, cellPx };
+};
 
 /** How often a frame with hidden lines lays out more lines to fill its rows. */
 const FILL_PASSES = 3;
@@ -174,20 +195,7 @@ export function paintLine(
   },
 ): void {
   const line = theme.style("cursorline");
-  const plain = theme.style("text").bg;
-  const styleOf = ({ style: token, under }: Span) => {
-    const own = theme.style(token);
-    const st =
-      under !== undefined && own.bg.equals(plain)
-        ? { ...own, bg: theme.style(under).bg }
-        : own;
-    return o.cursorline &&
-      token !== "selection" &&
-      token !== "searchMatch" &&
-      token !== "searchCurrent"
-      ? { ...st, bg: line.bg }
-      : st;
-  };
+  const styleOf = (span: Span) => lookOf(theme, span, o.cursorline);
   const end = o.endCol ?? Number.POSITIVE_INFINITY;
   let v = 0;
   let x = 0;
@@ -410,10 +418,12 @@ export class EditorView extends Renderable implements WindowView {
       insert,
     );
     const { textX, textW } = this.columnsOf(s, b);
+    const zoom = textZoom(s, this.deps);
     /**
-     * The cursor's wrap row and cell in `lines`. A row with virtual text or
-     * stretched rows places it among its spans; any other row uses the
-     * buffer line.
+     * The cursor's screen row within its line and its cell in `lines`. A
+     * zoomed line places it in its sized chunks, at the top of the row; a
+     * row with virtual text or stretched rows places it among its spans; any
+     * other row uses the buffer line.
      */
     const place = (lines: readonly RenderLine[]) => {
       const shown = lines.find(
@@ -421,6 +431,19 @@ export class EditorView extends Renderable implements WindowView {
           l.sourceLine === line &&
           !(l.widget !== undefined && l.spans.length === 0),
       );
+      if (shown?.zoom === true && zoom !== undefined) {
+        const dc = displayColOf(shown.spans, col, tabWidth, insert);
+        const zoomed = zoomRowsOf(shown, zoom, textW, tabWidth);
+        const k = zoomRowOf(zoomed, dc);
+        const at = zoomed[k];
+        const x = at === undefined ? 0 : zoomCellOf(at, dc);
+        return {
+          k: zoomStep(zoom.size) * k,
+          x: Math.min(x, textW - 1),
+          dc,
+          zoomed: true,
+        };
+      }
       const bySpans =
         shown?.spans.some((sp) => sp.virtual !== undefined) === true ||
         (wrap && shown?.justify === true);
@@ -428,7 +451,7 @@ export class EditorView extends Renderable implements WindowView {
         shown !== undefined && bySpans
           ? displayColOf(shown.spans, col, tabWidth, insert)
           : rawCol;
-      if (!wrap) return { k: 0, x: dc, dc };
+      if (!wrap) return { k: 0, x: dc, dc, zoomed: false };
       const prefix = shown === undefined ? 0 : prefixCells(shown);
       const starts = wrapLine(
         shown !== undefined && bySpans ? wrapText(shown.spans) : text,
@@ -451,35 +474,49 @@ export class EditorView extends Renderable implements WindowView {
           : undefined;
       const x = dc - start + indent + (shift?.[dc - start] ?? 0);
       // An Insert cursor just past a full row sits at the start of the next.
-      return x >= textW ? { k: k + 1, x: prefix, dc } : { k, x, dc };
+      return x >= textW
+        ? { k: k + 1, x: prefix, dc, zoomed: false }
+        : { k, x, dc, zoomed: false };
     };
+    const height = (row: RenderLine) =>
+      lineRows(row, {
+        width: textW,
+        tabWidth,
+        wrap,
+        ...(zoom === undefined ? {} : { zoom }),
+      });
     const at = (lines: RenderLine[]) =>
-      rowOfLine(lines, line, this.laidTo, rows, (row) =>
-        wrap
-          ? wrapLine(wrapText(row.spans), textW, tabWidth, prefixCells(row))
-              .length
-          : 1,
-      );
+      rowOfLine(lines, line, this.laidTo, rows, height);
     this.lines = followsCursor
       ? this.fitCursor(
           s,
           b,
           rows,
           textW,
-          (lines) => at(lines) + place(lines).k < rows,
+          (lines) => {
+            const p = place(lines);
+            // A zoomed cursor row shows whole.
+            const tall =
+              p.zoomed && zoom !== undefined ? zoomStep(zoom.size) : 1;
+            return at(lines) + p.k + tall - rows;
+          },
+          height,
         )
       : this.layoutFrame(s, b, this.topLine, rows, w.content.cursor, textW);
     const placed = place(this.lines);
     const k = placed.k;
     let x = placed.x;
     this.leftCol = 0;
-    if (!wrap) {
+    if (!wrap && !placed.zoomed) {
       this.leftCol = placed.dc >= textW ? placed.dc - textW + 1 : 0;
       x = placed.dc - this.leftCol;
     }
     let row = at(this.lines);
-    // A line taller than the window shows the rows holding the cursor.
-    if (row === 0 && k >= rows) this.skipRows = k - rows + 1;
+    // A line taller than the window shows the rows holding the cursor; a
+    // zoomed line drops whole sized rows.
+    const step = placed.zoomed && zoom !== undefined ? zoomStep(zoom.size) : 1;
+    if (row === 0 && k + step > rows)
+      this.skipRows = Math.ceil((k + step - rows) / step) * step;
     row += k - this.skipRows;
     const visible = line >= this.topLine && row < rows;
     const focused =
@@ -496,15 +533,18 @@ export class EditorView extends Renderable implements WindowView {
   }
 
   /**
-   * Lay out from the current top line and advance it one line at a time
-   * until `fits` holds; bounded by the window height, and usually one pass.
+   * Lay out from the current top line and advance it until the cursor's row
+   * fits: past the lines whose `height` covers the rows `over` says the
+   * cursor is below the window, else one line; bounded by the window height,
+   * and usually one pass.
    */
   private fitCursor(
     s: AppState,
     b: BufferState,
     rows: number,
     width: number,
-    fits: (lines: RenderLine[]) => boolean,
+    over: (lines: RenderLine[]) => number,
+    height: (row: RenderLine) => number,
   ): RenderLine[] {
     const cursor = s.windows.byId[this.windowId]?.content.cursor ?? {
       line: 0,
@@ -512,9 +552,18 @@ export class EditorView extends Renderable implements WindowView {
     };
     for (let tries = 0; ; tries++) {
       const lines = this.layoutFrame(s, b, this.topLine, rows, cursor, width);
-      if (fits(lines) || this.topLine >= cursor.line || tries > rows)
+      const below = over(lines);
+      if (below <= 0 || this.topLine >= cursor.line || tries > rows)
         return lines;
-      this.topLine++;
+      let skipped = 0;
+      let i = 0;
+      if (Number.isFinite(below))
+        while (i < lines.length - 1 && skipped < below) {
+          skipped += height(lines[i] as RenderLine);
+          i++;
+        }
+      const next = lines[i]?.sourceLine ?? this.topLine + 1;
+      this.topLine = Math.min(cursor.line, Math.max(this.topLine + 1, next));
     }
   }
 
@@ -616,11 +665,13 @@ export class EditorView extends Renderable implements WindowView {
     const { tabWidth, wrap } = s.config.editor;
     const { textX, textW } = this.columnsOf(s, b);
     const row = y - this.rect.y - (this.winbar ? 1 : 0);
+    const zoom = textZoom(s, this.deps);
     const shown = rowAt(this.lines, row, {
       width: textW,
       tabWidth,
       wrap,
       skipRows: this.skipRows,
+      ...(zoom === undefined ? {} : { zoom }),
     });
     const line = Math.min(
       shown?.line.sourceLine ?? this.topLine,
@@ -629,13 +680,15 @@ export class EditorView extends Renderable implements WindowView {
     const length = b.text.line(line).length;
     const widget =
       shown?.line.widget !== undefined && shown.line.spans.length === 0;
+    const dc =
+      shown === undefined
+        ? 0
+        : shown.zoom !== undefined
+          ? zoomColAt(shown.zoom, x - textX)
+          : displayColAt(shown, this.leftCol + x - textX);
     const span =
       markers && shown !== undefined && !widget && x >= textX
-        ? spanAt(
-            shown.line.spans,
-            displayColAt(shown, this.leftCol + x - textX),
-            tabWidth,
-          )
+        ? spanAt(shown.line.spans, dc, tabWidth)
         : undefined;
     const block = span?.fold;
     if (block !== undefined)
@@ -647,12 +700,7 @@ export class EditorView extends Renderable implements WindowView {
     const col =
       shown === undefined || widget || x < textX
         ? 0
-        : sourceColAt(
-            shown.line.spans,
-            displayColAt(shown, this.leftCol + x - textX),
-            tabWidth,
-            length,
-          );
+        : sourceColAt(shown.line.spans, dc, tabWidth, length);
     const pos = { line, col: Math.min(col, length) };
     return {
       kind: "window",
@@ -688,6 +736,7 @@ export class EditorView extends Renderable implements WindowView {
       for (let r = 0; r < rows; r++)
         drawCells(buf, theme.style("text"), this.x, y + r, "", this.width);
     const { tabWidth, wrap, relativeNumbers } = s.config.editor;
+    const zoom = textZoom(s, this.deps);
     const active = this.windowId === s.windows.active;
     const cursorLine = w?.content.cursor.line ?? -1;
     let numbered = -1;
@@ -761,6 +810,22 @@ export class EditorView extends Renderable implements WindowView {
         i += height;
         continue;
       }
+      if (row.zoom === true && zoom !== undefined) {
+        i = this.paintZoomed(buf, theme, row, zoom, {
+          x: tx,
+          y,
+          i,
+          rows,
+          width: textW,
+          tabWidth,
+          cursorline: isCursor && active,
+          gutter: (at, first) =>
+            first
+              ? gutter(number(), at, row.sign, row.changeSign)
+              : gutter("", at),
+        });
+        continue;
+      }
       const text = wrapText(row.spans);
       const prefix = prefixCells(row);
       const starts = wrap
@@ -805,6 +870,57 @@ export class EditorView extends Renderable implements WindowView {
     }
     for (; i < rows; i++)
       drawCells(buf, theme.style("text"), this.x, y + i, "", this.width);
+  }
+
+  /**
+   * A zoomed line's rows from screen row `o.i`, each a sized cell tall:
+   * every character at normal size on the first of its sized cells, in its look,
+   * blanks below it, and the terminal drawing it larger over them. A row cut
+   * at the window bottom or wider than the window keeps its normal-size text
+   * and is not sent. Returns the screen row after the line.
+   */
+  private paintZoomed(
+    buf: OptimizedBuffer,
+    theme: Theme,
+    line: RenderLine,
+    zoom: TextZoom,
+    o: {
+      x: number;
+      y: number;
+      i: number;
+      rows: number;
+      width: number;
+      tabWidth: number;
+      cursorline: boolean;
+      gutter: (at: number, first: boolean) => void;
+    },
+  ): number {
+    const scale = zoomScale(zoom);
+    const step = sizedCell(scale);
+    const zoomed = zoomRowsOf(line, zoom, o.width, o.tabWidth);
+    const skip =
+      line.sourceLine === this.topLine ? Math.floor(this.skipRows / step) : 0;
+    const look = (c: SizedChunk) => lookOf(theme, c, o.cursorline);
+    const fill = lookOf(theme, { style: "text" }, o.cursorline);
+    let i = o.i;
+    for (let k = skip; k < zoomed.length && i < o.rows; k++) {
+      const row = i;
+      paintZoomRow({
+        buf,
+        sizedText: this.deps.sizedText,
+        x: o.x,
+        y: o.y + i,
+        width: o.width,
+        rows: o.rows - i,
+        scale,
+        chunks: zoomed[k]?.chunks ?? [],
+        look,
+        fill,
+        gutter: (r) => o.gutter(row + r, k === 0 && r === 0),
+      });
+      i += step;
+    }
+    return i;
   }
 
   /**

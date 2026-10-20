@@ -1,12 +1,13 @@
 import { cellWidth, clusters } from "../../../kernel/text/cells";
 import type { Decoration } from "../../../kernel/view/decorations";
+import { gridColumns } from "../../../kernel/view/sized";
 import type { Span } from "../../../kernel/view/types";
 import { displayWidth, wrapLine } from "../../../kernel/view/wrap";
 import { nodeRange, rootOf } from "../block-text";
-import type { BlockRenderer } from "../live-preview";
+import { type BlockRenderer, zoomOf } from "../live-preview";
 import type { MdNode } from "../mdast";
 import { RenderCache } from "../render-cache";
-import { replaceLine, textWidget } from "./rows";
+import { replaceLine, textWidget, zoomTextWidget } from "./rows";
 
 /** Inline content as plain text, without Markdown markers. */
 function plainText(node: MdNode): string {
@@ -203,16 +204,32 @@ function tableRows(table: MdNode, w: number): Span[][][] {
 
 const tables = new RenderCache<Span[][][]>();
 
-/** A table fitted to the window, its rows drawn in place of its source lines. */
-export const tableRenderer: BlockRenderer = (block, v, { doc }) => {
-  const table = rootOf(doc, block, v.buf).children?.[0];
+/**
+ * A table fitted to the window, its rows drawn in place of its source
+ * lines. Under a text zoom it is fitted to the columns the zoom leaves and
+ * every row is drawn at the zoom as a grid.
+ */
+export const tableRenderer: BlockRenderer = (block, v, input) => {
+  const table = rootOf(input.doc, block, v.buf).children?.[0];
   const range = table && nodeRange(block, table);
   if (table === undefined || range === undefined) return [];
-  const rows = tables.get(`${block.hash}|${v.width}`, () =>
-    tableRows(table, v.width),
+  const zoom = zoomOf(input);
+  const width = zoom > 1 ? gridColumns(v.width, zoom) : v.width;
+  const rows = tables.get(`${block.hash}|${width}`, () =>
+    tableRows(table, width),
   );
   return rows.map((screen, i): Decoration => {
     const line = range.start.line + i;
+    if (zoom > 1)
+      return {
+        kind: "replace",
+        range: {
+          start: { line, col: 0 },
+          end: { line, col: v.buf.line(line).length },
+        },
+        block: true,
+        widget: zoomTextWidget(screen, zoom),
+      };
     if (screen.length <= 1) return replaceLine(v.buf, line, screen[0]);
     return {
       kind: "replace",
