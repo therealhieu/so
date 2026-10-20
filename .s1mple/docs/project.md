@@ -286,7 +286,7 @@ Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MP
   | `sourceScrollFrameP95` | 16.7 | `scroll.bench.ts --file ts` — the same in a TypeScript file |
   | `firstFrame` | 300 | `startup.bench.ts --metric firstFrame` — spawn to the first statusline, 10,000 notes, in a PTY |
   | `indexReady` | 3000 | `startup.bench.ts --metric indexReady` — spawn to `◆ index ready` |
-  | `indexingKeystrokeP95` | 30 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 10,000 notes |
+  | `indexingKeystrokeP95` | 30 | `indexing-keystroke.bench.ts` — 200 keys, including a `[[` link that opens completion, while the real worker scans 30,000 notes (about half are indexed by the last key) |
   | `lspKeystrokeP95` | 16 | `lsp-keystroke.bench.ts` — the source key mix in a 5,000-line TypeScript file with the real host attached to the fake server, which publishes 200 diagnostics on every change |
   | `gitDiffKeystrokeP95` | 24 | `git-diff.bench.ts` — 200 keys in a 5,000-line note whose every line differs from the index, each followed by the 100 ms diff |
 
