@@ -89,6 +89,24 @@ test("with a word space, words start their own chunks and spaces are plain cells
   expect(texts(wrapSized(heading("Consensus guide"), words, 80))).toEqual([
     ["Consensu", "s", " ", "guide"],
   ]);
+  // kitty draws a chunk short of its cells, so a split word's chunks meet.
+  const aligns = (text: string, scale: SizedScale) =>
+    wrapSized(heading(text), scale, 80)[0]?.map((c) => [c.text, c.align]);
+  expect(aligns("Consensus guide", words)).toEqual([
+    ["Consensu", "right"],
+    ["s", undefined],
+    [" ", undefined],
+    ["guide", undefined],
+  ]);
+  expect(aligns("Electroencephalogram", words)).toEqual([
+    ["Electroe", "right"],
+    ["ncephalo", "center"],
+    ["gram", undefined],
+  ]);
+  expect(aligns("Requirements", { ...H3, wordSpace: 1 })).toEqual([
+    ["Requiremen", "right"],
+    ["ts", undefined],
+  ]);
   expect(texts(wrapSized(heading("Markdown tour guide"), words, 20))).toEqual([
     ["Markdown", " "],
     ["tour", " ", "guide"],

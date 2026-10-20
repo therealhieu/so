@@ -12,13 +12,13 @@ const GLYPHS = ["█", "▊", "▌", "▏"];
 const ATX = /^( {0,3}#{1,6})([ \t]+|$)/;
 const CLOSING = /[ \t]+#+[ \t]*$/;
 /**
- * Sizes of the headings the terminal draws larger: H1 1.75× with words in
- * their own chunks and one-cell spaces, H2 1.6×, H3 1.4×.
+ * Sizes of the headings the terminal draws larger: H1 1.75× and H3 1.4×
+ * with words in their own chunks and one-cell spaces, H2 1.6×.
  */
 const SCALES: readonly SizedBlock["scale"][] = [
   { n: 7, d: 8, wordSpace: 1 },
   { n: 4, d: 5 },
-  { n: 7, d: 10 },
+  { n: 7, d: 10, wordSpace: 1 },
 ];
 /** How much larger than the body H1–H3 draw, as at 1×. */
 const FACTORS = [1.75, 1.6, 1.4];

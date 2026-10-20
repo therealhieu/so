@@ -37,7 +37,10 @@ const isBlank = (ch: string) => ch === " " || ch === "\t";
 /**
  * `units` as chunks: a same-look run is cut every `chunkPart` cells, so only
  * a run's last chunk leaves part of a double cell empty. With `wordSpace`, a
- * blank ends the chunk and becomes a `plain` chunk of its own.
+ * blank ends the chunk and becomes a `plain` chunk of its own, and a word
+ * of several chunks has them meet: kitty draws a chunk's text slightly
+ * short of its cells, so the first sits at the right of its cells, any
+ * between are centred, and the last sits at the left.
  */
 function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
   const part = chunkPart(scale);
@@ -45,6 +48,13 @@ function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
   let first: Unit | undefined;
   let text = "";
   let w = 0;
+  let wordStart = 0;
+  const endWord = () => {
+    const last = out.length - 1;
+    if (last > wordStart)
+      for (let i = wordStart; i < last; i++)
+        (out[i] as SizedChunk).align = i === wordStart ? "right" : "center";
+  };
   const flush = () => {
     if (first === undefined) return;
     const { style, under } = first;
@@ -59,6 +69,7 @@ function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
   for (const u of units) {
     if (scale.wordSpace !== undefined && isBlank(u.ch)) {
       flush();
+      endWord();
       const { style, under } = u;
       const cells = scale.wordSpace;
       out.push(
@@ -66,6 +77,7 @@ function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
           ? { text: " ", style, cells, plain: true }
           : { text: " ", style, under, cells, plain: true },
       );
+      wordStart = out.length;
       continue;
     }
     if (first !== undefined && sameLook(first, u) && w + u.w <= part) {
@@ -79,6 +91,7 @@ function chunksOf(units: readonly Unit[], scale: SizedScale): SizedChunk[] {
     w = u.w;
   }
   flush();
+  if (scale.wordSpace !== undefined) endWord();
   return out;
 }
 
