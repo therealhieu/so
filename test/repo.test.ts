@@ -51,6 +51,25 @@ test("CI runs on pull_request only", () => {
   expect(ci.concurrency["cancel-in-progress"]).toBe(true);
 });
 
+test("npm runs on the latest Node 24", () => {
+  type Step = { run?: string; uses?: string; with?: Record<string, unknown> };
+  const unpinned: string[] = [];
+  for (const [name, text] of workflows) {
+    const { jobs } = Bun.YAML.parse(text) as {
+      jobs: Record<string, { steps?: Step[] }>;
+    };
+    for (const [job, { steps = [] }] of Object.entries(jobs)) {
+      if (!steps.some((step) => /\bnpm\s/.test(step.run ?? ""))) continue;
+      const node = steps.find((step) =>
+        step.uses?.startsWith("actions/setup-node@"),
+      )?.with;
+      if (node?.["node-version"] !== "24" || node["check-latest"] !== true)
+        unpinned.push(`${name} ${job}`);
+    }
+  }
+  expect(unpinned).toEqual([]);
+});
+
 test("compile includes the workers", () => {
   const sources = [
     ...Object.values(pkg.scripts as Record<string, string>),
