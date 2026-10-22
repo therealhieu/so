@@ -1,0 +1,19 @@
+name: dependabot-auto-merge
+# Queues each Dependabot PR to squash-merge once master's required checks pass.
+on:
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
