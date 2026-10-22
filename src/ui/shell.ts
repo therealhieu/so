@@ -102,11 +102,14 @@ class Backdrop extends Renderable {
  *
  * A capability reply during terminal setup requests a frame that paints as
  * soon as setup ends, before the shell attaches. The renderer clears cells
- * with a white foreground, which NO_COLOR forbids, so that frame paints the
- * backdrop. Frames wait for setup, so the backdrop is added once it starts.
+ * with a white foreground, which a colourless start forbids, so with
+ * `noColor` the backdrop is added and that frame paints it instead. Adding
+ * the backdrop requests a frame of its own, so a colourless start always
+ * paints one blank frame before the shell attaches; a colour start adds
+ * nothing. Frames wait for setup, so the backdrop is added once it starts.
  */
 export async function createRenderer(
-  o: { imageFiles?: boolean } = {},
+  o: { imageFiles?: boolean; noColor?: boolean } = {},
 ): Promise<CliRenderer> {
   const renderer = new CliRenderer(
     process.stdin,
@@ -121,11 +124,15 @@ export async function createRenderer(
   );
   try {
     const setup = renderer.setupTerminal();
-    renderer.root.add(new Backdrop(renderer));
+    if (o.noColor) renderer.root.add(new Backdrop(renderer));
     await setup;
     return renderer;
   } catch (e) {
-    renderer.destroy();
+    // The setup error is the one reported; a renderer that fails to tear
+    // down still gets the chance to restore the terminal below.
+    try {
+      renderer.destroy();
+    } catch {}
     await renderer.closed.catch(() => {});
     throw e;
   }

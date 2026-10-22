@@ -328,6 +328,16 @@ function servedFileTypes(config: Action | undefined): ReadonlySet<string> {
   return new Set(resolveServers(lsp).flatMap((spec) => spec.fileTypes));
 }
 
+/** Whether the first frame paints without colour: `NO_COLOR` or `color = "never"`. */
+function startsColourless(config: Action | undefined): boolean {
+  if ((process.env.NO_COLOR ?? "") !== "") return true;
+  return (
+    config?.type === "configLoaded" &&
+    config.result.ok &&
+    config.result.config.color === "never"
+  );
+}
+
 /** Saves the session on shutdown; a failure is logged and never stops the exit. */
 function sessionSaver(
   path: string | undefined,
@@ -444,7 +454,10 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
-  const renderer = await createRenderer({ imageFiles: herdrFiles });
+  const renderer = await createRenderer({
+    imageFiles: herdrFiles,
+    noColor: startsColourless(config),
+  });
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
