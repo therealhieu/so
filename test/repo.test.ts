@@ -59,10 +59,11 @@ test("npm runs on the latest Node 24", () => {
       jobs: Record<string, { steps?: Step[] }>;
     };
     for (const [job, { steps = [] }] of Object.entries(jobs)) {
-      if (!steps.some((step) => /\bnpm\s/.test(step.run ?? ""))) continue;
-      const node = steps.find((step) =>
-        step.uses?.startsWith("actions/setup-node@"),
-      )?.with;
+      const npm = steps.findIndex((step) => /\bnpm\s/.test(step.run ?? ""));
+      if (npm < 0) continue;
+      const node = steps
+        .slice(0, npm)
+        .find((step) => step.uses?.startsWith("actions/setup-node@"))?.with;
       if (node?.["node-version"] !== "24" || node["check-latest"] !== true)
         unpinned.push(`${name} ${job}`);
     }
