@@ -96,8 +96,10 @@ test("a line of wide characters wraps at the window edge and places the cursor b
   // The captured frame drops wide characters' second cells, so read the
   // cells: ASCII as is, any other cell (either half of a wide one) as `#`.
   const buf = m.t.renderer.currentRenderBuffer;
+  const chars = buf.withBuffers((cells) => [...cells.char]);
   const row = (y: number) =>
-    [...buf.buffers.char.slice(y * buf.width, (y + 1) * buf.width)]
+    chars
+      .slice(y * buf.width, (y + 1) * buf.width)
       .map((c) => (c < 0x80 ? String.fromCharCode(c) : "#"))
       .join("");
   const rows = Array.from({ length: buf.height }, (_, y) => row(y));
