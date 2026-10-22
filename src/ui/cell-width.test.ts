@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { OptimizedBuffer } from "@opentui/core";
+import { afterEach, beforeEach, expect, test } from "bun:test";
+import { OptimizedBuffer, ResourceContext } from "@opentui/core";
 import { cellWidth, clusters } from "../core/kernel/text/cells";
 import { drawCells, themes } from "./theme";
 
@@ -20,6 +20,12 @@ const SAMPLES = [
   "가",
 ];
 
+let owner: ResourceContext;
+beforeEach(() => {
+  owner = new ResourceContext({ objectCapacity: 16, renderCellsMax: 64 });
+});
+afterEach(() => owner.destroy());
+
 const coreWidths = (text: string) => {
   const out: number[] = [];
   let v = 0;
@@ -32,7 +38,7 @@ const coreWidths = (text: string) => {
 };
 
 test("the core measures each character as wide as OpenTUI's unicode width method draws it", () => {
-  const buf = OptimizedBuffer.create(8, 1, "unicode");
+  const buf = OptimizedBuffer.create(8, 1, "unicode", { owner });
   try {
     for (const text of SAMPLES) {
       const encoded = buf.encodeUnicode(text);
@@ -47,12 +53,12 @@ test("the core measures each character as wide as OpenTUI's unicode width method
 });
 
 test("a wide character that would cross the drawn width leaves a blank cell", () => {
-  const buf = OptimizedBuffer.create(8, 1, "unicode");
+  const buf = OptimizedBuffer.create(8, 1, "unicode", { owner });
   try {
     const s = themes.dark.style("text");
     drawCells(buf, s, 0, 0, "x".repeat(8), 8);
     drawCells(buf, s, 0, 0, "中文字", 5);
-    const chars = [...buf.buffers.char];
+    const chars = buf.withBuffers((cells) => [...cells.char]);
     // 中 and 文 take cells 0-3, 字 does not fit in cell 4, and cells 5+ stay.
     expect(chars[4]).toBe(" ".charCodeAt(0));
     expect(chars.slice(5)).toEqual([..."xxx"].map((c) => c.charCodeAt(0)));
