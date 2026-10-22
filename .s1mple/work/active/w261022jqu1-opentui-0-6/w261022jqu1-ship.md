@@ -143,10 +143,10 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 
 ### Status
 
-- **State:** `Ready`
-- **Position:** `Not started`
+- **State:** `In Progress`
+- **Position:** `G1`
 - **Work branch:** `feat/opentui-0.6`
-- **Base commit:** `Pending — recorded at execution start`
+- **Base commit:** `80103fb` — the diff base for overall verification and harden
 
 ### Sources
 
