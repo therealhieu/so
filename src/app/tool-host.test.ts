@@ -9,7 +9,7 @@ import { bunToolSpawn, createToolHost, type ToolSpawn } from "./tool-host";
 function host(o: {
   spawn: ToolSpawn;
   which?: (c: string) => string | null;
-  failing?: "reset" | "resume";
+  failing?: "suspend" | "reset" | "resume";
 }) {
   const calls: string[] = [];
   const logs: { event: string; fields?: unknown }[] = [];
@@ -28,6 +28,7 @@ function host(o: {
         ),
       suspend: async () => {
         calls.push("suspend");
+        if (o.failing === "suspend") throw new Error("terminal not set up");
       },
       resume: async () => {
         calls.push("resume");
@@ -121,6 +122,17 @@ test("a failing restore step still resumes and releases once", async () => {
       fields: { reason },
     });
   }
+});
+
+test("a failing suspend releases interrupts once and never runs the tool", async () => {
+  const h = host({ spawn: async () => ({ code: 0 }), failing: "suspend" });
+  await expect(h.tool.run(["lazygit"], "/repo")).rejects.toThrow(
+    "terminal not set up",
+  );
+  expect(h.calls).toEqual(["flushed", "hold", "suspend", "release"]);
+  expect(h.logs).toEqual([
+    { event: "git.tool.suspend", fields: { reason: "terminal not set up" } },
+  ]);
 });
 
 test("a missing tool never suspends", async () => {

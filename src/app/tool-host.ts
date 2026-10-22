@@ -33,7 +33,8 @@ export const bunToolSpawn: ToolSpawn = async (argv, cwd) => {
  * A missing program never takes the terminal. Otherwise the current frame
  * is written first, interrupts are held, and the screen is suspended while
  * the program runs; whatever happens to it, the foreign modes are reset, the
- * screen resumes, and interrupts are released exactly once. A failed restore
+ * screen resumes, and interrupts are released exactly once. A failed suspend
+ * releases interrupts and never runs the program. A failed suspend or restore
  * step is logged and rejects the run.
  */
 export function createToolHost(d: {
@@ -50,7 +51,13 @@ export function createToolHost(d: {
       if (d.which(tool) === null) return { kind: "missing", tool };
       await d.screen.flush();
       const release = d.holdInterrupts();
-      await d.screen.suspend();
+      try {
+        await d.screen.suspend();
+      } catch (x) {
+        release();
+        d.logger.error("git.tool.suspend", { reason: message(x) });
+        throw x;
+      }
       try {
         const { code, signal } = await spawn(argv, cwd);
         d.logger.info(

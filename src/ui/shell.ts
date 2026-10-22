@@ -392,10 +392,16 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
     },
     async suspend() {
       suspended = true;
+      try {
+        await renderer.suspend();
+      } catch (x) {
+        // The terminal was not handed over, so the shell keeps painting.
+        suspended = false;
+        throw x;
+      }
       // The terminal drops every image: holding scrolled-away pictures would
       // send them all again on resume.
       imageSlots?.clear();
-      await renderer.suspend();
     },
     async resume() {
       // The renderer repaints every cell on its next frame, so each image

@@ -205,6 +205,18 @@ test("images visible before suspend are drawn again after resume", async () => {
   }
 });
 
+test("the shell keeps painting when the terminal cannot be suspended", async () => {
+  m = await mountShell({ cols: 80, rows: 24 });
+  const x = m;
+  const refused = spyOn(x.t.renderer, "suspend").mockImplementation(() => {
+    throw new Error("transition pending");
+  });
+  await expect(x.shell.suspend()).rejects.toThrow("transition pending");
+  refused.mockRestore();
+  x.keys(":echo");
+  expect(await x.cmdline()).toBe(":echo");
+});
+
 test("destroying the shell while suspended restores the terminal once", async () => {
   m = await mountShell({ cols: 80, rows: 24 });
   await m.shell.suspend();
