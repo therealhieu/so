@@ -40,9 +40,9 @@
   },
   "devDependencies": {
     "typescript": "7.0.2",
-    "@types/bun": "1.4.2",
+    "@types/bun": "1.4.3",
     "@biomejs/biome": "2.5.15",
-    "knip": "6.39.0",
+    "knip": "6.41.0",
     "@xterm/headless": "6.0.0"
   },
   "patchedDependencies": {
