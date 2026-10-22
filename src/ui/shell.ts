@@ -1,9 +1,10 @@
 import { writeSync } from "node:fs";
 import {
-  type CliRenderer,
+  CliRenderer,
   type CliRendererConfig,
-  createCliRenderer,
-  type Renderable,
+  type OptimizedBuffer,
+  Renderable,
+  type RenderContext,
   type TerminalCapabilities,
 } from "@opentui/core";
 import type { PdfPageRequest } from "../core/features/pdf/page";
@@ -38,6 +39,7 @@ import { SqliteQueryView } from "./overlays/sqlite-query";
 import { WhichKeyView } from "./overlays/whichkey";
 import { ZoomOverlay } from "./overlays/zoom";
 import { SizedText } from "./sized-text";
+import { drawCells, themes } from "./theme";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -73,15 +75,61 @@ export const RENDERER_OPTIONS = {
 export const FOREIGN_MODES_RESET =
   "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1004l\x1b[?2004l\x1b[<99u\x1b[>4;0m\x1b[0m\x1b[?25h";
 
-/** With `imageFiles`, raw kitty images go through files the terminal reads. */
-export const createRenderer = (
+const BACKDROP_ID = "so-backdrop";
+
+/** The whole screen blank in default colours, until the shell attaches. */
+class Backdrop extends Renderable {
+  constructor(ctx: RenderContext) {
+    super(ctx, {
+      id: BACKDROP_ID,
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: "100%",
+      height: "100%",
+    });
+  }
+
+  protected renderSelf(buf: OptimizedBuffer): void {
+    const blank = themes.nocolor.style("text");
+    for (let y = 0; y < this.height; y++)
+      drawCells(buf, blank, 0, y, "", this.width);
+  }
+}
+
+/**
+ * With `imageFiles`, raw kitty images go through files the terminal reads.
+ *
+ * A capability reply during terminal setup requests a frame that paints as
+ * soon as setup ends, before the shell attaches. The renderer clears cells
+ * with a white foreground, which NO_COLOR forbids, so that frame paints the
+ * backdrop. Frames wait for setup, so the backdrop is added once it starts.
+ */
+export async function createRenderer(
   o: { imageFiles?: boolean } = {},
-): Promise<CliRenderer> =>
-  createCliRenderer({
-    ...RENDERER_OPTIONS,
-    exitSignals: [],
-    ...(o.imageFiles ? { kittyImageTransport: "file" } : {}),
-  });
+): Promise<CliRenderer> {
+  const renderer = new CliRenderer(
+    process.stdin,
+    process.stdout,
+    process.stdout.columns || 80,
+    process.stdout.rows || 24,
+    {
+      ...RENDERER_OPTIONS,
+      exitSignals: [],
+      ...(o.imageFiles ? { kittyImageTransport: "file" } : {}),
+    },
+  );
+  try {
+    const setup = renderer.setupTerminal();
+    renderer.root.add(new Backdrop(renderer));
+    await setup;
+    return renderer;
+  } catch (e) {
+    renderer.destroy();
+    await renderer.closed.catch(() => {});
+    throw e;
+  }
+}
 
 export type LayoutClass = "wide" | "medium" | "narrow";
 
@@ -308,6 +356,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       ];
       // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
       const focus: View[] = [overlays, cmdline, explorer, side, windows];
+      renderer.root.getRenderable(BACKDROP_ID)?.destroy();
       for (const v of views) renderer.root.add(v);
       // Mouse sources, top of the z-order first: the paint order reversed.
       const sources: MouseSource[] = [
