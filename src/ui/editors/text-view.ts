@@ -952,6 +952,7 @@ export class EditorView extends Renderable implements WindowView {
       const ft = this.deps.reg.fileTypes.get(b.fileType);
       const spec = this.specOf(b);
       const pictures = kittyPictures(this.deps, s);
+      const cellPx = this.deps.images.cellPixels()?.width;
       const host: ViewHost = {
         width,
         rows,
@@ -964,6 +965,7 @@ export class EditorView extends Renderable implements WindowView {
               : got;
         },
         cell: this.deps.images.cellSize(),
+        ...(cellPx === undefined ? {} : { cellPx }),
         sizedText: this.deps.capabilities().caps?.scaled_text === true,
       };
       const input =

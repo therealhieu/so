@@ -3,6 +3,7 @@ import {
   gridRow,
   sizeScale,
   underText,
+  withAdvance,
   wrapSized,
   zoomCellOf,
   zoomColAt,
@@ -88,6 +89,48 @@ test("with a word space, words start their own chunks and spaces are plain cells
   // A word longer than a chunk still splits; a row still breaks after a space.
   expect(texts(wrapSized(heading("Consensus guide"), words, 80))).toEqual([
     ["Consensu", "s", " ", "guide"],
+  ]);
+  // kitty draws a chunk short of its cells, so a split word's chunks meet.
+  const aligns = (text: string, scale: SizedScale) =>
+    wrapSized(heading(text), scale, 80)[0]?.map((c) => [c.text, c.align]);
+  expect(aligns("Consensus guide", words)).toEqual([
+    ["Consensu", "right"],
+    ["s", undefined],
+    [" ", undefined],
+    ["guide", undefined],
+  ]);
+  expect(aligns("Electroencephalogram", words)).toEqual([
+    ["Electroe", "right"],
+    ["ncephalo", "center"],
+    ["gram", undefined],
+  ]);
+  expect(aligns("Requirements", { ...H3, words: true })).toEqual([
+    ["Requiremen", "right"],
+    ["ts", undefined],
+  ]);
+  // Placed word by word, short words share a chunk instead of each padding
+  // its own sized cells before a space.
+  expect(
+    texts(
+      wrapSized(
+        heading("Why can't you just put everything in goroutines?"),
+        { ...H3, words: true },
+        80,
+      ),
+    ),
+  ).toEqual([
+    [
+      "Why",
+      "can't you",
+      "just put",
+      " ",
+      "everything",
+      " ",
+      "in",
+      " ",
+      "goroutines",
+      "?",
+    ],
   ]);
   expect(texts(wrapSized(heading("Markdown tour guide"), words, 20))).toEqual([
     ["Markdown", " "],
@@ -271,7 +314,11 @@ test("at every text size each space between words is within four fifths of a col
     const rows = zoomRows(zoomLine(PROSE), zoom, 72, 8);
     const { spaces, joins } = gapsOf(rows, zoomScale(zoom));
     expect(spaces.length).toBeGreaterThan(5);
-    for (const g of spaces) expect(Math.abs(g)).toBeLessThanOrEqual(0.8 + 1e-9);
+    // With the cell's pixels a character is narrower than the size, so a
+    // block holds a little more room past its text.
+    const most = zoom.cellPx === undefined ? 0.8 : 0.9;
+    for (const g of spaces)
+      expect(Math.abs(g)).toBeLessThanOrEqual(most + 1e-9);
     // A word over two chunks long leaves part of a column between them; a
     // long word starting a row keeps its first chunk's slack, up to a column,
     // there instead of before the row.
@@ -345,9 +392,12 @@ test("a row's first word starts at its left edge", () => {
   }
 });
 
-test("with the cell's pixels a character takes kitty's whole-pixel width", () => {
-  expect(zoomScale({ size: 1.5, cellPx: 18 }).adv).toBeCloseTo(1.5);
-  expect(zoomScale({ size: 1.3, cellPx: 18 }).adv).toBeCloseTo(24 / 18);
+test("with the cell's pixels a character takes the font's advance at the size, half a pixel under the cell", () => {
+  expect(zoomScale({ size: 1.5, cellPx: 18 }).adv).toBeCloseTo(
+    (1.5 * 17.5) / 18,
+  );
+  // kitty measured at a 17-pixel cell: 1.4× characters 22.85 pixels apart.
+  expect((withAdvance(H3, 17).adv ?? 0) * 17).toBeCloseTo(23.1, 1);
   expect(zoomScale({ size: 2, cellPx: 18 }).adv).toBeUndefined();
 });
 

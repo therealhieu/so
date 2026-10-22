@@ -68,9 +68,9 @@ export type SizedChunk = {
 /**
  * Text size as `n/d` of `s` times the normal size (`s` defaults to 2): 7/8
  * draws text at 1.75×, and each row takes `s` screen rows. With
- * `wordSpace`, each word starts its own chunks and a space between words is
- * that many blank normal-size cells, so the gap kitty leaves after a chunk
- * falls between words. With `words`, each word is placed on its own and
+ * `wordSpace`, each word starts its own chunks, a word's chunks meet, and a
+ * space between words is that many blank normal-size cells, so the gap kitty
+ * leaves after a chunk falls between words. With `words`, each word is placed on its own and
  * every space between words takes its width at the scale.
  */
 export type SizedScale = {

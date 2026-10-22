@@ -4,8 +4,13 @@ import type { Decoration } from "../../../kernel/view/decorations";
 import type { SizedBlock } from "../../../kernel/view/types";
 import { headingRenderer, headingScale } from "./heading";
 
+/** The heading in `text` laid out with the cursor on a body line below it. */
 const render = (text: string, width: number, sizedText: boolean) => {
-  const { v, doc } = noteView(text, { width });
+  const lines = text.split("\n").length;
+  const { v, doc } = noteView(`${text}\n\nBody.`, {
+    width,
+    cursor: { line: lines + 1, col: 0 },
+  });
   const block = doc.blocks[0];
   if (block === undefined) throw new Error("no block");
   return headingRenderer(block, v, {
@@ -83,8 +88,8 @@ test("an H3 is sized at 1.4×", () => {
     type: "sizedText",
     rows: 2,
     data: {
-      scale: { n: 7, d: 10 },
-      rows: [[{ text: "Raft", style: "mdHeading3", cells: 6 }]],
+      scale: { n: 7, d: 10, words: true },
+      rows: [[{ text: "Raft", style: "mdHeading3", cells: 6, w: 4 }]],
     },
   });
 });
@@ -106,7 +111,7 @@ test("headings keep their sizes at 1× and keep about those factors of the zoome
   expect([1, 2, 3, 4].map((depth) => headingScale(depth, 1))).toEqual([
     { n: 7, d: 8, wordSpace: 1 },
     { n: 4, d: 5 },
-    { n: 7, d: 10 },
+    { n: 7, d: 10, words: true },
     undefined,
   ]);
   const size = (x: SizedBlock["scale"] | undefined) =>
@@ -119,6 +124,12 @@ test("headings keep their sizes at 1× and keep about those factors of the zoome
       expect(Math.abs((sizes[i] ?? 0) / zoom - factor)).toBeLessThan(0.2);
     });
   }
+  // With the cell's pixels, H3's characters take the font's advance; H1 and H2 keep their chunks.
+  expect([1, 2, 3].map((depth) => headingScale(depth, 1, 17)?.adv)).toEqual([
+    undefined,
+    undefined,
+    (1.4 * 16.5) / 17,
+  ]);
   expect([1, 2, 3].map((depth) => headingScale(depth, 1.5))).toEqual([
     { s: 3, n: 7, d: 8, words: true },
     { s: 3, n: 5, d: 6, words: true },
@@ -127,7 +138,10 @@ test("headings keep their sizes at 1× and keep about those factors of the zoome
 });
 
 test("in a zoomed reading view a heading is drawn larger, its rows that many screen rows", () => {
-  const { v, doc } = noteView("# Raft", { width: 80 });
+  const { v, doc } = noteView("# Raft\n\nBody.", {
+    width: 80,
+    cursor: { line: 2, col: 0 },
+  });
   const block = doc.blocks[0];
   if (block === undefined) throw new Error("no block");
   const [d] = headingRenderer(block, v, {
@@ -139,4 +153,46 @@ test("in a zoomed reading view a heading is drawn larger, its rows that many scr
     throw new Error("not sized");
   expect(d.widget.rows).toBe(4);
   expect((d.widget.data as SizedBlock).scale.s).toBe(4);
+});
+
+test("in the reading view a sized heading under the cursor or a selection is drawn at normal size in its sized rows", () => {
+  const at = (
+    opts: Parameters<typeof noteView>[1],
+    view: "reading" | "live",
+  ) => {
+    const { v, doc } = noteView("# Chapter 3\n\nBody.", { width: 40, ...opts });
+    const block = doc.blocks[0];
+    if (block === undefined) throw new Error("no block");
+    return headingRenderer(block, v, {
+      doc,
+      view,
+      ctx: stubCtx({ sizedText: true }),
+    });
+  };
+  const plain = render("# Chapter 3", 40, false);
+  const blankRow: Decoration = {
+    kind: "widget",
+    at: { line: 0, col: 1 },
+    block: true,
+    widget: { type: "text", data: [[]], rows: 1 },
+  };
+  // One row of text where the sized block takes two: one blank row keeps the lines below in place.
+  expect(at({ cursor: { line: 0, col: 4 } }, "reading")).toEqual([
+    ...plain,
+    blankRow,
+  ]);
+  const selection = {
+    start: { line: 0, col: 2 },
+    end: { line: 2, col: 2 },
+  };
+  expect(at({ cursor: { line: 2, col: 1 }, selection }, "reading")).toEqual([
+    ...plain,
+    blankRow,
+  ]);
+  // A selection elsewhere leaves it sized; the live view reveals its source itself.
+  const below = { start: { line: 2, col: 0 }, end: { line: 2, col: 3 } };
+  expect(
+    sized(at({ cursor: { line: 2, col: 2 }, selection: below }, "reading")),
+  ).toBeDefined();
+  expect(sized(at({ cursor: { line: 0, col: 4 } }, "live"))).toBeDefined();
 });

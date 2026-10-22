@@ -1,6 +1,7 @@
-// 200 keystrokes in a note while the real index worker scans 10,000
-// generated notes. The text includes "[[note-00042]]", so 44 of the keys
-// run link completion over the growing index. Each time runs from
+// 200 keystrokes in a note while the real index worker scans 30,000
+// generated notes, enough that the scan outlasts the typing. The text
+// includes "[[note-00042]]", so 44 of the keys run link completion over the
+// growing index. Each time runs from
 // the key's arrival, through any index batch queued ahead of it, the store,
 // the reducer, and a rendered frame. Prints
 // {"metric":"indexingKeystrokeP95","ms":<p95>} with the slowest key, the
@@ -14,9 +15,10 @@ import { makeNoteWorkspace, notePath } from "../fixtures/generate";
 import { mountShell } from "../support/ui";
 
 const KEYS = 200;
+const NOTES = 30_000;
 
 const ws = await mkdtemp(join(tmpdir(), "so-bench-indexing-"));
-await makeNoteWorkspace(ws);
+await makeNoteWorkspace(ws, NOTES);
 const note = notePath(0);
 const text = await readFile(join(ws, note), "utf8");
 
