@@ -144,7 +144,7 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 ### Status
 
 - **State:** `In Progress`
-- **Position:** `Overall verification`
+- **Position:** `Harden`
 - **Work branch:** `feat/opentui-0.6`
 - **Base commit:** `80103fb` — the diff base for overall verification and harden
 
@@ -319,19 +319,19 @@ harden → Deliver
 
 | Case | Actual result |
 |---|---|
-| `V1` | `Pending` |
-| `V2` | `Pending` |
-| `V3` | `Pending` |
-| `V4` | `Pending` |
-| `V5` | `Pending` |
-| `V6` | `Pending` |
-| `V7` | `Pending` |
+| `V1` | `bun run check`: Biome, tsc, knip clean; 0–3 watcher unit failures per run (one run 2020/2020), passing alone on HEAD and master (`A10`) |
+| `V2` | `test/ui/sized-text.test.ts` 17 pass; only harness lines changed, no byte or cell-count assertion |
+| `V3` | The `中`/`👍🏽` heading case passes; a forced grapheme mismatch made it fail (G2) |
+| `V4` | `test/ui/git.test.ts` 23 pass on a set-up test renderer, including the failed-suspend case |
+| `V5` | `test/e2e` 34 pass, every exit path and the killed git tool included |
+| `V6` | `bun run test:ci`: 6–7 failures on HEAD vs 8 on master, all watcher, external-change, or LSP-timing cases that fail on master by name; every `test/ui` and `test/e2e` case passed; build prints `so 0.0.0`; every bench metric within its limit; `bun audit` clean. CI on the PR: recorded under Deliver Evidence |
+| `V7` | Kitty and a separate herdr session in its own Ghostty window: every run exited 0 to a clean prompt with no error toast, debug logs only `info`; OSC 66 sent after each frame and again after the picker closed and after the lazygit hand-off; zoom in and out left no stale rows; a drag entered VISUAL; PDF pages turned and were sent as kitty images. Unverified by eye: how images and sized glyphs look (scripted screenshots capture only the wallpaper); herdr reported no scaled-text support, so sized text was exercised in kitty only |
 
 ### Overall Verification
 
-- **Report:** `reports/overall-verification-report.md` — `Pending`
-- **Result and report SHA:** `Pending`
-- **Findings → fix SHAs:** `Pending`
+- **Report:** `reports/overall-verification-report.md` — `Passed`
+- **Result and report SHA:** `Passed`, `1fb41e5`
+- **Findings → fix SHAs:** None
 
 ### Harden
 
