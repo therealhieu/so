@@ -11,9 +11,9 @@
 |---|---|---|
 | TypeScript | `7.0.2` | `tsconfig.json` |
 | Bun (runtime, test runner) | `1.4.2` | `package.json` `packageManager`, `bunfig.toml` |
-| `@types/bun` | `1.4.2` | `tsconfig.json` `types: ["bun"]` |
+| `@types/bun` | `1.4.3` | `tsconfig.json` `types: ["bun"]` |
 | Biome (format + lint) | `2.5.15` | `biome.json` |
-| knip | `6.39.0` | `knip.json` |
+| knip | `6.41.0` | `knip.json` |
 
 `tsconfig.json` rules:
 
