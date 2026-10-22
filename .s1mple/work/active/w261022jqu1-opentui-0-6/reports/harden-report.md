@@ -62,11 +62,14 @@ The renderer's backdrop (`startsColourless`) and the store's `color` field each 
 
 Workflow mode only. The implementer fills this section; the sections above stay unchanged.
 
-- **Status:** `Not required`
+- **Status:** `Resolved`
 
 | Finding | Change | Verification | Commit | Result |
 |---|---|---|---|---|
-| `HRD-1` | `Pending` | `Pending` | `Pending` | `Pending` |
+| `HRD-1` | `src/app/main.ts:main` reads `NO_COLOR` once into `const noColor` before `createRenderer`; `startsColourless(noColor, config)` and the store's `color` both use it | `rg -n "NO_COLOR" src/app/main.ts` → one read (plus the doc comment); `sh .tmp/nocolor-loop.sh <worktree> 10` → `0/10 failed`; `bun test --timeout=20000 test/e2e/restore.test.ts` → 7 pass, 0 fail | `953aa04` | `Fixed` |
 
-- **Final checks:** `Pending`
-- **Remaining issues:** `Pending`
+- **Final checks:**
+  - `bun run check` → Biome (1 warning, 2 infos, all outside the range and present on master), tsc, and knip clean; 2019 pass, 1 fail — a watcher test (`src/workspace/watcher.test.ts`, "dot entries other than .git are reported while dotfiles are shown"), expected on this machine (ship file A10).
+  - `bun test --timeout=20000 test/e2e/restore.test.ts` → `Passed` — 7 pass, 0 fail.
+  - `sh .tmp/nocolor-loop.sh <worktree> 10` → `Passed` — 0/10 failed.
+- **Remaining issues:** None
