@@ -1,0 +1,5 @@
+rules:
+  adhoc-packages:
+    ignore:
+      # The release smoke test installs the tarballs it has just packed.
+      - release.yml
