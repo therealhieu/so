@@ -1,6 +1,6 @@
 # so
 
-- **Last Modified:** 2026-10-19
+- **Last Modified:** 2026-10-22
 
 Use this as the reusable baseline for discussion and plan inspection. Keep change-specific details in work documents. Cite important claims, distinguish rules from observations, and link authoritative sources instead of duplicating them.
 
@@ -231,7 +231,7 @@ Package homes, enforced by the same test (`PACKAGE_HOMES`, keyed by package name
 Keep it lean and simple. Code carries no work-process identifiers (`.s1mple/S1MPLE.md` Implementation).
 
 - **Language Rules:** [TypeScript](languages/typescript.md)
-- **Pins:** every npm version is exact; GitHub Actions are pinned to a 40-character commit SHA with a `# <tag>` comment. `test/repo.test.ts` enforces both.
+- **Pins:** every npm version is exact; GitHub Actions are pinned to a 40-character commit SHA with a `# <tag>` comment; every workflow job that runs `npm` first runs `actions/setup-node` with `node-version: "24"` and `check-latest: true`, so it takes the newest Node 24 security release instead of a runner's cached or preinstalled Node (the app itself runs on Bun, not Node). `test/repo.test.ts` enforces all three.
 
 ## Constraints
 
