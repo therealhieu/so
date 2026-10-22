@@ -143,8 +143,8 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 
 ### Status
 
-- **State:** `In Progress`
-- **Position:** `Deliver`
+- **State:** `Completed`
+- **Position:** `Delivered — PR #51`
 - **Work branch:** `feat/opentui-0.6`
 - **Base commit:** `80103fb` — the diff base for overall verification and harden
 
@@ -162,7 +162,7 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 Verifiers and harden write reports here; each report is committed by its writer and never edited afterwards.
 
 ```text
-.s1mple/work/active/w261022jqu1-opentui-0-6/reports/
+.s1mple/work/done/w261022jqu1-opentui-0-6/reports/
 ├── g<n>-verification-report.md       one per group
 ├── overall-verification-report.md
 └── harden-report.md                  written by s1mple-harden
@@ -340,8 +340,8 @@ harden → Deliver
 
 ### Deliver Evidence
 
-- **Project document:** `Pending`
-- **Delivery actions:** `Pending`
+- **Project document:** `cf21015` — stack versions (`@opentui/core` 0.6.6 and the versions #47 and #49 moved), the sized-text mechanism on 0.6, the colourless-start backdrop, and the async hand-off and exit
+- **Delivery actions:** branch `feat/opentui-0.6` pushed; PR #51 (https://github.com/therealhieu/so/pull/51) opened against `master`, mergeable with no conflicts; CI on head `cf21015`: `check`, `test (ubuntu-24.04)`, `test (macos-15)` (build and bench included), `audit`, `zizmor`, CodeQL all pass. Work folder moved to `work/done/` with this file's paths updated (committed reports keep their original paths, since reports are never edited); pushed again for CI on the new head. Not merged: merging needs the user's approval
 
 ### Blockers, Deviations, and Replacements
 
@@ -352,7 +352,7 @@ harden → Deliver
 
 ### Completion Summary
 
-`Pending`
+`so` runs on OpenTUI 0.6.6. Sized text writes through the native session and finds painted-over draws by replaying their paints into an owned scratch buffer; the tool hand-off and every exit path follow 0.6's async terminal transitions; a colourless start no longer leaks colour in a pre-attach frame. All four groups were accepted after one Minor remediation each in G2–G4; overall verification passed with no findings, including a live smoke in kitty and herdr; harden's one Minor finding was fixed. Open: how images and sized glyphs look was not checked by eye, and sized text was exercised live in kitty only (that herdr build reported no scaled-text support).
 
 ## Ship File Check
 
