@@ -466,6 +466,7 @@ async function main(argv: string[]): Promise<void> {
     rasterizeSvg,
     rasterizePdf: (r) => pdf.page(r),
     videoFrame: (r) => video.frame(r),
+    logger,
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();

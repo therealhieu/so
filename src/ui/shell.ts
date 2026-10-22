@@ -141,6 +141,8 @@ export type ShellDeps = {
    * writer, in order with the frames.
    */
   write?: (bytes: string) => void;
+  /** Where failures the shell does not throw are reported. */
+  logger?: { error(event: string, fields: { reason: string }): void };
 };
 
 /** What the terminal can draw images with. */
@@ -183,6 +185,11 @@ export type Shell = {
   resetForeignModes(): void;
   /** Restore the terminal; later calls do nothing. Safe while suspended. */
   destroy(): void;
+  /**
+   * Resolves once the terminal is restored after `destroy`, or the renderer
+   * gave up on it; a failure is logged, never thrown.
+   */
+  closed(): Promise<void>;
 };
 
 /** Where the hardware cursor goes, in screen cells from the top left. */
@@ -201,6 +208,8 @@ export type View = Renderable & {
 };
 
 export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
+  // A destroyed renderer throws on most calls, and the store can still
+  // change while the terminal is being restored: nothing paints after it.
   let destroyed = false;
   // While another program owns the terminal, no paint may run: a paint
   // would turn mouse tracking back on under it.
@@ -321,7 +330,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const layer = new MouseLayer(renderer, router);
       renderer.root.add(layer);
       const paint = (s: AppState) => {
-        if (suspended) return;
+        if (suspended || destroyed) return;
         const lc = layoutClass(s.terminal.cols);
         for (const v of views) v.update(s, lc);
         if (renderer.useMouse !== s.config.mouse)
@@ -405,6 +414,15 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       images.clear();
       pictures?.clear();
       renderer.destroy();
+    },
+    closed() {
+      return renderer.closed.then(
+        () => {},
+        (x: unknown) =>
+          deps.logger?.error("terminal.closeFailed", {
+            reason: x instanceof Error ? x.message : String(x),
+          }),
+      );
     },
   };
 }

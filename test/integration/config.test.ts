@@ -38,6 +38,7 @@ type Running = Awaited<ReturnType<typeof start>>;
 let app: Running | undefined;
 afterEach(async () => {
   app?.shell.destroy();
+  await app?.shell.closed();
   if (app) await rm(app.base, { recursive: true, force: true });
   app = undefined;
 });
