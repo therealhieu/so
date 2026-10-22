@@ -64,8 +64,8 @@ export function paintZoomRow(o: {
       (r === step - 1 ? 0 : TextAttributes.UNDERLINE);
     return { ...st, attrs: st.attrs & ~drop };
   };
-  for (let r = 0; r < step && r < o.rows; r++) {
-    o.gutter?.(r);
+  /** Screen row `r`'s chunks; returns the column after them. */
+  const paintChunks = (buf: OptimizedBuffer, r: number): number => {
     let x = 0;
     for (const c of o.chunks) {
       const n = Math.min(o.width - x, whole ? c.cells : (c.w ?? c.cells));
@@ -81,16 +81,23 @@ export function paintZoomRow(o: {
               : c.text
             : "";
       const st = c.plain === true && whole ? blankLook(c, r) : o.look(c);
-      drawCells(o.buf, st, o.x + x, o.y + r, text, n);
+      drawCells(buf, st, o.x + x, o.y + r, text, n);
       x += n;
     }
+    return x;
+  };
+  for (let r = 0; r < step && r < o.rows; r++) {
+    o.gutter?.(r);
+    const x = paintChunks(o.buf, r);
     if (x < o.width)
       drawCells(o.buf, o.fill, o.x + x, o.y + r, "", o.width - x);
   }
   if (whole)
     o.sizedText.draw(
-      o.buf,
       [{ x: o.x, y: o.y, w: cells, h: step }],
       rowBytes(o.chunks, o.scale, o.x, o.y, o.look),
+      (buf) => {
+        for (let r = 0; r < step; r++) paintChunks(buf, r);
+      },
     );
 }

@@ -1,6 +1,6 @@
 import {
   type CliRenderer,
-  type OptimizedBuffer,
+  OptimizedBuffer,
   type RGBA,
   TextAttributes,
 } from "@opentui/core";
@@ -214,14 +214,6 @@ function* cellsOf(
 
 type Cells = OptimizedBuffer["buffers"];
 
-/** One cell's character, colours, and attributes. */
-const cellOf = (b: Cells, i: number): number[] => [
-  b.char[i] ?? 0,
-  b.attributes[i] ?? 0,
-  ...b.fg.subarray(4 * i, 4 * i + 4),
-  ...b.bg.subarray(4 * i, 4 * i + 4),
-];
-
 const sameCell = (a: Cells, b: Cells, i: number) =>
   a.char[i] === b.char[i] &&
   a.attributes[i] === b.attributes[i] &&
@@ -231,67 +223,92 @@ const sameCell = (a: Cells, b: Cells, i: number) =>
       a.bg[4 * i + k] === b.bg[4 * i + k],
   );
 
-/**
- * The renderer's terminal writer: bytes queued after the frame being
- * written, on its render thread where it has one. OpenTUI keeps it private.
- */
-export function terminalWriter(r: CliRenderer): (bytes: string) => void {
-  const writeOut = (r as unknown as { writeOut?: (chunk: string) => unknown })
-    .writeOut;
-  if (typeof writeOut !== "function")
-    throw new Error("OpenTUI's renderer has no writeOut");
-  return (bytes) => {
-    writeOut.call(r, bytes);
-  };
+/** Whether `test` holds for any cell of `rects` inside a `w`×`h` buffer. */
+function someCell(
+  rects: readonly CellRect[],
+  w: number,
+  h: number,
+  test: (i: number) => boolean,
+): boolean {
+  for (const i of cellsOf(rects, w, h)) if (test(i)) return true;
+  return false;
 }
+
+type Session = { write(bytes: Uint8Array): boolean };
+
+/**
+ * The renderer's terminal output: bytes join the queue the frames go
+ * through, so ones written while the frame is post-processed land before
+ * it and ones written once it is written land after it. `false` when the
+ * queue refused them. OpenTUI keeps the session private.
+ */
+export function sessionWriter(r: CliRenderer): (bytes: string) => boolean {
+  const session = (r as unknown as { nativeSession?: Partial<Session> })
+    .nativeSession;
+  if (typeof session?.write !== "function")
+    throw new Error("OpenTUI's renderer has no nativeSession.write");
+  const out = session as Session;
+  const encoder = new TextEncoder();
+  return (bytes) => out.write(encoder.encode(bytes));
+}
+
+type RepaintFlag = { forceFullRepaintRequested?: unknown };
 
 /**
  * Whether the renderer will repaint every cell this frame, which erases
  * all sized text. OpenTUI keeps the flag private.
  */
 export function fullRepaintFlag(r: CliRenderer): () => boolean {
-  const read = () =>
-    (r as unknown as { forceFullRepaintRequested?: unknown })
-      .forceFullRepaintRequested;
+  const read = () => (r as unknown as RepaintFlag).forceFullRepaintRequested;
   if (typeof read() !== "boolean")
     throw new Error("OpenTUI's renderer has no forceFullRepaintRequested");
   return () => read() === true;
 }
 
+/** Draws the cells of a draw's rects as the frame painted them. */
+export type SizedPaint = (buf: OptimizedBuffer) => void;
+
+/** A draw as a view registers it: also how its cells were painted. */
+type PaintedDraw = Draw & { paint: SizedPaint };
+
 /**
  * The frame's sized text. Views `draw` while they render; a post-process
  * step then decides with `planFrame`, erases the old areas through the
- * renderer's writer (so the bytes land before the frame's), and marks the
+ * renderer's output (so the bytes land before the frame's), and marks the
  * areas OpenTUI must rewrite as changed in its current buffer; once the
  * frame is written the draws go out in one write after it. A draw whose
- * cells something painted over since is covered and not sent.
+ * cells something painted over since is covered and not sent: its paint,
+ * replayed into a scratch buffer, no longer gives the frame's cells. Bytes
+ * the output refuses make the next frame fresh after a full repaint.
  */
 export class SizedText {
-  private draws: { rects: CellRect[]; bytes: string; painted: number[][] }[] =
-    [];
+  private draws: PaintedDraw[] = [];
   private last = new Map<string, readonly CellRect[]>();
   private pending: FramePlan | undefined;
   private fresh = false;
-  private readonly write: (bytes: string) => void;
+  private scratch: OptimizedBuffer | undefined;
+  private readonly write: (bytes: string) => boolean;
   private readonly repaintsAll: () => boolean;
 
   constructor(
     private readonly renderer: CliRenderer,
     write?: (bytes: string) => void,
   ) {
-    this.write = write ?? terminalWriter(renderer);
+    this.write =
+      write === undefined
+        ? sessionWriter(renderer)
+        : (bytes) => {
+            write(bytes);
+            return true;
+          };
     this.repaintsAll = fullRepaintFlag(renderer);
     renderer.addPostProcessFn(this.step);
     renderer.on("frame", this.flush);
   }
 
-  /** Send `bytes` this frame over `rects`, which `buf` now holds as painted. */
-  draw(buf: OptimizedBuffer, rects: CellRect[], bytes: string): void {
-    const b = buf.buffers;
-    const painted = [...cellsOf(rects, buf.width, buf.height)].map((i) =>
-      cellOf(b, i),
-    );
-    this.draws.push({ rects, bytes, painted });
+  /** Send `bytes` this frame over `rects`, whose cells `paint` draws. */
+  draw(rects: readonly CellRect[], bytes: string, paint: SizedPaint): void {
+    this.draws.push({ rects, bytes, paint });
   }
 
   /** Send every draw again on the next frame: the terminal resized or was handed back. */
@@ -302,6 +319,30 @@ export class SizedText {
   destroy(): void {
     this.renderer.removePostProcessFn(this.step);
     this.renderer.off("frame", this.flush);
+    this.scratch?.destroy();
+    this.scratch = undefined;
+  }
+
+  /** `draws` painted alone into a `w`×`h` buffer the renderer's scene owns. */
+  private replay(draws: readonly PaintedDraw[], w: number, h: number) {
+    let s = this.scratch;
+    if (s === undefined || s.width !== w || s.height !== h) {
+      s?.destroy();
+      s = OptimizedBuffer.create(w, h, this.renderer.widthMethod, {
+        owner: this.renderer.nativeScene,
+      });
+      this.scratch = s;
+    }
+    s.clear();
+    for (const d of draws) d.paint(s);
+    return s;
+  }
+
+  /** Repaint every cell next and send every draw again after it. */
+  private refused(): void {
+    this.fresh = true;
+    (this.renderer as unknown as RepaintFlag).forceFullRepaintRequested = true;
+    this.renderer.requestRender();
   }
 
   private readonly step = (next: OptimizedBuffer): void => {
@@ -311,38 +352,33 @@ export class SizedText {
     if (draws.length === 0 && this.last.size === 0) return;
     const cur = this.renderer.currentRenderBuffer;
     const { width: w, height: h } = next;
+    const scratch = this.replay(draws, w, h);
     const n = next.buffers;
-    const c = cur.buffers;
-    const sameSize = cur.width === w && cur.height === h;
-    const plan = planFrame(
-      this.last,
-      draws.map((d) => {
-        let k = 0;
-        let covered = false;
-        for (const i of cellsOf(d.rects, w, h)) {
-          const was = d.painted[k++];
-          const now = cellOf(n, i);
-          if (was === undefined || was.some((v, j) => v !== now[j])) {
-            covered = true;
-            break;
-          }
+    cur.withBuffers((c) =>
+      scratch.withBuffers((s) => {
+        const sameSize = c.width === w && c.height === h;
+        const plan = planFrame(
+          this.last,
+          draws.map((d) => ({
+            rects: d.rects,
+            bytes: d.bytes,
+            covered: someCell(d.rects, w, h, (i) => !sameCell(n, s, i)),
+          })),
+          (rects) =>
+            !sameSize || someCell(rects, w, h, (i) => !sameCell(n, c, i)),
+          this.fresh || this.repaintsAll(),
+        );
+        const erase = eraseBytes(plan.erase, w, h);
+        if (erase !== "" && !this.write(erase)) {
+          this.refused();
+          return;
         }
-        return { rects: d.rects, bytes: d.bytes, covered };
+        if (sameSize)
+          for (const i of cellsOf(plan.rewrite, w, h))
+            c.fg[4 * i + 3] = (n.fg[4 * i + 3] ?? 0) ^ 0x8000;
+        this.pending = plan;
       }),
-      (rects) => {
-        if (!sameSize) return true;
-        for (const i of cellsOf(rects, w, h))
-          if (!sameCell(n, c, i)) return true;
-        return false;
-      },
-      this.fresh || this.repaintsAll(),
     );
-    const erase = eraseBytes(plan.erase, w, h);
-    if (erase !== "") this.write(erase);
-    if (sameSize)
-      for (const i of cellsOf(plan.rewrite, w, h))
-        c.fg[4 * i + 3] = (n.fg[4 * i + 3] ?? 0) ^ 0x8000;
-    this.pending = plan;
   };
 
   private readonly flush = (): void => {
@@ -351,7 +387,10 @@ export class SizedText {
     if (plan === undefined) return;
     this.last = new Map(plan.shown);
     this.fresh = false;
-    if (plan.send.length > 0)
-      this.write(frameBytes(plan.send.map((d) => d.bytes).join("")));
+    if (
+      plan.send.length > 0 &&
+      !this.write(frameBytes(plan.send.map((d) => d.bytes).join("")))
+    )
+      this.refused();
   };
 }

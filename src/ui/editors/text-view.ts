@@ -224,12 +224,13 @@ export function paintLine(
     if (cells === 0 || room <= 0) continue;
     const n = Math.min(room, cells);
     const style = styleOf(span);
-    drawCells(buf, style, at.x + x, at.y, run, n);
+    const left = at.x + x;
+    drawCells(buf, style, left, at.y, run, n);
     if (span.script !== undefined && o.scripts !== undefined)
       o.scripts.draw(
-        buf,
-        [{ x: at.x + x, y: at.y, w: 1, h: 1 }],
-        scriptBytes(span.script, at.x + x, at.y, style),
+        [{ x: left, y: at.y, w: 1, h: 1 }],
+        scriptBytes(span.script, left, at.y, style),
+        (b) => drawCells(b, style, left, at.y, run, n),
       );
     x += n;
   }

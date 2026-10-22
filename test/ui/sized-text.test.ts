@@ -4,11 +4,12 @@ import { type OptimizedBuffer, Renderable, RGBA } from "@opentui/core";
 import {
   createTerminalCapabilities,
   createTestRenderer,
+  ManualClock,
 } from "@opentui/core/testing";
 import {
   fullRepaintFlag,
   SizedText,
-  terminalWriter,
+  sessionWriter,
 } from "../../src/ui/sized-text";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
@@ -39,9 +40,13 @@ class Heading extends Renderable {
     super(ctx, { position: "absolute", left: 0, top: 0, width: COLS });
   }
   protected renderSelf(buf: OptimizedBuffer): void {
-    buf.drawText(this.text.padEnd(6), 0, this.y0, FG, BG);
-    buf.drawText(" ".repeat(6), 0, this.y0 + 1, FG, BG);
-    this.sized.draw(buf, [{ x: 0, y: this.y0, w: 6, h: 2 }], this.bytes);
+    const { text, y0 } = this;
+    const paint = (b: OptimizedBuffer) => {
+      b.drawText(text.padEnd(6), 0, y0, FG, BG);
+      b.drawText(" ".repeat(6), 0, y0 + 1, FG, BG);
+    };
+    paint(buf);
+    this.sized.draw([{ x: 0, y: y0, w: 6, h: 2 }], this.bytes, paint);
   }
 }
 
@@ -71,8 +76,12 @@ async function mount() {
     height: ROWS,
     stdout,
     bufferedOutput: "stream" as never,
+    // Its clock stands still, so only `frame` renders.
+    clock: new ManualClock(),
   });
   opened.push(t.renderer);
+  // A terminal that is set up takes capability replies.
+  await t.renderer.setupTerminal();
   const sized = new SizedText(t.renderer);
   const heading = new Heading(t.renderer, sized);
   const float = new Float(t.renderer, { position: "absolute" });
@@ -80,6 +89,8 @@ async function mount() {
   t.renderer.root.add(float);
   /** Render one frame; what the terminal was sent and how many cells OpenTUI wrote. */
   const frame = async () => {
+    // What OpenTUI writes on its own beforehand (modes a reply turns on) lands first.
+    await Bun.sleep(5);
     out = "";
     await t.renderOnce();
     await Bun.sleep(5);
@@ -97,7 +108,7 @@ test("a sized draw goes out once after the frame, and not again while nothing ch
     `\x1b[?2026h\x1b7${OSC66}s=2;Raft`,
   );
   expect((await m.frame()).out).not.toContain(OSC66);
-  expect(typeof terminalWriter(m.t.renderer)).toBe("function");
+  expect(typeof sessionWriter(m.t.renderer)).toBe("function");
 });
 
 test("a draw goes out again once it moves, its cells change, or the screen is redrawn", async () => {
