@@ -144,7 +144,7 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 ### Status
 
 - **State:** `In Progress`
-- **Position:** `G1`
+- **Position:** `G2`
 - **Work branch:** `feat/opentui-0.6`
 - **Base commit:** `80103fb` — the diff base for overall verification and harden
 
@@ -310,7 +310,7 @@ harden → Deliver
 
 | Group | Directory | Task commits | Verification report → status, SHA | Findings → fix SHAs | Merge SHA | Result |
 |---|---|---|---|---|---|---|
-| `G1` | `Pending` | `Pending` | `reports/g1-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
+| `G1` | Main tree | `G1-T1` `7a62f59`, `G1-T2` `6509b76` | `reports/g1-verification-report.md` — `Passed`, `57a69d5` | None | Not applicable — main tree | `Accepted`; the verifier flagged `test/ui/editor-options.test.ts:100` reading `currentRenderBuffer.buffers` for the G4 sweep |
 | `G2` | `Pending` | `Pending` | `reports/g2-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
 | `G3` | `Pending` | `Pending` | `reports/g3-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
 | `G4` | `Pending` | `Pending` | `reports/g4-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
