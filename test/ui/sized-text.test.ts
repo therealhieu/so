@@ -156,6 +156,46 @@ test("a full repaint OpenTUI forces on its own erases and sends the draw again",
   expect((await m.frame()).out).not.toContain(OSC66);
 });
 
+test("an erase the terminal output refuses makes the next frame repaint every cell and send the draw again", async () => {
+  const m = await mount();
+  await m.frame();
+  const session = (
+    m.t.renderer as unknown as {
+      nativeSession: { write(bytes: Uint8Array): boolean };
+    }
+  ).nativeSession;
+  const write = session.write.bind(session);
+  let refusals = 0;
+  // The output queue is full once, just as the old area is erased.
+  session.write = (bytes) => {
+    if (refusals === 0 && new TextDecoder().decode(bytes).includes("[6X")) {
+      refusals++;
+      return false;
+    }
+    return write(bytes);
+  };
+  let asked = 0;
+  const requestRender = m.t.renderer.requestRender.bind(m.t.renderer);
+  m.t.renderer.requestRender = () => {
+    asked++;
+    requestRender();
+  };
+  m.heading.y0 = 2;
+  m.heading.bytes = `\x1b[3;1H${OSC66}s=2;Raft\x1b\\`;
+  const refused = await m.frame();
+  expect(refusals).toBe(1);
+  expect(asked).toBeGreaterThan(0);
+  expect(refused.out).not.toContain(OSC66);
+  expect(refused.cells).toBeLessThan(COLS * ROWS);
+  const next = await m.frame();
+  expect(next.cells).toBe(COLS * ROWS);
+  expect(next.out).toStartWith(ERASE_TOP);
+  expect(next.out).toContain(m.heading.bytes);
+  const after = await m.frame();
+  expect(after.out).not.toContain(OSC66);
+  expect(after.cells).toBe(0);
+});
+
 test("a float over the second row stops the draw and has its whole area rewritten", async () => {
   const m = await mount();
   await m.frame();

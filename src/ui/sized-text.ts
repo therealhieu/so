@@ -286,6 +286,7 @@ export class SizedText {
   private last = new Map<string, readonly CellRect[]>();
   private pending: FramePlan | undefined;
   private fresh = false;
+  private repaintNext = false;
   private scratch: OptimizedBuffer | undefined;
   private readonly write: (bytes: string) => boolean;
   private readonly repaintsAll: () => boolean;
@@ -338,14 +339,20 @@ export class SizedText {
     return s;
   }
 
-  /** Repaint every cell next and send every draw again after it. */
+  /** Repaint every cell on the next frame and send every draw again after it. */
   private refused(): void {
     this.fresh = true;
-    (this.renderer as unknown as RepaintFlag).forceFullRepaintRequested = true;
+    this.repaintNext = true;
     this.renderer.requestRender();
   }
 
   private readonly step = (next: OptimizedBuffer): void => {
+    // Set before this frame is written, so OpenTUI repaints all of it.
+    if (this.repaintNext) {
+      this.repaintNext = false;
+      (this.renderer as unknown as RepaintFlag).forceFullRepaintRequested =
+        true;
+    }
     const draws = this.draws;
     this.draws = [];
     this.pending = undefined;
