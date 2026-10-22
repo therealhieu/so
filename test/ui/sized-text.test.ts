@@ -231,6 +231,14 @@ test("a note's heading and script cells are sent at their size over cells the wi
   expect(await sent(m)).toBe("");
 });
 
+test("a heading of wide characters and graphemes is sent once and not again while nothing changes", async () => {
+  const m = await mountNote("# Raft 中 👍🏽\n\nEnd.\n");
+  const out = m.writes.join("");
+  expect(out).toContain(`${OSC66}s=2:w=2:n=7:d=8:v=2;中\x1b\\`);
+  expect(out).toContain(`${OSC66}s=2:w=2:n=7:d=8:v=2;👍🏽\x1b\\`);
+  expect(await sent(m)).toBe("");
+});
+
 test("a heading cut at the window bottom keeps its normal-size text and is not sent", async () => {
   const m = await mountNote(`${"line\n".repeat(30)}# Raft\n`);
   m.keys("Gk");
