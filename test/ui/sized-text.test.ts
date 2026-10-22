@@ -293,8 +293,8 @@ test("a resize or a resume from a tool hand-off sends the sized text again", asy
   m.t.resize(64, 12);
   expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
   expect(await sent(m)).toBe("");
-  m.shell.suspend();
-  m.shell.resume();
+  await m.shell.suspend();
+  await m.shell.resume();
   expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
 });
 

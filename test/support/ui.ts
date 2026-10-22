@@ -108,6 +108,8 @@ export async function mountShell(o: MountOptions) {
     height: o.rows,
     kittyKeyboard: o.kittyKeyboard ?? false,
   });
+  // Suspend and resume need a terminal that is set up.
+  await t.renderer.setupTerminal();
   let now = 1_000_000;
   const timers = new Map<TimerId, number>();
   const effects: Effect[] = [];

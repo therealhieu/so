@@ -15,8 +15,8 @@ export type ToolHost = {
 /** What the tool host needs from the screen: the shell, by structure. */
 type Screen = {
   flush(): Promise<void>;
-  suspend(): void;
-  resume(): void;
+  suspend(): Promise<void>;
+  resume(): Promise<void>;
   resetForeignModes(): void;
 };
 
@@ -50,7 +50,7 @@ export function createToolHost(d: {
       if (d.which(tool) === null) return { kind: "missing", tool };
       await d.screen.flush();
       const release = d.holdInterrupts();
-      d.screen.suspend();
+      await d.screen.suspend();
       try {
         const { code, signal } = await spawn(argv, cwd);
         d.logger.info(
@@ -65,19 +65,19 @@ export function createToolHost(d: {
         d.logger.error("git.tool.exit", { reason });
         return { kind: "failed", reason };
       } finally {
-        restore(release);
+        await restore(release);
       }
     },
   };
 
   /** Each step runs even when an earlier one throws; the error still surfaces. */
-  function restore(release: () => void): void {
+  async function restore(release: () => void): Promise<void> {
     try {
       try {
         d.screen.resetForeignModes();
       } finally {
         try {
-          d.screen.resume();
+          await d.screen.resume();
         } finally {
           release();
         }

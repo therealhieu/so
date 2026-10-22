@@ -26,8 +26,10 @@ function host(o: {
             r();
           }),
         ),
-      suspend: () => calls.push("suspend"),
-      resume: () => {
+      suspend: async () => {
+        calls.push("suspend");
+      },
+      resume: async () => {
         calls.push("resume");
         if (o.failing === "resume") throw new Error("renderer gone");
       },

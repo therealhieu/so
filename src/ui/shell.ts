@@ -176,9 +176,9 @@ export type Shell = {
   /** Paint the latest state and resolve once that frame is written. */
   flush(): Promise<void>;
   /** Give the terminal away: nothing is painted until `resume`. */
-  suspend(): void;
+  suspend(): Promise<void>;
   /** Take the terminal back and paint the latest state, images included. */
-  resume(): void;
+  resume(): Promise<void>;
   /** Write `FOREIGN_MODES_RESET`. */
   resetForeignModes(): void;
   /** Restore the terminal; later calls do nothing. Safe while suspended. */
@@ -381,17 +381,17 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       repaint();
       await renderer.idle();
     },
-    suspend() {
+    async suspend() {
       suspended = true;
       // The terminal drops every image: holding scrolled-away pictures would
       // send them all again on resume.
       imageSlots?.clear();
-      renderer.suspend();
+      await renderer.suspend();
     },
-    resume() {
+    async resume() {
       // The renderer repaints every cell on its next frame, so each image
       // still on screen is drawn again; the terminal dropped it on suspend.
-      renderer.resume();
+      await renderer.resume();
       suspended = false;
       sizedText?.invalidate();
       repaint();

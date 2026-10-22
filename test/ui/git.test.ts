@@ -141,7 +141,7 @@ test("the frame with the pre-suspend message is rendered before suspend and noth
   expect(frames.recordedFrames.at(-1)?.frame).toContain(OPENING);
 
   const before = frames.recordedFrames.length;
-  x.shell.suspend();
+  await x.shell.suspend();
   x.store.dispatch({ type: "resize", cols: 120, rows: 36 });
   x.store.dispatch({ type: "dirListed", dir: "", entries: [] });
   await settle();
@@ -151,7 +151,7 @@ test("the frame with the pre-suspend message is rendered before suspend and noth
 
   x.shell.resetForeignModes();
   expect(x.writes).toEqual([FOREIGN_MODES_RESET]);
-  x.shell.resume();
+  await x.shell.resume();
   await settle();
   expect(frames.recordedFrames.length).toBeGreaterThan(before);
   expect(x.t.renderer.useMouse).toBe(true);
@@ -190,13 +190,13 @@ test("images visible before suspend are drawn again after resume", async () => {
     await x.shell.flush();
     expect(draw).toHaveBeenCalled();
 
-    x.shell.suspend();
+    await x.shell.suspend();
     draw.mockClear();
     x.store.dispatch({ type: "resize", cols: 100, rows: 40 });
     await settle();
     expect(draw).not.toHaveBeenCalled();
 
-    x.shell.resume();
+    await x.shell.resume();
     await settle();
     expect(draw).toHaveBeenCalledTimes(1);
     expect(draw.mock.calls[0]?.[11]).toBe("kitty");
@@ -207,7 +207,7 @@ test("images visible before suspend are drawn again after resume", async () => {
 
 test("destroying the shell while suspended restores the terminal once", async () => {
   m = await mountShell({ cols: 80, rows: 24 });
-  m.shell.suspend();
+  await m.shell.suspend();
   m.shell.destroy();
   m.shell.destroy();
   expect(m.t.renderer.isDestroyed).toBe(true);
