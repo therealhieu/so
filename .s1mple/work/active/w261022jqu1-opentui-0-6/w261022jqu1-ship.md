@@ -144,7 +144,7 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 ### Status
 
 - **State:** `In Progress`
-- **Position:** `Harden`
+- **Position:** `Deliver`
 - **Work branch:** `feat/opentui-0.6`
 - **Base commit:** `80103fb` — the diff base for overall verification and harden
 
@@ -335,8 +335,8 @@ harden → Deliver
 
 ### Harden
 
-- **Report:** `reports/harden-report.md` — `Pending`
-- **Result:** `Pending`
+- **Report:** `reports/harden-report.md` — `e331ee2`; resolution `b805e65`
+- **Result:** `Findings identified` → resolved. `HRD-1` (Minor, Redundancy: `NO_COLOR` read twice in startup) → `953aa04`; `bun run check` clean apart from watcher tests (A10), `test/e2e/restore.test.ts` 7 pass, NO_COLOR case 0/10 failures
 
 ### Deliver Evidence
 
