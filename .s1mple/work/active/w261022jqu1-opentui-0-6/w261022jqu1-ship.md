@@ -144,7 +144,7 @@ The existing suites already pin the behaviour this upgrade must keep (sized-text
 ### Status
 
 - **State:** `In Progress`
-- **Position:** `G3`
+- **Position:** `G4`
 - **Work branch:** `feat/opentui-0.6`
 - **Base commit:** `80103fb` — the diff base for overall verification and harden
 
@@ -312,7 +312,7 @@ harden → Deliver
 |---|---|---|---|---|---|---|
 | `G1` | Main tree | `G1-T1` `7a62f59`, `G1-T2` `6509b76` | `reports/g1-verification-report.md` — `Passed`, `57a69d5` | None | Not applicable — main tree | `Accepted`; the verifier flagged `test/ui/editor-options.test.ts:100` reading `currentRenderBuffer.buffers` for the G4 sweep |
 | `G2` | Main tree | `G2-T1` `d5f504c`, `G2-T2` `5cc5e6e` | `reports/g2-verification-report.md` — `Failed` (1 Minor), `d618b06` | `G2-VER1` (refused write untested; repaint landed on the refused frame) → `1bd9227`, closure rerun by the orchestrator: sized-text suite 16 pass, 1 fail (the resume case, which needs G3's async suspend) | Not applicable — main tree | `Accepted` |
-| `G3` | `Pending` | `Pending` | `reports/g3-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
+| `G3` | Main tree | `G3-T1` `ff29fbc`, `G3-T2` `bf6ca37` | `reports/g3-verification-report.md` — `Failed` (1 Minor), `2e7408a` | `G3-VER1` (a failed suspend kept interrupts held and the shell frozen) → `e36fc61`; closure rerun by the orchestrator: `bun test src/app` 62 pass (twice; one earlier run had 2 `sqlite-host` timing failures that did not repeat), git + sized-text 40 pass | Not applicable — main tree | `Accepted` |
 | `G4` | `Pending` | `Pending` | `reports/g4-verification-report.md` — `Pending` | `Pending` | `Pending` | `Pending` |
 
 ### Verification Cases
@@ -345,7 +345,9 @@ harden → Deliver
 
 ### Blockers, Deviations, and Replacements
 
-`Pending`
+- **G3 unplanned change:** the shell no longer paints after `destroy()`; on 0.6 a store change landing while exit awaits `closed` called `setCursorPosition` on a destroyed renderer. The config integration suite covers it.
+- **G3 residual edge:** when OpenTUI's own native suspend transition fails after it set `explicit_suspended`, the renderer stays halted; the shell keeps its state but nothing renders until a resume. Not reproduced; it needs a terminal output failure, where the terminal is likely gone anyway.
+- **NO_COLOR e2e flake is a 0.6 regression, owned by G4:** "NO_COLOR output has no colour escape sequences" failed 3/40 runs on the post-G2 tree and 4/55 at `bf6ca37` (G3 verifier), but 0/50 on master `55b3044` with OpenTUI 0.5.14 (orchestrator run on a `git archive` copy). The failing first frame paints 30 cells with `38;2;255;255;255m`.
 
 ### Completion Summary
 
