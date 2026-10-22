@@ -329,8 +329,11 @@ function servedFileTypes(config: Action | undefined): ReadonlySet<string> {
 }
 
 /** Whether the first frame paints without colour: `NO_COLOR` or `color = "never"`. */
-function startsColourless(config: Action | undefined): boolean {
-  if ((process.env.NO_COLOR ?? "") !== "") return true;
+function startsColourless(
+  noColor: boolean,
+  config: Action | undefined,
+): boolean {
+  if (noColor) return true;
   return (
     config?.type === "configLoaded" &&
     config.result.ok &&
@@ -454,9 +457,10 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
+  const noColor = (process.env.NO_COLOR ?? "") !== "";
   const renderer = await createRenderer({
     imageFiles: herdrFiles,
-    noColor: startsColourless(config),
+    noColor: startsColourless(noColor, config),
   });
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
@@ -545,7 +549,6 @@ async function main(argv: string[]): Promise<void> {
     },
   };
   const runner = slowWrites(createEffectRunner(deps));
-  const noColor = (process.env.NO_COLOR ?? "") !== "";
   const store = createStore(
     initialState({
       root: ws.root,
