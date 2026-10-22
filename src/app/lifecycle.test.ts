@@ -32,7 +32,7 @@ async function withLifecycle(
   try {
     const l = installLifecycle({
       store,
-      shell: { destroy() {} },
+      shell: { destroy() {}, closed: async () => {} },
       runner: { flush: async () => {} },
       exit: (code) => exits.push(code),
     });

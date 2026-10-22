@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { OptimizedBuffer } from "@opentui/core";
+import { afterEach, beforeEach, expect, test } from "bun:test";
+import { OptimizedBuffer, ResourceContext } from "@opentui/core";
 import { wrapSized } from "../../core/kernel/view/sized";
 import type { SizedBlock } from "../../core/kernel/view/types";
 import type { CellRect } from "../sized-text";
@@ -10,13 +10,22 @@ import { paintSizedText } from "./sized-text";
 const H1 = { n: 7, d: 8, wordSpace: 1 };
 const WIDTH = 60;
 
+let owner: ResourceContext;
+beforeEach(() => {
+  owner = new ResourceContext({
+    objectCapacity: 16,
+    renderCellsMax: 4 * WIDTH,
+  });
+});
+afterEach(() => owner.destroy());
+
 /** The heading painted in `rows` rows: its first row's text and the draws sent. */
 function paint(text: string, rows: number) {
   const block: SizedBlock = {
     scale: H1,
     rows: wrapSized([{ text, style: "mdHeading1" }], H1, WIDTH),
   };
-  const buf = OptimizedBuffer.create(WIDTH, rows, "unicode");
+  const buf = OptimizedBuffer.create(WIDTH, rows, "unicode", { owner });
   const draws: CellRect[][] = [];
   try {
     const t = {
@@ -35,7 +44,9 @@ function paint(text: string, rows: number) {
       data: block,
       rows: 2 * block.rows.length,
     });
-    const line = String.fromCharCode(...buf.buffers.char.slice(0, WIDTH));
+    const line = buf.withBuffers((cells) =>
+      String.fromCharCode(...cells.char.slice(0, WIDTH)),
+    );
     return { line: line.trimEnd(), draws };
   } finally {
     buf.destroy();

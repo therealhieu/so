@@ -328,6 +328,19 @@ function servedFileTypes(config: Action | undefined): ReadonlySet<string> {
   return new Set(resolveServers(lsp).flatMap((spec) => spec.fileTypes));
 }
 
+/** Whether the first frame paints without colour: `NO_COLOR` or `color = "never"`. */
+function startsColourless(
+  noColor: boolean,
+  config: Action | undefined,
+): boolean {
+  if (noColor) return true;
+  return (
+    config?.type === "configLoaded" &&
+    config.result.ok &&
+    config.result.config.color === "never"
+  );
+}
+
 /** Saves the session on shutdown; a failure is logged and never stops the exit. */
 function sessionSaver(
   path: string | undefined,
@@ -444,7 +457,11 @@ async function main(argv: string[]): Promise<void> {
     logger,
   });
   const rasterizeSvg = createSvgRasterizer();
-  const renderer = await createRenderer({ imageFiles: herdrFiles });
+  const noColor = (process.env.NO_COLOR ?? "") !== "";
+  const renderer = await createRenderer({
+    imageFiles: herdrFiles,
+    noColor: startsColourless(noColor, config),
+  });
   const browserFrames = createBrowserFrames();
   const shell = createShell(renderer, {
     reg,
@@ -466,6 +483,7 @@ async function main(argv: string[]): Promise<void> {
     rasterizeSvg,
     rasterizePdf: (r) => pdf.page(r),
     videoFrame: (r) => video.frame(r),
+    logger,
   });
   const matcher = createExclusionMatcher(ws.root, readOrNull);
   const ownOps = createOwnOps();
@@ -531,7 +549,6 @@ async function main(argv: string[]): Promise<void> {
     },
   };
   const runner = slowWrites(createEffectRunner(deps));
-  const noColor = (process.env.NO_COLOR ?? "") !== "";
   const store = createStore(
     initialState({
       root: ws.root,

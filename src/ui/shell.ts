@@ -1,9 +1,10 @@
 import { writeSync } from "node:fs";
 import {
-  type CliRenderer,
+  CliRenderer,
   type CliRendererConfig,
-  createCliRenderer,
-  type Renderable,
+  type OptimizedBuffer,
+  Renderable,
+  type RenderContext,
   type TerminalCapabilities,
 } from "@opentui/core";
 import type { PdfPageRequest } from "../core/features/pdf/page";
@@ -38,6 +39,7 @@ import { SqliteQueryView } from "./overlays/sqlite-query";
 import { WhichKeyView } from "./overlays/whichkey";
 import { ZoomOverlay } from "./overlays/zoom";
 import { SizedText } from "./sized-text";
+import { drawCells, themes } from "./theme";
 import { Bufferline } from "./views/bufferline";
 import { CommandLine } from "./views/cmdline";
 import { ExplorerView } from "./views/explorer";
@@ -73,15 +75,68 @@ export const RENDERER_OPTIONS = {
 export const FOREIGN_MODES_RESET =
   "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1004l\x1b[?2004l\x1b[<99u\x1b[>4;0m\x1b[0m\x1b[?25h";
 
-/** With `imageFiles`, raw kitty images go through files the terminal reads. */
-export const createRenderer = (
-  o: { imageFiles?: boolean } = {},
-): Promise<CliRenderer> =>
-  createCliRenderer({
-    ...RENDERER_OPTIONS,
-    exitSignals: [],
-    ...(o.imageFiles ? { kittyImageTransport: "file" } : {}),
-  });
+const BACKDROP_ID = "so-backdrop";
+
+/** The whole screen blank in default colours, until the shell attaches. */
+class Backdrop extends Renderable {
+  constructor(ctx: RenderContext) {
+    super(ctx, {
+      id: BACKDROP_ID,
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: "100%",
+      height: "100%",
+    });
+  }
+
+  protected renderSelf(buf: OptimizedBuffer): void {
+    const blank = themes.nocolor.style("text");
+    for (let y = 0; y < this.height; y++)
+      drawCells(buf, blank, 0, y, "", this.width);
+  }
+}
+
+/**
+ * With `imageFiles`, raw kitty images go through files the terminal reads.
+ *
+ * A capability reply during terminal setup requests a frame that paints as
+ * soon as setup ends, before the shell attaches. The renderer clears cells
+ * with a white foreground, which a colourless start forbids, so with
+ * `noColor` the backdrop is added and that frame paints it instead. Adding
+ * the backdrop requests a frame of its own, so a colourless start always
+ * paints one blank frame before the shell attaches; a colour start adds
+ * nothing. Frames wait for setup, so the backdrop is added once it starts.
+ */
+export async function createRenderer(
+  o: { imageFiles?: boolean; noColor?: boolean } = {},
+): Promise<CliRenderer> {
+  const renderer = new CliRenderer(
+    process.stdin,
+    process.stdout,
+    process.stdout.columns || 80,
+    process.stdout.rows || 24,
+    {
+      ...RENDERER_OPTIONS,
+      exitSignals: [],
+      ...(o.imageFiles ? { kittyImageTransport: "file" } : {}),
+    },
+  );
+  try {
+    const setup = renderer.setupTerminal();
+    if (o.noColor) renderer.root.add(new Backdrop(renderer));
+    await setup;
+    return renderer;
+  } catch (e) {
+    // The setup error is the one reported; a renderer that fails to tear
+    // down still gets the chance to restore the terminal below.
+    try {
+      renderer.destroy();
+    } catch {}
+    await renderer.closed.catch(() => {});
+    throw e;
+  }
+}
 
 export type LayoutClass = "wide" | "medium" | "narrow";
 
@@ -141,6 +196,8 @@ export type ShellDeps = {
    * writer, in order with the frames.
    */
   write?: (bytes: string) => void;
+  /** Where failures the shell does not throw are reported. */
+  logger?: { error(event: string, fields: { reason: string }): void };
 };
 
 /** What the terminal can draw images with. */
@@ -176,13 +233,18 @@ export type Shell = {
   /** Paint the latest state and resolve once that frame is written. */
   flush(): Promise<void>;
   /** Give the terminal away: nothing is painted until `resume`. */
-  suspend(): void;
+  suspend(): Promise<void>;
   /** Take the terminal back and paint the latest state, images included. */
-  resume(): void;
+  resume(): Promise<void>;
   /** Write `FOREIGN_MODES_RESET`. */
   resetForeignModes(): void;
   /** Restore the terminal; later calls do nothing. Safe while suspended. */
   destroy(): void;
+  /**
+   * Resolves once the terminal is restored after `destroy`, or the renderer
+   * gave up on it; a failure is logged, never thrown.
+   */
+  closed(): Promise<void>;
 };
 
 /** Where the hardware cursor goes, in screen cells from the top left. */
@@ -201,6 +263,8 @@ export type View = Renderable & {
 };
 
 export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
+  // A destroyed renderer throws on most calls, and the store can still
+  // change while the terminal is being restored: nothing paints after it.
   let destroyed = false;
   // While another program owns the terminal, no paint may run: a paint
   // would turn mouse tracking back on under it.
@@ -299,6 +363,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       ];
       // Focus order: an overlay, then the command line, the explorer, the side panel, the active window.
       const focus: View[] = [overlays, cmdline, explorer, side, windows];
+      renderer.root.getRenderable(BACKDROP_ID)?.destroy();
       for (const v of views) renderer.root.add(v);
       // Mouse sources, top of the z-order first: the paint order reversed.
       const sources: MouseSource[] = [
@@ -321,7 +386,7 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       const layer = new MouseLayer(renderer, router);
       renderer.root.add(layer);
       const paint = (s: AppState) => {
-        if (suspended) return;
+        if (suspended || destroyed) return;
         const lc = layoutClass(s.terminal.cols);
         for (const v of views) v.update(s, lc);
         if (renderer.useMouse !== s.config.mouse)
@@ -381,17 +446,23 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       repaint();
       await renderer.idle();
     },
-    suspend() {
+    async suspend() {
       suspended = true;
+      try {
+        await renderer.suspend();
+      } catch (x) {
+        // The terminal was not handed over, so the shell keeps painting.
+        suspended = false;
+        throw x;
+      }
       // The terminal drops every image: holding scrolled-away pictures would
       // send them all again on resume.
       imageSlots?.clear();
-      renderer.suspend();
     },
-    resume() {
+    async resume() {
       // The renderer repaints every cell on its next frame, so each image
       // still on screen is drawn again; the terminal dropped it on suspend.
-      renderer.resume();
+      await renderer.resume();
       suspended = false;
       sizedText?.invalidate();
       repaint();
@@ -405,6 +476,15 @@ export function createShell(renderer: CliRenderer, deps: ShellDeps): Shell {
       images.clear();
       pictures?.clear();
       renderer.destroy();
+    },
+    closed() {
+      return renderer.closed.then(
+        () => {},
+        (x: unknown) =>
+          deps.logger?.error("terminal.closeFailed", {
+            reason: x instanceof Error ? x.message : String(x),
+          }),
+      );
     },
   };
 }

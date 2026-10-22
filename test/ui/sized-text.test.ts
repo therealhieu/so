@@ -4,11 +4,12 @@ import { type OptimizedBuffer, Renderable, RGBA } from "@opentui/core";
 import {
   createTerminalCapabilities,
   createTestRenderer,
+  ManualClock,
 } from "@opentui/core/testing";
 import {
   fullRepaintFlag,
   SizedText,
-  terminalWriter,
+  sessionWriter,
 } from "../../src/ui/sized-text";
 import { cellStyle, type Mounted, mountShell } from "../support/ui";
 
@@ -39,9 +40,13 @@ class Heading extends Renderable {
     super(ctx, { position: "absolute", left: 0, top: 0, width: COLS });
   }
   protected renderSelf(buf: OptimizedBuffer): void {
-    buf.drawText(this.text.padEnd(6), 0, this.y0, FG, BG);
-    buf.drawText(" ".repeat(6), 0, this.y0 + 1, FG, BG);
-    this.sized.draw(buf, [{ x: 0, y: this.y0, w: 6, h: 2 }], this.bytes);
+    const { text, y0 } = this;
+    const paint = (b: OptimizedBuffer) => {
+      b.drawText(text.padEnd(6), 0, y0, FG, BG);
+      b.drawText(" ".repeat(6), 0, y0 + 1, FG, BG);
+    };
+    paint(buf);
+    this.sized.draw([{ x: 0, y: y0, w: 6, h: 2 }], this.bytes, paint);
   }
 }
 
@@ -71,8 +76,12 @@ async function mount() {
     height: ROWS,
     stdout,
     bufferedOutput: "stream" as never,
+    // Its clock stands still, so only `frame` renders.
+    clock: new ManualClock(),
   });
   opened.push(t.renderer);
+  // A terminal that is set up takes capability replies.
+  await t.renderer.setupTerminal();
   const sized = new SizedText(t.renderer);
   const heading = new Heading(t.renderer, sized);
   const float = new Float(t.renderer, { position: "absolute" });
@@ -80,6 +89,8 @@ async function mount() {
   t.renderer.root.add(float);
   /** Render one frame; what the terminal was sent and how many cells OpenTUI wrote. */
   const frame = async () => {
+    // What OpenTUI writes on its own beforehand (modes a reply turns on) lands first.
+    await Bun.sleep(5);
     out = "";
     await t.renderOnce();
     await Bun.sleep(5);
@@ -97,7 +108,7 @@ test("a sized draw goes out once after the frame, and not again while nothing ch
     `\x1b[?2026h\x1b7${OSC66}s=2;Raft`,
   );
   expect((await m.frame()).out).not.toContain(OSC66);
-  expect(typeof terminalWriter(m.t.renderer)).toBe("function");
+  expect(typeof sessionWriter(m.t.renderer)).toBe("function");
 });
 
 test("a draw goes out again once it moves, its cells change, or the screen is redrawn", async () => {
@@ -143,6 +154,46 @@ test("a full repaint OpenTUI forces on its own erases and sends the draw again",
   expect(repainted.out).toStartWith(ERASE_TOP);
   expect(repainted.out).toContain(`${OSC66}s=2;Raft`);
   expect((await m.frame()).out).not.toContain(OSC66);
+});
+
+test("an erase the terminal output refuses makes the next frame repaint every cell and send the draw again", async () => {
+  const m = await mount();
+  await m.frame();
+  const session = (
+    m.t.renderer as unknown as {
+      nativeSession: { write(bytes: Uint8Array): boolean };
+    }
+  ).nativeSession;
+  const write = session.write.bind(session);
+  let refusals = 0;
+  // The output queue is full once, just as the old area is erased.
+  session.write = (bytes) => {
+    if (refusals === 0 && new TextDecoder().decode(bytes).includes("[6X")) {
+      refusals++;
+      return false;
+    }
+    return write(bytes);
+  };
+  let asked = 0;
+  const requestRender = m.t.renderer.requestRender.bind(m.t.renderer);
+  m.t.renderer.requestRender = () => {
+    asked++;
+    requestRender();
+  };
+  m.heading.y0 = 2;
+  m.heading.bytes = `\x1b[3;1H${OSC66}s=2;Raft\x1b\\`;
+  const refused = await m.frame();
+  expect(refusals).toBe(1);
+  expect(asked).toBeGreaterThan(0);
+  expect(refused.out).not.toContain(OSC66);
+  expect(refused.cells).toBeLessThan(COLS * ROWS);
+  const next = await m.frame();
+  expect(next.cells).toBe(COLS * ROWS);
+  expect(next.out).toStartWith(ERASE_TOP);
+  expect(next.out).toContain(m.heading.bytes);
+  const after = await m.frame();
+  expect(after.out).not.toContain(OSC66);
+  expect(after.cells).toBe(0);
 });
 
 test("a float over the second row stops the draw and has its whole area rewritten", async () => {
@@ -220,6 +271,14 @@ test("a note's heading and script cells are sent at their size over cells the wi
   expect(await sent(m)).toBe("");
 });
 
+test("a heading of wide characters and graphemes is sent once and not again while nothing changes", async () => {
+  const m = await mountNote("# Raft 中 👍🏽\n\nEnd.\n");
+  const out = m.writes.join("");
+  expect(out).toContain(`${OSC66}s=2:w=2:n=7:d=8:v=2;中\x1b\\`);
+  expect(out).toContain(`${OSC66}s=2:w=2:n=7:d=8:v=2;👍🏽\x1b\\`);
+  expect(await sent(m)).toBe("");
+});
+
 test("a heading cut at the window bottom keeps its normal-size text and is not sent", async () => {
   const m = await mountNote(`${"line\n".repeat(30)}# Raft\n`);
   m.keys("Gk");
@@ -234,8 +293,8 @@ test("a resize or a resume from a tool hand-off sends the sized text again", asy
   m.t.resize(64, 12);
   expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
   expect(await sent(m)).toBe("");
-  m.shell.suspend();
-  m.shell.resume();
+  await m.shell.suspend();
+  await m.shell.resume();
   expect(await sent(m)).toContain(`${OSC66}s=2:w=4:n=7:d=8:v=2;Raft`);
 });
 

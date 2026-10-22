@@ -1,3 +1,4 @@
+import type { OptimizedBuffer } from "@opentui/core";
 import { sizedCell } from "../../core/kernel/view/sized";
 import type { SizedBlock, SizedChunk } from "../../core/kernel/view/types";
 import { displayWidth } from "../../core/kernel/view/wrap";
@@ -34,36 +35,41 @@ export const paintSizedText: WidgetPainter = (t, w) => {
   const block = w.data as SizedBlock;
   const heading = headingOf(block);
   const plain = t.theme.style("text");
-  const rects: CellRect[] = [];
   const sizedOf = (row: readonly SizedChunk[]) =>
     row.reduce((n, c) => n + c.cells, 0);
   const whole =
     t.rows >= w.rows && block.rows.every((row) => sizedOf(row) <= t.width);
   const step = sizedCell(block.scale);
-  for (let i = 0; i < t.rows; i++) {
-    const row = block.rows[Math.floor(i / step)] ?? [];
-    const cells = Math.min(t.width, sizedOf(row));
-    let x = 0;
-    if (i % step === 0) {
-      rects.push({ x: t.x, y: t.y + i, w: cells, h: step });
-      for (const c of row) {
-        const text = c.text.replace(/\t/g, " ");
-        const n = Math.min(
-          t.width - x,
-          whole ? c.cells : displayWidth(text, 1),
-        );
-        if (n <= 0) break;
-        const style = chunkStyle(t.theme, c, heading);
-        drawCells(t.buf, style, t.x + x, t.y + i, text, n);
-        x += n;
-      }
+  const cellsAt = (i: number) =>
+    Math.min(t.width, sizedOf(block.rows[Math.floor(i / step)] ?? []));
+  /** The rows, each blank to the window's edge, or to its sized cells' edge. */
+  const paint = (buf: OptimizedBuffer, toEdge: boolean) => {
+    for (let i = 0; i < t.rows; i++) {
+      let x = 0;
+      if (i % step === 0)
+        for (const c of block.rows[i / step] ?? []) {
+          const text = c.text.replace(/\t/g, " ");
+          const n = Math.min(
+            t.width - x,
+            whole ? c.cells : displayWidth(text, 1),
+          );
+          if (n <= 0) break;
+          const style = chunkStyle(t.theme, c, heading);
+          drawCells(buf, style, t.x + x, t.y + i, text, n);
+          x += n;
+        }
+      const end = toEdge ? t.width : cellsAt(i);
+      if (x < end) drawCells(buf, plain, t.x + x, t.y + i, "", end - x);
     }
-    if (x < t.width) drawCells(t.buf, plain, t.x + x, t.y + i, "", t.width - x);
-  }
+  };
+  paint(t.buf, true);
   if (!whole) return;
+  const rects: CellRect[] = [];
+  for (let i = 0; i < t.rows; i += step)
+    rects.push({ x: t.x, y: t.y + i, w: cellsAt(i), h: step });
   t.deps.sizedText.draw(
-    t.buf,
     rects,
     blockBytes(block, t.x, t.y, (c) => chunkStyle(t.theme, c, heading)),
+    (buf) => paint(buf, false),
   );
 };

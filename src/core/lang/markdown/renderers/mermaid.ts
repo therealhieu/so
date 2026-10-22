@@ -76,24 +76,6 @@ let library: typeof BeautifulMermaid | undefined;
 const mermaid = (): typeof BeautifulMermaid =>
   (library ??= require("beautiful-mermaid") as typeof BeautifulMermaid);
 
-/**
- * Run `f` with no global `window`. The library's SVG layout (elkjs) binds to
- * `window` when one exists and to the runtime's `global` otherwise; the
- * terminal renderer defines a bare `window` for `requestAnimationFrame`,
- * which breaks that layout.
- */
-function withoutWindow<T>(f: () => T): T {
-  const g = globalThis as { window?: unknown };
-  if (!("window" in g)) return f();
-  const window = g.window;
-  delete g.window;
-  try {
-    return f();
-  } finally {
-    g.window = window;
-  }
-}
-
 const INVALID: MermaidResult = {
   kind: "source",
   label: "mermaid: invalid diagram shown as source",
@@ -244,9 +226,7 @@ export function mermaidSvg(
       DIAGRAM_COLORS[theme];
     const colors =
       typeof chosen === "string" ? mermaid().THEMES[chosen] : chosen;
-    const drawn = withoutWindow(() =>
-      mermaid().renderMermaidSVG(p.source, colors),
-    );
+    const drawn = mermaid().renderMermaidSVG(p.source, colors);
     const svg = inlineCssVars(drawn)
       .replace(/@import[^;]*;/g, "")
       .replace(

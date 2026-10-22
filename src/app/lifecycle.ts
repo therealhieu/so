@@ -26,7 +26,7 @@ const PREVIEW_STOP_BOUND_MS = 250;
  */
 export function installLifecycle(d: {
   store: Store;
-  shell: Pick<Shell, "destroy">;
+  shell: Pick<Shell, "destroy" | "closed">;
   runner: Pick<EffectRunner, "flush">;
   exit?: (code: number) => void;
   /** Saves the session synchronously; a failure must not stop the shutdown. */
@@ -78,6 +78,8 @@ export function installLifecycle(d: {
       ]);
     } catch {}
     d.shell.destroy();
+    // The renderer restores the terminal after `destroy` returns.
+    await d.shell.closed();
     // Written after the restore, so the lines land on the main screen, and
     // synchronously, so they are not lost to the exit that follows.
     const lines: string[] = [];
