@@ -54,5 +54,7 @@ test("an arrow key's escape sequence reaches the store at once", async () => {
     m.t.mockInput.pressKey("ARROW_UP");
     times.push(await done);
   }
-  for (const t of times) expect(t).toBeLessThan(10);
+  // Never held for the 50 ms escape timeout; headroom for a slow runner.
+  for (const t of times) expect(t).toBeLessThan(40);
+  expect(median(times)).toBeLessThan(10);
 });

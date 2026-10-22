@@ -24,7 +24,9 @@ type Screen = {
 export const bunToolSpawn: ToolSpawn = async (argv, cwd) => {
   const p = Bun.spawn(argv, { cwd, stdio: ["inherit", "inherit", "inherit"] });
   const code = await p.exited;
-  return p.signalCode === null ? { code } : { code, signal: p.signalCode };
+  return p.signalCode === null
+    ? { code }
+    : { code, signal: String(p.signalCode) };
 };
 
 /**
