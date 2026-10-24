@@ -131,10 +131,14 @@ function expectLinksKept(
   ws: Workspace,
   moves: readonly PathMove[],
   plan: readonly FileEdit[],
+  files: string[] = [],
 ) {
-  const ix = index(ws);
+  const ix = index(ws, files);
   const after = afterRename(ws, moves, plan);
-  const ixAfter = index(after);
+  const ixAfter = index(
+    after,
+    files.map((f) => image(f, moves)),
+  );
   for (const [path, text] of Object.entries(ws)) {
     const old = scanDoc(text).links;
     const moved = image(path, moves);
@@ -195,6 +199,20 @@ test("edits to a moved note use its new path", () => {
     ["b/x.md", ["[[a/plan]]"]],
   ]);
   expectLinksKept(ws, moves, plan);
+});
+
+test("relative links in a moved note keep their files", () => {
+  const ws: Workspace = {
+    "wiki/ch1.md": "![fig](../img/fig.png) [next](./ch2.md)",
+    "wiki/ch2.md": "",
+  };
+  const moves = [{ from: "wiki/ch1.md", to: "wiki/deep/ch1.md" }];
+  const files = ["img/fig.png"];
+  const plan = planRename(index(ws, files), moves, new Map());
+  expect(plan.map((f) => [f.path, f.edits.map((e) => e.text)])).toEqual([
+    ["wiki/deep/ch1.md", ["[fig](img/fig.png)", "[next](wiki/ch2.md)"]],
+  ]);
+  expectLinksKept(ws, moves, plan, files);
 });
 
 /** A small deterministic generator (mulberry32). */

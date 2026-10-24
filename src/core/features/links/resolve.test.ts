@@ -68,6 +68,29 @@ test("resolution follows the documented order", () => {
   });
 });
 
+test("paths resolve relative to the note's folder", () => {
+  const ix = index({ "wiki/books/go/ch1.md": "", "books/go/ch1.md": "" }, [
+    "books/api/images/fig-1.png",
+    "books/go/images/fig-1.png",
+  ]);
+  const from = "wiki/books/go/ch1.md";
+  const resolve = (source: string, target: string) =>
+    resolveLink(ix, source, { target });
+  expect(resolve(from, "../../../books/go/images/fig-1.png")).toEqual({
+    path: "books/go/images/fig-1.png",
+  });
+  expect(resolve("books/go/ch1.md", "./images/fig-1.png")).toEqual({
+    path: "books/go/images/fig-1.png",
+  });
+  // A relative path never falls back to a file-name match.
+  expect(resolve(from, "../images/fig-1.png")).toEqual({
+    unresolved: "../images/fig-1.png",
+  });
+  expect(resolve("books/go/ch1.md", "../../../../go/ch1")).toEqual({
+    unresolved: "../../../../go/ch1",
+  });
+});
+
 test("among equal candidates the fewest folders win, then alphabetical order", () => {
   const ix = index({
     "z/q.md": "",
