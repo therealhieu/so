@@ -57,13 +57,36 @@ function bestCandidate(
   return best;
 }
 
-/** The file `target` names from note `from`; an empty target is the note itself. */
+/**
+ * `target` joined to the folder of `from`, with `.` and `..` segments applied;
+ * undefined when it climbs above the vault root.
+ */
+function relativePath(from: string, target: string): string | undefined {
+  const out = dirname(from)
+    .split("/")
+    .filter((s) => s !== "");
+  for (const segment of target.split("/")) {
+    if (segment === "" || segment === ".") continue;
+    if (segment !== "..") out.push(segment);
+    else if (out.pop() === undefined) return undefined;
+  }
+  return out.join("/");
+}
+
+/**
+ * The file `target` names from note `from`; an empty target is the note
+ * itself, and one starting with `./` or `../` is relative to the note's folder.
+ */
 export function resolvePath(
   ix: NoteIndex,
   from: string,
   target: string,
 ): string | undefined {
   if (target === "") return from;
+  if (/^\.\.?\//.test(target)) {
+    const path = relativePath(from, target);
+    return path === undefined ? undefined : rootPath(ix, path);
+  }
   return rootPath(ix, target) ?? bestCandidate(ix, from, target);
 }
 
@@ -78,7 +101,7 @@ function subpathOf(subpath: string | undefined) {
   };
 }
 
-/** order: exact root path (with/without .md) → alias → basename candidates ranked by same folder as `from`, shortest path, alphabetical. */
+/** order: a `./` or `../` target only relative to `from`'s folder; else exact root path (with/without .md) → alias → basename candidates ranked by same folder as `from`, shortest path, alphabetical. */
 export function resolveLink(
   ix: NoteIndex,
   from: string,
